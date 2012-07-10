@@ -1,0 +1,14 @@
+Package: PBStools
+Version: 1.22
+Date: 2012-07-06
+Title: Tools for Serious Marine Scientists
+Author: Rowan Haigh, Jon T. Schnute, Norm Olsen, and Lisa Lacko
+Maintainer: Rowan Haigh <rowan.haigh@dfo-mpo.gc.ca>
+Depends: R (>= 2.12.0), PBSmapping, PBSmodelling, PBSdata, RODBC
+Suggests: boot, BRugs, cluster, MASS, reshape, sp, utils
+Description: Provides tools for exploring fisheries data.
+    This package attempts to provide screening and 
+    summary tools for fisheries stock assessments, COSEWIC 
+    status reports, and exploratory data analyses.
+License: GPL (>= 2)
+

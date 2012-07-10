@@ -1,0 +1,81 @@
+# State-space catch-at-age model: 46 years, 23 ages (11 surface)
+# F      : Historic fishing mortality
+0.0
+# M      : Natural mortality
+0.04
+# R      : Historic average recruitment
+4.496716318
+# gamma  : Recruitment correlation
+ 0.7663699
+# alpha  : Selectivity exponent
+ 6.2088638
+# beta   : Selectivity at age 1 0.1064185
+ 0.1064185
+# q      : Catchability for research vessels (G.B. Reed)
+0.4000280
+# q2     : Catchability for commercial vessels (>1984)
+0.5858133
+# rho    : Variance ratio sig1^2 / (sig1^2+tau1^2)
+0.9
+# kap_2 : total variance
+0.4
+# tau2_2 : age measurement error
+0.2
+# vec(R_t): T+A_1-1 recruitments at time (2-A < t <= T
+5.80115
+4.06694
+3.345
+3.48955
+5.68002
+10.3771
+10.5817
+6.08778
+5.08829
+5.41558
+4.51887
+2.65461
+3.48872
+4.89708
+3.53734
+1.5962
+0.696352
+0.507907
+0.572139
+2.24804
+12.4283
+7.43853
+3.72407
+3.09861
+7.51076
+5.08883
+4.78512
+2.99043
+6.73703
+3.30794
+2.26238
+1.71177
+1.69218
+2.53409
+4.03316
+2.86402
+2.18063
+1.02231
+1.73561
+2.5894
+3.08626
+3.88939
+9.09313
+17.4012
+5
+5
+5
+5
+5
+5
+5
+5
+5
+5
+5
+5
+

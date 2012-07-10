@@ -1,0 +1,7 @@
+The R library 'PBSfishery' contains useful functions 
+(both GUI-driven and not) for exploring fisheries data.
+This package relies heavily on the R-packages:
+PBSmapping, PBSmodelling, RODBC
+
+See 'PBStools-UG.pdf' in the library folder '../library/PBStools/doc'.
+

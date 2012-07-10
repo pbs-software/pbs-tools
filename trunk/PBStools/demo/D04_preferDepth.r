@@ -1,0 +1,10 @@
+require(PBStools)
+local({
+	spath <- paste(system.file(package="PBStools"),"/sql",sep="")
+	hfile <- paste(system.file(package="PBStools"),"/win/preferDepthHist.txt",sep="")
+	hdemo <- paste(system.file(package="PBStools"),"/win/demoHist.txt",sep="")
+	temp  <- readLines(hfile)
+	temp  <- gsub("path = \"\"",paste("path=\"",spath,"\"",sep=""),temp)
+	writeLines(temp,con=hdemo)
+	preferDepth(hnam=hdemo) 
+})

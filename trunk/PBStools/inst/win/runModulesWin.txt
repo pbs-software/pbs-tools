@@ -1,0 +1,29 @@
+window name=runM title="PBS Fishery" onClose=.runModHelperQuit
+
+grid 1 2 sticky=NW
+	label text=View font="bold 11" pady=5
+	button text=Window func=openFile action="@wdf"
+
+grid 1 2 sticky=W
+	label text="Choose a GUI" font="bold 12" sticky=W pady=5 fg="blue"
+	radio name=eN value=0 sticky=W padx=20 text=CLEAR function=.runModHelper action=clear
+grid 2 5 sticky=W byrow=F
+	label text="Mapping" font="bold 10" sticky=NW pady=2 padx=10
+	grid 1 1 sticky=NW padx=5
+		radio name=eN value=11 sticky=W padx=10 function=.runModHelper text="De Peche Mode"   action=map
+	label text="Biology" font="bold 10" sticky=NW pady=2 padx=10
+	grid 2 1 sticky=NW padx=5
+		radio name=eN value=21 sticky=W padx=10 function=.runModHelper text="Props-at-Age"    action=plotProp
+		radio name=eN value=22 sticky=W padx=10 function=.runModHelper text="ADMB Catch-Age"  action=reportCatchAge
+	label text="Spatial" font="bold 10" sticky=NW pady=2 padx=10
+	grid 1 1 sticky=NW padx=5
+		radio name=eN value=41 sticky=W padx=10 function=.runModHelper text="Prefer Depth"    action=preferDepth
+	label text="Survey" font="bold 10" sticky=NW pady=2 padx=10
+	grid 1 1 sticky=NW padx=5
+		radio name=eN value=51 sticky=W padx=10 function=.runModHelper text="Survey Trend"    action=trend
+	label text="Temporal" font="bold 10" sticky=NW pady=2 padx=10
+	grid 1 1 sticky=NW padx=5
+		radio name=eN value=61 sticky=W padx=10 function=.runModHelper text="IRR"             action=imputeRate
+null
+text name=wtxt height=2 width=75 relief=solid edit=TRUE value="" scrollbar=FALSE
+#button function=.runModHelper text="create window from source" action="__USE_EDIT__" pady=5 padx=20
