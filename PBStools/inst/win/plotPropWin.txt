@@ -1,0 +1,97 @@
+window name=window title="Proportions-at-Age"
+
+grid 1 2
+#Left 3 blocks----------------
+grid 3 1 sticky=W relief=sunken
+
+#Left block 1-----------------
+grid 5 1 sticky=W
+	grid 1 3 sticky=W
+		entry name=fnam value="@fnam" label=File width=20 mode=character
+		button text=ls(1) bg=darkseagreen1 function=doAction action=action="choice=ls(1); chooseWinVal(choice,`fnam`)"
+		button text=rda bg=darkseagreen1 function=doAction action=action="choice=findPrefix(`.rda`); chooseWinVal(choice,`fnam`)"
+	grid 1 2 sticky=W 
+		entry mode=character name=strat width=15 sticky=E value="" label=Stratify
+		check name=wted text=weighted sticky=E checked=F
+	grid 1 2 sticky=W
+		entry mode=character name=spp value="POP" width=5 label=Spp
+		vector mode=logical length=5 names=Usex sticky=NW values="T F F F F" \
+			labels="ALL Male Female Unsure Unknown" vertical=F
+	grid 1 3 sticky=W 
+		data nrow=2 ncol=4 names=XYopt modes="character numeric numeric numeric" \
+			rowlabels="X Y" collabels="field limit1 limit2 interval" \
+			rownames="X Y" colnames="fld lim1 lim2 int" \
+			byrow=FALSE values="year age '' 0 '' '' 1 1" sticky=W width=5
+		grid 2 1 sticky=SW 
+			label text="Agg Y" sticky=S
+			check name=agg text="" sticky=S
+		button text="Reset" bg=lightblue function=.plotProp.resetT padx=5 sticky=S pady=15
+	check name=bbonly text="Only use specimens with otoliths broken & burnt" checked=T sticky=W
+
+#Left block 2-----------------
+grid 2 1 sticky=W
+label text="Types ----------------------" font="courier 11 bold" sticky=W
+grid 2 3 byrow=FALSE sticky=W
+	label text="Gear" font="bold 10"
+	vector mode=logical length=4 names=Ugear sticky=NW values="F F F F" \
+		labels="ALL Unknown Trawl Longline" vertical=T
+	label text="Trip" font="bold 10"
+	vector mode=logical length=5 names=Uttype sticky=NW values="F F F F F" \
+		labels="ALL 'No Obs' Research Charter Observer" vertical=T
+	label text="Sample" font="bold 10"
+	vector mode=logical length=5 names=Ustype sticky=NW values="F F F F F" \
+		labels="ALL Unknown 'Tot catch' Random Selected" vertical=T
+
+#Left block 3-----------------
+grid 2 1 sticky=W
+	label text="Areas ----------------------" font="courier 11 bold" sticky=W
+	grid 3 2 sticky=W byrow=T
+		label text="PMFC" font="bold 10" fg=blue
+		vector mode=logical length=8 names=Umajor sticky=NW values="F F F F F F F F" \
+			labels="ALL 3C 3D 5A 5B 5C 5D 5E" vertical=F
+		label text="SRF" font="bold 10" fg=red
+		vector mode=logical length=7 names=Usrfa sticky=NW values="F F F F F F F" \
+			labels="ALL 3C 3D 5AB 5CD 5EN 5ES" vertical=F
+		label text="Gullies" font="bold 10" fg=forestgreen
+		vector mode=logical length=4 names=Usrfs sticky=NW values="F F F F" \
+			labels="ALL GI Mi Mo" vertical=F
+
+#Right 4 blocks---------------
+grid 3 1 sticky=NW  
+		#grid 1 4 sticky=NW pady=5
+		#label text=View: font="bold 10" pady=5
+	grid 1 3 sticky="" pady=5
+		button text=Window function=openFile action="@wdf"
+		button text="R code" function=doAction action="viewCode(`PBStools`,`plotProp`,pat=TRUE)"
+		button text="Reset" bg=lightblue function=.plotProp.resetP
+	grid 10 1 relief=solid toptitle="Plot Controls" topfont="bold 10" pady=5
+		label text="Bubbles" 
+		vector mode=numeric length=3 names="psize powr lwd" width=5 sticky=W values="0.03 0.5 2" vert=T
+		label text="Colours" 
+		vector mode=character length=3 names=bcol width=8 sticky=W values="blue grey coral" labels="pos neg zero" vert=T
+		vector mode=logical length=2 names="showH hide0" labels="line 'hide 0'" values="TRUE TRUE" vert=F
+		label text="Legend (1,2,3)"
+		grid 1 3
+			radio name=ltype text="" value=1 function=.plotProp.plotP
+			radio name=ltype text="" value=2 function=.plotProp.plotP
+			radio name=ltype text="" value=3 function=.plotProp.plotP
+		grid 1 3 sticky=""
+			button text="GO"   bg=palegreen function=.plotProp.calcP sticky=SE
+			button text="Plot" bg=lightblue function=.plotProp.plotP sticky=SE
+			button text="wmf"  bg=lightblue function=.plotProp.plotP sticky=SE action=wmf
+		label text="From the screen:" 
+		grid 3 3 sticky=""
+			button text="BMP" bg=moccasin function=.plotDev action=bmp font="8" width=4
+			button text="JPG" bg=moccasin function=.plotDev action=jpg font="8" width=4
+			button text="PNG" bg=moccasin function=.plotDev action=png font="8" width=4
+			button text="EPS" bg=gold     function=.plotDev action=eps font="8" width=4
+			button text="PDF" bg=gold     function=.plotDev action=pdf font="8" width=4
+			button text="WMF" bg=gold     function=.plotDev action=wmf font="8" width=4
+		label text=csv font="8" padx=5
+		button text=pa bg=lightpink function=doAction width=4 \
+			action="ss=getWinVal()$spp; expr=paste(`page`,ss,`=PBSfish$pa; attr(page`,ss,`,\\`spp\\`)=\\``,ss,`\\`; write.csv(page`,ss,`,\\`page`,ss,`.csv\\`); dump(\\`page`,ss,`\\`,\\`page`,ss,`.r\\`); save(\\`page`,ss,`\\`,file=\\`page`,ss,`.rda\\`)`,sep=``); eval(parse(text=expr))"
+		button text=Na bg=lightsalmon function=doAction width=4 \
+			action="ss=getWinVal()$spp; expr=paste(`nage`,ss,`=PBSfish$Na; attr(nage`,ss,`,\\`spp\\`)=\\``,ss,`\\`; write.csv(nage`,ss,`,\\`nage`,ss,`.csv\\`); dump(\\`nage`,ss,`\\`,\\`nage`,ss,`.r\\`); save(\\`nage`,ss,`\\`,file=\\`nage`,ss,`.rda\\`)`,sep=``); eval(parse(text=expr))"
+	history function=.plotProp.calcP pady=5 sticky="" #import=
+
+

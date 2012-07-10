@@ -1,0 +1,76 @@
+window name="window" title="Internal Rate of Return" onClose=.onClose
+grid 1 8 sticky=W
+	#label text=View: font="bold" sticky=W padx=1
+	button text=Data func=doAction action="openFile(paste(switch(getWinVal()$path,`.`,.getSpath()),`/`,getWinVal()$dbName,`.mdb`,sep=``))"
+	button text="R Code" func=doAction action="viewCode(`PBStools`,`imputeRate`,pat=TRUE)"
+	button text=Window func=openFile pady=2 action="@wdf"
+	#label text="MDB:table" fg=blue sticky=E padx=4
+	entry name="dbName" mode=character value="@dbName" width=7 label="MDB" sticky=E
+	button text=">" func=doAction action="choice=findPrefix(`.mdb`,path=switch(getWinVal()$path,`.`,.getSpath())); chooseWinVal(choice,`dbName`)"
+	entry name="qtName" mode=character value="@qtName" width=14 label="Table" sticky=E
+	button text=">" func=doAction action="choice=listTables(getWinVal()$dbName,type=`MDB`,ttype=c(`TABLE`,`VIEW`),path=switch(getWinVal()$path,`.`,.getSpath())); chooseWinVal(choice,`qtName`)"
+	button text="GET" func=.imputeRate.getIR bg=skyblue action=get
+
+grid 1 5 sticky=W
+	label text="Inputs" font="bold 12" sticky="W" fg="blue"
+	label text="----------------------" font="courier 10"
+	label text="MDB path" sticky=W
+	radio name=pathN value=1 text=cwd value=1
+	radio name=pathN value=2 text=sql value=2
+
+grid 1 3 sticky=W byrow=F
+		grid 4 1 sticky=NW relief=sunken
+			entry name=AID value=@AID label="Account #" sticky=W width=4
+			data names=parVec nrow=1 ncol=4 modes="numeric numeric numeric logical" \
+				rownames="rate" rowlabels="Par\nVec" colnames="val min max active"   \
+				collabels="val min max active" values="0.02 -1 1 TRUE" width=4
+			grid 2 2 byrow=FALSE sticky=W
+				label text=autoD
+				check name=autoD checked=TRUE text=""
+				entry name=d0 mode=character value="2008-01-01" label="Start date" width=9 sticky=E
+				entry name=d1 mode=character value="2008-12-31" label="End date" width=9 sticky=E
+			grid 1 2 sticky=W
+				label text="period" sticky=S pady=5
+				vector names="v0 v1 pyr" values="1 10 12" vertical=F labels="start end 'per yr'" \
+					width=5 padx=5 noeditbg=bisque edit=FALSE
+	grid 8 1 sticky=N
+		label text="Method" font="bold 10" sticky=W padx=5
+		radio name=method value="nlm" text="nlm" mode=character sticky=W padx=5
+		radio name=method value="nlminb" text="nlminb" mode=character sticky=W padx=5
+		radio name=method value="Nelder-Mead" text="Nelder-Mead" mode=character sticky=W padx=5
+		radio name=method value="BFGS" text="BFGS" mode=character sticky=W padx=5
+		radio name=method value="CG" text="CG" mode=character sticky=W padx=5
+		radio name=method value="L-BFGS-B" text="L-BFGS-B" mode=character sticky=W padx=5
+		radio name=method value="SANN" text="SANN" mode=character sticky=W padx=5
+	grid 3 1 sticky=N
+		label text="Controls" font="bold 10" sticky=""
+		vector names="trace maxit reltol steptol temp repN" length=6 values="0 1000 1e-8 1e-4 10 0" \
+			labels="trace maxit reltol steptol temp repN" width=5 vertical=T padx=10
+		grid 1 3
+			button text=" ReSet "  func=.imputeRate.resetIR action=reSet sticky=""
+			button text=" ReInit " func=.imputeRate.resetIR action=reInit sticky=""
+			button text=" RUN "    func=.imputeRate.impIR action=impute sticky="" bg=springgreen
+
+grid 1 5 relief=sunken
+	label text=Simulate font="times italic bold 12" fg=magenta stick=W
+	radio name=sim value=0 text=No func=.imputeRate.getIR action=get
+	radio name=sim value=1 text=Yes func=.imputeRate.simIR action=sim
+	radio name=sim value=2 text=Again func=.imputeRate.simIR action=sim
+	vector names="start rate nper up k" length=5 width=5 values="100 -0.10 36 0.80 20" \
+		labels="start rate nper up k"
+
+grid 1 2 sticky=W
+	label text="Outputs" font="bold 12" sticky="W" fg="red"
+	entry name=nd value=6 label="decimal places" width=4 sticky=W
+	#label text="-------------------------" font="courier 10"
+
+grid 2 3 sticky=W byrow=T
+	vector length=2 names="Git Gev" labels="Iters Evals" values="0 0" width=6 sticky=E vertical=T edit=F noeditbg=bisque
+	vector length=2 names="Gct Get" labels="Ctime Etime" values="0 0" width=8 sticky=E vertical=T edit=F noeditbg=bisque
+	grid 1 2
+		vector length=2 names="Gf1 Gf2" labels="Fmin0 Fmin" values="0 0" width=10 vertical=T edit=F noeditbg=bisque
+		vector length=2 names="Gaic Gaicc" labels="AIC AICc" values="0 0" width=10 vertical=T edit=F noeditbg=bisque
+	vector length=2 names=Gv1 labels="prate arate" values="0 0" width=6 sticky=E vertical=T edit=F noeditbg=bisque
+	vector length=2 names=Gv2 labels="prate arate" values="0 0" width=8 sticky=E vertical=T edit=F noeditbg=bisque
+	text name=Gmess height=5 width=35 edit=FALSE bg="#d7d7ff" borderwidth=5 relief=solid font="helvetica 8" scrollbar=F
+

@@ -1,0 +1,12 @@
+D02_plotProp        Display a GUI to explore proportions-at-metric data 
+                    using bubble plots.
+
+D03_trend           Display a GUI to see annual trends in CPUE or catch 
+                    from the IPHC survey.
+
+D04_preferDepth     Plot depth distributions of fish based on observations
+                    from a remote SQL Server database.
+
+D05_reportCatchAge  Plot results from catch-at-age ADMB report file.
+                    Based on Schnute et al. (2001) POP assessment.
+

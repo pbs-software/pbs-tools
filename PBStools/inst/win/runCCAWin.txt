@@ -1,0 +1,117 @@
+window title="Catch-Curve Analysis"
+
+notebook tabs="NLM BRugs" selected=1
+
+grid 5 1 #--- NLM Page -------------------------------------
+
+grid 1 5 sticky=W
+	label text=View font="bold 10" padx="0 5"
+	button text=Docs function=doAction action="openFile(paste(.getEpath(),`/CCADoc.pdf`,sep=``))"
+	button text=Model function=doAction action="openFile(paste(.getEpath(),`/CCAmod-`,switch(getWinVal()$MDL,`M`,`D`,`L`),getWinVal()$case,`.txt`,sep=``))"
+	button text="R Code" function=doAction action="viewCode(`PBStools`,`runCCA`,pat=TRUE)"
+	button text=Window function=openFile action="@wdf"
+
+grid 1 4 sticky=W
+	label text="Age\nData" font="bold 10"
+	grid 2 1 sticky=W
+		entry name=fnam value="@fnam" mode=character label=File width=11
+		entry name="year" mode=character label="Year" value="2008" width=10
+	grid 2 1 sticky=W
+		button text="Get" function=.runCCA.getData padx=5 bg="palegreen"
+		button text="Plot" function=.runCCA.plotData padx=5 bg="lightblue"
+	text name=msg mode=character height=2 width=25 edit=FALSE \
+		bg="ghostwhite" padx="5 0" font="times 8" scrollbar=FALSE
+
+grid 1 4 sticky=W
+	label text=Design font="bold 10" sticky=NE pady=10
+	vector names=phi length=11 width=5 mode=numeric vertical=T \
+		labels="k A B b0 eps m b1 b2 b3 b4 b5" \
+		vecnames="k A B b0 eps m b1 b2 b3 b4 b5" \
+		values="10 60 300 25 0.01 2 0 0 0 0 0"
+	label text=Model font="bold 10" sticky=NE pady=10
+	data nrow=11 ncol=4 names=theta width=5 mode="numeric numeric numeric logical" \
+		rownames="Z alpha betak tau sigma n rho1 rho2 rho3 rho4 rho5" \
+		colnames="val min max active" \
+		rowlabels="Z alpha betak tau sigma n rho1 rho2 rho3 rho4 rho5" \
+		collabels="val min max active" \
+		values="0.05 0 1 T 5 2 25 T 0.2 0 1 T 1 0 5 T 1 0 3 F 100 10 1000 T \
+		1 0 20 T 1 0 20 T 1 0 20 T 1 0 20 T 1 0 20 T"
+
+grid 1 4 sticky=W
+	label text="Distribution" font="bold 10"
+	vector names=modT length=3 mode=logical values="F T F" \
+		labels="Multinomial Dirichlet Logistic-normal"
+	label text="Auto A" sticky=S pady="0 2"
+	check name=autoA checked=T sticky=S
+
+grid 1 9
+	button text="Set"   function=.runCCA.setVals bg="moccasin"
+	button text="NLM"   function=.runCCA.evalMod bg="lightpink"
+	button text="Plot " function=.runCCA.plotNLM bg="palegreen" padx=10
+	check name=seepa checked=T text=pa padx=0
+	check name=seepi checked=F text=pi padx=0
+	check name=wmf checked=F text=wmf padx=0
+	button text=eps     bg=paleturquoise1 function=doAction action=".plotDev(act=`eps`)" padx="3 0"
+	button text=png     bg=paleturquoise1 function=doAction action=".plotDev(act=`png`)"
+	button text=wmf     bg=paleturquoise1 function=doAction action=".plotDev(act=`wmf`)"
+
+grid 8 1 #--- BRugs Page -----------------------------------
+
+grid 1 2 sticky=W
+	label text="Distribution" font="bold 10" sticky=W padx="0 10"
+	radio name=MDL value=2 text="Dirichlet"
+	#radio name=MDL value=1 text="Multinomial" padx=10
+	#radio name=MDL value=3 text="Logistic-normal" padx=10
+
+grid 1 5 sticky=W
+   label text="Case" font="bold 10"
+   radio name=case value=1 text="1  (M)"   padx="5 0" function=.runCCA.checkMon
+   radio name=case value=2 text="2  (MS)"  padx="5 0" function=.runCCA.checkMon
+   radio name=case value=3 text="3  (MA)"  padx="5 0" function=.runCCA.checkMon
+   radio name=case value=4 text="4  (MSA)" padx="5 0" function=.runCCA.checkMon selected=TRUE
+
+grid 2 1 sticky=W pady=5 
+	grid 1 4 sticky=W
+		label text="Monitor" font="bold 10" sticky=W padx="0 10"
+		radio mall value=1 selected=FALSE text=All  function=doAction action="setWinVal(list(pset=rep(TRUE,11)))"
+		radio mall value=0 selected=FALSE text=None function=doAction action="setWinVal(list(pset=rep(FALSE,11)))"
+		radio mall value=2 selected=TRUE  text=Active function=doAction action="setWinVal(list(pset=getWinVal()$theta$active))"
+	vector length=11 names=pset \
+		labels="Z alpha betak tau sigma n rho1 rho2 rho3 rho4 rho5" \
+		vecnames="Z alpha betak tau sigma n rho1 rho2 rho3 rho4 rho5" \
+		mode=logical values="T T T T F T T T T T T" vertical=F
+
+grid 1 4 sticky=W pady=5
+	label text=Compile font="bold 10" pady=4 sticky=SW
+	entry name=nc label="# chains" value=2 width=3 padx=5
+	button text=Compile function=.runCCA.compileMod stick="SE" bg="palegreen" pady=5 padx=10
+	button text=Data function=openFile action=CCAdat.txt sticky=SE pady=5 padx=0
+
+grid 1 4 sticky=W pady=5
+	label text=Update font="bold 10" sticky=SW pady=4 padx="0 5"
+	vector length=2 names="clen cthin" labels="Length Thin" values="100 1" vertical=F width=7 padx=0
+	entry name="ctot" label="Total" value="0" width=6 edit=F noeditbg="lightpink" padx=5 sticky=S
+	button text=Update function=.runCCA.updateMod stick="SE" bg="palegreen" pady=3 padx="15 0"
+
+grid 1 4 sticky=W pady=5
+	label text="Report" font="bold 10" sticky=SW pady=4 padx="0 8"
+	vector length=3 names="s1 s2 sthin" labels="Start End Thin" \
+		values="1 100 1" vertical=F width=7 padx=0
+	label text="Chains" font="10" padx=5 sticky="S" pady=4
+	vector length=2 names="chn1 chn2" labels="First Last" values="1 2" vertical=F width=4 padx=0
+
+grid 1 9 sticky=W pady=5
+	label text="Plot" font="bold 10" sticky=SW pady=4 padx="0 27"
+	button text=Trace   bg="moccasin" function=.runCCA.plotTrace
+	button text=Density bg="lightskyblue" function=.runCCA.plotDens
+	button text=ACF     bg="moccasin" function=.runCCA.plotACF
+	button text=Pairs   bg="lightskyblue" function=.runCCA.plotPairs
+	button text=Histo   bg="moccasin" function=.runCCA.plotHist
+	button text=eps     bg=paleturquoise1 function=doAction action=".plotDev(act=`eps`)" padx="3 0"
+	button text=png     bg=paleturquoise1 function=doAction action=".plotDev(act=`png`)"
+	button text=wmf     bg=paleturquoise1 function=doAction action=".plotDev(act=`wmf`)"
+
+grid 1 2 sticky=W pady=5
+	label text="History" font="bold 10" sticky=NW padx="0 10"
+	history #import=
+
