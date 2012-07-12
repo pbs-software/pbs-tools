@@ -3,7 +3,9 @@ PBSmapx Changes
 Authors: RH  = Rowan Haigh     NO = Norm Olsen
          LL  = Lisa Lacko     JTS = Jon T. Schnute
 
-1.22  2012-07-05  Rowan
+1.22  2012-07-12  Rowan
+  - Changed 'glimmer' argument 'dlim' to 'dbrks' to more easily convert continous depths into zones. (RH 7/11)
+  - Modified 'getData' to handle 'fqtName's created from a 'paste' command. (RH 7/10)
   - Finished UG for package 'PBStools' (RH 7/5)
   - Changed module names: (RH 6/26)
 	M01_Utility  M02_Biology  M03_Fishery  M04_Survey  M05_Spatial  M06_Temporal  M07_BuildCatch

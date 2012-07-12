@@ -10,7 +10,7 @@ grid 1 2 sticky=W
 grid 2 5 sticky=W byrow=F
 	label text="Mapping" font="bold 10" sticky=NW pady=2 padx=10
 	grid 1 1 sticky=NW padx=5
-		radio name=eN value=11 sticky=W padx=10 function=.runModHelper text="De Peche Mode"   action=map
+		radio name=eN value=11 sticky=W padx=10 function=.runModHelper text="De Peche Mode"   action=createMap
 	label text="Biology" font="bold 10" sticky=NW pady=2 padx=10
 	grid 2 1 sticky=NW padx=5
 		radio name=eN value=21 sticky=W padx=10 function=.runModHelper text="Props-at-Age"    action=plotProp

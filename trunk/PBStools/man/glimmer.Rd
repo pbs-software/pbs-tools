@@ -2,27 +2,28 @@
 \alias{glimmer}
 \title{Perform a Standardised GLM Analysis}
 \description{
-  Performs a standardised GLM analysis and plots the results.
+  Perform a standardised GLM analysis and plot the results.
 }
 \usage{
 glimmer(file, facs=c("year","month","depth","vessel"),
      afld="latitude", yrs=1996:2010, mos=1:12, mo1=1, 
-     dlim=seq(100,500,100), gear=c(0,1,3), catch="catch", 
+     dbrks=seq(100,500,100), gear=c(0,1,3), catch="catch", 
      areas=NULL, Vpro=0.03, Uplot=TRUE, Upanel=0.4, 
      Ionly=FALSE, Imax=NULL, crange=c(-2,2), erange=c(0,5), 
      facmin=10, effmax=1440, vline=NULL, wmf=FALSE)
 }
 \arguments{
-  \item{file}{ name of file or data object containing fields for GLM analysis:
-    \code{year, month, depth, latitude, vessel, effort, catch}. 
+  \item{file}{ name of file or data object containing fields for GLM analysis: \cr
+    \code{year, month, depth, latitude, vessel, effort, catch}. \cr
     See the SQL file \code{pht_glm.sql}.}
   \item{facs}{string vector: factors (fields) other than those that describe area.}
-  \item{afld}{string scalar: factor describing spatial area, choose one of:
-    \code{c("latitude", "major", "minor", "locality", "pfma", "pfms", "srfa", "srfs", "popa")}.}
+  \item{afld}{string scalar: factor describing spatial area, choose one of: \cr
+    \code{c("latitude", "major", "minor", "locality", "pfma", "pfms", \cr "srfa", "srfs", "popa")}.}
   \item{yrs}{numeric vector of years.}
   \item{mos}{numeric vector of months.}
   \item{mo1}{first month in year (\emph{e.g.}, 1=calendar year, 4=fishing year).}
-  \item{dlim}{numeric vector: depth breaks for binning.}
+  \item{dbrks}{either a numeric vector of two or more cut points or a single number 
+    (greater than or equal to 2) giving the number of intervals into which depth is to be cut.}
   \item{gear}{numeric vector: gear codes for trawl fishery (\emph{e.g.}, 1=bottom, 3=midwater).}
   \item{catch}{string scalar: field containing catch numbers.}
   \item{areas}{vector: specific area names/codes within \code{afld}.}
@@ -80,7 +81,7 @@ pbsfun=function(){
     depth=x$fdep,latitude=x$Y,vessel=x$cfv,
     effort=x$eff,catch=x$POP)
   attr(glmdat,"spp")="396"
-  glimmer(glmdat,Vpro=.025,dlim=c(100,500,50))
+  glimmer(glmdat,Vpro=.025,dbrks=seq(100,500,50))
   invisible() }
 pbsfun()
 }

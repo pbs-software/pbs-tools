@@ -285,7 +285,7 @@ getCatch = function(strSpp="394", dbs=c("gfb","gfc","pht","fos"),
 	eval(parse(text=paste(expr,collapse=""))) }
 #-----------------------------------------getCatch
 
-#glimmer--------------------------------2011-03-09
+#glimmer--------------------------------2012-07-11
 # Performs an lm/aov on a predefined dataset
 # Arguments:
 #   file   = name of file or data object containing fields for GLM analysis:
@@ -296,7 +296,8 @@ getCatch = function(strSpp="394", dbs=c("gfb","gfc","pht","fos"),
 #   yrs    = numeric vector of years.
 #   mos    = numeric vector of months.
 #   mo1    = first month in year (e.g., 1=calendar year, 4=fishing year).
-#   dlim   = numeric vector: depth breaks for binning.
+#   dbrks  = either a numeric vector of two or more cut points or a single number 
+#           (greater than or equal to 2) giving the number of intervals into which depth is to be cut.
 #   gear   = gear codes for trawl fishery (1=bottom, 3=midwater)
 #   catch  = string scalar: field containing catch numbers.
 #   areas  = vecor: specific area names/codes within 'afld'.
@@ -315,7 +316,7 @@ getCatch = function(strSpp="394", dbs=c("gfb","gfc","pht","fos"),
 #   wmf    = logical: if TRUE, send the plot to a WMF file.
 #-----------------------------------------------RH
 glimmer <- function(file, facs=c("year","month","depth","vessel"),
-     afld="latitude", yrs=1996:2010, mos=1:12, mo1=1, dlim=seq(100,500,100), gear=c(0,1,3), 
+     afld="latitude", yrs=1996:2010, mos=1:12, mo1=1, dbrks=seq(100,500,100), gear=c(0,1,3), 
      catch="catch", areas=NULL, Vpro=0.03, Uplot=TRUE, Upanel=0.4, Ionly=FALSE, Imax=NULL,
      crange=c(-2,2), erange=c(0,5), facmin=10, effmax=1440, vline=NULL, wmf=FALSE) {
 
@@ -329,7 +330,7 @@ glimmer <- function(file, facs=c("year","month","depth","vessel"),
 	names(facmin)[names(facmin)%in%AREAS]="area"
 	names(facmin)[names(facmin)%in%"depth"]="dzone"
 
-	assign("PBSfish",list(module="M03_Fishery",func="glimmer"),envir=.GlobalEnv)
+	assign("PBSfish",list(module="M03_Fishery",call=match.call()),envir=.GlobalEnv)
 	fnam=as.character(substitute(file))
 	expr = paste("getData(\"",fnam,"\",type=\"FILE\")",sep="")
 	eval(parse(text=expr))
@@ -380,18 +381,17 @@ glimmer <- function(file, facs=c("year","month","depth","vessel"),
 		if(nrow(file)==0) showError("year:month:vessel","nodata")
 		file$vid = vid[as.character(file$vessel)]
 	}
-#browser();return()
 	if (any(facs=="depth")) {
-		if (length(dlim)==2) {
-			file <- file[file$depth>=min(dlim) & file$depth<max(dlim) & !is.na(file$depth),]
-			file$dzone = file$depth }
-		if (length(dlim)==3) {
-			file <- file[file$depth>min(dlim) & file$depth<=max(dlim) & !is.na(file$depth),]
-			if(nrow(file)==0) showError("year:month:depth","nodata")
-			file$dzone = cut(file$depth,breaks=dlim,labels=FALSE) }
+		if (length(dbrks)==1)
+			dbrks = seq(min(file$depth),max(file$depth),length.out=dbrks)
+		file <- file[file$depth>=min(dbrks) & file$depth<max(dbrks) & !is.na(file$depth),]
+		if(nrow(file)==0) showError("year:month:depth","nodata")
+		file$dzone = cut(file$depth,breaks=dbrks,labels=FALSE,include.lowest=TRUE)
 		file=chewData(file,"dzone",facmin["dzone"]) 
 		if(nrow(file)==0) showError("year:month:depth","nodata")
 		dzone <- sort(unique(file$dzone));  ndzone <- length(dzone)
+		names(dzone) = round(dbrks[1:(length(dbrks)-1)])
+#browser();return()
 	}
 	if (any(facs=="bycatch")) {
 		quants = c(0.5,0.75,0.90,1)
@@ -504,7 +504,7 @@ glimmer <- function(file, facs=c("year","month","depth","vessel"),
 #if(ii=="gear") {browser();return()}
 		if (ii=="year") {inam=yrs[x]; x=as.numeric(inam)}
 		else if (ii=="month")    inam=c(month.abb,month.abb)[mos+(mo1-1)]
-		else if (ii=="depth")    inam=paste(dzone[x],"+",sep="")
+		else if (ii=="depth")    { dnam=rev(rev(round(dbrks))[-1]); inam=paste(dnam[x],"+",sep="") }
 		else if (ii=="gear")     { gcode=c("Unknown","Bottom trawl","Midwater trawl"); names(gcode)=c(0,1,3);  inam=gcode[as.character(gear)] }
 		else if (ii=="bycatch")  inam=quants[x]
 		else if (ii%in%AREAS)    inam=area[x]
@@ -514,7 +514,7 @@ glimmer <- function(file, facs=c("year","month","depth","vessel"),
 
 		y95lo <- icoef + iserr * qnorm(0.025)  ### lower limit 
 		y95hi <- icoef + iserr * qnorm(0.975)  ### upper limit
-#if (ii=="pjsarea") {browser();return()}
+#if (ii=="depth") {browser();return()}
 
 
 		if(ii=="year"){
