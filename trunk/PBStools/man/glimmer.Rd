@@ -18,7 +18,8 @@ glimmer(file, facs=c("year","month","depth","vessel"),
     See the SQL file \code{pht_glm.sql}.}
   \item{facs}{string vector: factors (fields) other than those that describe area.}
   \item{afld}{string scalar: factor describing spatial area, choose one of: \cr
-    \code{c("latitude", "major", "minor", "locality", "pfma", "pfms", \cr "srfa", "srfs", "popa")}.}
+    \code{c("latitude", "major", "minor", "locality", "pfma", "pfms",} \cr 
+    \code{"srfa", "srfs", "popa")}.}
   \item{yrs}{numeric vector of years.}
   \item{mos}{numeric vector of months.}
   \item{mo1}{first month in year (\emph{e.g.}, 1=calendar year, 4=fishing year).}
