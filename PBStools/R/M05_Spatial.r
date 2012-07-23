@@ -478,7 +478,8 @@ preferDepth = function(strSpp="410", fqtName="pht_fdep.sql", dbName="PacHarvest"
 		showMessage("Please wait while effort data is retrieved for this GUI session",col="blue",cex=1.2)
 		getData("pht_effort.sql",strSpp=strSpp,path=.getSpath())
 		effort=PBSdat; effort$effort=effort$effort/60 ### convert to hours
-		PBSfish$effort <<- effort #packList("effort","PBSfish") ### too slow
+		eval(parse(text="PBSfish$effort <<- effort"))
+		#packList("effort","PBSfish") ### too slow
 		frame(); addLabel(.5,.5,"Effort loaded",col="darkgreen",cex=1.2) }
 
 #.preferDepth.getDepth------------------2011-04-01
@@ -577,7 +578,7 @@ preferDepth = function(strSpp="410", fqtName="pht_fdep.sql", dbName="PacHarvest"
 			xy <- hist(jdat$depth, breaks=brks, plot=FALSE);
 			xy$density <- xy$counts/sum(xy$counts)
 			xyout <- paste("xy",spp,i,j,sep=".")
-			PBSfish[[xyout]] <<- xy;
+			eval(parse(text="PBSfish[[xyout]] <<- xy"))
 
 			if (isE) {
 				jeff$dbin=cut(jeff$depth,brks)

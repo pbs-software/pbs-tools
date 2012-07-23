@@ -622,9 +622,9 @@ revStr <- function(x)
 # runModules: Display a master GUI to display modules
 #-----------------------------------------------RH
 runModules <- function () {
-	if (!require(PBSmodelling, quietly=TRUE)) stop("PBSmodelling package is required")
+	#if (!require(PBSmodelling, quietly=TRUE)) stop("PBSmodelling package is required")
 	if (!require(PBStools, quietly=TRUE)) stop("PBStools package is required")
-	if (!require(PBSmapx, quietly=TRUE)) stop("PBSmapx package is required")
+	#if (!require(PBSmapx, quietly=TRUE)) stop("PBSmapx package is required")
 	.runModHelper <- function() {
 		getWinVal(scope = "L");  act <- getWinAct()[1]
 		if (!exists("act") || !exists("eN")) return()
