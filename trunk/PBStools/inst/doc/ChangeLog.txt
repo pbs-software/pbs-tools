@@ -3,7 +3,12 @@ PBSmapx Changes
 Authors: RH  = Rowan Haigh     NO = Norm Olsen
          LL  = Lisa Lacko     JTS = Jon T. Schnute
 
-1.22  2012-07-13  Rowan
+1.22  2012-07-16  Rowan
+  - Disabled mapping in 'runModules' to avoid circularity in package requirements. (RH 7/16)
+  - Disabled NOTES about 'no visible binding for '<<-'' by converting the assignment lines to evaluated text. (RH 7/16)
+  - Implemented Brian Ripley's suggestion to remove NOTES about 'no visible binding for global variable xxx':
+	if(getRversion() >= "2.15.1") globalVariables(names=c(...), package="PBSmapx") (RH 7/16)
+  - Submitted to CRAN, but rejected by Dr. Brian Ripley. (RH 7/13)
   - Added 'jss.bst' and 'jss.cls' to the 'vignettes' directory to enforce bibliography execution. (RH 7/13)
   - Changed 'glimmer' argument 'dlim' to 'dbrks' to more easily convert continous depths into zones. (RH 7/11)
   - Modified 'getData' to handle 'fqtName's created from a 'paste' command. (RH 7/10)

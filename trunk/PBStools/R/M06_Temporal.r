@@ -173,7 +173,7 @@ imputeRate <- function(qtName="Ex03_Portfolio", dbName="Examples", AID=1, pathN=
 		#fval = (Vlast - Vcont)^2
 #		print(round(c(r,fval,Vcont,Vlast),5))
 		IRRmin=c(r,fval,f*Vcont,f*Vlast); names(IRRmin)=c("r","fval","Vcont","Vlast")
-		PBSfish$IRRmin <<- IRRmin  # weird results for SANN
+		eval(parse(text="PBSfish$IRRmin <<- IRRmin"))  # weird results for SANN
 		#packList("IRRmin","PBSfish")
 		return(fval) }
 	#----------------

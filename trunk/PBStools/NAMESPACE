@@ -7,7 +7,6 @@ exportPattern("^\\.flush")
 exportPattern("^\\.get")
 exportPattern("^\\.grab")
 exportPattern("^\\.impute")
-# exportPattern("^\\.map")
 exportPattern("^\\.plot")
 exportPattern("^\\.prefer")
 exportPattern("^\\.report")
@@ -21,6 +20,4 @@ export(.su)
 import(
   PBSmapping, PBSmodelling, PBSdata, RODBC
 )
-#importFrom(utils, dataentry) # PBSmapx only
-# importFrom(base, .packages) # not allowed to import base objects
 

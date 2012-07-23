@@ -111,7 +111,7 @@ calcLenWt <- function(dat=bio440, strSpp="440", areas=NULL,
 					box(bty="l") } }
 			if (plotit) dev.off()
 	} } 
-	out <<- out; dat <<- dat
+	eval(parse(text="out <<- out; dat <<- dat"))
 	
 # Output table for Pre-COSEWIC
 	fn <- paste("LenWt-","440",".csv",sep="")
@@ -941,7 +941,7 @@ estOgive <- function(dat=pop.age, strSpp="", method=c("empir","dblnorm"), sex=li
 		sd    = sapply(ogive,sd)            # std dev of mean age/length by bin
 		out[names(pemp),"pemp",ss]=pemp
 		out[names(n),"n",ss]=n; out[names(mn),"mn",ss]=mn; out[names(sd),"sd",ss]=sd
-		obs <<- list(mn=mn, pemp=pemp)
+		eval(parse(text="obs <<- list(mn=mn, pemp=pemp)"))
 		mdx <- approx(pemp,mn,xout=.5,rule=2,ties="ordered")$y
 
 		# double normal fit

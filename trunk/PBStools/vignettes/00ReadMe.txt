@@ -23,10 +23,11 @@ Vignette Notes
 
    When 'make' runs it will check the timestamps of the two files to
    decide whether or not to run the actions.
+--------------------------------------------------------------------------------
 
-2. We include the Journal of Statistical Software control files 
-   (jss.bst, jss.cls) in the package 'vignettes' folder to enforce the proper 
-   implementation of citations and the bibliography.
+2. We include the Journal of Statistical Software control files 'jss.bst' and 
+   'jss.cls' in the package 'vignettes' folder to enforce the proper rendering
+   of citations and bibliography (though these are probably redundant).
 
    A straight-forward build from the command line:
 
@@ -35,17 +36,28 @@ Vignette Notes
    seems to find these files in the R installation, presumably at:
    C:\Apps\R\R2151\share\texmf\bibtex\bst  and
    C:\Apps\R\R2151\share\texmf\tex\latex
-   but our build routines use a an R script file:
+   
+   However, our build routine calls an R script file from the command line:
 
    Rscript.exe build.r
 
-   that calls the install command (above) using the R function 'system'.
-   This method does not implement the bibliography build unless we 
-   issue the build commands twice. Perhaps the bibliography needs this?
+   that downloads the latest source code from Google Code using SVN and creates
+   the source package first. In past, Tortoise SVN had .svn directories at 
+   practically every node and so we had to package the source while excluding 
+   SVN nonsense. The newly packed source is then unpacked to a temporary 
+   directory from which we then create the binary package. All this book-keeping
+   is controlled by an R script called 'build.r', and calls to R CMD are passed
+   from R to the operating system using the R function 'system' (or 'shell').
+   This method does not implement the bibliography build unless we instruct the
+   initial source build command to NOT rebuild package vignettes:
 
-   system("R CMD build --compact-vignettes PBStools",wait=TRUE,intern=TRUE)
+   system("R CMD build --no-vignettes --compact-vignettes PBStools", wait=TRUE)
 
-   system("R CMD INSTALL --build --compact-docs PBStools",wait=TRUE,intern=TRUE)
+   The binary build for Windows then appears to behave:
 
-   For now, however, we include the jss files in the vignettes folder.
+   system("R CMD INSTALL --build --compact-docs PBStools", wait=TRUE)
+
+   If we allow the source build to rebuild vignettes, the bibliography 
+   reconstruction becomes a hit or miss proposition (mostly miss).
+--------------------------------------------------------------------------------
 

@@ -561,7 +561,7 @@ glimmer <- function(file, facs=c("year","month","depth","vessel"),
 			rnam = gsub("999 NA","999 LESSER CATCH AREAS COMBINED",rnam) }
 		else rnam = inam
 		out <- data.frame(icoef,iserr,row.names=rnam); names(out)=c(ii,"stderr")
-		PBSfish[[ii]] <<- out
+		eval(parse(text="PBSfish[[ii]] <<- out"))
 		#if (ii=="year" || !Uplot)
 		write.csv(out,paste("cf-",ii,".csv",sep="")) ### output coefficients
 
