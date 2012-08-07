@@ -15,8 +15,7 @@ weightBio(adat, cdat, sunit="TID", sweight="catch",
      wSP=c(TRUE,TRUE), wN=TRUE, plus=60, Nmin=0, Amin=NULL, 
      ctype="C", per=90, SSID=32, 
      plot=TRUE, ptype="bubb", size=0.15, powr=0.5, zfld="wp", 
-     clrs=list(c("blue","cyan"),c("green4","chartreuse")),
-     cohorts=list(x=c(1962,1970,1977,1989,1990,1992,1999),y=rep(0,7)),
+     clrs=list(c("blue","cyan"),c("green4","chartreuse")), cohorts=NULL,
      regimes=list(1900:1908,1912:1915,1923:1929,1934:1943,1957:1960,
                   1976:1988,1992:1998,2002:2006),
      layout="portrait", wmf=FALSE, pix=FALSE, longside=10, ...)
@@ -39,7 +38,7 @@ weightBio(adat, cdat, sunit="TID", sweight="catch",
     \code{major} = PMFC major area code, \cr
     \code{catch} = trip catch or fishing event catch. }
   \item{sunit}{sample unit (e.g., \code{TID} for sampling at the trip level).}
-  \item{sweight}{sample weighting field (e.g., \code{catch}).}
+  \item{sweight}{sample weighting field (e.g., \code{catch} or \code{density}).}
   \item{ttype}{trip type where: \cr
     \code{1}  = non-observed domestic, \cr
     \code{2}  = research, \cr
@@ -84,9 +83,9 @@ weightBio(adat, cdat, sunit="TID", sweight="catch",
   \item{ptype}{plot type where \code{"bubb"} = bubbles and \code{"bars"} = horizontal bars.}
   \item{size}{specify size (inches) of largest bubble in all panels.}
   \item{powr}{power to scale bubbles, where \code{powr=0.5} makes bubble area roughly proportional to the z-value.}
-  \item{zfld}{field name containing z-values.}
+  \item{zfld}{field name containing values for output (e.g., \code{"wp"} for weighted proportions).}
   \item{clrs}{specify bubble colours indexed by sex code (\code{0} = black).}
-  \item{cohorts}{diagonal lines to plot indicating year-class cohorts.}
+  \item{cohorts}{diagonal lines to plot indicating year-class cohorts (list of x- and y-values).}
   \item{regimes}{diagonal periods to plot indicating regime periods (e.g., positive PDO periods).}
   \item{layout}{string describing figure layout; one of: \cr
     \code{"portrait"} for vertically stacked plots, \cr
@@ -96,6 +95,30 @@ weightBio(adat, cdat, sunit="TID", sweight="catch",
   \item{pix}{logical: if \code{TRUE}, send figure to a \code{.png} file.}
   \item{longside}{dimension (inches) of the longest side of the figure.}
   \item{...}{additional arguments to pass to the function \code{plotBubbles}.}
+}
+\details{
+  The function uses values in the field \code{sweight} to weight the 
+  proportions-at-age (or frequencies-at-age). For example, if 
+  \code{sweight="catch"} then the first weighting for commercial samples might 
+  be by trip catch with a quarter year to yield a weighted proportion-at-age
+  vector within each quarter. Similarly, the first weighting for a survey might
+  be by sample catch within a stratum to yield a weighted proportion-at-age
+  vector within each stratum. The second weighting would further weight these 
+  period/stratum vectors by total catch of the species in each period/stratum 
+  within a year/survey.
+  
+  The function is not designed to scale up observations based on areal 
+  densities, though it can use this information to weight the proportions.
+  For surveys in particular, if \code{sweight="density"}, then the first 
+  weighting is by density of the species in each sample to derive a vector of
+  weighted proportions for each stratum, and the second weightling is simply
+  by the stratum area (km\eqn{^2}).
+  
+  Weighting by density is treated differently here to 'emulate' a survey 
+  sample design. The code's algorithm usually takes data for the first weighting
+  from the age object and data for the second weighting from the catch object.
+  In the special case outlined in the previous paragragh, data for both 
+  weightings come from the age object.
 }
 \value{
   An array with the four dimensions: \code{age}, \code{year}, 

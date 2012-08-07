@@ -3,7 +3,11 @@ PBSmapx Changes
 Authors: RH  = Rowan Haigh     NO = Norm Olsen
          LL  = Lisa Lacko     JTS = Jon T. Schnute
 
-1.22  2012-07-16  Rowan
+1.22  2012-08-07  Rowan
+  - Modified function 'weightBio' to weight survey proportions by catch density (emulates survey design). (RH 8/3)
+  - Modified SQL code 'gfb_bio.sql' to grab additional fields 'SSID' (sampl series ID), 'use' (trawl survey usability), 'dist' (distance in km that trawl tows net),
+	'door' (doorspread in m), 'area' (survey stratum area), and 'density' (catch density = catch/(dist*door*0.001)).
+	Also change field names: 'group' -> 'GC' (survey grouping code) and 'Bwt' -> temp (bottom water temperature). (RH 8/3)
   - Disabled mapping in 'runModules' to avoid circularity in package requirements. (RH 7/16)
   - Disabled NOTES about 'no visible binding for '<<-'' by converting the assignment lines to evaluated text. (RH 7/16)
   - Implemented Brian Ripley's suggestion to remove NOTES about 'no visible binding for global variable xxx':

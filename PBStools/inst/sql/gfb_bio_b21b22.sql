@@ -44,7 +44,7 @@ SELECT
   'TID'  = SA.TRIP_ID,                                      -- B01_Trip
   'FEID' = SA.FISHING_EVENT_ID,                             -- B02_Fishing_Event
   'SVID' = COALESCE(L.SURVEY_ID,U.SVID_DEF,0),
-  'group'= COALESCE(SA.GROUPING_CODE,L.GROUPING_CODE,0),    -- B02_Fishing_Event
+  'GC'   = COALESCE(SA.GROUPING_CODE,L.GROUPING_CODE,0),    -- B02_Fishing_Event
   'hail' = IsNull(SA.HAIL_IN_NO,0),                         -- B01_Trip
   'set'  = SA.FE_MAJOR_LEVEL_ID,                            -- B02_Fishing_Event
   'subset' = IsNull(SA.FE_SUB_LEVEL_ID,1),                  -- B02_Fishing_Event
