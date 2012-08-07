@@ -71,7 +71,7 @@ SELECT -- TOP 20
 --  C.SPPDIS AS discard,            -- discarded
 --  C.SPPCAT/C.TOTCAT AS pcat,      -- proportion of total catch
   C.TARCAT AS bycatch,            -- proportion of total catch
-  CASE WHEN T.Source IN (1,3,5) AND E.Time>0 THEN 'TRUE' ELSE 'FALSE' END AS use4cpue
+  CASE WHEN T.Source IN (1,3,5) AND E.Time>0 THEN 'TRUE' ELSE 'FALSE' END AS use4cpue -- log type
 FROM 
   #Trips T RIGHT OUTER JOIN 
   (B2_Events E RIGHT OUTER JOIN 

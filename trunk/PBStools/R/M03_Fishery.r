@@ -285,7 +285,7 @@ getCatch = function(strSpp="394", dbs=c("gfb","gfc","pht","fos"),
 	eval(parse(text=paste(expr,collapse=""))) }
 #-----------------------------------------getCatch
 
-#glimmer--------------------------------2012-07-11
+#glimmer--------------------------------2012-07-23
 # Performs an lm/aov on a predefined dataset
 # Arguments:
 #   file   = name of file or data object containing fields for GLM analysis:
@@ -416,8 +416,9 @@ glimmer <- function(file, facs=c("year","month","depth","vessel"),
 			else file$area = ceiling(file$latitude/0.5)*0.5 }
 		else  file$area <- file[,afld]
 		if (afld=="pjsarea") {
-			getFile(pjsa)
-			file = file[is.element(file$major,3:9),]
+			getFile(pjsa,use.pkg=TRUE)
+#browser();return()
+			#file = file[is.element(file$major,3:9),]
 			ntows=split(file$catch,file$pjsarea)
 			ncats=sapply(ntows,function(x){length(x[x>0])})
 			ncats=rev(sort(ncats))

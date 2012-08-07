@@ -1,4 +1,4 @@
--- Get specimen biological data from GFBioSQL (2011-09-12)
+-- Get specimen biological data from GFBioSQL (2012-08-03)
 SET NOCOUNT ON
 
 -- Collect unadulterated values from B01 to B05
@@ -22,6 +22,7 @@ SELECT
   B05.SPECIMEN_AGE,
   B05.AGEING_METHOD_CODE,
   B02.GEAR_CODE,
+  B02.FE_DISTANCE_TRAVELLED,
   B02.MAJOR_STAT_AREA_CODE,
   B02.MINOR_STAT_AREA_CODE,
   B02.LOCALITY_CODE,
@@ -70,26 +71,23 @@ WHERE
   SP.SPECIES_CODE IN (@sppcode) AND
   SA.MAJOR_STAT_AREA_CODE IN (@major)
 
--- Get survey ID if it exists
+-- Get survey information by trip (TRIP_ID and GROUPING_CODE are key fields)
 SELECT
-  TS.TRIP_ID, TS.SURVEY_ID, SG.GROUPING_CODE
-INTO #Link
+  TS.TRIP_ID, 
+  TS.SURVEY_ID, 
+  IsNull(S.SURVEY_SERIES_ID,0) AS SURVEY_SERIES_ID,
+  IsNull(SG.GROUPING_CODE,0) AS GROUPING_CODE,
+  IsNull(G.AREA_KM2,0) AS AREA_KM2
+INTO #TripSurv
 FROM 
-  SURVEY S INNER JOIN 
-  (TRIP_SURVEY TS INNER JOIN 
-  SURVEY_GROUPING SG ON 
+  SURVEY S RIGHT OUTER JOIN 
+  (TRIP_SURVEY TS LEFT OUTER JOIN 
+  (SURVEY_GROUPING SG INNER JOIN
+  GROUPING G ON
+  SG.GROUPING_CODE = G.GROUPING_CODE) ON
   TS.SURVEY_ID = SG.SURVEY_ID) ON 
   S.SURVEY_ID = TS.SURVEY_ID 
 WHERE S.ORIGINAL_IND='Y' 
-
--- Get default survey ID if surveys in B21_Samples are missing GROUPING_CODE
-SELECT
-	TS.TRIP_ID,
-	MIN(TS.SURVEY_ID) AS SVID_DEF
-INTO  #Unilink
-FROM  TRIP_SURVEY TS
-GROUP BY TS.TRIP_ID
-ORDER BY TS.TRIP_ID
 
 -- Get 'collected attribute' of specimens
 SELECT
@@ -101,21 +99,39 @@ SELECT
   'genetics'  = SUM(CASE WHEN SC.COLLECTED_ATTRIBUTE_CODE IN (4,6,30) THEN 1 ELSE 0 END),
   'gonads'    = SUM(CASE WHEN SC.COLLECTED_ATTRIBUTE_CODE IN (1) THEN 1 ELSE 0 END),
   'stomachs'  = SUM(CASE WHEN SC.COLLECTED_ATTRIBUTE_CODE IN (2) THEN 1 ELSE 0 END)
-INTO #Atts
+INTO #SpecAtts
 FROM 
   B05a_Specimen_Collected SC 
 GROUP BY
   SC.SAMPLE_ID, SC.SPECIMEN_ID
 
+-- Trawl Specs (returns same # records as B02_FISHING_EVENT)
+SELECT
+  B01.TRIP_ID,
+  B02.FISHING_EVENT_ID,
+  'DISTANCE'  = CASE
+    WHEN B02.FE_DISTANCE_TRAVELLED IS NOT NULL THEN B02.FE_DISTANCE_TRAVELLED
+    WHEN IsNull(B01.TRIP_SUB_TYPE_CODE,0) IN (1,4) THEN 20 ELSE 1.75 END,
+  'DOORSPREAD'  = IsNull(B02e.TRLSP_DOORSPREAD,64.4),       -- TRAWL_SPECS
+  'USABILITY'   = IsNull(B02e.USABILITY_CODE,0)             -- TRAWL_SPECS
+INTO #TSpecs
+FROM
+  B01_TRIP B01 INNER JOIN
+  (B02_FISHING_EVENT B02 LEFT OUTER JOIN
+  B02e_Trawl_Specs B02e ON
+  B02.FISHING_EVENT_ID = B02e.FISHING_EVENT_ID) ON
+  B01.TRIP_ID = B02.TRIP_ID
+
 -- Tie everything together
 SELECT 
-  'TID'  = AA.TRIP_ID,                                      -- B01_Trip
-  'FEID' = AA.FISHING_EVENT_ID,                             -- B02_Fishing_Event
-  'CID'  = AA.CATCH_ID,
-  'SID'  = AA.SAMPLE_ID,                                    -- B04_Sample
-  'SPID' = AA.SPECIMEN_ID,                                  -- B05_Specimen
-  'SVID' = COALESCE(L.SURVEY_ID,U.SVID_DEF,0),
-  'group'= COALESCE(AA.GROUPING_CODE,L.GROUPING_CODE,0),    -- B02_Fishing_Event
+  'TID'  = AA.TRIP_ID,                                      -- B01_TRIP
+  'FEID' = AA.FISHING_EVENT_ID,                             -- B02_FISHING_EVENT
+  'CID'  = AA.CATCH_ID,                                     -- B03_CATCH
+  'SID'  = AA.SAMPLE_ID,                                    -- B04_SAMPLE
+  'SPID' = AA.SPECIMEN_ID,                                  -- B05_SPECIMEN
+  'SVID' = IsNull(TSG.SURVEY_ID,0),                         -- TRIP_SURVEY
+  'SSID' = IsNull(TSG.SURVEY_SERIES_ID,0),                  -- SURVEY
+  'GC'   = COALESCE(AA.GROUPING_CODE,TSG.GROUPING_CODE,0),  -- SURVEY_GROUPING
   'hail' = IsNull(AA.HAIL_IN_NO,0),                         -- B01_Trip
   'set'  = AA.FE_MAJOR_LEVEL_ID,                            -- B02_Fishing_Event
   'subset' = IsNull(AA.FE_SUB_LEVEL_ID,1),                  -- B02_Fishing_Event
@@ -133,13 +149,17 @@ SELECT
     ELSE AA.SAMPLE_DATE END),                                                   -- B04_Sample
   'sex'   = IsNull(AA.SPECIMEN_SEX_CODE,0),                 -- B05_Specimen
   'mat'   = IsNull(AA.MATURITY_CODE,0),                     -- B05_Specimen
-  'oto'   = IsNull(T.otoliths,0),
+  'oto'   = IsNull(TT.otoliths,0),
   'age'   = AA.SPECIMEN_AGE,                                -- B05_Specimen
   'ameth' = CASE WHEN AA.SPECIMEN_AGE Is Null THEN NULL ELSE IsNull(AA.AGEING_METHOD_CODE,0) END,  -- B05_Specimen
   'len'   = CASE WHEN BB.Best_Length=0 THEN NULL ELSE BB.Best_Length END,       -- B22_Specimens
   'wt'    = CASE WHEN BB.Round_Weight=0 THEN NULL ELSE BB.Round_Weight END,     -- B22_Specimens
   'fdep'  = CASE WHEN BB.Best_Depth=0 THEN NULL ELSE BB.Best_Depth END,         -- B21_Samples
   'gear'  = IsNull(AA.GEAR_CODE,0),                         -- B02_Fishing_Event
+  'use'   = IsNull(TSP.USABILITY,0),                        -- B02e_Trawl_Specs
+  'dist'  = IsNull(TSP.DISTANCE,0),                         -- B02e_Trawl_Specs
+  'door'  = IsNull(TSP.DOORSPREAD,0),                       -- B02e_Trawl_Specs
+  'area'  = IsNull(TSG.AREA_KM2,0),                         -- GROUPING
   'major' = IsNull(AA.MAJOR_STAT_AREA_CODE,0),              -- B02_Fishing_Event
   'minor' = IsNull(AA.MINOR_STAT_AREA_CODE,0),              -- B02_Fishing_Event
   'locality' = IsNull(AA.LOCALITY_CODE,0),                  -- B02_Fishing_Event
@@ -204,25 +224,30 @@ SELECT
           (AA.DFO_STAT_AREA_CODE IN ('130') AND AA.DFO_STAT_SUBAREA_CODE IN (3) AND 
             COALESCE(BB.Best_Lat,0)>51.93333) THEN '5E'
     ELSE '0' END AS GMA,                                                        -- B02_Fishing_Event
-  'Tbw' = CASE WHEN AA.FE_BOTTOM_WATER_TEMPERATURE>30 THEN NULL
+  'temp' = CASE WHEN AA.FE_BOTTOM_WATER_TEMPERATURE>30 THEN NULL
     ELSE AA.FE_BOTTOM_WATER_TEMPERATURE END,                                    -- B02_Fishing_Event
-  'catch' = AA.CATCH_WEIGHT                                                     -- B03_Catch
+  'catch' = AA.CATCH_WEIGHT,                                                    -- B03_Catch
+  'density' = (CASE -- this calculation is sensitive to zero-values 
+    WHEN AA.CATCH_WEIGHT IS NULL OR TSP.DISTANCE IS NULL OR TSP.DISTANCE<=0 
+      OR TSP.DOORSPREAD IS NULL OR TSP.DOORSPREAD<=0 THEN NULL
+    ELSE 1000.*AA.CATCH_WEIGHT / (TSP.DISTANCE*TSP.DOORSPREAD) END)
 FROM 
-  #Unilink U RIGHT OUTER JOIN
-  (#Link L RIGHT OUTER JOIN 
+  #SpecAtts TT RIGHT OUTER JOIN
+  (#TripSurv TSG RIGHT OUTER JOIN
   (#B21B22 BB RIGHT OUTER JOIN 
-  (#B01B05 AA LEFT OUTER JOIN 
-  #Atts T ON
-    T.SAMPLE_ID = AA.SAMPLE_ID AND
-    T.SPECIMEN_ID = AA.SPECIMEN_ID) ON 
+  (#B01B05 AA LEFT OUTER JOIN
+  #TSpecs TSP ON
+    TSP.TRIP_ID = AA.TRIP_ID AND
+    TSP.FISHING_EVENT_ID = AA.FISHING_EVENT_ID) ON
     AA.TRIP_ID = BB.TRIP_ID AND
     AA.FISHING_EVENT_ID = BB.FISHING_EVENT_ID AND
     AA.CATCH_ID = BB.CATCH_ID AND
     AA.SAMPLE_ID = BB.SAMPLE_ID AND
     AA.SPECIMEN_ID = BB.SPECIMEN_ID) ON
-    L.TRIP_ID = AA.TRIP_ID AND
-    L.GROUPING_CODE = AA.GROUPING_CODE) ON
-    U.TRIP_ID = AA.TRIP_ID
+    TSG.TRIP_ID = AA.TRIP_ID AND
+    TSG.GROUPING_CODE = AA.GROUPING_CODE) ON
+    TT.SAMPLE_ID = AA.SAMPLE_ID AND
+    TT.SPECIMEN_ID = AA.SPECIMEN_ID
 WHERE 
   AA.SPECIES_CODE IN (@sppcode) AND
   AA.MAJOR_STAT_AREA_CODE IN (@major)
