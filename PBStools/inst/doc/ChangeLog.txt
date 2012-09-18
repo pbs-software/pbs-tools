@@ -3,7 +3,8 @@ PBSmapx Changes
 Authors: RH  = Rowan Haigh     NO = Norm Olsen
          LL  = Lisa Lacko     JTS = Jon T. Schnute
 
-1.22  2012-08-07  Rowan
+1.22  2012-09-18  Rowan
+  - Modified function 'weightBio' to fix bugs and to allow postscript output. (RH 8/30)
   - Modified function 'weightBio' to weight survey proportions by catch density (emulates survey design). (RH 8/3)
   - Modified SQL code 'gfb_bio.sql' to grab additional fields 'SSID' (sampl series ID), 'use' (trawl survey usability), 'dist' (distance in km that trawl tows net),
 	'door' (doorspread in m), 'area' (survey stratum area), and 'density' (catch density = catch/(dist*door*0.001)).

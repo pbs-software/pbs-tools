@@ -4,21 +4,20 @@
   Weight Age Frequencies/Proportions by Catch
 }
 \description{
-  Weight age/length frequencies/proportions by sample unit catch 
-  (or some other sample unit metric like \sQuote{effort}) 
-  within strata (either quarterly periods or survey strata) and by 
-  total catch (either quarterly catch within years or strata catch within surveys).
+  Weight age or length frequencies\eqn{\Vert}proportions by: \cr
+  \emph{commercial}: sample trip catch within quarters and quarterly catch within years, or \cr
+  \emph{survey}: sample species density (kg/km\eqn{^2}) in stratum and stratum area (km\eqn{^2}) in survey.
 }
 \usage{
 weightBio(adat, cdat, sunit="TID", sweight="catch", 
-     ttype=NULL, stype=c(0,1,2,5:8), ameth=3, sex=1:2, major=NULL, 
+     ttype=NULL, stype=c(0,1,2,5:8), ameth=3, sex=1:2, major=NULL,
      wSP=c(TRUE,TRUE), wN=TRUE, plus=60, Nmin=0, Amin=NULL, 
-     ctype="C", per=90, SSID=32, 
+     ctype="C", per=90, SSID=32, tabs=TRUE, 
      plot=TRUE, ptype="bubb", size=0.15, powr=0.5, zfld="wp", 
      clrs=list(c("blue","cyan"),c("green4","chartreuse")), cohorts=NULL,
      regimes=list(1900:1908,1912:1915,1923:1929,1934:1943,1957:1960,
-                  1976:1988,1992:1998,2002:2006),
-     layout="portrait", wmf=FALSE, pix=FALSE, longside=10, ...)
+                  1976:1988,1992:1998,2002:2006),  #PDO
+     layout="portrait", wmf=FALSE, pix=FALSE, eps=FALSE, longside=10, ...)
 }
 \arguments{
   \item{adat}{data object of ageing information with fields that must include: \cr
@@ -79,7 +78,8 @@ weightBio(adat, cdat, sunit="TID", sweight="catch",
   \item{ctype}{catch type where \code{"C"} = commercial and \code{"S"} = survey.}
   \item{per}{period length (days) within a year (e.g., 90 for quarterly periods).}
   \item{SSID}{survey series ID (can be a restratification series).}
-  \item{plot}{logical scalar: if \code{TRUE}, plot the results as bubble plots.}
+  \item{tabs}{logical: if \code{TRUE}, create formatted tables for use in other applications.}
+  \item{plot}{logical: if \code{TRUE}, plot the results as bubble plots.}
   \item{ptype}{plot type where \code{"bubb"} = bubbles and \code{"bars"} = horizontal bars.}
   \item{size}{specify size (inches) of largest bubble in all panels.}
   \item{powr}{power to scale bubbles, where \code{powr=0.5} makes bubble area roughly proportional to the z-value.}
@@ -93,6 +93,7 @@ weightBio(adat, cdat, sunit="TID", sweight="catch",
     \code{"juxtapose"} for plots overlaid on each other (not implemented at present).}
   \item{wmf}{logical: if \code{TRUE}, send figure to a \code{.wmf} file.}
   \item{pix}{logical: if \code{TRUE}, send figure to a \code{.png} file.}
+  \item{eps}{logical: if \code{TRUE}, send figure to an \code{.eps} file.}
   \item{longside}{dimension (inches) of the longest side of the figure.}
   \item{...}{additional arguments to pass to the function \code{plotBubbles}.}
 }
