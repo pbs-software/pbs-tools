@@ -12,7 +12,7 @@
 plotConcur(strSpp="410", dbName="PacHarvest", 
      mindep=150, maxdep=435, major=NULL, top=NULL, trawl=1,
      saraSpp=c("027","394","410","424","435","437","440","442","453"),
-     reset.mf=TRUE, pix=FALSE)
+     reset.mf=TRUE, eps=FALSE, pix=FALSE)
 }
 \arguments{
   \item{strSpp}{string code specifying species of interest (often a Hart code for fish).}
@@ -29,6 +29,7 @@ plotConcur(strSpp="410", dbName="PacHarvest",
     \dQuote{Special Concern}, \dQuote{Threatened}, or \dQuote{Endangered}.}
   \item{reset.mf}{logical: if \code{TRUE}, reset the multiple figure region to \code{c(1,1)}
     (only effective for plots sent to the graphics window device).}
+  \item{eps}{logical: if \code{TRUE}, send the barplot to an \code{EPS} file.}
   \item{pix}{logical: if \code{TRUE}, send the barplot to a \code{PNG} file.}
 }
 \details{
@@ -46,7 +47,7 @@ plotConcur(strSpp="410", dbName="PacHarvest",
   Rowan Haigh, Pacific Biological Station, Fisheries and Oceans Canada, Nanaimo BC
 }
 \seealso{
-  \code{\link[PBStools]{preferDepth}}, \code{\link[PBStools]{getData}} \cr
+  \code{\link[PBStools]{preferDepth}}, \code{\link[PBStools]{getData}}, \code{\link[PBStools]{toUpper}} \cr
   Available SQL queries: \code{\link[PBStools]{SQLcode}}
 }
 \keyword{hplot}

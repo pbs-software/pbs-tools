@@ -24,6 +24,7 @@
 #  showError.......Display error message on device surface.
 #  spooler.........Spools list objects into fields of data frames.
 #  stdConc.........Standardise a chemical concentration.
+#  toUpper         Capitalise first letter of each word in phrase
 #  wrapText........Wrap, mark and indent a long text string.
 #  zapDupes........Delete duplicated records based on specified index.
 #
@@ -797,6 +798,24 @@ stdConc = function(dat, nUout="mg", dUout="kg", fac=1) {
 	return(data.frame(stdAmt=stdAmt,unit=unit))
 }
 #------------------------------------------stdConc
+
+#toUpper--------------------------------2012-09-19
+# Function to capitalise first letters of words
+#-----------------------------------------------RH
+toUpper = function(x,exclude=c("&","and","exact","or","in","on","organic","pelagic","sp.","spp.","species","undetermined","unidentified",
+   "birds","barnacles","crabs","eggs","fishes","larvae","matter","objects","remains","sample","shells","subfamily","tunicates","worms")) {
+	strList = strsplit(x,split=" ")
+	strL = sapply(strList,function(x){
+		x = x[!is.element(x,"")]  # remove extra spaces
+		z = !is.element(x,exclude)
+		X = sapply(x[z],function(y){paste(toupper(substring(y,1,1)),substring(y,2),sep="")})
+		x[z] = X
+		return(x) },simplify=FALSE)
+	strV = sapply(strL,paste,collapse=" ")
+	#sapply(,function(x){})
+	return(strV)
+}
+#^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^toUpper
 
 #wrapText-------------------------------2008-09-17
 # Wrap, mark and indent a long text string.

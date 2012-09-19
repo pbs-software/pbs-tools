@@ -1,3 +1,4 @@
+# Window for function 'preferDepth' (Last modified: RH 2012-09-19)
 window name="window" title="Prefer Depth"
 
 grid 1 4 sticky=NW
@@ -71,6 +72,9 @@ grid 1 2 sticky=W
 					button text=PLOT function=.preferDepth.getDepth  bg=green sticky=E
 grid 1 2
 	history func=.preferDepth.getDepth pady=5 #import=
-	grid 1 1 
-		vector length=2 mode=logical names="pix wmf" labels="png wmf" values="F F" vertical=T
+	grid 3 1 padx="15 0"
+		button text=EPS function=.preferDepth.getDepth action=eps bg=yellow sticky=E
+		button text=PNG function=.preferDepth.getDepth action=pix bg=greenyellow sticky=E
+		button text=WMF function=.preferDepth.getDepth action=wmf bg=lawngreen sticky=E
+		#vector length=2 mode=logical names="pix wmf" labels="png wmf" values="F F" vertical=T
 

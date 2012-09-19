@@ -4,7 +4,7 @@
   Weight Age Frequencies/Proportions by Catch
 }
 \description{
-  Weight age or length frequencies\eqn{\Vert}proportions by: \cr
+  Weight age or length frequencies\eqn{\Vert}{|}proportions by: \cr
   \emph{commercial}: sample trip catch within quarters and quarterly catch within years, or \cr
   \emph{survey}: sample species density (kg/km\eqn{^2}) in stratum and stratum area (km\eqn{^2}) in survey.
 }
