@@ -447,9 +447,9 @@ preferDepth = function(strSpp="410", fqtName="pht_fdep.sql", dbName="PacHarvest"
 	if (!require(PBSmodelling, quietly=TRUE)) stop("PBSmodelling package is required")
 	if (!require(PBStools, quietly=TRUE)) stop("PBStools package is required")
 	warn <- options()$warn; options(warn=-1)
-	assign("PBSfish",list(module="M05_Spatial",func="preferDepth",plotname="Rplot"),envir=.GlobalEnv)
+	assign("PBSfish",list(module="M05_Spatial",call=match.call(),args=args(preferDepth),plotname="Rplot"),envir=.GlobalEnv)
 
-	wpath <- .setWpath(win=FALSE)
+	wpath <- .getWpath()
 	if (is.null(spath) || spath=="") spath <- .getSpath()
 	rtmp <- tempdir(); rtmp <- gsub("\\\\","/",rtmp)
 	wnam <- paste(wpath,"preferDepthWin.txt",sep="/")
@@ -482,7 +482,7 @@ preferDepth = function(strSpp="410", fqtName="pht_fdep.sql", dbName="PacHarvest"
 		#packList("effort","PBSfish") ### too slow
 		frame(); addLabel(.5,.5,"Effort loaded",col="darkgreen",cex=1.2) }
 
-#.preferDepth.getDepth------------------2011-04-01
+#.preferDepth.getDepth------------------2012-09-19
 .preferDepth.getDepth <- function() { 
 	getWinVal(scope="L",winName="window"); act <- getWinAct()[1]
 	if (!is.null(act) && act=="getdata") getdata <- TRUE else getdata <- FALSE
@@ -500,7 +500,6 @@ preferDepth = function(strSpp="410", fqtName="pht_fdep.sql", dbName="PacHarvest"
 		else showError(paste("\"",strArea,"\" does not match \"",disA,"\"",sep="")) 
 	} else area <- NULL
 	if (any(spp=="") || length(spp)>1) showError("Choose 1 species")
-
 	if (!exists("PBSdat",where=1) || is.null(attributes(PBSdat)$spp) || 
 		spp!=attributes(PBSdat)$spp || fqtName!=attributes(PBSdat)$fqt || getdata) {
 		expr=paste("getData(fqtName=\"",fqtName,"\",dbName=\"",dbName,"\",strSpp=\"",
@@ -543,13 +542,23 @@ preferDepth = function(strSpp="410", fqtName="pht_fdep.sql", dbName="PacHarvest"
 	plotname = paste("dep",spp,ifelse(year==0,"",paste("-(",paste(year,collapse="."),")",sep="")),
 		ifelse(area==0,"",paste("-(",paste(area,collapse=""),")",sep="")),
 		ifelse(is.null(gear),"",paste("-gear",paste(gear,collapse=""),sep="")),sep="")
+	if (type=="FILE") plotname = sub(paste("dep",spp,sep=""),fqtName,plotname)
 	packList("plotname","PBSfish")
 	nrow <- max(nyr,nar); ncol <- min(nyr,nar);
 	if (nyr>=nar) { ifac <- year; jfac <- area; yba <- TRUE}
 	else { ifac <- area; jfac <- year; yba <- FALSE}
-	if (pix) png(width=6.5,height=5*nrow^0.25,units="in",res=100,filename=paste(plotname,"png",sep="."))
-	else if (wmf) win.metafile(width=6.5,height=5*nrow^0.25,filename=paste(plotname,"wmf",sep="."))
+
+	eps=pix=wmf=FALSE
+	if (!is.null(act)){
+		if (act=="eps") eps=TRUE
+		else if (act=="pix") pix=TRUE
+		else if (act=="wmf") wmf=TRUE
+	}
+	if (eps)      postscript(file=paste(plotname,"eps",sep="."),width=10,height=6*nrow^0.25,horizontal=FALSE,paper="special")
+	else if (pix) png(filename=paste(plotname,"png",sep="."),width=10,height=6*nrow^0.25,units="in",res=100)
+	else if (wmf) win.metafile(filename=paste(plotname,"wmf",sep="."),width=10,height=6*nrow^0.25)
 	else resetGraph()
+
 	if (nrow*ncol==1)
 		expandGraph(mfrow=c(nrow,ncol),mar=c(0,0,0,0),oma=c(4,5,1,1),cex=0.9,yaxs="i",mgp=c(2,.5,0),las=1)
 	else
@@ -622,11 +631,11 @@ preferDepth = function(strSpp="410", fqtName="pht_fdep.sql", dbName="PacHarvest"
 					addLabel(.98,.90,paste(ifelse(i==0,"",i),ifelse(j==0,"",j),
 						sep=ifelse(nrow==1 | ncol==1,""," \225 ")),col="grey30",adj=c(1,1))
 				else {
-					ylabpos = 0.88
-					data(spn); addLabel(.98,ylabpos,spn[spp],adj=c(1,1),col="black",cex=0.9)
-					addLabel(.98,ylabpos-0.06,paste("N =",format(ntows,big.mark=","),"tows"),cex=0.8,col="grey30",adj=c(1,1)) 
+					ylabpos = 0.88; labcex=1
+					data(spn); addLabel(.98,ylabpos,spn[spp],adj=c(1,1),col="black",cex=labcex)
+					addLabel(.98,ylabpos-0.06,paste("N =",format(ntows,big.mark=","),"tows"),cex=labcex-0.1,col="grey30",adj=c(1,1)) 
 					addLabel(.98,ylabpos-0.10,paste("C =",format(round(max(cc,na.rm=TRUE)),
-						big.mark=","),"t"),cex=0.8,col="grey30",adj=c(1,1)) }
+						big.mark=","),"t"),cex=labcex-0.1,col="grey30",adj=c(1,1)) }
 			}
 			plot(xy,freq=FALSE, xlab="", ylab="", main="",cex.lab=1.2,
 				col=barcol[1], xlim=XLIM, ylim=YLIM, axes=FALSE,add=TRUE)
@@ -639,9 +648,9 @@ preferDepth = function(strSpp="410", fqtName="pht_fdep.sql", dbName="PacHarvest"
 		"by column ]"))),outer=TRUE,side=1,line=2*nrow^0.25,cex=1.2)
 	mtext(paste("Proportions",ifelse(nrow==1,"",paste(" [",ifelse(yba,"year","area"),
 		"by row ]"))),outer=TRUE,side=2,line=3.25,cex=1.25,las=0)
-	if (pix|wmf) dev.off()
+	if (eps|pix|wmf) dev.off()
 	invisible() }
-#--------------------------------------preferDepth
+#^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^preferDepth
 
 #zapHoles-------------------------------2009-08-06
 # Attempts to remove holes overwritten by solids.
