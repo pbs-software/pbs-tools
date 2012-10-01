@@ -56,7 +56,8 @@ SELECT
     WHEN T.Log_Source IN (1) THEN 2    -- fisher logs
     ELSE 0 END),
   'gear' = ISNULL(E.Gear,0),
-  'date' = ISNULL(T.Date,Null), 
+  --'date' = ISNULL(T.Date,Null), 
+  'date' = CONVERT(char(10),ISNULL(T.Date,Null),20), 
   'major' = IsNull(E.Major_Area,0),
   'minor' = IsNull(E.Minor_Area,0),
   C.landed, C.discard, 

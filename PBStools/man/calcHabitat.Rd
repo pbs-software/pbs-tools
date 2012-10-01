@@ -6,8 +6,9 @@
 }
 \usage{
 calcHabitat(topofile="bctopo", isob=c(150,435),
-     digits=1, minVerts=10, col.hab="greenyellow", col.land="moccasin",
-     plot=TRUE, pin=c(7,8), eps=FALSE, pix=FALSE, wmf=FALSE)
+   digits=1, minVerts=10, col.hab="greenyellow", col.land="moccasin",
+   xlim=NULL, ylim=NULL, areas=list(), col.areas="red", isolab=TRUE, labtit="",
+   plot=TRUE, pin=c(7,8), eps=FALSE, pix=FALSE, wmf=FALSE)
 }
 \arguments{
   \item{topofile}{topographical ASCII XYZ file downloaded from the Scripps
@@ -18,6 +19,12 @@ calcHabitat(topofile="bctopo", isob=c(150,435),
     (becomes critical when \code{digits>1}).}
   \item{col.hab}{colour to fill the bathymetry interval (potential habitat).}
   \item{col.land}{colour to fill the land area.}
+  \item{xlim}{longitude limits of the x-axis}
+  \item{ylim}{latitude limits of the y-axis}
+  \item{areas}{list of area objects}
+  \item{col.areas}{vector of colours for the boundary lines of area objects (recycled if necessary)}
+  \item{isolab}{logical: if \code{TRUE}, add a legend label to the plot}
+  \item{labtit}{title for the legend label}
   \item{plot}{logical: if \code{TRUE}, plot the results.}
   \item{pin}{numeric vector: width and height of a figure device plot in inches.}
   \item{eps}{logical: if \code{TRUE}, send plot to a postscript (\code{.eps}) file.}
@@ -30,14 +37,14 @@ calcHabitat(topofile="bctopo", isob=c(150,435),
   west (-134.5), east (-124.5), south (48), north (55).
 
   The \code{PBSmapping} function \code{makeTopography} can become very slow as
-  the precision of the longitude-latitude data is increased. Setting \code{digits=1}
-  provides a very fast but roughly estimated habitat region. Increasing the precision
-  to \code{digits=2} slows the code markedly but provides a much more detailed 
-  bathymetry outline.
+  the precision of the longitude-latitude data is increased. 
+  Setting \code{digits=1} provides a very fast but roughly estimated habitat region. 
+  Note that you may need to reduce the value of \code{minVerts} to get get all the major shapes. 
+  Increasing the precision to \code{digits=2} slows the code markedly but provides a much more detailed bathymetry outline.
   
   Some choice of bathymetry limits, noticeably shallow depths, cause the function 
   \code{joinPolys} to crash. Therefore, \code{calcHabitat} taps into a patch function \code{findHoles}
-  which weeds out small polygons (< \code{minVerts} vertices) and identifies holes within parents.
+  which weeds out small polygons (less than \code{minVerts} vertices) and identifies holes within parents.
   The function \code{findHoles} can become very slow when there are hundreds of polygons.
   Ideally, \code{findHoles} should be programmed in C.
 }
@@ -49,7 +56,7 @@ calcHabitat(topofile="bctopo", isob=c(150,435),
   created in transforming \code{bathy} to \code{habitat}.
 }
 \author{ 
-  Rowan Haigh, Pacific Biological Station, Nanaimo BC
+  Rowan Haigh, Pacific Biological Station, Fisheries and Oceans Canada, Nanaimo BC
 }
 \seealso{
   \code{\link{calcSurficial}}, \code{\link{getFile}}, \code{\link{findHoles}} \cr

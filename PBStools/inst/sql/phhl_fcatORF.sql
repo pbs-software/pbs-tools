@@ -90,7 +90,8 @@ SELECT
 -- Create an events table based on unique hails
 SELECT 
   C.fid, C.lic,
-  'date' = CAST( COALESCE(C.date, T.OBFL_OFFLOAD_DT) AS smalldatetime),
+  --'date' = CAST( COALESCE(C.date, T.OBFL_OFFLOAD_DT) AS smalldatetime),
+  'date' = CONVERT(char(10),COALESCE(C.date, T.OBFL_OFFLOAD_DT),20),
   C.major, C.minor, C.region, C.fdep,
   'cfv' = CAST(IsNull(T.OBFL_VSL_CFV_NO,'0') AS VARCHAR(6)),
   C.eff,
