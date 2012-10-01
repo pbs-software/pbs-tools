@@ -48,7 +48,8 @@ SELECT
   --VH.vrec_hail_in_no,
   VH.vrec_fishery_id AS 'fid',
   VH.vrec_ext_lic_option_cde AS 'lic',
-  IsNull(VH.vrec_offload_dt,VH.vrec_departure_dt) AS 'date',
+  --IsNull(VH.vrec_offload_dt,VH.vrec_departure_dt) AS 'date',
+  CONVERT(char(10),IsNull(VH.vrec_offload_dt,VH.vrec_departure_dt),20) AS 'date',
   C.phhl_major AS 'major',
   C.phhl_minor AS 'minor',
   landed = Sum(CASE

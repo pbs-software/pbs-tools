@@ -12,11 +12,12 @@
 #  zapHoles........Attempts to remove holes overwritten by solids.
 #===============================================================================
 
-#calcHabitat----------------------------2011-04-21
+#calcHabitat----------------------------2012-09-24
 # Calculate potential habitat using bathymetry.
 #-----------------------------------------------RH
 calcHabitat <- function(topofile="bctopo", isob=c(150,435),
      digits=1, minVerts=10, col.hab="greenyellow", col.land="moccasin",
+     xlim=NULL, ylim=NULL,areas=list(), col.areas="red", isolab=TRUE, labtit="",
      plot=TRUE, pin=c(7,8), eps=FALSE, pix=FALSE, wmf=FALSE) {
 
 	assign("PBSfish",list(module="M05_Spatial",func="calcHabitat"),envir=.GlobalEnv)
@@ -27,48 +28,54 @@ calcHabitat <- function(topofile="bctopo", isob=c(150,435),
 	bCL <- contourLines(bathy,levels=isob)
 	bCP <- convCP(bCL,projection="LL",zone=9)
 	bPoly <- bCP$PolySet
-	rng = apply(bPoly,2,range); xlim=rng[,"X"]; ylim=rng[,"Y"]
+	rng = apply(bPoly,2,range)
+	if (is.null(xlim)) xlim=rng[,"X"]
+	if (is.null(ylim)) ylim=rng[,"Y"]
 
 	box=as.PolySet(data.frame(PID=rep(3,4),POS=1:4,X=xlim[c(1:2,2:1)],Y=ylim[c(1,1,2,2)]),projection="LL",zone=9)
-	polyOut = closePolys(fixBound(bPoly,.00001))
-	polyOut = joinPolys(polyOut,operation="UNION")
-	polyOut = findHoles(polyOut,minVerts=minVerts)
-	habitat = joinPolys(box,polyOut,operation="DIFF")
-
-#	polyA=bPoly[is.element(bPoly$PID,1),]; polyA=closePolys(fixBound(polyA,.00001))
-#	polyB=bPoly[is.element(bPoly$PID,2),]; polyB=closePolys(fixBound(polyB,.00001))
-#	maskB=joinPolys(box,polyB,"DIFF") # deeper poly first
-#	habitat=joinPolys(maskB,polyA,"DIFF") # subtract the shallower poly
+	poly0 = closePolys(fixBound(bPoly,.00001))
+	polyA = clipPolys(poly0,xlim=xlim,ylim=ylim)
+	polyB = findHoles(polyA,minVerts=minVerts)
+	polyC = joinPolys(polyB,operation="UNION")
+	habitat = joinPolys(box,polyC,operation="DIFF")
 
 	warn <- options()$warn; options(warn = -1)
 	area=calcArea(habitat); area=sum(area$area,na.rm=TRUE)
 	attr(habitat,"area")=area
 	options(warn = warn)
 
-	stuff=c("bathy","bCL","bCP","bPoly","polyOut","habitat"); packList(stuff,"PBSfish")
+	stuff=c("bathy","bCL","bCP","bPoly","box","polyA","polyB","polyC","habitat","xlim","ylim"); packList(stuff,"PBSfish")
 
 	if (plot) {
-		fout=paste("Habitat-",isob[1],"m-",isob[2],"m",sep="")
+		fout=paste("Habitat-",ifelse(labtit=="","",paste(gsub(" ","-",labtit),"-",sep="")),isob[1],"m-",isob[2],"m",sep="")
 		devs = c(eps=eps,pix=pix,wmf=wmf,win=TRUE)
 		for (i in names(devs)[devs]) {
 			if (i=="eps")      postscript(file=paste(fout,".eps",sep=""),width=pin[1],height=pin[2],fonts="mono") 
 			else if (i=="pix") png(paste(fout,".png",sep =""), width=round(100*pin[1]), height=round(100*pin[2])) 
 			else if (i=="wmf") win.metafile(paste(fout,".wmf",sep=""),width=pin[1],height=pin[2])
 			else          resetGraph()
-			expandGraph(mar=c(3,3,.5,.5),mgp=c(2.5,.5,0),las=1)
+			expandGraph(mar=c(3,3.5,0.5,0.5),mgp=c(3,.5,0),las=1)
 			plotMap(box,type="n",plt=NULL,cex.axis=1.2,cex.lab=1.5)
 			addPolys(habitat,col=col.hab)
+			if (!is.null(areas)&&length(areas)>0){
+				nareas = length(areas)
+				clrs   = rep(col.areas,nareas)[1:nareas]
+				sapply(1:nareas,function(x){addPolys(areas[[x]],border=clrs[[x]],lwd=2)})
+			}
 			#if (eps|pix|wmf) addPolys(habitat,col=col.hab,colHoles="white")
 			#else addPolys(habitat,col=col.hab)
 			addLines(habitat,col=icol)
 			data(nepacLL); addPolys(nepacLL,col=col.land)
 			.addAxis(xlim=xlim,ylim=ylim,tckLab=FALSE,tck=0.014,tckMinor=.007)
-			box()
+			if (isolab) legend("bottomleft",inset=0.06,fill=col.hab,title=labtit,title.adj=0.5,
+				legend=paste(isob[1],"\226",isob[2],"m  (",format(round(area),big.mark=","),"km\262)",sep=""),bty="n",cex=1.5)
+			box(lwd=2)
 			if (i %in% c("eps","pix","wmf")) dev.off()
 		}
 	}
+	gcdump=gc(verbose=FALSE)
 	invisible(habitat) }
-#--------------------------------------calcHabitat
+#^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^calcHabitat
 
 #calcOccur------------------------------2009-07-30
 # Calculate percent occurrence of events in PolySet
@@ -346,7 +353,7 @@ clarify <- function(dat, wmf=FALSE, cell=c(0.1,0.075), nG=8,
 	invisible() }
 #------------------------------------------clarify
 
-#findHoles------------------------------2011-04-21
+#findHoles------------------------------2012-09-24
 # Find holes and place them under correct parents.
 #-----------------------------------------------RH
 findHoles = function(polyset, minVerts=10) {
@@ -358,6 +365,7 @@ findHoles = function(polyset, minVerts=10) {
 		ipoly$SID = rep(1, nrow(ipoly))
 		ilst = split(1:nrow(ipoly),ipoly$PID)
 		ilen = rev(sort(sapply(ilst,length)))
+		if(!any(ilen>minVerts)) next
 		ilen = ilen[ilen>=minVerts]
 		olst = ilst[names(ilen)]
 		ivec = unlist(olst,use.names=FALSE)
@@ -365,11 +373,9 @@ findHoles = function(polyset, minVerts=10) {
 		ihole = rep(0,length(ilen)); names(ihole)=names(ilen)
 		parents = NULL               # keep track of identified parents
 		for (a in names(ihole)) {    # potential hole
-#cat("\n\n",a,"\n")
 			zsmall=is.element(opoly$PID,a)
 			for (b in names(ihole)) { # potential parent
 				if  (b==a || ihole[b]>0) next
-#print(b)
 				zbig=is.element(opoly$PID,b)
 				is.in = sp::point.in.polygon(opoly$X[zsmall],opoly$Y[zsmall],opoly$X[zbig],opoly$Y[zbig]) # is a in b ?
 				if (all(is.in>0)) {
@@ -377,7 +383,6 @@ findHoles = function(polyset, minVerts=10) {
 					next }
 			}
 			if (ihole[a]==0) parents = c(parents,a) # potential hole is in fact a parent
-#print (parents)
 		}
 		bigs = ihole[ihole==0]
 		inew = list()
@@ -400,7 +405,7 @@ findHoles = function(polyset, minVerts=10) {
 		attr(newpoly,paste("holes_in_",i,sep="")) = ihole
 	}
 	return(newpoly) }
-#----------------------------------------findHoles
+#^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^findHoles
 
 #plotGMA--------------------------------2011-05-24
 # Plot the Groundfish Management Areas

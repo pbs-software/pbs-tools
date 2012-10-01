@@ -9,9 +9,10 @@ SET NOCOUNT ON -- prevents timeout errors
 -- compile the landed catch stats for target, POP, & ORF
 SELECT 
   -- OC.OBFL_HAIL_IN_NO, OC.OBFL_SET_NO,
-  'fid' = IsNull(T.FISHERY_ID,3),
-  'gear' = CASE OC.GEAR WHEN 'TRAP' THEN 2 WHEN 'LONGLINE' THEN 5 ELSE 0 END,
-  'date' = CAST(OC.OFFLOAD_DT AS smalldatetime),
+  'fid'   = IsNull(T.FISHERY_ID,3),
+  'gear'  = CASE OC.GEAR WHEN 'TRAP' THEN 2 WHEN 'LONGLINE' THEN 5 ELSE 0 END,
+  --'date' = CAST(OC.OFFLOAD_DT AS smalldatetime),
+  'date'  = CONVERT(char(10),OC.OFFLOAD_DT,20),
   'major' = IsNull(OC.MAJOR_STAT_AREA_CDE,0),
   'minor' = IsNull(OC.MINOR_STAT_AREA_CDE,0),
   'cfv' = CAST(COALESCE(OC.VRN,T.VSL_CFV_NO,'0') AS VARCHAR(6)),

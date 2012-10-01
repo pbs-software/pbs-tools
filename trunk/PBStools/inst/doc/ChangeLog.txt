@@ -3,8 +3,11 @@ PBSmapx Changes
 Authors: RH  = Rowan Haigh     NO = Norm Olsen
          LL  = Lisa Lacko     JTS = Jon T. Schnute
 
-1.22  2012-09-19  Rowan
-  - Added a new function 'toUpper' to capitalise the first letter of each word in a phrase. (9/19)
+1.22  2012-10-01  Rowan
+  - Added new function 'makeLTH' to make longtable headers for printing xtables in Sweave. (RH 9/27)
+  - Revised function 'buildCatch' to exclude PacHarv3 1954-95 records for trawl and trap. (RH 9/26)
+  - Revised funtions 'calcHabitat' and 'findHoles' to more flexibly zoom in on specified geographic limits. (9/24)
+  - Added a new function 'toUpper' to capitalise the first letter of each word in a phrase. (RH 9/19)
   - Modified functions 'preferDepth' and 'plotConcur' to allow postscript output. (RH 9/19)
   - Modified function 'weightBio' to fix bugs and to allow postscript output. (RH 8/30)
   - Modified function 'weightBio' to weight survey proportions by catch density (emulates survey design). (RH 8/3)

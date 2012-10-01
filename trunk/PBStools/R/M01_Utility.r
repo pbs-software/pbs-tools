@@ -17,6 +17,7 @@
 #  isThere.........Check to see if object physically exists in the specified environment.
 #  lenv............Get the local/parent/global environment.
 #  listTables......List tables in specified SQL, ORA, or MDB database.
+#  makeLHT         Make a longtable header for printing an xtable
 #  prime...........Report the prime numbers given an integer vector.
 #  revStr..........Reverse characters in a string.
 #  runModules......Display a master GUI to display modules.
@@ -598,6 +599,33 @@ listTables <- function (dbName, pattern=NULL, path=getwd(), server=NULL,
 	if (!is.null(pattern)) tabs <- findPat(pattern,tabs)
 	if (!silent) print(tabs)
 	invisible(tabs) }
+
+#makeLTH--------------------------------2012-09-27
+# Make a longtable header for Sweave, source:
+# http://tex.stackexchange.com/questions/41067/caption-for-longtable-in-sweave?rq=1
+#-----------------------------------------------RH
+makeLTH <- function(xtab.table, table.caption, table.label) {
+	longtable.header <- paste(
+		paste("\\caption{", table.caption, "}",sep = "", collapse = ""),
+		paste("\\label{", table.label, "}\\\\ ",sep = "", collapse = ""),
+		"\\hline ",
+		attr(xtab.table, "names")[1],
+		paste(" &",attr(xtab.table, "names")[2:length(attr(xtab.table, "names"))],collapse = ""),
+		"\\\\\\hline ",
+		"\\endfirsthead ",
+		paste("\\multicolumn{",ncol(xtab.table),"}{l}{{\\tablename\\ \\thetable{} -- continued from previous page}}\\\\ ",sep = ""),
+		"\\hline ",
+		attr(xtab.table, "names")[1],
+		paste("&",attr(xtab.table, "names")[2:length(attr(xtab.table, "names"))],collapse = ""),
+		"\\\\\\hline ",
+		"\\endhead ",
+		"\\hline ",
+		paste("\\multicolumn{", as.character(ncol(xtab.table)), "}{r}{{\\footnotesize \\emph{Continued on next page}}}\\\\ ", sep = "", collapse = ""),
+		#"\\hline \\endfoot ",
+		"\\endfoot ","\\hline \\endlastfoot ",collapse = "")
+	return(longtable.header)
+}
+#^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^makeLTH
 
 #prime----------------------------------2010-03-25
 # Report the prime numbers given an integer vector
