@@ -3,15 +3,16 @@ PBSmapx Changes
 Authors: RH  = Rowan Haigh     NO = Norm Olsen
          LL  = Lisa Lacko     JTS = Jon T. Schnute
 
-1.22  2012-10-01  Rowan
+1.22  2012-10-03  Rowan
+  - Added new function 'formatCatch' to format tables by transforming numeric values to strings that display significant digits. (RH 10/3) 
   - Added new function 'makeLTH' to make longtable headers for printing xtables in Sweave. (RH 9/27)
   - Revised function 'buildCatch' to exclude PacHarv3 1954-95 records for trawl and trap. (RH 9/26)
-  - Revised funtions 'calcHabitat' and 'findHoles' to more flexibly zoom in on specified geographic limits. (9/24)
+  - Revised functions 'calcHabitat' and 'findHoles' to more flexibly zoom in on specified geographic limits. (RH 9/24)
   - Added a new function 'toUpper' to capitalise the first letter of each word in a phrase. (RH 9/19)
   - Modified functions 'preferDepth' and 'plotConcur' to allow postscript output. (RH 9/19)
   - Modified function 'weightBio' to fix bugs and to allow postscript output. (RH 8/30)
   - Modified function 'weightBio' to weight survey proportions by catch density (emulates survey design). (RH 8/3)
-  - Modified SQL code 'gfb_bio.sql' to grab additional fields 'SSID' (sampl series ID), 'use' (trawl survey usability), 'dist' (distance in km that trawl tows net),
+  - Modified SQL code 'gfb_bio.sql' to grab additional fields 'SSID' (sample series ID), 'use' (trawl survey usability), 'dist' (distance in km that trawl tows net),
 	'door' (doorspread in m), 'area' (survey stratum area), and 'density' (catch density = catch/(dist*door*0.001)).
 	Also change field names: 'group' -> 'GC' (survey grouping code) and 'Bwt' -> temp (bottom water temperature). (RH 8/3)
   - Disabled mapping in 'runModules' to avoid circularity in package requirements. (RH 7/16)
@@ -20,7 +21,7 @@ Authors: RH  = Rowan Haigh     NO = Norm Olsen
 	if(getRversion() >= "2.15.1") globalVariables(names=c(...), package="PBSmapx") (RH 7/16)
   - Submitted to CRAN, but rejected by Dr. Brian Ripley. (RH 7/13)
   - Added 'jss.bst' and 'jss.cls' to the 'vignettes' directory to enforce bibliography execution. (RH 7/13)
-  - Changed 'glimmer' argument 'dlim' to 'dbrks' to more easily convert continous depths into zones. (RH 7/11)
+  - Changed 'glimmer' argument 'dlim' to 'dbrks' to more easily convert continuous depths into zones. (RH 7/11)
   - Modified 'getData' to handle 'fqtName's created from a 'paste' command. (RH 7/10)
   - Finished UG for package 'PBStools' (RH 7/5)
   - Changed module names: (RH 6/26)
@@ -44,13 +45,13 @@ PBSfishery History
   - Removed 'GLOP' button from map GUI and added 'GOP' (grid over plot) and 'LOP' (land over plot) buttons. (RH 2/23)
   - Added two new 'par.map' values called 'tit.loc' and 'leg.loc' to give the user some control on title and legend placement - requested by Paul Starr. (RH 2/21)
   - Added new button on map GUI called 'par.map' to allow the user to see and change extra par values. (RH 2/21)
-  - Added small subfuction '.map.checkLims' to 'M01_Map.r' to check that data limit GUI inputs are strictly increasing. (RH 2/17)
+  - Added small subfunction '.map.checkLims' to 'M01_Map.r' to check that data limit GUI inputs are strictly increasing. (RH 2/17)
   - Added new SQL query 'fos_checklist_catch.sql' to provide retained and discarded catches for DFO's checklist. (RH 2/16)
   - Modified functions 'trackComp', 'plotDiversity', and 'boxSeason' to use local files/objects if available. (RH 12/5)
   - R-2.14.0 appears to implement windows buffering, which can screw the interactive nature of 'map'.
 	Code now sets 'windows.options(buffered=FALSE)' then resets it back to the user's original setting with an 'onclose=.map.exit' in the GUI. (RH 11/14)
   - Used 'packageStartupMessage' rather than 'cat' in '.onLoad' in 'zzz.r'. (RH 11/14)
-  - Resaved the '.rda' data files using compress = "bzip2". (RH 11/14)
+  - Re-saved the '.rda' data files using compress = "bzip2". (RH 11/14)
   - Building PDF manuals (for R itself or packages, e.g. via R CMD check) by default requires the LaTeX package inconsolata. (RH 11/14)
 
 1.19  2011-11-09  Authors
@@ -94,7 +95,7 @@ PBSfishery History
   - Added new functions 'predictRER', 'simRER', 'simBSR' to implement Orr & Hawkins (2008) discriminant analysis. (RH 6/14)
   - Tweaked function 'imputeRate'; tightened limits on parVec for rate r. (RH 6/13)
   - Fixed function 'imputeRate', bug improperly computed internal rate of return. (RH 6/10)
-  - Revised 'buildCatch' algorithm for the Tech Report. (6/7)
+  - Revised 'buildCatch' algorithm for the Tech Report. (RH 6/7)
   - Added new function 'plotGMA' to plot Groundfish Management Areas (RH 5/24)
   - R-2.13.0 has deprecated zip files in the data section. Now stores as the original '.rda' files.
 
@@ -200,7 +201,7 @@ PBSfishery History
 	if FALSE, terminate the code once the modern catch array has been compiled and saved
 	(to a binary file 'cat123mod.rda', where 123 = species code). (RH 6/22)
   - Revised the queries 'phhl_vcatch_fyear.sql', 'phhl_fcatch_fyear.sql', 'phhl_hcatch_fyear.sql' 
-	to mirror those used for the catch reconstruction. ( RH 6/21)
+	to mirror those used for the catch reconstruction. (RH 6/21)
 
 1.08  2010-06-16  Rowan
   - Revised 'requestAges', 'gfb_age_request.sql', 'gfb_pht_catch.sql' and 'gfb_fos_catch.sql'. (RH 6/16)
@@ -326,7 +327,7 @@ PBSfishery History
   - Added 'fos_fcatORF.sql' to query FOS for species catch history with associated landed catch of other species.
   - Revised 'getData' to gsub variables in SQL queries; added a few new arguments.
   - Revised the FOS catch records query.
-  - Revised SQl queries 'phhl_fcatORF.sql', 'phhl_hcatORF.sql', 'phhl_ocatORF.sql', 'phs_scatORF.sql', 'pht_tcatORF.sql'.
+  - Revised SQL queries 'phhl_fcatORF.sql', 'phhl_hcatORF.sql', 'phhl_ocatORF.sql', 'phs_scatORF.sql', 'pht_tcatORF.sql'.
   - Fixed small bug in 'getFile'; changed font size for sql error message in 'getData'.
 
 0.79  2009-09-17  Rowan
