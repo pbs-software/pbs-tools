@@ -72,10 +72,10 @@ buildCatch=function(dbdat, sql=FALSE, strSpp="424", dfld="ORF",
 
 	htabmax=htab[,,,"max",,]
 	### historical maximum catch (POP,ORF,TRF) by year, major, gear (i.e. comparative):
-	hismax=apply(htabmax,c(1:2,4:5),max,na.rm=TRUE)
+	hismax=apply(htabmax,c(1:2,4:5),max,na.rm=TRUE) # collapse 'source' (dim 3)
 	htabadd=htab[,,,"add",,]
 	### historical unique catch (POP,ORF,TRF) by year, major, gear (i.e. additive):
-	hisadd=apply(htabadd,c(1:2,4:5),sum,na.rm=TRUE) 
+	hisadd=apply(htabadd,c(1:2,4:5),sum,na.rm=TRUE) # collapse 'source' (dim 3)
 	if (saveinfo)
 		packList(c("htab","htabmax","htabadd","hismax","hisadd"),"PBSfish")
 	### Historical used again on line 335
@@ -522,7 +522,7 @@ buildCatch=function(dbdat, sql=FALSE, strSpp="424", dfld="ORF",
 		if (strSpp=="396" && k==1) {
 			### POP trawl catch relatively well known back to 1956
 			estYRS=HISYRS[1]:1955; useYRS=1956:rev(HISYRS)[1] } 
-			#estYRS=HISYRS[1]:1955; useYRS=1956:rev(HISYRS)[1] }  # 
+			#estYRS=HISYRS[1]:1976; useYRS=1977:rev(HISYRS)[1] } # if estimating foreign catch
 		if (any(strSpp==c("442","396")) && any(k==c(4,5))) {
 			### YYR H&L catch relatively well known back to 1982
 			estYRS=HISYRS[1]:1981; useYRS=1982:rev(HISYRS)[1] } 
@@ -656,32 +656,33 @@ buildCatch=function(dbdat, sql=FALSE, strSpp="424", dfld="ORF",
 #source("getFile.r"); source("getData.r"); source("calcRatio.r")
 
 # POP - Pacific Ocean Perch
-#x=buildCatch(sql=TRUE,strSpp="396",dfld="TRF",wmf=TRUE,pwd=c("pwd1","pwd2"))
+#x=buildCatch(sql=TRUE,strSpp="396",dfld="TRF",wmf=TRUE,pwd=c("haighr","haighr357"))
 #x=buildCatch(cat396orf,strSpp="396",dfld="TRF",wmf=TRUE)
+#x=buildCatch(cat396orf,strSpp="396",dfld="TRF",wmf=TRUE) #---not good
 
 # YMR - Yellowmouth Rockfish
-#x=buildCatch(sql=T,strSpp="440",dfld="TRF",wmf=T,pwd=c("pwd1","pwd2"))
+#x=buildCatch(sql=T,strSpp="440",dfld="TRF",wmf=T,pwd=c("haighr","haighr357"))
 #x=buildCatch(cat440orf,strSpp="440",dfld="TRF",wmf=T)
 
 # LST - Longspine thornyhead
-#x=buildCatch(sql=T,strSpp="453",wmf=T,pwd=c("pwd1","pwd2"))
+#x=buildCatch(sql=T,strSpp="453",wmf=T,pwd=c("haighr","haighr357"))
 #x=buildCatch(cat453orf,strSpp="453",wmf=T)
 
 # RER - Rougheye rockfish
-#x=buildCatch(sql=T,strSpp="394",wmf=T,pwd=c("pwd1","pwd2"))
+#x=buildCatch(sql=T,strSpp="394",wmf=T,pwd=c("haighr","haighr357"))
 #x=buildCatch(cat439orf,strSpp="394",wmf=T)
 
 # QBR - Quilback rockfish
-#x=buildCatch(sql=T,strSpp="424",dfld="ORF",wmf=T,pwd=c("pwd1","pwd2"))
+#x=buildCatch(sql=T,strSpp="424",dfld="ORF",wmf=T,pwd=c("haighr","haighr357"))
 #x=buildCatch(cat424orf,strSpp="424",dfld="ORF",wmf=T)
 
 # YYR - Yelloweye rockfish
-#x=buildCatch(sql=TRUE,strSpp="442",wmf=TRUE,pwd=c("pwd1","pwd2"))
-#x=buildCatch(sql=T,strSpp="442",refyrs=1982:2009,wmf=T,pwd=c("pwd1","pwd2"))
+#x=buildCatch(sql=TRUE,strSpp="442",wmf=TRUE,pwd=c("haighr","haighr357"))
+#x=buildCatch(sql=T,strSpp="442",refyrs=1982:2009,wmf=T,pwd=c("haighr","haighr357"))
 #x=buildCatch(cat442orf,strSpp="442",wmf=T)
 
 # Nathan Taylor
 # Splitnose (412), Greenstriped (414), Redstripe (439), Harlequin (446), Sharpchin (450)
-#x=buildCatch(sql=T,strSpp="414",wmf=T,pwd=c("pwd1","pwd2"))
-#x=buildCatch(cat412orf,strSpp="412",wmf=T,pwd=c("pwd1","pwd2"))
+#x=buildCatch(sql=T,strSpp="414",wmf=T,pwd=c("haighr","haighr357"))
+#x=buildCatch(cat412orf,strSpp="412",wmf=T,pwd=c("haighr","haighr357"))
 

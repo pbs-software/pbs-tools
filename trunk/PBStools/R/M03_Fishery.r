@@ -4,6 +4,7 @@
 #  calcRatio.......Calculates ratios of numerator to denominator (e.g., 'discard'/'catch').
 #  dumpMod.........Dump catch from modern sources used in catch reconstruction.
 #  dumpRat.........Dump catch ratios calculated by a catch reconstruction.
+#  formatCatch     Format numeric catch tables to character strings that display significant digits.
 #  getCatch........Get catch records for a species from various databases and combine.
 #  glimmer.........Performs an lm on a predefined dataset.
 #  makeCATtables...Make CSV files containing catch from commercial fisheries.
@@ -210,6 +211,72 @@ dumpRat = function(strSpp="396", rats=c("alpha","beta","gamma","delta","lambda")
 	}
 }
 #------------------------------------------dumpRat
+
+#formatCatch----------------------------2012-10-03
+# Format a numeric table so that each cell 
+# displays N significnat figures in character format.
+# Arguments:
+#  dat  = dataframe/matrix of raw catch numbers
+#  N    = number of significant digits
+#  X    = numeric vector of columns to exclude
+#  zero = character replacement for zero-values
+#  K    = big mark separator (see 'format')
+#-----------------------------------------------RH
+formatCatch = function(dat,N=3,X=1,zero="0",K=",") {
+	dnam = dimnames(dat)
+	if (is.null(dnam)) {
+		dnam=list(paste("R",1:nrow(dat),sep=""),paste("C",1:ncol(dat),sep=""))
+		dimnames(dat) = dnam
+	}
+	if (length(dnam[[2]])!=length(.su(dnam[[2]]))) {
+		dnam[[2]] = paste("C",1:ncol(dat),".",dnam[[2]],sep="")
+		dimnames(dat) = dnam
+	}
+	# When user wants to convert all columns
+	if (is.null(X) || all(X==0)) X = -(1:ncol(dat))
+	
+	# Detect, remember, and remove negative signs
+	negdat = dat[,-(X)] < 0
+	dat[,-(X)][negdat] = -dat[,-(X)][negdat]
+
+	cdat = apply(dat,2,as.character)
+	cdat = as.data.frame(cdat); dimnames(cdat) = dnam
+	for (i in dnam[[2]][-(X)]) {
+		idat = dat[,i]
+		istr = strsplit(as.character(idat),split="\\.")
+		inum = sapply(istr, function(x,N,K,zero){
+			x1 = format(round(as.numeric(x[1])),big.mark=K,trim=TRUE,scientific=FALSE)
+			X1 = format(as.numeric(paste(x,collapse=".")),digits=N,big.mark=K,trim=TRUE,scientific=FALSE)
+			n2 = N - nchar(x[1])
+			if (length(x)==1) {
+				if (x[1]=="0") ival=zero
+				else if (n2>=1) ival = format(as.numeric(gsub(",","",x1)),nsmall=n2,big.mark=K,trim=TRUE,scientific=FALSE)
+				else ival = x1
+			}
+			else {
+				if (nchar(x[1])>=N) ival = X1
+				else {
+					if (x1=="0") {
+						# exclude leading zeroes using 'clipVector' from 'PBSmodelling' package
+						x2ex0 = paste(clipVector(strsplit(x[2],split="")[[1]],"0",1),collapse="")
+						n2 = N + (nchar(x[2])-nchar(x2ex0)) # adjusted for leading zeroes
+					}
+					else n2 = N - nchar(x[1])
+					x2 = pad0(round(as.numeric(substring(x[2],1,n2+1))/10),n2)
+					if (x2=="10") ival = format(as.numeric(gsub(",","",X1)),nsmall=n2,big.mark=K,trim=TRUE,scientific=FALSE)
+					#show0(as.numeric(gsub(",","",X1)),n2,add2int=TRUE)
+					else ival = paste(x1,x2,sep=".")
+				}
+			}
+			return(ival)
+		},N=N,K=K,zero=zero)
+		cdat[[i]] = inum
+	}
+	# Resore the negative sign
+	cdat[,-(X)][negdat] = paste("-",cdat[,-(X)][negdat],sep="")
+	return(cdat)
+}
+#^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^formatCatch
 
 #getCatch-------------------------------2010-07-23
 # Extract catch records for a species from various 
@@ -765,7 +832,7 @@ plotConcur = function(strSpp="410", dbName="PacHarvest",
 	textab$latin = paste("\\emph{",textab$latin,"}",sep="")
 	textab$catKt = format(round(textab$catKt * 1000.),big.mark=",",trim=TRUE)
 	textab$pct   = show0(round(textab$pct,3),3)
-	names(textab)=c("Code","Species","Latin name","Catch (t)","Catch (%)")
+	names(textab)=c("Code","Species","Latin name","Catch (t)","Catch (\\%)")
 	write.csv(textab,paste("tex-",plotname,".csv",sep=""),row.names=FALSE)
 	# Note: to read the table back into R use 'read.csv("xyz.csv",check.names=FALSE)'
 
