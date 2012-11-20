@@ -1972,10 +1972,11 @@ reportCatchAge <- function(prefix="pop", path=getwd(), hnam=NULL, ...) {
 	invisible() }
 #-----------------------------------reportCatchAge
 
-#requestAges----------------------------2012-06-19
+#requestAges----------------------------2012-11-15
 # Determine which otoliths to sample for ageing requests.
 # Note: only have to use sql=TRUE once for each species 
 # using any year before querying a group of years.
+# Note: ageing methdology is not a sensible selection criterion because the fish selected have not been aged.
 #-----------------------------------------------RH
 requestAges=function(strSpp, nage=500, year=2011, 
      areas=list(major=3:9, minor=NULL), ttype=c(1,4),
@@ -2086,11 +2087,11 @@ requestAges=function(strSpp, nage=500, year=2011,
 		samp$tid  = paste(samp$TID_gfb,samp$FEID,sep=".")
 		catch$tid = paste(catch$TID,catch$FEID,sep=".")
 	}
+#browser();return()
 	spooler(areas,"area",samp) # creates a column called 'area' and populates based on argument 'areas'.
 	spooler(areas,"area",catch)
 	area=sort(unique(samp$area))
 	unpackList(list(...))
-#browser();return()
 	for (i in intersect(c("year","area","ttype","TID_gfb","TID_fos"),ls())) {
 		eval(parse(text=paste("samp=biteData(samp,",i,")",sep="")))
 		if (i!="ttype") eval(parse(text=paste("catch=biteData(catch,",i,")",sep="")))
@@ -2115,10 +2116,12 @@ requestAges=function(strSpp, nage=500, year=2011,
 	if (type=="S") {
 		cid=catch$tid
 		sid=samp$tid
-		group=catch$group; names(group)=cid
-		samp$group=group[sid]; samp=samp[!is.na(samp$group),] #get rid of unidentified groups (strata)
-		Clev  = paste(catch$year,pad0(catch$group,3),sep="-") # all groups in survey catch
-		Slev  = paste(samp$year,pad0(samp$group,3),sep="-")   # groups in sample data
+#browser();return()
+		# 'gfb_age_request.sql" now gathers Grouping Code (GC)
+		#group=catch$GC; names(group)=cid
+		#samp$GC=group[sid]; samp=samp[!is.na(samp$GC),] #get rid of unidentified groups (strata)
+		Clev  = paste(catch$year,pad0(catch$GC,3),sep="-") # all groups in survey catch
+		Slev  = paste(samp$year,pad0(samp$GC,3),sep="-")   # groups in sample data
 		clev=names(Clev)=Clev; slev=names(Slev)=Slev
 	}
 	samp$lev = slev
@@ -2134,7 +2137,8 @@ requestAges=function(strSpp, nage=500, year=2011,
 	cper = Clev[zper]                                   # periods in comm.catch in common with those from samples
 	ccat = ccat[zper]                                   # comm.catch relevant to sample periods
 	qcat = split(ccat,names(cper))
-	qC   = CC[ulev]
+	#qC   = CC[ulev]
+	qC   = CC[intersect(names(CC),ulev)]
 	pC   = qC / sum(qC)                                 # proportion of total catch in each period
 	nC   = pC * nage                                    # number of otoliths to age per period, given a fixed budget
 	samp[["Tcat"]] = qC[samp$lev]                       # populate the data frame with period/strata catches
@@ -2159,12 +2163,18 @@ requestAges=function(strSpp, nage=500, year=2011,
 	packList(c("Sdat","catch","C"),"PBSfish")
 	samp$nwant = round(samp$ncat)                                # No. otoliths wanted by the selection algorithm
 	samp$ndone = samp$NBBA                                       # No. otoliths broken & burnt
-	samp$nfree = round(samp$NOTO-samp$NAGE)                     # No. of free/available otoliths not yet processed
+	samp$nfree = round(samp$NOTO-samp$NAGE)                      # No. of free/available otoliths not yet processed
 	samp$ncalc = pmin(pmax(0,samp$nwant-samp$ndone),samp$nfree)  # No. of otoliths calculated to satisfy Nwant given constraint of Nfree
-	samp$nallo = adjustN(a=samp$nfree,b=samp$nwant)              # No. of otoliths allocated to satisfy user's initial request, given constraint of Nfree
+#browser();return()
+	nardwuar = samp$ncalc > 0 & !is.na(samp$ncalc)
+	samp$nallo = rep(0,nrow(samp))
+	samp$nallo[nardwuar] = adjustN(a=samp$nfree[nardwuar],b=samp$nwant[nardwuar])  # No. of otoliths allocated to satisfy user's initial request, given constraint of Nfree
+	narduse = samp[,nfld] > 0 & !is.na(samp[,nfld])
+	sampuse = samp[narduse,]
 	### End sample calculations ###
 
-	describe=paste("-",type,"(",paste(year,collapse="+"),")-area(",area,")-sex(",paste(sex,collapse="+"),")-N",round(sum(samp[,nfld])),sep="")
+	yearmess = if (length(year)>3) paste(min(year),"-",max(year),sep="") else paste(year,collapse="+")
+	describe=paste("-",type,"(",yearmess,")-area(",area,")-sex(",paste(sex,collapse="+"),")-N",round(sum(samp[,nfld])),sep="")
 	attr(samp,"Q") = cbind(qC,pC,nC)
 	attr(samp,"call") = deparse(match.call())
 	packList(c("samp","describe"),"PBSfish")
@@ -2172,19 +2182,20 @@ requestAges=function(strSpp, nage=500, year=2011,
 	write.csv(samp,  paste("Sdat",strSpp,describe,".csv",sep=""))
 #browser();return()
 
-	tid=unique(samp[["tid"]])
-	sid=unique(samp[["SID"]])
+	tid=unique(sampuse[["tid"]])
+	sid=unique(sampuse[["SID"]])
 	# Get list of available otoliths.
 	expr=paste("SELECT B5.SAMPLE_ID AS SID, B5.SPECIMEN_SERIAL_NUMBER AS SN FROM B05_SPECIMEN B5 WHERE B5.SAMPLE_ID IN (",
 		paste(sid,collapse=","),") AND B5.AGEING_METHOD_CODE IS NULL AND B5.SPECIMEN_SEX_CODE IN (", paste(sex,collapse=","),")",sep="")
 	getData(expr,"GFBioSQL",strSpp=strSpp,type="SQLX")
 	Opool = split(PBSdat$SN,PBSdat$SID)                    # Pool of available otoliths
-	Nsamp = samp[,nfld]; names(Nsamp)=sid; names(sid)=tid  # Number of otoliths to sample from the pool
+	Npool = Opool[as.character(sampuse$SID)]         # Pool relevant to the n field
+	Nsamp = sampuse[,nfld]; names(Nsamp)=sid; names(sid)=tid  # Number of otoliths to sample from the pool
 #browser();return()
 	Osamp = sapply(sid,function(x,O,N){                    # Otoliths sampled randomly from pool
 		xx=as.character(x); o=O[[xx]]; n=N[xx]
 		if (n==0) NA else sample(o,min(n,length(o)),replace=FALSE) }, 
-		O=Opool, N=Nsamp, simplify=FALSE)
+		O=Npool, N=Nsamp, simplify=FALSE)
 	packList(c("Opool","Nsamp","Osamp"),"PBSfish")
 
 	fnam = paste("oto",strSpp,describe,".csv",sep="")
@@ -2774,7 +2785,7 @@ weightBio = function(adat, cdat, sunit="TID", sweight="catch",
 			width=ifelse(layout=="landscape",longside,shortside)
 			height=ifelse(layout=="landscape",shortside,longside)
 			png(plotname,width=width,height=height,units="in",res=ppi,pointsize=pnt) }
-		else if (eps) # postcript orientation is hopelessly F'ed up
+		else if (eps) # postscript orientation is hopelessly F'ed up
 			postscript(plotname,width=switch(nlay,shortside,longside,longside),
 			height=switch(nlay,longside,shortside,longside),horizontal=FALSE,paper="special")
 		else resetGraph()

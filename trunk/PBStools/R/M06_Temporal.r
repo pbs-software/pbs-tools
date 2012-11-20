@@ -403,7 +403,7 @@ plotDiversity <- function (fqtName="Ex01_Sample_Info",dbName="Examples.mdb",
 	xshow=rep("",nx); xshow[znams]=xnams[znams]; xchar=max(nchar(xshow))
 	unpackList(ypick(dat[,bars]),scope="L")
 	
-	#if (ps) postscript(file=paste(fnam,".ps",sep=""),width=11,height=8.5)
+	#if (eps) postscript(file=paste(fnam,".eps",sep=""),width=11,height=8.5,paper="special")
 	if (pdf) pdf(file=paste(fnam,".pdf",sep=""),width=11,height=8.5)
 	else if (wmf) win.metafile(paste(fnam,".wmf",sep=""),width=11,height=8.5)
 	else resetGraph()

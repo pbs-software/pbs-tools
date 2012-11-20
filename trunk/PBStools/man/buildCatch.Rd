@@ -12,8 +12,9 @@
 \usage{
 buildCatch(dbdat, sql=FALSE, strSpp="424", dfld="ORF", 
      major=c(1,3:9), refyrs=1997:2005, fidout=c(1:5,10), 
-     saveinfo=TRUE, wmf=FALSE, uid=Sys.info()["user"], pwd=uid,
-     reconstruct=TRUE)
+     saveinfo=TRUE, eps=FALSE, pix=FALSE, wmf=FALSE, 
+     uid=Sys.info()["user"], pwd=uid,
+     reconstruct=TRUE, diagnostics=TRUE)
 }
 \arguments{
   \item{dbdat}{a list object of landing records from eight DFO databases: \cr
@@ -42,11 +43,18 @@ buildCatch(dbdat, sql=FALSE, strSpp="424", dfld="ORF",
     \code{10} = all fisheries combined.}
   \item{saveinfo}{logical: if \code{TRUE}, save various data objects created within the function
     to a list object called \code{PBSfish}; setting to \code{FALSE} may speed reconstruction.}
+  \item{eps}{logical: if \code{TRUE} send the figures to \code{.eps} files.}
+  \item{pix}{logical: if \code{TRUE} send the figures to \code{.png} files.}
   \item{wmf}{logical: if \code{TRUE} send the figures to \code{.wmf} files.}
   \item{uid, pwd}{user ID and password for Oracle DB account authentication.}
   \item{reconstruct}{logical: if \code{TRUE} (default) complete the reconstruction as previously, \cr
 	if \code{FALSE}, terminate the code once the modern catch array has been compiled and saved 
 	(to a binary file \code{cat123mod.rda}, where \code{123} = species code). }
+  \item{diagnostics}{logical: if \code{TRUE} (default) create automatically-numbered diagnostic
+    images files (prefaced with \code{pD000}, where \code{000} is the automatic number) to 
+    a subdirectory called \code{CRdiag}. Subsequent calls to \code{buildCatch} remove all \code{pD...}
+    files created by previous builds.}
+
 }
 \details{
   For the time period 1918--1949, landings of other rockfish (ORF) and total rockfish (TRF) 
@@ -83,7 +91,9 @@ buildCatch(dbdat, sql=FALSE, strSpp="424", dfld="ORF",
 \value{
   The final reconstructed catch array is invisibly returned. Additionally, if 
   \code{saveinfo = TRUE}, various data objects internal to the function are saved to 
-  a global list object called \code{PBSfish}. Also, various data objects, including the 
+  a global list object called \code{PBSfish}, and if \code{diagnostics = TRUE}, numerous
+  plots of the various intermediary data objects are stored as image files in a 
+  subdirectory called \code{CRdiag}. Also, various data objects, including the 
   eight database catch files consolidated and massaged, are saved as system 
   binary files \code{.rda}. The final reconstructed catch array is also flattened to a 
   comma-delimited text file \code{Catch-History-123.csv}, where \code{123} 
