@@ -50,7 +50,7 @@ calcHabitat <- function(topofile="bctopo", isob=c(150,435),
 		fout=paste("Habitat-",ifelse(labtit=="","",paste(gsub(" ","-",labtit),"-",sep="")),isob[1],"m-",isob[2],"m",sep="")
 		devs = c(eps=eps,pix=pix,wmf=wmf,win=TRUE)
 		for (i in names(devs)[devs]) {
-			if (i=="eps")      postscript(file=paste(fout,".eps",sep=""),width=pin[1],height=pin[2],fonts="mono") 
+			if (i=="eps")      postscript(file=paste(fout,".eps",sep=""),width=pin[1],height=pin[2],fonts="mono",paper="special") 
 			else if (i=="pix") png(paste(fout,".png",sep =""), width=round(100*pin[1]), height=round(100*pin[2])) 
 			else if (i=="wmf") win.metafile(paste(fout,".wmf",sep=""),width=pin[1],height=pin[2])
 			else          resetGraph()

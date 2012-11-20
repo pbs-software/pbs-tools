@@ -2,16 +2,17 @@
 SELECT * FROM
 (SELECT
   (CASE  -- in order of priority
-    WHEN TAR.GR_GEAR_CDE IN (50,51,57,59) THEN 1                      -- originally TRAWL (otter bottom, midwater, shrimp, herring)
-    WHEN TAR.GR_GEAR_CDE IN (40) AND TAR.Target IN ('614') THEN 2     -- originally LONGLINE
-    WHEN TAR.GR_GEAR_CDE IN (40) AND TAR.Target IN ('455') THEN 3     -- originally LONGLINE
-    WHEN TAR.GR_GEAR_CDE IN (86,90,91,92,97,98) THEN 3                -- originally TRAP (experimental, salmon, longline, shrimp & prawn, crab)
-    WHEN TAR.GR_GEAR_CDE IN (30,31)  THEN 4                           -- originally TROLL (salmon, freezer salmon)
-    WHEN TAR.GR_GEAR_CDE IN (36) OR (TAR.GR_GEAR_CDE IN (40) AND 
-         TAR.Target NOT IN ('614','455')) THEN 5                      -- originally JIG (hand non-salmon) and LONGLINE
-    WHEN TAR.Target IN ('455') THEN 3                                 -- Sablefish
-    WHEN TAR.Target IN ('044','467') THEN 4                           -- Dogfish-Lingcod
-    WHEN TAR.Target IN ('388','437','405','440','394','403','451','453','401','442','424','407','431','433') THEN 5  -- ZN TAC species
+    WHEN TAR.GR_GEAR_CDE IN (50,51,57,59) THEN 1                                -- originally TRAWL (otter bottom, midwater, shrimp, herring)
+    WHEN TAR.GR_GEAR_CDE IN (40) AND TAR.Target IN ('614') THEN 2               -- originally LONGLINE
+    WHEN TAR.GR_GEAR_CDE IN (86,90,91,92,97,98) THEN 3                          -- originally TRAP (experimental, salmon, longline, shrimp & prawn, crab)
+    WHEN TAR.GR_GEAR_CDE IN (40) AND TAR.Target IN ('455') THEN 3               -- originally LONGLINE
+    WHEN TAR.GR_GEAR_CDE IN (30,31)  THEN 4                                     -- originally TROLL (salmon, freezer salmon)
+    --WHEN TAR.GR_GEAR_CDE IN (36,40) AND TAR.Target IN ('044','467') THEN 4    -- originally JIG (hand non-salmon) and LONGLINE
+    WHEN TAR.GR_GEAR_CDE IN (36,40) THEN 5                                      -- originally JIG (hand non-salmon) and LONGLINE
+    --WHEN TAR.Target IN ('222','225','228','388','394','396','401','405','418','440','451','597','602','607','621','626','628','631') THEN 1
+    WHEN TAR.Target IN ('455') THEN 3
+    --WHEN TAR.Target IN ('044','467') THEN 4
+    WHEN TAR.Target IN ('388','394','401','405','418','424','440','442','451') THEN 5
     ELSE 0 END) AS \"fid\",
   CS.STP_SPER_YR AS \"year\",
   (CASE
@@ -104,27 +105,71 @@ SELECT * FROM
 FROM
   @table.CATCH_SUMMARY CS INNER JOIN
   (SELECT
-    TC.STP_SPER_YR,
-    TC.STP_SPER_PERIOD_CDE,
-    TC.SFA_MSFA_MIDSIZE_FA_CDE,
-    TC.SFA_SMALL_FA_CDE,
-    TC.GR_GEAR_CDE,
-    NVL(TC.SP_SPECIES_CDE,'UNK') AS Target,
-    TC.MaxCat
+    ZC.STP_SPER_YR,
+    ZC.STP_SPER_PERIOD_CDE,
+    ZC.SFA_MSFA_MIDSIZE_FA_CDE,
+    ZC.SFA_SMALL_FA_CDE,
+    ZC.GR_GEAR_CDE,
+    ZC.SumCat,
+    MIN(ZC.SP_SPECIES_CDE) AS Target
   FROM
-    (SELECT
-      YC.STP_SPER_YR,
-      YC.STP_SPER_PERIOD_CDE,
-      YC.SFA_MSFA_MIDSIZE_FA_CDE,
-      YC.SFA_SMALL_FA_CDE,
-      YC.GR_GEAR_CDE,
-      YC.SP_SPECIES_CDE,
-      YC.CATSUM_ROUND_LBS_WT,
-      MAX(YC.CATSUM_ROUND_LBS_WT) OVER 
-      (PARTITION BY YC.STP_SPER_YR, YC.STP_SPER_PERIOD_CDE, YC.SFA_MSFA_MIDSIZE_FA_CDE, YC.SFA_SMALL_FA_CDE, YC.GR_GEAR_CDE) MaxCat
+    (SELECT 
+      CS.STP_SPER_YR,
+      CS.STP_SPER_PERIOD_CDE,
+      CS.SFA_MSFA_MIDSIZE_FA_CDE,
+      CS.SFA_SMALL_FA_CDE,
+      CS.GR_GEAR_CDE,
+      CS.SP_SPECIES_CDE,
+      Sum(CS.CATSUM_ROUND_LBS_WT) AS SumCat
     FROM
-      @table.CATCH_SUMMARY YC) TC
-  WHERE TC.CATSUM_ROUND_LBS_WT = TC.MaxCat) TAR ON                -- target species
+      @table.CATCH_SUMMARY CS
+    GROUP BY 
+      CS.STP_SPER_YR, CS.STP_SPER_PERIOD_CDE,
+      CS.SFA_MSFA_MIDSIZE_FA_CDE, CS.SFA_SMALL_FA_CDE, CS.GR_GEAR_CDE, CS.SP_SPECIES_CDE) ZC -- Species catch by year, period, and area
+
+  INNER JOIN
+    (SELECT
+      TC.STP_SPER_YR,
+      TC.STP_SPER_PERIOD_CDE,
+      TC.SFA_MSFA_MIDSIZE_FA_CDE,
+      TC.SFA_SMALL_FA_CDE,
+      TC.GR_GEAR_CDE,
+      Max(TC.SumCat) AS MaxCat
+    FROM
+      (SELECT
+        YC.STP_SPER_YR,
+        YC.STP_SPER_PERIOD_CDE,
+        YC.SFA_MSFA_MIDSIZE_FA_CDE,
+        YC.SFA_SMALL_FA_CDE,
+        YC.GR_GEAR_CDE,
+        YC.SP_SPECIES_CDE,
+        Sum(YC.CATSUM_ROUND_LBS_WT) AS SumCat
+      FROM
+        @table.CATCH_SUMMARY YC
+      GROUP BY 
+        YC.STP_SPER_YR, YC.STP_SPER_PERIOD_CDE,
+        YC.SFA_MSFA_MIDSIZE_FA_CDE, YC.SFA_SMALL_FA_CDE, YC.GR_GEAR_CDE, YC.SP_SPECIES_CDE) TC   -- total catch
+    GROUP BY 
+      TC.STP_SPER_YR, TC.STP_SPER_PERIOD_CDE,
+      TC.SFA_MSFA_MIDSIZE_FA_CDE, TC.SFA_SMALL_FA_CDE, TC.GR_GEAR_CDE) MC ON                     -- maximum catch
+
+    ZC.STP_SPER_YR = MC.STP_SPER_YR AND
+    ZC.STP_SPER_PERIOD_CDE = MC.STP_SPER_PERIOD_CDE AND
+    ZC.SFA_MSFA_MIDSIZE_FA_CDE = MC.SFA_MSFA_MIDSIZE_FA_CDE AND
+    ZC.SFA_SMALL_FA_CDE = MC.SFA_SMALL_FA_CDE AND
+    ZC.GR_GEAR_CDE = MC.GR_GEAR_CDE AND
+    ZC.SumCat = MC.MaxCat
+--  WHERE -- Test group
+--    ZC.STP_SPER_YR IN (1995) AND
+--    ZC.STP_SPER_PERIOD_CDE IN ('070') AND
+--    ZC.SFA_MSFA_MIDSIZE_FA_CDE IN (9021)
+  GROUP BY
+    ZC.STP_SPER_YR,
+    ZC.STP_SPER_PERIOD_CDE,
+    ZC.SFA_MSFA_MIDSIZE_FA_CDE,
+    ZC.SFA_SMALL_FA_CDE,
+    ZC.GR_GEAR_CDE,
+    ZC.SumCat) TAR ON                -- target species
 
     CS.STP_SPER_YR = TAR.STP_SPER_YR AND
     CS.STP_SPER_PERIOD_CDE = TAR.STP_SPER_PERIOD_CDE AND
@@ -136,16 +181,17 @@ WHERE
   CS.CATSUM_FISHERY_TYPE_CDE IN ('01','02')
 GROUP BY
   (CASE 
-    WHEN TAR.GR_GEAR_CDE IN (50,51,57,59) THEN 1                      -- originally TRAWL (otter bottom, midwater, shrimp, herring)
-    WHEN TAR.GR_GEAR_CDE IN (40) AND TAR.Target IN ('614') THEN 2     -- originally LONGLINE
-    WHEN TAR.GR_GEAR_CDE IN (40) AND TAR.Target IN ('455') THEN 3     -- originally LONGLINE
-    WHEN TAR.GR_GEAR_CDE IN (86,90,91,92,97,98) THEN 3                -- originally TRAP (experimental, salmon, longline, shrimp & prawn, crab)
-    WHEN TAR.GR_GEAR_CDE IN (30,31)  THEN 4                           -- originally TROLL (salmon, freezer salmon)
-    WHEN TAR.GR_GEAR_CDE IN (36) OR (TAR.GR_GEAR_CDE IN (40) AND 
-         TAR.Target NOT IN ('614','455')) THEN 5                      -- originally JIG (hand non-salmon) and LONGLINE
-    WHEN TAR.Target IN ('455') THEN 3                                 -- Sablefish
-    WHEN TAR.Target IN ('044','467') THEN 4                           -- Dogfish-Lingcod
-    WHEN TAR.Target IN ('388','437','405','440','394','403','451','453','401','442','424','407','431','433') THEN 5  -- ZN TAC species
+    WHEN TAR.GR_GEAR_CDE IN (50,51,57,59) THEN 1                                -- originally TRAWL (otter bottom, midwater, shrimp, herring)
+    WHEN TAR.GR_GEAR_CDE IN (40) AND TAR.Target IN ('614') THEN 2               -- originally LONGLINE
+    WHEN TAR.GR_GEAR_CDE IN (86,90,91,92,97,98) THEN 3                          -- originally TRAP (experimental, salmon, longline, shrimp & prawn, crab)
+    WHEN TAR.GR_GEAR_CDE IN (40) AND TAR.Target IN ('455') THEN 3               -- originally LONGLINE
+    WHEN TAR.GR_GEAR_CDE IN (30,31)  THEN 4                                     -- originally TROLL (salmon, freezer salmon)
+    --WHEN TAR.GR_GEAR_CDE IN (36,40) AND TAR.Target IN ('044','467') THEN 4    -- originally JIG (hand non-salmon) and LONGLINE
+    WHEN TAR.GR_GEAR_CDE IN (36,40) THEN 5                                      -- originally JIG (hand non-salmon) and LONGLINE
+    --WHEN TAR.Target IN ('222','225','228','388','394','396','401','405','418','440','451','597','602','607','621','626','628','631') THEN 1
+    WHEN TAR.Target IN ('455') THEN 3
+    --WHEN TAR.Target IN ('044','467') THEN 4
+    WHEN TAR.Target IN ('388','394','401','405','418','424','440','442','451') THEN 5
     ELSE 0 END),
   CS.STP_SPER_YR,
   (CASE

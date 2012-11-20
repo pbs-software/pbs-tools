@@ -41,6 +41,7 @@ SELECT --TOP 100
   B02.LOCALITY_CODE,
   B02.DFO_STAT_AREA_CODE,
   B02.DFO_STAT_SUBAREA_CODE,
+  B02.GROUPING_CODE,
   B03.SPECIES_CODE,
   B03.CATCH_WEIGHT,
   B04.SAMPLE_TYPE_CODE,
@@ -87,6 +88,7 @@ SELECT
   AA.MAJOR_STAT_AREA_CODE AS major,               -- B02_FISHING_EVENT
   AA.MINOR_STAT_AREA_CODE AS minor,               -- B02_FISHING_EVENT
   AA.FE_MAJOR_LEVEL_ID AS 'set',                  -- B02_FISHING_EVENT
+  ISNULL(AA.GROUPING_CODE,0) AS 'GC',             -- B02_FISHING_EVENT
   AA.CATCH_WEIGHT AS catchKg,                     -- B03_CATCH
   AA.SPECIES_CODE AS spp,                         -- B03_CATCH
   -- Following from B05_Specimen
@@ -149,6 +151,7 @@ GROUP BY
   AA.MAJOR_STAT_AREA_CODE,
   AA.MINOR_STAT_AREA_CODE,
   AA.FE_MAJOR_LEVEL_ID,
+  ISNULL(AA.GROUPING_CODE,0),
   AA.CATCH_WEIGHT,
   AA.SPECIES_CODE,
   AA.SAMPLE_ID,
@@ -201,7 +204,7 @@ SELECT
   GFB.TID_gfb,
   COALESCE(GFB.TID_fos,FOS1.fos_tid,FOS2.fos_tid,0)  AS TID_fos,
   --GFB.hail, GFB.cfv, GFB.gfb_date
-  GFB.FEID, GFB.hail, GFB.[set], GFB.vessel, GFB.cfv,
+  GFB.FEID, GFB.hail, GFB.[set], GFB.GC, GFB.vessel, GFB.cfv,
   CONVERT(smalldatetime,GFB.gfb_date) AS tdate,
   GFB.ttype, GFB.major, GFB.minor, GFB.spp, GFB.catchKg,
   GFB.SID, GFB.Noto, GFB.Foto, GFB.Moto, GFB.Nbba, GFB.Fbba, GFB.Mbba, GFB.Nage, GFB.Fage, GFB.Mage, GFB.Xage,
@@ -224,5 +227,5 @@ SELECT
 
 --select * from #GFB_Otoliths
 
--- getData("gfb_age_request.sql",dbName="GFBioSQL",strSpp="396")
+-- getData("gfb_age_request.sql",dbName="GFBioSQL",strSpp="401")
 

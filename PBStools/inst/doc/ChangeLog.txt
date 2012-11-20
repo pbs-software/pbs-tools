@@ -1,9 +1,14 @@
-PBSmapx Changes
-===============
+PBStools Changes
+================
 Authors: RH  = Rowan Haigh     NO = Norm Olsen
          LL  = Lisa Lacko     JTS = Jon T. Schnute
 
-1.22  2012-10-03  Rowan
+1.23  2012-11-20
+  - Further modified 'buildCatch' to finish diagnostic plots (using 'plotData') and to call 'plotRecon' for final output barplots. (RH 11/20)
+  - Modified function 'requestAges' and SQL query 'gfb_age_request.sql' to deal with requests that span years with no grouping code. (RH 11/15)
+  - Added diagnostic plots to see data for catch reconstruction. (RH 11/14)
+
+1.22  2012-10-03
   - Added new function 'formatCatch' to format tables by transforming numeric values to strings that display significant digits. (RH 10/3) 
   - Added new function 'makeLTH' to make longtable headers for printing xtables in Sweave. (RH 9/27)
   - Revised function 'buildCatch' to exclude PacHarv3 1954-95 records for trawl and trap. (RH 9/26)

@@ -18,6 +18,9 @@ A complete user guide 'PBStools-UG.pdf' is located at
 Packaged on ", pkg_date, "
 Pacific Biological Station, Nanaimo
 
+All available PBS packages can be found at
+http://code.google.com/p/pbs-software/
+
 We may not be big, but we're small.
 -----------------------------------------------------------
 
