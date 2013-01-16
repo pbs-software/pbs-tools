@@ -25,7 +25,7 @@ FROM
   FW.SPP = OC.SPECIES_CODE
 WHERE 
   OC.SPECIES_CODE NOT IN ('004','848','849','999','XXX') AND 
-  TO_DATE(TO_CHAR(OC.BEST_DATE,'YYYY-MM-DD'),'YYYY-MM-DD') BETWEEN TO_DATE('2010-04-01', 'YYYY-MM-DD') AND TO_DATE('2011-03-31', 'YYYY-MM-DD') AND
+  TO_DATE(TO_CHAR(OC.BEST_DATE,'YYYY-MM-DD'),'YYYY-MM-DD') BETWEEN TO_DATE('2011-04-01', 'YYYY-MM-DD') AND TO_DATE('2012-03-31', 'YYYY-MM-DD') AND
   (CASE WHEN
     (OC.GEAR_SUBTYPE IN ('HARD BOTTOM TRAWL','SOFT BOTTOM TRAWL') OR   -- bottom
     (OC.GEAR_SUBTYPE IN ('UNSPECIFIED') AND 
@@ -35,7 +35,8 @@ WHERE
     (OC.GEAR_SUBTYPE IN ('MIDWATER TRAWL') OR   -- midwater
     (OC.GEAR_SUBTYPE IN ('UNSPECIFIED') AND 
      OC.TRIP_CATEGORY IN ('OPT A - HAKE QUOTA (GULF)','OPT A - HAKE QUOTA (SHORESIDE)','OPT A - HAKE QUOTA (JV)')))
-  THEN 3 ELSE 0 END) IN (@dummy) 
+  THEN 3 ELSE 0 END) IN (@dummy) AND
+  OC.MAJOR_STAT_AREA_CODE IN (@major)
 GROUP BY
   OC.SPECIES_CODE
 ORDER BY
@@ -43,5 +44,5 @@ ORDER BY
 ;
 
 -- Note: @dummy refers to GFFOS gear_subtype: 1=bottom trawl, 3=midwater trawl
--- getData("fos_checklist_catch.sql","GFFOS",strSpp="440",server="GFSH",type="ORA",trusted=F,uid="haighr",pwd="",dummy=0:3)
+-- getData("fos_checklist_catch.sql","GFFOS",strSpp="440",server="GFSH",type="ORA",trusted=F,uid="haighr",pwd="",dummy=0:3,major=3:9)
 

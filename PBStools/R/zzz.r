@@ -1,3 +1,5 @@
+.PBStoolEnv <- new.env(FALSE, parent=globalenv())  # Taking cue from Roger Bivand's maptools
+
 .onLoad <- function(lib,pkg)
 {
 	pkg_info = utils::sessionInfo( package="PBStools" )$otherPkgs$PBStools
@@ -10,7 +12,7 @@
 	
 	packageStartupMessage("
 -----------------------------------------------------------
-PBS Tools ", pkg_info$Version, " -- Copyright (C) 2007-2012 Fisheries and Oceans Canada
+PBS Tools ", pkg_info$Version, " -- Copyright (C) 2007-2013 Fisheries and Oceans Canada
 
 A complete user guide 'PBStools-UG.pdf' is located at 
 ", userguide_path, "
@@ -26,11 +28,14 @@ We may not be big, but we're small.
 
 ")
 }
+.onUnload <- function(libpath) {
+	rm(.PBStoolEnv)
+}
 
 # No Visible Bindings
 # ===================
 if(getRversion() >= "2.15.1") utils::globalVariables(names=c(
-	".PBSserver",
+	".PBSmod",".PBSserver",
 	"A","acut","adat","Afile","age","agg","AID","amax","areas","autoA","autoD","aVal",
 	"B","b0","b5","barcol","bathy","bbonly","Bboot","bcol","bdat","Best","bgsamp","bgtab","bh","bio440","Bobs","Bqnt","Bt","bta","Btot","bugsData",
 	"C1","C2","case","cat440rec","catch","Cbar","Cbox","Ccat","ccol","cdata","Ceq","chn1","chn2","clen","Clin","clwd","Cnum","cobs","Cpoi","cpuTime","cthin","ctot","Ctrd","Cval",

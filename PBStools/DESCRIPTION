@@ -1,6 +1,6 @@
 Package: PBStools
 Version: 1.23
-Date: 2012-11-20
+Date: 2013-01-16
 Title: Tools for Serious Marine Scientists
 Author: Rowan Haigh, Jon T. Schnute, Norm Olsen, and Lisa Lacko
 Maintainer: Rowan Haigh <rowan.haigh@dfo-mpo.gc.ca>
@@ -11,5 +11,7 @@ Description: Provides tools for exploring fisheries data.
     summary tools for fisheries stock assessments, 
     species at risk reports, and exploratory data analyses.
 License: GPL (>= 2)
-URL: http://code.google.com/p/pbs-tools/
+URL: http://code.google.com/p/pbs-tools/,
+     http://code.google.com/p/pbs-data/,
+     http://code.google.com/p/pbs-mapx/
 
