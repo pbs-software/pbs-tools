@@ -3,6 +3,7 @@
 # -----------------
 #  biteData........Subsets a data matrix/frame using input vector.
 #  chewData........Remove records that contribute little information to factor categories.
+#  collectFigs     Collect encapsulated postscript figures into one document.
 #  confODBC........Set up an ODBC User Data Source Name (DSN).
 #  convFY..........Convert dates into fishing years.
 #  convYM..........Convert date limits into a vector of year-months (YYY-MM).
@@ -64,6 +65,68 @@ chewData=function(dat,fac,nmin=3,na.rm=TRUE) {
 	if (na.rm) ndat=ndat[names(ndat)!=""]
 	dat=dat[is.element(dat[,fac],names(ndat)),]
 	return(dat) }
+
+#collectFigs----------------------------2013-01-16
+#  Collect encapsulated postscript figures into one document.
+#-----------------------------------------------RH
+collectFigs = function(path=".", ext="eps", is.fnum=FALSE, 
+   fout="collectFigs", width=6, capskip=0) {
+	cwd = getwd(); on.exit(setwd(cwd))
+	suffix = paste("\\.",ext,"$",sep="")
+	figs = list.files(path=path,pattern=suffix)
+	figs = sort(figs); Nfigs = length(figs)
+	fnam = fcap = gsub(suffix,"",figs)
+	if (is.fnum)  # figure number already in file name
+		fcap = sub("-",": ",fcap) 
+	fcap = gsub("-"," ",fcap)
+	fcap = gsub("&","\\\\&",fcap)
+
+	# Start build tex file
+	ftex = c(
+	"\\documentclass[12pt]{article}",
+	"\\usepackage[top=0.8in, bottom=0.7in, left=1in, right=1in]{geometry} %  page margins",
+	"\\usepackage{epsfig}",
+	"\\usepackage[font=sf,labelfont=bf,labelsep=period,justification=raggedright]{caption}",
+	"\\usepackage{hyperref}",
+	paste("\\captionsetup[figure]{position=bottom,skip=",capskip,"pt}",sep=""),
+	"\\DeclareCaptionTextFormat{bookmark}{\\belowpdfbookmark{Fig \\thefigure. #1}{\\thefigure}#1}",
+	"\\captionsetup{textformat=bookmark}",
+	"",
+	"\\newcommand\\pbsfig[2]{ % filename is #1, text is #2",
+	"  \\begin{figure}[ht!]",
+	"  \\begin{center}",
+	paste("  \\epsfxsize=",width,"in",sep=""),
+	"  \\epsfbox{#1.eps}",
+	"  \\end{center}",
+	"  \\caption{#2 }",
+	"  \\label{fig:#1}",
+	"  \\end{figure} }",
+	"",
+	"\\begin{document}"
+	)
+	for (i in 1:Nfigs) {
+		ftex = c(ftex,paste("\\pbsfig{",fnam[i],"}{",fcap[i],"}",sep=""))
+		if (i%%6==0) ftex = c(ftex, "\\clearpage")
+	}
+	ftex = c(ftex, "\\end{document}")
+	writeLines(ftex,paste(path,"/",fout,".tex",sep=""))
+	setwd(path)
+	debris = list.files(pattern=paste("^",fout,sep=""))
+	debris = setdiff(debris,paste(fout,".tex",sep=""))
+	if (length(debris)>0)  file.remove(debris)
+	err = shell(cmd=paste("latex ",fout,".tex",sep=""),wait=TRUE)
+		if (err>0) stop("===== First latex call failed =====")
+	err = shell(cmd=paste("latex ",fout,".tex",sep=""),wait=TRUE)
+		if (err>0) stop("===== Second latex call failed =====")
+	# Create a ps file from a dvi file
+	err = shell(cmd=paste("dvips ",fout,".dvi",sep=""),wait=TRUE)
+		if (err>0) stop("===== The dvips call failed =====")
+	# Create a pdf from a ps file
+	err = shell(cmd=paste("ps2pdf ",fout,".ps",sep=""),wait=TRUE)
+		if (err>0) stop("===== The ps2pdf call failed =====")
+	invisible(ftex)
+}
+#--------------------------------------collectFigs
 
 #confODBC-------------------------------2010-06-02
 # Set up an ODBC User Data Source Name (DSN)
@@ -209,7 +272,7 @@ flagIt = function(a, b, A=45, r=0.2, n=1, ...){
 	return(invisible(list(xvec=xvec,yvec=yvec,rads=rads,x0=x0,x=x,y=y)))
 }
 
-#getData--------------------------------2012-07-10
+#getData--------------------------------2013-01-10
 # Get data from a variety of sources.
 #-----------------------------------------------RH
 getData <-function(fqtName, dbName="PacHarvest", strSpp=NULL, server=NULL,
@@ -274,13 +337,27 @@ getData <-function(fqtName, dbName="PacHarvest", strSpp=NULL, server=NULL,
 		else {
 			data(species,envir=penv())
 			suni = function(x) {sort(unique(x))}
-			alfSpp=suni(species$code[species$fish]) ### all fish species
-			trfSpp=suni(species$code[species$rf])   ### total rockfish species
-			orfSpp=setdiff(trfSpp,"396")            ### other rockfish species
-			tffSpp=suni(species$code[species$ff])   ### total flatfish species
-			offSpp=setdiff(tffSpp,"602")            ### other flatfish species
+			alfSpp=suni(species$code[species$fish])                 ### all fish species
+			trfSpp=suni(species$code[species$rf])                   ### total rockfish species
+			orfSpp=setdiff(trfSpp,"396")                            ### other rockfish species
+			tffSpp=suni(species$code[species$ff])                   ### total flatfish species
+			offSpp=setdiff(tffSpp,"602")                            ### other flatfish species
 			carSpp=suni(species$code[is.element(species$taxon,2)])  ### cartilaginous species
-			sssSpp=setdiff(carSpp,c("065","066"))   ### shark and skate species
+			sssSpp=setdiff(carSpp,c("065","066"))                   ### shark and skate species
+			invSpp=suni(species$code[species$invert])               ### invertebrates
+			t01Spp=suni(species$code[is.element(species$taxon,1)])  ### taxon 1:  Agnatha (hagfish, lampreys)
+			t02Spp=suni(species$code[is.element(species$taxon,2)])  ### taxon 2:  Chondrichthyes (sharks, rays, chimaeras)
+			t03Spp=suni(species$code[is.element(species$taxon,3)])  ### taxon 3:  Clupeiformes (herring, anchovies)
+			t04Spp=suni(species$code[is.element(species$taxon,4)])  ### taxon 4:  Salmonidae (salmon, trout)
+			t05Spp=suni(species$code[is.element(species$taxon,5)])  ### taxon 5:  Osmeridae (smelts)
+			t06Spp=suni(species$code[is.element(species$taxon,6)])  ### taxon 6:  Myctophidae (lanternfishes)
+			t07Spp=suni(species$code[is.element(species$taxon,7)])  ### taxon 7:  Gadidae (codfishes)
+			t08Spp=suni(species$code[is.element(species$taxon,8)])  ### taxon 8:  Macrouridae (grenadiers)
+			t09Spp=suni(species$code[is.element(species$taxon,9)])  ### taxon 9:  Scombridae (mackerels, tunas)
+			t10Spp=suni(species$code[is.element(species$taxon,10)]) ### taxon 10: Scorpaenidae (scorpionfishes)
+			t11Spp=suni(species$code[is.element(species$taxon,11)]) ### taxon 11: Hexagrammidae (greenlings)
+			t12Spp=suni(species$code[is.element(species$taxon,12)]) ### taxon 12: Pleuronectiformes (flounders, soles, halibut)
+			t00Spp=intersect(alfSpp,suni(species$code[!is.element(species$taxon,1:12)])) ### taxon 00: All fish not part of a taxon group
 			if (is.null(mnwt)) {
 				if (type=="ORA") 
 					mnwt=species[strSpp,"foswt",drop=FALSE]
@@ -297,6 +374,20 @@ getData <-function(fqtName, dbName="PacHarvest", strSpp=NULL, server=NULL,
 			sOFF <- paste("'",paste(offSpp,collapse="','"),"'",sep="")
 			sCAR <- paste("'",paste(carSpp,collapse="','"),"'",sep="")
 			sSSS <- paste("'",paste(sssSpp,collapse="','"),"'",sep="")
+			sINV <- paste("'",paste(invSpp,collapse="','"),"'",sep="")
+			sT01 <- paste("'",paste(t01Spp,collapse="','"),"'",sep="")
+			sT02 <- paste("'",paste(t02Spp,collapse="','"),"'",sep="")
+			sT03 <- paste("'",paste(t03Spp,collapse="','"),"'",sep="")
+			sT04 <- paste("'",paste(t04Spp,collapse="','"),"'",sep="")
+			sT05 <- paste("'",paste(t05Spp,collapse="','"),"'",sep="")
+			sT06 <- paste("'",paste(t06Spp,collapse="','"),"'",sep="")
+			sT07 <- paste("'",paste(t07Spp,collapse="','"),"'",sep="")
+			sT08 <- paste("'",paste(t08Spp,collapse="','"),"'",sep="")
+			sT09 <- paste("'",paste(t09Spp,collapse="','"),"'",sep="")
+			sT10 <- paste("'",paste(t10Spp,collapse="','"),"'",sep="")
+			sT11 <- paste("'",paste(t11Spp,collapse="','"),"'",sep="")
+			sT12 <- paste("'",paste(t12Spp,collapse="','"),"'",sep="")
+			sT00 <- paste("'",paste(t00Spp,collapse="','"),"'",sep="")
 			qnam <- paste(path,fqtName,sep="/")
 			strQ <- readLines(qnam)
 			strQ <- PBSmodelling:::.trimWhiteSpace(strQ)
@@ -316,6 +407,20 @@ getData <-function(fqtName, dbName="PacHarvest", strSpp=NULL, server=NULL,
 			strQ <- gsub(pattern="@offcode",replacement=sOFF,x=strQ)
 			strQ <- gsub(pattern="@carcode",replacement=sCAR,x=strQ)
 			strQ <- gsub(pattern="@ssscode",replacement=sSSS,x=strQ)
+			strQ <- gsub(pattern="@invcode",replacement=sINV,x=strQ)
+			strQ <- gsub(pattern="@t01code",replacement=sT01,x=strQ)
+			strQ <- gsub(pattern="@t02code",replacement=sT02,x=strQ)
+			strQ <- gsub(pattern="@t03code",replacement=sT03,x=strQ)
+			strQ <- gsub(pattern="@t04code",replacement=sT04,x=strQ)
+			strQ <- gsub(pattern="@t05code",replacement=sT05,x=strQ)
+			strQ <- gsub(pattern="@t06code",replacement=sT06,x=strQ)
+			strQ <- gsub(pattern="@t07code",replacement=sT07,x=strQ)
+			strQ <- gsub(pattern="@t08code",replacement=sT08,x=strQ)
+			strQ <- gsub(pattern="@t09code",replacement=sT09,x=strQ)
+			strQ <- gsub(pattern="@t10code",replacement=sT10,x=strQ)
+			strQ <- gsub(pattern="@t11code",replacement=sT11,x=strQ)
+			strQ <- gsub(pattern="@t12code",replacement=sT12,x=strQ)
+			strQ <- gsub(pattern="@t00code",replacement=sT00,x=strQ)
 			strQ <- gsub(pattern="@mnwt",replacement=mnwt,x=strQ)
 			strQ <- gsub(pattern="@mindep",replacement=ifelse(is.null(mindep),0,mindep),x=strQ)
 			strQ <- gsub(pattern="@maxdep",replacement=ifelse(is.null(maxdep),1200,maxdep),x=strQ)
@@ -884,7 +989,7 @@ zapDupes = function(dat, index) {
 .chooseFQT <- function() {
 	path <- getWinVal()$path
 	sfiles <- list.files(path=path)
-	chooseWinVal(sfiles,"fqtName",winname=.PBSmod$.activeWin) }
+	chooseWinVal(sfiles,"fqtName",winname=tcall(.PBSmod)$.activeWin) }
 
 #.flush.cat-----------------------------2011-09-30
 # Flush the cat down the console
@@ -906,7 +1011,7 @@ zapDupes = function(dat, index) {
 		stop(paste("\n",pkgDir,"\ndoes not exist",sep=""))
 	pkgList <- list(path=pkgDir)
 	if (win) 
-		try(setWinVal(pkgList, winName=.PBSmod$.activeWin),silent=TRUE)
+		try(setWinVal(pkgList, winName=tcall(.PBSmod)$.activeWin),silent=TRUE)
 	invisible(pkgDir) }
 
 # Shortcut functions:
@@ -926,12 +1031,12 @@ zapDupes = function(dat, index) {
 #-----------------------------------------------RH
 .plotDev = function(nam=NULL,act=NULL){
 	if (is.null(nam)) {
-		if (exists(".PBSmod") && !all(substring(names(.PBSmod),1,1)=="."))
+		if (exists(".PBSmod",envir=.PBSmodEnv) && !all(substring(names(tcall(.PBSmod)),1,1)=="."))
 			nam=getWinVal(scope="L")$plotname
 		if (is.null(nam) & exists("PBSfish")) nam=PBSfish$plotname
 		if (is.null(nam)) nam="Rplot" }
 	if (is.null(act)) {
-		if (exists(".PBSmod") && !all(substring(names(.PBSmod),1,1)==".")) {
+		if (exists(".PBSmod",envir=.PBSmodEnv) && !all(substring(names(tcall(.PBSmod)),1,1)==".")) {
 			act=getWinAct()[1]
 			if (!any(act==c("wmf","emf","png","jpg","jpeg","bmp","tif","tiff","ps","eps","pdf")))
 				act="wmf" }
@@ -945,7 +1050,7 @@ zapDupes = function(dat, index) {
 .setCWD = function(win=TRUE) {
 	path = getwd()
 	cwdList = list(path = path)
-	if (win) setWinVal(cwdList,winName=.PBSmod$.activeWin)
+	if (win) setWinVal(cwdList,winName=tcall(.PBSmod)$.activeWin)
 	invisible(path) }
 
 #.su------------------------------------2011-09-12

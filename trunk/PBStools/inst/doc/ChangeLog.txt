@@ -3,7 +3,14 @@ PBStools Changes
 Authors: RH  = Rowan Haigh     NO = Norm Olsen
          LL  = Lisa Lacko     JTS = Jon T. Schnute
 
-1.23  2012-11-20
+1.23  2013-01-16
+  - Uploading for intermediate build. Problems exist because PBStools is highly entwined with PBSmodelling before the latter was retro-fitted with the new working environment `.PBSmodEnv.` (RH 1/16)
+  - Added a new working environment called `.PBStoolEnv`. (RH 1/16)
+  - Added function `collectFigs` to collect encapsulated postscript files into one document using latex. (RH 1/16)
+  - Added new query `pht_map_catch.sql` (modified slightly from `pht_map_density.sql`) to gather catch by GMU areas, in addition to PMFC areas. (RH 1/14)
+  - Modified function `clarify` to save figures as encapsulated postscript `.eps` files. (RH 1/10)
+  - Modified function `getData` to recognise taxonomic groups. (RH 1/10)
+  - Modified 'buildCatch' to fix a bug in allocating catch from unknown areas to PMFC major areas. (RH 11/21)
   - Further modified 'buildCatch' to finish diagnostic plots (using 'plotData') and to call 'plotRecon' for final output barplots. (RH 11/20)
   - Modified function 'requestAges' and SQL query 'gfb_age_request.sql' to deal with requests that span years with no grouping code. (RH 11/15)
   - Added diagnostic plots to see data for catch reconstruction. (RH 11/14)

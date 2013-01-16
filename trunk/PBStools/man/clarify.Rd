@@ -6,15 +6,14 @@
   \emph{n} \code{CLARA} clusters.
 }
 \usage{
-clarify(dat, wmf=FALSE, cell=c(0.1,0.075), nG=8,
+clarify(dat, cell=c(0.1,0.075), nG=8,
    xlim=c(-134.2,-127), ylim=c(49.6,54.8), zlim=NULL, targ="YMR", 
    clrs=c("red","orange","yellow","green","forestgreen","deepskyblue",
-   "blue","midnightblue"), hpage=10)
+   "blue","midnightblue"), wmf=FALSE, eps=FALSE, hpage=10)
 }
 \arguments{
   \item{dat}{an \code{EventData} obejct with fields \code{EID}, \code{X},
     \code{Y}, optional \code{Z}, and species fields named by 3-letter codes.}
-  \item{wmf}{logical: if \code{TRUE}, send plot to a \code{.wmf} file.}
   \item{cell}{cell size in degrees Lon/Lat (UTMs currently not implemented).}
   \item{nG}{number of CLARA groups to end up with.}
   \item{xlim}{X-limits of the mapping region.}
@@ -22,6 +21,8 @@ clarify(dat, wmf=FALSE, cell=c(0.1,0.075), nG=8,
   \item{zlim}{optional Z-limits (depth) to qualify data (if field available).}
   \item{targ}{target species to identify within the \code{CLARA} groups.}
   \item{clrs}{vector of colours to use for displaying \code{nG} \code{CLARA} groups.}
+  \item{wmf}{logical: if \code{TRUE}, send plot to a windows meta file \code{.wmf}.}
+  \item{eps}{logical: if \code{TRUE}, send plot to an encapsulated postscript \code{.eps} file.}
   \item{hpage}{dimension in inches of the longest side of a plot page sent to an output file.}
 }
 \details{

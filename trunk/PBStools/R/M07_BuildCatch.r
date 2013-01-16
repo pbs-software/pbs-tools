@@ -348,8 +348,15 @@ buildCatch=function(dbdat, sql=FALSE, strSpp="424", dfld="ORF",
 	for (aa in dimnames(catmod1)$dbs) {          ### databases
 		for (kk in dimnames(catmod1)$fid) {       ### fishery IDs
 			for (ll in dimnames(catmod1)$catch) {  ### catch categories
-				pmaj=apply(catmod1[,mm,kk,ll,aa],1,pcalc)
-				allo=apply(pmaj,1,function(x,u){x*u},u=catmod0[,"0",kk,ll,aa])
+				#pmaj=apply(catmod1[,mm,kk,ll,aa],1,pcalc)  ### allocation doesn't work when all unknown
+				#allo   = apply(pmaj,1,function(x,u){x*u},u=catmod0[,"0",kk,ll,aa])
+				### Allocate based on mean proportions in each major observed over a number of years (>2)
+				cattab = catmod1[,mm,kk,ll,aa]
+				catobs = apply(cattab,1,function(x){length(x[x>0])})
+				catyrs = names(catobs)[catobs>2]
+				if (length(catyrs)==0) next
+				pmaj   = apply(apply(cattab[catyrs,,drop=FALSE],1,pcalc),1,mean)
+				allo   = t(t(catmod0[,"0",kk,ll,aa]))%*%pmaj; dimnames(allo)[[2]] = mm
 				catmod1[,mm,kk,ll,aa] = catmod1[,mm,kk,ll,aa] + allo 
 	} } }
 
@@ -370,9 +377,9 @@ buildCatch=function(dbdat, sql=FALSE, strSpp="424", dfld="ORF",
 		dbmerge = switch(k,
 			dbs[c(2,3,8)], dbs[c(1,4,6,8)], dbs[c(2,5,8)], dbs[c(1,6,7,8)], dbs[c(1,2,6,7,8)] ) # drop PacHarv3 for Trawl and Trap (see Rutherford 1999)
 			#dbs[c(1,2,3,8)], dbs[c(1,4,6,8)], dbs[c(1,2,5,8)], dbs[c(1,6,7,8)], dbs[c(1,2,6,7,8)] )
-		### adjust for quirks in DB transitions
 		fcat = apply(catmod1[ii,jj,kk,ll,dbmerge,drop=FALSE],1:4,max)
 		catmod[ii,jj,kk,ll]=fcat
+		### adjust for quirks in DB transitions
 		if (any(k==c(1,3))) {
 			if (k==1) { iii="2007"; aaa=c("phtcat","foscat") }
 			if (k==3) { iii="2006"; aaa=c("phscat","foscat") }
@@ -652,6 +659,7 @@ buildCatch=function(dbdat, sql=FALSE, strSpp="424", dfld="ORF",
 		idata = intersect(dimnames(catmod)[[1]],idata)
 		disD  = catmod[,,kk,"discard"]
 		disD  = disD[idata,jj,drop=FALSE]
+#if (k==2) {browser();return()}
 
 		### Add in the RRF discards
 		sppnew[icalc,jj,kk]  = sppnew[icalc,jj,kk]   + disC[icalc,jj]
@@ -667,6 +675,7 @@ buildCatch=function(dbdat, sql=FALSE, strSpp="424", dfld="ORF",
 	sppnew[,,"10"] = apply(sppnew[,,as.character(fid)],1:2,sum)  ### sum across fisheries
 	if (diagnostics){
 		plotData(sppnew[,,"10"],paste("sppnew for ",fidnam[10]," by major",sep=""),col=clrs.major[mm])
+		collectFigs(path="./CRdiag",width=5,capskip=-20,is.fnum=TRUE)
 	}
 	expr=paste("cat",strSpp,"rec=sppnew; save(\"cat",strSpp,"rec\",file=\"cat",strSpp,"rec.rda\")",sep="")
 	eval(parse(text=expr))
@@ -779,40 +788,3 @@ plotData =function(x,description="something",
 	invisible() }
 
 #===============================================================================
-# RBR - Redbanded Rockfish
-#x=buildCatch(sql=TRUE,strSpp="401",dfld="ORF",wmf=FALSE,pwd=c("haighr","haighr357"))
-#x=buildCatch(cat401orf,strSpp="401",dfld="ORF",eps=TRUE)
-
-# POP - Pacific Ocean Perch
-#x=buildCatch(sql=TRUE,strSpp="396",dfld="TRF",wmf=TRUE,pwd=c("haighr","haighr357"))
-#x=buildCatch(cat396orf,strSpp="396",dfld="TRF",wmf=TRUE)
-#x=buildCatch(cat396orf,strSpp="396",dfld="TRF",wmf=TRUE) #---not good
-
-# YMR - Yellowmouth Rockfish
-#x=buildCatch(sql=T,strSpp="440",dfld="TRF",wmf=T,pwd=c("haighr","haighr357"))
-#x=buildCatch(cat440orf,strSpp="440",dfld="TRF",wmf=T)
-
-# LST - Longspine thornyhead
-#x=buildCatch(sql=T,strSpp="453",wmf=T,pwd=c("haighr","haighr357"))
-#x=buildCatch(cat453orf,strSpp="453",wmf=T)
-
-# RER - Rougheye rockfish
-#x=buildCatch(sql=T,strSpp="394",wmf=T,pwd=c("haighr","haighr357"))
-#x=buildCatch(cat439orf,strSpp="394",wmf=T)
-
-# QBR - Quilback rockfish
-#x=buildCatch(sql=T,strSpp="424",dfld="ORF",wmf=T,pwd=c("haighr","haighr357"))
-#x=buildCatch(cat424orf,strSpp="424",dfld="ORF",wmf=T)
-
-# YYR - Yelloweye rockfish
-#x=buildCatch(sql=TRUE,strSpp="442",wmf=TRUE,pwd=c("haighr","haighr357"))
-#x=buildCatch(sql=T,strSpp="442",refyrs=1982:2009,wmf=T,pwd=c("haighr","haighr357"))
-#x=buildCatch(cat442orf,strSpp="442",wmf=T)
-
-# Nathan Taylor
-# Splitnose (412), Greenstriped (414), Redstripe (439), Harlequin (446), Sharpchin (450)
-#x=buildCatch(sql=T,strSpp="414",wmf=T,pwd=c("haighr","haighr357"))
-#x=buildCatch(cat412orf,strSpp="412",wmf=T,pwd=c("haighr","haighr357"))
-
-#source("getFile.r"); source("getData.r"); source("calcRatio.r")
-

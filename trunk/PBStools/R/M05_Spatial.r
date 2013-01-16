@@ -220,15 +220,15 @@ calcSurficial <- function(surf="qcb", hab,
 	invisible() }
 #------------------------------------calcSurficial
 
-#clarify--------------------------------2009-07-31
+#clarify--------------------------------2013-01-10
 #  Analyse catch proportions in blocks, then cluster into fisheries groups.
 #  Initially, done to address the CASSIS proposal and its impact (John Pringle).
 #  CASSIS = CAScadia SeISmic experiment
 #-----------------------------------------------RH
-clarify <- function(dat, wmf=FALSE, cell=c(0.1,0.075), nG=8,
+clarify <- function(dat, cell=c(0.1,0.075), nG=8,
    xlim=c(-134.2,-127), ylim=c(49.6,54.8), zlim=NULL, targ="YMR", 
    clrs=c("red","orange","yellow","green","forestgreen","deepskyblue",
-   "blue","midnightblue"), hpage=10) {
+   "blue","midnightblue"), wmf=FALSE, eps=FALSE, hpage=10) {
 
 	tcomp <- function(x,i) {
 		iU <- sort(unique(i))
@@ -262,6 +262,7 @@ clarify <- function(dat, wmf=FALSE, cell=c(0.1,0.075), nG=8,
 	gx <- seq(xlim[1],xlim[2],cell[1]); gy <- seq(ylim[1],ylim[2],cell[length(cell)])
 	agrid <- makeGrid(x=gx,y=gy,projection="LL",zone=9,byrow=TRUE,addSID=FALSE)
 
+#browser();return()
 	events <- data.frame(EID=dat$EID,X=dat$X,Y=dat$Y,Z=dat$tcat)
 	events <- na.omit(events)
 	attr(events,"class") <- c("EventData","data.frame")
@@ -331,9 +332,14 @@ clarify <- function(dat, wmf=FALSE, cell=c(0.1,0.075), nG=8,
 
 	#--Plot-results---------------------------------------------
 	# Try to automate based on par()$pid - plot must be ready on-screen first
+	dev=TRUE; plop = list(dev=dev,eps=eps,wmf=wmf)
+	for (i in c("dev","eps","wmf")) {
+		ii = plop[[i]]
+		if (ii) {
 	PIN = par()$pin/max(par()$pin)*hpage
-	fn = paste(ifelse(is.null(targ),"ALL",targ),"-Clara-nG",nG,".wmf",sep="")
-	if (wmf) win.metafile(fn,width=PIN[1],height=PIN[2]) # OTHER
+	fn = paste(fnam,ifelse(is.null(targ),"",targ),"-Clara-nG",nG,"-(",paste(round(PIN,1),collapse="x"),")",sep="")
+	if (i=="eps" && ii) postscript(paste(fn,".eps",sep=""),width=PIN[1],height=PIN[2],paper="special") 
+	else if (i=="wmf" && ii) win.metafile(paste(fn,".wmf",sep=""),width=PIN[1],height=PIN[2])
 	else resetGraph()
 	getFile(nepacLL,use.pkg=TRUE)
 
@@ -349,7 +355,8 @@ clarify <- function(dat, wmf=FALSE, cell=c(0.1,0.075), nG=8,
 			cex=ifelse(wmf,0.8,0.7),adj=1,xjust=1,yjust=0,text.col="blue",title=targ)
 	.addAxis(xlim=xlim,ylim=ylim,tckLab=FALSE,tck=0.014,tckMinor=.007)
 	box()
-	if (wmf) dev.off()
+	if (i!="dev" && ii) dev.off()
+	}	}
 	invisible() }
 #------------------------------------------clarify
 
