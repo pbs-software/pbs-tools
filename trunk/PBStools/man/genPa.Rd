@@ -63,7 +63,7 @@ genPa( np = 40,
 }
 \examples{
 pbsfun=function(){
-  genPa(); unpackList(PBSfish); unpackList(theta)
+  genPa(); unpackList(ttget(PBSfish)); unpackList(theta)
   par0 = par(no.readonly=TRUE); on.exit(par(par0))
   expandGraph(mfrow=c(2,2),mar=c(1,4,1,0.5),oma=c(3,0,0,0),mgp=c(2,.5,0))
   for (i in c("Sa","Ba","Ra","pa")) {

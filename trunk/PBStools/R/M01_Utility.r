@@ -27,6 +27,7 @@
 #  spooler.........Spools list objects into fields of data frames.
 #  stdConc.........Standardise a chemical concentration.
 #  toUpper         Capitalise first letter of each word in phrase
+#  ttget           Provide wrappers for PBSmodelling functions tget/tcall/tprint/tput/lisp
 #  wrapText........Wrap, mark and indent a long text string.
 #  zapDupes........Delete duplicated records based on specified index.
 #
@@ -135,7 +136,7 @@ confODBC <- function(dsn="PacHarvest",server="GFDB",db="PacHarvest",
                      driver="SQL Server",descr="",trusted=TRUE) {
 	#use forward slashes "/" for server otherwise the translation
 	#is too dependent on the number of times "\" is escaped
-	getFile(".PBSserver",path=.getSpath())
+	getFile(".PBSserver",path=.getSpath(),tenv=penv())
 	if (is.element(server,names(.PBSserver))) server <- .PBSserver[server]
 	syntax <- paste("{CONFIGDSN \"",driver,"\" \"DSN=",dsn,
 		"|Description=",descr,"|SERVER=",server,"|Trusted_Connection=",
@@ -218,7 +219,7 @@ createDSN <- function(trusted=TRUE) {
 #-----------------------------------------------RH
 crossTab = function(x=PBSdat, y=c("year","major"), 
      z="landed", func=function(x){sum(x)/1000.}, ...) {
-	require(reshape)
+	if (!require(reshape, quietly=TRUE)) stop("`reshape` package is required")
 	x=x;  flds=names(x)
 	if (!all(is.element(setdiff(y,"year"),flds)))
 		stop ("Not all specified 'z' in dataframe")
@@ -272,7 +273,7 @@ flagIt = function(a, b, A=45, r=0.2, n=1, ...){
 	return(invisible(list(xvec=xvec,yvec=yvec,rads=rads,x0=x0,x=x,y=y)))
 }
 
-#getData--------------------------------2013-01-10
+#getData--------------------------------2013-01-17
 # Get data from a variety of sources.
 #-----------------------------------------------RH
 getData <-function(fqtName, dbName="PacHarvest", strSpp=NULL, server=NULL,
@@ -280,7 +281,7 @@ getData <-function(fqtName, dbName="PacHarvest", strSpp=NULL, server=NULL,
      noFactors=TRUE, noLogicals=TRUE, rownum=0, mindep=NULL, 
      maxdep=NULL, surveyid=NULL, survserid=NULL, fisheryid=NULL, 
      logtype=NULL, doors=NULL, speed=NULL, mnwt=NULL, tarSpp=NULL, 
-     major=NULL, top=NULL, dummy=NULL, ...) {
+     major=NULL, top=NULL, dummy=NULL, tenv=.GlobalEnv, ...) {
 
 	if (missing(fqtName)) showError("Specify 'fqtName'")
 	if (dbName=="") showError("Specify 'dbName'")
@@ -288,13 +289,13 @@ getData <-function(fqtName, dbName="PacHarvest", strSpp=NULL, server=NULL,
 	strQ=as.character(substitute(fqtName)) ### string name
 	if (length(strQ)>1 && any(strQ=="paste"))
 		strQ = fqtName
-	env=parent.frame(1)
-	if (exists(strQ,where=env) && length(get(strQ,envir=env))==1 && is.character(get(strQ,envir=env)))
-		fqtName=get(strQ,envir=env)         ### variable string name
+	pfenv=parent.frame(1)
+	if (exists(strQ,where=pfenv) && length(get(strQ,envir=pfenv))==1 && is.character(get(strQ,envir=pfenv)))
+		fqtName=get(strQ,envir=pfenv)       ### variable string name
 	else fqtName=strQ
 	envs=sys.frames()                      ### list all environments currently open
 	if (type=="FILE") {
-		expr=paste("getFile(\"",fqtName,"\",path=\"",path,"\",try.all.frames=TRUE); ",sep="")
+		expr=paste("getFile(\"",fqtName,"\",path=\"",path,"\",try.all.frames=TRUE,tenv=penv()); ",sep="")
 		expr=paste(expr,"PBSdat=",fqtName,";",sep="")
 		expr=paste(expr," attr(PBSdat,\"fqt\")=\"",fqtName,"\"",sep="")
 		eval(parse(text=expr)) }
@@ -429,11 +430,11 @@ getData <-function(fqtName, dbName="PacHarvest", strSpp=NULL, server=NULL,
 			else
 				strQ <- gsub(pattern="@originid",replacement="'Y','N'",x=strQ)
 			if (is.null(surveyid)){
-				getData("select SURVEY_ID FROM SURVEY","GFBioSQL",type="SQLX")
+				getData("select SURVEY_ID FROM SURVEY","GFBioSQL",type="SQLX",tenv=penv())
 				surveyid=PBSdat[[1]] }
 			strQ <- gsub(pattern="@surveyid",replacement=paste(surveyid,collapse=","),x=strQ)
 			if (is.null(survserid)){
-				getData("select SURVEY_SERIES_ID FROM SURVEY","GFBioSQL",type="SQLX")
+				getData("select SURVEY_SERIES_ID FROM SURVEY","GFBioSQL",type="SQLX",tenv=penv())
 				survserid=sort(unique(PBSdat[[1]])) }
 			strQ <- gsub(pattern="@survserid",replacement=paste(survserid,collapse=","),x=strQ)
 			strQ <- gsub(pattern="@fisheryid",replacement=ifelse(is.null(fisheryid),
@@ -450,7 +451,7 @@ getData <-function(fqtName, dbName="PacHarvest", strSpp=NULL, server=NULL,
 			strQ <- gsub(pattern="@dummy",replacement=ifelse(is.null(dummy),"''",
 				ifelse(is.numeric(dummy),paste(dummy,collapse=","),
 				ifelse(is.character(dummy),paste("'",paste(dummy,collapse="','"),"'",sep=""),"''"))),x=strQ)
-			assign("sql",strQ,envir=.GlobalEnv)
+			assign("sql",strQ,envir=tenv)
 			expr <-paste("datt=.getSQLdata(dbName=\"",dbName,"\",strSQL=\"",strQ,
 			"\",server=\"",server,"\",type=\"",type,"\",trusted=",trusted,
 			",uid=\"",uid,"\",pwd=\"",pwd,"\",...)",sep="")
@@ -464,10 +465,12 @@ getData <-function(fqtName, dbName="PacHarvest", strSpp=NULL, server=NULL,
 		PBSdat <- datt
 		if (!is.null(strSpp)) { 
 			attr(PBSdat,"spp") <- strSpp;  attr(PBSdat,"sql") <- strQ }
-		attr(PBSdat,"db") <- dbName;  attr(PBSdat,"fqt") <- fqtName }
-		else {
-		assign("PBSdat",NULL,envir=.GlobalEnv)
-		showError(paste("No",type,"table available")) }
+		attr(PBSdat,"db") <- dbName;  attr(PBSdat,"fqt") <- fqtName
+	}
+	else {
+		assign("PBSdat",NULL,envir=tenv)
+		showError(paste("No",type,"table available"))
+	}
 	if (noFactors) {
 		z <- sapply(PBSdat,is.factor)
 		if (any(z==TRUE)) {
@@ -476,11 +479,11 @@ getData <-function(fqtName, dbName="PacHarvest", strSpp=NULL, server=NULL,
 		z <- sapply(PBSdat,is.logical)
 		if (any(z==TRUE)) {
 			for (i in (1:length(z))[z]) PBSdat[,i] <- substring(as.character(PBSdat[,i]),1,1) } }
-	assign("PBSdat",PBSdat,envir=.GlobalEnv)
+	assign("PBSdat",PBSdat,envir=tenv)
 	timeF = round(proc.time()[1:3]-timeF0,2)
 	if (type %in% c("SQL","ORA"))  FQtime = rbind(timeF,timeQ)
 	else FQtime = timeF
-	assign("FQtime",FQtime,envir=.GlobalEnv)
+	assign("FQtime",FQtime,envir=tenv)
 	junk=gc(verbose=FALSE) ### garbage collection (shunt messages to junk also)
 	invisible(strQ) }
 #------------------------------------------getData
@@ -491,11 +494,11 @@ getData <-function(fqtName, dbName="PacHarvest", strSpp=NULL, server=NULL,
 .getSQLdata <- function(dbName, qtName=NULL, strSQL=NULL,
      server=NULL, type="SQL", trusted=TRUE, uid="", pwd="", 
      rownum=0,...) {
-	require(RODBC)
+	if (!require(RODBC, quietly=TRUE)) stop("`RODBC` package is required")
 	### Use forward slashes "/" for server otherwise the translation
 	### is too dependent on the number of times "\" is escaped
 	if (is.null(server) || server=="") {
-		getFile(".PBSserver", path = .getSpath())
+		getFile(".PBSserver", path = .getSpath(),tenv=penv())
 		server = .PBSserver[1]; type="SQL" }
 	if (type=="SQL") driver="SQL Server"
 	else if (type=="ORA") driver="Oracle ODBC Driver" ### "Microsoft ODBC for Oracle"
@@ -506,7 +509,7 @@ getData <-function(fqtName, dbName="PacHarvest", strSpp=NULL, server=NULL,
 	if (!trusted) syntax <- paste(syntax,";UID=",uid,";PWD=",pwd,sep="")
 	if (type=="ORA") syntax = paste(syntax,";TLO=0;QTO=F",sep="")
 	syntax=gsub("/","\\\\",syntax) ### finally convert "/" to "\\"
-	assign("cns",syntax,envir=.GlobalEnv)
+	assign("cns",syntax,envir=.PBStoolEnv)
 	cnn <- odbcDriverConnect(connection=syntax)
 	if (is.null(qtName) && is.null(strSQL))
 		showError("Must specify either 'qtName' or 'strSQL'")
@@ -531,7 +534,7 @@ getData <-function(fqtName, dbName="PacHarvest", strSpp=NULL, server=NULL,
 # Retrieves a data frame from MDB query or table
 #-----------------------------------------------RH
 .getMDBdata <- function(mdbTable,qtName,rownum=0,...) {
-	require(RODBC)
+	if (!require(RODBC, quietly=TRUE)) stop("`RODBC` package is required")
 	cnn <- odbcConnectAccess(access.file=mdbTable)
 	query=paste("SELECT ",ifelse(rownum>0,paste("TOP",rownum),"")," * FROM ",qtName,sep="")
 	dat <- sqlQuery(cnn, query, ...)
@@ -543,7 +546,7 @@ getData <-function(fqtName, dbName="PacHarvest", strSpp=NULL, server=NULL,
 #-----------------------------------------------RH
 .getDBFdata <- function(dbfTable,qtName,...) {
 	if (nchar(qtName)>8) showError("Rename DBF file using 8 or less characters")
-	require(RODBC)
+	if (!require(RODBC, quietly=TRUE)) stop("`RODBC` package is required")
 	cnn <- odbcConnectDbase(dbf.file=dbfTable)
 	dat <- sqlQuery(cnn, paste("SELECT * FROM",qtName),...)
 	odbcClose(cnn)
@@ -553,19 +556,19 @@ getData <-function(fqtName, dbName="PacHarvest", strSpp=NULL, server=NULL,
 # Retrieves data from an XLS worksheet
 #-----------------------------------------------RH
 .getXLSdata <- function(xlsTable,qtName) {
-	require(RODBC)
+	if (!require(RODBC, quietly=TRUE)) stop("`RODBC` package is required")
 	cnn <- odbcConnectExcel(xls.file=xlsTable)
 	dat <- sqlFetch(cnn, qtName)
 	odbcClose(cnn)
 	return(dat) };
 #====================================getData group
 
-#getFile--------------------------------2010-08-26
+#getFile--------------------------------2013-01-17
 # Get a dataset searching:
 # 1. binary libraries, 2. binary local (.rda), 
 # 3. dumped data (.r), 4. comma-delimited text files (.csv,.txt)
 #-----------------------------------------------RH
-getFile <- function(..., list=character(0), path=getwd(), scope="L", 
+getFile <- function(..., list=character(0), path=getwd(), tenv=.GlobalEnv,
      use.pkg=FALSE, reload=FALSE, try.all.frames=FALSE,
      use.all.packages=FALSE) {
 
@@ -577,18 +580,17 @@ getFile <- function(..., list=character(0), path=getwd(), scope="L",
 	for (i in gfnam) {
 		zi=is.element(gfnam,i) # placement boolean
 		for (j in tryN) {
-			tenv=sys.frame(j)
-			if (isThere(i,envir=tenv)) {
-				ival=get(i,envir=tenv)
+			jenv=sys.frame(j)
+			if (isThere(i,envir=jenv)) {
+				ival=get(i,envir=jenv)
 				if (length(ival)==1 && is.character(ival))
 					gfnam[zi]=get(i,envir=penv) # variable string name
-				if (isThere(gfnam[zi],envir=tenv))
+				if (isThere(gfnam[zi],envir=jenv))
 					names(gfnam)[zi]=j
 				break
 			} # exists
 		}    # end j loop
 	}       # end i loop
-	if (scope=="L") env <- parent.frame(1) else env <- .GlobalEnv
 	if (use.pkg) {
 		warn <- options()$warn; options(warn=-1)
 		# available datsets from packages either loaded or installed (latter can be slow)
@@ -596,23 +598,23 @@ getFile <- function(..., list=character(0), path=getwd(), scope="L",
 		options(warn=warn) }
 	for (i in gfnam) {
 		ii=as.numeric(names(gfnam)[match(i,gfnam)])
-		if ( reload || !any(i==ls(envir=env)) ) { 
+		if ( reload || !any(i==ls(envir=tenv)) ) { 
 			if (!reload && ii >= 0) 
-				eval(parse(text=paste("assign(\"",i,"\",get(\"",i,"\",envir=sys.frame(",ii,")),envir=env)",sep="")))
+				eval(parse(text=paste("assign(\"",i,"\",get(\"",i,"\",envir=sys.frame(",ii,")),envir=tenv)",sep="")))
 			else if (!reload && use.pkg && is.element(i,Gdata) )
-				eval(parse(text = paste("data(", i, ", envir=env)", sep = "")))
+				eval(parse(text = paste("data(", i, ", envir=tenv)", sep = "")))
 			else {
 				rda = paste(path,"/",i,".rda",sep=""); rnam = paste(path,"/",i,".r", sep = "")
 				csv = paste(path,"/",i,".csv",sep=""); txt  = paste(path,"/",i,".txt", sep = "")
-				if (file.exists(rda)) load(rda,envir=env)
-				else if (file.exists(rnam)) sys.source(rnam,envir=env)
+				if (file.exists(rda)) load(rda,envir=tenv)
+				else if (file.exists(rnam)) sys.source(rnam,envir=tenv)
 				else if (file.exists(csv) || file.exists(txt)) {
 					if (file.exists(csv)) TXT=csv else TXT=txt
 					expr=paste("temp=read.table(\"",TXT,"\",header=TRUE,sep=\",\",stringsAsFactors=FALSE)",sep="")
-					expr=paste(expr,paste("assign(\"",i,"\",temp,envir=env)",sep=""),sep=";")
+					expr=paste(expr,paste("assign(\"",i,"\",temp,envir=tenv)",sep=""),sep=";")
 					eval(parse(text=expr)) } 
 				else {
-					envN=environmentName(env);  print(env)
+					envN=environmentName(tenv);  print(tenv)
 					if (envN=="") envN=paste("local environment (frame",
 						ifelse(length(tryN)>1,"s "," "),paste(tryN,collapse=","),")",sep="")
 					mess=paste("'",i,"' cannot be found. Checked:",sep="")
@@ -667,18 +669,20 @@ isThere = function(x, envir=parent.frame()) {
 #lenv-----------------------------------2010-05-25
 # Get the local/parent/global environment.
 #-----------------------------------------------RH 
-	lenv = function(){ sys.frame(sys.nframe()) } # local environment
-	penv = function(){ parent.frame() }          # parent environment
-	genv = function(){ .GlobalEnv }              # global environment
+	lenv = function(){ sys.frame(sys.nframe()-1) } # local environment (probably the same as parent.frame())
+	penv = function(){ parent.frame() }            # parent environment
+	genv = function(){ .GlobalEnv }                # global environment
 
-#listTables-----------------------------2010-06-02
+#listTables-----------------------------2013-01-17
 # List tables in specified SQL, ORA, or MDB database.
 #-----------------------------------------------RH
-listTables <- function (dbName, pattern=NULL, path=getwd(), server=NULL,
-    type="SQL", ttype=NULL, trusted=TRUE, uid="", pwd="", silent=FALSE) {
-	require(RODBC)
+listTables <- function (dbName, pattern=NULL, path=getwd(), 
+   server=NULL, type="SQL", ttype=NULL, trusted=TRUE, uid="", 
+   pwd="", silent=FALSE, tenv=.GlobalEnv)
+{
+	if (!require(RODBC, quietly=TRUE)) stop("`RODBC` package is required")
 	if (is.null(server)) {
-		getFile(".PBSserver", path = .getSpath())
+		getFile(".PBSserver", path=.getSpath(), tenv=penv())
 		server = .PBSserver[1] }
 	if (type=="SQL") driver="SQL Server"
 	else if (type=="ORA") driver="Oracle ODBC Driver" # DFO standard
@@ -693,10 +697,10 @@ listTables <- function (dbName, pattern=NULL, path=getwd(), server=NULL,
 		cnn <- odbcDriverConnect(connection = syntax)  }
 	else if (type=="MDB") {
 		cnn = odbcConnectAccess(access.file=mdbTable) }
-	assign("cns",cnn,envir=.GlobalEnv)
+	assign("cns",cnn,envir=tenv)
 	if (type=="ORA") dat = sqlTables(cnn,schema=dbName)
 	else             dat = sqlTables(cnn)
-	assign("PBSdat",dat,envir=.GlobalEnv)
+	assign("PBSdat",dat,envir=tenv)
 	odbcClose(cnn)
 
 	if (!is.null(ttype)) dat=dat[is.element(dat$TABLE_TYPE,ttype),]
@@ -704,6 +708,7 @@ listTables <- function (dbName, pattern=NULL, path=getwd(), server=NULL,
 	if (!is.null(pattern)) tabs <- findPat(pattern,tabs)
 	if (!silent) print(tabs)
 	invisible(tabs) }
+#---------------------------------------listTables
 
 #makeLTH--------------------------------2012-09-27
 # Make a longtable header for Sweave, source:
@@ -730,7 +735,7 @@ makeLTH <- function(xtab.table, table.caption, table.label) {
 		"\\endfoot ","\\hline \\endlastfoot ",collapse = "")
 	return(longtable.header)
 }
-#^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^makeLTH
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~makeLTH
 
 #prime----------------------------------2010-03-25
 # Report the prime numbers given an integer vector
@@ -756,9 +761,7 @@ revStr <- function(x)
 # runModules: Display a master GUI to display modules
 #-----------------------------------------------RH
 runModules <- function () {
-	#if (!require(PBSmodelling, quietly=TRUE)) stop("PBSmodelling package is required")
 	if (!require(PBStools, quietly=TRUE)) stop("PBStools package is required")
-	#if (!require(PBSmapx, quietly=TRUE)) stop("PBSmapx package is required")
 	.runModHelper <- function() {
 		getWinVal(scope = "L");  act <- getWinAct()[1]
 		if (!exists("act") || !exists("eN")) return()
@@ -781,8 +784,8 @@ runModules <- function () {
 		closeWin(c("window",paste("mod",pad0(1:20,2),sep=""),"runM"))
 		return()
 	}
-	assign(".runModHelper",.runModHelper,envir=.GlobalEnv)
-	assign(".runModHelperQuit",.runModHelperQuit,envir=.GlobalEnv)
+	assign(".runModHelper",.runModHelper,envir=.PBStoolEnv)
+	assign(".runModHelperQuit",.runModHelperQuit,envir=.PBStoolEnv)
 	wpath <- .getWpath()
 	rtmp <- tempdir(); rtmp <- gsub("\\\\","/",rtmp)
 	wnam <- paste(wpath,"runModulesWin.txt",sep="/")
@@ -825,10 +828,11 @@ showMessage <- function(str, type="", as.is=FALSE, err=FALSE, ...) {
 	evalCall(addLabel,argu=list(x=.5,y=.5,txt=msg,cex=1.2,col="red"),...,checkpar=TRUE)
 	if (err) stop("See display",call.=FALSE) 
 	invisible()}
+
 showError=function(str, type="", as.is=FALSE, err=TRUE, ...) {
 	showMessage(str=str, type=type, as.is=as.is, err=err, ...) 
 	invisible()}
-#----------------------------------------showError
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~showError
 
 #spooler--------------------------------2008-08-21
 # Spools list objects into fields of data frames.
@@ -868,8 +872,8 @@ spooler <- function(xlist,newfld="area",target){
 #  dUout  = denominator unit desired
 #  fac    = multiplicative factor (e.g., 75 for 75 mg)
 #-----------------------------------------------RH
-stdConc = function(dat, nUout="mg", dUout="kg", fac=1) {
-
+stdConc = function(dat, nUout="mg", dUout="kg", fac=1)
+{
 	oldopts = options(); on.exit(options(oldopts))
 	options(stringsAsFactors=FALSE)
 	namt=as.numeric(dat[1]); nunit=dat[2]; 
@@ -949,6 +953,15 @@ toUpper = function(x,exclude=c("&","and","exact","or","in","on","organic","pelag
 	return(strV)
 }
 #^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^toUpper
+
+#ttget----------------------------------2013-01-17
+# Provide wrappers for PBSmodelling functions tget/tcall/tprint/tput/lisp
+#-----------------------------------------------RH 
+ttget   = function(...) {tget  (..., penv=parent.frame(), tenv=.PBStoolEnv)}
+ttcall  = function(...) {tcall (..., penv=parent.frame(), tenv=.PBStoolEnv)}
+ttprint = function(...) {tprint(..., penv=parent.frame(), tenv=.PBStoolEnv)}
+ttput   = function(...) {tput  (..., penv=parent.frame(), tenv=.PBStoolEnv)}
+tlisp   = function(...) {lisp  (..., pos =.PBStoolEnv)}
 
 #wrapText-------------------------------2008-09-17
 # Wrap, mark and indent a long text string.
@@ -1033,7 +1046,7 @@ zapDupes = function(dat, index) {
 	if (is.null(nam)) {
 		if (exists(".PBSmod",envir=.PBSmodEnv) && !all(substring(names(tcall(.PBSmod)),1,1)=="."))
 			nam=getWinVal(scope="L")$plotname
-		if (is.null(nam) & exists("PBSfish")) nam=PBSfish$plotname
+		if (is.null(nam) & exists("PBSfish",envir=.PBStoolEnv)) nam=ttcall(PBSfish)$plotname
 		if (is.null(nam)) nam="Rplot" }
 	if (is.null(act)) {
 		if (exists(".PBSmod",envir=.PBSmodEnv) && !all(substring(names(tcall(.PBSmod)),1,1)==".")) {

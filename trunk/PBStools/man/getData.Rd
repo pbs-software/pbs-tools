@@ -12,7 +12,7 @@ getData(fqtName, dbName="PacHarvest", strSpp=NULL, server=NULL,
      noFactors=TRUE, noLogicals=TRUE, rownum=0, mindep=NULL, 
      maxdep=NULL, surveyid=NULL, survserid=NULL, fisheryid=NULL, 
      logtype=NULL, doors=NULL, speed=NULL, mnwt=NULL, tarSpp=NULL, 
-     major=NULL, top=NULL, dummy=NULL, ...)
+     major=NULL, top=NULL, dummy=NULL, tenv=.GlobalEnv, ...)
 }
 \arguments{
   \item{fqtName}{string specifying name of file, query, or table; 
@@ -57,18 +57,19 @@ getData(fqtName, dbName="PacHarvest", strSpp=NULL, server=NULL,
   \item{major}{numeric specifying PMFC major area codes(s) for the SQL variable \code{@major}.}
   \item{top}{numeric specifying top \emph{N} records for the SQL variable \code{@top}.}
   \item{dummy}{numeric or character to use \emph{ad hoc} wherever the SQL variable \code{@dummy} appears.}
+  \item{tenv}{target environment to which the result object \code{PBSdat} will be sent.}
   \item{...}{additional arguments for \code{RODBC}'s function \code{sqlQuery} 
     (specifically if the user wishes to specify \code{rows_at_time=1}).}
 }
 \details{
-  The data table retrieved is placed in the global data frame object \code{PBSdat}.
+  The data table retrieved is placed in the data frame object \code{PBSdat}.
   If the type is \code{MDB}, the query/table name and the database name 
   are attached as attributes. If the type is \code{SQL} or \code{ORA}, the DB name, query name,
   and SQL code are attached as attributes.
 }
 \value{
   No value is explicitly returned; data frame is retrieved and place in the 
-  global environment as an object called \code{PBSdat}.
+  target environment as an object called \code{PBSdat}.
 }
 \author{
   Rowan Haigh, Pacific Biological Station, Fisheries and Oceans Canada, Nanaimo BC

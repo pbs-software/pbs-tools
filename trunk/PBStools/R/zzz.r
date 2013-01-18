@@ -1,4 +1,5 @@
-.PBStoolEnv <- new.env(FALSE, parent=globalenv())  # Taking cue from Roger Bivand's maptools
+# Taking cue from Roger Bivand's maptools:
+.PBStoolEnv <- new.env(FALSE, parent=globalenv())  # be sure to exportPattern("^\\.PBS") in NAMESPACE
 
 .onLoad <- function(lib,pkg)
 {

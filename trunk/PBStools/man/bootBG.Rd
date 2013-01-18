@@ -9,7 +9,7 @@
 \usage{
 bootBG(dat=pop.pmr.qcss, K=100, S=100, R=500, 
        SID=NULL, ci=seq(0.1,0.9,0.1), 
-       lims=c("emp","norm","basic","perc","bca"), allo=0, scope="G")
+       lims=c("emp","norm","basic","perc","bca"), allo=0)
 }
 \arguments{
   \item{dat}{data frame with fields: \cr
@@ -29,9 +29,6 @@ bootBG(dat=pop.pmr.qcss, K=100, S=100, R=500,
     \code{ci=c(0.90,0.95)} gives confidence limits \code{(0.025,0.05,0.95,0.975)}.}
   \item{lims}{bootstrap confidence limit types to compute (see \code{boot::boot.ci}).}
   \item{allo}{tow allocation scheme: \code{0} = existing, \code{1} = optimal.}
-  \item{scope}{string specifying either local \code{"L"} or global 
-    \code{"G"} location of data file \code{dat}.}
-
 }
 \details{
   This function depends on the R package \pkg{boot}. The user supplies

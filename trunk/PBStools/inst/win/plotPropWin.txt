@@ -89,9 +89,9 @@ grid 3 1 sticky=NW
 			button text="WMF" bg=gold     function=.plotDev action=wmf font="8" width=4
 		label text=csv font="8" padx=5
 		button text=pa bg=lightpink function=doAction width=4 \
-			action="ss=getWinVal()$spp; expr=paste(`page`,ss,`=PBSfish$pa; attr(page`,ss,`,\\`spp\\`)=\\``,ss,`\\`; write.csv(page`,ss,`,\\`page`,ss,`.csv\\`); dump(\\`page`,ss,`\\`,\\`page`,ss,`.r\\`); save(\\`page`,ss,`\\`,file=\\`page`,ss,`.rda\\`)`,sep=``); eval(parse(text=expr))"
+			action="ss=getWinVal()$spp; expr=paste(`page`,ss,`=ttcall(PBSfish)$pa; attr(page`,ss,`,\\`spp\\`)=\\``,ss,`\\`; write.csv(page`,ss,`,\\`page`,ss,`.csv\\`); dump(\\`page`,ss,`\\`,\\`page`,ss,`.r\\`); save(\\`page`,ss,`\\`,file=\\`page`,ss,`.rda\\`)`,sep=``); eval(parse(text=expr))"
 		button text=Na bg=lightsalmon function=doAction width=4 \
-			action="ss=getWinVal()$spp; expr=paste(`nage`,ss,`=PBSfish$Na; attr(nage`,ss,`,\\`spp\\`)=\\``,ss,`\\`; write.csv(nage`,ss,`,\\`nage`,ss,`.csv\\`); dump(\\`nage`,ss,`\\`,\\`nage`,ss,`.r\\`); save(\\`nage`,ss,`\\`,file=\\`nage`,ss,`.rda\\`)`,sep=``); eval(parse(text=expr))"
+			action="ss=getWinVal()$spp; expr=paste(`nage`,ss,`=ttcall(PBSfish)$Na; attr(nage`,ss,`,\\`spp\\`)=\\``,ss,`\\`; write.csv(nage`,ss,`,\\`nage`,ss,`.csv\\`); dump(\\`nage`,ss,`\\`,\\`nage`,ss,`.r\\`); save(\\`nage`,ss,`\\`,file=\\`nage`,ss,`.rda\\`)`,sep=``); eval(parse(text=expr))"
 	history function=.plotProp.calcP pady=5 sticky="" #import=
 
 

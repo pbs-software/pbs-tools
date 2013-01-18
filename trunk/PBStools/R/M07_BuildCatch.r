@@ -1,4 +1,4 @@
-#buildCatch-----------------------------2012-11-20
+#buildCatch-----------------------------2013-01-16
 # Catch reconstruction algorithm for BC rockfish.
 # Use ratios of species catch to ORF catch for multiple fisheries.
 # Matrix indices: i=year, j=major, k=fid, l='spp'
@@ -10,8 +10,8 @@ buildCatch=function(dbdat, sql=FALSE, strSpp="424", dfld="ORF",
      reconstruct=TRUE, diagnostics=TRUE){
 
 	### Global list object 'PBSfish' stores results from the analysis
-	assign("PBSfish",list(call=match.call(),args=args(buildCatch),module="M07_BuildCatch",
-		spp=strSpp,pD=1,eps=eps,wmf=wmf),envir=.GlobalEnv)
+	assign("PBSfish",list(module="M07_BuildCatch",call=match.call(),args=args(buildCatch),
+		spp=strSpp,pD=1,eps=eps,wmf=wmf),envir=.PBStoolEnv)
 	# pD = Counter for plotData diagnostics
 	### Function to convert numbers to proportions
 	pcalc=function(x){if (all(x==0)) rep(0,length(x)) else x/sum(x)}
@@ -28,7 +28,7 @@ buildCatch=function(dbdat, sql=FALSE, strSpp="424", dfld="ORF",
 	### 1. Compile the historical catches for POP, ORF and TRF
 	### ------------------------------------------------------
 
-	getFile(orfhistory,use.pkg=TRUE,scope="G"); dat=orfhistory ### catch in kg
+	getFile(orfhistory,use.pkg=TRUE,tenv=penv()); dat=orfhistory ### catch in kg
 	hisyrs=sort(unique(dat$year))
 	HISYRS=hisyrs[1]:hisyrs[length(hisyrs)]
 	majhis=sort(unique(dat$major))
@@ -101,7 +101,7 @@ buildCatch=function(dbdat, sql=FALSE, strSpp="424", dfld="ORF",
 	clrs.major[as.character(c(1,3:9))]=c("moccasin","blue","lightblue","yellow","orange","red","seagreen","lightgreen")
 
 	if (saveinfo)
-		packList(c("htab","htabmax","htabadd","hismax","hisadd"),"PBSfish")
+		packList(c("htab","htabmax","htabadd","hismax","hisadd"),"PBSfish",tenv=.PBStoolEnv)
 	### Historical used again on line 335
 
 	### ------------------------------------------------
@@ -140,47 +140,47 @@ buildCatch=function(dbdat, sql=FALSE, strSpp="424", dfld="ORF",
 
 		### PacHarv3 catch summary for fids 1:5 and 0 (unknown)
 		getData("ph3_fcatORF.sql",dbName="HARVEST_V2_0",strSpp=strSpp,path=.getSpath(),
-			server="ORAPROD",type="ORA",trusted=FALSE,uid=uid[1],pwd=pwd[1])
-			assign("ph3dat",PBSdat); rm(PBSdat,envir=.GlobalEnv) ### just to be safe
+			server="ORAPROD",type="ORA",trusted=FALSE,uid=uid[1],pwd=pwd[1],tenv=penv())
+			assign("ph3dat",PBSdat);  rm(PBSdat) ### just to be safe
 			dimnames(ph3dat)[[1]]=1:nrow(ph3dat)
 			save("ph3dat",file="ph3dat.rda")
 
 		### GFCatch records for fids (1,3,5)
-		getData("gfc_fcatORF.sql","GFCatch",strSpp=strSpp,path=.getSpath())
-			assign("gfcdat",PBSdat); rm(PBSdat,envir=.GlobalEnv) ### just to be safe
+		getData("gfc_fcatORF.sql","GFCatch",strSpp=strSpp,path=.getSpath(),tenv=penv())
+			assign("gfcdat",PBSdat); rm(PBSdat) ### just to be safe
 			#gfcdat$year=as.numeric(substring(gfcdat$date,1,4))  ### doesn't appear to be used
 			dimnames(gfcdat)[[1]]=1:nrow(gfcdat)
 			save("gfcdat",file="gfcdat.rda")
 		
 		### PacHarvest records for fids (1)
-		getData("pht_tcatORF.sql","PacHarvest",strSpp=strSpp,path=.getSpath())
-			assign("phtdat",PBSdat); rm(PBSdat,envir=.GlobalEnv) ### just to be safe
+		getData("pht_tcatORF.sql","PacHarvest",strSpp=strSpp,path=.getSpath(),tenv=penv())
+			assign("phtdat",PBSdat); rm(PBSdat) ### just to be safe
 			save("phtdat",file="phtdat.rda")
 
 		### PacHarvHL halibut validation records for fids (2,7)
-		getData("phhl_hcatORF.sql","PacHarvHL",strSpp=strSpp,path=.getSpath())   ### validated (DMP) catch
-			assign("phhdat",PBSdat); rm(PBSdat,envir=.GlobalEnv) ### just to be safe
+		getData("phhl_hcatORF.sql","PacHarvHL",strSpp=strSpp,path=.getSpath(),tenv=penv())   ### validated (DMP) catch
+			assign("phhdat",PBSdat); rm(PBSdat) ### just to be safe
 			save("phhdat",file="phhdat.rda")
 
 		### PacHarvSable fisherlogs for fids (3)
-		getData("phs_scatORF.sql","PacHarvSable",strSpp=strSpp,path=.getSpath(),fisheryid=3,logtype="FISHERLOG")
-			assign("phsdat",PBSdat); rm(PBSdat,envir=.GlobalEnv) ### just to be safe
+		getData("phs_scatORF.sql","PacHarvSable",strSpp=strSpp,path=.getSpath(),fisheryid=3,logtype="FISHERLOG",tenv=penv())
+			assign("phsdat",PBSdat); rm(PBSdat) ### just to be safe
 			save("phsdat",file="phsdat.rda")
 
 		### PacHarvHL validation records for fids (2,4,5)
-		getData("phhl_vcatORF.sql","PacHarvHL",strSpp=strSpp,path=.getSpath())   ### validated (DMP) catch
-			assign("phvdat",PBSdat); rm(PBSdat,envir=.GlobalEnv) ### just to be safe
+		getData("phhl_vcatORF.sql","PacHarvHL",strSpp=strSpp,path=.getSpath(),tenv=penv())   ### validated (DMP) catch
+			assign("phvdat",PBSdat); rm(PBSdat) ### just to be safe
 			save("phvdat",file="phvdat.rda")
 
 		### PacHarvHL fisherlog records for fids (4,5)
-		getData("phhl_fcatORF.sql","PacHarvHL",strSpp=strSpp,path=.getSpath(),logtype="FISHERLOG") ### fisherlog catch
-			assign("phfdat",PBSdat); rm(PBSdat,envir=.GlobalEnv) ### just to be safe
+		getData("phhl_fcatORF.sql","PacHarvHL",strSpp=strSpp,path=.getSpath(),logtype="FISHERLOG",tenv=penv()) ### fisherlog catch
+			assign("phfdat",PBSdat); rm(PBSdat) ### just to be safe
 			save("phfdat",file="phfdat.rda")
 
 		### FOS catch from all fisheries (fid=1:5)
 		getData("fos_vcatORF.sql",dbName="GFFOS",strSpp=strSpp,path=.getSpath(),
-			server="GFSH",type="ORA",trusted=FALSE,uid=uid[2],pwd=pwd[2])
-			assign("fosdat",PBSdat); rm(PBSdat,envir=.GlobalEnv) ### just to be safe
+			server="GFSH",type="ORA",trusted=FALSE,uid=uid[2],pwd=pwd[2],tenv=penv())
+			assign("fosdat",PBSdat); rm(PBSdat) ### just to be safe
 			dimnames(fosdat)[[1]]=1:nrow(fosdat)
 			save("fosdat",file="fosdat.rda")
 
@@ -193,7 +193,7 @@ buildCatch=function(dbdat, sql=FALSE, strSpp="424", dfld="ORF",
 	}
 	else {
 		dbdat=as.character(substitute(dbdat)) ### database list object name
-		expr=paste("getFile(",dbdat,",try.all.frames=TRUE,scope=\"G\"); fnam=names(",dbdat,"); unpackList(",dbdat,")",sep="")
+		expr=paste("getFile(",dbdat,",try.all.frames=TRUE,tenv=penv()); fnam=names(",dbdat,"); unpackList(",dbdat,")",sep="")
 		eval(parse(text=expr)) 
 	}
 #browser();return()
@@ -424,7 +424,7 @@ buildCatch=function(dbdat, sql=FALSE, strSpp="424", dfld="ORF",
 	orfhis=allhis[,,,dfld]
 	if (any(strSpp==c("396"))) rawhis=allhis[,,,"POP"]
 	if (saveinfo)
-		packList(c("catmod","catmod0","catmod1","ctab","MM","mm","allhis"),"PBSfish")
+		packList(c("catmod","catmod0","catmod1","ctab","MM","mm","allhis"),"PBSfish",tenv=.PBStoolEnv)
 	### Terminate here if all you want are the modern landings
 	if (!reconstruct) return(list(catmod0=catmod0,catmod1=catmod1,catmod=catmod)) 
 
@@ -438,7 +438,7 @@ buildCatch=function(dbdat, sql=FALSE, strSpp="424", dfld="ORF",
 	catYM=apply(cref,c(1:2,4),sum,na.rm=TRUE)  ### total catch by year and major
 	catYF=apply(cref,c(1,3:4),sum,na.rm=TRUE)  ### total catch by year and fid
 	if (saveinfo)
-		packList(c("cref","catYM","catMF","catYF"),"PBSfish")
+		packList(c("cref","catYM","catMF","catYF"),"PBSfish",tenv=.PBStoolEnv)
 
 	### alpha - Proportion RRF caught in a major area for each fid
 	alpha=apply(catMF[,,"landed"],2,function(x){
@@ -480,7 +480,7 @@ buildCatch=function(dbdat, sql=FALSE, strSpp="424", dfld="ORF",
 	}
 
 	### delta - Discard rate of landed species per ORF from observer logs
-	assign("PBSfish",PBSfish) ### remember global collection object because 'calcRatio' overwrites it
+	assign("PBSfish",ttget(PBSfish)) ### remember global collection object because 'calcRatio' overwrites it
 	drSpp=list(c("discard","landed"),c("discard","TAR"),c("discard","ORF"))
 	drate=sapply(drSpp,function(x){paste(x,collapse=":")}) ### discard ratio description
 	drN=length(drSpp)                                      ### number of discard rates
@@ -495,10 +495,10 @@ buildCatch=function(dbdat, sql=FALSE, strSpp="424", dfld="ORF",
 		else if (any(k==c(2:5))) {
 			if (any(k==c(2,4,5))) 
 				getData("phhl_fcatORF.sql","PacHarvHL",strSpp=strSpp,
-					path=.getSpath(),fisheryid=k,logtype="OBSERVRLOG")
+					path=.getSpath(),fisheryid=k,logtype="OBSERVRLOG",tenv=penv())
 			if (k==3)
 				getData("phs_scatORF.sql","PacHarvSable",strSpp=strSpp,
-					path=.getSpath(),fisheryid=k,logtype="OBSERVRLOG")
+					path=.getSpath(),fisheryid=k,logtype="OBSERVRLOG",tenv=penv())
 			discat=PBSdat; dyrs=2000:2004 }
 		if (nrow(discat)==0) next
 		ologs[[kk]] = discat
@@ -518,8 +518,8 @@ buildCatch=function(dbdat, sql=FALSE, strSpp="424", dfld="ORF",
 		if (any(k==c(2,3,4)))
 			dfac[jj,kk,"dr"]=dfac[jj,kk,"discard:TAR"]
 	}
-	assign("PBSfish",PBSfish,envir=.GlobalEnv); rm(PBSfish) ### restore to global and remove local
-	save("ologs",file=paste("ologs",strSpp,".rda",sep=""))  ### save observerlogs  with discard information
+	assign("PBSfish",PBSfish,envir=.PBStoolEnv); rm(PBSfish) ### restore to .PBStoolEnv and remove local copy
+	save("ologs",file=paste("ologs",strSpp,".rda",sep=""))   ### save observerlogs  with discard information
 	dfac[is.na(dfac)] = 0; delta = dfac
 	if (diagnostics){
 		for (rate in dimnames(delta)$rate) {
@@ -528,7 +528,7 @@ buildCatch=function(dbdat, sql=FALSE, strSpp="424", dfld="ORF",
 			plotData(t(delta[,,rate]),paste("delta ",rr," (major in fishery)",sep=""),col=clrs.major[mm],type="bars")
 	}	}
 	if (saveinfo)
-		packList(c("alpha","beta","rtar","gamma","delta"),"PBSfish")
+		packList(c("alpha","beta","rtar","gamma","delta"),"PBSfish",tenv=.PBStoolEnv)
 
 	fidnam=c("trawl","halibut","sablefish","sched2","zn","sabzn","sabhal","dogfish","lingcod","combined")
 	fshnam=c("trawl","h&l","trap",rep("h&l",6),"combined")  ### general category vector
@@ -579,7 +579,7 @@ buildCatch=function(dbdat, sql=FALSE, strSpp="424", dfld="ORF",
 		plotData(apply(ancient,c(1,3),sum),"ancient in fishery",col=clrs.fishery)
 	}
 	if (saveinfo)
-		packList(c("cobra","lambda","gamma.lambda","fidnam","fshnam","ancient"),"PBSfish")
+		packList(c("cobra","lambda","gamma.lambda","fidnam","fshnam","ancient"),"PBSfish",tenv=.PBStoolEnv)
 
 	### ----------------------------
 	### 5. Reconstruct the RRF catch
@@ -681,7 +681,7 @@ buildCatch=function(dbdat, sql=FALSE, strSpp="424", dfld="ORF",
 	eval(parse(text=expr))
 
 	if (saveinfo) packList(c("HISYRS","MODYRS","ALLYRS","inone","icalc","idata",
-		"disC","disD","sppnew"),"PBSfish")
+		"disC","disD","sppnew"),"PBSfish",tenv=.PBStoolEnv)
 #browser(); return()
 
 	###-----Plot results-----
@@ -731,7 +731,8 @@ buildCatch=function(dbdat, sql=FALSE, strSpp="424", dfld="ORF",
 	}
 	#options(warn=warn)
 	if (saveinfo) {
-		packList(c("plotname","clrs.major","clrs.fishery","fidlab"),"PBSfish")
+		packList(c("plotname","clrs.major","clrs.fishery","fidlab"),"PBSfish",tenv=.PBStoolEnv)
+		ttget(PBSfish)
 		save("PBSfish",file=paste("PBSfish",strSpp,".rda",sep="")) }
 #browser();return()	
 	invisible(sppnew) }
@@ -756,8 +757,9 @@ plotData =function(x,description="something",
 	xx = x; xx[xx==0] = NA
 	cnam = colnames(x); nc = length(cnam) # column names
 	col =rep(col,nc)[1:nc]; names(col) = cnam
-	pD = PBSfish$pD
-	eps=PBSfish$eps; wmf=PBSfish$wmf
+	pD = ttcall(PBSfish)$pD
+	eps= ttcall(PBSfish)$eps
+	wmf= ttcall(PBSfish)$wmf
 	if (!eps & !wmf) eps=TRUE
 	plotname = paste("CRdiag/pD",pad0(pD,3),"-",gsub(" ","-",description),sep="")
 #browser();return()
@@ -783,7 +785,8 @@ plotData =function(x,description="something",
 	#legend("topleft",col=col[zuse],lwd=2,legend=cnam[zuse],inset=0.025,bty="n",title=zlab)
 	legend(xval[xmin][1],par()$usr[4],col=col[zuse],lwd=2,legend=cnam[zuse],bty="n",title=zlab,xjust=xadj)
 	if (eps|wmf) dev.off()
-	eval(parse(text="PBSfish$pD <<- pD +1"))
+	#eval(parse(text="PBSfish$pD <<- pD +1"))
+	ttget(PBSfish); PBSfish$pD <- pD + 1; ttput(PBSfish)  # increment number of diagnostic plot
 #browser();return()
 	invisible() }
 

@@ -3,8 +3,11 @@ PBStools Changes
 Authors: RH  = Rowan Haigh     NO = Norm Olsen
          LL  = Lisa Lacko     JTS = Jon T. Schnute
 
-1.23  2013-01-16
-  - Uploading for intermediate build. Problems exist because PBStools is highly entwined with PBSmodelling before the latter was retro-fitted with the new working environment `.PBSmodEnv.` (RH 1/16)
+1.23  2013-01-18
+  - Debugged functions to finalise retro-fitting, at least enough to pass Rcheck (sans CRAN flag). (RH 1/18)
+  - Modified functions `getData` and `getFile` to specify which environment the results should be sent to. (RH 1/17)
+  - Retrofit the code to move the working list `PBSfish` to the working environment `.PBStoolEnv`. (RH 1/17)
+  - Uploaded an intermediate build. Problems exist because PBStools is highly entwined with PBSmodelling before the latter was retro-fitted with the new working environment `.PBSmodEnv.` (RH 1/16)
   - Added a new working environment called `.PBStoolEnv`. (RH 1/16)
   - Added function `collectFigs` to collect encapsulated postscript files into one document using latex. (RH 1/16)
   - Added new query `pht_map_catch.sql` (modified slightly from `pht_map_density.sql`) to gather catch by GMU areas, in addition to PMFC areas. (RH 1/14)
