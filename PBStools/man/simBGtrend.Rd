@@ -6,8 +6,8 @@
   (\eqn{p}, \eqn{\mu}, \eqn{\rho}), and display the results.
 }
 \usage{
-simBGtrend(pmr=pop.pmr.qcss, Npred=15, genT=NULL, Nsim=1, yrs=NULL, 
-           alpha=1, scope="G")
+simBGtrend(pmr=pop.pmr.qcss, Npred=15, genT=NULL, Nsim=1,
+   yrs=NULL, alpha=1)
 }
 \arguments{
   \item{pmr}{data frame with fields: \cr
@@ -28,8 +28,6 @@ simBGtrend(pmr=pop.pmr.qcss, Npred=15, genT=NULL, Nsim=1, yrs=NULL,
     \code{alpha=0} applies equal weighting, increasingly positive \code{alpha} values 
     apply exponentially heavier weights to latter observations, and negative \code{alpha}
     values weight earlier observations more heavily.}
-  \item{scope}{string specifying either local \code{"L"} or global 
-    \code{"G"} location of data file \code{pmr}.}
 }
 \details{
   This function attempts to simulate a population past the observed year by 
@@ -59,7 +57,7 @@ simBGtrend(pmr=pop.pmr.qcss, Npred=15, genT=NULL, Nsim=1, yrs=NULL,
   Research Document} \bold{2004/059}, 75 pp.
 }
 \author{ 
-  Rowan Haigh, Pacific Biological Station, Nanaimo BC
+  Rowan Haigh, Pacific Biological Station, Fisheries and Oceans Canada, Nanaimo BC
 }
 \seealso{ 
   \code{\link{getPMR}}, \code{\link{calcPMR}}, \code{\link{sampBG}}

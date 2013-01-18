@@ -18,11 +18,11 @@ boxSeason <- function (fqtName="Ex01_Sample_Info", dbName="Examples.mdb",
 	on.exit(par(par0))
 
 	fnam=paste("Season-",fld,"x",brks,sep="")
-	assign("PBSfish",list(module="M06_Temporal",call=match.call(),plotname=fnam),envir=.GlobalEnv)
+	assign("PBSfish",list(module="M06_Temporal",call=match.call(),plotname=fnam),envir=.PBStoolEnv)
 	if (type=="FILE") {
-		eval(parse(text=paste("getFile(",fqtName,",try.all.frames=TRUE); dat=",fqtName,sep=""))) }
+		eval(parse(text=paste("getFile(",fqtName,",try.all.frames=TRUE,tenv=penv()); dat=",fqtName,sep=""))) }
 	else {
-		getData(fqtName,dbName,type=type,path=path) 
+		getData(fqtName,dbName,type=type,path=path,tenv=penv()) 
 		dat=PBSdat }
 	ramp <- colorRamp(c("yellow","red","darkblue"))
 
@@ -61,7 +61,7 @@ boxSeason <- function (fqtName="Ex01_Sample_Info", dbName="Examples.mdb",
 #browser();return()
 	ylim=c(0, max(sapply(bag[ii],function(x){if(length(x)>0) max(x) else 0 })))
 	stuff=c("dat","brks","labs","bag","ii","bcol")
-	packList(stuff,"PBSfish")
+	packList(stuff,"PBSfish",tenv=.PBStoolEnv)
 
 	if (pdf) pdf(file=paste(fnam,".pdf",sep=""),width=11,height=8.5)
 	else if (wmf) win.metafile(paste(fnam,".wmf",sep=""),width=11,height=8.5)
@@ -121,9 +121,9 @@ calcMA = function(x,y,y2,period=270,every=10) {
 #-----------------------------------------------RH
 imputeRate <- function(qtName="Ex03_Portfolio", dbName="Examples", AID=1, pathN=2, hnam=NULL) {
 
-	if (!require(PBSmodelling)) stop("!!!!!Install package PBSmodelling!!!!!")
-	if (!require(stats))        showAlert("Intall package 'stats'")
-	assign("PBSfish",list(module="M06_Temporal",func="imputeRate",plotname="impute"),envir=.GlobalEnv)
+	if (!require(PBSmodelling)) stop("`PBSmodelling` package is required")
+	if (!require(stats)) stop("`stats` package is required")
+	assign("PBSfish",list(module="M06_Temporal",call=match.call(),args=args(imputeRate),plotname="impute"),envir=.PBStoolEnv)
 	wdir <- paste(system.file(package="PBStools"),"/win",sep="")
 	sdir <- switch(pathN,getwd(),.getSpath())
 	tdir <- tempdir(); tdir <- gsub("\\\\","/",tdir)
@@ -142,8 +142,8 @@ imputeRate <- function(qtName="Ex03_Portfolio", dbName="Examples", AID=1, pathN=
 		gsub("cwd value=1","cwd value=1 selected=TRUE",temp),
 		gsub("sql value=2","sql value=2 selected=TRUE",temp) )
 	writeLines(temp,con=wtmp)
-	.onClose=function() { save("PBSfish",file="PBSfish.rda") }
-	assign(".onClose",.onClose,envir=.GlobalEnv)
+	.onClose=function() { ttget(PBSfish); save("PBSfish",file="PBSfish.rda") }
+	assign(".onClose",.onClose,envir=.PBStoolEnv)
 	createWin(wtmp);  .imputeRate.impIR()
 	invisible() }
 
@@ -153,7 +153,8 @@ imputeRate <- function(qtName="Ex03_Portfolio", dbName="Examples", AID=1, pathN=
 .imputeRate.impIR <- function() {
 	IRRfun <- function(P){
 		# See XIRR function in Excel
-		r=as.numeric(P[1]); unpackList(PBSfish["ddat"],scope="L")
+		r=as.numeric(P[1])
+		unpackList(ttcall(PBSfish)["ddat"],scope="L")
 		N=nrow(ddat)
 		Ci=c(ddat$value[1],ddat$cont[2:N]) # initial value (includes 1st contributuon) + additioanl contributions
 		#Clast=Ci[N]; Ci[N]=0
@@ -173,15 +174,19 @@ imputeRate <- function(qtName="Ex03_Portfolio", dbName="Examples", AID=1, pathN=
 		#fval = (Vlast - Vcont)^2
 #		print(round(c(r,fval,Vcont,Vlast),5))
 		IRRmin=c(r,fval,f*Vcont,f*Vlast); names(IRRmin)=c("r","fval","Vcont","Vlast")
-		eval(parse(text="PBSfish$IRRmin <<- IRRmin"))  # weird results for SANN
-		#packList("IRRmin","PBSfish")
+		#packList("IRRmin","PBSfish",tenv=.PBStoolEnv)
+		#eval(parse(text="PBSfish$IRRmin <<- IRRmin"))  # weird results for SANN
+		ttget(PBSfish); PBSfish$IRRmin <- IRRmin; ttput(PBSfish)  # weird results for SANN
 		return(fval) }
 	#----------------
-	getWinVal(scope="L"); unpackList(PBSfish,scope="L"); act=getWinAct()[1]
-	cenv=environment(); penv=parent.frame(1); genv=.GlobalEnv
+	getWinVal(scope="L")
+	unpackList(ttcall(PBSfish),scope="L")
+	act=getWinAct()[1]
+	cenv=environment(); penv=parent.frame(1); genv=.PBStoolEnv
 	if (!isThere("dat",envir=cenv) ) {#|| (act=="impute" && attributes(dat)$fqt!=qtName)) {
-		.imputeRate.getIR(); unpackList(PBSfish,scope="L") }
-	assign("PBSfish",PBSfish[c("module","func","plotname","dat","DLIM","PLIM")],envir=.GlobalEnv)
+		.imputeRate.getIR()
+		unpackList(ttcall(PBSfish),scope="L") }
+	assign("PBSfish",PBSfish[c("module","func","plotname","dat","DLIM","PLIM")],envir=.PBStoolEnv)
 	adat=dat[is.element(dat$AID,AID),] # account data
 	if (nrow(adat)==0) showError("account ID","nodata")
 	if (autoD) dlim=range(adat$date,na.rm=TRUE) else dlim=c(d0,d1)
@@ -200,12 +205,13 @@ imputeRate <- function(qtName="Ex03_Portfolio", dbName="Examples", AID=1, pathN=
 	cobs <- ddat$cont[z]; cobs[1]=yobs[1] # initial value already includes 1st contribution
 	names(cobs)=as.character(ddat$date[z])
 	Vstart <- yobs[1]; Vend <- yobs[zL]; Vadj=Vend-cobs[zL]
-	packList(c("adat","ddat","Vstart","Vend","Vadj","x","y","z0","z1","z","zL","xobs","yobs","cobs"),"PBSfish")
+	packList(c("adat","ddat","Vstart","Vend","Vadj","x","y","z0","z1","z","zL","xobs","yobs","cobs"),"PBSfish",tenv=.PBStoolEnv)
 #browser();return()
 
 	Obag <- calcMin(pvec=parVec,func=IRRfun,method=method,trace=trace,maxit=maxit,reltol=reltol,steptol=steptol,repN=repN);
 	fmin <- PBSmin$fmin; np <- sum(parVec[,4]); ng <- zL;
-	AICc = 2*fmin + 2*np * (ng/(ng-np-1)); packList("AICc","PBSmin")
+	AICc = 2*fmin + 2*np * (ng/(ng-np-1))
+	packList("AICc","PBSmin",tenv=.PBStoolEnv)
 	Pend <- PBSmin$end  # Pend is annualized if IRRfun()
 	ftime <- PBSmin$time;
 	rates=c(Pend/pyr,Pend)  # period and annual rates
@@ -217,7 +223,7 @@ imputeRate <- function(qtName="Ex03_Portfolio", dbName="Examples", AID=1, pathN=
 		Gf1=round(fminS,nd), Gf2=round(fminE,nd), Gaic=round(AIC,nd), Gaicc=round(PBSmin$AICc,nd),
 		Gv1=c(Pstart,((1+Pstart)^pyr)-1), Gv2=round(rates,nd), Gmess=message, sim=sim);
 	setWinVal(Gbag)
-	packList(c("Obag","Gbag","Pend","rates","Pfig","ftime"),"PBSfish")
+	packList(c("Obag","Gbag","Pend","rates","Pfig","ftime"),"PBSfish",tenv=.PBStoolEnv)
 	.imputeRate.plotIR()
 	invisible() }
 
@@ -238,8 +244,8 @@ imputeRate <- function(qtName="Ex03_Portfolio", dbName="Examples", AID=1, pathN=
 #-----------------------------------------------RH
 .imputeRate.getIR <- function(){
 	act <- getWinAct()[1]; getWinVal(scope="L")
-	if (!is.null(act) && act=="sim") dat=PBSfish$dat 
-	else {getData(qtName,dbName,type="MDB",path=switch(pathN,getwd(),.getSpath())); dat <- PBSdat }
+	if (!is.null(act) && act=="sim") dat=ttcall(PBSfish)$dat 
+	else {getData(qtName,dbName,type="MDB",path=switch(pathN,getwd(),.getSpath()),tenv=penv()); dat <- PBSdat }
 	if (!is.data.frame(dat)) showError("Specify a valid SQL table/query or Simulate data")
 	dat$year=as.numeric(substring(dat$date,1,4)); dat$month=as.numeric(substring(dat$date,6,7))
 	dat$date <- as.Date(dat$date); dat=dat[order(dat$AID,as.numeric(dat$date)),]
@@ -250,15 +256,16 @@ imputeRate <- function(qtName="Ex03_Portfolio", dbName="Examples", AID=1, pathN=
 		PLIM=range(dat$period[is.element(dat$AID,AID)],na.rm=TRUE)
 		setWinVal(list(d0=DLIM[1],d1=DLIM[2],v0=PLIM[1],v1=PLIM[2])) }
 	dat$cont[is.na(dat$cont)] <- 0; 
-	packList(c("dat","DLIM","PLIM"),"PBSfish")
+	packList(c("dat","DLIM","PLIM"),"PBSfish",tenv=.PBStoolEnv)
 	invisible() }
 
 #.imputeRate.plotIR---------------------2011-06-10
 # Plot the results of the imputed rate.
 #-----------------------------------------------RH
 .imputeRate.plotIR=function() {
-	getWinVal(scope="L"); unpackList(PBSfish,scope="L")
-	cenv=environment(); penv=parent.frame(1); genv=.GlobalEnv
+	getWinVal(scope="L")
+	unpackList(ttcall(PBSfish),scope="L")
+	cenv=environment(); penv=parent.frame(1); genv=.PBStoolEnv
 	if (!isThere("ddat",envir=cenv)) {.imputeRate.impIR(); return()}
 	resetGraph(); expandGraph(mar=c(5,2.5,1.5,1.5))
 	clrs <- c("red","blue","green4","purple4","cornflowerblue","darkorange3","darkolivegreen");
@@ -310,8 +317,8 @@ imputeRate <- function(qtName="Ex03_Portfolio", dbName="Examples", AID=1, pathN=
 		"    Contributions = ",format(round(sum(ddat$cont[z][-1])),big.mark=","),
 		"    Final value = ",format(round(Vend),big.mark=","),sep="")
 	addLabel(.99,.01,clab,adj=c(1,0),cex=0.7,col=mclr[3]);
-	packList(c("ycum","ccum","clr"),"PBSfish")
-	packList(c("xlim","ylim","yyy","zax","zay","zac","rcobs","zpos","zneg","base"),"PBSfish")
+	packList(c("ycum","ccum","clr"),"PBSfish",tenv=.PBStoolEnv)
+	packList(c("xlim","ylim","yyy","zax","zay","zac","rcobs","zpos","zneg","base"),"PBSfish",tenv=.PBStoolEnv)
 	box(bty="L"); invisible() }
 
 #.imputeRate.resetIR--------------------2010-10-20
@@ -319,18 +326,21 @@ imputeRate <- function(qtName="Ex03_Portfolio", dbName="Examples", AID=1, pathN=
 #-----------------------------------------------RH
 .imputeRate.resetIR=function(){
 	act <- getWinAct()[1]; if (is.null(act)) return()
-	getWinVal(scope="L"); unpackList(PBSfish,scope="L")
+	getWinVal(scope="L")
+	unpackList(ttcall(PBSfish),scope="L")
 	basic=list(Git=0,Gev=0,Gct=0,Get=0,Gf1=0,Gf2=0,Gaic=0,Gaicc=0,Gv1=c(0,0),Gv2=c(0,0))
 	if (act=="reSet") {
 		pvec=data.frame(val=0.02,min=-3,max=3,active=TRUE,row.names="rate")
 		reSet=c(basic,list(parVec=pvec,d0=DLIM[1],d1=DLIM[2],v0=PLIM[1],v1=PLIM[2],
 			Gmess="------------\nparVec reset with initial starting values.\n------------"))
-		setWinVal(reSet); packList("reSet","PBSfish") }
+		setWinVal(reSet)
+		packList("reSet","PBSfish",tenv=.PBStoolEnv) }
 	else if (act=="reInit") {
 		pvec=parVec; pvec[,1]=Gv2[1]
 		reInit=c(basic,list(parVec=pvec,
 			Gmess="------------\nparVec reset with last set of estimated parameters.\n------------"))
-		setWinVal(reInit); packList("reInit","PBSfish") }
+		setWinVal(reInit)
+		packList("reInit","PBSfish",tenv=.PBStoolEnv) }
 	invisible() }
 
 #.imputeRate.simIR----------------------2010-10-20
@@ -339,8 +349,8 @@ imputeRate <- function(qtName="Ex03_Portfolio", dbName="Examples", AID=1, pathN=
 .imputeRate.simIR <- function() {
 	rpareto <- function(n,xm,k) {
 		y = runif(n); x = xm*(1-y)^(-1/k); return(x) }
-	getWinVal(scope="L"); #unpackList(PBSfish,scope="L")
-	assign("PBSfish",PBSfish[c("module","func","plotname")],envir=.GlobalEnv)
+	getWinVal(scope="L"); #unpackList(ttcall(PBSfish),scope="L")
+	assign("PBSfish",PBSfish[c("module","func","plotname")],envir=.PBStoolEnv)
 	if (k!=0 && k<1) { resetGraph();
 		setWinVal(list(k=20,sim=1))
 		showError("Pareto distribution parameter k:  Volatility decreases as k increases;  Choose k>=1  Try k=20") }
@@ -356,7 +366,7 @@ imputeRate <- function(qtName="Ex03_Portfolio", dbName="Examples", AID=1, pathN=
 	dat=data.frame(AID=rep(AID,nper),date=seq(as.Date("2009/1/1"),by="month",length.out=nper),
 		value=val,cont=cont)
 	attr(dat,"fqt") = "Simulation"
-	packList("dat","PBSfish")
+	packList("dat","PBSfish",tenv=.PBStoolEnv)
 	.imputeRate.getIR(); .imputeRate.impIR()
 	invisible()}
 #---------------------------------------imputeRate
@@ -373,11 +383,11 @@ plotDiversity <- function (fqtName="Ex01_Sample_Info",dbName="Examples.mdb",
 	on.exit(par(par0))
 
 	fnam=paste("Diversity-",bars,"x",pnts,sep="")
-	assign("PBSfish",list(module="M06_Temporal",call=match.call(),plotname=fnam),envir=.GlobalEnv)
+	assign("PBSfish",list(module="M06_Temporal",call=match.call(),plotname=fnam),envir=.PBStoolEnv)
 	if (type=="FILE") {
-		eval(parse(text=paste("getFile(",fqtName,",try.all.frames=TRUE); dat=",fqtName,sep=""))) }
+		eval(parse(text=paste("getFile(",fqtName,",try.all.frames=TRUE,tenv=penv()); dat=",fqtName,sep=""))) }
 	else {
-		getData(fqtName,dbName,type=type,path=path) 
+		getData(fqtName,dbName,type=type,path=path,tenv=penv()) 
 		dat=PBSdat }
 	index=c("Shannon-Wiener diversity H", "Species richness S", "Species evenness E")
 	names(index)=c("H","S","E")
@@ -431,7 +441,7 @@ plotDiversity <- function (fqtName="Ex01_Sample_Info",dbName="Examples.mdb",
 		if (addlowess) addLegend(.06,1,lty=c(1,1),col=clrs[3:4],legend=c("",""),bty="n")
 	box()
 	if (pdf|wmf) dev.off()
-	packList(c("dat","x","xnams","xshow"),"PBSfish")
+	packList(c("dat","x","xnams","xshow"),"PBSfish",tenv=.PBStoolEnv)
 	invisible() }
 #------------------------------------plotDiversity
 
@@ -448,11 +458,11 @@ trackComp = function(fqtName=c("Ex01_Sample_Info","Ex02_Species_Abundance"),
 	on.exit(par(par0))
 	dots=list(...)
 	fnam=paste("Comp",paste(dots$co,collapse="-"),"-Every-",ndays,"days",sep="")
-	assign("PBSfish",list(module="M06_Temporal",call=match.call(),plotname=fnam),envir=.GlobalEnv)
+	assign("PBSfish",list(module="M06_Temporal",call=match.call(),plotname=fnam),envir=.PBStoolEnv)
 	if (type=="FILE") {
-		eval(parse(text=paste("getFile(",fqtName[1],",try.all.frames=TRUE); dat=",fqtName[1],sep=""))) }
+		eval(parse(text=paste("getFile(",fqtName[1],",try.all.frames=TRUE,tenv=penv()); dat=",fqtName[1],sep=""))) }
 	else {
-		eval(parse(text=paste("getData(\"",fqtName[1],"\",\"",dbName,"\",type=\"",type,"\",path=\"",path,"\")",sep="")))
+		eval(parse(text=paste("getData(\"",fqtName[1],"\",\"",dbName,"\",type=\"",type,"\",path=\"",path,"\",tenv=penv())",sep="")))
 		dat=PBSdat }
 	if (any(names(dat)=="YMD")) dat$date=as.POSIXct(dat$YMD)
 	flds=names(dat)
@@ -474,9 +484,9 @@ trackComp = function(fqtName=c("Ex01_Sample_Info","Ex02_Species_Abundance"),
 	
 	#Group proportions
 	if (type=="FILE") {
-		eval(parse(text=paste("getFile(",fqtName[2],",try.all.frames=TRUE); gdat=",fqtName[2],sep=""))) }
+		eval(parse(text=paste("getFile(",fqtName[2],",try.all.frames=TRUE,tenv=penv()); gdat=",fqtName[2],sep=""))) }
 	else {
-		eval(parse(text=paste("getData(\"",fqtName[2],"\",\"",dbName,"\",type=\"",type,"\",path=\"",path,"\")",sep="")))
+		eval(parse(text=paste("getData(\"",fqtName[2],"\",\"",dbName,"\",type=\"",type,"\",path=\"",path,"\",tenv=penv())",sep="")))
 		gdat=PBSdat }
 	gdat = gdat[is.element(gdat$SID,sort(unique(dat$SID))),]
 	if (is.null(groups))
@@ -510,7 +520,7 @@ trackComp = function(fqtName=c("Ex01_Sample_Info","Ex02_Species_Abundance"),
 	mtext(paste("Year-period (interval =",ndays,"days)"),side=1,las=1,line=3,cex=1)
 	mtext("Relative Composition (%)",side=2,las=0,line=2,cex=1.2)
 	box(); 
-	packList(c("dat","gdat","plob","dfpic"),"PBSfish")
+	packList(c("dat","gdat","plob","dfpic"),"PBSfish",tenv=.PBStoolEnv)
 	#Legend
 	#par(new=TRUE,mar=c(0,2,1.25,0),fig=c(0,1,.95,1))
 	par(new=TRUE,mar=c(0,1,0.1,0),fig=c(0,1,.95,1))

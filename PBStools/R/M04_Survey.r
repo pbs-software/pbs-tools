@@ -14,7 +14,7 @@
 #  trend...........Simple trend analysis for annnual IPHC indices.
 #===============================================================================
 
-#bootBG---------------------------------2009-11-10
+#bootBG---------------------------------2013-01-17
 # Bootstraps binomial-gamma variates from (p, mu, rho) for each stratum.
 # Arguments:
 #  dat : Data file containing p, mu, rho, A, k for each stratum h, where
@@ -34,8 +34,7 @@
 # allo : Tow allocation scheme 0=existing, 1=optimal
 #-----------------------------------------------RH
 bootBG <- function (dat="pop.pmr.qcss", K=100, S=100, R=500, SID=NULL, 
-	ci=seq(0.1,0.9,0.1), lims=c("emp","norm","basic","perc","bca"), 
-	allo=0, scope="G") {
+	ci=seq(0.1,0.9,0.1), lims=c("emp","norm","basic","perc","bca"), allo=0) {
 	#Subfunctions--------------
 	cmatrix=function(x,cc) {
 		dnam=dimnames(x); rnam=dnam[[1]]; cnam=dnam[[2]]
@@ -46,14 +45,14 @@ bootBG <- function (dat="pop.pmr.qcss", K=100, S=100, R=500, SID=NULL,
 		z=!is.na(x)
 		sum(f[z]*x[z])}
 	#--------------------------
-	assign("PBSfish",list(module="M04_Survey",func="bootBG"),envir=.GlobalEnv)
-	require(boot)
+	assign("PBSfish",list(module="M04_Survey",call=match.call(),args=args(bootBG)),envir=.PBStoolEnv)
+
+	if (!require(boot, quietly=TRUE)) stop("`boot` package is required")
 	snam=as.character(substitute(dat))
-	if (scope=="L") env <- parent.frame(1) else env <- .GlobalEnv
 	if (length(snam)==0 || snam=="") showError("Supply a file name or \n run 'getPMR' to create the file.")
-	if (!exists(snam,envir=env) || is.null(dim(dat))) {
-		txt=paste("getFile(\"",snam,"\",scope=\"",scope,"\",use.pkg=TRUE,try.all.frames=TRUE); dat=",snam,sep="")
-		eval(parse(text=txt)) }
+
+	txt=paste("getFile(\"",snam,"\",use.pkg=TRUE,try.all.frames=TRUE,tenv=penv()); dat=",snam,sep="")
+	eval(parse(text=txt))
 	flds=names(dat)
 	if (any(flds=="SID") && !is.null(SID)) dat=dat[is.element(dat$SID,SID),]
 	m=nrow(dat) # number of strata
@@ -155,7 +154,7 @@ bootBG <- function (dat="pop.pmr.qcss", K=100, S=100, R=500, SID=NULL,
 	} # end S loop
 	Best <- apply(cmatrix(z,BS),2,sum) # B estimated from random binomial gamma
 	bgtab=x; dStab=y; BStab=z; Bboot=Bboot.all; Bobs=Btrue
-	packList(c("dat","bgtab","dStab","BStab","bgsamp","Bboot","Bqnt","Best","Bobs","group"),"PBSfish")
+	packList(c("dat","bgtab","dStab","BStab","bgsamp","Bboot","Bqnt","Best","Bobs","group"),"PBSfish",tenv=.PBStoolEnv)
 	invisible() }
 #-------------------------------------------bootBG
 
@@ -197,19 +196,19 @@ calcMoments = function(strSpp="396", survID=c(1,2,3,121,167)) {
 		Bmat$CV=Bmat$CV*100
 		return(Bmat) }
 	#------------------------Subfunctions
-	assign("PBSfish",list(module="M04_Survey",func="calcMoments"),envir=.GlobalEnv)
-	getData("BOOT_DEFAULTS","GFBioSQL")
+	assign("PBSfish",list(module="M04_Survey",call=match.call(),args=args(calcMoments)),envir=.PBStoolEnv)
+	getData("BOOT_DEFAULTS","GFBioSQL",tenv=penv())
 	doors=PBSdat$doorspread; names(doors)=PBSdat$SURVEY_ID
 	speed=PBSdat$speed;      names(speed)=PBSdat$SURVEY_ID
 	moments=list()
 	for (i in survID) {
 		ii=as.character(i)
-		getData("gfb_survey_stratum.sql","GFBioSQL","xxx",path=.getSpath(),surveyid=i);  sa=PBSdat
+		getData("gfb_survey_stratum.sql","GFBioSQL","xxx",path=.getSpath(),surveyid=i,tenv=penv());  sa=PBSdat
 		getData("gfb_survey_catch.sql","GFBioSQL",strSpp,path=.getSpath(),surveyid=i,
-			doors=doors[ii],speed=speed[ii]); dat=PBSdat
+			doors=doors[ii],speed=speed[ii],tenv=penv()); dat=PBSdat
 		moments[[ii]]=calcBio(dat,i,sa,Bonly=FALSE)
 	}
-	packList(c("doors","speed","moments"),"PBSfish")
+	packList(c("doors","speed","moments"),"PBSfish",tenv=.PBStoolEnv)
 	invisible(moments)
 }
 #--------------------------------------calcMoments
@@ -237,7 +236,7 @@ calcPMR <- function(x, na.value=NULL) {
 # Get Norm's survey bootstrap results.
 #-----------------------------------------------RH
 getBootRuns=function(strSpp) {
-	getData("gfb_boot.sql","GFBioSQL",strSpp=strSpp,path=.getSpath())
+	getData("gfb_boot.sql","GFBioSQL",strSpp=strSpp,path=.getSpath(),tenv=penv())
 	surveys=PBSdat[order(PBSdat$date,PBSdat$bootID),]
 	return(surveys) }
 
@@ -246,13 +245,13 @@ getBootRuns=function(strSpp) {
 # using the SQL query 'gfb_pmr.sql'.
 #-----------------------------------------------RH
 getPMR =  function(strSpp="396",survID=c(1,2,3,121,167)){
-	assign("PBSfish",list(module="M04_Survey",func="getPMR"),envir=.GlobalEnv)
+	assign("PBSfish",list(module="M04_Survey",call=match.call(),args=args(getPMR)),envir=.PBStoolEnv)
 	sTime=proc.time()
 	pmrTab = NULL
 	cat(paste("pmr for species ",strSpp,"\n-------------------\nSurvey ID: ",sep=""))
 	for (i in survID) {
 		cat(paste(i,ifelse(i==survID[length(survID)],"",", "),sep="")); flush.console()
-		getData("gfb_pmr.sql","GFBioSQL",strSpp,path=.getSpath(),surveyid=i)
+		getData("gfb_pmr.sql","GFBioSQL",strSpp,path=.getSpath(),surveyid=i,tenv=penv())
 		pmrTmp=data.frame(SID=rep(i,nrow(PBSdat)),PBSdat[,c("h","p","mu","rho","A")],n=PBSdat$Nh,k=rep(1,nrow(PBSdat)))
 		pmrTab=rbind(pmrTab,pmrTmp) }
 	h=sort(unique(pmrTab$h))
@@ -260,7 +259,7 @@ getPMR =  function(strSpp="396",survID=c(1,2,3,121,167)){
 	surveys=SURVEYS[is.element(SURVEYS$survID,survID),]
 	attributes(pmrTab)=c(attributes(pmrTab),list(fqt="gfb_pmr.sql",strSpp=strSpp,
 		h=h,surveys.all=SURVEYS,surveys.selected=surveys))
-	packList(c("pmrTab","sTime"),"PBSfish")
+	packList(c("pmrTab","sTime"),"PBSfish",tenv=.PBStoolEnv)
 	sTime=proc.time()-sTime
 	cat(paste("\nDone and done in ",show0(round(sTime[3],1),1,add2int=TRUE)," sec\n",sep=""))
 	return(pmrTab) }
@@ -277,7 +276,7 @@ makePMRtables <- function(strSpp, surveys=list(qcss=c(1,2,3,121,167),
 		for (j in sid) {
 			cat(paste("SID ",j,"\n",sep="")); flush.console()
 			first <- j==sid[1]
-			getData(qName,"GFBioSQL",strSpp=strSpp,path=path,surveyid=j)
+			getData(qName,"GFBioSQL",strSpp=strSpp,path=path,surveyid=j,tenv=penv())
 			write.table(PBSdat,paste("pmr-",i,".csv",sep=""),sep=",",
 				append=ifelse(first,FALSE,TRUE),row.names=FALSE,col.names=ifelse(first,TRUE,FALSE))
 		} } }
@@ -298,12 +297,12 @@ sampBG <- function (n, p=0.25, mu=1, rho=0.5) {
 	bgvec <- bvec * gvec                  # binomial gamma vector
 	return(bgvec) }
 
-#showAlpha------------------------------2009-11-10
+#showAlpha------------------------------2013-01-18
 # Show quantile confidence levels (alpha) for bootstrapped biomass.
 #-----------------------------------------------RH
 showAlpha <- function(lims=c("emp","bca")) {
-	if (!exists("PBSfish",where=1) || is.null(PBSfish$func) || PBSfish$func!="bootBG") bootBG()
-	unpackList(PBSfish,scope="L")
+	if (!exists("PBSfish",envir=.PBStoolEnv) || is.null(ttcall(PBSfish)$Bboot) || is.null(ttcall(PBSfish)$bgtab)) bootBG()
+	unpackList(ttcall(PBSfish),scope="L")
 	m    <- dim(bgtab)[1]
 	h    <- dimnames(bgtab)$h
 	S    <- length(Bboot)
@@ -446,7 +445,7 @@ showAlpha <- function(lims=c("emp","bca")) {
 		mlab="expression(Observed~~alpha)"
 		mtext(eval(parse(text=mlab)),side=2,line=2,cex=.9,las=0)
 	}
-	packList(c("plev","xy","xcount","pobs"),"PBSfish")
+	packList(c("plev","xy","xcount","pobs"),"PBSfish",tenv=.PBStoolEnv)
 	invisible() }
 #----------------------------------------showAlpha
 
@@ -454,7 +453,7 @@ showAlpha <- function(lims=c("emp","bca")) {
 # Show survey indices from Norm's bootstrap tables
 #-----------------------------------------------RH
 showIndices =  function(strSpp="396",survID=c(1,2,3,121,167), bootID){
-	assign("PBSfish",list(module="M04_Survey",func="showIndices"),envir=.GlobalEnv)
+	assign("PBSfish",list(module="M04_Survey",call=match.call(),args=args(showIndices)),envir=.PBStoolEnv)
 	data(spn)
 	surveys=getBootRuns(strSpp)
 	survBoot=PBSdat[,c("survID","bootID","runDesc")]
@@ -528,7 +527,7 @@ showIndices =  function(strSpp="396",survID=c(1,2,3,121,167), bootID){
 	mtext("Relative Biomass (t)",side=2,line=3.5,cex=1.2,las=0)
 	mtext("Survey Year",side=1,line=2,cex=1.2)
 	box()
-	packList(c("surveys","sppBoot","survBoot","xy","cil","cih","clr","llab","ulab"),"PBSfish")
+	packList(c("surveys","sppBoot","survBoot","xy","cil","cih","clr","llab","ulab"),"PBSfish",tenv=.PBStoolEnv)
 	names(y)=x
 	print(sppBoot); invisible(y)
 }
@@ -537,7 +536,8 @@ showIndices =  function(strSpp="396",survID=c(1,2,3,121,167), bootID){
 #simBGtrend-----------------------------2009-08-11
 # Simulate a population projection based on prior binomial-gamma parameters.
 #-----------------------------------------------RH
-simBGtrend <- function(pmr=pop.pmr.qcss,Npred=15,genT=NULL,Nsim=1,yrs=NULL,alpha=1,scope="G") {
+simBGtrend <- function(pmr=pop.pmr.qcss, Npred=15, genT=NULL,
+   Nsim=1, yrs=NULL, alpha=1) {
 	#Subfunctions--------------
 	wval <- function(y,alpha=1){ 
 		#weighted y based on distance x; sum values for current weighted y
@@ -547,10 +547,10 @@ simBGtrend <- function(pmr=pop.pmr.qcss,Npred=15,genT=NULL,Nsim=1,yrs=NULL,alpha
 		w=d/sum(d)     # proportional weights
 		return(sum(w*y,na.rm=TRUE))}
 	#--------------------------
-	assign("PBSfish",NULL,envir=.GlobalEnv)
-	#if (scope=="L") env <- parent.frame(1) else env <- .GlobalEnv
+	assign("PBSfish",NULL,envir=.PBStoolEnv)
+	#if (scope=="L") env <- parent.frame(1) else env <- .PBStoolEnv
 	snam=as.character(substitute(pmr))
-	txt=paste("getFile(\"",snam,"\",scope=\"",scope,"\",use.pkg=TRUE,try.all.frames=TRUE); pmr=",snam,sep="")
+	txt=paste("getFile(\"",snam,"\",use.pkg=TRUE,try.all.frames=TRUE,tenv=penv()); pmr=",snam,sep="")
 	eval(parse(text=txt))
 	if (is.null(yrs)) {
 		survey=attributes(pmr)$survey; yrs=survey$year }
@@ -576,8 +576,9 @@ simBGtrend <- function(pmr=pop.pmr.qcss,Npred=15,genT=NULL,Nsim=1,yrs=NULL,alpha
 		cat(paste(s,ifelse(s==Nsim || round(s%%10)==0,"\n",", "),sep="")); flush.console()
 		for (i in SIDs) {
 			yr=yrs[is.element(SIDs,i)]; yy=as.character(yr)
-			bootBG(pmr,K=224,S=1,R=500,SID=i,ci=.95,lims=c("emp","bca"),scope="L") # must be local to be seen
-			unpackList(PBSfish,scope="L")
+			#bootBG(pmr,K=224,S=1,R=500,SID=i,ci=.95,lims=c("emp","bca"),scope="L") # must be local to be seen
+			bootBG(pmr,K=224,S=1,R=500,SID=i,ci=.95,lims=c("emp","bca"))
+			unpackList(ttcall(PBSfish),scope="L")
 			pmrhist[hh,c("p","mu","rho"),yy,s]=bgtab[hh,c("p","mu","rho")]
 			iqnt=c(year=yr,Bqnt[,,"bca"])
 			Btrend[yy,Brows,s]=iqnt }
@@ -591,8 +592,9 @@ simBGtrend <- function(pmr=pop.pmr.qcss,Npred=15,genT=NULL,Nsim=1,yrs=NULL,alpha
 			newpmr=data.frame(SID=rep(SID,m),h=h,
 				p=unlist(nextpmr[,"p"]),mu=unlist(nextpmr[,"mu"]),rho=unlist(nextpmr[,"rho"]),
 				bgtab[,c("A","n","k")])
-			bootBG(newpmr,K=224,S=1,R=500,SID=SID,ci=.95,lims=c("emp","bca"),scope="L") # must be local to be seen
-			unpackList(PBSfish,scope="L")
+			#bootBG(newpmr,K=224,S=1,R=500,SID=SID,ci=.95,lims=c("emp","bca"),scope="L") # must be local to be seen
+			bootBG(newpmr,K=224,S=1,R=500,SID=SID,ci=.95,lims=c("emp","bca"))
+			unpackList(ttcall(PBSfish),scope="L")
 			pmrhist[hh,c("p","mu","rho"),yy,s]=nextpmr[hh,c("p","mu","rho")]
 			iqnt=c(year=yr,Bqnt[,,"bca"])
 			Btrend[yy,Brows,s]=iqnt }
@@ -605,7 +607,7 @@ simBGtrend <- function(pmr=pop.pmr.qcss,Npred=15,genT=NULL,Nsim=1,yrs=NULL,alpha
 
 	Bmean=apply(Btrend,1:2,mean,na.rm=TRUE); Bmean=as.data.frame(Bmean)
 	Bseen=Bmean[as.character(yrs),]
-	packList(c("pmrhist","Btrend","Bmean","Bseen","brR"),"PBSfish")
+	packList(c("pmrhist","Btrend","Bmean","Bseen","brR"),"PBSfish",tenv=.PBStoolEnv)
 
 	# Plot
 	x=Bmean$year; ytru=Bmean$Btrue; ylo=Bmean$Blo; yhi=Bmean$Bhi
@@ -630,10 +632,10 @@ simBGtrend <- function(pmr=pop.pmr.qcss,Npred=15,genT=NULL,Nsim=1,yrs=NULL,alpha
 #-----------------------------------------------RH
 trend <- function(strSpp="442",fqtName="gfb_iphc.sql",dbName="GFBioSQL",
 	spath=NULL, type="SQL", hnam=NULL) {
-	if (!require(PBSmodelling, quietly=TRUE)) stop("PBSmodelling package is required")
+	if (!require(PBSmodelling, quietly=TRUE)) stop("`PBSmodelling` package is required")
 	warn <- options()$warn; options(warn=-1)
 	data(spn); if (exists("PBSdat",where=1)) rm(PBSdat,pos=1)
-	assign("PBSfish",list(module="M04_Survey",func="trend",plotname="Rplot"),envir=.GlobalEnv)
+	assign("PBSfish",list(module="M04_Survey",call=match.call(),args=args(trend),plotname="Rplot"),envir=.PBStoolEnv)
 
 	wpath <- .getWpath()
 	if (is.null(spath)) spath <- .getSpath()
@@ -668,13 +670,14 @@ trend <- function(strSpp="442",fqtName="gfb_iphc.sql",dbName="GFBioSQL",
 		fqtName!=attributes(PBSdat)$fqt || getdata) {
 		expr=paste("getData(fqtName=\"",fqtName,"\",dbName=\"",dbName,"\",strSpp=\"",
 			spp,"\",type=\"",type,"\",path=\"",path,"\",trusted=",trusted,
-			",uid=\"",uid,"\",pwd=\"",pwd,"\")",sep="")
+			",uid=\"",uid,"\",pwd=\"",pwd,"\",tenv=penv())",sep="")
 		eval(parse(text=expr)) }
 	if (nrow(PBSdat)==0 || sum(PBSdat$pcs)==0) showError(paste("Species =",spp),type="nodata")
 	if (is.null(attributes(PBSdat)$spp) || attributes(PBSdat)$spp!=spp) {
 		spp <- attributes(PBSdat)$spp
 		setWinVal(list(strSpp=spp),winName="window") } 
 	setWinVal(list(fnam="PBSdat"),winName="window")
+	ttput(PBSdat)
 	invisible() }
 
 #.trend.trendy--------------------------2010-10-20
@@ -686,7 +689,7 @@ trend <- function(strSpp="442",fqtName="gfb_iphc.sql",dbName="GFBioSQL",
 	if (any(spp=="") || length(spp)>1) showError("Choose 1 species")
 	if (fnam=="empty" || (fnam=="PBSdat" && attributes(PBSdat)$spp!=spp)) {
 		.trend.getSQLspp(spp); fnam=getWinVal()$fnam }
-	else eval(parse(text=paste("getFile(",fnam,",scope=\"G\",use.pkg=TRUE,try.all.frames=TRUE)",sep=""))) 
+	else eval(parse(text=paste("getFile(",fnam,",use.pkg=TRUE,try.all.frames=TRUE,tenv=penv())",sep=""))) 
 	eval(parse(text=paste("dat=",fnam,sep="")))
 	if (attributes(dat)$spp!=spp) {
 		spp=attributes(dat)$spp
@@ -697,7 +700,8 @@ trend <- function(strSpp="442",fqtName="gfb_iphc.sql",dbName="GFBioSQL",
 
 	if (zstn) { # Exclude stations with no history of catch
 		PCS <- sapply(split(dat$pcs,dat$station),sum)
-		stn <- names(PCS[PCS>0]); packList("stn","PBSfish")
+		stn <- names(PCS[PCS>0])
+		packList("stn","PBSfish",tenv=.PBStoolEnv)
 		dat <- dat[is.element(dat$station,stn),]
 		if (nrow(dat)==0) showError(paste("Stations catching",spp),type="nodata") }
 
@@ -709,7 +713,7 @@ trend <- function(strSpp="442",fqtName="gfb_iphc.sql",dbName="GFBioSQL",
 
 	dat <- dat[is.element(dat$year,yrUse),]
 	if (nrow(dat)==0) showError(paste("year =",paste(yrUse,collapse=", ")),type="nodata") 
-	packList("dat","PBSfish")
+	packList("dat","PBSfish",tenv=.PBStoolEnv)
 
 	# Generate trend in data along with boxplots and proportions zero
 	sfunc <- get(func); # summary function
@@ -718,15 +722,17 @@ trend <- function(strSpp="442",fqtName="gfb_iphc.sql",dbName="GFBioSQL",
 	one <- ifelse(tran=="",0,1); xfld <- "year";
 
 	X <- dat[,xfld]; Y <- dat[,yfld]; #z0 <- Y==0 | is.na(Y);
-	Alist <- split(Y,X); packList("Alist","PBSfish")
-	alist <- sapply(Alist,function(x){if(length(x[x>0&!is.na(x)])>0) x[x>0&!is.na(x)] else NULL }); packList("alist","PBSfish")
+	Alist <- split(Y,X)
+	packList("Alist","PBSfish",tenv=.PBStoolEnv)
+	alist <- sapply(Alist,function(x){if(length(x[x>0&!is.na(x)])>0) x[x>0&!is.na(x)] else NULL })
+	packList("alist","PBSfish",tenv=.PBStoolEnv)
 	pA <- sapply(Alist,function(x){length(x[x==0 & !is.na(x)])/length(x)});
 	pB=pA; if(!zero) pB[pB==1]=NA
 	Alist=sapply(Alist,function(x,a=max(0,aVal,na.rm=TRUE)){x+a},simplify=FALSE)
 	alist=sapply(alist,function(x,a=max(0,aVal,na.rm=TRUE)){x+a},simplify=FALSE)
 
-	if (zero) ttlist <- sapply(Alist,PBSfish$ftran,simplify=FALSE)
-	else ttlist <- sapply(alist,PBSfish$ftran,simplify=FALSE)
+	if (zero) ttlist <- sapply(Alist,ttcall(PBSfish)$ftran,simplify=FALSE)
+	else ttlist <- sapply(alist,ttcall(PBSfish)$ftran,simplify=FALSE)
 	if (any(sapply(ttlist,function(x){any(is.infinite(x))})==TRUE)) 
 		showError("Add small value to observations for sensible log-transformation")
 	tlist[names(ttlist)] = ttlist
@@ -743,7 +749,7 @@ trend <- function(strSpp="442",fqtName="gfb_iphc.sql",dbName="GFBioSQL",
 	ylim <- c( min(y[z1],sapply(tlist[z1],min)), max(y[z1],sapply(tlist[z1],max)) );
 	if (diff(ylim)==0) ylim <- ylim + c(-1,1); # in case all values are the same
 	tlist[z0] <- NA;
-	packList("tlist","PBSfish")
+	packList("tlist","PBSfish",tenv=.PBStoolEnv)
 
 	# Lower area for p
 	pex <- ifelse(zsho,0.25,0); psp <- 1-1/(1+pex); # proportion of boxplot area
@@ -755,7 +761,7 @@ trend <- function(strSpp="442",fqtName="gfb_iphc.sql",dbName="GFBioSQL",
 	else resetGraph()
 	expandGraph(mfrow=c(1,1),mar=c(4,4,4,3),omi=c(0,0,0,0),mgp=c(2.5,.5,0));
 	out <- boxplot(tlist,ylim=ylim,las=1,col=Cbox,range=0,boxwex=0.5,staplewex=0,lty=1);
-	packList("out","PBSfish")
+	packList("out","PBSfish",tenv=.PBStoolEnv)
 	lines(xpos[z1],y[z1],col=Clin,lwd=3);
 	points(xpos[z1],y[z1],col=Cpoi,pch=15,cex=1.2); points(xpos[z1],y[z1],col="black",pch=0,cex=1.2);
 	mtext(spn[spp],side=3,line=2,cex=1.5,las=0);
@@ -771,9 +777,11 @@ trend <- function(strSpp="442",fqtName="gfb_iphc.sql",dbName="GFBioSQL",
 		#nout=nout[z1]; n[names(nout)]=nout
 		text(xpos,(ylim[1]+par()$usr[3])/2,n,col=Cnum,cex=0.8)
 		text(.4*(1+par()$usr[1]),(ylim[1]+par()$usr[3])/2,"n",col=Cnum,cex=0.9)
-		packList(c("n","p","xpos"),"PBSfish") }
+		packList(c("n","p","xpos"),"PBSfish",tenv=.PBStoolEnv) }
 
-	lmY <- lm(y[z1]~x[z1]); b <- lmY$coeff[2]; r <- PBSfish$btran(b)-one; R <- PBSfish$btran(b*(N-1))-one;
+	lmY <- lm(y[z1]~x[z1]); b <- lmY$coeff[2]
+	r   <- ttcall(PBSfish)$btran(b)-one
+	R   <- ttcall(PBSfish)$btran(b*(N-1))-one
 	yp  <- predict.lm(lmY); lines(xpos[z1],yp,col=Ctrd,lwd=3);
 	msg <- paste("( b= ",show0(round(b,4),4),",  r= ",show0(round(r,4),4),",  R= ",show0(round(R,4),4),")",sep="");
 	mtext(msg,side=3,line=.5,cex=1);
@@ -789,7 +797,7 @@ trend <- function(strSpp="442",fqtName="gfb_iphc.sql",dbName="GFBioSQL",
 	if (!any(tran==c("log2","log","log10"))) {
 		ftran <- function(x) {return (x)}
 		btran <- function(x) {return (x)}
-		packList(c("ftran","btran"),"PBSfish")
+		packList(c("ftran","btran"),"PBSfish",tenv=.PBStoolEnv)
 		setWinVal(list(tran="nada"),winName="window"); }
 	else {
 		ftran <- get(tran)
@@ -797,7 +805,7 @@ trend <- function(strSpp="442",fqtName="gfb_iphc.sql",dbName="GFBioSQL",
 		tbase <- switch(zbase,2,exp(1),10);
 		fexp  <- paste("btran = function(x,t=",tbase,"){t^x}");
 		eval(parse(text=fexp)); 
-		packList(c("ftran","btran"),"PBSfish")
+		packList(c("ftran","btran"),"PBSfish",tenv=.PBStoolEnv)
 		#setWinVal(list(zero=FALSE),winName="window")
 		}
 	invisible() }
@@ -806,7 +814,7 @@ trend <- function(strSpp="442",fqtName="gfb_iphc.sql",dbName="GFBioSQL",
 # Calculate and plot bootstraps.
 #-----------------------------------------------RH
 .trend.booty <- function() {
-	alist <- PBSfish$tlist
+	alist <- ttcall(PBSfish)$tlist
 	if (is.null(alist)) showError("Generate a TREND first")
 	# Bootstrap the indices and generate multiple trends
 	getWinVal(scope="L",winName="window");
@@ -816,9 +824,10 @@ trend <- function(strSpp="442",fqtName="gfb_iphc.sql",dbName="GFBioSQL",
 	tboot <- sapply(alist,sample,size=Nboot,replace=TRUE);
 	x     <- as.numeric(dimnames(tboot)[[2]]);
 	brR   <- function(y,x,one) {
-				N <- max(x)-min(x)+1;
+				N   <- max(x)-min(x)+1;
 				lmY <- lm(y~x); b <- lmY$coeff[2];
-				r <- PBSfish$btran(b)-one; R <- PBSfish$btran(b*(N-1))-one;
+				r   <- ttcall(PBSfish)$btran(b)-one
+				R   <- ttcall(PBSfish)$btran(b*(N-1))-one
 				return(c(b,r,R)) };
 	bboot <- t(apply(tboot,1,brR,x=x,one=one));
 	dimnames(bboot)[[2]] <- c("b","r","R");

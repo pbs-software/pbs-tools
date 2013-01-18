@@ -7,7 +7,8 @@
 }
 \usage{
 listTables(dbName, pattern=NULL, path=getwd(), server=NULL,
-     type="SQL", ttype=NULL, trusted=TRUE, uid="", pwd="", silent=FALSE) 
+   type="SQL", ttype=NULL, trusted=TRUE, uid="", pwd="",
+   silent=FALSE, tenv=.GlobalEnv) 
 }
 \arguments{
   \item{dbName}{string specifying the name of a remote \code{SQL}/\code{ORA}
@@ -24,6 +25,7 @@ listTables(dbName, pattern=NULL, path=getwd(), server=NULL,
     to use a trusted DFO login ID.}
   \item{uid, pwd}{user ID and password for authentication (if \code{trusted=FALSE}).}
   \item{silent}{logical: if \code{TRUE} then table names are not printed to the console.}
+  \item{tenv}{target environment to which the result object \code{PBSdat} will be sent.}
 }
 \details{
   The results of \code{RODBC::sqlTables} are dumped to a data frame 
@@ -37,7 +39,7 @@ listTables(dbName, pattern=NULL, path=getwd(), server=NULL,
   Silently returns a vector of table names.
 }
 \author{
-  Rowan Haigh, Pacific Biological Station, Nanaimo BC
+  Rowan Haigh, Pacific Biological Station, Fisheries and Oceans Canada, Nanaimo BC
 }
 \seealso{ 
   \code{\link{getFile}}, \code{\link{getData}}
