@@ -3,7 +3,9 @@ PBStools Changes
 Authors: RH  = Rowan Haigh     NO = Norm Olsen
          LL  = Lisa Lacko     JTS = Jon T. Schnute
 
-1.23  2013-01-18
+1.23  2013-01-22
+  - Added new function `prepClara` to prepare a data object for use by `clarify`. (RH 1/21)
+  - Modified function `clarify` to use species names in the legend label. (RH 1/21)
   - Debugged functions to finalise retro-fitting, at least enough to pass Rcheck (sans CRAN flag). (RH 1/18)
   - Modified functions `getData` and `getFile` to specify which environment the results should be sent to. (RH 1/17)
   - Retrofit the code to move the working list `PBSfish` to the working environment `.PBStoolEnv`. (RH 1/17)

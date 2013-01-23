@@ -9,7 +9,8 @@
 clarify(dat, cell=c(0.1,0.075), nG=8,
    xlim=c(-134.2,-127), ylim=c(49.6,54.8), zlim=NULL, targ="YMR", 
    clrs=c("red","orange","yellow","green","forestgreen","deepskyblue",
-   "blue","midnightblue"), wmf=FALSE, eps=FALSE, hpage=10)
+   "blue","midnightblue"), spp.names=FALSE, 
+   wmf=FALSE, eps=FALSE, hpage=10)
 }
 \arguments{
   \item{dat}{an \code{EventData} obejct with fields \code{EID}, \code{X},
@@ -21,6 +22,8 @@ clarify(dat, cell=c(0.1,0.075), nG=8,
   \item{zlim}{optional Z-limits (depth) to qualify data (if field available).}
   \item{targ}{target species to identify within the \code{CLARA} groups.}
   \item{clrs}{vector of colours to use for displaying \code{nG} \code{CLARA} groups.}
+  \item{spp.names}{logical: if \code{TRUE}, replace species codes
+    (if they are used in the data) with species names in the legend.}
   \item{wmf}{logical: if \code{TRUE}, send plot to a windows meta file \code{.wmf}.}
   \item{eps}{logical: if \code{TRUE}, send plot to an encapsulated postscript \code{.eps} file.}
   \item{hpage}{dimension in inches of the longest side of a plot page sent to an output file.}
@@ -41,12 +44,13 @@ clarify(dat, cell=c(0.1,0.075), nG=8,
   to Cluster Analysis. Wiley, New York.
 }
 \author{ 
-  Rowan Haigh, Pacific Biological Station, Nanaimo BC
+  Rowan Haigh and Norm Olsen, Pacific Biological Station, Fisheries and Oceans Canada, Nanaimo BC
 }
 \seealso{
-  \code{\link{getFile}} \cr
+  \code{\link[PBStools]{getFile}}, \code{\link[PBStools]{prepClara}} \cr
   \pkg{PBSmapping}: \code{\link[PBSmapping]{makeGrid}}, \code{\link[PBSmapping]{findCells}} \cr
-  \pkg{cluster}: \code{\link[cluster]{clara}}
+  \pkg{cluster}: \code{\link[cluster]{clara}} (clustering large applications) \cr
+  \pkg{PBSdata}: \code{\link[PBSdata]{claradat}} for an example dataset.
 }
 \examples{
 pbsfun=function(){
