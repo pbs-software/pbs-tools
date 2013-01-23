@@ -7,6 +7,7 @@
 #  getBootRuns.....Get Norm's survey bootstrap results.
 #  getPMR..........Get pmr values from survey data in GFBioSQL.
 #  makePMRtables...Make CSV files containg pmr values for survey strata.
+#  makeSSID        Make a data objest of survey series information.
 #  sampBG..........Sample from the binomial-gamma distribution.
 #  showAlpha.......Show quantile confidence levels (alpha) for bootstrapped biomass.
 #  showIndices.....Show survey indices from Norm's bootstrap tables.
@@ -280,6 +281,30 @@ makePMRtables <- function(strSpp, surveys=list(qcss=c(1,2,3,121,167),
 			write.table(PBSdat,paste("pmr-",i,".csv",sep=""),sep=",",
 				append=ifelse(first,FALSE,TRUE),row.names=FALSE,col.names=ifelse(first,TRUE,FALSE))
 		} } }
+
+
+#makeSSID-------------------------------2013-01-22
+# Make a data object of survey series information
+# called `ssid` for inclusion to `PBSdata`.
+#-----------------------------------------------RH
+makeSSID = function() {
+	getData("SURVEY","GFBioSQL")
+	z = is.element(PBSdat$SURVEY_SERIES_ID,0)
+	PBSdat$SURVEY_SERIES_ID[z]= 1000 + PBSdat$SURVEY_ID[z]
+	desc = sapply(split(PBSdat$SURVEY_DESC, PBSdat$SURVEY_SERIES_ID),function(x){x[1]})
+	SSID = names(desc)
+	ssid = as.numeric(SSID)
+	ORIG = sapply(split(PBSdat$ORIGINAL_IND, PBSdat$SURVEY_SERIES_ID),function(x){x[1]})
+	TRAW = sapply(split(PBSdat$TRAWL_IND, PBSdat$SURVEY_SERIES_ID),function(x){x[1]})
+	orig = as.logical(as.numeric(gsub("N",0,gsub("Y",1,ORIG))))
+	traw = as.logical(as.numeric(gsub("N",0,gsub("Y",1,TRAW))))
+	gfb.survey.series = data.frame(ssid=ssid, desc=desc, original=orig, trawl=traw, row.names=SSID)
+	ssid = list(gfb=gfb.survey.series)
+	save("ssid",file="ssid.rda")
+	invisible(ssid)
+}
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~makeSSID
+
 
 #sampBG---------------------------------2008-09-30
 # Sample from the binomial-gamma distribution.

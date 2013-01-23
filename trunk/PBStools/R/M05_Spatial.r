@@ -9,6 +9,7 @@
 #  findHoles.......Find holes and place them under correct parents.
 #  plotGMA.........Plot the Groundfish Management Areas.
 #  preferDepth.....Histogram showing depth-of-capture.
+#  prepClara       Prepare a data object for use by `clarify`.
 #  zapHoles........Attempts to remove holes overwritten by solids.
 #===============================================================================
 
@@ -231,7 +232,8 @@ calcSurficial <- function(surf="qcb", hab,
 clarify <- function(dat, cell=c(0.1,0.075), nG=8,
    xlim=c(-134.2,-127), ylim=c(49.6,54.8), zlim=NULL, targ="YMR", 
    clrs=c("red","orange","yellow","green","forestgreen","deepskyblue",
-   "blue","midnightblue"), wmf=FALSE, eps=FALSE, hpage=10) {
+   "blue","midnightblue"), spp.names=FALSE, 
+   wmf=FALSE, eps=FALSE, hpage=10) {
 
 	tcomp <- function(x,i) {
 		iU <- sort(unique(i))
@@ -327,6 +329,12 @@ clarify <- function(dat, cell=c(0.1,0.075), nG=8,
 	kcol = clrs[1:nG]
 	glab = sapply(split(pdata$label,pdata$target),unique)
 	kgrp = glab[gord]
+	if (spp.names) {
+		data(species,envir=penv()) # local
+		kcode=strsplit(kgrp,split="-")
+		kgrp=sapply(kcode,function(x){paste(gsub(" ",".",species[x,"name"]),collapse="+")})
+	}
+#browser()
 
 	getFile(isobath,use.pkg=TRUE,tenv=penv())
 	isob <- isobath[is.element(isobath$PID,c(200,1000,1800)),] # & is.element(isobath$SID,1),]
@@ -361,6 +369,7 @@ clarify <- function(dat, cell=c(0.1,0.075), nG=8,
 	box()
 	if (i!="dev" && ii) dev.off()
 	}	}
+	gc(verbose=FALSE)
 	invisible() }
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~clarify
 
@@ -669,7 +678,61 @@ preferDepth = function(strSpp="410", fqtName="pht_fdep.sql", dbName="PacHarvest"
 		"by row ]"))),outer=TRUE,side=2,line=3.25,cex=1.25,las=0)
 	if (eps|pix|wmf) dev.off()
 	invisible() }
-#^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^preferDepth
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~preferDepth
+
+
+#prepClara----------------------------2013-01-22
+# Prepare a data object for use by `clarify`,
+#  which uses the cluster function `clara`.
+# Arguments:
+#  ssid = survey series ID
+#  gfld = grouping field name
+#  sfld = species filed name
+#  mfld = metric field name
+#  fnam = assume input data object (not file) is always called `dat` and
+#         output object (not file) is always called `claradat`.
+#-----------------------------------------------RH
+prepClara =function(ssid=7, gfld=c("X","Y"), sfld="spp", mfld="catKg", fnam=NULL)
+{
+	SSID = paste(ssid,collapse=".")
+	if (is.null(fnam)){ 
+		getData("gfb_clara_survey.sql","GFBioSQL",strSpp="000",path=.getSpath(),survserid=ssid)
+		dat = PBSdat
+		save("dat",file=paste("ssid.",SSID,".dat.rda",sep=""))
+		fout = paste("clara.ssid.",SSID,".rda",sep="")
+	}
+	else {
+		mess=paste("getFile(\"",fnam,"\",reload=TRUE,try.all.frames=TRUE,tenv=penv())",sep="")
+		eval(parse(text=mess))
+		fout = paste("clara.",fnam,".rda",sep="")
+	}
+	dat  = dat[dat$X<0 & !is.na(dat$X) & dat$Y>0 & !is.na(dat$Y),]
+#browser();return()
+	if (all(gfld==c("X","Y"))){
+		index = -round(dat$X,5)*1e5 + round(dat$Y,5)/100
+		uID = sort(unique(index))
+		dat$index = match(index,uID)
+		gfld = "index"
+	}
+	rows = sort(unique(dat[,gfld]))
+	cdat = array(NA,dim=c(length(rows),3),dimnames=list(rows,c("X","Y","Z")))
+	for (i in c("X","Y","Z")) {
+		mess = paste("g",i," = sapply(split(dat[,\"",i,"\"],dat[,\"",gfld,"\"]),function(x){",
+			"z = round(x,5)==0; ",
+			"if (all(z)) 0 else mean(x[!z]) } ); ",
+			"cdat[names(g",i,"),\"",i,"\"]=g",i, sep="")
+		eval(parse(text=mess))
+	}
+	spptab = crossTab(dat,c(gfld,sfld),mfld,sum)
+	gtab   = spptab[,-1]; attr(gtab,"class")="data.frame"; row.names(gtab)=spptab[,gfld]
+	zrows  = sort(unique(intersect(row.names(cdat),row.names(gtab))))
+	claradat = data.frame(EID=1:length(zrows),cdat[zrows,],gtab[zrows,],check.names=FALSE)
+	save("claradat",file=fout)
+	gc(verbose=FALSE)
+	return(claradat)
+}
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~prepClara
+
 
 #zapHoles-------------------------------2009-08-06
 # Attempts to remove holes overwritten by solids.
