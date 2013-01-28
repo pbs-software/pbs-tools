@@ -33,6 +33,7 @@ biteData(dat, vec)
   \code{\link{chewData}}, \code{\link{getData}}, \code{\link{getFile}}
 }
 \examples{
+local(envir=.PBStoolEnv,expr={
 pbsfun=function(){
   cat("Records in original swiss object by Education\n")
   print(sapply(split(swiss$Education,swiss$Education),length))
@@ -41,6 +42,7 @@ pbsfun=function(){
   print(sapply(split(test$Education,test$Education),length))
   invisible() }
 pbsfun()
+})
 }
 \keyword{data}
 \keyword{utilities}

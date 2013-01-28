@@ -11,7 +11,7 @@ histMetric(dat=pop.age, xfld="age", xint=1, minN=50,
   major=NULL, minor=NULL, locality=NULL, srfa=NULL, srfs=NULL,
   xlim=NULL, ylim=NULL, pxlab=c(.075,.85),axes=TRUE,
   fill=FALSE, bg="grey90", fg="black", 
-  hrow=0.75, hpage=8, wmf=FALSE, pix=FALSE)
+  hrow=0.75, hpage=8, wmf=FALSE, pix=FALSE, ioenv=.GlobalEnv)
 }
 \arguments{
   \item{dat}{data file of biology metrics (e.g., \code{pop.age}).}
@@ -47,6 +47,7 @@ histMetric(dat=pop.age, xfld="age", xint=1, minN=50,
     where \code{m} is the number of rows in a multi-panel figure. }
   \item{wmf}{logical: if \code{TRUE}, send plot to a \code{.wmf} file.}
   \item{pix}{logical: if \code{TRUE}, send plot to a \code{.png} file.}
+  \item{ioenv}{input/output environment for function input data and output results.}
 }
 \details{
   The function displays the relative frequency of a specified metric like length
@@ -56,7 +57,7 @@ histMetric(dat=pop.age, xfld="age", xint=1, minN=50,
   number of columns.
 }
 \value{
-  No value is explictly returned by the function. A global list object \code{PBSfish}
+  No value is explictly returned by the function. A global list object \code{PBStool}
   provides the following:
   \item{dat }{Massaged input data.}
   \item{xy }{Output from the function \code{hist()}.}
@@ -66,11 +67,13 @@ histMetric(dat=pop.age, xfld="age", xint=1, minN=50,
   \item{ylim }{Limits of the y-axis.}
 }
 \examples{
+local(envir=.PBStoolEnv,expr={
 pbsfun=function(){
-  data(pop.age)
+  data(pop.age,envir=.PBStoolEnv)
   histMetric(xfld="len",year=2003:2007,xlim=c(0,60),fill=TRUE,bg="moccasin",xint=2)
   invisible() }
 pbsfun()
+})
 }
 \seealso{
   \code{\link{histTail}}, \code{\link{getFile}} \cr

@@ -29,6 +29,7 @@ isThere(x, envir=parent.frame())
   \code{\link{getFile}}
 }
 \examples{
+local(envir=.PBStoolEnv,expr={
 pbsfun=function() {
   cat("Data object 'swiss' appears to exist in pos=0\n")
   cat(paste("   exists(\"swiss\",envir=sys.frame(0))",
@@ -38,6 +39,7 @@ pbsfun=function() {
     isThere("swiss",envir=sys.frame(0))),"\n")
   invisible() }
 pbsfun()
+})
 }
 \keyword{logic}
 

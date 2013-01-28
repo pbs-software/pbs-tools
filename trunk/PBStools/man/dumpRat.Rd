@@ -7,11 +7,13 @@
   Dump catch ratios calculated during a catch reconstruction into CSV tables.
 }
 \usage{
-dumpRat(strSpp="396", rats=c("alpha","beta","gamma","delta","lambda"))
+dumpRat(strSpp="396", rats=c("alpha","beta","gamma","delta","lambda"),
+   ioenv=.GlobalEnv)
 }
 \arguments{
   \item{strSpp}{character string specifying species Hart code (e.g., \code{"396"} = Pacific Ocean Perch). }
   \item{rats}{character vector of named ratios used in a catch reconstruction. }
+  \item{ioenv}{input/output environment for function input data and output results.}
 }
 \details{
   See the catch reconstruction algorithm (\code{\link{buildCatch}}) for more details. \cr
@@ -25,7 +27,7 @@ dumpRat(strSpp="396", rats=c("alpha","beta","gamma","delta","lambda"))
   \eqn{\lambda} = proportion of early ORF/TRF catch by general gear type.
 }
 \value{
-  The ratio arrays are stored in a list object \code{PBSfish123} spat out by the 
+  The ratio arrays are stored in a list object \code{PBStool123} spat out by the 
   reconstruction procedure. The arrays are extracted and sent to a comma-delimited text file (\code{.csv}).
 }
 \references{

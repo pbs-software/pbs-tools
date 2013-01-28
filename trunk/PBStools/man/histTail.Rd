@@ -8,7 +8,7 @@
 \usage{
 histTail(dat=pop.age, xfld="age", tailmin=NULL, 
     bcol="gold", tcol="moccasin", hpage=3.5, 
-    wmf=FALSE, pix=FALSE, ...)
+    wmf=FALSE, pix=FALSE, ioenv=.GlobalEnv, ...)
 }
 \arguments{
   \item{dat}{data file of biology metrics (e.g., \code{pop.age}).}
@@ -19,6 +19,7 @@ histTail(dat=pop.age, xfld="age", tailmin=NULL,
   \item{hpage}{height of page in inches if figure is sent to an image file.}
   \item{wmf}{logical: if \code{TRUE}, send plot to a \code{.wmf} file.}
   \item{pix}{logical: if \code{TRUE}, send plot to a \code{.png} file.}
+  \item{ioenv}{input/output environment for function input data and output results.}
   \item{...}{additional arguments to pass to \code{truehist} and \code{hist}.}
 }
 \details{
@@ -32,7 +33,7 @@ histTail(dat=pop.age, xfld="age", tailmin=NULL,
   The default provides the former for the main histogram and the latter for the tail zoom-in.
 }
 \value{
-  No value is explictly returned by the function. A global list object \code{PBSfish}
+  No value is explictly returned by the function. A global list object \code{PBStool}
   provides the following:
   \item{x}{Vector of raw data (\code{xfld} in \code{dat}) used in the main histogram.}
   \item{nx}{Total number of observations \emph{N}.}
@@ -42,11 +43,13 @@ histTail(dat=pop.age, xfld="age", tailmin=NULL,
   \item{ylab}{Label used for y-axis.}
 }
 \examples{
+local(envir=.PBStoolEnv,expr={
 pbsfun=function(){
-  data(pop.age)
+  data(pop.age,envir=.PBStoolEnv)
   histTail(xfld="age",tailmin=60,prob=FALSE)
   invisible() }
 pbsfun()
+})
 }
 \seealso{
   \code{\link{histMetric}} \cr

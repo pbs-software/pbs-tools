@@ -7,11 +7,12 @@
   controlled by an interactive GUI.
 }
 \usage{
-plotProp(fnam="pop.age", hnam=NULL, ...) 
+plotProp(fnam="pop.age", hnam=NULL, ioenv=.GlobalEnv, ...) 
 }
 \arguments{
   \item{fnam}{ string specifying file name }
   \item{hnam}{string name of a history file}
+  \item{ioenv}{input/output environment for function input data and output results.}
   \item{...}{additional arguments for \code{plotProp}.}
 }
 \details{

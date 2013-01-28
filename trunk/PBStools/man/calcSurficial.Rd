@@ -9,7 +9,7 @@
 calcSurficial(surf="qcb", hab,
     xlim=c(-133.4,-127.8), ylim=c(50.5,54.8),
     col.hab=c("aliceblue","grey"), col.cst="grey85", 
-    pix=FALSE, wmf=FALSE)
+    pix=FALSE, wmf=FALSE, ioenv=.GlobalEnv)
 }
 \arguments{
   \item{surf}{surficial geology data object (e.g., \code{qcb}).}
@@ -20,11 +20,12 @@ calcSurficial(surf="qcb", hab,
   \item{col.cst}{scalar specifying fill colour for the coast.}
   \item{pix}{logical: if \code{TRUE}, send plot to a \code{.png} file.}
   \item{wmf}{logical: if \code{TRUE}, send plot to a \code{.wmf} file.}
+  \item{ioenv}{input/output environment for function input data and output results.}
 }
 \details{
   The function uses available datasets \code{surf} (surficial geology) and 
   \code{hab} (bathymetry habitat) and calculates the intersection. The results 
-  are displayed on a map and stored in the global list object \code{PBSfish}.
+  are displayed on a map and stored in the global list object \code{PBStool}.
 }
 \author{ 
   Rowan Haigh, Pacific Biological Station, Nanaimo BC
@@ -37,11 +38,13 @@ calcSurficial(surf="qcb", hab,
 }
 \examples{
 \dontrun{
+local(envir=.PBStoolEnv,expr={
 pbsfun=function() {
   habitat=calcHabitat(isob=c(150,435), digits=1, plot=FALSE) # DBR
   calcSurficial(surf="qcb", hab=habitat)
   invisible() }
 pbsfun()
+})
 }
 }
 \keyword{hplot}

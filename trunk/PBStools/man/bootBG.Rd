@@ -8,8 +8,8 @@
 }
 \usage{
 bootBG(dat=pop.pmr.qcss, K=100, S=100, R=500, 
-       SID=NULL, ci=seq(0.1,0.9,0.1), 
-       lims=c("emp","norm","basic","perc","bca"), allo=0)
+   SID=NULL, ci=seq(0.1,0.9,0.1), 
+   lims=c("emp","norm","basic","perc","bca"), allo=0, ioenv=.GlobalEnv)
 }
 \arguments{
   \item{dat}{data frame with fields: \cr
@@ -29,6 +29,7 @@ bootBG(dat=pop.pmr.qcss, K=100, S=100, R=500,
     \code{ci=c(0.90,0.95)} gives confidence limits \code{(0.025,0.05,0.95,0.975)}.}
   \item{lims}{bootstrap confidence limit types to compute (see \code{boot::boot.ci}).}
   \item{allo}{tow allocation scheme: \code{0} = existing, \code{1} = optimal.}
+  \item{ioenv}{input/output environment for function input data and output results.}
 }
 \details{
   This function depends on the R package \pkg{boot}. The user supplies
@@ -38,7 +39,7 @@ bootBG(dat=pop.pmr.qcss, K=100, S=100, R=500,
   binomial-gamma distribution.
 }
 \value{
-  No value is explicitly returned by the function. A global list object \code{PBSfish}
+  No value is explicitly returned by the function. A global list object \code{PBStool}
   provides results of the analysis:
   \item{dat}{data frame: a subset from the user input that contains 
     population parameters for each unique stratum.}
@@ -68,11 +69,13 @@ bootBG(dat=pop.pmr.qcss, K=100, S=100, R=500,
   \pkg{boot}: \code{\link[boot]{boot.ci}}
 }
 \examples{
+local(envir=.PBStoolEnv,expr={
 pbsfun=function(SID=1,S=50){
   bootBG(dat=pop.pmr.qcss,SID=SID,S=S)
   showAlpha()
   invisible() }
 pbsfun()
+})
 }
 \keyword{ data }
 \keyword{ utilities }

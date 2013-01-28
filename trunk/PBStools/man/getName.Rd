@@ -27,6 +27,7 @@ getName(fnam)
   \code{\link{getFile}}, \code{\link{getData}}
 }
 \examples{
+local(envir=.PBStoolEnv,expr={
 pbsfun=function() {
   cat("Data object 'swiss' doesn't appear in the parent frame\n")
   print(getName(swiss))
@@ -35,6 +36,7 @@ pbsfun=function() {
   print(getName(swiss))
   invisible() }
 pbsfun()
+})
 }
 \keyword{ data }
 \keyword{ utilities }

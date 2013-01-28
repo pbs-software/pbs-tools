@@ -9,10 +9,10 @@
 }
 \usage{
 trackComp(fqtName=c("Ex01_Sample_Info","Ex02_Species_Abundance"),
-     dbName="Examples.mdb", type="MDB", path=getwd(), ndays=15, groups=NULL, 
-     dlim=c("2007-01-01",substring(Sys.time(),1,19)),
-     clrs=c("green","dodgerblue","orange","yellow","red","grey"),
-     pdf=FALSE, wmf=FALSE, ...)
+   dbName="Examples.mdb", type="MDB", path=getwd(), ndays=15, groups=NULL, 
+   dlim=c("2007-01-01",substring(Sys.time(),1,19)),
+   clrs=c("green","dodgerblue","orange","yellow","red","grey"),
+   pdf=FALSE, wmf=FALSE, ioenv=.GlobalEnv, ...)
 }
 \arguments{
   \item{fqtName}{string vector specifying table names containing sample information
@@ -29,6 +29,7 @@ trackComp(fqtName=c("Ex01_Sample_Info","Ex02_Species_Abundance"),
   \item{clrs}{vector of colours to shade \code{groups}.}
   \item{pdf}{logical: if \code{TRUE}, send figure to a postscript document file \code{PDF}.}
   \item{wmf}{logical: if \code{TRUE}, send figure to a windows metafile \code{WMF}.}
+  \item{ioenv}{input/output environment for function input data and output results.}
   \item{\dots}{additional vectors to use for data selection 
     (e.g., \code{co="CPA", use=1}).}
 }
@@ -38,7 +39,7 @@ trackComp(fqtName=c("Ex01_Sample_Info","Ex02_Species_Abundance"),
 }
 \value{
   No value is explicitly returned; however, objects of interest are store in the 
-  global list object \code{PBSfish}.
+  global list object \code{PBStool}.
 }
 \author{
   Rowan Haigh, Pacific Biological Station, Fisheries and Oceans Canada, Nanaimo BC
@@ -47,11 +48,13 @@ trackComp(fqtName=c("Ex01_Sample_Info","Ex02_Species_Abundance"),
   \code{\link[PBStools]{convYP}}, \code{\link[PBStools]{boxSeason}}
 }
 \examples{
+local(envir=.PBStoolEnv,expr={
 pbsfun=function(os=.Platform$OS.type) {
   if (os=="windows") trackComp(ndays=15,path=.getSpath())
   else showMessage("Only functional for Microsoft Access on Windows OS")
   invisible() }
 pbsfun()
+})
 }
 \keyword{hplot}
 

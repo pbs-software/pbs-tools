@@ -29,11 +29,13 @@ createDSN(trusted=TRUE)
   \code{\link{confODBC}}, \code{\link{runModules}}
 }
 \examples{
+local(envir=.PBStoolEnv,expr={
 pbsfun=function(os=.Platform$OS.type,dfo=FALSE) {
   if (os=="windows" && dfo) createDSN() 
   else showMessage("Only functional for DFO personnel using Microsoft Windows OS")
   invisible() }
 pbsfun()
+})
 }
 \keyword{data}
 \keyword{utilities}

@@ -31,6 +31,7 @@ chewData(dat, fac, nmin=3, na.rm=TRUE)
   \code{\link{biteData}}, \code{\link{getData}}, \code{\link{getFile}}
 }
 \examples{
+local(envir=.PBStoolEnv,expr={
 pbsfun=function(){
   cat("Unique records in 'iris$Petal.Width'\n")
   print(sapply(split(iris$Petal.Width,iris$Petal.Width),length))
@@ -39,6 +40,7 @@ pbsfun=function(){
   print(sapply(split(test$Petal.Width,test$Petal.Width),length))
   invisible() }
 pbsfun()
+})
 }
 \keyword{data}
 \keyword{utilities}

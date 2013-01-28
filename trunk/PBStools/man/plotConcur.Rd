@@ -41,7 +41,7 @@ plotConcur(strSpp="410", dbName="PacHarvest",
 \value{
   Invisibly returns a data frame of top \emph{N} species ordered by percent catch weight.
 
-  Also, objects of interest are saved to the global list object \code{PBSfish}.
+  Also, objects of interest are saved to the global list object \code{PBStool}.
 }
 \author{
   Rowan Haigh, Pacific Biological Station, Fisheries and Oceans Canada, Nanaimo BC

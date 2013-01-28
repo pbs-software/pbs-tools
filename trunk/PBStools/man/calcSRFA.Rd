@@ -27,12 +27,14 @@ calcSRFA(major, minor=NULL, loc=NULL, subarea=FALSE)
   A character vector specifying slope rockfish assessment areas/subreas.
 }
 \examples{
+local(envir=.PBStoolEnv,expr={
 pbsfun=function(){
   dat=data.frame(major=c(3:7,9,9),
     minor=c(23,26,11,8,8,35,31),loc=c(1,1,1,3,6,1,1))
   sdat=cbind(dat,srfa=calcSRFA(dat),srfs=calcSRFA(dat,subarea=TRUE))
   print(sdat); invisible() }
 pbsfun()
+})
 }
 \seealso{ 
   \code{\link[PBSdata]{srfa}}

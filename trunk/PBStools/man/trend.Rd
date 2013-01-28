@@ -8,8 +8,8 @@
   bootstrapped estimates of slope \emph{b} and annual rate \emph{r}.
 }
 \usage{
-trend(strSpp="442",fqtName="gfb_iphc.sql",dbName="GFBioSQL",
-     spath=NULL, type="SQL", hnam=NULL)
+trend(strSpp="442", fqtName="gfb_iphc.sql", dbName="GFBioSQL",
+   spath=NULL, type="SQL", ioenv=.GlobalEnv, hnam=NULL)
 }
 \arguments{
   \item{strSpp}{ string specifying the code for a species that appears in the
@@ -20,6 +20,7 @@ trend(strSpp="442",fqtName="gfb_iphc.sql",dbName="GFBioSQL",
     the SQL Server database \code{SVBCPBSGFIIS}, or an MDB database}
   \item{spath}{string specifying the path to the file \code{fqtName}}
   \item{type}{string specifying the file type: \code{"SQL"}, \code{"MDB"}, or \code{"FILE"}}
+  \item{ioenv}{input/output environment for function input data and output results.}
   \item{hnam}{string specifying the name of a history file}
 }
 \details{

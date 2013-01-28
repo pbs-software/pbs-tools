@@ -11,7 +11,7 @@
 estOgive(dat=pop.age, strSpp="", method=c("empir","dblnorm"), 
      sex=list(1,2,1:2), mos=list(1:12,1:12,1:12), mat=3:7, 
      ofld="age", obin=1, xlim=c(0,60), fg=c("blue","red","black"), 
-     bg=c("cyan","pink","grey85"), wmf=FALSE, ...)
+     bg=c("cyan","pink","grey85"), wmf=FALSE, ioenv=.GlobalEnv, ...)
 }
 \arguments{
   \item{dat}{biological data set with fields \code{mat} and \code{age}.}
@@ -31,6 +31,7 @@ estOgive(dat=pop.age, strSpp="", method=c("empir","dblnorm"),
   \item{fg}{vector of three foreground colours for the sexes listed in order.}
   \item{bg}{vector of three background colours for the sexes listed in order.}
   \item{wmf}{logical: if \code{TRUE}, send plot to a \code{.wmf} file.}
+  \item{ioenv}{input/output environment for function input data and output results.}
   \item{...}{additional arguments for use in \code{estOgive}.}
 }
 \details{
@@ -42,7 +43,7 @@ estOgive(dat=pop.age, strSpp="", method=c("empir","dblnorm"),
   to a double normal curve (which is the default method used in Coleraine).
 }
 \value{
-  No value is explictly returned by the function. A global list object \code{PBSfish}
+  No value is explictly returned by the function. A global list object \code{PBStool}
   provides the following:
   \item{mdxy}{Last median x-y values.}
   \item{mbin }{Maturities binned by age (or length) group.}
@@ -63,11 +64,13 @@ estOgive(dat=pop.age, strSpp="", method=c("empir","dblnorm"),
   \code{getData("gfb_bio.sql","GFBioSQL","396",path=.getSpath())}
 }
 \examples{
+local(envir=.PBStoolEnv,expr={
 pbsfun=function(){
-  data(pop.age)
+  data(pop.age,envir=.PBStoolEnv)
   estOgive(obin=2, xlim=c(0,30), sex=1:2, method=c("empir","dblnorm"), cex=0.9)
   invisible() }
 pbsfun()
+})
 }
 \seealso{
   \code{\link[PBSdata]{pop.age}}, \code{\link[PBStools]{fitLogit}}, 

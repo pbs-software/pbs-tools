@@ -25,7 +25,7 @@ getPMR(strSpp="396", survID=c(1,2,3,121,167))
   (data frame from a call to \code{getBootRuns}), and \code{surveys.selected}
   (records from \code{surveys.all} with the specified \code{survID}).
 
-  Additionally, a global list object \code{PBSfish} contains: \cr
+  Additionally, a global list object \code{PBStool} contains: \cr
   \item{pmrTab }{the data frame output object described above.}
   \item{sTime }{system and elapsed time to get the \code{pmr} data.}
 }
@@ -43,6 +43,7 @@ getPMR(strSpp="396", survID=c(1,2,3,121,167))
   Available SQL queries: \code{\link[PBStools]{SQLcode}}
 }
 \examples{
+local(envir=.PBStoolEnv,expr={
 pbsfun=function(dfo=FALSE){
   if (dfo) {
     pmrTab=getPMR(strSpp="396", survID=c(1,121))
@@ -50,6 +51,7 @@ pbsfun=function(dfo=FALSE){
   else showMessage("If connected to DFO network, set argument 'dfo=TRUE'")
   invisible() }
 pbsfun()
+})
 }
 \keyword{ data }
 \keyword{ utilities }

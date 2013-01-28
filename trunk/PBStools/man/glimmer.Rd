@@ -10,7 +10,7 @@ glimmer(file, facs=c("year","month","depth","vessel"),
      dbrks=seq(100,500,100), gear=c(0,1,3), catch="catch", 
      areas=NULL, Vpro=0.03, Uplot=TRUE, Upanel=0.4, 
      Ionly=FALSE, Imax=NULL, crange=c(-2,2), erange=c(0,5), 
-     facmin=10, effmax=1440, vline=NULL, wmf=FALSE)
+     facmin=10, effmax=1440, vline=NULL, wmf=FALSE, ioenv=.GlobalEnv)
 }
 \arguments{
   \item{file}{ name of file or data object containing fields for GLM analysis: \cr
@@ -41,6 +41,7 @@ glimmer(file, facs=c("year","month","depth","vessel"),
   \item{effmax}{effort maximum; all records with effort greater than this are discarded.}
   \item{vline}{numeric vector: value(s) on x-axis to place a vertical dashed line.}
   \item{wmf}{logical: if \code{TRUE}, send plot to a \code{.wmf} file.}
+  \item{ioenv}{input/output environment for function input data and output results.}
 }
 \details{
   This function calculates parameter coefficients using the \code{lm} and 
@@ -49,7 +50,7 @@ glimmer(file, facs=c("year","month","depth","vessel"),
   detailed discussion on \sQuote{Standardized CPUE Analyses}.
 }
 \value{
-  List \code{PBSfish} containing:
+  List \code{PBStool} containing:
   \item{dat}{Data frame of processed data to pass to \code{lm} and \code{aov}.}
   \item{coeffs}{Named vector of coefficients calculated by \code{lm}.}
   \item{lmres}{Results of \code{lm} analysis}
@@ -74,8 +75,9 @@ glimmer(file, facs=c("year","month","depth","vessel"),
   Rowan Haigh, Pacific Biological Station, Fisheries and Oceans Canada, Nanaimo BC
 }
 \examples{
+local(envir=.PBStoolEnv,expr={
 pbsfun=function(){
-  data(testdatC);  x=testdatC
+  data(testdatC,envir=.PBStoolEnv); x = testdatC
   glmdat=data.frame(
     year=as.numeric(substring(x$date,1,4)),
     month=as.numeric(substring(x$date,6,7)),
@@ -85,6 +87,7 @@ pbsfun=function(){
   glimmer(glmdat,Vpro=.025,dbrks=seq(100,500,50))
   invisible() }
 pbsfun()
+})
 }
 \seealso{
   \code{\link[PBStools]{getData}} \cr

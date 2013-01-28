@@ -26,13 +26,15 @@ zapDupes(dat, index)
   \code{\link{zapHoles}}, \code{\link{processBio}}
 }
 \examples{
+local(envir=.PBStoolEnv,expr={
 pbsfun=function(){
-  data(ltmose07)
+  data(ltmose07,envir=.PBStoolEnv)
   cat(paste("'ltmose07' has",nrow(ltmose07),"rows\n"))
   zap=zapDupes(ltmose07,"PID")
   print(zap,quote=FALSE)
   cat(paste("After zapping using index 'PID', there are",nrow(zap),"rows\n"))
   invisible() }
 pbsfun()
+})
 }
 \keyword{manip}

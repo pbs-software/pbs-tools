@@ -208,7 +208,7 @@
 
 \tab \pkg{PBStools} provides an R interface for algorithms commonly used in fisheries. The scope of this package is by no means comprehensive, having grown from the need to satisfy tasks specific to British Columbia (BC) ocean fisheries. Many of the functions provide a quick way to visualize data, and in some cases perform preliminary analyses. Though oriented to users at the Pacific Biological Station (PBS), these functions may provide a broad utility to users at other locales. The User Guide is organised into sections that loosely classify the functions by theme -- (1)~Utility, (2)~Biology, (3)~Fishery, (4)~Survey, (5)~Spatial, (6)~Temporal, and (7)~Catch Reconstruction. Within each section, the functions are described alphabetically.
 
-\tab \pkg{PBStools} depends heavily on two other R package: \pkg{PBSmapping} \citep{Schnute-etal:2004b,Boers-etal:2004} and \pkg{PBSmodelling} \citep{Schnute-etal:2006}. We use the latter to implement several Graphical User Interfaces (GUIs) that facilitate a few select functions. Most functions, however, are designed for use on the command line or in sourced code. Many of the functions invisibly return a global list object called \code{PBSfish} containing auxiliary output.
+\tab \pkg{PBStools} depends heavily on two other R package: \pkg{PBSmapping} \citep{Schnute-etal:2004b,Boers-etal:2004} and \pkg{PBSmodelling} \citep{Schnute-etal:2006}. We use the latter to implement several Graphical User Interfaces (GUIs) that facilitate a few select functions. Most functions, however, are designed for use on the command line or in sourced code. Many of the functions invisibly return a global list object called \code{PBStool} containing auxiliary output.
 
 \tab Amongst the various functions in the package, we include those that implement some of the models published by the authors. For example, \code{calcSG} estimates parameters for the Schnute growth model \citep{Schnute:1981}, which offers a versatile alternative to the von Bertalanffy growth model (\code{calcVB}). The functions presented in the Survey section make use of the binomial-gamma model \citep{Schnute-Haigh:2003} for characterizing survey strata populations when designing or simulating groundfish trawl surveys. The function \code{runCCA} implements the composition analysis of \citet{Schnute-Haigh:2007} to estimate total mortality $Z$ of rockfish (\emph{Sebastes} spp.) using three combined effects: survival at age ($S_a$), fishery selectivity at age ($\beta_a$), and relative recruitment anomalies ($R_a$). Finally, the function \code{buildCatch} provides an efficient method for reconstructing rockfish catch from 1918 to the present along the BC coast \citep{Haigh-Yamanaka:2011}.
 
@@ -961,13 +961,13 @@ Here we use $\theta$ primarily as a parameter vector, but include the design ele
 This parameretisation replaces (T2.2) in \citet{Schnute-Haigh:2007}, which uses $\alpha$ and $\beta_k$.
 
 \tab The output is a proportions-at-age vector of length \code{np}.\\
-If \code{sim=TRUE}, the components $S_a$, $\beta_a$, $R_a$, and $p_a$ are writtten to the global list object \code{PBSfish}.
+If \code{sim=TRUE}, the components $S_a$, $\beta_a$, $R_a$, and $p_a$ are writtten to the global list object \code{PBStool}.
 
 \begin{examplebox}
 \example{genPa}
 \begin{Verbatim}[fontsize=\footnotesize]
 pbsfun=function(){
-  genPa(); unpackList(PBSfish); unpackList(theta)
+  genPa(); unpackList(PBStool); unpackList(theta)
   par0 = par(no.readonly=TRUE); on.exit(par(par0))
   expandGraph(mfrow=c(2,2),mar=c(1,4,1,0.5),oma=c(3,0,0,0),mgp=c(2,.5,0))
   for (i in c("Sa","Ba","Ra","pa")) {
@@ -1347,7 +1347,7 @@ pbsfun(TRUE)
 The function \code{dumpCat} flattens the input array \code{dat} from four or five dimensions to two dimensions and sends the result to a comma-delimited text file (\code{.csv}).
 
 \tab Dump catch ratios calculated during a catch reconstruction into CSV tables.
-The reconstruction procedure stores ratio arrays in a list object \code{PBSfish123}, where \code{123} is the species Hart code.
+The reconstruction procedure stores ratio arrays in a list object \code{PBStool123}, where \code{123} is the species Hart code.
 The function \code{dumpRat} extracts the arrays and sends them to a comma-delimited text file (\code{.csv}).
 
 \subsection {getCatch}
@@ -1475,7 +1475,7 @@ plotConcur(strSpp="410", mindep=150, maxdep=435) # DFO only
 
 \tab This function queries the DFO \db{FOS}\footnote{Fishery Operations System} database for catches of the specified species, and plots monthly catches as bars stacked by PMFC area. The SQL query \code{fos\_catch.sql} (DFO personnel only) obtains catch from all fisheries, and the user chooses which fishery to display. Barplot categories are combinations of year and month, and catch is colour-coded by PMFC area (blues for 3C-3D, yellow-orange-red for 5A-5B-5C, and greens for 5D-5E) to provide a visual feel for the part of the coast (WCVI\footnote{west coast of Vancouver Island}, QSC\footnote{Queen Charlotte Sound or central BC coast}, or WCHG\footnote{west coast Haida Gwaii (offshore west, Hecate Strait to the east, \& Dixon Entrance to the north)}) that provides the predominant catch (Figure~\ref{fig:PBStools-plotFOScatch}). The total catch is reported at the end of each fishing year.
 
-\tab In addition to the plot, catch summaries by fishery, year, and PMFC area are dumped to a file called \code{catFOSfyr.csv}. Also, internally-derived objects of interest (such as catch-by-month and catch-by-year matrices) are saved in the global list object \code{PBSfish}.
+\tab In addition to the plot, catch summaries by fishery, year, and PMFC area are dumped to a file called \code{catFOSfyr.csv}. Also, internally-derived objects of interest (such as catch-by-month and catch-by-year matrices) are saved in the global list object \code{PBStool}.
 
 \begin{examplebox}
 \example{plotFOScatch}
@@ -1506,7 +1506,7 @@ The code allows a user to perform both frequentist (NLM) and Bayesian (BRugs) an
 \end{tabular}
 
 The Bayesian model is coded in the OpenBUGS language and can be found in the examples subdirectory 
-\code{library/PBSfishery/examples}.
+\code{library/PBStools/examples}.
 
 \subsection {sumCatTabs}
 
@@ -1530,9 +1530,9 @@ The catch array is saved to an \code{.rda} file with a name that indicates major
   
 \tab If the argument \code{rda} is given an \code{.rda} name, the \code{bycatch} array is loaded, by-passing the SQL calls.
 
-\tab The \code{bycatch} array is returned invisibly. Additionally, a list object called \code{PBSfish}, located in the user's global environment, is populated with:\\
+\tab The \code{bycatch} array is returned invisibly. Additionally, a list object called \code{PBStool}, located in the user's global environment, is populated with:\\
 \begin{tabular}{ll}
-  \code{module}   & the name of the \pkg{PBSfishery} module to which this function belongs;\\
+  \code{module}   & the name of the \pkg{PBStools} module to which this function belongs;\\
   \code{call}     & the call to the function \code{trackBycat};\\
   \code{plotname} & name of the plot, should the user which to use it, e.g. \code{.plotDev(act="png")};\\
   \code{bartab}   & matrix of catch (tonnes) by year and fish group, summed over the databases;\\
@@ -1552,7 +1552,7 @@ The catch array is saved to an \code{.rda} file with a name that indicates major
 
 \tab Bootstrap stratified biomass estimates using random draws from the binomial-gamma distribution using strata population parameters \citep{Schnute-Haigh:2003} supplied. This function depends on the R-package \pkg{boot}. These parameters are used to estimate the survey population using random draws from the binomial-gamma distribution.
 
-\tab No value is explicitly returned by the function. A global list object \code{PBSfish} provides results of the analysis:
+\tab No value is explicitly returned by the function. A global list object \code{PBStool} provides results of the analysis:
 
 \begin{tabular}{ll}
 	\code{dat}    & data frame: a subset from the user input that contains population \\
@@ -1570,7 +1570,7 @@ The catch array is saved to an \code{.rda} file with a name that indicates major
 	\code{group}  & vector: stratum grouping showing allocation of $K$ tows.\\
 \end{tabular}
 
-\tab The results contained in \code{PBSfish} can be displayed using the function \code{showAlpha} (Figure~\ref{fig:PBStools-showAlpha}), which plots bootstrapped biomass values and their quantile confidence levels $\alpha$ (see Fig. 3 in \citet{Schnute-Haigh:2003}).
+\tab The results contained in \code{PBStool} can be displayed using the function \code{showAlpha} (Figure~\ref{fig:PBStools-showAlpha}), which plots bootstrapped biomass values and their quantile confidence levels $\alpha$ (see Fig. 3 in \citet{Schnute-Haigh:2003}).
 
 \begin{examplebox}
 \example{bootBG}
@@ -1729,7 +1729,7 @@ pbsfun()
 
 \subsection {getPMR}
 
-\tab Get \code{p}, \code{mu}, and \code{rho} values for populations by strata from survey data housed in \db{GFBioSQL} using the query \code{gfb\_pmr.sql} stored in \code{library/PBSfishery/sql}.\\ 
+\tab Get \code{p}, \code{mu}, and \code{rho} values for populations by strata from survey data housed in \db{GFBioSQL} using the query \code{gfb\_pmr.sql} stored in \code{library/PBStools/sql}.\\ 
 The function executes the SQL query for each survey ID \code{i}:
 \begin{Verbatim}[fontsize=\footnotesize]
 getData("gfb_pmr.sql","GFBioSQL",strSpp,path=.getSpath(),surveyid=i)
@@ -1829,7 +1829,7 @@ Estimated parameters of the sampled binomial-gamma distribution:
 
 \subsection {showAlpha}
 
-\tab Show quantile confidence levels $\alpha$ for bootstrapped biomass. This function assumes that \code{bootBG()} has been run and that the data list object \code{PBSfish} exists in the global position. The figure generated (Figure~\ref{fig:PBStools-showAlpha}) follows the format of Figure 3 in \citet{Schnute-Haigh:2003}. The panels show: \\
+\tab Show quantile confidence levels $\alpha$ for bootstrapped biomass. This function assumes that \code{bootBG()} has been run and that the data list object \code{PBStool} exists in the global position. The figure generated (Figure~\ref{fig:PBStools-showAlpha}) follows the format of Figure 3 in \citet{Schnute-Haigh:2003}. The panels show: \\
 \tab (a) histogram of bootstrapped biomass;\\
 \tab (b) cumulative probability distribution of bootstrapped biomass;\\
 \tab (c) normal quantiles of the estimates $\hat{B}$;\\
@@ -1985,7 +1985,7 @@ pbsfun()
 \begin{Verbatim}[fontsize=\footnotesize]
 pbsfun=function() {
   calcHabitat(isob=c(150,435), digits=1, plot=FALSE) # DBR
-  habitat = PBSfish$habitat
+  habitat = PBStool$habitat
   calcSurficial(surf="qcb", hab=habitat)
   invisible() }
 pbsfun()
@@ -2350,7 +2350,7 @@ getData("fos_vcatORF.sql",dbName="GFFOS",strSpp=strSpp,path=.getSpath(),
 \end{Verbatim}
 \end{dfobox}
 
-\tab The final reconstructed catch array is invisibly returned. Additionally, if \code{saveinfo = TRUE}, various data objects internal to the function are saved to a global list object called \code{PBSfish}. Also, various data objects, including the eight database catch files consolidated and massaged, are saved as system binary files \code{.rda}. The final reconstructed catch array is also flattened to a comma-delimited text file \code{Catch-History-123.csv}, where \code{123} represents the species code. Summary catch barplots, specified by the argument \code{fidout}, are plotted on the R graphics device or sent to \code{wmf} file(s) (e.g., Figure~\ref{fig:PBStools-buildCatch}).
+\tab The final reconstructed catch array is invisibly returned. Additionally, if \code{saveinfo = TRUE}, various data objects internal to the function are saved to a global list object called \code{PBStool}. Also, various data objects, including the eight database catch files consolidated and massaged, are saved as system binary files \code{.rda}. The final reconstructed catch array is also flattened to a comma-delimited text file \code{Catch-History-123.csv}, where \code{123} represents the species code. Summary catch barplots, specified by the argument \code{fidout}, are plotted on the R graphics device or sent to \code{wmf} file(s) (e.g., Figure~\ref{fig:PBStools-buildCatch}).
 
 \tab The function only has one argument for an Oracle database user ID and one for its password. If the user's authentication credentials are different for \db{PacHarv3} and \db{GFFOS}, specify \code{uid} and \code{pwd} as two-element vectors. The SQL servers assume a trusted relationship with the user's DFO logon identity.
 
@@ -2379,7 +2379,7 @@ getData("fos_vcatORF.sql",dbName="GFFOS",strSpp=strSpp,path=.getSpath(),
                 &  \code{4}  = Dogfish-Lingcod,\\
                 &  \code{5}  = hook and line (H\&L) rockfish,\\
                 &  \code{10} = all fisheries combined.\\
-  \code{saveinfo}     &  logical: if \code{TRUE}, save various data objects created within the function to a list object called \code{PBSfish}; setting to \code{FALSE} may speed reconstruction.\\
+  \code{saveinfo}     &  logical: if \code{TRUE}, save various data objects created within the function to a list object called \code{PBStool}; setting to \code{FALSE} may speed reconstruction.\\
   \code{wmf}          &  logical: if \code{TRUE} send the figures to \code{.wmf} files.\\
   \code{uid, pwd}     &  user ID and password for Oracle DB account authentication.\\
   \code{reconstruct}  &  logical: if \code{TRUE} (default) complete the reconstruction as previously; if \code{FALSE}, terminate the code once the modern catch array has been compiled and saved (to a binary file \code{cat123mod.rda}, where \code{123} = species code).\\

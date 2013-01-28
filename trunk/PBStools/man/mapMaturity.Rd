@@ -8,7 +8,7 @@
 mapMaturity(dat=pop.age, strSpp="", mats=1:7, sex=1:2, 
     brks=c(0,.05,.1,.25,.5,1),
     clrs=c("aliceblue","lightblue","skyblue3","steelblue4","black"),
-    hpage=6, wmf=FALSE, pix=FALSE) 
+    hpage=6, wmf=FALSE, pix=FALSE, ioenv=.GlobalEnv) 
 }
 \arguments{
   \item{dat}{biological data set with fields \code{mat} and \code{age}.}
@@ -21,13 +21,14 @@ mapMaturity(dat=pop.age, strSpp="", mats=1:7, sex=1:2,
   \item{hpage}{height of page in inches if figure is sent to an image file.}
   \item{wmf}{logical: if \code{TRUE}, send plot to a \code{.wmf} file.}
   \item{pix}{logical: if \code{TRUE}, send plot to a \code{.png} file.}
+  \item{ioenv}{input/output environment for function input data and output results.}
 }
 \details{
   For each maturity code the function plots a row of monthly boxes colour-
   coded by the relative occurrence of the code in that month compared to the year.
 }
 \value{
-  No value is explictly returned by the function. A global list object \code{PBSfish}
+  No value is explictly returned by the function. A global list object \code{PBStool}
   provides the following:
   \item{dat}{Qualified data used for the analysis.}
   \item{xlim}{Limits of the x-axis.}
@@ -48,11 +49,13 @@ mapMaturity(dat=pop.age, strSpp="", mats=1:7, sex=1:2,
   \code{getData("gfb_bio.sql","GFBioSQL","396",path=.getSpath())}
 }
 \examples{
+local(envir=.PBStoolEnv,expr={
 pbsfun=function(){
-  data(pop.age)
+  data(pop.age,envir=.PBStoolEnv)
   mapMaturity(brks=c(0,.01,.05,.25,.5,1),sex=1:2)
   invisible() }
 pbsfun()
+})
 }
 \seealso{
   \code{\link{pop.age}}, \code{\link{estOgive}}, \code{\link{getData}}

@@ -44,7 +44,7 @@ genPa( np = 40,
 \value{
   Proportions-at-age vector of length \code{np}. \cr
   If \code{sim=TRUE}, the components \eqn{S_a}{S[a]}, \eqn{\beta_a}{\beta[a]}, \eqn{R_a}{R[a]}, 
-  and \eqn{p_a}{p[a]} are writtten to the global list object \code{PBSfish}.
+  and \eqn{p_a}{p[a]} are writtten to the global list object \code{PBStool}.
 }
 \references{
   Edwards, A.M., Starr, P.J., and Haigh, R. (2010, under revision) 
@@ -62,8 +62,9 @@ genPa( np = 40,
   \code{\link[PBStools]{scaleVec}}, \code{\link[PBStools]{sampBG}}
 }
 \examples{
+local(envir=.PBStoolEnv,expr={
 pbsfun=function(){
-  genPa(); unpackList(ttget(PBSfish)); unpackList(theta)
+  genPa(); unpackList(ttget(PBStool)); unpackList(theta)
   par0 = par(no.readonly=TRUE); on.exit(par(par0))
   expandGraph(mfrow=c(2,2),mar=c(1,4,1,0.5),oma=c(3,0,0,0),mgp=c(2,.5,0))
   for (i in c("Sa","Ba","Ra","pa")) {
@@ -80,6 +81,7 @@ pbsfun=function(){
   mtext("     Age",outer=TRUE,side=1,line=1.5,cex=1.5)
   invisible() }
 pbsfun()
+})
 }
 \keyword{datagen}
 

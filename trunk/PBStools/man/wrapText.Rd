@@ -32,11 +32,13 @@ wrapText(string, width=50, prefix=c("> ","+ "), exdent=3)
   \code{\link{revStr}}, \code{\link{showError}}
 }
 \examples{
+local(envir=.PBStoolEnv,expr={
 pbsfun=function(){
   txt=wrapText(paste("USA state names:  ",
     paste(state.name,collapse=", "),sep=""),width=72,exdent=5)
   showMessage(txt,as.is=TRUE,adj=0,col="blue",cex=.9,x=.05)
   cat(txt,"\n"); invisible() }
 pbsfun()
+})
 }
 \keyword{character}

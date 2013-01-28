@@ -14,11 +14,15 @@ revStr(x)
   A vector strings that have been reversed.
 }
 \author{\code{base::strsplit}}
-\seealso{ \code{\link{wrapText}} }
+\seealso{
+  \code{\link{wrapText}} 
+}
 \examples{
+local(envir=.PBStoolEnv,expr={
 pbsfun=function() {
   cat(revStr("Nardwuar the Human Serviette"),"\n")
   invisible() }
 pbsfun()
+})
 }
 \keyword{character}

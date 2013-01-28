@@ -1,4 +1,4 @@
-#buildCatch-----------------------------2013-01-16
+#buildCatch-----------------------------2013-01-28
 # Catch reconstruction algorithm for BC rockfish.
 # Use ratios of species catch to ORF catch for multiple fisheries.
 # Matrix indices: i=year, j=major, k=fid, l='spp'
@@ -7,10 +7,10 @@ buildCatch=function(dbdat, sql=FALSE, strSpp="424", dfld="ORF",
      major=c(1,3:9), refyrs=1997:2005, fidout=c(1:5,10), 
      saveinfo=TRUE, eps=FALSE, pix=FALSE, wmf=FALSE, 
      uid=Sys.info()["user"], pwd=uid,
-     reconstruct=TRUE, diagnostics=TRUE){
+     reconstruct=TRUE, diagnostics=TRUE, ioenv=.GlobalEnv){
 
-	### Global list object 'PBSfish' stores results from the analysis
-	assign("PBSfish",list(module="M07_BuildCatch",call=match.call(),args=args(buildCatch),
+	### Global list object 'PBStool' stores results from the analysis
+	assign("PBStool",list(module="M07_BuildCatch",call=match.call(),args=args(buildCatch),
 		spp=strSpp,pD=1,eps=eps,wmf=wmf),envir=.PBStoolEnv)
 	# pD = Counter for plotData diagnostics
 	### Function to convert numbers to proportions
@@ -101,7 +101,7 @@ buildCatch=function(dbdat, sql=FALSE, strSpp="424", dfld="ORF",
 	clrs.major[as.character(c(1,3:9))]=c("moccasin","blue","lightblue","yellow","orange","red","seagreen","lightgreen")
 
 	if (saveinfo)
-		packList(c("htab","htabmax","htabadd","hismax","hisadd"),"PBSfish",tenv=.PBStoolEnv)
+		packList(c("htab","htabmax","htabadd","hismax","hisadd"),"PBStool",tenv=.PBStoolEnv)
 	### Historical used again on line 335
 
 	### ------------------------------------------------
@@ -193,7 +193,7 @@ buildCatch=function(dbdat, sql=FALSE, strSpp="424", dfld="ORF",
 	}
 	else {
 		dbdat=as.character(substitute(dbdat)) ### database list object name
-		expr=paste("getFile(",dbdat,",try.all.frames=TRUE,tenv=penv()); fnam=names(",dbdat,"); unpackList(",dbdat,")",sep="")
+		expr=paste("getFile(",dbdat,",senv=ioenv,try.all.frames=TRUE,tenv=penv()); fnam=names(",dbdat,"); unpackList(",dbdat,")",sep="")
 		eval(parse(text=expr)) 
 	}
 #browser();return()
@@ -424,7 +424,7 @@ buildCatch=function(dbdat, sql=FALSE, strSpp="424", dfld="ORF",
 	orfhis=allhis[,,,dfld]
 	if (any(strSpp==c("396"))) rawhis=allhis[,,,"POP"]
 	if (saveinfo)
-		packList(c("catmod","catmod0","catmod1","ctab","MM","mm","allhis"),"PBSfish",tenv=.PBStoolEnv)
+		packList(c("catmod","catmod0","catmod1","ctab","MM","mm","allhis"),"PBStool",tenv=.PBStoolEnv)
 	### Terminate here if all you want are the modern landings
 	if (!reconstruct) return(list(catmod0=catmod0,catmod1=catmod1,catmod=catmod)) 
 
@@ -438,7 +438,7 @@ buildCatch=function(dbdat, sql=FALSE, strSpp="424", dfld="ORF",
 	catYM=apply(cref,c(1:2,4),sum,na.rm=TRUE)  ### total catch by year and major
 	catYF=apply(cref,c(1,3:4),sum,na.rm=TRUE)  ### total catch by year and fid
 	if (saveinfo)
-		packList(c("cref","catYM","catMF","catYF"),"PBSfish",tenv=.PBStoolEnv)
+		packList(c("cref","catYM","catMF","catYF"),"PBStool",tenv=.PBStoolEnv)
 
 	### alpha - Proportion RRF caught in a major area for each fid
 	alpha=apply(catMF[,,"landed"],2,function(x){
@@ -480,7 +480,7 @@ buildCatch=function(dbdat, sql=FALSE, strSpp="424", dfld="ORF",
 	}
 
 	### delta - Discard rate of landed species per ORF from observer logs
-	assign("PBSfish",ttget(PBSfish)) ### remember global collection object because 'calcRatio' overwrites it
+	assign("PBStool",ttget(PBStool)) ### remember global collection object because 'calcRatio' overwrites it
 	drSpp=list(c("discard","landed"),c("discard","TAR"),c("discard","ORF"))
 	drate=sapply(drSpp,function(x){paste(x,collapse=":")}) ### discard ratio description
 	drN=length(drSpp)                                      ### number of discard rates
@@ -518,7 +518,7 @@ buildCatch=function(dbdat, sql=FALSE, strSpp="424", dfld="ORF",
 		if (any(k==c(2,3,4)))
 			dfac[jj,kk,"dr"]=dfac[jj,kk,"discard:TAR"]
 	}
-	assign("PBSfish",PBSfish,envir=.PBStoolEnv); rm(PBSfish) ### restore to .PBStoolEnv and remove local copy
+	assign("PBStool",PBStool,envir=.PBStoolEnv); rm(PBStool) ### restore to .PBStoolEnv and remove local copy
 	save("ologs",file=paste("ologs",strSpp,".rda",sep=""))   ### save observerlogs  with discard information
 	dfac[is.na(dfac)] = 0; delta = dfac
 	if (diagnostics){
@@ -528,7 +528,7 @@ buildCatch=function(dbdat, sql=FALSE, strSpp="424", dfld="ORF",
 			plotData(t(delta[,,rate]),paste("delta ",rr," (major in fishery)",sep=""),col=clrs.major[mm],type="bars")
 	}	}
 	if (saveinfo)
-		packList(c("alpha","beta","rtar","gamma","delta"),"PBSfish",tenv=.PBStoolEnv)
+		packList(c("alpha","beta","rtar","gamma","delta"),"PBStool",tenv=.PBStoolEnv)
 
 	fidnam=c("trawl","halibut","sablefish","sched2","zn","sabzn","sabhal","dogfish","lingcod","combined")
 	fshnam=c("trawl","h&l","trap",rep("h&l",6),"combined")  ### general category vector
@@ -579,7 +579,7 @@ buildCatch=function(dbdat, sql=FALSE, strSpp="424", dfld="ORF",
 		plotData(apply(ancient,c(1,3),sum),"ancient in fishery",col=clrs.fishery)
 	}
 	if (saveinfo)
-		packList(c("cobra","lambda","gamma.lambda","fidnam","fshnam","ancient"),"PBSfish",tenv=.PBStoolEnv)
+		packList(c("cobra","lambda","gamma.lambda","fidnam","fshnam","ancient"),"PBStool",tenv=.PBStoolEnv)
 
 	### ----------------------------
 	### 5. Reconstruct the RRF catch
@@ -681,7 +681,7 @@ buildCatch=function(dbdat, sql=FALSE, strSpp="424", dfld="ORF",
 	eval(parse(text=expr))
 
 	if (saveinfo) packList(c("HISYRS","MODYRS","ALLYRS","inone","icalc","idata",
-		"disC","disD","sppnew"),"PBSfish",tenv=.PBStoolEnv)
+		"disC","disD","sppnew"),"PBStool",tenv=.PBStoolEnv)
 #browser(); return()
 
 	###-----Plot results-----
@@ -691,7 +691,7 @@ buildCatch=function(dbdat, sql=FALSE, strSpp="424", dfld="ORF",
 	}
 	fidlab=c("Trawl","Halibut","Sablefish","Dogfish-Lingcod","H&L Rockfish","Sablefish + ZN",
 		"Sablefish + Halibut","Dogfish","Lingcod","Combined Fisheries")
-	data(pmfc,species)
+	data(pmfc,species,envir=penv())
 
 	### ADMB catch data file for the combined fishery
 	admdat = paste("admb-cat",strSpp,".dat",sep="")
@@ -731,9 +731,9 @@ buildCatch=function(dbdat, sql=FALSE, strSpp="424", dfld="ORF",
 	}
 	#options(warn=warn)
 	if (saveinfo) {
-		packList(c("plotname","clrs.major","clrs.fishery","fidlab"),"PBSfish",tenv=.PBStoolEnv)
-		ttget(PBSfish)
-		save("PBSfish",file=paste("PBSfish",strSpp,".rda",sep="")) }
+		packList(c("plotname","clrs.major","clrs.fishery","fidlab"),"PBStool",tenv=.PBStoolEnv)
+		ttget(PBStool)
+		save("PBStool",file=paste("PBStool",strSpp,".rda",sep="")) }
 #browser();return()	
 	invisible(sppnew) }
 #---------------------------------------buildCatch
@@ -757,9 +757,9 @@ plotData =function(x,description="something",
 	xx = x; xx[xx==0] = NA
 	cnam = colnames(x); nc = length(cnam) # column names
 	col =rep(col,nc)[1:nc]; names(col) = cnam
-	pD = ttcall(PBSfish)$pD
-	eps= ttcall(PBSfish)$eps
-	wmf= ttcall(PBSfish)$wmf
+	pD = ttcall(PBStool)$pD
+	eps= ttcall(PBStool)$eps
+	wmf= ttcall(PBStool)$wmf
 	if (!eps & !wmf) eps=TRUE
 	plotname = paste("CRdiag/pD",pad0(pD,3),"-",gsub(" ","-",description),sep="")
 #browser();return()
@@ -785,8 +785,8 @@ plotData =function(x,description="something",
 	#legend("topleft",col=col[zuse],lwd=2,legend=cnam[zuse],inset=0.025,bty="n",title=zlab)
 	legend(xval[xmin][1],par()$usr[4],col=col[zuse],lwd=2,legend=cnam[zuse],bty="n",title=zlab,xjust=xadj)
 	if (eps|wmf) dev.off()
-	#eval(parse(text="PBSfish$pD <<- pD +1"))
-	ttget(PBSfish); PBSfish$pD <- pD + 1; ttput(PBSfish)  # increment number of diagnostic plot
+	#eval(parse(text="PBStool$pD <<- pD +1"))
+	ttget(PBStool); PBStool$pD <- pD + 1; ttput(PBStool)  # increment number of diagnostic plot
 #browser();return()
 	invisible() }
 

@@ -37,7 +37,7 @@ plotFOScatch(strSpp="453", majors=c(1,3:9), space=0.5,
   to a file called \code{catFOSfyr.csv}.
   
   Internally derived objects of interest (such as catch-by-month and catch-by-year
-  matrices) are save in the global list object \code{PBSfish}.
+  matrices) are save in the global list object \code{PBStool}.
 }
 \author{
   Rowan Haigh, Pacific Biological Station, Fisheries and Oceans Canada, Nanaimo BC

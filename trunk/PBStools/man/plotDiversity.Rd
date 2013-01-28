@@ -9,9 +9,9 @@
 }
 \usage{
 plotDiversity(fqtName="Ex01_Sample_Info",dbName="Examples.mdb",
-     type="MDB", path=getwd(), bars="H", pnts="S", xnames=c("SID","Batch"),
-     xint=40, clrs=c("skyblue","gold","blue","green4"), addlowess=TRUE,
-     f=0.2, pdf=FALSE, wmf=FALSE)
+   type="MDB", path=getwd(), bars="H", pnts="S", xnames=c("SID","Batch"),
+   xint=40, clrs=c("skyblue","gold","blue","green4"), addlowess=TRUE,
+   f=0.2, pdf=FALSE, wmf=FALSE, ioenv=.GlobalEnv)
 }
 \arguments{
   \item{fqtName}{string specifying name of file, query, or table; \cr
@@ -30,6 +30,7 @@ plotDiversity(fqtName="Ex01_Sample_Info",dbName="Examples.mdb",
     of points in the plot which influence the fit at each value. Larger values give more smoothness.}
   \item{pdf}{logical: if \code{TRUE}, send figure to a postscript document file (\code{.pdf}).}
   \item{wmf}{logical: if \code{TRUE}, send figure to a windows metafile (\code{.wmf}).}
+  \item{ioenv}{input/output environment for function input data and output results.}
 }
 \details{
   Creates a barplot of one index with overlaid points of another. The arguments 
@@ -56,7 +57,7 @@ plotDiversity(fqtName="Ex01_Sample_Info",dbName="Examples.mdb",
 }
 \value{
   No value is explicitly return; however, objects of interest are stored in the 
-  global list object \code{PBSfish}.
+  global list object \code{PBStool}.
 }
 \references{
   Haigh, R. and Schnute, J.T. (2003) The Longspine Thornyhead fishery along the west coast of 
@@ -70,12 +71,14 @@ plotDiversity(fqtName="Ex01_Sample_Info",dbName="Examples.mdb",
   \code{\link[PBStools]{trackComp}}, \code{\link[PBStools]{boxSeason}}
 }
 \examples{
+local(envir=.PBStoolEnv,expr={
 pbsfun=function(os=.Platform$OS.type) {
   if (os=="windows")
     plotDiversity(bars="H",pnts="S",xnames="Batch",path=.getSpath())
   else showMessage("Only functional for Microsoft Access on Windows OS")
   invisible() }
 pbsfun()
+})
 }
 \keyword{hplot}
 

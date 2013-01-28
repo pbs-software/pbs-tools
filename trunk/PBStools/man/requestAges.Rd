@@ -49,7 +49,7 @@ requestAges(strSpp, nage=500, year=2011,
   and \code{999} = no. of otoliths) writes out the random samples for each trip 
   (if commercial samples) / fishing event (if survey samples) in a format that simulates an otolith tray.
   
-  The global list object \code{PBSfish} contains: 
+  The global list object \code{PBStool} contains: 
   \tabular{lll}{
     \code{module}   \tab \code{string}     \tab \pkg{PBStools} source code module that contains \code{requestAges}; \cr
     \code{call}     \tab \code{call}       \tab details of the last last call to \code{requestAges}; \cr

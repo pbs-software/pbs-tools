@@ -9,7 +9,8 @@ Display Seasonal Patterns Using Boxplots
 }
 \usage{
 boxSeason(fqtName="Ex01_Sample_Info", dbName="Examples.mdb",
-     type="MDB", path=getwd(), fld="S", brks="M", pdf=FALSE, wmf=FALSE)
+   type="MDB", path=getwd(), fld="S", brks="M", 
+   pdf=FALSE, wmf=FALSE, ioenv=.GlobalEnv)
 }
 \arguments{
   \item{fqtName}{name of a file, query or table in the specified database \code{dbName}; \cr
@@ -22,6 +23,7 @@ boxSeason(fqtName="Ex01_Sample_Info", dbName="Examples.mdb",
     \code{"S"} (seasonal), \code{"B"} (bimonthly), or \code{"M"} (monthly).}
   \item{pdf}{logical: if \code{TRUE}, send figure to a postscript document file \code{.pdf}.}
   \item{wmf}{logical: if \code{TRUE}, send figure to a windows metafile \code{.wmf}.}
+  \item{ioenv}{input/output environment for function input data and output results.}
 }
 \details{
   The data file imported from a Microsoft Access table or query called 
@@ -36,12 +38,14 @@ boxSeason(fqtName="Ex01_Sample_Info", dbName="Examples.mdb",
   \code{\link[PBStools]{histMetric}}, \code{\link[PBStools]{imputeRate}}
 }
 \examples{
+local(envir=.PBStoolEnv,expr={
 pbsfun=function(os=.Platform$OS.type) {
   if (os=="windows")
     boxSeason(fld="S",brks="M",path=.getSpath())
   else showMessage("Only functional for Microsoft Access on Windows OS")
   invisible() }
 pbsfun()
+})
 }
 \keyword{hplot}
 \keyword{category}

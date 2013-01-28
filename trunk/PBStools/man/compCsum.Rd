@@ -9,7 +9,7 @@ compCsum(dat=pop.age, pro=TRUE, strSpp="", xfld="age", plus=60,
      yfac="year",areas=list(major=NULL, minor=NULL, locality=NULL, 
      srfa=NULL, srfs=NULL, popa=NULL), ttype=list(c(1,4),c(2,3)), 
      stype=c(1,2,5:8), ameth=3, allTT=TRUE, years=1998:2006,
-     pix=FALSE, wmf=FALSE, singles=FALSE, pages=FALSE)
+     pix=FALSE, wmf=FALSE, singles=FALSE, pages=FALSE, ioenv=.GlobalEnv)
 }
 \arguments{
   \item{dat}{Biological data set with fields \code{xfld} and \code{yfac}.}
@@ -32,6 +32,7 @@ compCsum(dat=pop.age, pro=TRUE, strSpp="", xfld="age", plus=60,
   \item{wmf}{Logical: if \code{TRUE}, send plot to a \code{.wmf} file.}
   \item{singles}{Logical: if \code{TRUE} and \code{pix|wmf}, send each area/trip type combination to separate files.}
   \item{pages}{Logical: if \code{TRUE} and \code{pix|wmf}, send each page of area plots to separate files.}
+  \item{ioenv}{input/output environment for function input data and output results.}
 }
 \details{
   The function compares cumulative relative frequency curves for specified factors 
@@ -48,7 +49,7 @@ compCsum(dat=pop.age, pro=TRUE, strSpp="", xfld="age", plus=60,
   \code{areas} or \code{ttype}. (The option \code{yfac="trip"} is not implemented at present.)
 }
 \value{
-  No value is explictly returned by the function. A global list object \code{PBSfish}
+  No value is explictly returned by the function. A global list object \code{PBStool}
   provides the following plus some labels:
   \item{dat}{Qualified data used for the analysis.}
   \item{xlim}{Limits of the x-axis.}
@@ -62,11 +63,13 @@ compCsum(dat=pop.age, pro=TRUE, strSpp="", xfld="age", plus=60,
   \code{getData("gfb_bio.sql","GFBioSQL","396",path=.getSpath())}
 }
 \examples{
+local(envir=.PBStoolEnv,expr={
 pbsfun=function(){
-  data(pop.age)
+  data(pop.age,envir=.PBStoolEnv)
   compCsum(areas=list(srfa=list(c("5AB","5CD"))),ttype=list(c(2,3)))
   invisible() }
 pbsfun()
+})
 }
 \seealso{
   \code{\link{pop.age}}, \code{\link{calcVB}}, \code{\link{histMetric}}, 

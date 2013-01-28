@@ -9,7 +9,8 @@
 }
 \usage{
 getCatch(strSpp="394", dbs=c("gfb","gfc","pht","fos"),
-     sql=FALSE, proBio=TRUE, uid=Sys.info()["user"], pwd=uid)
+   sql=FALSE, proBio=TRUE, uid=Sys.info()["user"], pwd=uid,
+   ioenv=.GlobalEnv)
 }
 \arguments{
   \item{strSpp}{character string specifying a species code.}
@@ -26,6 +27,7 @@ getCatch(strSpp="394", dbs=c("gfb","gfc","pht","fos"),
     \code{srfs} = slope rockfish assessment subareas or gullies, \cr
     \code{popa} = Pacific ocean perch areas.}
   \item{uid, pwd}{user ID and password for Oracle DB account authentication.}
+  \item{ioenv}{input/output environment for function input data and output results.}
 }
 \details{
   This function provides a quick method of extracting contiguous datasets
