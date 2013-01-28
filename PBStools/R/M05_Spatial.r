@@ -13,17 +13,17 @@
 #  zapHoles........Attempts to remove holes overwritten by solids.
 #===============================================================================
 
-#calcHabitat----------------------------2013-01-18
+#calcHabitat----------------------------2013-01-28
 # Calculate potential habitat using bathymetry.
 #-----------------------------------------------RH
 calcHabitat <- function(topofile="bctopo", isob=c(150,435),
      digits=1, minVerts=10, col.hab="greenyellow", col.land="moccasin",
      xlim=NULL, ylim=NULL,areas=list(), col.areas="red", isolab=TRUE, labtit="",
-     plot=TRUE, pin=c(7,8), eps=FALSE, pix=FALSE, wmf=FALSE) {
+     plot=TRUE, pin=c(7,8), eps=FALSE, pix=FALSE, wmf=FALSE, ioenv=.GlobalEnv) {
 
-	assign("PBSfish",list(module="M05_Spatial",call=match.call(),args=args(calcHabitat)),envir=.PBStoolEnv)
+	assign("PBStool",list(module="M05_Spatial",call=match.call(),args=args(calcHabitat),ioenv=ioenv),envir=.PBStoolEnv)
 	icol = rgb(t(round(col2rgb(col.hab)*.65)),maxColorValue=255) # darker than col.hab
-	expr=paste("getFile(",topofile,",use.pkg=TRUE,try.all.frames=TRUE,tenv=penv()); ",
+	expr=paste("getFile(",topofile,",senv=ioenv,use.pkg=TRUE,try.all.frames=TRUE,tenv=penv()); ",
 		"bathy=makeTopography(",topofile,",digits=",digits,")",sep="")
 	eval(parse(text=expr))
 	bCL <- contourLines(bathy,levels=isob)
@@ -46,7 +46,7 @@ calcHabitat <- function(topofile="bctopo", isob=c(150,435),
 	options(warn = warn)
 
 	stuff=c("bathy","bCL","bCP","bPoly","box","polyA","polyB","polyC","habitat","xlim","ylim")
-	packList(stuff,"PBSfish",tenv=.PBStoolEnv)
+	packList(stuff,"PBStool",tenv=.PBStoolEnv)
 
 	if (plot) {
 		fout=paste("Habitat-",ifelse(labtit=="","",paste(gsub(" ","-",labtit),"-",sep="")),isob[1],"m-",isob[2],"m",sep="")
@@ -67,7 +67,7 @@ calcHabitat <- function(topofile="bctopo", isob=c(150,435),
 			#if (eps|pix|wmf) addPolys(habitat,col=col.hab,colHoles="white")
 			#else addPolys(habitat,col=col.hab)
 			addLines(habitat,col=icol)
-			data(nepacLL); addPolys(nepacLL,col=col.land)
+			data(nepacLL,envir=penv()); addPolys(nepacLL,col=col.land)
 			.addAxis(xlim=xlim,ylim=ylim,tckLab=FALSE,tck=0.014,tckMinor=.007)
 			if (isolab) legend("bottomleft",inset=0.06,fill=col.hab,title=labtit,title.adj=0.5,
 				legend=paste(isob[1],"\226",isob[2],"m  (",format(round(area),big.mark=","),"km\262)",sep=""),bty="n",cex=1.5)
@@ -79,18 +79,18 @@ calcHabitat <- function(topofile="bctopo", isob=c(150,435),
 	invisible(habitat) }
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~calcHabitat
 
-#calcOccur------------------------------2013-01-18
+#calcOccur------------------------------2013-01-28
 # Calculate percent occurrence of events in PolySet
 #-----------------------------------------------RH
-calcOccur = function(polyset="qcb", events, wt=1, mess=FALSE) {
-	assign("PBSfish",list(module="M05_Spatial",call=match.call(),args=args(calcOccur)),envir=.PBStoolEnv)
+calcOccur = function(polyset="qcb", events, wt=1, mess=FALSE, ioenv=.GlobalEnv) {
+	assign("PBStool",list(module="M05_Spatial",call=match.call(),args=args(calcOccur),ioenv=ioenv),envir=.PBStoolEnv)
 	polyset=as.character(substitute(polyset)) #string name of PolySet object
 	events=as.character(substitute(events))   #string name of events bject
 	if (polyset=="polyset" || events=="events")
 		showError("Do not name objects polyset='polyset' or events='events'")
-	expr=paste("getFile(",polyset,",use.pkg=TRUE,try.all.frames=TRUE,tenv=penv()); polyset=",polyset,sep="")
+	expr=paste("getFile(",polyset,",senv=ioenv,use.pkg=TRUE,try.all.frames=TRUE,tenv=penv()); polyset=",polyset,sep="")
 	eval(parse(text=expr))
-	expr=paste("getFile(",events,",use.pkg=TRUE,try.all.frames=TRUE,tenv=penv()); events=",events,sep="")
+	expr=paste("getFile(",events,",senv=ioenv,use.pkg=TRUE,try.all.frames=TRUE,tenv=penv()); events=",events,sep="")
 	eval(parse(text=expr))
 	if (is.character(wt) && !is.element(wt,names(events)))
 		showError("Specified 'wt' is not a field in 'events'")
@@ -114,7 +114,7 @@ calcOccur = function(polyset="qcb", events, wt=1, mess=FALSE) {
 		mess=paste("Percent Occurrence:\n\n",mess,collapse="")
 		showMessage(mess,as.is=TRUE,adj=1,x=.9,col="dodgerblue") }
 	stuff=c("pd","loc","eidpid","occur","poccur")
-	packList(stuff,"PBSfish",tenv=.PBStoolEnv)
+	packList(stuff,"PBStool",tenv=.PBStoolEnv)
 	return(poccur) }
 #----------------------------------------calcOccur
 
@@ -161,25 +161,25 @@ calcSRFA <- function(major, minor=NULL, loc=NULL, subarea=FALSE) {
 	return(srfa) }
 #-----------------------------------------calcSRFA
 
-#calcSurficial--------------------------2013-01-18
+#calcSurficial--------------------------2013-01-28
 # Calculate the intersection of surficial geology
 # and bathymetry interval object from calcHabitat()
 #-----------------------------------------------RH
 calcSurficial <- function(surf="qcb", hab,
 		xlim=c(-133.4,-127.8), ylim=c(50.5,54.8),
 		col.hab=c("aliceblue","grey"), col.cst="grey85", 
-		pix=FALSE, wmf=FALSE) {
+		pix=FALSE, wmf=FALSE, ioenv=.GlobalEnv) {
 
-	assign("PBSfish",list(module="M05_Spatial",call=match.call(),args=args(calcSurficial)),envir=.PBStoolEnv)
+	assign("PBStool",list(module="M05_Spatial",call=match.call(),args=args(calcSurficial),ioenv=ioenv),envir=.PBStoolEnv)
 	surf=as.character(substitute(surf)) #string name of surficial object
 	if (missing(hab))
 		showError("Supply a habitat PolySet")
 	else 
 		hab=as.character(substitute(hab))   #string name of bathymetry object
 	fout=paste(surf,hab,sep=".")
-	expr=paste("getFile(",surf,",use.pkg=TRUE,try.all.frames=TRUE,tenv=penv()); surf=",surf,sep="")
+	expr=paste("getFile(",surf,",senv=ioenv,use.pkg=TRUE,try.all.frames=TRUE,tenv=penv()); surf=",surf,sep="")
 	eval(parse(text=expr))
-	expr=paste("getFile(",hab,",use.pkg=TRUE,try.all.frames=TRUE,tenv=penv()); hab=",hab,sep="")
+	expr=paste("getFile(",hab,",senv=ioenv,use.pkg=TRUE,try.all.frames=TRUE,tenv=penv()); hab=",hab,sep="")
 	eval(parse(text=expr))
 	pd=attributes(surf)$PolyData
 	hab=clipPolys(hab,xlim=xlim,ylim=ylim)
@@ -203,7 +203,7 @@ calcSurficial <- function(surf="qcb", hab,
 	legarea=paste(leg," (",format(round(area[leg]),big.mark=",",trim=TRUE)," km\262)",sep="")
 
 	stuff=c("surfhab","areasum","area","leg","legarea")
-	packList(stuff,"PBSfish",tenv=.PBStoolEnv)
+	packList(stuff,"PBStool",tenv=.PBStoolEnv)
 
 	if(wmf) win.metafile(paste(fout,".wmf",sep=""),width=6.75,height=8.5)
 	else if (pix) {
@@ -224,7 +224,7 @@ calcSurficial <- function(surf="qcb", hab,
 	invisible() }
 #------------------------------------calcSurficial
 
-#clarify--------------------------------2013-01-18
+#clarify--------------------------------2013-01-28
 #  Analyse catch proportions in blocks, then cluster into fisheries groups.
 #  Initially, done to address the CASSIS proposal and its impact (John Pringle).
 #  CASSIS = CAScadia SeISmic experiment
@@ -233,7 +233,7 @@ clarify <- function(dat, cell=c(0.1,0.075), nG=8,
    xlim=c(-134.2,-127), ylim=c(49.6,54.8), zlim=NULL, targ="YMR", 
    clrs=c("red","orange","yellow","green","forestgreen","deepskyblue",
    "blue","midnightblue"), spp.names=FALSE, 
-   wmf=FALSE, eps=FALSE, hpage=10) {
+   wmf=FALSE, eps=FALSE, hpage=10, ioenv=.GlobalEnv) {
 
 	tcomp <- function(x,i) {
 		iU <- sort(unique(i))
@@ -249,9 +249,9 @@ clarify <- function(dat, cell=c(0.1,0.075), nG=8,
 	parlist=list(mfrow=c(1,1),mar=c(2.5,2.5,.5,.5),oma=c(0,0,0,0),las=0,cex=1.4,mgp=c(1,.2,0))
 
 	if (!require(cluster, quietly=TRUE)) stop("`cluster` package is required")
-	assign("PBSfish",list(module="M05_Spatial",call=match.call(),args=args(clarify),plotname="Rplot"),envir=.PBStoolEnv)
+	assign("PBStool",list(module="M05_Spatial",call=match.call(),args=args(clarify),ioenv=ioenv,plotname="Rplot"),envir=.PBStoolEnv)
 	fnam=as.character(substitute(dat))
-	expr=paste("getFile(",fnam,",use.pkg=TRUE,try.all.frames=TRUE,tenv=penv()); dat=",fnam,sep="") # input file made global cause it's big
+	expr=paste("getFile(",fnam,",senv=ioenv,use.pkg=TRUE,try.all.frames=TRUE,tenv=penv()); dat=",fnam,sep="") # input file made global cause it's big
 	eval(parse(text=expr))
 	#clrs <- c("blue","magenta","orange","green","cyan","forestgreen","yellow","black","purple4","red") #PNCIMA
 	#clrs <- c("red","orange","yellow","green","forestgreen","deepskyblue","blue","midnightblue")
@@ -340,7 +340,7 @@ clarify <- function(dat, cell=c(0.1,0.075), nG=8,
 	isob <- isobath[is.element(isobath$PID,c(200,1000,1800)),] # & is.element(isobath$SID,1),]
 
 	stuff=c("tcat","pcat","ptree","pout","pdata","clrs","glab","kgrp")
-	packList(stuff,"PBSfish",tenv=.PBStoolEnv)
+	packList(stuff,"PBStool",tenv=.PBStoolEnv)
 
 	#--Plot-results---------------------------------------------
 	# Try to automate based on par()$pid - plot must be ready on-screen first
@@ -442,7 +442,7 @@ plotGMA = function(gma=gma.popymr, xlim=c(-134,-123), ylim=c(48.05,54.95),
 			projection="LL" )
 	}
 	fnam = as.character(substitute(gma))
-	data(nepacLLhigh,major)
+	data(nepacLLhigh,major,envir=penv())
 	edata = pdata = attributes(gma.popymr)$PolyData
 	names(edata)[1]="EID"
 	edata=as.EventData(edata,projection="LL")
@@ -472,7 +472,7 @@ preferDepth = function(strSpp="410", fqtName="pht_fdep.sql", dbName="PacHarvest"
 	if (!require(PBSmodelling, quietly=TRUE)) stop("`PBSmodelling` package is required")
 	if (!require(PBStools, quietly=TRUE))     stop("`PBStools` package is required")
 	warn <- options()$warn; options(warn=-1)
-	assign("PBSfish",list(module="M05_Spatial",call=match.call(),args=args(preferDepth),plotname="Rplot"),envir=.PBStoolEnv)
+	assign("PBStool",list(module="M05_Spatial",call=match.call(),args=args(preferDepth),plotname="Rplot"),envir=.PBStoolEnv)
 
 	wpath <- .getWpath()
 	if (is.null(spath) || spath=="") spath <- .getSpath()
@@ -494,7 +494,7 @@ preferDepth = function(strSpp="410", fqtName="pht_fdep.sql", dbName="PacHarvest"
 	if (get.effort) .preferDepth.getEffort()
 	else {
 		effort=NULL; setWinVal(list(showE=FALSE),winName="window") 
-		packList("effort","PBSfish",tenv=.PBStoolEnv) }
+		packList("effort","PBStool",tenv=.PBStoolEnv) }
 	invisible() }
 
 #.preferDepth.getEffort-----------------2010-10-19
@@ -503,9 +503,9 @@ preferDepth = function(strSpp="410", fqtName="pht_fdep.sql", dbName="PacHarvest"
 		showMessage("Please wait while effort data is retrieved for this GUI session",col="blue",cex=1.2)
 		getData("pht_effort.sql",strSpp=strSpp,path=.getSpath(),tenv=penv())
 		effort=PBSdat; effort$effort=effort$effort/60 ### convert to hours
-		#packList("effort","PBSfish",tenv=.PBStoolEnv) ### too slow
-		#eval(parse(text="PBSfish$effort <<- effort"))
-		ttget(PBSfish); PBSfish$effort <- effort; ttput(PBSfish)
+		#packList("effort","PBStool",tenv=.PBStoolEnv) ### too slow
+		#eval(parse(text="PBStool$effort <<- effort"))
+		ttget(PBStool); PBStool$effort <- effort; ttput(PBStool)
 		frame(); addLabel(.5,.5,"Effort loaded",col="darkgreen",cex=1.2) }
 
 #.preferDepth.getDepth------------------2012-09-19
@@ -537,7 +537,7 @@ preferDepth = function(strSpp="410", fqtName="pht_fdep.sql", dbName="PacHarvest"
 			setWinVal(list(strSpp=spp),winName="window") } }
 	assign("dat",PBSdat)
 	if (nrow(dat)==0) showError(paste("Species =",spp),type="nodata")
-	eff = ttcall(PBSfish)$effort
+	eff = ttcall(PBStool)$effort
 	isE = ifelse(is.null(eff),FALSE,TRUE)
 	if (!isE) setWinVal(list(showE=FALSE),winName="window")
 
@@ -569,7 +569,7 @@ preferDepth = function(strSpp="410", fqtName="pht_fdep.sql", dbName="PacHarvest"
 		ifelse(area==0,"",paste("-(",paste(area,collapse=""),")",sep="")),
 		ifelse(is.null(gear),"",paste("-gear",paste(gear,collapse=""),sep="")),sep="")
 	if (type=="FILE") plotname = sub(paste("dep",spp,sep=""),fqtName,plotname)
-	packList("plotname","PBSfish",tenv=.PBStoolEnv)
+	packList("plotname","PBStool",tenv=.PBStoolEnv)
 	nrow <- max(nyr,nar); ncol <- min(nyr,nar);
 	if (nyr>=nar) { ifac <- year; jfac <- area; yba <- TRUE}
 	else { ifac <- area; jfac <- year; yba <- FALSE}
@@ -593,7 +593,7 @@ preferDepth = function(strSpp="410", fqtName="pht_fdep.sql", dbName="PacHarvest"
 	ylim <- c(0,.19)
 	brks=seq(xlim[1],xlim[2],xwid)
 	stuff=c("xlim","ylim","brks","area")
-	packList(stuff,"PBSfish",tenv=.PBStoolEnv)
+	packList(stuff,"PBStool",tenv=.PBStoolEnv)
 	
 	for (i in ifac) {
 		if (all(ifac!=0)) {
@@ -609,13 +609,13 @@ preferDepth = function(strSpp="410", fqtName="pht_fdep.sql", dbName="PacHarvest"
 				jdat <- idat; if (isE) jeff <- ieff }
 			ntows <- nrow(jdat)
 			stuff=c("ifac","jfac","ntows") # (,"jdat","jeff") ### too big slow things down
-			packList(stuff,"PBSfish",tenv=.PBStoolEnv)
+			packList(stuff,"PBStool",tenv=.PBStoolEnv)
 
 			xy <- hist(jdat$depth, breaks=brks, plot=FALSE);
 			xy$density <- xy$counts/sum(xy$counts)
 			xyout <- paste("xy",spp,i,j,sep=".")
-			#eval(parse(text="PBSfish[[xyout]] <<- xy"))
-			ttget(PBSfish); PBSfish[[xyout]] <- xy; ttput(PBSfish)
+			#eval(parse(text="PBStool[[xyout]] <<- xy"))
+			ttget(PBStool); PBStool[[xyout]] <- xy; ttput(PBStool)
 
 			if (isE) {
 				jeff$dbin=cut(jeff$depth,brks)
@@ -623,7 +623,7 @@ preferDepth = function(strSpp="410", fqtName="pht_fdep.sql", dbName="PacHarvest"
 				effDen=effTot/sum(effTot)
 				xye=list(breaks=brks,counts=effTot,density=effDen)
 				attr(xye,"class")="histogram"
-				packList("xye","PBSfish",tenv=.PBStoolEnv) }
+				packList("xye","PBStool",tenv=.PBStoolEnv) }
 
 			plot(xy,freq=FALSE, xlab="", ylab="", main="",cex.lab=1.2,
 				col="white", xlim=XLIM, ylim=YLIM, axes=FALSE);
@@ -660,7 +660,8 @@ preferDepth = function(strSpp="410", fqtName="pht_fdep.sql", dbName="PacHarvest"
 						sep=ifelse(nrow==1 | ncol==1,""," \225 ")),col="grey30",adj=c(1,1))
 				else {
 					ylabpos = 0.88; labcex=1
-					data(spn); addLabel(.98,ylabpos,spn[spp],adj=c(1,1),col="black",cex=labcex)
+					data(spn,envir=penv())
+					addLabel(.98,ylabpos,spn[spp],adj=c(1,1),col="black",cex=labcex)
 					addLabel(.98,ylabpos-0.06,paste("N =",format(ntows,big.mark=","),"tows"),cex=labcex-0.1,col="grey30",adj=c(1,1)) 
 					addLabel(.98,ylabpos-0.10,paste("C =",format(round(max(cc,na.rm=TRUE)),
 						big.mark=","),"t"),cex=labcex-0.1,col="grey30",adj=c(1,1)) }
@@ -681,7 +682,7 @@ preferDepth = function(strSpp="410", fqtName="pht_fdep.sql", dbName="PacHarvest"
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~preferDepth
 
 
-#prepClara----------------------------2013-01-22
+#prepClara----------------------------2013-01-28
 # Prepare a data object for use by `clarify`,
 #  which uses the cluster function `clara`.
 # Arguments:
@@ -692,7 +693,7 @@ preferDepth = function(strSpp="410", fqtName="pht_fdep.sql", dbName="PacHarvest"
 #  fnam = assume input data object (not file) is always called `dat` and
 #         output object (not file) is always called `claradat`.
 #-----------------------------------------------RH
-prepClara =function(ssid=7, gfld=c("X","Y"), sfld="spp", mfld="catKg", fnam=NULL)
+prepClara =function(ssid=7, gfld=c("X","Y"), sfld="spp", mfld="catKg", fnam=NULL, ioenv=.GlobalEnv)
 {
 	SSID = paste(ssid,collapse=".")
 	if (is.null(fnam)){ 
@@ -702,7 +703,7 @@ prepClara =function(ssid=7, gfld=c("X","Y"), sfld="spp", mfld="catKg", fnam=NULL
 		fout = paste("clara.ssid.",SSID,".rda",sep="")
 	}
 	else {
-		mess=paste("getFile(\"",fnam,"\",reload=TRUE,try.all.frames=TRUE,tenv=penv())",sep="")
+		mess=paste("getFile(\"",fnam,"\",senv=ioenv,reload=TRUE,try.all.frames=TRUE,tenv=penv())",sep="")
 		eval(parse(text=mess))
 		fout = paste("clara.",fnam,".rda",sep="")
 	}

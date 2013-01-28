@@ -80,7 +80,7 @@ preferDepth(strSpp="410", fqtName="pht_fdep.sql", dbName="PacHarvest",
 }
 \value{
   No value is explicitly return; however, objects of interest are stored in the 
-  global list object \code{PBSfish}.
+  global list object \code{PBStool}.
 }
 \author{
   Rowan Haigh, Pacific Biological Station, Fisheries and Oceans Canada, Nanaimo BC.
@@ -90,11 +90,12 @@ preferDepth(strSpp="410", fqtName="pht_fdep.sql", dbName="PacHarvest",
   Available SQL queries: \code{\link[PBStools]{SQLcode}}
 }
 \examples{
+local(envir=.PBStoolEnv,expr={
 pbsfun=function(dfo=FALSE,strSpp="LST"){
   if (dfo) {
     preferDepth(strSpp=strSpp, get.effort=FALSE) }
   else {
-    data(testdatC); 
+    data(testdatC,envir=.PBStoolEnv) 
     x=testdatC[testdatC[strSpp]>0 & !is.na(testdatC[strSpp]),]
     testdep=data.frame(year=as.numeric(substring(x$date,1,4)),depth=x$fdep,catch=x$LST)
     attr(testdep,"spp")=strSpp
@@ -103,5 +104,6 @@ pbsfun=function(dfo=FALSE,strSpp="LST"){
       spath=convSlashes(tempdir(), os="unix"), get.effort=FALSE) }
   invisible() }
 pbsfun()
+})
 }
 \keyword{hplot}

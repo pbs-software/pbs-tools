@@ -17,7 +17,8 @@ weightBio(adat, cdat, sunit="TID", sweight="catch",
      clrs=list(c("blue","cyan"),c("green4","chartreuse")), cohorts=NULL,
      regimes=list(1900:1908,1912:1915,1923:1929,1934:1943,1957:1960,
                   1976:1988,1992:1998,2002:2006),  #PDO
-     layout="portrait", wmf=FALSE, pix=FALSE, eps=FALSE, longside=10, ...)
+     layout="portrait", wmf=FALSE, pix=FALSE, eps=FALSE, longside=10,
+     ioenv=.GlobalEnv, ...)
 }
 \arguments{
   \item{adat}{data object of ageing information with fields that must include: \cr
@@ -95,6 +96,7 @@ weightBio(adat, cdat, sunit="TID", sweight="catch",
   \item{pix}{logical: if \code{TRUE}, send figure to a \code{.png} file.}
   \item{eps}{logical: if \code{TRUE}, send figure to an \code{.eps} file.}
   \item{longside}{dimension (inches) of the longest side of the figure.}
+  \item{ioenv}{input/output environment for function input data and output results.}
   \item{...}{additional arguments to pass to the function \code{plotBubbles}.}
 }
 \details{

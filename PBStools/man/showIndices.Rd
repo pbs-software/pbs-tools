@@ -25,7 +25,7 @@ showIndices(strSpp="396", survID=c(1,2,3,121,167), bootID)
 }
 \value{
   Annual biomass indices for the specified \code{survID}s are return invisibly.
-  A global list object \code{PBSfish} provides the following:
+  A global list object \code{PBStool} provides the following:
   \item{surveys}{Data frame of survey information for the specified species.}
   \item{sppBoot}{Subset of \code{surveys} that has records with the specified survey IDs.}
   \item{survBoot}{Subset of \code{surveys} that shows boot run description for \code{bootID}.}
@@ -44,6 +44,7 @@ showIndices(strSpp="396", survID=c(1,2,3,121,167), bootID)
   \code{\link{spn}}, \code{\link{species}}
 }
 \examples{
+local(envir=.PBStoolEnv,expr={
 pbsfun=function(strSpp="602",region="QCS",dfo=FALSE){
   if (dfo) {
     choices=c("WCVI","QCS","WQCI","HS")
@@ -59,5 +60,6 @@ pbsfun=function(strSpp="602",region="QCS",dfo=FALSE){
   else showMessage("If connected to DFO network, set argument 'dfo=TRUE'")
   invisible() }
 pbsfun()
+})
 }
 \keyword{hplot}

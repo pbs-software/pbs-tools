@@ -8,7 +8,8 @@
   which uses the \pkg{cluster} function \code{clara}.
 }
 \usage{
-prepClara(ssid=7, gfld=c("X","Y"), sfld="spp", mfld="catKg", fnam=NULL)
+prepClara(ssid=7, gfld=c("X","Y"), sfld="spp", mfld="catKg",
+   fnam=NULL, ioenv=.GlobalEnv)
 }
 \arguments{
   \item{ssid}{survey series ID}
@@ -18,6 +19,7 @@ prepClara(ssid=7, gfld=c("X","Y"), sfld="spp", mfld="catKg", fnam=NULL)
   \item{mfld}{metric field name (determines the impact of the species)}
   \item{fnam}{if \code{NULL}, the function queries the \code{GFBioSQL} database
     using the SQL query \cr \code{gfb_clara_survey.sql} (at present only queries invertebrates)}
+  \item{ioenv}{input/output environment for function input data and output results.}
 }
 \details{
   The grouping variable \code{gfld} will determine how event data

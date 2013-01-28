@@ -45,6 +45,7 @@ listTables(dbName, pattern=NULL, path=getwd(), server=NULL,
   \code{\link{getFile}}, \code{\link{getData}}
 }
 \examples{
+local(envir=.PBStoolEnv,expr={
 pbsfun=function(os=.Platform$OS.type,dfo=FALSE) {
   if (os=="windows") {
     if(dfo) {
@@ -56,6 +57,7 @@ pbsfun=function(os=.Platform$OS.type,dfo=FALSE) {
   else showMessage("If logged onto DFO network, set argument 'dfo=T'")
   invisible() }
 pbsfun()
+})
 }
 \keyword{data}
 \keyword{utilities}

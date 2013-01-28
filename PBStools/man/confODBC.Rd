@@ -30,6 +30,7 @@ confODBC(dsn="PacHarvest", server="GFDB", db="PacHarvest",
   \code{\link{getData}}, \code{\link{runModules}}
 }
 \examples{
+local(envir=.PBStoolEnv,expr={
 pbsfun=function(os=.Platform$OS.type,dfo=FALSE) {
   if (os=="windows" && dfo)
     confODBC(dsn="Popsicle", server="GFDB", db="PacHarvest",
@@ -37,6 +38,7 @@ pbsfun=function(os=.Platform$OS.type,dfo=FALSE) {
   else showMessage("Only functional for DFO personnel using Microsoft Windows OS")
   invisible() }
 pbsfun()
+})
 }
 \keyword{data}
 \keyword{utilities}

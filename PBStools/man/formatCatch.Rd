@@ -39,7 +39,9 @@ formatCatch(dat, N=3, X=1, zero="0", K=",")
   \code{\link[PBStools]{plotRecon}}, \code{\link[PBStools]{makeLTH}}
 }
 \examples{
-print(formatCatch(genMatrix(20,5),X=0))
+local(envir=.PBStoolEnv,expr={
+  print(formatCatch(genMatrix(20,5),X=0))
+})
 }
 \keyword{manip}
 \keyword{character}

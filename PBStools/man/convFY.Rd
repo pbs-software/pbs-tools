@@ -28,11 +28,13 @@ convFY(x, startM=4)
   \code{\link{convYM}}, \code{\link{convYP}}
 }
 \examples{
+local(envir=.PBStoolEnv,expr={
 pbsfun=function() {
   cat("Fishing years starting in April\n")
   print(convFY(paste("2009-",pad0(1:12,2),"-15",sep="")))
   invisible() }
 pbsfun()
+})
 }
 \keyword{manip}
 

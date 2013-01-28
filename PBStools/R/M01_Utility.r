@@ -273,7 +273,7 @@ flagIt = function(a, b, A=45, r=0.2, n=1, ...){
 	return(invisible(list(xvec=xvec,yvec=yvec,rads=rads,x0=x0,x=x,y=y)))
 }
 
-#getData--------------------------------2013-01-17
+#getData--------------------------------2013-01-25
 # Get data from a variety of sources.
 #-----------------------------------------------RH
 getData <-function(fqtName, dbName="PacHarvest", strSpp=NULL, server=NULL,
@@ -281,7 +281,7 @@ getData <-function(fqtName, dbName="PacHarvest", strSpp=NULL, server=NULL,
      noFactors=TRUE, noLogicals=TRUE, rownum=0, mindep=NULL, 
      maxdep=NULL, surveyid=NULL, survserid=NULL, fisheryid=NULL, 
      logtype=NULL, doors=NULL, speed=NULL, mnwt=NULL, tarSpp=NULL, 
-     major=NULL, top=NULL, dummy=NULL, tenv=.GlobalEnv, ...) {
+     major=NULL, top=NULL, dummy=NULL, senv=NULL, tenv=.GlobalEnv, ...) {
 
 	if (missing(fqtName)) showError("Specify 'fqtName'")
 	if (dbName=="") showError("Specify 'dbName'")
@@ -295,7 +295,7 @@ getData <-function(fqtName, dbName="PacHarvest", strSpp=NULL, server=NULL,
 	else fqtName=strQ
 	envs=sys.frames()                      ### list all environments currently open
 	if (type=="FILE") {
-		expr=paste("getFile(\"",fqtName,"\",path=\"",path,"\",try.all.frames=TRUE,tenv=penv()); ",sep="")
+		expr=paste("getFile(\"",fqtName,"\",path=\"",path,"\",senv=senv,use.pkg=TRUE,try.all.frames=TRUE,tenv=penv()); ",sep="")
 		expr=paste(expr,"PBSdat=",fqtName,";",sep="")
 		expr=paste(expr," attr(PBSdat,\"fqt\")=\"",fqtName,"\"",sep="")
 		eval(parse(text=expr)) }
@@ -563,19 +563,39 @@ getData <-function(fqtName, dbName="PacHarvest", strSpp=NULL, server=NULL,
 	return(dat) };
 #====================================getData group
 
-#getFile--------------------------------2013-01-17
-# Get a dataset searching:
-# 1. binary libraries, 2. binary local (.rda), 
-# 3. dumped data (.r), 4. comma-delimited text files (.csv,.txt)
-#-----------------------------------------------RH
-getFile <- function(..., list=character(0), path=getwd(), tenv=.GlobalEnv,
-     use.pkg=FALSE, reload=FALSE, try.all.frames=FALSE,
-     use.all.packages=FALSE) {
 
-	penv  = parent.frame(1); fraN=sys.nframe()
-	if (try.all.frames) tryN=(fraN-1):0 else tryN=fraN-1 # parent frame / parent frame and back to global
+#getFile--------------------------------2013-01-25
+# If a user specifies a source environment (senv)
+#  then function only looks there. Otherwise,
+#  function searches sequentially through frames or
+# Gets datasets searching:
+#  1. binary libraries, 2. binary local (.rda), 
+#  3. dumped data (.r), 4. comma-delimited text files (.csv,.txt)
+#-----------------------------------------------RH
+getFile <- function(..., list=character(0), path=getwd(), 
+   senv=NULL, tenv=.GlobalEnv, use.pkg=FALSE, 
+   reload=FALSE, try.all.frames=FALSE, use.all.packages=FALSE) {
+
 	gfnam = c(as.character(substitute(list(...))[-1L]), list)
 	if (is.null(gfnam)) return(invisible())
+	if (!is.null(senv)) {
+		gfnot = character()
+		for (i in gfnam){
+			if (isThere(i,envir=senv)) {
+				dat = get(i,envir=senv)
+				assign(i,dat,envir=tenv)
+			} else
+				#print(paste("object `",i,"` not found in specified environment",sep=""))
+				gfnot = c(gfnot,i)
+		}
+		if (length(gfnot)==0) {
+			junk = gc(verbose=FALSE)
+			return(invisible()) }
+		else gfnam = gfnot
+	}
+	fenv = parent.frame(1) # frame environment
+	fraN=sys.nframe()
+	if (try.all.frames) tryN=(fraN-1):0 else tryN=fraN-1 # parent frame / parent frame and back to global
 	names(gfnam)=rep(-1,length(gfnam))
 	for (i in gfnam) {
 		zi=is.element(gfnam,i) # placement boolean
@@ -584,7 +604,7 @@ getFile <- function(..., list=character(0), path=getwd(), tenv=.GlobalEnv,
 			if (isThere(i,envir=jenv)) {
 				ival=get(i,envir=jenv)
 				if (length(ival)==1 && is.character(ival))
-					gfnam[zi]=get(i,envir=penv) # variable string name
+					gfnam[zi]=get(i,envir=fenv) # variable string name
 				if (isThere(gfnam[zi],envir=jenv))
 					names(gfnam)[zi]=j
 				break
@@ -633,7 +653,8 @@ getFile <- function(..., list=character(0), path=getwd(), tenv=.GlobalEnv,
 	}    # end i loop
 	junk=gc(verbose=FALSE) # garbage collection (shunt messages to junk also)
 	invisible() }
-#------------------------------------------getFile
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~getFile
+
 
 #getName--------------------------------2009-05-11
 # Get the names of the input object.
@@ -955,13 +976,21 @@ toUpper = function(x,exclude=c("&","and","exact","or","in","on","organic","pelag
 #^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^toUpper
 
 #ttget----------------------------------2013-01-17
-# Provide wrappers for PBSmodelling functions tget/tcall/tprint/tput/lisp
+# Provide PBStools wrappers for PBSmodelling functions tget/tcall/tprint/tput/lisp
 #-----------------------------------------------RH 
 ttget   = function(...) {tget  (..., penv=parent.frame(), tenv=.PBStoolEnv)}
 ttcall  = function(...) {tcall (..., penv=parent.frame(), tenv=.PBStoolEnv)}
 ttprint = function(...) {tprint(..., penv=parent.frame(), tenv=.PBStoolEnv)}
 ttput   = function(...) {tput  (..., penv=parent.frame(), tenv=.PBStoolEnv)}
 tlisp   = function(...) {lisp  (..., pos =.PBStoolEnv)}
+
+# Provide PBSdata wrappers for PBSmodelling functions tget/tcall/tprint/tput/lisp
+#-----------------------------------------------RH 
+dtget   = function(...) {tget  (..., penv=parent.frame(), tenv=.PBSdataEnv)}
+dtcall  = function(...) {tcall (..., penv=parent.frame(), tenv=.PBSdataEnv)}
+dtprint = function(...) {tprint(..., penv=parent.frame(), tenv=.PBSdataEnv)}
+dtput   = function(...) {tput  (..., penv=parent.frame(), tenv=.PBSdataEnv)}
+dlisp   = function(...) {lisp  (..., pos =.PBSdataEnv)}
 
 #wrapText-------------------------------2008-09-17
 # Wrap, mark and indent a long text string.
@@ -1046,7 +1075,7 @@ zapDupes = function(dat, index) {
 	if (is.null(nam)) {
 		if (exists(".PBSmod",envir=.PBSmodEnv) && !all(substring(names(tcall(.PBSmod)),1,1)=="."))
 			nam=getWinVal(scope="L")$plotname
-		if (is.null(nam) & exists("PBSfish",envir=.PBStoolEnv)) nam=ttcall(PBSfish)$plotname
+		if (is.null(nam) & exists("PBStool",envir=.PBStoolEnv)) nam=ttcall(PBStool)$plotname
 		if (is.null(nam)) nam="Rplot" }
 	if (is.null(act)) {
 		if (exists(".PBSmod",envir=.PBSmodEnv) && !all(substring(names(tcall(.PBSmod)),1,1)==".")) {

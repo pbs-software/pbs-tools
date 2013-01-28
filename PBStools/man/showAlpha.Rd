@@ -12,7 +12,7 @@ showAlpha(lims=c("emp","bca"))
 }
 \details{
   This function assumes that \code{bootBG()} has been run and that the data
-  list object \code{PBSfish} exists in the global position. The figure generated
+  list object \code{PBStool} exists in the global position. The figure generated
   follows the format of Figure 3 in Schnute and Haigh (2003). The panels show: \cr
   (a) histogram of bootstrapped biomass; \cr
   (b) cumulative probability distribution of bootstrapped biomass; \cr
@@ -22,7 +22,7 @@ showAlpha(lims=c("emp","bca"))
 }
 \value{
   No value is explicitly returned by the function. Objects generated are appended to 
-  the global list object \code{PBSfish}:
+  the global list object \code{PBStool}:
   \item{plev}{vector: probability levels used in the \code{bootBG} analysis.}
   \item{xy}{histogram: output from the last \eqn{\alpha} histogram.}
   \item{xcount}{vector: count of \eqn{\alpha} values in Confidence Interval (CI) for the last graph.}
@@ -41,11 +41,13 @@ showAlpha(lims=c("emp","bca"))
   \code{\link{calcPMR}}, \code{\link{sampBG}}
 }
 \examples{
+local(envir=.PBStoolEnv,expr={
 pbsfun=function(SID=1,S=50){
   bootBG(dat=pop.pmr.qcss,SID=SID,S=S)
   showAlpha()
   invisible() }
 pbsfun()
+})
 }
 \keyword{ data }
 \keyword{ utilities }

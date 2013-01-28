@@ -37,11 +37,13 @@ makePMRtables(strSpp, surveys=list(qcss=c(1,2,3,121,167),
   Available SQL queries: \code{\link[PBStools]{SQLcode}}
 }
 \examples{
+local(envir=.PBStoolEnv,expr={
 pbsfun=function(strSpp="451",dfo=FALSE) {
   if (dfo) makePMRtables(strSpp)
   else showMessage("If connected to DFO network, set argument 'dfo=TRUE'")
   invisible() }
 pbsfun()
+})
 }
 \keyword{data}
 \keyword{utilities}

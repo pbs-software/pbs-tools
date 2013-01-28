@@ -63,6 +63,7 @@ predictRER(S, L, N)
   \code{\link{simRER}}, \code{\link{simBSR}}
 }
 \examples{
+local(envir=.PBStoolEnv,expr={
 pbsfun = function(){
   test = simRER(1000)
   Dval = apply(test,1,function(x){predictRER(x[1],x[2:7],x[8:9])})
@@ -74,6 +75,7 @@ pbsfun = function(){
     round((length(Dval[Dval>0])/length(Dval)*100),1),"\% of the time",sep=""))
   invisible() }
 pbsfun()
+})
 }
 \keyword{multivariate}
 

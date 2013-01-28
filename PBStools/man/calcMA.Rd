@@ -49,6 +49,7 @@ calcMA(x, y, y2, period = 270, every = 10)
   \code{\link{glimmer}}, \code{\link{plotDiversity}}, \code{\link{simBGtrend}}
 }
 \examples{
+local(envir=.PBStoolEnv,expr={
 pbsfun=function(os=.Platform$OS.type) {
   if (os=="windows") {
     getData("Ex03_Portfolio","Examples",type="MDB",path=.getSpath())
@@ -59,6 +60,7 @@ pbsfun=function(os=.Platform$OS.type) {
     lines(ma$x,ma$y,col="blue",lwd=2) }
   invisible() }
 pbsfun()
+})
 }
 \keyword{manip}
 \keyword{smooth}

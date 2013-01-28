@@ -38,13 +38,15 @@ spooler(xlist, newfld="area", target)
   \code{\link{biteData}}, \code{\link{compCsum}}
 }
 \examples{
+local(envir=.PBStoolEnv,expr={
 pbsfun=function(){
-  data(pop.age)
+  data(pop.age,envir=.PBStoolEnv)
   temp=pop.age[sample(1:nrow(pop.age),10),]
   spooler(list(major=list(3:4,7:8),srfs=list("GS","MI","MR")),"area",temp)
   print(temp)
   invisible() }
 pbsfun()
+})
 }
 \keyword{data}
 \keyword{utilities}

@@ -26,11 +26,13 @@ convYM(x)
   \code{\link{convYP}}, \code{\link{convFY}}
 }
 \examples{
+local(envir=.PBStoolEnv,expr={
 pbsfun=function() {
   cat("Year-month labels between the specified date limits\n")
   print(convYM(c("2009-07-01","2011-11-11")))
   invisible() }
 pbsfun()
+})
 }
 \keyword{manip}
 

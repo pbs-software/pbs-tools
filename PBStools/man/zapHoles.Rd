@@ -41,8 +41,9 @@ zapHoles(pset)
 }
 \examples{
 \dontrun{
+local(envir=.PBStoolEnv,expr={
 pbsfun=function(){
-  data(qcb); qcbz=zapHoles(qcb)
+  data(qcb,envir=.PBStoolEnv); qcbz=zapHoles(qcb)
   pdata=attributes(qcb)$PolyData
   pdata=pdata[rev(order(pdata$area)),]
   expandGraph(mfrow=c(1,1),plt=c(.05,1,.05,1))
@@ -54,5 +55,6 @@ pbsfun=function(){
     addPolys(qcbi,col=pdata$col[i]) }
   invisible() }
 pbsfun()
+})
 }}
 \keyword{manip}

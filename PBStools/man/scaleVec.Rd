@@ -33,6 +33,7 @@ scaleVec(V, Tmin = 0, Tmax = 1)
   \code{\link[PBSmodelling]{scalePar}}, \code{\link[PBSmodelling]{restorePar}}
 }
 \examples{
+local(envir=.PBStoolEnv,expr={
 pbsfun=function() {
   V = runif(50,100,1000)
   T = scaleVec(V, Tmin=-3, Tmax=5)
@@ -48,6 +49,7 @@ pbsfun=function() {
   eval(parse(text=expr))
   invisible(expr) }
 pbsfun()
+})
 }
 \keyword{arith}
 \keyword{utilities}

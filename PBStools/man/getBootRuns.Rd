@@ -31,6 +31,7 @@ getBootRuns(strSpp)
   Available SQL queries: \code{\link[PBStools]{SQLcode}}
 }
 \examples{
+local(envir=.PBStoolEnv,expr={
 pbsfun=function(strSpp="057",dfo=FALSE) {
   if (dfo) {
     bootTab=getBootRuns(strSpp)
@@ -38,6 +39,7 @@ pbsfun=function(strSpp="057",dfo=FALSE) {
   else showMessage("If connected to DFO network, set argument 'dfo=TRUE'")
   invisible() }
 pbsfun()
+})
 }
 \keyword{ data }
 

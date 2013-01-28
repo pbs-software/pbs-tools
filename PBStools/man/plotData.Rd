@@ -26,7 +26,7 @@ plotData(x, description="something", col=c("red","coral","gold",
 }
 \note{
   This plot is used by the catch reconstruction algorithm which automatically increments
-  the plot number \code{pD} that is logged in the global list object \code{PBSfish}.
+  the plot number \code{pD} that is logged in the global list object \code{PBStool}.
   
   Additionally, the catch reconstruction creates a subdirectory \code{CRdiag} to which 
   \code{plotData} sends image files.

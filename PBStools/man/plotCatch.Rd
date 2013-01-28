@@ -5,8 +5,8 @@
   Display catch history where selected columns of catch are stacked by year.
 }
 \usage{
-plotCatch(dat="dbr.rem",flds=c("CAtrawl","UStrawl","TotalHL"),
-            yrlim=NULL,wmf=FALSE,...)
+plotCatch(dat="dbr.rem", flds=c("CAtrawl","UStrawl","TotalHL"),
+   yrlim=NULL, wmf=FALSE, ioenv=.GlobalEnv, ...)
 }
 \arguments{
   \item{dat}{ catch data object or string representing the object contained
@@ -14,6 +14,7 @@ plotCatch(dat="dbr.rem",flds=c("CAtrawl","UStrawl","TotalHL"),
   \item{flds}{string specifying fields of catch to use in barplot.}
   \item{yrlim}{numeric limits of the years to display; default uses all in \code{dat}.}
   \item{wmf}{logical: if \code{TRUE}, send plot to a \code{.wmf} file.}
+  \item{ioenv}{input/output environment for function input data and output results.}
   \item{...}{additional arguments passed to \code{barplot} and \code{legend}.}
 }
 \details{
@@ -29,11 +30,13 @@ plotCatch(dat="dbr.rem",flds=c("CAtrawl","UStrawl","TotalHL"),
   Rowan Haigh, Pacific Biological Station, Nanaimo BC
 }
 \examples{
+local(envir=.PBStoolEnv,expr={
 pbsfun=function(){
   col=fill=c("yellow","green","blue")
   plotCatch(dat=ymr.rem,col=col,fill=fill)
   invisible() }
 pbsfun()
+})
 }
 \seealso{
   \code{\link{getData}}, \code{\link{getFile}}, \code{\link{dbr.rem}}

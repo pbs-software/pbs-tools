@@ -22,7 +22,7 @@ calcMoments(strSpp="396", survID=c(1,2,3,121,167))
 }
 \value{
   Invisibly returns a list of survey moments.
-  Additionally, a global list object \code{PBSfish} provides the following:
+  Additionally, a global list object \code{PBStool} provides the following:
   \item{doors}{Vector of default doorspread values for each survey from \code{BOOT_DEFAULTS}.}
   \item{speed}{Vector of default vessel trawling speeds for each survey from \code{BOOT_DEFAULTS}.}
   \item{moments}{List of moment calculations by strata, listed by \code{survID}.}
@@ -35,6 +35,7 @@ calcMoments(strSpp="396", survID=c(1,2,3,121,167))
   Available SQL queries: \code{\link[PBStools]{SQLcode}}
 }
 \examples{
+local(envir=.PBStoolEnv,expr={
 pbsfun=function(strSpp="455", survID=c(1,121),dfo=FALSE){
   if (dfo) {
     momList=calcMoments(strSpp,survID)
@@ -42,5 +43,6 @@ pbsfun=function(strSpp="455", survID=c(1,121),dfo=FALSE){
   else showMessage("If connected to DFO network, set argument 'dfo=TRUE'")
   invisible() }
 pbsfun()
+})
 }
 \keyword{hplot}

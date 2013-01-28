@@ -1,9 +1,17 @@
 PBStools Changes
-================
-Authors: RH  = Rowan Haigh     NO = Norm Olsen
-         LL  = Lisa Lacko     JTS = Jon T. Schnute
+==============================
+Authors: RH  = Rowan Haigh
+         NO  = Norm Olsen
+         LL  = Lisa Lacko
+         JTS = Jon T. Schnute
+------------------------------
 
-1.23  2013-01-22
+1.23  2013-01-28
+  - Changed the package's general storage object from `PBSfish` to `PBStool`. (RH 1/28)
+  - Introduced new argument `ioenv` (input/output environment) to functions that call `getFile` with its new argument `senv` (source environment). (RH 1/28)
+  - Finished wrapping examples in a local environment. (RH 1/25)
+  - Modified functions `getFile` and `getData` to use a source environment for objects. (RH 1/25)
+  - Modified function `trend` to work in multiple environments. (RH 1/24)
   - Added new function `prepClara` to prepare a data object for use by `clarify`. (RH 1/21)
   - Modified function `clarify` to use species names in the legend label. (RH 1/21)
   - Debugged functions to finalise retro-fitting, at least enough to pass Rcheck (sans CRAN flag). (RH 1/18)

@@ -32,12 +32,14 @@ convYP(x, ndays=90)
   \code{\link{trackComp}}, \code{\link{convYM}}, \code{\link{convFY}}
 }
 \examples{
+local(envir=.PBStoolEnv,expr={
 pbsfun=function() {
   x=paste("2009-",c("03-31","06-30","09-30","12-30"),sep="")
   cat("Year periods based on numeric value of input dates\n")
   print(convYP(x,30))
   invisible() }
 pbsfun()
+})
 }
 \keyword{manip}
 

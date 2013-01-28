@@ -12,7 +12,7 @@ getData(fqtName, dbName="PacHarvest", strSpp=NULL, server=NULL,
      noFactors=TRUE, noLogicals=TRUE, rownum=0, mindep=NULL, 
      maxdep=NULL, surveyid=NULL, survserid=NULL, fisheryid=NULL, 
      logtype=NULL, doors=NULL, speed=NULL, mnwt=NULL, tarSpp=NULL, 
-     major=NULL, top=NULL, dummy=NULL, tenv=.GlobalEnv, ...)
+     major=NULL, top=NULL, dummy=NULL, senv=NULL, tenv=.GlobalEnv, ...)
 }
 \arguments{
   \item{fqtName}{string specifying name of file, query, or table; 
@@ -57,6 +57,8 @@ getData(fqtName, dbName="PacHarvest", strSpp=NULL, server=NULL,
   \item{major}{numeric specifying PMFC major area codes(s) for the SQL variable \code{@major}.}
   \item{top}{numeric specifying top \emph{N} records for the SQL variable \code{@top}.}
   \item{dummy}{numeric or character to use \emph{ad hoc} wherever the SQL variable \code{@dummy} appears.}
+  \item{senv}{source environment from which \code{fqtName} will be retrieved (if available).
+    Only used when \code{type=FILE}.}
   \item{tenv}{target environment to which the result object \code{PBSdat} will be sent.}
   \item{...}{additional arguments for \code{RODBC}'s function \code{sqlQuery} 
     (specifically if the user wishes to specify \code{rows_at_time=1}).}

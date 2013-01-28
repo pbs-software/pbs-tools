@@ -9,8 +9,8 @@
 }
 \usage{
 trackBycat(strSpp="396", major=5:7, mindep=70, maxdep=441, 
-     dbs=c("gfb", "pht", "fos"), trawl="bottom", spath=.getSpath(),
-     pyrs=1996:2010, rda=NULL)
+   dbs=c("gfb", "pht", "fos"), trawl="bottom", spath=.getSpath(),
+   pyrs=1996:2010, rda=NULL, ioenv=.GlobalEnv)
 }
 \arguments{
   \item{strSpp}{string Hart code for a target fish species.}
@@ -23,6 +23,7 @@ trackBycat(strSpp="396", major=5:7, mindep=70, maxdep=441,
   \item{spath}{path where SQL files are located; defaults to the package repository of SQL code.}
   \item{pyrs}{numeric vector of years used to plot the results.}
   \item{rda}{string name (without extension) of an R binary file (\code{.rda}) containing an array of catches called \code{bycatch}.}
+  \item{ioenv}{input/output environment for function input data and output results.}
 }
 \details{
   The function currently uses three SQL query files called \code{gfb_bycatch.sql}, 
@@ -43,7 +44,7 @@ trackBycat(strSpp="396", major=5:7, mindep=70, maxdep=441,
   If the argument \code{rda} is given an \code{.rda} name, the \code{bycatch} array is loaded, by-passing the SQL calls.
 
   The \code{bycatch} array is returned invisibly. \cr
-  Additionally, a list object called \code{PBSfish}, located in the user's global environment, is populated with: \cr
+  Additionally, a list object called \code{PBStool}, located in the user's global environment, is populated with: \cr
   \code{module.....} the name of the \pkg{PBStools} module to which this function belongs; \cr
   \code{call.......} the call to the function \code{trackBycat}; \cr
   \code{plotname...} name of the plot, should the user which to use it, e.g. \code{.plotDev(act="png")}; \cr

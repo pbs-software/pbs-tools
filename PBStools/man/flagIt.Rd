@@ -37,12 +37,14 @@ flagIt(a, b, A = 45, r = 0.2, n = 1, ...)
 \code{\link[PBStools]{estOgive}}, \code{\link[PBStools]{scaleVec}}
 }
 \examples{
+local(envir=.PBStoolEnv,expr={
 pbsfun = function() {
   plot(0,0,type="n",xlim=c(0,20),ylim=c(0,1))
   points(10,0.5,pch=20,col="blue")
   for (i in seq(10,360,10))
     flagIt(a=10, b=0.5, r=0.25, A=i,col="blue",cex=0.7)
 }; pbsfun()
+})
 }
 \keyword{aplot}
 

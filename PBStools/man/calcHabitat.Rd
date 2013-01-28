@@ -8,7 +8,7 @@
 calcHabitat(topofile="bctopo", isob=c(150,435),
    digits=1, minVerts=10, col.hab="greenyellow", col.land="moccasin",
    xlim=NULL, ylim=NULL, areas=list(), col.areas="red", isolab=TRUE, labtit="",
-   plot=TRUE, pin=c(7,8), eps=FALSE, pix=FALSE, wmf=FALSE)
+   plot=TRUE, pin=c(7,8), eps=FALSE, pix=FALSE, wmf=FALSE, ioenv=.GlobalEnv)
 }
 \arguments{
   \item{topofile}{topographical ASCII XYZ file downloaded from the Scripps
@@ -30,6 +30,7 @@ calcHabitat(topofile="bctopo", isob=c(150,435),
   \item{eps}{logical: if \code{TRUE}, send plot to a postscript (\code{.eps}) file.}
   \item{pix}{logical: if \code{TRUE}, send plot to a raster (\code{.png}) file.}
   \item{wmf}{logical: if \code{TRUE}, send plot to a metafile (\code{.wmf}) file.}
+  \item{ioenv}{input/output environment for function input data and output results.}
 }
 \details{
   The function uses the dataset \code{bctopo} downloaded from the site 
@@ -50,7 +51,7 @@ calcHabitat(topofile="bctopo", isob=c(150,435),
 }
 \value{
   Returns a a bathymetry habitat \code{PolySet}.
-  Additionally, a global list object \code{PBSfish} contains the object
+  Additionally, a global list object \code{PBStool} contains the object
   \code{bathy} created from the call to \code{makeTopography}, the final 
   bathymetry habitat \code{habitat}, and a variety of \code{PolySet}s 
   created in transforming \code{bathy} to \code{habitat}.
@@ -66,10 +67,12 @@ calcHabitat(topofile="bctopo", isob=c(150,435),
 }
 \examples{
 \dontrun{
+local(envir=.PBStoolEnv,expr={
 pbsfun=function(){
   calcHabitat(isob=c(150,435),digits=1) # DBR
   invisible() }
 pbsfun()
+})
 }
 }
 \keyword{hplot}

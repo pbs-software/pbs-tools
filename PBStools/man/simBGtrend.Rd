@@ -7,7 +7,7 @@
 }
 \usage{
 simBGtrend(pmr=pop.pmr.qcss, Npred=15, genT=NULL, Nsim=1,
-   yrs=NULL, alpha=1)
+   yrs=NULL, alpha=1, ioenv=.GlobalEnv)
 }
 \arguments{
   \item{pmr}{data frame with fields: \cr
@@ -28,6 +28,7 @@ simBGtrend(pmr=pop.pmr.qcss, Npred=15, genT=NULL, Nsim=1,
     \code{alpha=0} applies equal weighting, increasingly positive \code{alpha} values 
     apply exponentially heavier weights to latter observations, and negative \code{alpha}
     values weight earlier observations more heavily.}
+  \item{ioenv}{input/output environment for function input data and output results.}
 }
 \details{
   This function attempts to simulate a population past the observed year by 
@@ -36,7 +37,7 @@ simBGtrend(pmr=pop.pmr.qcss, Npred=15, genT=NULL, Nsim=1,
 }
 \value{
   No value is explicitly returned by the function. Objects generated are appended to 
-  the global list object \code{PBSfish} (which contains the last call to \code{bootBG}):
+  the global list object \code{PBStool} (which contains the last call to \code{bootBG}):
   \item{pmrhist}{array: the \code{p}, \code{mu}, \code{rho} values used for each year of each simulation.}
   \item{Btrend}{array: estimated annual biomass and CI values for each simulation.}
   \item{Bmean}{data frame: mean annual biomass and CI limits of the multiple simulations.}
@@ -63,10 +64,12 @@ simBGtrend(pmr=pop.pmr.qcss, Npred=15, genT=NULL, Nsim=1,
   \code{\link{getPMR}}, \code{\link{calcPMR}}, \code{\link{sampBG}}
 }
 \examples{
+local(envir=.PBStoolEnv,expr={
 pbsfun=function(Nsim=1,alpha=1) {
   simBGtrend(Nsim=Nsim,alpha=alpha)
   invisible() }
 pbsfun()
+})
 }
 \keyword{ data }
 \keyword{ utilities }

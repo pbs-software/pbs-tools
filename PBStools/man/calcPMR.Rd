@@ -36,6 +36,7 @@ calcPMR(x, na.value=NULL)
   \code{\link{getPMR}}, \code{\link{sampBG}}
 }
 \examples{
+local(envir=.PBStoolEnv,expr={
 pbsfun=function(P=list(n=1000,p=0.25,mu=1,rho=0.5)) {
   unpackList(P)
   x = sampBG(n,p,mu,rho) # create a sample population
@@ -46,6 +47,7 @@ pbsfun=function(P=list(n=1000,p=0.25,mu=1,rho=0.5)) {
   print(y)
   invisible() }
 pbsfun()
+})
 }
 \keyword{ data }
 \keyword{ utilities }

@@ -10,7 +10,7 @@ calcSG(dat=pop.age, strSpp="", yfld="len", tau=c(5,40),
      areas=list(major=NULL, minor=NULL, locality=NULL, srfa=NULL,
      srfs=NULL, popa=NULL), ttype=list(c(1,4),c(2,3)), stype=NULL,
      year=NULL, ameth=3, allTT=TRUE, jit=c(0,0), 
-     pix=FALSE, wmf=FALSE, singles=FALSE, pages=FALSE)
+     pix=FALSE, wmf=FALSE, singles=FALSE, pages=FALSE, ioenv=.GlobalEnv)
 }
 \arguments{
   \item{dat}{biological data set with fields \code{yfld} and \code{age}.}
@@ -32,6 +32,7 @@ calcSG(dat=pop.age, strSpp="", yfld="len", tau=c(5,40),
   \item{wmf}{logical: if \code{TRUE}, send plot to a \code{.wmf} file.}
   \item{singles}{logical: if \code{TRUE} and \code{pix|wmf}, send each area/trip type combination to separate files.}
   \item{pages}{logical: if \code{TRUE} and \code{pix|wmf}, send each page of area plots to separate files.}
+  \item{ioenv}{input/output environment for function input data and output results.}
 }
 \details{
   The function plots versatile Schnute fits to length-age or weight-age data where each column 
@@ -47,7 +48,7 @@ calcSG(dat=pop.age, strSpp="", yfld="len", tau=c(5,40),
   Pacific Ocean Perch (\emph{Sebastes alutus}).
 }
 \value{
-  No value is explictly returned by the function. A global list object \code{PBSfish}
+  No value is explictly returned by the function. A global list object \code{PBStool}
   provides the following plus some labels:
   \item{out }{Output array of model parameter estimates and other metrics.}
   \item{pVec }{The initial parameter vector used for the model.}
@@ -78,10 +79,12 @@ calcSG(dat=pop.age, strSpp="", yfld="len", tau=c(5,40),
   \pkg{base}: \code{\link[base]{jitter}}
 }
 \examples{
+local(envir=.PBStoolEnv,expr={
 pbsfun=function(){
-  data(pop.age)
+  data(pop.age,envir=.PBStoolEnv)
   calcSG(areas=list(srfa=list(c("5AB","5CD"))),ttype=list(2:3))
   invisible() }
 pbsfun()
+})
 }
 \keyword{hplot}
