@@ -984,6 +984,10 @@ ttprint = function(...) {tprint(..., penv=parent.frame(), tenv=.PBStoolEnv)}
 ttput   = function(...) {tput  (..., penv=parent.frame(), tenv=.PBStoolEnv)}
 tlisp   = function(...) {lisp  (..., pos =.PBStoolEnv)}
 
+# functions called from window description files
+.win.onClose  = function(){ ttcall(.onClose)() }
+.win.runModHelperQuit = function(){ ttcall(.runModHelperQuit)() }
+
 # Provide PBSdata wrappers for PBSmodelling functions tget/tcall/tprint/tput/lisp
 #-----------------------------------------------RH 
 dtget   = function(...) {tget  (..., penv=parent.frame(), tenv=.PBSdataEnv)}

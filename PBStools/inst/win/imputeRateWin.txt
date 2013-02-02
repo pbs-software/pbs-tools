@@ -1,4 +1,4 @@
-window name="window" title="Internal Rate of Return" onClose=.onClose
+window name="window" title="Internal Rate of Return" onClose=.win.onClose
 grid 1 8 sticky=W
 	#label text=View: font="bold" sticky=W padx=1
 	button text=Data func=doAction action="openFile(paste(switch(getWinVal()$path,`.`,.getSpath()),`/`,getWinVal()$dbName,`.mdb`,sep=``))"

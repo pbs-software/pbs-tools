@@ -115,6 +115,7 @@ calcMA = function(x,y,y2,period=270,every=10) {
 	return(ma) }
 #-------------------------------------------calcMA
 
+
 #imputeRate-----------------------------2010-10-20
 # Impute the rate of return from an investment 
 # with irregular contributions/withdrawals.
@@ -146,8 +147,9 @@ imputeRate <- function(qtName="Ex03_Portfolio", dbName="Examples", AID=1, pathN=
 	assign(".onClose",.onClose,envir=.PBStoolEnv)
 	createWin(wtmp);  .imputeRate.impIR()
 	invisible() }
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~imputeRate
 
-#.imputeRate.impIR----------------------2011-06-13
+#.imputeRate.impIR----------------------2013-02-01
 # Impute the rate of return from an investment.
 #-----------------------------------------------RH
 .imputeRate.impIR <- function() {
@@ -180,13 +182,15 @@ imputeRate <- function(qtName="Ex03_Portfolio", dbName="Examples", AID=1, pathN=
 		return(fval) }
 	#----------------
 	getWinVal(scope="L")
-	unpackList(ttcall(PBStool),scope="L")
+	ttget(PBStool)
+	unpackList(PBStool,scope="L")
 	act=getWinAct()[1]
 	cenv=environment(); penv=parent.frame(1); genv=.PBStoolEnv
 	if (!isThere("dat",envir=cenv) ) {#|| (act=="impute" && attributes(dat)$fqt!=qtName)) {
 		.imputeRate.getIR()
-		unpackList(ttcall(PBStool),scope="L") }
-	assign("PBStool",PBStool[c("module","func","plotname","dat","DLIM","PLIM")],envir=.PBStoolEnv)
+		ttget(PBStool)
+		unpackList(PBStool,scope="L") }
+	assign("PBStool",PBStool[c("module","call","args","plotname","dat","DLIM","PLIM")],envir=.PBStoolEnv)
 	adat=dat[is.element(dat$AID,AID),] # account data
 	if (nrow(adat)==0) showError("account ID","nodata")
 	if (autoD) dlim=range(adat$date,na.rm=TRUE) else dlim=c(d0,d1)
@@ -208,7 +212,8 @@ imputeRate <- function(qtName="Ex03_Portfolio", dbName="Examples", AID=1, pathN=
 	packList(c("adat","ddat","Vstart","Vend","Vadj","x","y","z0","z1","z","zL","xobs","yobs","cobs"),"PBStool",tenv=.PBStoolEnv)
 #browser();return()
 
-	Obag <- calcMin(pvec=parVec,func=IRRfun,method=method,trace=trace,maxit=maxit,reltol=reltol,steptol=steptol,repN=repN);
+	Obag <- calcMin(pvec=parVec,func=IRRfun,method=method,trace=trace,maxit=maxit,reltol=reltol,steptol=steptol,repN=repN)
+	tget(PBSmin)
 	fmin <- PBSmin$fmin; np <- sum(parVec[,4]); ng <- zL;
 	AICc = 2*fmin + 2*np * (ng/(ng-np-1))
 	packList("AICc","PBSmin",tenv=.PBStoolEnv)
@@ -220,12 +225,14 @@ imputeRate <- function(qtName="Ex03_Portfolio", dbName="Examples", AID=1, pathN=
 	if (sim==2) sim <- 1
 	unpackList(Obag,scope="L");
 	Gbag <- list(Git=iters, Gev=evals, Gct=round(cpuTime,nd), Get=round(elapTime,nd),
-		Gf1=round(fminS,nd), Gf2=round(fminE,nd), Gaic=round(AIC,nd), Gaicc=round(PBSmin$AICc,nd),
+		Gf1=round(fminS,nd), Gf2=round(fminE,nd), Gaic=round(AIC,nd), Gaicc=round(AICc,nd),
 		Gv1=c(Pstart,((1+Pstart)^pyr)-1), Gv2=round(rates,nd), Gmess=message, sim=sim);
+	tput(PBSmin)
 	setWinVal(Gbag)
 	packList(c("Obag","Gbag","Pend","rates","Pfig","ftime"),"PBStool",tenv=.PBStoolEnv)
 	.imputeRate.plotIR()
 	invisible() }
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~.imputeRate.impIR
 
 #.imputeRate.trajIR---------------------2011-06-10
 # Calculate the value trajectory.
@@ -238,6 +245,7 @@ imputeRate <- function(qtName="Ex03_Portfolio", dbName="Examples", AID=1, pathN=
 	ypred=cw/ri  # NPV
 	y=cumsum(ypred)
 	return(y) }
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~.imputeRate.trajIR
 
 #.imputeRate.getIR----------------------2010-10-20
 # Get the master data set to impute rate.
@@ -258,6 +266,7 @@ imputeRate <- function(qtName="Ex03_Portfolio", dbName="Examples", AID=1, pathN=
 	dat$cont[is.na(dat$cont)] <- 0; 
 	packList(c("dat","DLIM","PLIM"),"PBStool",tenv=.PBStoolEnv)
 	invisible() }
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~.imputeRate.getIR
 
 #.imputeRate.plotIR---------------------2011-06-10
 # Plot the results of the imputed rate.
@@ -320,6 +329,7 @@ imputeRate <- function(qtName="Ex03_Portfolio", dbName="Examples", AID=1, pathN=
 	packList(c("ycum","ccum","clr"),"PBStool",tenv=.PBStoolEnv)
 	packList(c("xlim","ylim","yyy","zax","zay","zac","rcobs","zpos","zneg","base"),"PBStool",tenv=.PBStoolEnv)
 	box(bty="L"); invisible() }
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~.imputeRate.plotIR
 
 #.imputeRate.resetIR--------------------2010-10-20
 # Reset/reinitialize the GUI.
@@ -342,15 +352,17 @@ imputeRate <- function(qtName="Ex03_Portfolio", dbName="Examples", AID=1, pathN=
 		setWinVal(reInit)
 		packList("reInit","PBStool",tenv=.PBStoolEnv) }
 	invisible() }
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~.imputeRate.resetIR
 
-#.imputeRate.simIR----------------------2010-10-20
+#.imputeRate.simIR----------------------2013-02-01
 # Simulate a data set for imputing.
 #-----------------------------------------------RH
 .imputeRate.simIR <- function() {
 	rpareto <- function(n,xm,k) {
 		y = runif(n); x = xm*(1-y)^(-1/k); return(x) }
-	getWinVal(scope="L"); #unpackList(ttcall(PBStool),scope="L")
-	assign("PBStool",PBStool[c("module","func","plotname")],envir=.PBStoolEnv)
+	getWinVal(scope="L")
+	ttget(PBStool)
+	assign("PBStool",PBStool[c("module","call","args","plotname")],envir=.PBStoolEnv)
 	if (k!=0 && k<1) { resetGraph();
 		setWinVal(list(k=20,sim=1))
 		showError("Pareto distribution parameter k:  Volatility decreases as k increases;  Choose k>=1  Try k=20") }
@@ -369,7 +381,9 @@ imputeRate <- function(qtName="Ex03_Portfolio", dbName="Examples", AID=1, pathN=
 	packList("dat","PBStool",tenv=.PBStoolEnv)
 	.imputeRate.getIR(); .imputeRate.impIR()
 	invisible()}
-#---------------------------------------imputeRate
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~.imputeRate.simR
+#=======================================imputeRate
+
 
 #plotDiversity--------------------------2013-01-28
 # Plot diversity as barplots and overlay species richness.

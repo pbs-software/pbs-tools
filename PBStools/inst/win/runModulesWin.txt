@@ -1,4 +1,4 @@
-window name=runM title="PBS Fishery" onClose=.runModHelperQuit
+window name=runM title="PBS Fishery" onClose=.win.runModHelperQuit
 
 grid 1 2 sticky=NW
 	label text=View font="bold 11" pady=5
