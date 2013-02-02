@@ -6,7 +6,8 @@ Authors: RH  = Rowan Haigh
          JTS = Jon T. Schnute
 ------------------------------
 
-1.23  2013-01-28
+1.23  2013-02-01
+  - Debugged function `imputeRate` where control objects were out of focus. (RH 2/1)
   - Changed the package's general storage object from `PBSfish` to `PBStool`. (RH 1/28)
   - Introduced new argument `ioenv` (input/output environment) to functions that call `getFile` with its new argument `senv` (source environment). (RH 1/28)
   - Finished wrapping examples in a local environment. (RH 1/25)
