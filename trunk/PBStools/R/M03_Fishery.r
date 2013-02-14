@@ -11,7 +11,6 @@
 #  plotCatch.......Plot catch history as annual barplot using specified catch fields.
 #  plotConcur......Horizontal barplot of concurrent species in tows.
 #  plotFOScatch....Plot catch as monthly barplots from 'fos_catch.sql' query to GFFOS.
-#  plotRecon.......Plot reconstructed catch using barplots stacked by PMFC area.
 #  runCCA..........Catch-curve model based on Schnute and Haigh (2006).
 #  sumCatTabs......Summarize catch by year & PMFC from modern catch data used in catch reconstruction.
 #  trackBycat      Track annual fish group catches between depth limits.
@@ -1007,49 +1006,6 @@ plotFOScatch <- function(strSpp="453", majors=c(1,3:9), space=0.5,
 	if(wmf) dev.off()
 	invisible(dat) }
 #-------------------------------------plotFOScatch
-
-#plotRecon------------------------------2011-06-15
-# Plot reconstructed catch using barplots stacked by PMFC area.
-#-----------------------------------------------RH
-plotRecon = function(dat=cat440rec, strSpp="440", major=c(1,3:9), fidout=10, 
-     years=1918:2011, xlab=seq(1920,2010,5),
-     eps=FALSE, pix=FALSE, wmf=FALSE, PIN=c(10,5)) {
-
-	fshnam=c("trawl","h&l","trap",rep("h&l",6),"combined") #general category vector
-	fidnam=c("trawl","halibut","sablefish","sched2","zn","sabzn","sabhal","dogfish","lingcod","combined")
-	fidlab=c("Trawl","Halibut","Sablefish","Dogfish-Lingcod","H&L Rockfish","Sablefish + ZN",
-		"Sablefish + Halibut","Dogfish","Lingcod","Combined Fisheries")
-	yy  = as.character(years)
-	dat = dat[yy,,,drop=FALSE]
-	MAJ = as.character(1:10); mm=as.character(major)
-	clrs = rep("gainsboro",length(MAJ)); names(clrs)=MAJ
-	clrs[as.character(c(1,3:9))]=c("moccasin","blue","lightblue","yellow","orange","red","seagreen","lightgreen")
-	mclrs=clrs[mm]
-	data(pmfc,species,envir=penv())
-	XLAB=dimnames(dat)[[1]];  xpos=(1:length(XLAB))-.5; zlab=is.element(XLAB,xlab)
-	for (i in fidout){
-		ii=as.character(i)
-		plotname=paste(strSpp,"-Catch-History-",fidnam[i],"-years(",min(years),"-",max(years),")-major(",paste(major,collapse=""),")",sep="")
-		if (eps)       postscript(file=paste(plotname,".eps",sep=""),width=PIN[1],height=PIN[2],fonts="mono",paper="special")
-		else if (pix)  png(filename=paste(plotname,".png",sep=""),width=round(100*PIN[1]),height=round(100*PIN[2]))
-		else if (wmf)  win.metafile(paste(plotname,".wmf",sep=""),width=PIN[1],height=PIN[2])
-		else  resetGraph()
-		expandGraph(mar=c(3,3,.5,.5))
-		barplot(t(dat[,mm,ii]),col=0,space=0,xaxt="n",yaxt="n",xaxs="i")
-		yaxp=par()$yaxp; yint=yaxp[2]/yaxp[3]; hlin=seq(yint,yaxp[2],yint)
-		segments(rep(0,length(hlin)),hlin,rep(par()$usr[2],length(hlin)),hlin,col="gainsboro")
-		barplot(t(dat[,mm,ii]),col=mclrs,space=0,cex.names=.8,mgp=c(1.5,.5,0),xaxt="n",xaxs="i",add=TRUE)
-		axis(1,at=xpos[zlab],labels=XLAB[zlab],tick=FALSE,las=3,mgp=c(0,.2,0),cex.axis=.8,hadj=1)
-		legend("topleft",fill=rev(mclrs),legend=paste("PMFC",rev(pmfc[mm,"gmu"])),
-			bty="n", cex=0.8, xjust=0, inset=c(.04,.20))
-		addLabel(.05,.95,species[strSpp,"latin"],font=3,cex=1,col="#400080",adj=0)
-		addLabel(.05,.90,fidlab[i],cex=1.2,col="#400080",adj=0)
-		mtext("Year",side=1,line=1.75,cex=1.2)
-		mtext("Catch (t)",side=2,line=2,cex=1.3)
-		if (eps|pix|wmf) dev.off()
-	}
-}
-#----------------------------------------plotRecon
 
 #runCCA---------------------------------2013-01-28
 # Catch-curve model based on Schnute, J.T., and Haigh, R. 2006.

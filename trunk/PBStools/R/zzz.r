@@ -36,7 +36,7 @@ We may not be big, but we're small.
 # No Visible Bindings
 # ===================
 if(getRversion() >= "2.15.1") utils::globalVariables(names=c(
-	".PBSmod",".PBSserver",
+	".onClose",".PBSmod",".PBSserver",".runModHelperQuit",
 	"A","acut","adat","Afile","age","agg","AID","amax","areas","autoA","autoD","aVal",
 	"B","b0","b5","barcol","bathy","bbonly","Bboot","bcol","bdat","Best","bgsamp","bgtab","bh","bio440","Bobs","Bqnt","Bt","bta","Btot","bugsData",
 	"C1","C2","case","cat440rec","catch","Cbar","Cbox","Ccat","ccol","cdata","Ceq","chn1","chn2","clen","Clin","clwd","Cnum","cobs","Cpoi","cpuTime","cthin","ctot","Ctrd","Cval",
@@ -61,6 +61,6 @@ if(getRversion() >= "2.15.1") utils::globalVariables(names=c(
 	"wgta","wgtat","wmf","wted",
 	"x","xfun","XLIM","xlsName","xobs","xwid","xy","XYopt",
 	"y","year","years","yfld","yfun","yinf","ylim","YLIM","ypos","yr","ystar","ytck",
-	"z","Z","za","zero","Zlim","zsho","zstar","zstn"), 
-	package="PBStools")
+	"z","Z","za","zero","Zlim","zsho","zstar","zstn"
+	), package="PBStools")
 

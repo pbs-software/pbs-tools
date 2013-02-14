@@ -1990,7 +1990,7 @@ reportCatchAge <- function(prefix="pop", path=getwd(), hnam=NULL, ...) {
 	invisible() }
 #-----------------------------------reportCatchAge
 
-#requestAges----------------------------2012-11-15
+#requestAges----------------------------2013-02-14
 # Determine which otoliths to sample for ageing requests.
 # Note: only have to use sql=TRUE once for each species 
 # using any year before querying a group of years.
@@ -2002,7 +2002,7 @@ requestAges=function(strSpp, nage=500, year=2011,
      spath=.getSpath(), uid=Sys.info()["user"], pwd=uid, ...) {
 
 	on.exit(gc())
-	assign("PBStool",list(module="M02_Biology",call=match.call()),envir=.PBStoolEnv)
+	assign("PBStool",list(module="M02_Biology",call=match.call(),args=args(requestAges)),envir=.PBStoolEnv)
 
 	#Subfunctions -----------------------
 	adjustN = function(a,b){           # a=available , b=desired
@@ -2020,7 +2020,7 @@ requestAges=function(strSpp, nage=500, year=2011,
 			aN[!za] = aN[!za] + pb*sN    # allocate surplus
 			adjustN(a,aN)                # re-iterate
 		}
-		else return(round(b)) }
+		else return(b) }
 
 	moveCat=function(C,S){
 		if (all(S)) return(C) # all periods sampled, no need to move catch
@@ -2066,6 +2066,7 @@ requestAges=function(strSpp, nage=500, year=2011,
 		expr=paste(c("load(\"Sdat",strSpp,".rda\"); load(\"Ccat",strSpp,".rda\"); ",
 			"load(\"Scat",strSpp,".rda\")"),collapse="")
 		eval(parse(text=expr)) }
+#browser();return()
 	
 	if (nrow(Sdat)==0 || nrow(Ccat)==0) showError("Not enough data")
 	samp=Sdat
@@ -2179,17 +2180,27 @@ requestAges=function(strSpp, nage=500, year=2011,
 		samp[["ncat"]][zs] = ncat[zss]                   # populate the data frame with number of specimens to age
 	}
 	packList(c("Sdat","catch","C"),"PBStool",tenv=.PBStoolEnv)
-	samp$nwant = round(samp$ncat)                                # No. otoliths wanted by the selection algorithm
+	samp$nwant = round(pmax(1,samp$ncat))                        # No. otoliths wanted by the selection algorithm (inflated when many values are <1)
 	samp$ndone = samp$NBBA                                       # No. otoliths broken & burnt
 	samp$nfree = round(samp$NOTO-samp$NAGE)                      # No. of free/available otoliths not yet processed
 	samp$ncalc = pmin(pmax(0,samp$nwant-samp$ndone),samp$nfree)  # No. of otoliths calculated to satisfy Nwant given constraint of Nfree
 #browser();return()
 	nardwuar = samp$ncalc > 0 & !is.na(samp$ncalc)
 	samp$nallo = rep(0,nrow(samp))
-	samp$nallo[nardwuar] = adjustN(a=samp$nfree[nardwuar],b=samp$nwant[nardwuar])  # No. of otoliths allocated to satisfy user's initial request, given constraint of Nfree
+	samp$nallo[nardwuar] = adjustN(a=samp$nfree[nardwuar],b=samp$ncat[nardwuar])    # No. of otoliths allocated to satisfy user's initial request, given constraint of Nfree
+	# Adjust for many small n-values (<1) using median rather than 0.5 as the determinant of 0 vs.1
+	zsmall = samp$nallo[nardwuar] < 1.
+	if (any(zsmall)) {
+		msmall = median(samp$nallo[nardwuar][zsmall])
+		zzero  = samp$nallo[nardwuar][zsmall] < msmall
+		samp$nallo[nardwuar][zsmall][zzero] = 0
+		samp$nallo[nardwuar][zsmall][!zzero] = 1
+	}
+	samp$nallo[nardwuar] = round(samp$nallo[nardwuar])
 	narduse = samp[,nfld] > 0 & !is.na(samp[,nfld])
 	sampuse = samp[narduse,]
 	### End sample calculations ###
+#browser();return()
 
 	yearmess = if (length(year)>3) paste(min(year),"-",max(year),sep="") else paste(year,collapse="+")
 	describe=paste("-",type,"(",yearmess,")-area(",area,")-sex(",paste(sex,collapse="+"),")-N",round(sum(samp[,nfld])),sep="")
@@ -2198,7 +2209,6 @@ requestAges=function(strSpp, nage=500, year=2011,
 	packList(c("samp","describe"),"PBStool",tenv=.PBStoolEnv)
 	save("samp",file=paste("Sdat",strSpp,describe,".rda",sep=""))
 	write.csv(samp,  paste("Sdat",strSpp,describe,".csv",sep=""))
-#browser();return()
 
 	tid=unique(sampuse[["tid"]])
 	sid=unique(sampuse[["SID"]])
@@ -2206,14 +2216,15 @@ requestAges=function(strSpp, nage=500, year=2011,
 	expr=paste("SELECT B5.SAMPLE_ID AS SID, B5.SPECIMEN_SERIAL_NUMBER AS SN FROM B05_SPECIMEN B5 WHERE B5.SAMPLE_ID IN (",
 		paste(sid,collapse=","),") AND B5.AGEING_METHOD_CODE IS NULL AND B5.SPECIMEN_SEX_CODE IN (", paste(sex,collapse=","),")",sep="")
 	getData(expr,"GFBioSQL",strSpp=strSpp,type="SQLX",tenv=penv())
-	Opool = split(PBSdat$SN,PBSdat$SID)                    # Pool of available otoliths
-	Npool = Opool[as.character(sampuse$SID)]         # Pool relevant to the n field
+	Opool = split(PBSdat$SN,PBSdat$SID)                       # Pool of available otoliths
+	Npool = Opool[as.character(sampuse$SID)]                  # Pool relevant to the n field
 	Nsamp = sampuse[,nfld]; names(Nsamp)=sid; names(sid)=tid  # Number of otoliths to sample from the pool
 #browser();return()
-	Osamp = sapply(sid,function(x,O,N){                    # Otoliths sampled randomly from pool
+	Osamp = sapply(sid,function(x,O,N){                       # Otoliths sampled randomly from pool
 		xx=as.character(x); o=O[[xx]]; n=N[xx]
-		if (n==0) NA else sample(o,min(n,length(o)),replace=FALSE) }, 
+		if (n==0) NA else if (n==1) o else sample(o,min(n,length(o)),replace=FALSE) }, 
 		O=Npool, N=Nsamp, simplify=FALSE)
+#browser();return()
 	packList(c("Opool","Nsamp","Osamp"),"PBStool",tenv=.PBStoolEnv)
 
 	fnam = paste("oto",strSpp,describe,".csv",sep="")
@@ -2223,7 +2234,7 @@ requestAges=function(strSpp, nage=500, year=2011,
 		ii=as.character(i)
 		otos=Osamp[[ii]]
 		if ( all(is.na(otos))) next
-		x=samp[is.element(samp$tid,i),]
+		x=sampuse[is.element(sampuse$tid,i),]
 		unpackList(x); ntray=0; ser1=NULL
 		for (j in 1:length(firstSerial)) {
 			sers = firstSerial[j]:lastSerial[j]
@@ -2260,7 +2271,7 @@ requestAges=function(strSpp, nage=500, year=2011,
 		catnip("Last serial,",paste(lastSerial,collapse=" | "),"\n\n",file=fnam,append=TRUE)
 #if (storageID=="17Q+17R") {browser();return()}
 	}
-	invisible(samp) }
+	invisible(sampuse) }
 #--------------------------------------requestAges
 
 #simBSR---------------------------------2011-06-14

@@ -1,7 +1,7 @@
 Package: PBStools
 Version: 1.23
-Date: 2013-01-28
-Title: Tools for Serious Marine Scientists
+Date: 2013-02-14
+Title: Tools for Semi-Serious Marine Scientists
 Author: Rowan Haigh, Jon T. Schnute, Norm Olsen, and Lisa Lacko
 Maintainer: Rowan Haigh <rowan.haigh@dfo-mpo.gc.ca>
 Depends: R (>= 2.15.0), PBSmapping, PBSmodelling, PBSdata, RODBC

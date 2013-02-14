@@ -533,7 +533,7 @@ getData <-function(fqtName, dbName="PacHarvest", strSpp=NULL, server=NULL,
 #.getMDBdata----------------------------2010-07-22
 # Retrieves a data frame from MDB query or table
 #-----------------------------------------------RH
-.getMDBdata <- function(mdbTable,qtName,rownum=0,...) {
+.getMDBdata <- function(mdbTable, qtName, rownum=0, ...) {
 	if (!require(RODBC, quietly=TRUE)) stop("`RODBC` package is required")
 	cnn <- odbcConnectAccess(access.file=mdbTable)
 	query=paste("SELECT ",ifelse(rownum>0,paste("TOP",rownum),"")," * FROM ",qtName,sep="")
@@ -544,7 +544,7 @@ getData <-function(fqtName, dbName="PacHarvest", strSpp=NULL, server=NULL,
 #.getDBFdata----------------------------2010-07-22
 # Retrieves data from a DBF file
 #-----------------------------------------------RH
-.getDBFdata <- function(dbfTable,qtName,...) {
+.getDBFdata <- function(dbfTable, qtName, ...) {
 	if (nchar(qtName)>8) showError("Rename DBF file using 8 or less characters")
 	if (!require(RODBC, quietly=TRUE)) stop("`RODBC` package is required")
 	cnn <- odbcConnectDbase(dbf.file=dbfTable)
@@ -552,13 +552,13 @@ getData <-function(fqtName, dbName="PacHarvest", strSpp=NULL, server=NULL,
 	odbcClose(cnn)
 	return(dat) };
 
-#.getXLSdata----------------------------2008-07-29
+#.getXLSdata----------------------------2013-01-30
 # Retrieves data from an XLS worksheet
 #-----------------------------------------------RH
-.getXLSdata <- function(xlsTable,qtName) {
+.getXLSdata <- function(xlsTable, qtName, ...) {
 	if (!require(RODBC, quietly=TRUE)) stop("`RODBC` package is required")
 	cnn <- odbcConnectExcel(xls.file=xlsTable)
-	dat <- sqlFetch(cnn, qtName)
+	dat <- sqlFetch(cnn, qtName, ...)
 	odbcClose(cnn)
 	return(dat) };
 #====================================getData group
