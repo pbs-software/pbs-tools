@@ -6,6 +6,15 @@ Authors: RH  = Rowan Haigh
          JTS = Jon T. Schnute
 ------------------------------
 
+1.24  2013-02-26
+  - Added new function `plotTertiary` to plot compositional data of n-dimensions into a polygonal shape with n sides. (RH 3/13)
+  - Modified function `clarify` to allow user to specify land mass colour. (RH 3/12)
+  - Added some new SQl queries to return catch data for cluster analysis via CLARA in the function `clarify`. (RH 3/11)
+  - Added function `plotTernary` to plot ternary diagrams of data that have been grouped into three categories. (RH 3/7)
+  - Modified function `plotGMA` to allow a bit more flexibility in adding extra labels. (RH 2/26)
+  - Modified function `requestAges` to display random samples by storage ID (sample box : otolith tray) rather than by sample ID. (RH 2/21)
+	The issue arose because in surveys recently, biologists have been taking many samples of few fish rather than few samples of many fish.
+
 1.23  2013-02-14
   - Modified function `requestAges` to deal with many samples where selected number of otoliths is less than 1. (RH 2/14)
   - Debugged function `imputeRate` where control objects were out of focus. (RH 2/1)

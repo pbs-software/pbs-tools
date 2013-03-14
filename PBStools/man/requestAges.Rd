@@ -11,7 +11,7 @@
 \usage{
 requestAges(strSpp, nage=500, year=2011, 
      areas=list(major=3:9, minor=NULL), ttype=c(1,4),
-     sex=1:2, nfld = "nallo", sql=TRUE, 
+     sex=1:2, nfld = "nallo", sql=TRUE, bySID=FALSE,
      spath=.getSpath(), uid=Sys.info()["user"], pwd=uid, ...)
 }
 \arguments{
@@ -34,6 +34,8 @@ requestAges(strSpp, nage=500, year=2011,
   \item{sql}{logical: if \code{TRUE} query the databases for all otolith and catch information,
     otherwise grab the information from stored binaries (e.g., \code{Sdat396.rda} for POP
     otolith data, and \code{Ccat396.rda} for POP catch from \code{PacHarvest} and \code{GFFOS}.}
+  \item{bySID}{logical: if \code{TRUE} group the chosen otoliths by sample ID (SID) for presentation 
+    in the CSV file (assumes that one tray houses one sample); otherwise assume that many small samples occur in one tray.}
   \item{spath}{string specifying system path to the SQL queries; default points to the SQL directory in \pkg{PBStools}.}
   \item{uid, pwd}{user ID and password for Oracle DB account authentication (no longer need as 
     queries are coded in SQL with embedded Oracle queries that use the SQL server's  credentials).}

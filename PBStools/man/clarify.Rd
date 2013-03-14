@@ -9,7 +9,7 @@
 clarify(dat, cell=c(0.1,0.075), nG=8,
    xlim=c(-134.2,-127), ylim=c(49.6,54.8), zlim=NULL, targ="YMR", 
    clrs=c("red","orange","yellow","green","forestgreen","deepskyblue",
-   "blue","midnightblue"), spp.names=FALSE, 
+   "blue","midnightblue"), land="ghostwhite", spp.names=FALSE, 
    wmf=FALSE, eps=FALSE, hpage=10, ioenv=.GlobalEnv)
 }
 \arguments{
@@ -22,6 +22,7 @@ clarify(dat, cell=c(0.1,0.075), nG=8,
   \item{zlim}{optional Z-limits (depth) to qualify data (if field available).}
   \item{targ}{target species to identify within the \code{CLARA} groups.}
   \item{clrs}{vector of colours to use for displaying \code{nG} \code{CLARA} groups.}
+  \item{land}{colour to shade land masses.}
   \item{spp.names}{logical: if \code{TRUE}, replace species codes
     (if they are used in the data) with species names in the legend.}
   \item{wmf}{logical: if \code{TRUE}, send plot to a windows meta file \code{.wmf}.}

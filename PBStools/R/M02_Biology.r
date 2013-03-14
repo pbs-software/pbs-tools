@@ -1990,7 +1990,7 @@ reportCatchAge <- function(prefix="pop", path=getwd(), hnam=NULL, ...) {
 	invisible() }
 #-----------------------------------reportCatchAge
 
-#requestAges----------------------------2013-02-14
+#requestAges----------------------------2013-02-21
 # Determine which otoliths to sample for ageing requests.
 # Note: only have to use sql=TRUE once for each species 
 # using any year before querying a group of years.
@@ -1998,7 +1998,7 @@ reportCatchAge <- function(prefix="pop", path=getwd(), hnam=NULL, ...) {
 #-----------------------------------------------RH
 requestAges=function(strSpp, nage=500, year=2011, 
      areas=list(major=3:9, minor=NULL), ttype=c(1,4),
-     sex=1:2, nfld = "nallo", sql=TRUE, 
+     sex=1:2, nfld = "nallo", sql=TRUE, bySID=FALSE,
      spath=.getSpath(), uid=Sys.info()["user"], pwd=uid, ...) {
 
 	on.exit(gc())
@@ -2009,7 +2009,7 @@ requestAges=function(strSpp, nage=500, year=2011,
 		if (round(sum(b),5) > round(sum(a),5)) {
 			showMessage(paste("There are only",sum(round(a,0)),"otoliths available.\n",
 				"All were selected."),as.is=TRUE)
-			return(round(a)) }
+			return(a) }
 		za = b>a                        # restricted to available
 		if (any(za)) {
 			aN = rep(0,length(a))        # adjusted N
@@ -2180,6 +2180,7 @@ requestAges=function(strSpp, nage=500, year=2011,
 		samp[["ncat"]][zs] = ncat[zss]                   # populate the data frame with number of specimens to age
 	}
 	packList(c("Sdat","catch","C"),"PBStool",tenv=.PBStoolEnv)
+	samp$ncat  = nage*samp$ncat/sum(samp$ncat)                   # Force the calculated otoliths back to user's desired number (nage)
 	samp$nwant = round(pmax(1,samp$ncat))                        # No. otoliths wanted by the selection algorithm (inflated when many values are <1)
 	samp$ndone = samp$NBBA                                       # No. otoliths broken & burnt
 	samp$nfree = round(samp$NOTO-samp$NAGE)                      # No. of free/available otoliths not yet processed
@@ -2206,7 +2207,7 @@ requestAges=function(strSpp, nage=500, year=2011,
 	describe=paste("-",type,"(",yearmess,")-area(",area,")-sex(",paste(sex,collapse="+"),")-N",round(sum(samp[,nfld])),sep="")
 	attr(samp,"Q") = cbind(qC,pC,nC)
 	attr(samp,"call") = deparse(match.call())
-	packList(c("samp","describe"),"PBStool",tenv=.PBStoolEnv)
+		packList(c("samp","describe"),"PBStool",tenv=.PBStoolEnv)
 	save("samp",file=paste("Sdat",strSpp,describe,".rda",sep=""))
 	write.csv(samp,  paste("Sdat",strSpp,describe,".csv",sep=""))
 
@@ -2217,12 +2218,16 @@ requestAges=function(strSpp, nage=500, year=2011,
 		paste(sid,collapse=","),") AND B5.AGEING_METHOD_CODE IS NULL AND B5.SPECIMEN_SEX_CODE IN (", paste(sex,collapse=","),")",sep="")
 	getData(expr,"GFBioSQL",strSpp=strSpp,type="SQLX",tenv=penv())
 	Opool = split(PBSdat$SN,PBSdat$SID)                       # Pool of available otoliths
-	Npool = Opool[as.character(sampuse$SID)]                  # Pool relevant to the n field
-	Nsamp = sampuse[,nfld]; names(Nsamp)=sid; names(sid)=tid  # Number of otoliths to sample from the pool
+	Npool = Opool[.su(as.character(sampuse$SID))]             # Pool relevant to the n field
+	Nsamp = sapply(split(sampuse[,nfld],sampuse$SID),sum)     # Number of otoliths to sample from the pool (sapply-split: because samples might be split across trays)
+	Nsamp = Nsamp[order(names(Nsamp))]
+	names(sid)=tid
 #browser();return()
 	Osamp = sapply(sid,function(x,O,N){                       # Otoliths sampled randomly from pool
-		xx=as.character(x); o=O[[xx]]; n=N[xx]
-		if (n==0) NA else if (n==1) o else sample(o,min(n,length(o)),replace=FALSE) }, 
+		xx=as.character(x); oo=O[[xx]]; nn=N[xx]; olen=length(oo)
+		if (nn==0) return(NA)
+		else if (olen==1) return(oo)
+		else return(sample(x=oo,size=min(nn,olen),replace=FALSE)) }, 
 		O=Npool, N=Nsamp, simplify=FALSE)
 #browser();return()
 	packList(c("Opool","Nsamp","Osamp"),"PBStool",tenv=.PBStoolEnv)
@@ -2230,6 +2235,7 @@ requestAges=function(strSpp, nage=500, year=2011,
 	fnam = paste("oto",strSpp,describe,".csv",sep="")
 	data(species,pmfc,envir=penv())
 	catnip(paste("Otolith Samples for", species[strSpp,]["name"],"(", species[strSpp,]["latin"],")"),"\n\n",file=fnam)
+	if (bySID) {
 	for (i in tid) {
 		ii=as.character(i)
 		otos=Osamp[[ii]]
@@ -2270,9 +2276,48 @@ requestAges=function(strSpp, nage=500, year=2011,
 		catnip("E,",paste(TRAY[5,],collapse=","),"\n",file=fnam,append=TRUE)
 		catnip("Last serial,",paste(lastSerial,collapse=" | "),"\n\n",file=fnam,append=TRUE)
 #if (storageID=="17Q+17R") {browser();return()}
-	}
+	} }
+	else {
+		tray = sampuse$storageID; names(tray)=sampuse$tid
+		trid = sort(unique(tray))
+		for (i in trid) {
+			ii = names(tray[is.element(tray,i)])
+			Otos = sort(unique(as.vector(unlist(Osamp[ii]))))
+			if ( all(is.na(Otos))) next
+			#x = sampuse[is.element(sampuse$tid,ii),]
+			x = sampuse[is.element(sampuse$storageID,i),] # use because some samples span trays
+			unpackList(x)
+			ocells = min(firstSerial):max(lastSerial)     # available otoliths
+			pcells = match(Otos,ocells)                   # cell positions to take samples
+			pcells = pcells[pcells>0 & !is.na(pcells)]    # remove NAs caused by a samples spanning trays
+			otos   = ocells[pcells]                       # otoliths specific to this tray
+#if (i=="18L:2") {browser();return()}
+#browser();return()
+			TRAY   = array("",dim=c(5,20),dimnames=list(LETTERS[1:5],1:20))
+			serT   = matrix(seq(ocells[1],ocells[1]+99,1),nrow=5,ncol=20,byrow=TRUE)
+			TRAY[pmatch(otos,serT)] = otos
+			catnip("Vessel,",vessel[1],",\n",file=fnam,append=TRUE)
+			catnip("Trip date,",format(tdate[1],format="%d-%b-%Y"),",",file=fnam,append=TRUE)
+			catnip("Otoliths","\n",file=fnam,append=TRUE)
+			catnip("Sample date,",format(sdate[1],"%d-%b-%Y"),",",file=fnam,append=TRUE)
+			catnip("<",length(otos),">","\n",file=fnam,append=TRUE)
+			catnip("Sample ID,",paste(min(SID),max(SID),sep=" to "),",",file=fnam,append=TRUE)
+			catnip("Tray,",paste(1:20,collapse=","),"\n",file=fnam,append=TRUE)
+			catnip("Set,",paste(min(set),max(set),sep=" to "),",",file=fnam,append=TRUE)
+			catnip("A,",paste(TRAY[1,],collapse=","),"\n",file=fnam,append=TRUE)
+			catnip("PMFC,",paste(pmfc[as.character(.su(major)),"gmu"],collapse="+"),",",file=fnam,append=TRUE)
+			catnip("B,",paste(TRAY[2,],collapse=","),"\n",file=fnam,append=TRUE)
+			catnip("Storage box,",storageID[1],",",file=fnam,append=TRUE)
+			catnip("C,",paste(TRAY[3,],collapse=","),"\n",file=fnam,append=TRUE)
+			catnip("Prefix,",prefix[1],",",file=fnam,append=TRUE)
+			catnip("D,",paste(TRAY[4,],collapse=","),"\n",file=fnam,append=TRUE)
+			catnip("First serial,",min(firstSerial),",",file=fnam,append=TRUE)
+			catnip("E,",paste(TRAY[5,],collapse=","),"\n",file=fnam,append=TRUE)
+			catnip("Last serial,",max(lastSerial),"\n\n",file=fnam,append=TRUE)
+	}	}
 	invisible(sampuse) }
-#--------------------------------------requestAges
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~requestAges
+
 
 #simBSR---------------------------------2011-06-14
 # Simulate Blackspotted Rockfish biological data.

@@ -8,10 +8,13 @@
 #  clarify.........Analyse catch proportions in blocks, then cluster into fisheries groups.
 #  findHoles.......Find holes and place them under correct parents.
 #  plotGMA.........Plot the Groundfish Management Areas.
+#  plotTernary     Plot a ternary diagram for data amalgamated into 3 groups.
+#  plotTertiary    Composition plots within a polygonal space.
 #  preferDepth.....Histogram showing depth-of-capture.
 #  prepClara       Prepare a data object for use by `clarify`.
 #  zapHoles........Attempts to remove holes overwritten by solids.
 #===============================================================================
+
 
 #calcHabitat----------------------------2013-01-28
 # Calculate potential habitat using bathymetry.
@@ -79,6 +82,7 @@ calcHabitat <- function(topofile="bctopo", isob=c(150,435),
 	invisible(habitat) }
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~calcHabitat
 
+
 #calcOccur------------------------------2013-01-28
 # Calculate percent occurrence of events in PolySet
 #-----------------------------------------------RH
@@ -117,6 +121,7 @@ calcOccur = function(polyset="qcb", events, wt=1, mess=FALSE, ioenv=.GlobalEnv) 
 	packList(stuff,"PBStool",tenv=.PBStoolEnv)
 	return(poccur) }
 #----------------------------------------calcOccur
+
 
 #calcSRFA-------------------------------2008-12-01
 # Determine SRF assessment areas or subareas (gullies) based on 
@@ -160,6 +165,7 @@ calcSRFA <- function(major, minor=NULL, loc=NULL, subarea=FALSE) {
 	srfa <- apply(xin,1,fn)
 	return(srfa) }
 #-----------------------------------------calcSRFA
+
 
 #calcSurficial--------------------------2013-01-28
 # Calculate the intersection of surficial geology
@@ -224,7 +230,8 @@ calcSurficial <- function(surf="qcb", hab,
 	invisible() }
 #------------------------------------calcSurficial
 
-#clarify--------------------------------2013-01-28
+
+#clarify--------------------------------2013-03-11
 #  Analyse catch proportions in blocks, then cluster into fisheries groups.
 #  Initially, done to address the CASSIS proposal and its impact (John Pringle).
 #  CASSIS = CAScadia SeISmic experiment
@@ -232,7 +239,7 @@ calcSurficial <- function(surf="qcb", hab,
 clarify <- function(dat, cell=c(0.1,0.075), nG=8,
    xlim=c(-134.2,-127), ylim=c(49.6,54.8), zlim=NULL, targ="YMR", 
    clrs=c("red","orange","yellow","green","forestgreen","deepskyblue",
-   "blue","midnightblue"), spp.names=FALSE, 
+   "blue","midnightblue"), land="ghostwhite", spp.names=FALSE, 
    wmf=FALSE, eps=FALSE, hpage=10, ioenv=.GlobalEnv) {
 
 	tcomp <- function(x,i) {
@@ -290,7 +297,7 @@ clarify <- function(dat, cell=c(0.1,0.075), nG=8,
 	spp  <- names(ppos[z])
 	psub <- pcat[,spp]
 
-	ptree  <- clara(psub, k=nG)
+	ptree  <- clara(psub, k=nG, pamLike=TRUE, metric="euclidean")
 	clus   <- ptree$clustering
 	groups <- split(as.numeric(names(clus)),clus)
 
@@ -359,9 +366,9 @@ clarify <- function(dat, cell=c(0.1,0.075), nG=8,
 	plotMap(nepacLL,xlim=xlim,ylim=ylim,plt=NULL,col="white")
 	addPolys(agrid,polyProps=pdata,border=FALSE)
 	addLines(isob,col=c("steelblue4","navy","black"))
-	addPolys(nepacLL,col="lightgrey")
+	addPolys(nepacLL,col=land)
 	xoff=ifelse(wmf,-.05,0); yoff=ifelse(wmf,-.01,0)
-	addLegend(.01,.01,fill=kcol,legend=kgrp,bty="n",cex=ifelse(wmf,0.8,0.7),yjust=0)
+	addLegend(.02,.02,fill=kcol,legend=kgrp,bty="n",cex=ifelse(wmf,0.8,0.7),yjust=0)
 	if (!is.null(targ)) 
 		addLegend(.35,.01,legend=floor(as.numeric(names(kgrp))),bty="n",
 			cex=ifelse(wmf,0.8,0.7),adj=1,xjust=1,yjust=0,text.col="blue",title=targ)
@@ -372,6 +379,7 @@ clarify <- function(dat, cell=c(0.1,0.075), nG=8,
 	gc(verbose=FALSE)
 	invisible() }
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~clarify
+
 
 #findHoles------------------------------2012-09-24
 # Find holes and place them under correct parents.
@@ -425,16 +433,18 @@ findHoles = function(polyset, minVerts=10) {
 		attr(newpoly,paste("holes_in_",i,sep="")) = ihole
 	}
 	return(newpoly) }
-#^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^findHoles
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~findHoles
 
-#plotGMA--------------------------------2011-05-24
+
+#plotGMA--------------------------------2013-02-26
 # Plot the Groundfish Management Areas
 #-----------------------------------------------RH
 plotGMA = function(gma=gma.popymr, xlim=c(-134,-123), ylim=c(48.05,54.95), 
-     dimfig=c(9,9), pix=FALSE, extra=NULL) {
-	
-	if (is.null(extra)) {
-		extra = as.EventData(data.frame(
+     dimfig=c(9,9), pix=FALSE, extra.labels=NULL) {
+
+	oldpar=par(no.readonly=-TRUE); on.exit(par(oldpar))
+	if (!is.null(extra.labels) && mode(extra.labels)=="character" && extra.labels[1]=="default") {
+		extra.labels = as.EventData(data.frame(
 			EID = 1:4,
 			X   = c(-132.3628,-130.0393,-129.1727,-126.3594),
 			Y   = c(53.74724,51.48773,51.05771,50.15860),
@@ -455,13 +465,277 @@ plotGMA = function(gma=gma.popymr, xlim=c(-134,-123), ylim=c(48.05,54.95),
 	addPolys(nepacLLhigh,col="white",border="grey")
 	.addAxis(par()$usr[1:2],ylim=par()$usr[3:4],tckLab=FALSE,tck=.015,tckMinor=.015/2)
 	addLabels(edata,cex=2.5,font=2)
-	addLabels(extra,cex=1.8,col="blue")
+	if (!is.null(extra.labels))
+		addLabels(extra.labels,cex=1.8,col="blue")
 	text(-125.2416,52.70739,"BC",cex=5,col="grey",font=2)
 	box(lwd=2)
 	if (pix) dev.off()
-	invisible(list(pdata=pdata,extra=extra))
+	gc(verbose=FALSE)
+	invisible(list(pdata=pdata,extra.labels=extra.labels))
 }
-#------------------------------------------plotGMA
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotGMA
+
+
+#plotTernary----------------------------2013-02-26
+# Ternary plots - compositions in triangular space
+# Equations in Schnute and Haigh (2007)
+#-----------------------------------------------RH
+plotTernary <- function(x=c(3,2,1), connect=FALSE, show.geometry=TRUE,
+   bw=FALSE, eps=FALSE, wmf=FALSE)
+{
+	ciao = function(opar){ gc(verbose=FALSE); par(opar) }
+	oldpar=par(no.readonly=TRUE); on.exit(ciao(oldpar))
+	fill = ifelse(bw,"light gray","yellow")
+	xlim <- c(0,1); ylim <- c(0,sqrt(3)/2)
+	lwd = 2; tadj = 0.02; xyrng = c(-tadj, 1 + tadj) # text placement adjustments
+
+	sq3 = sqrt(3)
+	triangle = as.PolySet(data.frame(PID=rep(1,3),POS=1:3,X=c(1,0,.5),Y=c(0,0,sq3/2)),projection=1)
+
+	if (is.vector(x)) x = matrix(x,nrow=1)
+	if (!is.matrix(x) && !is.data.frame(x)) stop ("Input x a matrix or data.frame")
+	if (ncol(x)!=3) stop("Data for ternary diagrams nust have three observations (columns) per event")
+	if (is.null(rownames(x))) xnames = paste("x",1:nrow(x),sep="") else xnames=rownames(x)
+	if (is.null(colnames(x))) ynames = paste("p",1:3,sep="") else ynames=colnames(x)
+	
+	p = t(apply(x,1,function(x){x/sum(x)}))
+	N = dim(p)[1]
+	p1=p[,1]; p2=p[,2]; p3=p[,3] #fornow
+	#psum <- p1 + p2 + p3; 
+	#p1 <- p1/psum; p2 <- p2/psum; p3 <- p3/psum
+
+	# Appendix A. Ternary diagram equations (p.231)
+	x   = (2*p2 + p3)/2       ; y  = sq3*p3 / 2              #(A.1)
+	x1  = (3 + x - sq3*y) / 4 ; y1 = (sq3*(1-x) + 3*y) / 4   #(A.2)
+	x2  = (x + sq3*y) / 4     ; y2 = (sq3*x + 3*y) / 4       #(A.3)
+	x3  = x                   ; y3 = rep(0,N)                #(A.4)
+	#----------------------------------------------
+
+	if (eps) postscript(file="ternary.eps", width=8,height=7,paper="special")
+	else if (wmf) win.metafile(filename="ternary.wmf",width=10,height=8.7,pointsize=12)
+	par( mfrow=c(1,1), mai=c(.2,.2,.2,.2), omi=c(0,0,0,0))
+	plotMap(triangle,axes=FALSE,xlab="",ylab="",xlim=extendrange(xlim),ylim=extendrange(ylim),plt=NULL,lwd=lwd*2)
+	#xpts <- c(x1,x2,x3); ypts <- c(y1,y2,y3)
+	#points(xpts,ypts,col="blue")
+	XY = cbind(x,y,x1,y1,x2,y2,x3,y3)
+	if (connect) {
+		#colPal = colorRampPalette(c("grey95", "grey30"))
+		colPal = colorRampPalette(c("navy","green4","yellow","red"))
+		lines(x,y,lwd=lwd,col="gainsboro")
+		points(x,y,pch=21,bg=colPal(N),cex=1.5)
+		text(x,y-0.02,xnames)
+	}
+	if (show.geometry) {
+		apply(XY,1,function(xy){
+			lines(c(xy[3],xy[1]),c(xy[4],xy[2]),lwd=lwd)
+			lines(c(xy[5],xy[1]),c(xy[6],xy[2]),lwd=lwd)
+			lines(c(xy[7],xy[1]),c(xy[8],xy[2]),lwd=lwd)
+			lines(c(0,xy[1]),c(0,xy[2]),lty=2)
+			lines(c(1,xy[1]),c(0,xy[2]),lty=2)
+			lines(c(0.5,xy[1]),c(sq3/2,xy[2]),lty=2)
+			points(xy[1],xy[2],pch=21,bg=fill,cex=1.5)
+		})
+		text((x+x1)/2,(y+y1)/2+tadj,expression(italic(p)[1]))
+		text((x+x2)/2,(y+y2)/2+tadj,expression(italic(p)[2]))
+		text((x+x3)/2+tadj,(y+y3)/2,expression(italic(p)[3]))
+	}
+	text(-tadj,0,"1",font=2)
+	text(1+tadj,0,"2",font=2)
+	text(0.5,sq3/2+tadj,"3",font=2)
+	if(eps|wmf) dev.off()
+#browser();return()
+	invisible() }
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotTernary
+
+
+#plotTertiary---------------------------2013-03-13
+# Composition plots within a polygonal space.
+#-----------------------------------------------RH
+plotTertiary = function(x=c(100,5,25,10,50), pC=c(0.5,0.5), r=0.5,
+   diag=FALSE, eps=FALSE, wmf=FALSE)
+{
+	ciao = function(opar){ gc(verbose=FALSE); par(opar) }
+	oldpar=par(no.readonly=TRUE); on.exit(ciao(oldpar))
+	assign("PBStool",list(module="M05_Spatial",call=match.call(),args=args(plotTertiary)),envir=.PBStoolEnv)
+
+	if (is.vector(x)) x = matrix(x,nrow=1)
+	if (!is.matrix(x) && !is.data.frame(x)) stop ("Input x a matrix or data.frame")
+	if (is.null(rownames(x))) xnames = paste("M",1:nrow(x),sep="") else xnames=rownames(x)
+	if (is.null(colnames(x))) ynames = paste("p",1:ncol(x),sep="") else ynames=colnames(x)
+
+	M = dim(x)[1]; N = dim(x)[2]; MNnam = list(xnames,ynames)
+	pA = 360/N 
+	A0 = pA/2; R0 = A0 * pi/180
+	A1 = 270-A0; A = c(A1, A1+(1:(N-1))*pA); 
+	A[A>360] = A[A>360] - 360                 # angles from centroid to vertex
+	R  = A * pi/180                           # centroid-vertex angles in radians
+	Aside = A+A0
+	Aside[Aside>360] = Aside[Aside>360] - 360     # angles from centroid to polygon sides
+	Rside  = Aside * pi/180                   # centroid-side angles in radians
+	Avert = A - 180
+	Avert[Avert<0] = Avert[Avert<0] + 360     # angles from vertex to centroid
+	Rvert  = Avert * pi/180                   # vertex-centroid angles in radians
+
+	stuff = c("MNnam","pA","A0","A1","A","Aside","Avert","R0","R","Rside","Rvert")
+	packList(stuff,target="PBStool",tenv=.PBStoolEnv)
+
+	b  = round(tan(R),6)                      # slopes relative to shape centroid
+	a  = round(pC[2] - b * pC[1], 6)          # line intercepts
+	sx = as.numeric(A<90|A>280); sx[sx<1]=-1; sx[A%in%seq(90,360,180)]=0  # shape x-vertices >= centroid x
+	sy = as.numeric(A>0&A<180);  sy[sy<1]=-1; sy[A%in%seq(0,360,180)]=0   # shape y-vertices >= centroid y
+	X  = pC[1]+r*cos(R)                       # polygon vertex X-coordinates
+	Y  = pC[2]+r*sin(R)                       # polygon vertex Y-coordinates
+
+	xlim = range(X); ylim = range(Y)
+	lwd = 2
+	tadj = 0.02; xyrng = c(-tadj, 1 + tadj)   # text placement adjustments
+
+	shape = as.PolySet(data.frame(PID=rep(1,N),POS=1:N,X=X,Y=Y),projection=1)
+
+	Nside = ceiling(N/2)                           # Number of opposite polygon side
+	zside = c(Nside:N,1:(Nside-1))                 # Index of opposite side for each vertex
+	s = rbind(shape,shape[1,])
+	xside = shape$X+diff(s$X)/2
+	yside = shape$Y+diff(s$Y)/2
+	XYside = data.frame(x=xside[zside], y=yside[zside])
+	#bside = round(diff(s$Y),6)/round(diff(s$X),6)  # slopes of polygon sides
+	#aside = round(shape$Y-bside*shape$X,6)         # y-intercept of polygon sides
+	#Nside = ceiling(N/2)                           # Number of opposite polygon side
+	#zside = c(Nside:N,1:(Nside-1))                 # Index of opposite side for each vertex
+	#xside = (aside[zside]-a)/(b-bside[zside])      # x-coordinate at mid-point of each opposite side
+	#yside = aside[zside] + bside[zside]*xside      # y-coordinate at mid-point of each opposite side
+	#XYside = data.frame(x=xside,y=yside)
+
+	if (as.logical(N%%2))
+	# Opposite point of vertex in polygon with odd number of sides is mid-point of an opposite side (e.g., triangle)
+		Dtab = apply(shape,1,function(S1,S2){
+			apply(S2,1,function(x,y){sqrt((x[1]-y[3])^2 + (x[2]-y[4])^2)},y=S1)
+		},S2=XYside)
+	else
+	# Opposite point of vertex in polygon with even number of sides is another vertex (e.g., square)
+		Dtab = apply(shape,1,function(S1,S2){
+			apply(S2,1,function(x,y){sqrt((x[3]-y[3])^2 + (x[4]-y[4])^2)},y=S1)
+		},S2=shape)
+	#D = max(Dtab)  # maximum distance between vertex and opposite side (even-sided polygon) or vertex (odd-sided polygons)
+
+	Dmin = sum(apply(XYside,1,function(x,m){sqrt((x[1]-m[1])^2+(x[2]-m[2])^2)},m=pC))            # maximum sum of p if mode occurs at the centre
+	if (as.logical(N%%2))
+		h = Dmin/N + r  # height of the polygon
+	else
+		h = 2 * Dmin/N
+	Dmax = sum(apply(XYside,1,function(x,m){sqrt((x[1]-m[1])^2+(x[2]-m[2])^2)},m=shape[1,3:4]))  # maximum sum of p if mode occurs at a vertex
+
+	#D = sqrt((pC[1]-pC[1])^2+(pC[2]-shape$Y[1])^2)*N # N times distance from centroid to the base
+	#D = sqrt((pC[1]-pC[1])^2+(pC[2]-shape$Y[1])^2)+r # N times distance from centroid to the base
+	#D = sqrt((pC[1]-pC[1])^2+(pC[2]-shape$Y[1])^2)*N^(1/(N-2)) # N times distance from centroid to the base
+
+	p  = t(apply(x,1,function(x){x/sum(x)})); dimnames(p)=MNnam
+	if (N==3) pD = t(apply(p,1,function(x){x*sqrt(3)/2}))           # p-vector lengths proportional to p (ternary)
+	else      pD = t(apply(p,1,function(x,h) { h*x/max(x) },h=h^N)) # p-vector lengths proportional to p
+	dimnames(pD)=MNnam
+	D  = apply(pD,1,sum)
+	#pD = t(apply(p,1,function(x) { D*x }));   dimnames(pD)=MNnam    # p-vector lengths proportional to p
+#browser()
+	q  = t(sapply(xnames,function(x){D[x]-p[x,]*D[x]}));   dimnames(q)=MNnam
+	#q = t(apply(p,1,function(x) { D-scaleVec(x,min(x),D) }));   dimnames(q)=MNnam
+
+	# XYmean deprecated (mean of points does not work)
+	XYmean = apply(q,1,function(qvec,shp,rad){  # p-vertices at end of vector with magnitude q and direction Rvert
+		x = shp$X + qvec*cos(rad)
+		y = shp$Y + qvec*sin(rad)
+		return(data.frame(x=x,y=y))
+	}, shp=shape, rad=Rvert)
+	pM = sapply(XYmean,function(px){apply(px,2,mean)},simplify=FALSE) # Midpoint resultant for each M set
+	pMtab = as.data.frame(t(sapply(pM,function(x){c(x)})))            # Midpoints in tabular format
+
+	# Takes the mean of coordinate intersections between two pvecs perpendicular to each side of each vertex
+	XYmode = sapply(xnames,function(xnam,pvec,dvec,side,R,A){  # p-vertices at end of vector with magnitude q and direction Rvert
+		xP = side$x + dvec[xnam,]*cos(R)
+		yP = side$y + dvec[xnam,]*sin(R)
+		Aperp = A - 90; Aperp[Aperp<0] = Aperp[Aperp<0]+360
+		Rperp = Aperp*pi/180
+		# from sides opposite vertices 1,2,3,...
+		bperp = round(tan(Rperp),6)
+		aperp = yP - bperp*xP
+		if (N==3) {
+			x0 = (2*pvec[xnam,2]+pvec[xnam,3])/2
+			y0 = (sqrt(3)*pvec[xnam,3])/2
+			xmode = scaleVec(c(0,x0,1),shape$X[1],shape$X[2])[2]
+			ymode = scaleVec(c(0,y0,sqrt(3)/2),shape$Y[2],shape$Y[3])[2]
+			#xmode = (aperp[2]-aperp[1])/(bperp[1]-bperp[2]) # Only need to solve (x,y) for the first two lines (only true for triangles);
+			#ymode = aperp[1] + bperp[1]*xmode               # all others are assumed to have the same intersection.
+			#xmode = xmode + xoff; ymode = ymode + yoff
+			dside = sqrt((shape$X[1]-shape$X[2])^2 + (shape$Y[1]-shape$Y[2])^2)
+#browser()
+		}
+		else {
+			xmode=ymode=dside=numeric(N)
+			for (i in 1:N) {
+				j = ifelse(i==N,1,i+1)
+				xmode[i] = (aperp[j]-aperp[i])/(bperp[i]-bperp[j])  # Only need to solve (x,y) for the first two lines (only true for triangles);
+				ymode[i] = aperp[i] + bperp[i]*xmode[i]             # all others are assumed to have the same intersection.
+				dside[i] = sqrt((shape$X[i]-shape$X[j])^2 + (shape$Y[i]-shape$Y[j])^2)
+			}
+		}
+#browser()
+		return(data.frame(x=xmode,y=ymode,d=dside))
+	}, pvec=p, dvec=pD, side=XYside, R=R, A=A,simplify=FALSE)
+	#XYmode = t(XYmode)
+#browser();return()
+	pM = sapply(XYmode,function(px){apply(px,2,mean)},simplify=FALSE) # Midpoint resultant for each M set
+	pMtab = as.data.frame(t(sapply(pM,function(x){c(x)})))            # Midpoints in tabular format
+
+	stuff = c("shape","XYside","Dtab","Dmin","Dmax","p","pD","D","q","XYmean","XYmode","pM","pMtab")
+	packList(stuff,target="PBStool",tenv=.PBStoolEnv)
+
+	if (eps) postscript(file="tertiary.eps", width=8,height=8,paper="special")
+	else if (wmf) win.metafile(filename="tertiary.wmf",width=10,height=10,pointsize=12)
+	par( mfrow=c(1,1), mai=c(.2,.2,.2,.2), omi=c(0,0,0,0))
+	plotMap(shape,axes=FALSE,xlab="",ylab="",xlim=extendrange(xlim),ylim=extendrange(ylim),plt=NULL,lwd=lwd*2)
+	if (diag) {
+		# Raw vecors of pD (proportional to p) coming from the opposite side
+		xraw = XYside$x + pD*cos(Rside-ifelse(N%%2,R0,R0*2))
+		yraw = XYside$y + pD*sin(Rside-ifelse(N%%2,R0,R0*2))
+		xvec = as.vector(t(cbind(XYside$x,t(xraw),rep(NA,N))))
+		yvec = as.vector(t(cbind(XYside$y,t(yraw),rep(NA,N))))
+		lines(xvec,yvec,col="blue")
+		points(xvec,yvec,pch=21,bg="pink")
+	}
+	if (M==1) {
+		sapply(pM,function(x){
+			xM = x[[1]]; yM = x[[2]]; clen=x[[3]]
+			xvec = as.vector(t(cbind(shape$X,rep(xM,N),rep(NA,N))))
+			yvec = as.vector(t(cbind(shape$Y,rep(yM,N),rep(NA,N))))
+			lines(xvec,yvec,lty=2,lwd=1)
+			# pvecs: see Law of Cosines - http://en.wikipedia.org/wiki/Law_of_cosines
+			blen = sqrt((xM-shape$X)^2+(yM-shape$Y)^2)
+			alen = blen[c(2:N,1)]
+			beta = acos((alen^2 + clen^2 - blen^2)/(2*alen*clen))
+			alph = acos((blen^2 + clen^2 - alen^2)/(2*blen*clen))
+			zOK = alph*180/pi<=90 & beta*180/pi <= 90 # angle >90 will cause pvec to lie outside the polygon
+			Nshow = sum(zOK)
+			dlen = alen*sin(beta)
+			pvx = xM + dlen * cos(Rside)
+			pvy = yM + dlen * sin(Rside)
+			xpvec = as.vector(rbind(pvx[zOK],rep(xM,Nshow),rep(NA,Nshow)))
+			ypvec = as.vector(rbind(pvy[zOK],rep(yM,Nshow),rep(NA,Nshow)))
+			lines(xpvec,ypvec,lwd=lwd)
+		})
+		points(pM[[1]][1],pM[[1]][2],pch=21,cex=1.5,bg="yellow",lwd=1)
+	} else {
+		colPal = colorRampPalette(c("navy","green4","yellow","red"))
+		lines(pMtab$x,pMtab$y,lwd=lwd,col="gainsboro")
+		points(pMtab$x,pMtab$y,pch=21,bg=colPal(M),cex=1.5,lwd=1)
+		text(pMtab$x,pMtab$y-0.02,xnames)
+#browser()
+	}
+	
+	text(tadj*sx+X,tadj*sy+Y,1:N,cex=1.2,font=2)
+	if(eps|wmf) dev.off()
+#browser();return()
+	invisible(pMtab) }
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotTertiary
+
 
 #preferDepth----------------------------2010-10-19
 # Histogram showing depth-of-capture
@@ -763,5 +1037,5 @@ zapHoles <- function(pset){
 	atts$zap=zap
 	attributes(pset)=c(attributes(pset),atts)
 	return(pset) }
-#-----------------------------------------zapHoles
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~zapHoles
 
