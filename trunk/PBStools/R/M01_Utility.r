@@ -273,7 +273,7 @@ flagIt = function(a, b, A=45, r=0.2, n=1, ...){
 	return(invisible(list(xvec=xvec,yvec=yvec,rads=rads,x0=x0,x=x,y=y)))
 }
 
-#getData--------------------------------2013-01-25
+#getData--------------------------------2013-03-11
 # Get data from a variety of sources.
 #-----------------------------------------------RH
 getData <-function(fqtName, dbName="PacHarvest", strSpp=NULL, server=NULL,
@@ -389,6 +389,31 @@ getData <-function(fqtName, dbName="PacHarvest", strSpp=NULL, server=NULL,
 			sT11 <- paste("'",paste(t11Spp,collapse="','"),"'",sep="")
 			sT12 <- paste("'",paste(t12Spp,collapse="','"),"'",sep="")
 			sT00 <- paste("'",paste(t00Spp,collapse="','"),"'",sep="")
+			# If Oracle SQL is called from SQL Server via OPENQUERY
+			pppS <- paste("''",paste(strSpp,collapse="'',''"),"''",sep="")
+			pppT <- paste("''",paste(tarSpp,collapse="'',''"),"''",sep="")
+			pALF <- paste("''",paste(alfSpp,collapse="'',''"),"''",sep="")
+			pTRF <- paste("''",paste(trfSpp,collapse="'',''"),"''",sep="")
+			pORF <- paste("''",paste(orfSpp,collapse="'',''"),"''",sep="")
+			pTFF <- paste("''",paste(tffSpp,collapse="'',''"),"''",sep="")
+			pOFF <- paste("''",paste(offSpp,collapse="'',''"),"''",sep="")
+			pCAR <- paste("''",paste(carSpp,collapse="'',''"),"''",sep="")
+			pSSS <- paste("''",paste(sssSpp,collapse="'',''"),"''",sep="")
+			pINV <- paste("''",paste(invSpp,collapse="'',''"),"''",sep="")
+			pT01 <- paste("''",paste(t01Spp,collapse="'',''"),"''",sep="")
+			pT02 <- paste("''",paste(t02Spp,collapse="'',''"),"''",sep="")
+			pT03 <- paste("''",paste(t03Spp,collapse="'',''"),"''",sep="")
+			pT04 <- paste("''",paste(t04Spp,collapse="'',''"),"''",sep="")
+			pT05 <- paste("''",paste(t05Spp,collapse="'',''"),"''",sep="")
+			pT06 <- paste("''",paste(t06Spp,collapse="'',''"),"''",sep="")
+			pT07 <- paste("''",paste(t07Spp,collapse="'',''"),"''",sep="")
+			pT08 <- paste("''",paste(t08Spp,collapse="'',''"),"''",sep="")
+			pT09 <- paste("''",paste(t09Spp,collapse="'',''"),"''",sep="")
+			pT10 <- paste("''",paste(t10Spp,collapse="'',''"),"''",sep="")
+			pT11 <- paste("''",paste(t11Spp,collapse="'',''"),"''",sep="")
+			pT12 <- paste("''",paste(t12Spp,collapse="'',''"),"''",sep="")
+			pT00 <- paste("''",paste(t00Spp,collapse="'',''"),"''",sep="")
+			#-------------------------------------------------------------
 			qnam <- paste(path,fqtName,sep="/")
 			strQ <- readLines(qnam)
 			strQ <- PBSmodelling:::.trimWhiteSpace(strQ)
@@ -422,6 +447,31 @@ getData <-function(fqtName, dbName="PacHarvest", strSpp=NULL, server=NULL,
 			strQ <- gsub(pattern="@t11code",replacement=sT11,x=strQ)
 			strQ <- gsub(pattern="@t12code",replacement=sT12,x=strQ)
 			strQ <- gsub(pattern="@t00code",replacement=sT00,x=strQ)
+			# If Oracle SQL is called from SQL Server via OPENQUERY
+			strQ <- gsub(pattern="@~sppcode",replacement=pppS,x=strQ)
+			strQ <- gsub(pattern="@~tarcode",replacement=pppT,x=strQ)
+			strQ <- gsub(pattern="@~alfcode",replacement=pALF,x=strQ)
+			strQ <- gsub(pattern="@~trfcode",replacement=pTRF,x=strQ)
+			strQ <- gsub(pattern="@~orfcode",replacement=pORF,x=strQ)
+			strQ <- gsub(pattern="@~tffcode",replacement=pTFF,x=strQ)
+			strQ <- gsub(pattern="@~offcode",replacement=pOFF,x=strQ)
+			strQ <- gsub(pattern="@~carcode",replacement=pCAR,x=strQ)
+			strQ <- gsub(pattern="@~ssscode",replacement=pSSS,x=strQ)
+			strQ <- gsub(pattern="@~invcode",replacement=pINV,x=strQ)
+			strQ <- gsub(pattern="@~t01code",replacement=pT01,x=strQ)
+			strQ <- gsub(pattern="@~t02code",replacement=pT02,x=strQ)
+			strQ <- gsub(pattern="@~t03code",replacement=pT03,x=strQ)
+			strQ <- gsub(pattern="@~t04code",replacement=pT04,x=strQ)
+			strQ <- gsub(pattern="@~t05code",replacement=pT05,x=strQ)
+			strQ <- gsub(pattern="@~t06code",replacement=pT06,x=strQ)
+			strQ <- gsub(pattern="@~t07code",replacement=pT07,x=strQ)
+			strQ <- gsub(pattern="@~t08code",replacement=pT08,x=strQ)
+			strQ <- gsub(pattern="@~t09code",replacement=pT09,x=strQ)
+			strQ <- gsub(pattern="@~t10code",replacement=pT10,x=strQ)
+			strQ <- gsub(pattern="@~t11code",replacement=pT11,x=strQ)
+			strQ <- gsub(pattern="@~t12code",replacement=pT12,x=strQ)
+			strQ <- gsub(pattern="@~t00code",replacement=pT00,x=strQ)
+			#--------------------------------------------------------
 			strQ <- gsub(pattern="@mnwt",replacement=mnwt,x=strQ)
 			strQ <- gsub(pattern="@mindep",replacement=ifelse(is.null(mindep),0,mindep),x=strQ)
 			strQ <- gsub(pattern="@maxdep",replacement=ifelse(is.null(maxdep),1200,maxdep),x=strQ)

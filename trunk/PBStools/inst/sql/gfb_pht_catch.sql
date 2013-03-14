@@ -1,30 +1,29 @@
--- Get commercial catch from PacHarvest; match trip IDs in GFBioSQL & GFFOS.  (2010-02-08)
+-- Get commercial catch from PacHarvest; match trip IDs in GFBioSQL & GFFOS.  (2013-02-20)
 SET NOCOUNT ON  -- prevents timeout errors
 
 -- Get GFB Trip ID for selected species from Hail-Vessel-Date combo
-SELECT
-  --CAST(IsNull(SA.HAIL_IN_NO,'0') AS INT) AS hail, 
-  SA.HAIL_IN_NO AS gfb_hail, 
+SELECT --TOP 40
+  --CAST(IsNull(T.HAIL_IN_NO,'0') AS INT) AS hail, 
+  T.HAIL_IN_NO AS gfb_hail, 
   V.CFV_NUM AS gfb_cfv, 
-  CONVERT(char(10),ISNULL(SA.TRIP_START_DATE, SA.TRIP_END_DATE),20) AS gfb_date, 
-  CONVERT(char(7),ISNULL(SA.TRIP_START_DATE, SA.TRIP_END_DATE),20) AS gfb_yrmo, 
-  SA.TRIP_ID AS gfb_tid
-  INTO 
-    #GFB_HVD
-  FROM
-    B21_Samples SA INNER JOIN 
-    C_Vessels V ON 
-    SA.VESSEL_ID = V.VESSEL_ID AND 
-    SA.SUFFIX = V.SUFFIX
-  WHERE
-    SA.SPECIES_CODE IN (@sppcode) AND
-    SA.HAIL_IN_NO Is Not NULL
-  GROUP BY
-    SA.HAIL_IN_NO, 
-    V.CFV_NUM, 
-    convert(char(10),ISNULL(SA.TRIP_START_DATE, SA.TRIP_END_DATE),20), 
-    convert(char(7),ISNULL(SA.TRIP_START_DATE, SA.TRIP_END_DATE),20), 
-    SA.TRIP_ID
+  CONVERT(char(10),ISNULL(T.TRIP_START_DATE, T.TRIP_END_DATE),20) AS gfb_date, 
+  CONVERT(char(7),ISNULL(T.TRIP_START_DATE, T.TRIP_END_DATE),20) AS gfb_yrmo, 
+  T.TRIP_ID AS gfb_tid
+INTO #GFB_HVD
+FROM
+  B01_TRIP T INNER JOIN 
+  C_Vessels V ON 
+    T.VESSEL_ID = V.VESSEL_ID AND 
+    T.SUFFIX = V.SUFFIX
+WHERE
+  --T.SPECIES_CODE IN (@sppcode) AND
+  T.HAIL_IN_NO Is Not NULL
+GROUP BY
+  T.HAIL_IN_NO, 
+  V.CFV_NUM, 
+  convert(char(10),ISNULL(T.TRIP_START_DATE, T.TRIP_END_DATE),20), 
+  convert(char(7),ISNULL(T.TRIP_START_DATE, T.TRIP_END_DATE),20), 
+  T.TRIP_ID
 
 -- Get FOS Trip from Hail-Vessel-Date combo
 SELECT * INTO #FOS_HVD
@@ -145,5 +144,5 @@ GROUP BY
   PHT.spp
 
 
--- getData("gfb_pht_catch.sql","GFBioSQL",strSpp="440")
+-- getData("gfb_pht_catch.sql","GFBioSQL",strSpp="4010")
 
