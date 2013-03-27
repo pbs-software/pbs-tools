@@ -13,7 +13,7 @@
 buildCatch(dbdat, sql=FALSE, strSpp="424", dfld="ORF", 
    major=c(1,3:9), refyrs=1997:2005, fidout=c(1:5,10), 
    saveinfo=TRUE, eps=FALSE, pix=FALSE, wmf=FALSE, 
-   uid=Sys.info()["user"], pwd=uid,
+   uid=Sys.info()["user"], pwd=uid, only.sql=FALSE,
    reconstruct=TRUE, diagnostics=TRUE, ioenv=.GlobalEnv)
 }
 \arguments{
@@ -47,6 +47,7 @@ buildCatch(dbdat, sql=FALSE, strSpp="424", dfld="ORF",
   \item{pix}{logical: if \code{TRUE} send the figures to \code{.png} files.}
   \item{wmf}{logical: if \code{TRUE} send the figures to \code{.wmf} files.}
   \item{uid, pwd}{user ID and password for Oracle DB account authentication.}
+  \item{only.sql}{logical: if \code{TRUE}, then only execute the queries to download catch data from remote databases.}
   \item{reconstruct}{logical: if \code{TRUE} (default) complete the reconstruction as previously, \cr
 	if \code{FALSE}, terminate the code once the modern catch array has been compiled and saved 
 	(to a binary file \code{cat123mod.rda}, where \code{123} = species code). }
@@ -107,7 +108,7 @@ buildCatch(dbdat, sql=FALSE, strSpp="424", dfld="ORF",
   its password. If the user's authentication credentials are different for 
   \code{PacHarv3} and \code{GFFOS}, specify \code{uid} and \code{pwd} as two-
   element vectors. The SQL servers assume a trusted relationship with the user's 
-  DFO logon identity.
+  DFO login identity.
 }
 \seealso{
   \code{\link[PBStools]{getCatch}}, \code{\link[PBStools]{getData}}, \code{\link[PBSdata]{orfhistory}} \cr
