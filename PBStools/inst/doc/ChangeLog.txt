@@ -6,10 +6,13 @@ Authors: RH  = Rowan Haigh
          JTS = Jon T. Schnute
 ------------------------------
 
-1.24  2013-02-26
+1.24  2013-03-27
+  - Modified SQL queries to Oracle via SQL Server using variable format `@~sppcode` rather than `@sppcode`; this inserts two single-quote delimiters rather than one. (RH 3/20)
+  - Modified function `buildCatch` to stitch together EPS barplot results using the function `collectFigs`. (RH 3/15)
+  - Modified function `getData` to handle multiple species substitutions in SQL code that queries Oracle databases via OPENQUERY in SQL Server. (RH 3/14)
   - Added new function `plotTertiary` to plot compositional data of n-dimensions into a polygonal shape with n sides. (RH 3/13)
   - Modified function `clarify` to allow user to specify land mass colour. (RH 3/12)
-  - Added some new SQl queries to return catch data for cluster analysis via CLARA in the function `clarify`. (RH 3/11)
+  - Added some new SQL queries to return catch data for cluster analysis via CLARA in the function `clarify`. (RH 3/11)
   - Added function `plotTernary` to plot ternary diagrams of data that have been grouped into three categories. (RH 3/7)
   - Modified function `plotGMA` to allow a bit more flexibility in adding extra labels. (RH 2/26)
   - Modified function `requestAges` to display random samples by storage ID (sample box : otolith tray) rather than by sample ID. (RH 2/21)

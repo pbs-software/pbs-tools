@@ -6,17 +6,18 @@
 #  plotRecon....Plot reconstructed catch using barplots stacked by PMFC area.
 #===============================================================================
 
-#buildCatch-----------------------------2013-01-28
+#buildCatch-----------------------------2013-03-15
 # Catch reconstruction algorithm for BC rockfish.
 # Use ratios of species catch to ORF catch for multiple fisheries.
 # Matrix indices: i=year, j=major, k=fid, l='spp'
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~RH
 buildCatch=function(dbdat, sql=FALSE, strSpp="424", dfld="ORF", 
-     major=c(1,3:9), refyrs=1997:2005, fidout=c(1:5,10), 
-     saveinfo=TRUE, eps=FALSE, pix=FALSE, wmf=FALSE, 
-     uid=Sys.info()["user"], pwd=uid,
-     reconstruct=TRUE, diagnostics=TRUE, ioenv=.GlobalEnv){
+   major=c(1,3:9), refyrs=1997:2005, fidout=c(1:5,10), 
+   saveinfo=TRUE, eps=FALSE, pix=FALSE, wmf=FALSE, 
+   uid=Sys.info()["user"], pwd=uid, only.sql=FALSE,
+   reconstruct=TRUE, diagnostics=TRUE, ioenv=.GlobalEnv){
 
+	if (!only.sql) {
 	### Global list object 'PBStool' stores results from the analysis
 	assign("PBStool",list(module="M07_BuildCatch",call=match.call(),args=args(buildCatch),
 		spp=strSpp,pD=1,eps=eps,wmf=wmf),envir=.PBStoolEnv)
@@ -136,6 +137,7 @@ buildCatch=function(dbdat, sql=FALSE, strSpp="424", dfld="ORF",
 	keep  = c("fid","date","major","minor",cflds)
 	ufos  = c("POP","PAH","SBF","DOG","RFA","RFA","PAH","DOG","LIN")
 	dbs   = c("ph3cat","gfccat","phtcat","phhcat","phscat","phvcat","phfcat","foscat")
+	} # end skip if only.sql
 #browser();return()
 
 	if (sql) {
@@ -204,7 +206,7 @@ buildCatch=function(dbdat, sql=FALSE, strSpp="424", dfld="ORF",
 		expr=paste("getFile(",dbdat,",senv=ioenv,try.all.frames=TRUE,tenv=penv()); fnam=names(",dbdat,"); unpackList(",dbdat,")",sep="")
 		eval(parse(text=expr)) 
 	}
-#browser();return()
+	if (only.sql) return()
 
 	### Consolidate PacHarv3 records (fid=c(1:5))
 	ph3cat = as.data.frame(t(apply(ph3dat,1,function(x){
@@ -742,6 +744,7 @@ buildCatch=function(dbdat, sql=FALSE, strSpp="424", dfld="ORF",
 		packList(c("plotname","clrs.major","clrs.fishery","fidlab"),"PBStool",tenv=.PBStoolEnv)
 		ttget(PBStool)
 		save("PBStool",file=paste("PBStool",strSpp,".rda",sep="")) }
+	collectFigs(path=".",ext="eps",fout=paste("Catch-Recon-Summary-",strSpp,sep=""),width=6.5)
 #browser();return()	
 	invisible(sppnew) }
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~buildCatch
@@ -847,3 +850,40 @@ plotRecon = function(dat=cat440rec, strSpp="440", major=c(1,3:9), fidout=10,
 }
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotRecon
 
+#===============================================================================
+# YYR - Yelloweye rockfish
+#x=buildCatch(sql=TRUE,strSpp="442",dfld="ORF",wmf=FALSE,pwd=c("pwd1","pwd2"),only.sql=TRUE)
+#x=buildCatch(cat442orf,strSpp="442",dfld="ORF",eps=TRUE)
+#x=buildCatch(sql=T,strSpp="442",refyrs=1982:2009,wmf=T,pwd=c("pwd1","pwd2"))  # --trial only
+
+# RBR - Redbanded Rockfish
+#x=buildCatch(sql=TRUE,strSpp="401",dfld="ORF",wmf=FALSE,pwd=c("pwd1","pwd2"))
+#x=buildCatch(cat401orf,strSpp="401",dfld="ORF",eps=TRUE)
+
+# POP - Pacific Ocean Perch
+#x=buildCatch(sql=TRUE,strSpp="396",dfld="TRF",wmf=TRUE,pwd=c("pwd1","pwd2"))
+#x=buildCatch(cat396orf,strSpp="396",dfld="TRF",wmf=TRUE)
+#x=buildCatch(cat396orf,strSpp="396",dfld="TRF",wmf=TRUE) #---not good
+
+# YMR - Yellowmouth Rockfish
+#x=buildCatch(sql=T,strSpp="440",dfld="TRF",wmf=T,pwd=c("pwd1","pwd2"))
+#x=buildCatch(cat440orf,strSpp="440",dfld="TRF",wmf=T)
+
+# LST - Longspine thornyhead
+#x=buildCatch(sql=T,strSpp="453",wmf=T,pwd=c("pwd1","pwd2"))
+#x=buildCatch(cat453orf,strSpp="453",wmf=T)
+
+# RER - Rougheye rockfish
+#x=buildCatch(sql=T,strSpp="394",wmf=T,pwd=c("pwd1","pwd2"))
+#x=buildCatch(cat439orf,strSpp="394",wmf=T)
+
+# QBR - Quilback rockfish
+#x=buildCatch(sql=T,strSpp="424",dfld="ORF",wmf=T,pwd=c("pwd1","pwd2"))
+#x=buildCatch(cat424orf,strSpp="424",dfld="ORF",wmf=T)
+
+# Nathan Taylor
+# Splitnose (412), Greenstriped (414), Redstripe (439), Harlequin (446), Sharpchin (450)
+#x=buildCatch(sql=T,strSpp="414",wmf=T,pwd=c("pwd1","pwd2"))
+#x=buildCatch(cat412orf,strSpp="412",wmf=T,pwd=c("pwd1","pwd2"))
+
+#source("getFile.r"); source("getData.r"); source("calcRatio.r")
