@@ -665,7 +665,7 @@ simBGtrend <- function(pmr=pop.pmr.qcss, Npred=15, genT=NULL,
 #---------------------------------------simBGtrend
 
 
-#trend----------------------------------2013-01-24
+#trend----------------------------------2013-04-03
 # Simple trend analysis for annnual IPHC indices
 #-----------------------------------------------RH
 trend <- function(strSpp="442", fqtName="gfb_iphc.sql",
@@ -691,6 +691,7 @@ trend <- function(strSpp="442", fqtName="gfb_iphc.sql",
 	temp <- gsub("@type",type,temp)
 	if (!is.null(hnam) && is.character(hnam))
 		temp <- gsub("#import=",paste("import=\"",hnam,"\"",sep=""),temp)
+	temp <- gsub("guest",Sys.info()["user"],temp)
 	writeLines(temp,con=wtmp)
 	createWin(wtmp); options(warn=warn)
 	invisible() }
@@ -725,7 +726,7 @@ trend <- function(strSpp="442", fqtName="gfb_iphc.sql",
 	tput(PBSdat,tenv=ioenv)
 	invisible() }
 
-#.trend.trendy--------------------------2013-01-25
+#.trend.trendy--------------------------2013-04-04
 # Main engine of the trend algorithm.
 #-----------------------------------------------RH
 .trend.trendy <- function() {
@@ -734,14 +735,20 @@ trend <- function(strSpp="442", fqtName="gfb_iphc.sql",
 	spp  <- eval(parse(text=paste("c(\"",gsub(",","\",\"",strSpp),"\")",sep="")));
 	if (any(spp=="") || length(spp)>1) showError("Choose 1 species")
 	if (fnam=="empty" || (fnam=="PBSdat" && attributes(tcall(PBSdat,tenv=ioenv))$spp!=spp)) {
-		.trend.getSQLspp(spp); fnam=getWinVal()$fnam; tget(PBSdat,tenv=ioenv) }
+		.trend.getSQLspp(spp)
+		fnam = getWinVal()$fnam
+		tget(PBSdat,tenv=ioenv) }
+	else if (fnam %in% c("iphc.rbr","iphc.rer","iphc.yyr"))
+		eval(parse(text=paste("data(",fnam,",envir=penv())",sep=""))) 
 	else 
 		eval(parse(text=paste("getFile(",fnam,",senv=ioenv,tenv=penv())",sep=""))) 
 	eval(parse(text=paste("dat=",fnam,sep="")))
-	if (attributes(dat)$spp!=spp) {
+	if (is.null(attributes(dat)$spp))
+		attr(dat,"spp") = spp
+	else if( attributes(dat)$spp!=spp) {
 		spp=attributes(dat)$spp
-		setWinVal(list(strSpp=spp),winName="window") }
-
+		setWinVal(list(strSpp=spp),winName="window") 
+	}
 	year=eval(parse(text=paste("c(",strYear,")",sep="")))
 	if (is.null(year)) YEAR <- sort(unique(dat$year))
 
@@ -771,7 +778,7 @@ trend <- function(strSpp="442", fqtName="gfb_iphc.sql",
 	X <- dat[,xfld]; Y <- dat[,yfld]; #z0 <- Y==0 | is.na(Y);
 	Alist <- split(Y,X)
 	packList("Alist","PBStool",tenv=.PBStoolEnv)
-	alist <- sapply(Alist,function(x){if(length(x[x>0&!is.na(x)])>0) x[x>0&!is.na(x)] else NULL })
+	alist <- sapply(Alist,function(x){if(length(x[x>0&!is.na(x)])>0) x[x>0&!is.na(x)] else NULL },simplify=FALSE)
 	packList("alist","PBStool",tenv=.PBStoolEnv)
 	pA <- sapply(Alist,function(x){length(x[x==0 & !is.na(x)])/length(x)});
 	pB=pA; if(!zero) pB[pB==1]=NA
@@ -793,6 +800,7 @@ trend <- function(strSpp="442", fqtName="gfb_iphc.sql",
 	y <- sapply(tlist,sfunc,na.rm=TRUE,simplify=TRUE);
 	x <- as.numeric(names(y)); 
 	xpos <- 1:length(x); N <- max(x)-min(x)+1;
+#browser();return()
 	ylim <- c( min(y[z1],sapply(tlist[z1],min)), max(y[z1],sapply(tlist[z1],max)) );
 	if (diff(ylim)==0) ylim <- ylim + c(-1,1); # in case all values are the same
 	tlist[z0] <- NA;
@@ -803,36 +811,47 @@ trend <- function(strSpp="442", fqtName="gfb_iphc.sql",
 	ylim <- ylim + c(-(pex+0.05)*diff(ylim),0);
 	blim <- c(ylim[1],ylim[1]+psp*diff(ylim)); db <- diff(blim);
 
-	if (wmf) win.metafile(width=6.5,height=7,
-		filename=paste(paste("trend",spp,yfld,sep="-"),"wmf",sep="."))
-	else resetGraph()
-	expandGraph(mfrow=c(1,1),mar=c(4,4,4,3),omi=c(0,0,0,0),mgp=c(2.5,.5,0));
-	out <- boxplot(tlist,ylim=ylim,las=1,col=Cbox,range=0,boxwex=0.5,staplewex=0,lty=1);
-	packList("out","PBStool",tenv=.PBStoolEnv)
-	lines(xpos[z1],y[z1],col=Clin,lwd=3);
-	points(xpos[z1],y[z1],col=Cpoi,pch=15,cex=1.2); points(xpos[z1],y[z1],col="black",pch=0,cex=1.2);
-	mtext(tcall(spn,tenv=ioenv)[spp],side=3,line=2,cex=1.5,las=0);
-	mtext("Year",side=1,line=2,cex=1.5); mtext(paste(tran,yfld),side=2,line=2.5,cex=1.5);
-
-	if (zsho) {
-		pp <- p*db + ylim[1]; qq <- seq(0,1,.25); hh <- qq*db + ylim[1];
-		abline(h=hh,col="grey40",lty=3);
-		drawBars(xpos,pp,base=ylim[1],col=Cbar,lwd=2);
-		mtext("prop Zero",side=2,line=2.5,cex=1,adj=0.10,col=Cbar,las=0)
-		mtext(show0(qq,2),side=4,at=hh,las=1,cex=.8,col=Cbar,line=.5,adj=0)
-		text(xpos,pp,show0(round(p,2),2),col=Cbar,cex=.8,adj=c(.5,-.5))
-		#nout=nout[z1]; n[names(nout)]=nout
-		text(xpos,(ylim[1]+par()$usr[3])/2,n,col=Cnum,cex=0.8)
-		text(.4*(1+par()$usr[1]),(ylim[1]+par()$usr[3])/2,"n",col=Cnum,cex=0.9)
-		packList(c("n","p","xpos"),"PBStool",tenv=.PBStoolEnv) }
-
-	lmY <- lm(y[z1]~x[z1]); b <- lmY$coeff[2]
-	r   <- ttcall(PBStool)$btran(b)-one
-	R   <- ttcall(PBStool)$btran(b*(N-1))-one
-	yp  <- predict.lm(lmY); lines(xpos[z1],yp,col=Ctrd,lwd=3);
-	msg <- paste("( b= ",show0(round(b,4),4),",  r= ",show0(round(r,4),4),",  R= ",show0(round(R,4),4),")",sep="");
-	mtext(msg,side=3,line=.5,cex=1);
-	if (wmf) dev.off()
+	oname = paste("trend",spp,yfld,sep="-")
+	ofile = c(TRUE,ofile); names(ofile)[1] = "gdev"
+	for (i in 1:length(ofile)){
+		ii = ofile[i];  if (!ii) next; iii=names(ii)
+		switch(iii,
+			"eps"  = { postscript(file=paste(oname,"eps",sep="."),width=6.5,height=7,paper="special") },
+			"pdf"  = { pdf(file=paste(oname,"pdf",sep="."),width=6.5,height=7,paper="special") },
+			"png"  = { png(filename=paste(oname,"png",sep="."),width=6.5*150,height=7*150,pointsize=18) },
+			"wmf"  = { win.metafile(filename=paste(oname,"wmf",sep="."),width=6.5,height=7) },
+			"gdev" = { resetGraph() }
+		)
+		expandGraph(mfrow=c(1,1),mar=c(4,4,4,3),omi=c(0,0,0,0),mgp=c(2.5,.5,0));
+		out <- boxplot(tlist,ylim=ylim,las=1,col=Cbox,range=0,boxwex=0.5,staplewex=0,lty=1);
+		packList("out","PBStool",tenv=.PBStoolEnv)
+		lines(xpos[z1],y[z1],col=Clin,lwd=3);
+		points(xpos[z1],y[z1],col=Cpoi,pch=15,cex=1.2); points(xpos[z1],y[z1],col="black",pch=0,cex=1.2);
+		mtext(tcall(spn,tenv=ioenv)[spp],side=3,line=2,cex=1.5,las=0);
+		mtext("Year",side=1,line=2,cex=1.5); mtext(paste(tran,yfld),side=2,line=2.5,cex=1.5);
+		if (zsho) {
+			pp <- p*db + ylim[1]; qq <- seq(0,1,.25); hh <- qq*db + ylim[1];
+			abline(h=hh,col="grey40",lty=3);
+			if (zfill) {
+				eval(parse(text=paste(c("fillBars = ",gsub("lines","polygon",deparse(drawBars))))))
+				fillBars(xpos,pp,base=ylim[1],col=lucent(Cbar,0.1),border=FALSE)
+			}
+			drawBars(xpos,pp,base=ylim[1],col=Cbar,lwd=2);
+			mtext("prop Zero",side=2,line=2.5,cex=1,adj=0.10,col=Cbar,las=0)
+			mtext(show0(qq,2),side=4,at=hh,las=1,cex=.8,col=Cbar,line=.5,adj=0)
+			text(xpos,pp,show0(round(p,2),2),col=Cbar,cex=.8,adj=c(.5,-.5))
+			#nout=nout[z1]; n[names(nout)]=nout
+			text(xpos,(ylim[1]+par()$usr[3])/2,n,col=Cnum,cex=0.8)
+			text(.4*(1+par()$usr[1]),(ylim[1]+par()$usr[3])/2,"n",col=Cnum,cex=0.9)
+			packList(c("n","p","xpos"),"PBStool",tenv=.PBStoolEnv) }
+		lmY <- lm(y[z1]~x[z1]); b <- lmY$coeff[2]
+		r   <- ttcall(PBStool)$btran(b)-one
+		R   <- ttcall(PBStool)$btran(b*(N-1))-one
+		yp  <- predict.lm(lmY); lines(xpos[z1],yp,col=Ctrd,lwd=3);
+		msg <- paste("( b= ",show0(round(b,4),4),",  r= ",show0(round(r,4),4),",  R= ",show0(round(R,4),4),")",sep="");
+		mtext(msg,side=3,line=.5,cex=1);
+		if (iii!="gdev") dev.off()
+	}
 	invisible() }
 
 #.trend.funky---------------------------2010-10-20
@@ -857,7 +876,7 @@ trend <- function(strSpp="442", fqtName="gfb_iphc.sql",
 		}
 	invisible() }
 
-#.trend.booty---------------------------------2010-10-20
+#.trend.booty---------------------------2013-04-03
 # Calculate and plot bootstraps.
 #-----------------------------------------------RH
 .trend.booty <- function() {
@@ -880,24 +899,34 @@ trend <- function(strSpp="442", fqtName="gfb_iphc.sql",
 	dimnames(bboot)[[2]] <- c("b","r","R");
 	bout  <- as.data.frame(bboot);
 
-	if (wmf) win.metafile(paste(paste("boot",spp,yfld,sep="-"),"wmf",sep="."),width=6.5,height=9);
-	expandGraph(mfrow=c(2,1),mar=c(3,4,.5,.1),omi=c(0,0,0,0),mgp=c(2.5,.5,0));
-	for (i in c("b","r")){
-		ii<- match(i,c("b","r","R"));
-		x <- sort(bout[,i]);
-		n <- length(x);
-		y <- (1:n)/n;
-		q <- quantile(x,c(.025,.5,.975));
-		plot(x,y,ylim=c(0,1),type="l",lwd=2,col="#400080",las=1,
-			xlab="",ylab=paste("Cum % Freq of ",i),cex.lab=1.2);
-		abline(v=q,lty=c(3,2,3),col=c("red","green","red"),lwd=c(1,2,1));
-		text(q,c(.95,.875,.80),show0(round(q,3),3),cex=1.2,adj=c(-.1,0),col=c("red","darkgreen","red"));
-		addLabel(.98,.15,i,cex=2,col="#400080",adj=1);
-		mtext(switch(ii,"Slope","Annual Rate","Accumulated Change"),side=1,line=1.75,cex=1);
-		box() }
-	if(wmf) dev.off()
+	oname = paste("boot",attributes(ttcall(PBStool)$dat)$spp,yfld,sep="-")
+	ofile = c(TRUE,ofile); names(ofile)[1] = "gdev"
+	for (i in 1:length(ofile)){
+		ii = ofile[i];  if (!ii) next; iii=names(ii)
+		switch(iii,
+			"eps"  = { postscript(file=paste(oname,"eps",sep="."),width=6.5,height=7,paper="special") },
+			"pdf"  = { pdf(file=paste(oname,"pdf",sep="."),width=6.5,height=7,paper="special") },
+			"png"  = { png(filename=paste(oname,"png",sep="."),width=6.5*150,height=7*150,pointsize=18) },
+			"wmf"  = { win.metafile(filename=paste(oname,"wmf",sep="."),width=6.5,height=7) },
+			"gdev" = { resetGraph() }
+		)
+		expandGraph(mfrow=c(2,1),mar=c(3,4,.5,.5),omi=c(0,0,0,0),mgp=c(2.5,.5,0))
+		for (i in c("b","r")){
+			ii<- match(i,c("b","r","R"));
+			x <- sort(bout[,i]);
+			n <- length(x);
+			y <- (1:n)/n;
+			q <- quantile(x,c(.025,.5,.975));
+			plot(x,y,ylim=c(0,1),type="l",lwd=2,col="#400080",las=1,
+				xlab="",ylab=paste("Cum % Freq of ",i),cex.lab=1.2);
+			abline(v=q,lty=c(3,2,3),col=c("red","green","red"),lwd=c(1,2,1));
+			text(q,c(.95,.875,.80),show0(round(q,3),3),cex=1.2,adj=c(-.1,0),col=c("red","darkgreen","red"));
+			addLabel(.98,.15,i,cex=2,col="#400080",adj=1);
+			mtext(switch(ii,"Slope","Annual Rate","Accumulated Change"),side=1,line=1.75,cex=1);
+			box() }
+		if(iii!="gdev") dev.off()
+	}
 	invisible() }
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~trend
-
 
 

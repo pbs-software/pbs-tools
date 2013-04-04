@@ -42,7 +42,7 @@ if(getRversion() >= "2.15.1") utils::globalVariables(names=c(
 	"C1","C2","case","cat440rec","catch","Cbar","Cbox","Ccat","ccol","cdata","Ceq","chn1","chn2","clen","Clin","clwd","Cnum","cobs","Cpoi","cpuTime","cthin","ctot","Ctrd","Cval",
 	"dat","datt","dBars","dbName","ddat","disA","DLIM",
 	"elapTime","eN","eps","evals",
-	"firstSerial","fminE","fminS","fnam","Fout","fqtName","Ft","ftime","func",
+	"fillBars","firstSerial","fminE","fminS","fnam","Fout","fqtName","Ft","ftime","func",
 	"g","glmfit","gma.popymr","Gv2",
 	"hide0","HSreg","HStrc",
 	"idxD","idxL","idxM","IRRmin","is.pred","isobath","iters",
@@ -61,6 +61,6 @@ if(getRversion() >= "2.15.1") utils::globalVariables(names=c(
 	"wgta","wgtat","wmf","wted",
 	"x","xfun","XLIM","xlsName","xobs","xwid","xy","XYopt",
 	"y","year","years","yfld","yfun","yinf","ylim","YLIM","ypos","yr","ystar","ytck",
-	"z","Z","za","zero","Zlim","zsho","zstar","zstn"
+	"z","Z","za","zero","zfill","Zlim","zsho","zstar","zstn"
 	), package="PBStools")
 

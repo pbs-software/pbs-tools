@@ -6,7 +6,9 @@ Authors: RH  = Rowan Haigh
          JTS = Jon T. Schnute
 ------------------------------
 
-1.24  2013-03-27
+1.24  2013-04-04
+  - Fixed bug in function `trend` - specifically in function `.trend.trendy` where object `ttlist` was created with `sapply` and `simplify` was NOT set to `FALSE`. (RH 4/4)
+  - Modified function `trend` - fixed bugs, updated the GUI, added support for multiple image file formats. (RH 4/3)
   - Modified SQL queries to Oracle via SQL Server using variable format `@~sppcode` rather than `@sppcode`; this inserts two single-quote delimiters rather than one. (RH 3/20)
   - Modified function `buildCatch` to stitch together EPS barplot results using the function `collectFigs`. (RH 3/15)
   - Modified function `getData` to handle multiple species substitutions in SQL code that queries Oracle databases via OPENQUERY in SQL Server. (RH 3/14)
