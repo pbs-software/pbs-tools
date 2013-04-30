@@ -14,6 +14,7 @@ exportPattern("^\\.report")
 exportPattern("^\\.run")
 exportPattern("^\\.set")
 exportPattern("^\\.trend")
+exportPattern("^\\.win")
 
 export(.su)
 

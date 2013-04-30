@@ -6,6 +6,12 @@ Authors: RH  = Rowan Haigh
          JTS = Jon T. Schnute
 ------------------------------
 
+1.25  2013-04-30
+  - Updated User's Guide and vignette that build the User's Guide. (RH 4/30)
+  - Added a small script called `qpdf.bat` in directory `inst/scripts` to compress PDF files (e.g., User's Guide). (RH 4/30)
+  - Added a new directory `documentation` under `trunk` to mirror other PBS package repositories. (RH 4/30)
+  - Requires R-3.0.0 (RH 4/29)
+
 1.24  2013-04-04
   - Fixed bug in function `trend` - specifically in function `.trend.trendy` where object `ttlist` was created with `sapply` and `simplify` was NOT set to `FALSE`. (RH 4/4)
   - Modified function `trend` - fixed bugs, updated the GUI, added support for multiple image file formats. (RH 4/3)
