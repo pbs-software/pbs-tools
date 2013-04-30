@@ -57,10 +57,10 @@ plotTertiary(x=c(100,5,25,10,50), pC=c(0.5,0.5), r=0.5,
 }
 \examples{
 local(envir=.PBStoolEnv,expr={
-pbsfun=function(){
-  plotTertiary(c(1/2,1/3,1/6))
-  invisible() }
-pbsfun()
+  pbsfun=function(){
+    plotTertiary(c(1,1,2,2,5,5))
+    invisible() }
+  pbsfun()
 })
 }
 \keyword{hplot}

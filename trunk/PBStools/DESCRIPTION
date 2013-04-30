@@ -1,10 +1,10 @@
 Package: PBStools
-Version: 1.24
-Date: 2013-03-27
+Version: 1.25
+Date: 2013-04-30
 Title: Tools for Semi-Serious Marine Scientists et al.
 Author: Rowan Haigh, Jon T. Schnute, Norm Olsen, and Lisa Lacko
 Maintainer: Rowan Haigh <rowan.haigh@dfo-mpo.gc.ca>
-Depends: R (>= 2.15.0), PBSmapping, PBSmodelling, PBSdata, RODBC
+Depends: R (>= 3.0.0), PBSmapping, PBSmodelling, PBSdata, RODBC
 Suggests: boot, BRugs, cluster, MASS, reshape, sp, utils
 Description: Provides tools for exploring fisheries data.
     This package provides screening and 
