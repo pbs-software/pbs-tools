@@ -9,10 +9,10 @@
   specified species.
 }
 \usage{
-requestAges(strSpp, nage=500, year=2011, 
-     areas=list(major=3:9, minor=NULL), ttype=c(1,4),
-     sex=1:2, nfld = "nallo", sql=TRUE, bySID=FALSE,
-     spath=.getSpath(), uid=Sys.info()["user"], pwd=uid, ...)
+requestAges(strSpp, nage=500, year=2012, 
+   areas=list(major=3:9, minor=NULL), ttype=c(1,4),
+   sex=1:2, nfld = "nallo", sql=TRUE, only.sql=FALSE, bySID=FALSE,
+   spath=.getSpath(), uid=Sys.info()["user"], pwd=uid, ...)
 }
 \arguments{
   \item{strSpp}{string HART code of a species with sampled otoliths.}
@@ -34,6 +34,8 @@ requestAges(strSpp, nage=500, year=2011,
   \item{sql}{logical: if \code{TRUE} query the databases for all otolith and catch information,
     otherwise grab the information from stored binaries (e.g., \code{Sdat396.rda} for POP
     otolith data, and \code{Ccat396.rda} for POP catch from \code{PacHarvest} and \code{GFFOS}.}
+  \item{only.sql}{logical: if \code{TRUE} only query the databases for otolith and catch information;
+    do not process the request for otoliths.}
   \item{bySID}{logical: if \code{TRUE} group the chosen otoliths by sample ID (SID) for presentation 
     in the CSV file (assumes that one tray houses one sample); otherwise assume that many small samples occur in one tray.}
   \item{spath}{string specifying system path to the SQL queries; default points to the SQL directory in \pkg{PBStools}.}
@@ -53,7 +55,7 @@ requestAges(strSpp, nage=500, year=2011,
   
   The global list object \code{PBStool} contains: 
   \tabular{lll}{
-    \code{module}   \tab \code{string}     \tab \pkg{PBStools} source code module that contains \code{requestAges}; \cr
+    \code{module}   \tab \code{string}     \tab PBStools source code module that contains \code{requestAges}; \cr
     \code{call}     \tab \code{call}       \tab details of the last last call to \code{requestAges}; \cr
     \code{Sdat}     \tab \code{data.frame} \tab all sample data for \code{strSpp}; \cr
     \code{catch}    \tab \code{data.frame} \tab catches for \code{strSpp} (either commercial or survey); \cr
