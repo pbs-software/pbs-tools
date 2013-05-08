@@ -6,7 +6,11 @@ Authors: RH  = Rowan Haigh
          JTS = Jon T. Schnute
 ------------------------------
 
-1.25  2013-04-30
+1.25  2013-05-08
+  - Moved object `.PBSserver` form the `sql` directory to the `R` directory in `M01_Utility.r`. (RH 5/8)
+  - Updated script `Rqpdf.bat` to utilize ghostcript's `gswin32c.exe` AND QPDF's `qpdf.exe`, paralleling the process in tools::compactPDF. (RH 5/8)
+  - Added two new functions to manipulate files: `countLines` and `subsetFile`. (RH 5/8)
+  - Added a new argument `only.sql` to function `requestAges` to only get the database information (survey data, commercial and survey catch). (RH 5/2)
   - Updated User's Guide and vignette that build the User's Guide. (RH 4/30)
   - Added a small script called `qpdf.bat` in directory `inst/scripts` to compress PDF files (e.g., User's Guide). (RH 4/30)
   - Added a new directory `documentation` under `trunk` to mirror other PBS package repositories. (RH 4/30)

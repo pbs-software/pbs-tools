@@ -8,6 +8,7 @@
 #  convFY..........Convert dates into fishing years.
 #  convYM..........Convert date limits into a vector of year-months (YYY-MM).
 #  convYP..........Convert dates into year periods.
+#  countLines      Count the number of lines in an ASCII file.
 #  createDSN.......Create entire suite of DSNs for the groundfish databases.
 #  crossTab........Use package 'reshape' to summarize z using crosstab values y.
 #  fitLogit........Fit binomial data using logit link function.
@@ -26,6 +27,7 @@
 #  showError.......Display error message on device surface.
 #  spooler.........Spools list objects into fields of data frames.
 #  stdConc.........Standardise a chemical concentration.
+#  subsetFile      Subset an ASCII file every n rows (enrow).
 #  toUpper         Capitalise first letter of each word in phrase
 #  ttget           Provide wrappers for PBSmodelling functions tget/tcall/tprint/tput/lisp
 #  wrapText........Wrap, mark and indent a long text string.
@@ -41,6 +43,9 @@
 #  .setCWD.........Return the current working directory and if win=TRUE, set the path variable in the active window.
 #  .su.............Shortcut for sort(unique(x))
 #===============================================================================
+
+.PBSserver = c("199.60.95.134", "199.60.95.200", "PAC03450/GFDB", "199.60.95.134")
+names(.PBSserver) = c("GFDB", "PACPBSGFDB", "GFDBtemp", "SVBCPBSGFIIS")
 
 #biteData-------------------------------2008-11-10
 # Subsets a data matrix/frame using input vector.
@@ -136,7 +141,7 @@ confODBC <- function(dsn="PacHarvest",server="GFDB",db="PacHarvest",
                      driver="SQL Server",descr="",trusted=TRUE) {
 	#use forward slashes "/" for server otherwise the translation
 	#is too dependent on the number of times "\" is escaped
-	getFile(".PBSserver",path=.getSpath(),tenv=penv())
+	#getFile(".PBSserver",path=.getSpath(),tenv=penv())
 	if (is.element(server,names(.PBSserver))) server <- .PBSserver[server]
 	syntax <- paste("{CONFIGDSN \"",driver,"\" \"DSN=",dsn,
 		"|Description=",descr,"|SERVER=",server,"|Trusted_Connection=",
@@ -201,6 +206,18 @@ convYP = function(x, ndays=90) {
 		cdate=format(x) # 10-character date "yyyy-mm-dd"
 	else  return(rep("",length(x)))
 	return(yearperiod(cdate,ndays)) }
+
+#countLines-----------------------------2013-05-07
+# Count the number of lines in an ASCII file.
+#-----------------------------------------------RH
+countLines = function(fnam,os=.Platform$OS.type)
+{
+	if (os!="windows") stop("You're sh1t out of luck")
+	if (!file.exists(fnam)) stop("File name specified does not exist.")
+	cmd = paste("%SystemRoot%\\system32\\findstr /R /N \"^\" ",fnam," | %SystemRoot%\\system32\\find /C \":\"",sep="")
+	Nrow = as.numeric(shell(cmd,intern=TRUE))
+	return(Nrow)
+}
 
 #createDSN------------------------------2009-02-26
 # Create entire suite of DSNs for the groundfish databases
@@ -548,7 +565,7 @@ getData <-function(fqtName, dbName="PacHarvest", strSpp=NULL, server=NULL,
 	### Use forward slashes "/" for server otherwise the translation
 	### is too dependent on the number of times "\" is escaped
 	if (is.null(server) || server=="") {
-		getFile(".PBSserver", path = .getSpath(),tenv=penv())
+		#getFile(".PBSserver", path = .getSpath(),tenv=penv())
 		server = .PBSserver[1]; type="SQL" }
 	if (type=="SQL") driver="SQL Server"
 	else if (type=="ORA") driver="Oracle ODBC Driver" ### "Microsoft ODBC for Oracle"
@@ -753,7 +770,7 @@ listTables <- function (dbName, pattern=NULL, path=getwd(),
 {
 	if (!require(RODBC, quietly=TRUE)) stop("`RODBC` package is required")
 	if (is.null(server)) {
-		getFile(".PBSserver", path=.getSpath(), tenv=penv())
+		#getFile(".PBSserver", path=.getSpath(), tenv=penv())
 		server = .PBSserver[1] }
 	if (type=="SQL") driver="SQL Server"
 	else if (type=="ORA") driver="Oracle ODBC Driver" # DFO standard
@@ -1006,6 +1023,22 @@ stdConc = function(dat, nUout="mg", dUout="kg", fac=1)
 	return(data.frame(stdAmt=stdAmt,unit=unit))
 }
 #------------------------------------------stdConc
+
+
+#subsetFile-----------------------------2013-05-07
+# Subsets an ASCII file every n rows (enrow).
+#-----------------------------------------------RH
+subsetFile = function(fnam,enrow=30,header=TRUE,os=.Platform$OS.type)
+{
+	if (os!="windows") stop("You're sh1t out of luck")
+	if (!file.exists(fnam)) stop("File name specified does not exist.")
+	snam = paste("sub_",fnam,sep="")
+	cmd = paste("sed -n ",ifelse(header,"-e 1p "," "),"-e '",enrow + as.numeric(header),"~",enrow,"p' ",fnam," > ",snam,sep="")
+	shell(cmd)
+	invisible()
+}
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~subsetFile
+
 
 #toUpper--------------------------------2012-09-19
 # Function to capitalise first letters of words

@@ -1990,18 +1990,19 @@ reportCatchAge <- function(prefix="pop", path=getwd(), hnam=NULL, ...) {
 	invisible() }
 #-----------------------------------reportCatchAge
 
-#requestAges----------------------------2013-02-21
+#requestAges----------------------------2013-05-02
 # Determine which otoliths to sample for ageing requests.
 # Note: only have to use sql=TRUE once for each species 
 # using any year before querying a group of years.
 # Note: ageing methdology is not a sensible selection criterion because the fish selected have not been aged.
 #-----------------------------------------------RH
-requestAges=function(strSpp, nage=500, year=2011, 
+requestAges=function(strSpp, nage=500, year=2012, 
      areas=list(major=3:9, minor=NULL), ttype=c(1,4),
-     sex=1:2, nfld = "nallo", sql=TRUE, bySID=FALSE,
+     sex=1:2, nfld = "nallo", sql=TRUE, only.sql=FALSE, bySID=FALSE,
      spath=.getSpath(), uid=Sys.info()["user"], pwd=uid, ...) {
 
 	on.exit(gc())
+	if (!only.sql) {
 	assign("PBStool",list(module="M02_Biology",call=match.call(),args=args(requestAges)),envir=.PBStoolEnv)
 
 	#Subfunctions -----------------------
@@ -2037,8 +2038,9 @@ requestAges=function(strSpp, nage=500, year=2011,
 
 	catnip = function(...) {cat(... ,sep="")}
 	#------------------------subfunctions
+	}
 
-	if (sql) {
+	if (sql || only.sql) {
 		expr=paste(c("getData(\"gfb_age_request.sql\"",
 			",dbName=\"GFBioSQL\",strSpp=\"",strSpp,"\",path=\"",spath,"\",tenv=penv())"),collapse="")
 		expr=paste(c(expr,"; Sdat=PBSdat"),collapse="")
@@ -2061,12 +2063,15 @@ requestAges=function(strSpp, nage=500, year=2011,
 		expr=paste(c(expr,"; Scat=PBSdat"),collapse="")
 		expr=paste(c(expr,"; save(\"Scat\",file=\"Scat",strSpp,".rda\")"),collapse="")      # Survey catch (binary)
 		expr=paste(c(expr,"; write.csv(Scat,file=\"Scat",strSpp,".csv\")"),collapse="")     # Survey catch (ascii)
-		eval(parse(text=expr)) } 
-	else { 
+		eval(parse(text=expr))
+	}
+	if (!only.sql && !sql) { 
 		expr=paste(c("load(\"Sdat",strSpp,".rda\"); load(\"Ccat",strSpp,".rda\"); ",
 			"load(\"Scat",strSpp,".rda\")"),collapse="")
-		eval(parse(text=expr)) }
-#browser();return()
+		eval(parse(text=expr)) 
+	}
+	else
+		return(invisible(list(expr=expr,Sdat=Sdat,Ccat=Ccat,Scat=Scat)))
 	
 	if (nrow(Sdat)==0 || nrow(Ccat)==0) showError("Not enough data")
 	samp=Sdat
