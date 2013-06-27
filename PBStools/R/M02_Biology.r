@@ -21,12 +21,13 @@
 #  weightBio.......Weight age/length frequencies/proportions by catch.
 #===============================================================================
 
-#calcLenWt------------------------------2011-06-15
+#calcLenWt------------------------------2013-06-27
 # Calculate length-weight relationship for a fish.
 #-----------------------------------------------RH
-calcLenWt <- function(dat=bio440, strSpp="440", areas=NULL, 
-    ttype=NULL, stype=NULL, plotit=FALSE) {
+calcLenWt <- function(dat=bio440, strSpp="440",
+   areas=NULL, ttype=NULL, stype=NULL, plotit=FALSE) {
 
+	#Subfunctions----------------------------------
 	# Setup the jpeg device for import to word, half page with 2 plots side by side
 	createJPG <- function(plotName,rc=c(2,2)) {
 		plotName <- paste(plotName,"jpg",sep=".")
@@ -47,33 +48,41 @@ calcLenWt <- function(dat=bio440, strSpp="440", areas=NULL,
 		win.metafile(plotName, width=9, height=5)
 		par(mfrow=rc,cex=1.5)
 		par(mar=c(4,4,1,1),oma=c(1,1,1,1)) }
+	#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~Subfunctions
+	assign("PBStool",list(module="M02_Biology",call=match.call(),args=args(calcLenWt)),envir=.PBStoolEnv)
 
 	dat <- dat[!is.na(dat$wt) & !is.na(dat$len) & !is.na(dat$sex),]
-	dat$len <- dat$len/10 # change from mm to cm
-	dat$wt  <- dat$wt/1000 # change from g to kg
+	# SQL code `gfb_bio.sql` already converts fish to cm and kg
+	#dat$len <- dat$len/10 # change from mm to cm
+	#dat$wt  <- dat$wt/1000 # change from g to kg
 	dat <- dat[is.element(dat$major,1:9),]
 	if (!is.null(ttype)) dat <- dat[is.element(dat$ttype,unique(unlist(ttype))),]
+	else {
+		ttype =  paste(.su(dat$ttype),collapse="|")
+		dat$ttype = ttype }
 	if (!is.null(stype)) dat <- dat[is.element(dat$stype,stype),]
-	if (is.null(areas)) { areas <- c("Coast"); dat$area <- rep(areas,nrow(dat)) }
-	else {dat$area <- dat$major; dat <- dat[is.element(dat$area,unique(unlist(areas))),] }
+	if (is.null(areas)) { areas <- list(coast="BC"); dat$coast <- rep("BC",nrow(dat)) }
+	anams = sapply(areas,function(x){paste(paste(x,collapse="|",sep=""),sep="")})
+	anams = paste(names(anams),anams,sep="_")
 	ylim <- range(dat$wt,na.rm=TRUE)
 	xlim <- range(dat$len,na.rm=TRUE)
 	sex <- list(1,2,1:2,c(0,3),0:3); names(sex) <- c("Males","Females","M+F","Unknown","All")
 	out <- array(NA,dim=c(length(sex),9,length(ttype),length(areas)),
 		dimnames=list(names(sex),c("n","a","SEa","b","SEb","w","SDw","wmin","wmax"),
 		sapply(ttype,function(x){paste(paste(x,collapse="|",sep=""),sep="")}),
-		sapply(areas,function(x){paste(paste(x,collapse="|",sep=""),sep="")}) ))
+		anams ))
 	names(dimnames(out)) <- c("sex","par","ttype","area")
-	#out <- list(dat=dat)
-	for (ar in areas) {
-		adat <- dat[is.element(dat$area,ar),]
+	for (a in 1:length(areas)) {
+		aa = names(areas)[a]; ar = areas[[a]]
+		adat <- dat[is.element(dat[,aa],ar),]
 		if (nrow(adat)==0) next
-		arName <- paste(paste(ar,collapse="|",sep=""),sep="")
+		arName <- paste(aa,paste(paste(ar,collapse="|",sep=""),sep=""),sep="_")
 		for (tt in ttype) {
 			tdat <- adat[is.element(adat$ttype,tt),]
 			if (nrow(tdat)==0) next
 			ttName <- paste(paste(tt,collapse="|",sep=""),sep="")
-			plotName <- gsub("\\|","",paste("LenWt",strSpp,arName,ttName,sep="-"))
+			plotName <- gsub("_","(",gsub("\\|","+",arName))
+			plotName <- paste("LenWt-",strSpp,"-",plotName,")-tt(",gsub("\\|","",ttName),")",sep="")
 			if (plotit) createPNG(plotName)
 			else par(mfrow=c(2,2),cex=2.0,mar=c(3.5,3,1.5,.1),oma=c(0,0,0,0),mgp=c(2,.5,0),cex=1)
 			for (i in 1:length(sex)) {
@@ -102,31 +111,46 @@ calcLenWt <- function(dat=bio440, strSpp="440", areas=NULL,
 					if (n>1) lines(0:xlim[2], Wt, col="blue", lwd=3)
 
 					mw <- format(round(mean(idat$wt,na.rm=TRUE),2),big.mark=",")
-					addLabel(0.1,0.9,bquote(bolditalic(bar(W)) == .(mw)),adj=0,cex=0.8)
-					addLabel(0.1,0.85,bquote(bolditalic(n)==.(format(n,big.mark=","))),adj=0,cex=0.8)
-					addLabel(0.1,0.80,bquote(bolditalic(a)==.(aa)),adj=0,cex=0.8)
-					addLabel(0.1,0.75,bquote(bolditalic(b)==.(bb)),adj=0,cex=0.8)
-					addLabel(.9,.1,paste(arName," - trip type (",ttName,")",sep=""),adj=1,cex=.7)
-
+					xleft = 0.075; ytop = 0.90
+					addLabel(xleft,ytop,paste(gsub("_"," (",arName),") - trip type (",ttName,")",sep=""),adj=0,cex=0.7)
+					addLabel(xleft,ytop-0.10,bquote(bolditalic(bar(W)) == .(mw)),adj=0,cex=0.8)
+					addLabel(xleft,ytop-0.15,bquote(bolditalic(n)==.(format(n,big.mark=","))),adj=0,cex=0.8)
+					addLabel(xleft,ytop-0.20,bquote(bolditalic(a)==.(aa)),adj=0,cex=0.8)
+					addLabel(xleft,ytop-0.25,bquote(bolditalic(b)==.(bb)),adj=0,cex=0.8)
 					box(bty="l") } }
 			if (plotit) dev.off()
 	} } 
-	#eval(parse(text="out <<- out; dat <<- dat"))
-	ttput(out); ttput(dat)
-	
-# Output table for Pre-COSEWIC
-	fn <- paste("LenWt-","440",".csv",sep="")
-	tkey <- c("Non Obs Comm","Research","Charter","Obs Comm","Res + Chart","Commercial")
-	names(tkey) <- c("1","2","3","4","2|3","1|4")
-	ukey <- dimnames(out)$ttype
-	header <- dimnames(out)$par;  header=gsub("a$","log(a)",dimnames(out)$par)
-	cat(paste(c("",header),collapse=","),"\n",file=fn)
-	for (i in c("Males","Females","M+F")) {
-		iout <- t(out[i,,,]); dimnames(iout)[[1]] <- tkey[ukey]
-		cat(i,"\n",file=fn,append=TRUE)
-		write.table(iout,file=fn,col.names=FALSE,append=TRUE,sep=",") }
+	ttget(PBStool); PBStool$out=out; PBStool$dat=dat
+
+	# Output table for Pre-COSEWIC
+	pout = out
+	fn <- paste("LenWt-",strSpp,".csv",sep="")
+	tkey <- c("Non-observed Commercial","Research","Survey","Observed Commercial","Research Survey","Commercial","All Trips")
+	names(tkey) <- c("1","2","3","4","2|3","1|4","1|2|3|4")
+	jkey <- dimnames(pout)$ttype
+	iskey=is.element(jkey,names(tkey))
+	jkey[iskey] = tkey[jkey[iskey]]
+	dimnames(pout)$ttype = jkey
+	kkey = paste(names(areas),sapply(areas,function(x){paste(x,collapse="+")}),sep=" ")
+	dimnames(pout)$area = kkey
+	header <- dimnames(pout)$par;  header=gsub("a$","log(a)",dimnames(pout)$par)
+	data(species,envir=.PBStoolEnv)
+	cat(ttcall(species)[strSpp,"name"],"\n\n",file=fn)
+	for (k in dimnames(pout)[[4]]) {
+		for (j in dimnames(pout)[[3]]) {
+			cat(paste("Area (",k,")   Trip type (",j,")",sep=""),"\n",file=fn,append=TRUE)
+			cat(paste(c("",header),collapse=","),"\n",file=fn,append=TRUE)
+			for (i in dimnames(pout)[[1]]) {
+				iout <- t(pout[i,,j,k])
+				cat(paste(c(i,iout),collapse=",",sep=""),"\n",file=fn,append=TRUE)
+			}
+			cat("\n",file=fn, append=TRUE)
+		}
+	}
+	PBStool$pout=pout; ttput(PBStool)
 	invisible(out) }
-#----------------------------------------calcLenWt
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-calcLenWt
+
 
 #calcSG---------------------------------2013-01-25
 # Calculate growth curve using Schnute growth model.

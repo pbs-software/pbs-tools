@@ -5,8 +5,11 @@ Authors: RH  = Rowan Haigh
          LL  = Lisa Lacko
          JTS = Jon T. Schnute
 ------------------------------
-
-1.25  2013-05-08
+25  2013-06-27
+  - Modified function `calcLenWt` to subset any type of area (e.g., `major`, `PMFC`, `GMA`, etc.) if available in data object. (RH 6/27)
+  - Added new function `getODBC` to get a list of the ODBC drivers on a user's Windows system. (RH 6/26)
+  - Modified function `.getSQLdata` to use the Oracle ODBC driver `Oracle in OraClient11g_home1` instead of `Oracle ODBC Driver`. (RH 6/25)
+	User can still specify alternative SQL\Oracle drivers by passing, for example, `driver="Oracle ODBC Driver"` through the function `getData`.
   - Moved object `.PBSserver` form the `sql` directory to the `R` directory in `M01_Utility.r`. (RH 5/8)
   - Updated script `Rqpdf.bat` to utilize ghostcript's `gswin32c.exe` AND QPDF's `qpdf.exe`, paralleling the process in tools::compactPDF. (RH 5/8)
   - Added two new functions to manipulate files: `countLines` and `subsetFile`. (RH 5/8)
