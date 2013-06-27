@@ -16,6 +16,7 @@
 #  getData.........Get data from a variety of sources.
 #  getFile.........Get a dataset (binary libraries, binary local, dumped data, comma-delimited text.
 #  getName.........Get the names of the input object.
+#  getODBC         Get a string vector of ODBC drivers on user's Windows system.
 #  isThere.........Check to see if object physically exists in the specified environment.
 #  lenv............Get the local/parent/global environment.
 #  listTables......List tables in specified SQL, ORA, or MDB database.
@@ -555,7 +556,7 @@ getData <-function(fqtName, dbName="PacHarvest", strSpp=NULL, server=NULL,
 	invisible(strQ) }
 #------------------------------------------getData
 
-#.getSQLdata----------------------------2010-07-22
+#.getSQLdata----------------------------2013-06-25
 # Retrieves a data frame from SQL Server
 #-----------------------------------------------RH
 .getSQLdata <- function(dbName, qtName=NULL, strSQL=NULL,
@@ -567,8 +568,10 @@ getData <-function(fqtName, dbName="PacHarvest", strSpp=NULL, server=NULL,
 	if (is.null(server) || server=="") {
 		#getFile(".PBSserver", path = .getSpath(),tenv=penv())
 		server = .PBSserver[1]; type="SQL" }
-	if (type=="SQL") driver="SQL Server"
-	else if (type=="ORA") driver="Oracle ODBC Driver" ### "Microsoft ODBC for Oracle"
+	driver= list(...)$driver
+	if (type=="SQL") driver=ifelse(is.null(driver),"SQL Server",driver)
+	#else if (type=="ORA") driver="Oracle ODBC Driver" ### "Microsoft ODBC for Oracle"
+	else if (type=="ORA") driver=ifelse(is.null(driver),"Oracle in OraClient11g_home1",driver)
 	else showError("Only 'SQL' and 'ORA' supported at present")
 	syntax <- paste("Driver={",driver,"}",
 		ifelse(type=="ORA" && substring(driver,1,1)=="O",";DBQ=",";Server="),server,
@@ -589,7 +592,7 @@ getData <-function(fqtName, dbName="PacHarvest", strSpp=NULL, server=NULL,
 			query=paste("SELECT ",ifelse(rownum>0,paste("TOP",rownum),"")," * FROM ",qtName,sep="")
 		dat <- sqlQuery(cnn, query, rows_at_time=1) }
 	else { 
-		dat <- sqlQuery(cnn, strSQL, ...) #, believeNRows=ifelse(type=="ORA",FALSE,TRUE))
+		dat <- sqlQuery(cnn, strSQL, list(...)[!is.element(names(list(...)),"driver")] ) #...) #, believeNRows=ifelse(type=="ORA",FALSE,TRUE))
 		if (is.data.frame(dat) && nrow(dat)==0) 
 			showMessage("No records returned. Maybe try again with 'rows_at_time=1'.",col="blue")
 	}
@@ -745,6 +748,44 @@ getName=function(fnam){
 		fnam = snam; type="literal"; len=1 }
 	attr(fnam,"type")=type; attr(fnam,"len")=len
 	return(fnam) }
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~getName
+
+
+#getODBC--------------------------------2013-06-26
+# Get a string vector of ODBC drivers installed on user's Windows system.
+# Code: Scripting Guy
+# URL : http://blogs.technet.com/b/heyscriptingguy/archive/2005/07/07/how-can-i-get-a-list-of-the-odbc-drivers-that-are-installed-on-a-computer.aspx
+#--------------------------------------------SG/RH
+getODBC <- function(os=.Platform$OS.type, pattern=NULL, status="Installed") {
+	if (os!="windows") {
+		err="'getODBC' needs Windows OS to use Windows Scripting"
+		cat(err,"\n"); return(invisible(err)) }
+	tdir <- tempdir()
+	fname <- paste(tdir, "\\getODBC.vbs", sep="")
+	cat('Const HKEY_LOCAL_MACHINE = &H80000002\n', file=fname)
+	cat('strComputer = "."\n', file=fname, append=TRUE)
+	cat('Set objRegistry = GetObject("winmgmts:\\\\" & strComputer & "\\root\\default:StdRegProv")\n', file=fname, append=TRUE)
+	cat('strKeyPath = "SOFTWARE\\ODBC\\ODBCINST.INI\\ODBC Drivers"\n', file=fname, append=TRUE)
+	cat('objRegistry.EnumValues HKEY_LOCAL_MACHINE, strKeyPath, arrValueNames, arrValueTypes\n', file=fname, append=TRUE)
+	cat('For i = 0 to UBound(arrValueNames)\n', file=fname, append=TRUE)
+	cat('  strValueName = arrValueNames(i)\n', file=fname, append=TRUE)
+	cat('  objRegistry.GetStringValue HKEY_LOCAL_MACHINE,strKeyPath,strValueName,strValue\n', file=fname, append=TRUE)
+	cat('  Wscript.Echo arrValueNames(i) & " -- " & strValue\n', file=fname, append=TRUE)
+	#cat('  Wscript.Echo arrValueNames(i)\n', file=fname, append=TRUE)
+	cat('Next\n', file=fname, append=TRUE)
+	odbcAll  = system(paste("cscript //NoLogo", fname), minimized=TRUE, intern=TRUE)
+	odbcList = strsplit(odbcAll,split=" -- ")
+	odbcStat = sapply(odbcList,function(x){x[1]})
+	if (!is.null(status)) {
+		isStatus = sapply(odbcList,function(x){x[2]==status})
+		odbcStat = odbcStat[isStatus]
+	}
+	if (!is.null(pattern))
+		odbcOut = odbcStat[grep(pattern,odbcStat)]
+	packList(c("odbcAll","odbcList","odbcStat","odbcOut"),target="PBStool",tenv=.PBStoolEnv)
+	invisible(odbcOut) }
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~getODBC
+
 
 #isThere--------------------------------2009-06-18
 # Check to see if object physically exists in the specified environment.
@@ -773,7 +814,7 @@ listTables <- function (dbName, pattern=NULL, path=getwd(),
 		#getFile(".PBSserver", path=.getSpath(), tenv=penv())
 		server = .PBSserver[1] }
 	if (type=="SQL") driver="SQL Server"
-	else if (type=="ORA") driver="Oracle ODBC Driver" # DFO standard
+	else if (type=="ORA") driver="Oracle in OraClient11g_home1" #"Oracle ODBC Driver" # DFO standard
 	else if (type=="MDB") mdbTable=paste(path,"/",dbName,".mdb",sep="")
 	else showError("Only 'SQL', 'ORA', and 'MDB' supported at present")
 	if (any(type==c("SQL","ORA"))) {
