@@ -1,4 +1,4 @@
--- Get specimen biological data from GFBioSQL (2013-02-19)
+-- Get specimen biological data from GFBioSQL (2013-07-30)
 SET NOCOUNT ON
 
 -- Trawl Specs (returns same # records as B02_FISHING_EVENT)
@@ -79,24 +79,6 @@ FROM
 
 ---------------------------SPECIMEN QUERIES---------------------------
 
--- Collect specimen IDs for ONLY strSpp (to speed up some later queries)
-SELECT --TOP 40
-  B03.CATCH_ID,
-  B03.SPECIES_CODE,
-  B04.SAMPLE_ID,
-  B05.SPECIMEN_ID
-INTO #onlySPID
-FROM
-  B03_CATCH B03 INNER JOIN
-  B03L4_Link_Catch_Sample L2 INNER JOIN
-  B04_SAMPLE B04 INNER JOIN
-  B05_SPECIMEN B05 ON
-    B05.SAMPLE_ID = B04.SAMPLE_ID ON
-    B04.SAMPLE_ID = L2.SAMPLE_ID ON
-    L2.CATCH_ID = B03.CATCH_ID
-WHERE 
-  B03.SPECIES_CODE IN (@sppcode)
-
 -- Collect unadulterated values from B01 to B05
 SELECT --TOP 40
   B01.TRIP_ID,
@@ -126,6 +108,7 @@ SELECT --TOP 40
   B02.DFO_STAT_SUBAREA_CODE,
   B02.FE_BOTTOM_WATER_TEMPERATURE,
   B03.SPECIES_CODE,
+  B03.SPECIES_CATEGORY_CODE,
   B03.CATCH_WEIGHT
 INTO #B01B05
 FROM 
@@ -145,6 +128,24 @@ FROM
 WHERE 
   B03.SPECIES_CODE IN (@sppcode) AND
   B02.MAJOR_STAT_AREA_CODE IN (@major)
+
+-- Collect specimen IDs for ONLY strSpp (to speed up some later queries)
+SELECT --TOP 40
+  B03.CATCH_ID,
+  B03.SPECIES_CODE,
+  B04.SAMPLE_ID,
+  B05.SPECIMEN_ID
+INTO #onlySPID
+FROM
+  B03_CATCH B03 INNER JOIN
+  B03L4_Link_Catch_Sample L2 INNER JOIN
+  B04_SAMPLE B04 INNER JOIN
+  B05_SPECIMEN B05 ON
+    B05.SAMPLE_ID = B04.SAMPLE_ID ON
+    B04.SAMPLE_ID = L2.SAMPLE_ID ON
+    L2.CATCH_ID = B03.CATCH_ID
+WHERE 
+  B03.SPECIES_CODE IN (@sppcode)
 
 -- Get 'collected attribute' of specimens
 SELECT --TOP 40
@@ -197,12 +198,12 @@ WHERE
 SELECT --TOP 40
   SM.SAMPLE_ID,
   SM.SPECIMEN_ID,
-  'Best_Length' = AVG(COALESCE(
+  'Best_Length' = SUM(COALESCE(
     CASE WHEN SM.MORPHOMETRICS_ATTRIBUTE_CODE IN (4) THEN SM.SPECIMEN_MORPHOMETRICS_VALUE * FM.FACTOR ELSE NULL END,  -- total length
     CASE WHEN SM.MORPHOMETRICS_ATTRIBUTE_CODE IN (2) THEN SM.SPECIMEN_MORPHOMETRICS_VALUE * FM.FACTOR ELSE NULL END,  -- standard length
     CASE WHEN SM.MORPHOMETRICS_ATTRIBUTE_CODE IN (1) THEN SM.SPECIMEN_MORPHOMETRICS_VALUE * FM.FACTOR ELSE NULL END,  -- fork length
     CASE WHEN SM.MORPHOMETRICS_ATTRIBUTE_CODE IN (6) THEN SM.SPECIMEN_MORPHOMETRICS_VALUE * FM.FACTOR ELSE NULL END,0)), -- third dorsal length
-  'Round_Weight'  = AVG(CASE
+  'Round_Weight'  = SUM(CASE
     WHEN SM.MORPHOMETRICS_ATTRIBUTE_CODE IN (10) THEN SM.SPECIMEN_MORPHOMETRICS_VALUE * FACTOR ELSE 0 END)
 INTO #BestMorpho
 FROM 
@@ -226,7 +227,7 @@ SELECT
   'SSID' = IsNull(TSG.SURVEY_SERIES_ID,0),                  -- SURVEY
   'GC'   = COALESCE(AA.GROUPING_CODE,TSG.GROUPING_CODE,0),  -- SURVEY_GROUPING
   'hail' = IsNull(AA.HAIL_IN_NO,0),                         -- B01_Trip
-  'set'  = AA.FE_MAJOR_LEVEL_ID,                            -- B02_Fishing_Event
+  'set'  = IsNull(AA.FE_MAJOR_LEVEL_ID,0),                  -- B02_Fishing_Event
   'subset' = IsNull(AA.FE_SUB_LEVEL_ID,1),                  -- B02_Fishing_Event
   'ttype' = IsNull(AA.TRIP_SUB_TYPE_CODE,0),                -- B01_Trip
   'stype' = IsNull(AA.SAMPLE_TYPE_CODE,0),                  -- B04_Sample
@@ -234,7 +235,7 @@ SELECT
     WHEN AA.SAMPLE_DATE Is Null Or 
          AA.TRIP_END_DATE-AA.SAMPLE_DATE < 0 Or 
          AA.TRIP_START_DATE-AA.SAMPLE_DATE > 0 THEN 
-      convert(smalldatetime,convert(varchar(10),AA.TRIP_END_DATE,20),20)        -- B01_Trip
+      convert(smalldatetime,convert(varchar(10),AA.TRIP_END_DATE,20),20)          -- B01_Trip
     ELSE convert(smalldatetime,convert(varchar(10),AA.SAMPLE_DATE,20),20) END,  -- B04_Sample
   'year' = Year(CASE 
     WHEN AA.SAMPLE_DATE Is Null Or AA.TRIP_END_DATE-AA.SAMPLE_DATE<0 Or
@@ -244,10 +245,13 @@ SELECT
   'mat'   = IsNull(AA.MATURITY_CODE,0),                     -- B05_Specimen
   'oto'   = IsNull(TT.otoliths,0),
   'age'   = AA.SPECIMEN_AGE,                                -- B05_Specimen
-  'ameth' = CASE WHEN AA.SPECIMEN_AGE Is Null THEN NULL ELSE IsNull(AA.AGEING_METHOD_CODE,0) END,  -- B05_Specimen
-  'len'   = CASE WHEN BM.Best_Length=0 THEN NULL ELSE BM.Best_Length END,       -- B05d_Specimen_Morphometrics
-  'wt'    = CASE WHEN BM.Round_Weight=0 THEN NULL ELSE BM.Round_Weight END,     -- B05d_Specimen_Morphometrics
-  'fdep'  = CASE WHEN BB.Best_Depth=0 THEN NULL ELSE BB.Best_Depth END,         -- B02_FISHING_EVENT
+  'ameth' = CASE WHEN AA.SPECIMEN_AGE Is Null THEN NULL ELSE IsNull(AA.AGEING_METHOD_CODE,0) END,      -- B05_Specimen
+  'len'   = CASE WHEN IsNull(BM.Best_Length,0)=0 THEN NULL ELSE BM.Best_Length END,    -- B05d_Specimen_Morphometrics
+  'wt'    = CASE WHEN IsNull(BM.Round_Weight,0)=0 THEN NULL ELSE BM.Round_Weight END, -- B05d_Specimen_Morphometrics
+  'scat'  = IsNull(AA.SPECIES_CATEGORY_CODE,0),                          -- B03_Catch
+  'fdep'  = CASE WHEN BB.Best_Depth=0 THEN NULL ELSE BB.Best_Depth END,  -- B02_FISHING_EVENT
+  'bwt'   = CASE WHEN AA.FE_BOTTOM_WATER_TEMPERATURE>30 THEN NULL
+    ELSE AA.FE_BOTTOM_WATER_TEMPERATURE END,                -- B02_Fishing_Event
   'gear'  = IsNull(AA.GEAR_CODE,0),                         -- B02_Fishing_Event
   'use'   = IsNull(TSP.USABILITY,0),                        -- B02e_Trawl_Specs
   'dist'  = IsNull(TSP.DISTANCE,0),                         -- B02e_Trawl_Specs
@@ -317,35 +321,39 @@ SELECT
           (AA.DFO_STAT_AREA_CODE IN ('130') AND AA.DFO_STAT_SUBAREA_CODE IN (3) AND 
             COALESCE(BB.Best_Lat,0)>51.93333) THEN '5E'
     ELSE '0' END AS GMA,                                                        -- B02_Fishing_Event
-  'temp' = CASE WHEN AA.FE_BOTTOM_WATER_TEMPERATURE>30 THEN NULL
-    ELSE AA.FE_BOTTOM_WATER_TEMPERATURE END,                                    -- B02_Fishing_Event
   'catch' = AA.CATCH_WEIGHT,                                                    -- B03_Catch
   'density' = (CASE -- this calculation is sensitive to zero-values 
     WHEN AA.CATCH_WEIGHT IS NULL OR TSP.DISTANCE IS NULL OR TSP.DISTANCE<=0 
       OR TSP.DOORSPREAD IS NULL OR TSP.DOORSPREAD<=0 THEN NULL
     ELSE 1000.*AA.CATCH_WEIGHT / (TSP.DISTANCE*TSP.DOORSPREAD) END)
 FROM 
-  #BestMorpho BM RIGHT OUTER JOIN
-  (#SpecAtts TT RIGHT OUTER JOIN
-  (#TripSurv TSG RIGHT OUTER JOIN
-  (#BestEvents BB RIGHT OUTER JOIN 
-  (#B01B05 AA LEFT OUTER JOIN
-  #TSpecs TSP ON
-    TSP.TRIP_ID = AA.TRIP_ID AND
-    TSP.FISHING_EVENT_ID = AA.FISHING_EVENT_ID) ON
-    AA.TRIP_ID = BB.TRIP_ID AND
-    AA.FISHING_EVENT_ID = BB.FISHING_EVENT_ID AND
-    AA.FE_MAJOR_LEVEL_ID = BB.FE_MAJOR_LEVEL_ID) ON
-    TSG.TRIP_ID = AA.TRIP_ID AND
-    TSG.GROUPING_CODE = AA.GROUPING_CODE) ON
-    TT.SAMPLE_ID = AA.SAMPLE_ID AND
-    TT.SPECIMEN_ID = AA.SPECIMEN_ID) ON
-    BM.SAMPLE_ID = AA.SAMPLE_ID AND
-    BM.SPECIMEN_ID = AA.SPECIMEN_ID
+  #B01B05 AA 
+  LEFT OUTER JOIN
+  #BestEvents BB  ON
+     AA.TRIP_ID = BB.TRIP_ID AND
+     AA.FISHING_EVENT_ID = BB.FISHING_EVENT_ID AND
+    AA.FE_MAJOR_LEVEL_ID = BB.FE_MAJOR_LEVEL_ID 
+  LEFT OUTER JOIN 
+  #TSpecs TSP  ON
+     AA.TRIP_ID = TSP.TRIP_ID AND
+     AA.FISHING_EVENT_ID = TSP.FISHING_EVENT_ID
+  LEFT OUTER JOIN
+  #TripSurv TSG  ON
+    AA.TRIP_ID = TSG.TRIP_ID AND
+    AA.GROUPING_CODE = TSG.GROUPING_CODE
+  LEFT OUTER JOIN
+  #BestMorpho BM  ON
+    AA.SAMPLE_ID = BM.SAMPLE_ID AND
+    AA.SPECIMEN_ID = BM.SPECIMEN_ID
+  LEFT OUTER JOIN
+  #SpecAtts TT  ON
+    AA.SAMPLE_ID = TT.SAMPLE_ID AND
+    AA.SPECIMEN_ID = TT.SPECIMEN_ID
 WHERE 
   AA.SPECIES_CODE IN (@sppcode) AND
   AA.MAJOR_STAT_AREA_CODE IN (@major)
 
--- getData("gfb_bio.sql","GFBioSQL",strSpp="403")
+
+-- getData("gfb_bio.sql","GFBioSQL",strSpp="415")
 
 

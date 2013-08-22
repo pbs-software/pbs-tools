@@ -10,7 +10,7 @@
 }
 \usage{
 collectFigs(path=".", ext="eps", is.fnum=FALSE, 
-   fout="collectFigs", width=6, capskip=0)
+   fout="collectFigs", width=6, capskip=0, pattern=NULL)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -21,6 +21,7 @@ collectFigs(path=".", ext="eps", is.fnum=FALSE,
   \item{fout}{file name prefix of the output file.}
   \item{width}{width (inches) to render each figure in the collection.}
   \item{capskip}{space (pt) between each figure and its caption (negative values reduce the space).}
+  \item{pattern}{specify a pattern of figure files to collect if not all desired.}
 }
 \details{
   The code constructs a \code{.tex} file that uses all available 

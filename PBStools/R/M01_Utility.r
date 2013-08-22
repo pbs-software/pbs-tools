@@ -3,7 +3,6 @@
 # -----------------
 #  biteData........Subsets a data matrix/frame using input vector.
 #  chewData........Remove records that contribute little information to factor categories.
-#  collectFigs     Collect encapsulated postscript figures into one document.
 #  confODBC........Set up an ODBC User Data Source Name (DSN).
 #  convFY..........Convert dates into fishing years.
 #  convYM..........Convert date limits into a vector of year-months (YYY-MM).
@@ -20,7 +19,6 @@
 #  isThere.........Check to see if object physically exists in the specified environment.
 #  lenv............Get the local/parent/global environment.
 #  listTables......List tables in specified SQL, ORA, or MDB database.
-#  makeLHT         Make a longtable header for printing an xtable
 #  prime...........Report the prime numbers given an integer vector.
 #  revStr..........Reverse characters in a string.
 #  runModules......Display a master GUI to display modules.
@@ -73,67 +71,6 @@ chewData=function(dat,fac,nmin=3,na.rm=TRUE) {
 	dat=dat[is.element(dat[,fac],names(ndat)),]
 	return(dat) }
 
-#collectFigs----------------------------2013-01-16
-#  Collect encapsulated postscript figures into one document.
-#-----------------------------------------------RH
-collectFigs = function(path=".", ext="eps", is.fnum=FALSE, 
-   fout="collectFigs", width=6, capskip=0) {
-	cwd = getwd(); on.exit(setwd(cwd))
-	suffix = paste("\\.",ext,"$",sep="")
-	figs = list.files(path=path,pattern=suffix)
-	figs = sort(figs); Nfigs = length(figs)
-	fnam = fcap = gsub(suffix,"",figs)
-	if (is.fnum)  # figure number already in file name
-		fcap = sub("-",": ",fcap) 
-	fcap = gsub("-"," ",fcap)
-	fcap = gsub("&","\\\\&",fcap)
-
-	# Start build tex file
-	ftex = c(
-	"\\documentclass[12pt]{article}",
-	"\\usepackage[top=0.8in, bottom=0.7in, left=1in, right=1in]{geometry} %  page margins",
-	"\\usepackage{epsfig}",
-	"\\usepackage[font=sf,labelfont=bf,labelsep=period,justification=raggedright]{caption}",
-	"\\usepackage{hyperref}",
-	paste("\\captionsetup[figure]{position=bottom,skip=",capskip,"pt}",sep=""),
-	"\\DeclareCaptionTextFormat{bookmark}{\\belowpdfbookmark{Fig \\thefigure. #1}{\\thefigure}#1}",
-	"\\captionsetup{textformat=bookmark}",
-	"",
-	"\\newcommand\\pbsfig[2]{ % filename is #1, text is #2",
-	"  \\begin{figure}[ht!]",
-	"  \\begin{center}",
-	paste("  \\epsfxsize=",width,"in",sep=""),
-	"  \\epsfbox{#1.eps}",
-	"  \\end{center}",
-	"  \\caption{#2 }",
-	"  \\label{fig:#1}",
-	"  \\end{figure} }",
-	"",
-	"\\begin{document}"
-	)
-	for (i in 1:Nfigs) {
-		ftex = c(ftex,paste("\\pbsfig{",fnam[i],"}{",fcap[i],"}",sep=""))
-		if (i%%6==0) ftex = c(ftex, "\\clearpage")
-	}
-	ftex = c(ftex, "\\end{document}")
-	writeLines(ftex,paste(path,"/",fout,".tex",sep=""))
-	setwd(path)
-	debris = list.files(pattern=paste("^",fout,sep=""))
-	debris = setdiff(debris,paste(fout,".tex",sep=""))
-	if (length(debris)>0)  file.remove(debris)
-	err = shell(cmd=paste("latex ",fout,".tex",sep=""),wait=TRUE)
-		if (err>0) stop("===== First latex call failed =====")
-	err = shell(cmd=paste("latex ",fout,".tex",sep=""),wait=TRUE)
-		if (err>0) stop("===== Second latex call failed =====")
-	# Create a ps file from a dvi file
-	err = shell(cmd=paste("dvips ",fout,".dvi",sep=""),wait=TRUE)
-		if (err>0) stop("===== The dvips call failed =====")
-	# Create a pdf from a ps file
-	err = shell(cmd=paste("ps2pdf ",fout,".ps",sep=""),wait=TRUE)
-		if (err>0) stop("===== The ps2pdf call failed =====")
-	invisible(ftex)
-}
-#--------------------------------------collectFigs
 
 #confODBC-------------------------------2010-06-02
 # Set up an ODBC User Data Source Name (DSN)
@@ -839,32 +776,6 @@ listTables <- function (dbName, pattern=NULL, path=getwd(),
 	invisible(tabs) }
 #---------------------------------------listTables
 
-#makeLTH--------------------------------2012-09-27
-# Make a longtable header for Sweave, source:
-# http://tex.stackexchange.com/questions/41067/caption-for-longtable-in-sweave?rq=1
-#-----------------------------------------------RH
-makeLTH <- function(xtab.table, table.caption, table.label) {
-	longtable.header <- paste(
-		paste("\\caption{", table.caption, "}",sep = "", collapse = ""),
-		paste("\\label{", table.label, "}\\\\ ",sep = "", collapse = ""),
-		"\\hline ",
-		attr(xtab.table, "names")[1],
-		paste(" &",attr(xtab.table, "names")[2:length(attr(xtab.table, "names"))],collapse = ""),
-		"\\\\\\hline ",
-		"\\endfirsthead ",
-		paste("\\multicolumn{",ncol(xtab.table),"}{l}{{\\tablename\\ \\thetable{} -- continued from previous page}}\\\\ ",sep = ""),
-		"\\hline ",
-		attr(xtab.table, "names")[1],
-		paste("&",attr(xtab.table, "names")[2:length(attr(xtab.table, "names"))],collapse = ""),
-		"\\\\\\hline ",
-		"\\endhead ",
-		"\\hline ",
-		paste("\\multicolumn{", as.character(ncol(xtab.table)), "}{r}{{\\footnotesize \\emph{Continued on next page}}}\\\\ ", sep = "", collapse = ""),
-		#"\\hline \\endfoot ",
-		"\\endfoot ","\\hline \\endlastfoot ",collapse = "")
-	return(longtable.header)
-}
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~makeLTH
 
 #prime----------------------------------2010-03-25
 # Report the prime numbers given an integer vector

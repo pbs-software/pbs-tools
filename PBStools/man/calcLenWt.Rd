@@ -16,12 +16,12 @@ calcLenWt(dat=bio440, strSpp="440", areas=NULL,
   \item{areas}{area list named by area type (e.g., \code{major}, \code{srfa}, etc.). }
   \item{ttype}{list of trip types (1=non-observed commercial, 2=research, 3=survey, 4=observed commercial). }
   \item{stype}{list of sample types (see GFBioSQL for codes).}
-  \item{plotit}{logical: if \code{TRUE}, plot the results to a raster image file (\code{.png}).}
+  \item{plotit}{logical -- if \code{TRUE}, plot the results to a postscript file (\code{.pdf}).}
 }
 \details{
   The functions spits results out to a comma-delimited text file (\code{.csv}). If the user 
   specifies \code{plotit=TRUE} then image files are also generated. The code is currently set 
-  to spew \code{.png} files but with some code tweaking, other file types could be generated.
+  to spew \code{.pdf} files but with some code tweaking, other file types could be generated.
 }
 \author{
   Rowan Haigh, Pacific Biological Station, Fisheries and Oceans Canada, Nanaimo BC

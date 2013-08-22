@@ -5,7 +5,12 @@ Authors: RH  = Rowan Haigh
          LL  = Lisa Lacko
          JTS = Jon T. Schnute
 ------------------------------
-25  2013-06-27
+1.25  2013-08-22
+  - Modified function `weightBio` to fix some small bugs. (RH 8/22)
+  - Added new function `texArray` to convert arrays, data frames and vectors into a two-dimensional longtable in LaTeX code. (RH 8/21)
+  - Created new module called `M08_texCrap.r` to house functions related to LaTeX manipulation and document creation. (RH 8/20)
+  - Added new SQL query `gfb_rcatORF.sql` to grab catch records for a species caught in Research/Surveys. (RH 8/20)
+  - Modified functions `buildCatch`, `calcRatio`, and `collectFigs` for Silvergrey Rockfish catch reconstruction. (RH 7/19)
   - Modified function `calcLenWt` to subset any type of area (e.g., `major`, `PMFC`, `GMA`, etc.) if available in data object. (RH 6/27)
   - Added new function `getODBC` to get a list of the ODBC drivers on a user's Windows system. (RH 6/26)
   - Modified function `.getSQLdata` to use the Oracle ODBC driver `Oracle in OraClient11g_home1` instead of `Oracle ODBC Driver`. (RH 6/25)
