@@ -91,6 +91,10 @@ FROM
 GROUP BY SP.SPECIES_CDE, SP.SPECIES_DESC
 ORDER BY SUM(AC.LANDED + AC.DISCARDED) / @total DESC
 
--- getData("pht_concurrent.sql","PacHarvest",strSpp="424",mindep=49,maxdep=101)
--- getData("pht_concurrent.sql","PacHarvest",strSpp="396",major=5:7,mindep=70,maxdep=441) -- QCS (567)
+-- data(species); fish=species$code[species$fish]
+-- mess=paste("getData(\"pht_concurrent.sql\",\"PacHarvest\",strSpp=c(\"",paste(fish,collapse="\",\""),"\"),mindep=330,maxdep=500,dummy=1)",sep="") -- all fish
+-- eval(parse(text=mess))
+
+-- getData("pht_concurrent.sql","PacHarvest",strSpp="424",mindep=49,maxdep=101,dummy=1)  -- dummy essential to make query work
+-- getData("pht_concurrent.sql","PacHarvest",strSpp="396",major=5:7,mindep=70,maxdep=441,dummy=1) -- QCS (567)
 

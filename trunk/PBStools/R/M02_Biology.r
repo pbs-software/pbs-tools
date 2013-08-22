@@ -21,7 +21,7 @@
 #  weightBio.......Weight age/length frequencies/proportions by catch.
 #===============================================================================
 
-#calcLenWt------------------------------2013-06-27
+#calcLenWt------------------------------2013-08-06
 # Calculate length-weight relationship for a fish.
 #-----------------------------------------------RH
 calcLenWt <- function(dat=bio440, strSpp="440",
@@ -48,10 +48,25 @@ calcLenWt <- function(dat=bio440, strSpp="440",
 		win.metafile(plotName, width=9, height=5)
 		par(mfrow=rc,cex=1.5)
 		par(mar=c(4,4,1,1),oma=c(1,1,1,1)) }
+
+	# Setup the eps device for import to word, half page with 2 plots side by side
+	createEPS <- function(plotName,rc=c(2,2)) {
+		plotName <- paste(plotName,"eps",sep=".")
+		postscript(plotName, width=8.5, height=11, paper="special")
+		par(mfrow=rc,cex=1.2)
+		par(mar=c(4,4,1,1),oma=c(1,1,1,1)) }
+
+	# Setup the eps device for import to word, half page with 2 plots side by side
+	createPDF <- function(plotName,rc=c(2,2)) {
+		plotName <- paste(plotName,"pdf",sep=".")
+		pdf(plotName, width=8.5, height=11, paper="special")
+		par(mfrow=rc,cex=1.2,mgp=c(1.5,0.5,0))
+		par(mar=c(3,3,1,1),oma=c(1,1,1,1)) }
 	#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~Subfunctions
+
 	assign("PBStool",list(module="M02_Biology",call=match.call(),args=args(calcLenWt)),envir=.PBStoolEnv)
 
-	dat <- dat[!is.na(dat$wt) & !is.na(dat$len) & !is.na(dat$sex),]
+	dat <- dat[dat$len>=1 & !is.na(dat$len) & dat$wt>0 & !is.na(dat$wt) & !is.na(dat$sex),]
 	# SQL code `gfb_bio.sql` already converts fish to cm and kg
 	#dat$len <- dat$len/10 # change from mm to cm
 	#dat$wt  <- dat$wt/1000 # change from g to kg
@@ -83,7 +98,7 @@ calcLenWt <- function(dat=bio440, strSpp="440",
 			ttName <- paste(paste(tt,collapse="|",sep=""),sep="")
 			plotName <- gsub("_","(",gsub("\\|","+",arName))
 			plotName <- paste("LenWt-",strSpp,"-",plotName,")-tt(",gsub("\\|","",ttName),")",sep="")
-			if (plotit) createPNG(plotName)
+			if (plotit) createPDF(plotName)
 			else par(mfrow=c(2,2),cex=2.0,mar=c(3.5,3,1.5,.1),oma=c(0,0,0,0),mgp=c(2,.5,0),cex=1)
 			for (i in 1:length(sex)) {
 				ii   <- sex[[i]]; iii <- names(sex)[i]
@@ -122,6 +137,7 @@ calcLenWt <- function(dat=bio440, strSpp="440",
 	} } 
 	ttget(PBStool); PBStool$out=out; PBStool$dat=dat
 
+#browser();return()
 	# Output table for Pre-COSEWIC
 	pout = out
 	fn <- paste("LenWt-",strSpp,".csv",sep="")
@@ -428,15 +444,18 @@ calcSG <- function(dat=pop.age, strSpp="", yfld="len", tau=c(5,40),
 	invisible() }
 #-------------------------------------------calcSG
 
-#calcVB---------------------------------2013-01-28
+
+#calcVB---------------------------------2013-08-06
 # Calculate von Bertalanffy growth curve.
 # Note: ameth=3 otoliths broken & burnt
+# areas: list of lists
 #-----------------------------------------------RH
 calcVB <- function(dat=pop.age, strSpp="", yfld="len", fixt0=FALSE, 
      areas=list(major=NULL, minor=NULL, locality=NULL, srfa=NULL,
      srfs=NULL, popa=NULL), ttype=list(c(1,4),c(2,3)), stype=NULL,
      year=NULL, ameth=3, allTT=TRUE, jit=c(0,0), 
-     pix=FALSE, wmf=FALSE, singles=FALSE, pages=FALSE, ioenv=.GlobalEnv) {
+     pix=FALSE, wmf=FALSE, eps=FALSE, pdf=FALSE,
+     singles=FALSE, pages=FALSE, ioenv=.GlobalEnv) {
 
 	assign("PBStool",list(module="M02_Biology",call=match.call(),args=args(calcVB),ioenv=ioenv),envir=.PBStoolEnv)
 	#Subfunctions----------------------------------
@@ -456,6 +475,16 @@ calcVB <- function(dat=pop.age, strSpp="", yfld="len", fixt0=FALSE,
 		plotName <- paste(plotName,"wmf",sep=".")
 		win.metafile(plotName, width=6.5, height=3*rc[1])
 		expandGraph(mfrow=rc,mar=c(2.75,2.5,1.5,.1),oma=c(0,0,0,0),mgp=c(1.5,.5,0),cex=0.8) }
+	# Setup the eps device for import to word, half page with 2 plots side by side
+	createEPS <- function(plotName,rc=c(1,3)) {
+		plotName <- paste(plotName,"eps",sep=".")
+		postscript(plotName, width=8.5, height=11, paper="special")
+		expandGraph(mfrow=rc,mar=c(2.75,2.5,1.5,.1),oma=c(1,1,1,1),mgp=c(1.5,.5,0),cex=0.8) }
+	# Setup the eps device for import to word, half page with 2 plots side by side
+	createPDF <- function(plotName,rc=c(1,3)) {
+		plotName <- paste(plotName,"pdf",sep=".")
+		pdf(plotName, width=8.5, height=11, paper="special")
+		expandGraph(mfrow=rc,mar=c(2.75,2.5,1.5,.1),oma=c(1,1,1,1),mgp=c(1.5,.5,0),cex=0.8) }
 	#----------------------------------Subfunctions
 
 	unpackList(areas,scope="L")
@@ -487,11 +516,14 @@ calcVB <- function(dat=pop.age, strSpp="", yfld="len", fixt0=FALSE,
 		if (strSpp=="394" || strSpp=="RER") z=dat$yval>100
 		if (strSpp=="396" || strSpp=="POP") z=dat$yval>75 & dat$yval<600
 		if (strSpp=="440" || strSpp=="YMR") {
-			z1=dat$yval>=210 & dat$yval<=600; z2=dat$age<=90; z=z1&z2 }
-		dat$yval <- dat$yval/10. }  # change from mm to cm
+			z1=dat$yval>=210 & dat$yval<=600; z2=dat$age<=90; z=z1&z2
+		}
+		#dat$yval <- dat$yval/10.  # change from mm to cm
+		}
 	if (isWt) {
 		if (strSpp=="396" || strSpp=="POP") z=dat$yval<2000
-		dat$yval = dat$yval/1000. } # change from g to kg
+		#dat$yval = dat$yval/1000. # change from g to kg
+	} 
 	if (!all(z==TRUE)) dat=dat[z,] # keep good, remove outliers
 
 	aflds=c("major","minor","locality","srfa","srfs","popa")
@@ -501,18 +533,22 @@ calcVB <- function(dat=pop.age, strSpp="", yfld="len", fixt0=FALSE,
 		expr=paste("dat=biteData(dat,",i,")",sep=""); eval(parse(text=expr))
 		if (any(i==aflds)) eval(parse(text=paste("yarea=union(yarea,",i,")"))) }
 	if (nrow(dat)==0) {
-		if (pix|wmf) return()
+		if (eps|pdf|pix|wmf) return()
 		else showError("No records selected for specified qualification") }
+
 
 	if (!allTT) ttype=sort(unique(dat$ttype))
 	tlab=sapply(ttype,function(x){paste(paste(x,collapse="",sep=""),sep="")},simplify=TRUE); ntt=length(tlab)
 	alist=sapply(areas,function(x){sapply(x,function(x){paste(x,collapse="")},simplify=FALSE)},simplify=FALSE)
+	##alist=sapply(areas,function(x){paste(x,collapse="")},simplify=FALSE)
 	alen=sapply(alist,length)
 	if (all(alen==0)) {
 		areas=list(area="NA"); alen=1; names(alen)="area"; alab="areaNA"
 		dat$area=rep("NA",nrow(dat)) }
-	else 
-		alab=paste(rep(names(alist),each=alen),unlist(alist),sep="")
+	else {
+		alab = paste(rep(names(alist),each=alen),unlist(alist),sep="")
+		##alab = paste(names(alist),unlist(alist),sep="")
+	}
 	nar=length(alab)
 
 	xlim <- c(0,max(dat$age,na.rm=TRUE))
@@ -537,11 +573,14 @@ calcVB <- function(dat=pop.age, strSpp="", yfld="len", fixt0=FALSE,
 	adm=paste("fits-",plotName,".dat",sep="")
 	#------------------------------------
 	
-	if (!pix&!wmf) { resetGraph()
+	if (!eps&!pdf&!pix&!wmf) { resetGraph()
 		expandGraph(mfrow=c(length(ttype),3),mar=c(2.75,2.5,1.5,.1),oma=c(0,0,0,0),mgp=c(1.5,.5,0),cex=0.8) }
-	else if ((!singles&!pages) && (pix|wmf)) {
-		if (pix)      createPNG(plotName,rc=c(length(alab)*length(tlab),3))
-		else if (wmf) createWMF(plotName,rc=c(length(alab)*length(tlab),3)) }
+	else if ((!singles&!pages) && (eps|pdf|pix|wmf)) {
+		if (eps)      createEPS(plotName,rc=c(length(alab)*length(tlab),3))
+		else if (pdf) createPDF(plotName,rc=c(length(alab)*length(tlab),3))
+		else if (pix) createPNG(plotName,rc=c(length(alab)*length(tlab),3))
+		else if (wmf) createWMF(plotName,rc=c(length(alab)*length(tlab),3))
+	}
 
 	fits=list()
 	if (!is.null(year)) yrlim = range(year)
@@ -557,17 +596,23 @@ calcVB <- function(dat=pop.age, strSpp="", yfld="len", fixt0=FALSE,
 	for (a in names(areas)) {
 		for (aa in 1:alen[a]) {
 			aaa=areas[[a]][[aa]]; assign(a,aaa)
+			##aaa=areas[[a]]; assign(a,aaa)
 			expr=paste("adat=biteData(dat,",a,")",sep=""); eval(parse(text=expr))
 			amat=paste(a,"",paste(aaa,collapse=""),sep="")
 			aaName <- paste(pName,strSpp,"-area(",amat,")",tName,"-VB",sep="")
-			if (pages && pix)      createPNG(aaName,rc=c(length(tlab),3))
+#browser();return()
+			if (pages && eps)      createEPS(aaName,rc=c(length(tlab),3))
+			else if (pages && pdf) createPDF(aaName,rc=c(length(tlab),3))
+			else if (pages && pix) createPNG(aaName,rc=c(length(tlab),3))
 			else if (pages && wmf) createWMF(aaName,rc=c(length(tlab),3))
 			for (tt in ttype) {
 				tmat=paste(tt,collapse="")
 				tdat <- adat[is.element(adat$ttype,tt),]
 				if (nrow(tdat)==0) next
 				ttName <- paste(pName,strSpp,aName,paste("-tt(",tmat,")",sep=""),"-VB",sep="")
-				if (singles && pix) createPNG(ttName)
+				if (singles && eps)      createEPS(ttName)
+				else if (singles && pdf) createPDF(ttName)
+				else if (singles && pix) createPNG(ttName)
 				else if (singles && wmf) createWMF(ttName)
 				for (i in 1:length(sex)) {
 					ii   <- sex[[i]]; iii <- names(sex)[i]
@@ -616,7 +661,7 @@ calcVB <- function(dat=pop.age, strSpp="", yfld="len", fixt0=FALSE,
 							fits[[amat]][[tmat]][[iii]] = list(xpred=xpred,ypred=ypred)
 							lines(xpred,ypred,col="blue", lwd=2)
 							mw <- format(round(mean(idat$wt,na.rm=TRUE),1),nsmall=1)
-							posX=0.6; posY=.25; difY=.05; cexlab=ifelse(pix|wmf,0.7,0.8)
+							posX=0.6; posY=.25; difY=.05; cexlab=ifelse(eps|pdf|pix|wmf,0.7,0.8)
 							addLabel(posX,posY-difY*0,bquote(bolditalic(n)==.(format(n,big.mark=","))),adj=0,cex=cexlab)
 							addLabel(posX,posY-difY*1,bquote(bolditalic(Y)[infinity] == .(par1)),adj=0,cex=cexlab)
 							addLabel(posX,posY-difY*2,bquote(bolditalic(K)==.(par2)),adj=0,cex=cexlab)
@@ -626,7 +671,7 @@ calcVB <- function(dat=pop.age, strSpp="", yfld="len", fixt0=FALSE,
 						}
 					}
 				}
-				if (singles && (pix|wmf)) dev.off()
+				if (singles && (eps|pdf|pix|wmf)) dev.off()
 				cat(paste("\nArea: ",amat,"   Trip type: ",tmat,sep=""),"\n",file=csv,append=TRUE)
 				cat("age,females,males,M+F","\n",file=csv,append=TRUE)
 				mf=cbind(sapply(fits[[amat]][[tmat]][["Females"]],function(x){x},simplify=TRUE),
@@ -642,14 +687,20 @@ calcVB <- function(dat=pop.age, strSpp="", yfld="len", fixt0=FALSE,
 				cat(paste(apply(mess,1,paste,collapse=""),collapse="\n"),sep="",file=adm,append=TRUE)
 				cat("\n\n",file=adm,append=TRUE) 
 			}
-			if (pages && (pix|wmf)) dev.off()
+			if (pages && (eps|pdf|pix|wmf)) dev.off()
 	}	}
-	if ((!singles&!pages) && (pix|wmf)) dev.off()
+	if ((!singles&!pages) && (eps|pdf|pix|wmf)) dev.off()
 	assign(fName,fits,envir=.PBStoolEnv)
 	stuff=c("out","pVec","xlim","ylim","alab","tlab","aName","tName","aaName","ttName","strSpp","fits")
 	packList(stuff,"PBStool",tenv=.PBStoolEnv)
-	invisible() }
+	omess = c( 
+		paste("assign(\"vonB",strSpp,"\",out); ",sep=""),
+		paste("save(\"vonB",strSpp,"\",file=\"vonB",strSpp,".rda\")",sep="")
+	)
+	eval(parse(text=paste(omess,collapse="")))
+	invisible(out) }
 #-------------------------------------------calcVB
+
 
 #compCsum-------------------------------2013-01-28
 # Compare cumulative sum curves
@@ -1344,7 +1395,7 @@ mapMaturity <- function (dat=pop.age, strSpp="", mats=1:7, sex=1:2,
 	par(new=FALSE); invisible() }
 #--------------------------------------mapMaturity
 
-#plotProp-------------------------------2013-01-28
+#plotProp-------------------------------2013-07-04
 # Plot proportion-at-age (or length) from GFBio specimen data.
 #-----------------------------------------------RH
 plotProp <- function(fnam="pop.age",hnam=NULL, ioenv=.GlobalEnv,...) {
@@ -1509,11 +1560,15 @@ plotProp <- function(fnam="pop.age",hnam=NULL, ioenv=.GlobalEnv,...) {
 
 	stuff=c("dat","flds","XLIM","xlim","YLIM","ylim","xval","yval","zmat",
 			"freak","nSID","ylist","ycount","pa","Na","xy","yy","sex","ttype","stype","areas")
-	packList(stuff,"PBStool",tenv=.PBStoolEnv)
+	#packList(stuff,"PBStool",tenv=.PBStoolEnv) #way too slow
+	ttget(PBStool)
+	for (i in stuff)
+		eval(parse(text=paste("PBStool$",i,"=",i,sep="")))
+	ttput(PBStool)
 	.plotProp.plotP()
 	invisible }
 
-#.plotProp.plotP------------------------2010-10-20
+#.plotProp.plotP------------------------2013-07-04
 # Guts of the plotting routine.
 #-----------------------------------------------RH
 .plotProp.plotP <- function(wmf=FALSE) {                # Start blowing bubbles
@@ -1608,7 +1663,12 @@ plotProp <- function(fnam="pop.age",hnam=NULL, ioenv=.GlobalEnv,...) {
 		text(Spos,usr[3]+0.02*dyu,Slab,col=tcol,srt=270,adj=c(1,.5),cex=0.8)}
 	)
 	if (wmf) dev.off()
-	packList(c("infolab","Nlab","Slab","Npos","Spos","plotname"),"PBStool",tenv=.PBStoolEnv)
+	#packList(c("infolab","Nlab","Slab","Npos","Spos","plotname"),"PBStool",tenv=.PBStoolEnv)
+	stuff=c("infolab","Nlab","Slab","Npos","Spos","plotname")
+	ttget(PBStool)
+	for (i in stuff)
+		eval(parse(text=paste("PBStool$",i,"=",i,sep="")))
+	ttput(PBStool)
 	invisible() }
 
 #.plotProp.resetP-----------------------2010-10-20
@@ -1641,7 +1701,8 @@ plotProp <- function(fnam="pop.age",hnam=NULL, ioenv=.GlobalEnv,...) {
     "Y"), class = "data.frame"))
 	setWinVal(resList,winName="window")
 	invisible() }
-#-----------------------------------------plotProp
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotProp
+
 
 #predictRER-----------------------------2011-06-14
 # Discriminant function for the accurate classification
@@ -2014,7 +2075,8 @@ reportCatchAge <- function(prefix="pop", path=getwd(), hnam=NULL, ...) {
 	invisible() }
 #-----------------------------------reportCatchAge
 
-#requestAges----------------------------2013-05-02
+
+#requestAges----------------------------2013-07-04
 # Determine which otoliths to sample for ageing requests.
 # Note: only have to use sql=TRUE once for each species 
 # using any year before querying a group of years.
@@ -2023,8 +2085,8 @@ reportCatchAge <- function(prefix="pop", path=getwd(), hnam=NULL, ...) {
 requestAges=function(strSpp, nage=500, year=2012, 
      areas=list(major=3:9, minor=NULL), ttype=c(1,4),
      sex=1:2, nfld = "nallo", sql=TRUE, only.sql=FALSE, bySID=FALSE,
-     spath=.getSpath(), uid=Sys.info()["user"], pwd=uid, ...) {
-
+     spath=.getSpath(), uid=Sys.info()["user"], pwd=uid, ...)
+{
 	on.exit(gc())
 	if (!only.sql) {
 	assign("PBStool",list(module="M02_Biology",call=match.call(),args=args(requestAges)),envir=.PBStoolEnv)
@@ -2307,8 +2369,13 @@ requestAges=function(strSpp, nage=500, year=2012,
 #if (storageID=="17Q+17R") {browser();return()}
 	} }
 	else {
+		isUNK = is.element(sampuse$storageID,"UNK")
+		if (any(isUNK)) sampuse$storageID[isUNK] = paste("UNK",sampuse$TID_gfb,sep="")
 		tray = sampuse$storageID; names(tray)=sampuse$tid
-		trid = sort(unique(tray))
+		oldtrid = sort(unique(tray))
+		tdate.storage=sapply(split(sampuse$tdate,sampuse$storageID),function(x){ xmin=min(x);substring(xmin,1,10)})
+		trid = names(tdate.storage[order(tdate.storage)])
+#browser();return()
 		for (i in trid) {
 			ii = names(tray[is.element(tray,i)])
 			Otos = sort(unique(as.vector(unlist(Osamp[ii]))))
@@ -2320,10 +2387,10 @@ requestAges=function(strSpp, nage=500, year=2012,
 			pcells = match(Otos,ocells)                   # cell positions to take samples
 			pcells = pcells[pcells>0 & !is.na(pcells)]    # remove NAs caused by a samples spanning trays
 			otos   = ocells[pcells]                       # otoliths specific to this tray
-#if (i=="18L:2") {browser();return()}
-#browser();return()
 			TRAY   = array("",dim=c(5,20),dimnames=list(LETTERS[1:5],1:20))
 			serT   = matrix(seq(ocells[1],ocells[1]+99,1),nrow=5,ncol=20,byrow=TRUE)
+			#if (i=="16X:1") {browser();return()}         # there are apparently 103 Shortraker otoliths in this trip (16X:1)
+			otos   = otos[otos%in%serT]                   # tray only has room for 100; be sure extras are excluded
 			TRAY[pmatch(otos,serT)] = otos
 			catnip("Vessel,",vessel[1],",\n",file=fnam,append=TRUE)
 			catnip("Trip date,",format(tdate[1],format="%d-%b-%Y"),",",file=fnam,append=TRUE)
@@ -2390,6 +2457,7 @@ simRER = function(Nfish) {
 	attr(SLN,"spp") = "RER"
 	return(SLN) }
 
+
 #sumBioTabs-----------------------------2009-11-25
 # Summarize frequency occurrence of biological samples
 # and specimens and send output to a data table.
@@ -2424,7 +2492,8 @@ sumBioTabs=function(dat, fnam="sumBioTab.csv", samps=TRUE, specs=TRUE,
 	} }
 #---------------------------------------sumBioTabs
 
-#weightBio------------------------------2013-01-28
+
+#weightBio------------------------------2013-08-20
 # Weight age|length frequencies|proportions by catch|density.
 #   adat = age123 from query 'gfb_bio.sql'    -- e.g., getData("gfb_bio.sql","GFBioSQL",strSpp="439",path=.getSpath()); bio439=processBio()
 #   cdat = cat123.wB from function 'getCatch' -- e.g., getCatch("439",pwd="myGFSHpwd",sql=TRUE)
@@ -2439,8 +2508,8 @@ weightBio = function(adat, cdat, sunit="TID", sweight="catch",
      #regimes=list(1926:1929,1939:1946,1977:1978,1980:1981,1983:1984,1986:1988,1991:1992,1995:2006), #ALPI
      regimes=list(1900:1908,1912:1915,1923:1929,1934:1943,1957:1960,1976:1988,1992:1998,2002:2006),  #PDO
      #regimes=list(1912:1915,1923:1929,1931,1934:1943,1947,1957:1958,1960,1976:1988,1992:1993,1995:1998,2002:2006,2010), #PDO
-     layout="portrait", wmf=FALSE, pix=FALSE, eps=FALSE, longside=10, ioenv=.GlobalEnv, ...) {
-
+     layout="portrait", wmf=FALSE, pix=FALSE, eps=FALSE, pdf=FALSE, longside=10, ioenv=.GlobalEnv, ...)
+{
 	expr = paste("getFile(",substitute(adat),",",substitute(cdat),",ioenv=ioenv,try.all.frames=TRUE,tenv=penv())",sep="")
 	eval(parse(text=expr))
 	strSpp=attributes(adat)$spp; if(is.null(strSpp)) strSpp="000"
@@ -2520,6 +2589,7 @@ weightBio = function(adat, cdat, sunit="TID", sweight="catch",
 		ageLEV=sort(unique(SLEV))
 		adat$SLEV = SLEV                  # only used for surveys to get all portential stratum areas later
 	}
+	packList("ages","PBStool",tenv=.PBStoolEnv)
 #browser();return()
 
 	# Collect age frequency by sample unit and calculate proportions
@@ -2606,6 +2676,7 @@ weightBio = function(adat, cdat, sunit="TID", sweight="catch",
 		clev   = convYP(catdat$date,per)       # catch level year.period
 	catdat$lev = clev
 	#catdat=catdat[is.element(catdat$per,agelev),]  # only look at fishery catch that matches age periods
+	packList("catdat","PBStool",tenv=.PBStoolEnv)
 
 	# Fishery catch proportions
 	if (is.element("catKg",names(catdat)))      Ccat = split(catdat$catKg,catdat$lev)
@@ -2736,9 +2807,10 @@ weightBio = function(adat, cdat, sunit="TID", sweight="catch",
 	if (sweight=="density") { # ensure all stratum areas are populated
 #browser();return()
 		if (dim(sumtab)[1]>1) { #areas = sumtab[,,"Fcat"]
-			areas = apply(sumtab[,,"Fcat"],2,function(x){mean(x[!is.na(x)&x>0])})
-			Ftab  = sumtab[,names(areas),"Fcat"]
-			Atab  = array(rep(areas,each=dim(Ftab)[[1]]),dim=dim(Ftab),dimnames=dimnames(Ftab))
+			areas = apply(sumtab[,,"Fcat",drop=FALSE],2,function(x){mean(x[!is.na(x)&x>0])})
+			Ftab  = sumtab[,names(areas),"Fcat",drop=FALSE]
+			Atab  = array(rep(areas,each=dim(Ftab)[[1]]),dim=dim(sumtab)[1:2],dimnames=dimnames(sumtab)[1:2])
+			#Atab  = array(rep(areas,each=dim(Ftab)[[1]]),dim=dim(Ftab),dimnames=dimnames(Ftab))
 			Atab[apply(Ftab,1,function(x){all(x==0)}),]=0 # revert to zero for non-sampled years (easier for reporting later)
 			sumtab[,,"Fcat"]=Atab
 		}
@@ -2854,7 +2926,7 @@ weightBio = function(adat, cdat, sunit="TID", sweight="catch",
 		#else
 		#	plotname=paste(c(plotname,"-tt(",ttype,")"),collapse="")
 		#if (!is.null(major)) plotname=paste(c(plotname,"-major(",paste(major,collapse=""),")"),collapse="")
-		plotname=paste(plotname,ifelse(wmf,".wmf",ifelse(pix,".png",ifelse(eps,".eps",""))),sep="")
+		plotname=paste(plotname,ifelse(wmf,".wmf",ifelse(pix,".png",ifelse(eps,".eps",ifelse(pdf,".pdf","")))),sep="")
 
 		display = agetab
 		reject  = apply(display[,,,"n",drop=FALSE],2:3,sum) < Nmin # do not display these years
@@ -2893,8 +2965,11 @@ weightBio = function(adat, cdat, sunit="TID", sweight="catch",
 		else if (eps) # postscript orientation is hopelessly F'ed up
 			postscript(plotname,width=switch(nlay,shortside,longside,longside),
 			height=switch(nlay,longside,shortside,longside),horizontal=FALSE,paper="special")
+		else if (pdf) # PDF file for convenience
+			pdf(plotname,width=switch(nlay,shortside,longside,longside),
+			height=switch(nlay,longside,shortside,longside),paper="special")
 		else resetGraph()
-		expandGraph(mfrow=c(rows,cols),mar=c(2.25,2.5,0.25,0.5),mgp=c(1.5,0.25,0))
+		expandGraph(mfrow=c(rows,cols),mar=c(2.25,2.5,0.25,0.5),mgp=c(1.5,0.25,0),oma=c(1,1,1,1))
 		clrs=rep(clrs,length(sex))[1:length(sex)]
 
 		for (k in sex) {
@@ -2972,10 +3047,10 @@ weightBio = function(adat, cdat, sunit="TID", sweight="catch",
 #browser();return()
 			par(new=FALSE)
 		}
-		if (wmf|pix|eps) dev.off()
+		if (wmf|pix|eps|pdf) dev.off()
 		packList(c("Amin","bigBub","reject", "display","plotname"), "PBStool",tenv=.PBStoolEnv)
 	}
 	invisible(agetab) }
-#^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^weightBio
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~weightBio
 
 

@@ -437,6 +437,7 @@ buildCatch=function(dbdat, sql=FALSE, strSpp="424", dfld="ORF",
 		packList(c("catmod","catmod0","catmod1","ctab","MM","mm","allhis"),"PBStool",tenv=.PBStoolEnv)
 	### Terminate here if all you want are the modern landings
 	if (!reconstruct) return(list(catmod0=catmod0,catmod1=catmod1,catmod=catmod)) 
+#browser();return()
 
 	### -------------------
 	### 3. Calculate ratios
@@ -512,11 +513,11 @@ buildCatch=function(dbdat, sql=FALSE, strSpp="424", dfld="ORF",
 			discat=PBSdat; dyrs=2000:2004 }
 		if (nrow(discat)==0) next
 		ologs[[kk]] = discat
-
 		for (d in 1:drN) { ### discard ratio combos 'drSpp'
 			dd=drate[d]
 			### if denominator is landed catch, allow zero-value denominators:
 			dzero=nzero=ifelse(drSpp[[d]][2]=="landed",TRUE,FALSE)
+#browser();return()
 			DRAT=calcRatio(discat,drSpp[[d]][1],drSpp[[d]][2],major=j,dzero=dzero,quiet=TRUE)
 			if (is.null(DRAT)) next
 			drat=apply(DRAT[is.element(rownames(DRAT),as.character(dyrs)),,drop=FALSE],2,mean,na.rm=TRUE)
@@ -744,7 +745,7 @@ buildCatch=function(dbdat, sql=FALSE, strSpp="424", dfld="ORF",
 		packList(c("plotname","clrs.major","clrs.fishery","fidlab"),"PBStool",tenv=.PBStoolEnv)
 		ttget(PBStool)
 		save("PBStool",file=paste("PBStool",strSpp,".rda",sep="")) }
-	collectFigs(path=".",ext="eps",fout=paste("Catch-Recon-Summary-",strSpp,sep=""),width=6.5)
+	collectFigs(path=".",ext="eps",fout=paste("Catch-Recon-Summary-",strSpp,sep=""),width=6.75,pattern="Catch-History")
 #browser();return()	
 	invisible(sppnew) }
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~buildCatch
@@ -851,6 +852,10 @@ plotRecon = function(dat=cat440rec, strSpp="440", major=c(1,3:9), fidout=10,
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotRecon
 
 #===============================================================================
+# SGR - Silvergrey Rockfish
+#x=buildCatch(sql=TRUE,strSpp="405",dfld="ORF",wmf=FALSE,pwd=c("pwd1","pdw2"),only.sql=TRUE)
+#x=buildCatch(cat405orf,strSpp="405",dfld="TRF",eps=TRUE)
+
 # YYR - Yelloweye rockfish
 #x=buildCatch(sql=TRUE,strSpp="442",dfld="ORF",wmf=FALSE,pwd=c("pwd1","pwd2"),only.sql=TRUE)
 #x=buildCatch(cat442orf,strSpp="442",dfld="ORF",eps=TRUE)

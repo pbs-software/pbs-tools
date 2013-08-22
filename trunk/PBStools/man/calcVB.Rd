@@ -6,11 +6,13 @@
   data using a von Bertalanffy growth model.
 }
 \usage{
-calcVB(dat=pop.age, strSpp="", yfld="len", fixt0=FALSE, 
+calcVB( dat=pop.age, strSpp="", yfld="len", fixt0=FALSE, 
      areas=list(major=NULL, minor=NULL, locality=NULL, srfa=NULL,
      srfs=NULL, popa=NULL), ttype=list(c(1,4),c(2,3)), stype=NULL,
      year=NULL, ameth=3, allTT=TRUE, jit=c(0,0), 
-     pix=FALSE, wmf=FALSE, singles=FALSE, pages=FALSE, ioenv=.GlobalEnv)
+     pix=FALSE, wmf=FALSE, eps=FALSE, pdf=FALSE,
+     singles=FALSE, pages=FALSE, ioenv=.GlobalEnv )
+
 }
 \arguments{
   \item{dat}{biological data set with fields \code{yfld} and \code{age}.}
@@ -28,17 +30,19 @@ calcVB(dat=pop.age, strSpp="", yfld="len", fixt0=FALSE,
   \item{allTT}{logical: if \code{TRUE}, force the display of all trip types either specified or available.}
   \item{jit}{two-element vector specifying amount of jittering to apply in the 
     x- and -y-directions respectively. (See \code{jitter} in the \pkg{base} package.)}
-  \item{pix}{logical: if \code{TRUE}, send plot to a \code{.png} file.}
-  \item{wmf}{logical: if \code{TRUE}, send plot to a \code{.wmf} file.}
-  \item{singles}{logical: if \code{TRUE} and \code{pix|wmf}, send each area/trip type combination to separate files.}
-  \item{pages}{logical: if \code{TRUE} and \code{pix|wmf}, send each page of area plots to separate files.}
+  \item{pix}{logical -- if \code{TRUE}, send plot to a raster \code{.png} file.}
+  \item{wmf}{logical -- if \code{TRUE}, send plot to a vector \code{.wmf} file.}
+  \item{eps}{logical -- if \code{TRUE}, send plot to a postscript \code{.eps} file.}
+  \item{pdf}{logical -- if \code{TRUE}, send plot to a postscript \code{.pdf} file.}
+  \item{singles}{logical: if \code{TRUE} and \code{eps|pdf|pix|wmf}, send each area/trip type combination to separate files.}
+  \item{pages}{logical: if \code{TRUE} and \code{eps|pdf|pix|wmf}, send each page of area plots to separate files.}
   \item{ioenv}{input/output environment for function input data and output results.}
 }
 \details{
   The function plots von Bertalanffy fits to length-age or weight-age data where each column 
   shows the fits for Males, Females, and M+F. If the data are plotted to the 
   screen device, each row shows the fits by trip type, and each page shows the 
-  fits by area. If plots are sent to image files (\code{.png} or \code{.wmf}),
+  fits by area. If plots are sent to image files (\code{.eps}, \code{pdf}, \code{.png} or \code{.wmf}),
   each trip type and area combination goes to separate image files (handy for
   stacking in a \code{.doc} file).
   
@@ -48,7 +52,7 @@ calcVB(dat=pop.age, strSpp="", yfld="len", fixt0=FALSE,
   Pacific Ocean Perch (\emph{Sebastes alutus}).
 }
 \value{
-  No value is explictly returned by the function. A global list object \code{PBStool}
+  No value is explicitly returned by the function. A global list object \code{PBStool}
   provides the following plus some labels:
   \item{out }{Output array of model parameter estimates and other metrics.}
   \item{pVec }{The initial parameter vector used for the model.}
@@ -66,7 +70,7 @@ calcVB(dat=pop.age, strSpp="", yfld="len", fixt0=FALSE,
   \code{getData("gfb_bio.sql","GFBioSQL","396",path=.getSpath())}
 }
 \author{
-  Rowan Haigh, Pacific Biological Station, Nanaimo BC
+  Rowan Haigh, Pacific Biological Station, Fisheries and Oceans Canada, Nanaimo BC
 }
 \seealso{
   \code{\link{calcSG}}, \code{\link{pop.age}}, \code{\link{parVec}}, \code{\link{getData}}, 

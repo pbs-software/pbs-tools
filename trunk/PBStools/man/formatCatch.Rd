@@ -8,13 +8,14 @@
   significant figures in character format.
 }
 \usage{
-formatCatch(dat, N=3, X=1, zero="0", K=",")
+formatCatch(dat, N=3, X=0, zero="0", na="---", K=",")
 }
 \arguments{
-  \item{dat}{data frame/matrix of raw catch numbers}
+  \item{dat}{data frame/matrix/vector of raw (catch) numbers}
   \item{N}{number of significant digits}
   \item{X}{numeric vector of columns to exclude (set to \code{NULL} or \code{0} if selecting all columns)}
   \item{zero}{character replacement for zero-values}
+  \item{na}{character replacement for \code{NA} values}
   \item{K}{big mark separator (see \code{format})}
 }
 \details{
@@ -33,10 +34,14 @@ formatCatch(dat, N=3, X=1, zero="0", K=",")
 \note{
   If the input table has no \code{dimnames}, one will be added with format \cr
   \code{list(paste("R",1:nrow(dat),sep=""),paste("C",1:ncol(dat),sep=""))}
+  
+  Function will accept a vector of numerics, which will be converted to a 
+  one-column data frame.
 }
 \seealso{
   \code{\link[PBStools]{buildCatch}}, \code{\link[PBStools]{dumpMod}}, 
-  \code{\link[PBStools]{plotRecon}}, \code{\link[PBStools]{makeLTH}}
+  \code{\link[PBStools]{plotRecon}}, \code{\link[PBStools]{makeLTH}},
+  \code{\link[PBStools]{texArray}}
 }
 \examples{
 local(envir=.PBStoolEnv,expr={
