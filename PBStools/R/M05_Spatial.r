@@ -743,8 +743,8 @@ plotTertiary = function(x=c(100,5,25,10,50), pC=c(0.5,0.5), r=0.5,
 preferDepth = function(strSpp="410", fqtName="pht_fdep.sql", dbName="PacHarvest",
      spath=NULL, type="SQL", hnam=NULL, get.effort=TRUE) {
 
-	if (!require(PBSmodelling, quietly=TRUE)) stop("`PBSmodelling` package is required")
-	if (!require(PBStools, quietly=TRUE))     stop("`PBStools` package is required")
+	#if (!require(PBSmodelling, quietly=TRUE)) stop("`PBSmodelling` package is required")
+	#if (!require(PBStools, quietly=TRUE))     stop("`PBStools` package is required")
 	warn <- options()$warn; options(warn=-1)
 	assign("PBStool",list(module="M05_Spatial",call=match.call(),args=args(preferDepth),plotname="Rplot"),envir=.PBStoolEnv)
 

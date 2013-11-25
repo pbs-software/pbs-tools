@@ -6,22 +6,29 @@
   estimates stored in the SQL database \code{GFBioSQL}.
 }
 \usage{
-showIndices(strSpp="396", survID=c(1,2,3,121,167), bootID)
+showIndices(strSpp="396", serID=1, survID=c(1,2,3,121,167),
+   bootID, tenv=.PBStoolEnv)
 }
 \arguments{
   \item{strSpp}{string specifying species code (\code{species$code}).}
+  \item{serID}{numeric survey series ID assigned to each survey series;
+    if specified (not NULL) then \code{survID} is ignored.}
   \item{survID}{numeric survey ID assigned to each survey by the GFBio team.}
   \item{bootID}{numeric boot run ID assigned to each record in the BOOT header table.}
+  \item{tenv}{temporary working environment.}
 }
 \details{
   The function relies on a short query function called \code{getBootRuns} 
   which in turn queries tables of survey information (\code{BOOT_HEADER}) 
-  and relative biomass estimates by species for each survey (\code{BOOT_DETAIL}). 
+  and relative biomass estimates by species for each survey (\code{BOOT_DETAIL}).
+  The results (\code{PBSdat}) are sent to the specified temporary working environment.
   
   Species relative biomass indices and their bootstrapped confidence intervals are plotted.
 
   Note: Any survey ID \code{survID} can have multiple boot runs \code{bootID}
-  (e.g., re-stratification trials).
+  (e.g., re-stratification trials). These are usually not consistent across an 
+  entire survey series. If the user knows the \code{bootID} values that define a consistent series,
+  s/he can specify them explicitly.
 }
 \value{
   Annual biomass indices for the specified \code{survID}s are return invisibly.
@@ -37,7 +44,8 @@ showIndices(strSpp="396", survID=c(1,2,3,121,167), bootID)
   \item{ulab}{Vector of unique boot run labels for the legend.}
 }
 \author{ 
-  Rowan Haigh, Pacific Biological Station, Nanaimo BC
+  Rowan Haigh, Pacific Biological Station, Fisheries and Oceans Canada, Nanaimo BC \cr
+  Bootstraps by Norm Olsen (also PBS, Nanaimo).
 }
 \seealso{
   \code{\link{getBootRuns}}, \code{\link{calcMoments}}, 

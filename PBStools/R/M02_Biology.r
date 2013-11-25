@@ -896,7 +896,8 @@ compCsum <- function(dat=pop.age, pro=TRUE, strSpp="", xfld="age", plus=60,
 	invisible() }
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~compCsum
 
-#estOgive-------------------------------2013-01-28
+
+#estOgive-------------------------------2013-08-26
 # Creates ogives of some metric (e.g., % maturity at age).
 # Arguments:
 #   dat    - specimen morphometrics data from GFBio
@@ -909,9 +910,12 @@ compCsum <- function(dat=pop.age, pro=TRUE, strSpp="", xfld="age", plus=60,
 #   obin   - bin size (y) to group ages
 #   xlim   - range of morphometric (x-axis)
 #-----------------------------------------------RH
-estOgive <- function(dat=pop.age, strSpp="", method=c("empir","dblnorm"), sex=list(1,2,1:2), 
-     mos=list(1:12,1:12,1:12), mat=3:7, ofld="age", obin=1, xlim=c(0,60), 
-     fg=c("blue","red","black"), bg=c("cyan","pink","grey85"), wmf=FALSE, ioenv=.GlobalEnv, ...) {
+estOgive <- function(dat=pop.age, strSpp="", method=c("empir","dblnorm"),
+   sex=list(1,2,1:2), mos=list(1:12,1:12,1:12), mat=3:7, raw=FALSE,
+   ofld="age", obin=1, xlim=c(0,60), figdim=c(8,5),
+   fg=c("blue","red","black"), bg=c("cyan","pink","grey85"),
+   eps=FALSE, wmf=FALSE, ioenv=.GlobalEnv, ...)
+{
 
 #--Subfunctions-------------------------
 	pmat <- function(x,mat) { # calculate proportions mature
@@ -935,8 +939,8 @@ estOgive <- function(dat=pop.age, strSpp="", method=c("empir","dblnorm"), sex=li
 		ldR=unlist(approx(x,y,min(xlim[2],x[length(x)],na.rm=TRUE),rule=2,ties="ordered"))
 		#text(ldR[1],ldR[2]+.01*dy,sexlab,cex=0.8,col=fg[s])
 		if (x50>xlim[1] & x50<xlim[2]) {
-			flagIt(a=x50,b=0.5,r=0.2,A=switch(s,135,315),col=fg[s],n=n,...)
-			points(x50,0.5,pch=21,bg=bg[s],cex=1.2)
+			flagIt(a=x50,b=0.5,r=0.2,A=switch(s,135,315,150,330),col=fg[s],n=n,...)
+			points(x50,0.5,pch=21,bg=bg[s],cex=1.5)
 			#if (above) off=c(-1.10,(s-1)*.015) else off=c(1.10,-(s-2)*.02)
 			#text(x50+off[1],.5+off[2],show0(round(x50,1),1,add2int=TRUE),cex=0.8,col=fg[s],srt=0) }
 			#text(x50+.015*dx*off[1],.5+.02*dy*off[2],show0(round(x50,1),1,add2int=TRUE),cex=0.8,col=fg[s],srt=0) }
@@ -967,7 +971,7 @@ estOgive <- function(dat=pop.age, strSpp="", method=c("empir","dblnorm"), sex=li
 		fldSpp=intersect(c("spp","species","sppcode"),flds)[1]
 		dat=dat[is.element(dat[,fldSpp],strSpp),] }
 
-	if (ofld=="len") dat$len=dat$len/10
+	if (ofld=="len") dat$len=dat$len
 	if (ofld=="age") dat=dat[is.element(dat$ameth,3),] # break and burn only
 	dat$month <- as.numeric(substring(dat$date,6,7))
 
@@ -976,7 +980,9 @@ estOgive <- function(dat=pop.age, strSpp="", method=c("empir","dblnorm"), sex=li
 	dat <- dat[is.element(dat$mat,1:7),]
 	dat <- dat[dat$ogive>=xlim[1] & dat$ogive<=xlim[2] & !is.na(dat$ogive),]
 	dat$obin <- ceiling(dat$ogive/obin)*obin # - (obin/2) # Mean age of each bin
-	names(sex)=sapply(sex,function(x){paste(x,collapse="")})
+	if (is.null(names(sex)))
+		names(sex)=sapply(sex,function(x){paste("sex_",paste(x,collapse="+"),sep="")})
+		#paste("sex",sapply(strsplit(names(sex),""),paste,collapse="+")
 	if (any(duplicated(names(sex)))) showError("Choose unique combinations of sex")
 	nsex=length(sex)
 	mos=rep(mos,nsex)[1:nsex]; fg=rep(fg,nsex)[1:nsex]; bg=rep(bg,nsex)[1:nsex]
@@ -989,21 +995,24 @@ estOgive <- function(dat=pop.age, strSpp="", method=c("empir","dblnorm"), sex=li
 	out = array(NA,dim=c(length(names(abin)),6,nsex),
 		dimnames=list(bin=names(abin),val=c("pemp","n","mn","sd","pbin","pdbl"),sex=names(sex)))
 	ylim <- c(0,1); dy <- diff(ylim)
-	pend=list()
+	pend = CALCS = DATA = list()
 
 	for (s in 1:nsex) {
 		ss=names(sex)[s]
-		above=as.logical(s%%2); print(c(s,above))
+		above=as.logical(s%%2); #print(c(s,above))
 		sexlab=paste(substring(sexcode[as.character(sex[[s]])],1,1),collapse="+")
 
 		sdat <- dat[is.element(dat$sex,sex[[s]]),]
 		sdat <- sdat[is.element(sdat$month,mos[[s]]),]
-		mbin <- split(sdat$mat,sdat$obin)	
+		if (strSpp=="405" && ss=="Males") sdat = sdat[sdat$age>3 & !is.na(sdat$age),] # special condition (may not always be necessary)
+		mbin <- split(sdat$mat,sdat$obin)
+		CALCS[[ss]][["mbin"]] = mbin
 		x = as.numeric(names(mbin))
 		xpos = x - (obin-1)*.5   # mid-point of binned ogive
 
 		# binomial logit fit
 		sdat$bmat = as.numeric(is.element(sdat$mat,mat)) # TRUE/FALSE for mature
+		DATA[[ss]] = sdat
 		pdat = sdat[,c("obin","bmat")]
 		pout = fitLogit(pdat,"bmat","obin")
 		coeffs = pout$coefficients
@@ -1013,6 +1022,7 @@ estOgive <- function(dat=pop.age, strSpp="", method=c("empir","dblnorm"), sex=li
 		ybin=seq(.01,.99,.01)
 		xbin=(log(ybin/(1-ybin))-a)/b
 		ld50=-a/b
+		CALCS[[ss]][["ld50"]] = ld50
 
 		# empirical fit
 		pemp  = sapply(mbin,pmat,mat=mat)   # empircal proportions mature
@@ -1038,20 +1048,26 @@ estOgive <- function(dat=pop.age, strSpp="", method=c("empir","dblnorm"), sex=li
 		out[names(ydbl),"pdbl",ss]=ydbl
 		out[names(n),"n",ss]=n; out[names(mn),"mn",ss]=mn; out[names(sd),"sd",ss]=sd
 
+		sexmos = paste(names(sex),"-mo(",sapply(mos,paste,collapse="+"),")",sep="")
+		onam=paste(strSpp,"-Ogive(",ofld,")-",paste(sexmos,collapse="-"),"-Mat(",mat[1],"+)",sep="")
+#browser();return()
+
 		if (s==1) {
-			if (wmf) win.metafile(paste("Ogive-",ofld,".wmf",sep=""),height=4,width=8)
+			if (eps) postscript(paste(onam,".eps",sep=""),width=figdim[1],height=figdim[2],paper="special")
+			else if (wmf) win.metafile(paste(onam,".wmf",sep=""),width=figdim[1],height=figdim[2])
 			else resetGraph()
 			expandGraph(mfrow=c(1,1),mai=c(.6,.7,0.05,0.05),omi=c(0,0,0,0),las=1,lwd=1)
 			plot(xpos,pemp,type="n",xlab="",ylab="",xaxt="n",yaxt="n",xlim=xlim,ylim=c(0,1))
 			abline(h=.5,col="gainsboro",lty=1,lwd=2)
+			abline(h=seq(0,1,.1),v=seq(0,xlim[2],ifelse(xlim[2]<30,1,2)),col="gainsboro",lty=2,lwd=1)
 			if(ofld=="age") axis(1,at=seq(floor(xlim[1]),ceiling(xlim[2]),1),tcl=-.2,labels=FALSE)
 			axis(1,at=seq(floor(xlim[1]),ceiling(xlim[2]),5),tcl=-.4,labels=FALSE)
 			axis(1,at=seq(floor(xlim[1]),ceiling(xlim[2]),10),tcl=-.5,mgp=c(0,.5,0),cex=.9)
 			axis(2,at=seq(0,1,.05),tcl=-.25,labels=FALSE)
 			axis(2,at=seq(0,1,.1),tcl=-.5,mgp=c(0,.7,0),cex=.9,adj=1)
 			mtext(ifelse(ofld=="age","Age","Length"),side=1,cex=1.2,line=1.75)
-			mtext("Proportion Mature",side=2,cex=1.2,line=2.5,las=0) }
-
+			mtext("Proportion Mature",side=2,cex=1.2,line=2.5,las=0)
+		}
 		nmeth = 0
 		if (any(method=="logit")) {
 			nmeth = nmeth + 1
@@ -1060,9 +1076,13 @@ estOgive <- function(dat=pop.age, strSpp="", method=c("empir","dblnorm"), sex=li
 		}
 		if (any(method=="dblnorm")) {
 			nmeth = nmeth + 1
+			if (raw) points(xpos,pemp,pch=1,col=fg[s],cex=1)
 			Xdbl=seq(xlim[1],xlim[2],len=1000)
 			Ydbl=calcDN(Pend,a=Xdbl)
 			lines(Xdbl,Ydbl,col=fg[s],lwd=ifelse(all(method=="dblnorm"),2,2),lty=ifelse(all(method=="dblnorm"),1,1))
+			Xpts=seq(1,xlim[2],1)
+			Ypts=calcDN(Pend,a=Xpts)
+			points(Xpts,Ypts,pch=21,col=fg[s],bg=bg[s],cex=1.1)
 			doLab(Xdbl, Ydbl,p50,n=nmeth,...)
 		}
 		if (any(method=="empir")) {
@@ -1071,19 +1091,21 @@ estOgive <- function(dat=pop.age, strSpp="", method=c("empir","dblnorm"), sex=li
 			#if (all(method=="empir")) {
 				lines(mn,pemp,col=fg[s])
 				mdxy <- approx(pemp,mn,xout=.5,rule=2,ties="ordered")
+				CALCS[[ss]][["mdxy"]] = mdxy
 				mdx=mdxy$y; mdy=mdxy$x
 				doLab(mn,pemp,mdx,n=nmeth,...)
 			#}
 		}
 	}
-	addLegend(.7,.3,legend=paste("sex",sapply(strsplit(names(sex),""),paste,collapse="+")),lwd=ifelse(any(method==c("logit","dblnorm")),2,1),
+	#addLegend(.7,.3,legend=paste("sex",sapply(strsplit(names(sex),""),paste,collapse="+")),lwd=ifelse(any(method==c("logit","dblnorm")),2,1),
+	addLegend(.7,.3,legend=names(sex),lwd=ifelse(any(method==c("logit","dblnorm")),2,1),
 		pch=ifelse(any(method=="empir"),20,NA),col=fg[1:length(sex)],cex=1.2,bty="n")
 	box()
-	if(wmf) dev.off()
-	stuff=c("mdxy","mbin","ld50","ldR","ldL","out","pmat","obin","strSpp","pend")
+	if(eps|wmf) dev.off()
+	stuff=c("pmat","DATA","CALCS","out","pend","strSpp")
 	packList(stuff,"PBStool",tenv=.PBStoolEnv)
 
-	fout=paste(fnam,"-sex(",paste(names(sex),collapse="+"),").csv",sep="")
+	fout=paste(onam,".csv",sep="")
 	data(species,envir=penv())
 	cat(paste("Maturity ogives:",species[strSpp,"name"],"\n"),file=fout)
 	for (s in 1:nsex) {
@@ -1094,8 +1116,10 @@ estOgive <- function(dat=pop.age, strSpp="", method=c("empir","dblnorm"), sex=li
 		svec=apply(sout,1,paste,collapse=",")
 		cat(paste(paste(names(svec),svec,sep=","),collapse="\n"),"\n",file=fout,append=TRUE)
 	}
-	invisible() }
-#-----------------------------------------estOgive
+	invisible(out)
+}
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~estOgive
+
 
 #genPa----------------------------------2013-01-18
 # Generate proportions-at-age using the catch curve 
@@ -1202,7 +1226,7 @@ histMetric <- function(dat=pop.age, xfld="age", xint=1, minN=50,
 	NYR=length(YRS)
 
 	if (ntt==1) {
-		rc=PBSmodelling:::.findSquare(NYR)
+		rc=PBSmodelling::.findSquare(NYR)
 		m=rc[1]; n=rc[2] }
 	else {
 		m=NYR; n=ntt }
@@ -1402,8 +1426,8 @@ plotProp <- function(fnam="pop.age",hnam=NULL, ioenv=.GlobalEnv,...) {
 	assign("PBStool",list(module="M02_Biology",call=match.call(),args=args(plotProp),ioenv=ioenv,plotname="Rplot"),envir=.PBStoolEnv)
 	fnam=as.character(substitute(fnam))
 	if (!is.character(fnam)) stop("Argument 'fnam' must be a string name of an R dataset")
-	if (!require(PBSmodelling, quietly=TRUE)) stop("`PBSmodelling` package is required")
-	if (!require(PBStools, quietly=TRUE)) stop("`PBStools` package is required")
+	#if (!require(PBSmodelling, quietly=TRUE)) stop("`PBSmodelling` package is required")
+	#if (!require(PBStools, quietly=TRUE)) stop("`PBStools` package is required")
 	options(warn=-1)
 	data(spn,envir=.PBStoolEnv)
 
@@ -2056,7 +2080,7 @@ reportCatchAge <- function(prefix="pop", path=getwd(), hnam=NULL, ...) {
 	# Main body of .reportCatchAge.plotrep()
 	plotcodes=plotcodes[is.element(plotcodes,choices)]
 	if (unique.only) plotcodes=unique(plotcodes) # order is retained
-	N=length(plotcodes); rc=PBSmodelling:::.findSquare(N); pnum=0; cexN=3/sqrt(N)
+	N=length(plotcodes); rc=PBSmodelling::.findSquare(N); pnum=0; cexN=3/sqrt(N)
 	figpars=list(mfrow=rc,mar=c(4.5,4,0.5,1),oma=c(0,0,0,0),mgp=c(2.5,.5,0),las=1,tcl=-.3)
 	unpackList(ttcall(PBStool),scope="L")
 	unpackList(figpars); resetGraph()

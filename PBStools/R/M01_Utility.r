@@ -371,7 +371,7 @@ getData <-function(fqtName, dbName="PacHarvest", strSpp=NULL, server=NULL,
 			#-------------------------------------------------------------
 			qnam <- paste(path,fqtName,sep="/")
 			strQ <- readLines(qnam)
-			strQ <- PBSmodelling:::.trimWhiteSpace(strQ)
+			strQ <- PBSmodelling::.trimWhiteSpace(strQ)
 			begC <- regexpr("--",strQ)
 			isC  <- begC>0                               ### identify comments
 			strQ[isC]=substring(strQ[isC],0,begC[isC]-1) ### strip comments
@@ -499,7 +499,7 @@ getData <-function(fqtName, dbName="PacHarvest", strSpp=NULL, server=NULL,
 .getSQLdata <- function(dbName, qtName=NULL, strSQL=NULL,
      server=NULL, type="SQL", trusted=TRUE, uid="", pwd="", 
      rownum=0,...) {
-	if (!require(RODBC, quietly=TRUE)) stop("`RODBC` package is required")
+	#if (!require(RODBC, quietly=TRUE)) stop("`RODBC` package is required")
 	### Use forward slashes "/" for server otherwise the translation
 	### is too dependent on the number of times "\" is escaped
 	if (is.null(server) || server=="") {
@@ -541,7 +541,7 @@ getData <-function(fqtName, dbName="PacHarvest", strSpp=NULL, server=NULL,
 # Retrieves a data frame from MDB query or table
 #-----------------------------------------------RH
 .getMDBdata <- function(mdbTable, qtName, rownum=0, ...) {
-	if (!require(RODBC, quietly=TRUE)) stop("`RODBC` package is required")
+	#if (!require(RODBC, quietly=TRUE)) stop("`RODBC` package is required")
 	cnn <- odbcConnectAccess(access.file=mdbTable)
 	query=paste("SELECT ",ifelse(rownum>0,paste("TOP",rownum),"")," * FROM ",qtName,sep="")
 	dat <- sqlQuery(cnn, query, ...)
@@ -553,7 +553,7 @@ getData <-function(fqtName, dbName="PacHarvest", strSpp=NULL, server=NULL,
 #-----------------------------------------------RH
 .getDBFdata <- function(dbfTable, qtName, ...) {
 	if (nchar(qtName)>8) showError("Rename DBF file using 8 or less characters")
-	if (!require(RODBC, quietly=TRUE)) stop("`RODBC` package is required")
+	#if (!require(RODBC, quietly=TRUE)) stop("`RODBC` package is required")
 	cnn <- odbcConnectDbase(dbf.file=dbfTable)
 	dat <- sqlQuery(cnn, paste("SELECT * FROM",qtName),...)
 	odbcClose(cnn)
@@ -561,9 +561,13 @@ getData <-function(fqtName, dbName="PacHarvest", strSpp=NULL, server=NULL,
 
 #.getXLSdata----------------------------2013-01-30
 # Retrieves data from an XLS worksheet
+# Note: Data truncated to 255 characters with Excel ODBC driver
+# Fix : http://support.microsoft.com/kb/189897/en-us
+# regjump HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Jet\4.0\Engines\Excel
+# Set TypeGuessRows DWORD Value to 0 (scan all rows). OK for most small tables.
 #-----------------------------------------------RH
 .getXLSdata <- function(xlsTable, qtName, ...) {
-	if (!require(RODBC, quietly=TRUE)) stop("`RODBC` package is required")
+	#if (!require(RODBC, quietly=TRUE)) stop("`RODBC` package is required")
 	cnn <- odbcConnectExcel(xls.file=xlsTable)
 	dat <- sqlFetch(cnn, qtName, ...)
 	odbcClose(cnn)
@@ -746,7 +750,7 @@ listTables <- function (dbName, pattern=NULL, path=getwd(),
    server=NULL, type="SQL", ttype=NULL, trusted=TRUE, uid="", 
    pwd="", silent=FALSE, tenv=.GlobalEnv)
 {
-	if (!require(RODBC, quietly=TRUE)) stop("`RODBC` package is required")
+	#if (!require(RODBC, quietly=TRUE)) stop("`RODBC` package is required")
 	if (is.null(server)) {
 		#getFile(".PBSserver", path=.getSpath(), tenv=penv())
 		server = .PBSserver[1] }
@@ -801,7 +805,7 @@ revStr <- function(x)
 # runModules: Display a master GUI to display modules
 #-----------------------------------------------RH
 runModules <- function () {
-	if (!require(PBStools, quietly=TRUE)) stop("PBStools package is required")
+	#if (!require(PBStools, quietly=TRUE)) stop("PBStools package is required")
 	.runModHelper <- function() {
 		getWinVal(scope = "L");  act <- getWinAct()[1]
 		if (!exists("act") || !exists("eN")) return()

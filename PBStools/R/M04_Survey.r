@@ -233,12 +233,13 @@ calcPMR <- function(x, na.value=NULL) {
 	names(pmr)=c("n","p","mu","rho")
 	return(pmr) }
 
-#getBootRuns----------------------------2010-06-02
+#getBootRuns----------------------------2013-11-25
 # Get Norm's survey bootstrap results.
 #-----------------------------------------------RH
 getBootRuns=function(strSpp) {
 	getData("gfb_boot.sql","GFBioSQL",strSpp=strSpp,path=.getSpath(),tenv=penv())
 	surveys=PBSdat[order(PBSdat$date,PBSdat$bootID),]
+	ttput(PBSdat)
 	return(surveys) }
 
 #getPMR---------------------------------2010-06-02
@@ -486,20 +487,33 @@ showAlpha <- function(lims=c("emp","bca")) {
 	invisible() }
 #----------------------------------------showAlpha
 
-#showIndices----------------------------2009-09-17
+
+#showIndices----------------------------2013-11-25
 # Show survey indices from Norm's bootstrap tables
 #-----------------------------------------------RH
-showIndices =  function(strSpp="396",survID=c(1,2,3,121,167), bootID){
-	assign("PBStool",list(module="M04_Survey",call=match.call(),args=args(showIndices)),envir=.PBStoolEnv)
+showIndices =  function(strSpp="396",serID=1, survID=c(1,2,3,121,167), bootID, tenv=.PBStoolEnv)
+{
+	assign("PBStool",list(module="M04_Survey",call=match.call(),args=args(showIndices)),envir=tenv)
 	data(spn,envir=penv())
 	surveys=getBootRuns(strSpp)
-	survBoot=PBSdat[,c("survID","bootID","runDesc")]
+	survBoot=surveys[,c("serID","survID","bootID","runDesc")]
 
 	# Selected survey
-	sppBoot=surveys[is.element(surveys$survID,survID),]
+	if (!is.null(serID))
+		sppBoot=surveys[is.element(surveys$serID,serID),]
+	else
+		sppBoot=surveys[is.element(surveys$survID,survID),]
 	if (!missing(bootID)) 
 		sppBoot=sppBoot[is.element(sppBoot$bootID,bootID),]
 	if (nrow(sppBoot)==0) showError(paste("No index for species '",strSpp,"'",sep=""))
+	noDesc = is.na(sppBoot$runDesc)
+	if (any(noDesc)) {
+		for (i in grep(TRUE,noDesc)) {
+			getData(paste("SELECT SURVEY_SERIES_DESC FROM SURVEY_SERIES WHERE SURVEY_SERIES_ID IN (",sppBoot$serID[i],")",sep=""),type="SQLX",dbName="GFBioSQL",strSpp=strSpp,tenv=penv())
+			sppBoot$runDesc[i] = PBSdat
+		}
+	}
+#browser();return()
 
 	# Function to group and flatten x by some factor, usually y
 	flatten=function(x,f,off=0) {
@@ -540,11 +554,22 @@ showIndices =  function(strSpp="396",survID=c(1,2,3,121,167), bootID){
 	tlab=split(sppBoot$runDesc,x)
 	llab=character(0)
 	for(i in names(tlab)){llab=c(llab,gsub(paste(i," ",sep=""),"",tlab[[i]]))}
+	llab[is.element(llab,c("",NA))] = "No description"
 	ulab=unique(llab); nlab=length(ulab)
 	clr=flatten(match(llab,ulab),x,off=xoff)
-	bg=rep(c("gold","green","coral","cyan","magenta"),nlab)[1:nlab]
-	fg=rep(c("black","darkgreen","darkred","darkblue","magenta4"),nlab)[1:nlab]
-	
+	#bg=rep(c("gold","green","coral","cyan","magenta","moccasin"),nlab)[1:nlab]
+	#fg=rep(c("black","darkgreen","darkred","darkblue","magenta4","brown"),nlab)[1:nlab]
+	bg=c("gold","green","coral","cyan","magenta","moccasin")
+	fg=c("black","darkgreen","darkred","darkblue","magenta4","brown")
+	if (nlab>length(bg)) {
+		newclrs = setdiff(colors(),c(bg,"black",paste(c("gray","grey"),rep(1:99,each=2),sep="")))
+		bg=c(bg,sample(newclrs,(nlab-length(bg))))
+		newclrs = setdiff(newclrs,bg)
+		fg=c(fg,sample(newclrs,(nlab-length(fg))))
+	} else {
+		bg = bg[1:nlab]; fg = fg[1:nlab]
+	}
+
 	# Plot the results
 	resetGraph(); expandGraph(mar=c(4,5,1,1),las=1)
 	plot(xy,xlim=xlim,ylim=ylim,type="n",xlab="",ylab="")
@@ -564,11 +589,12 @@ showIndices =  function(strSpp="396",survID=c(1,2,3,121,167), bootID){
 	mtext("Relative Biomass (t)",side=2,line=3.5,cex=1.2,las=0)
 	mtext("Survey Year",side=1,line=2,cex=1.2)
 	box()
-	packList(c("surveys","sppBoot","survBoot","xy","cil","cih","clr","llab","ulab"),"PBStool",tenv=.PBStoolEnv)
+	packList(c("surveys","sppBoot","survBoot","xy","cil","cih","clr","llab","ulab"),"PBStool",tenv=tenv)
 	names(y)=x
 	print(sppBoot); invisible(y)
 }
-#--------------------------------------showIndices
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~showIndices
+
 
 #simBGtrend-----------------------------2013-01-28
 # Simulate a population projection based on prior binomial-gamma parameters.
@@ -671,7 +697,7 @@ simBGtrend <- function(pmr=pop.pmr.qcss, Npred=15, genT=NULL,
 trend <- function(strSpp="442", fqtName="gfb_iphc.sql",
    dbName="GFBioSQL", spath=NULL, type="SQL", ioenv=.GlobalEnv, hnam=NULL)
 {
-	if (!require(PBSmodelling, quietly=TRUE)) stop("`PBSmodelling` package is required")
+	#if (!require(PBSmodelling, quietly=TRUE)) stop("`PBSmodelling` package is required")
 	warn <- options()$warn; options(warn=-1)
 	data(spn,envir=ioenv)
 	if (exists("PBSdat",envir=ioenv)) rm(PBSdat,pos=ioenv)

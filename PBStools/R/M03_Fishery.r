@@ -952,8 +952,8 @@ runCCA = function(fnam="nage394", hnam=NULL, ioenv=.GlobalEnv, ...) {
 	assign("PBStool",list(module="M03_Fishery",call=match.call(),args=args(runCCA),ioenv=ioenv,plotname="CCAplot",dots=list(...)),envir=.PBStoolEnv)
 	fnam=as.character(substitute(fnam))
 	if (!is.character(fnam)) stop("Argument 'fnam' must be a string name of an R dataset")
-	if (!require(PBSmodelling, quietly=TRUE)) stop("`PBSmodelling` package is required")
-	if (!require(PBStools,   quietly=TRUE))   stop("`PBStools` package is required")
+	#if (!require(PBSmodelling, quietly=TRUE)) stop("`PBSmodelling` package is required")
+	#if (!require(PBStools,   quietly=TRUE))   stop("`PBStools` package is required")
 	if (!require(BRugs,        quietly=TRUE)) stop("`BRugs` package is required")
 
 	path <- .getWpath() # win path
