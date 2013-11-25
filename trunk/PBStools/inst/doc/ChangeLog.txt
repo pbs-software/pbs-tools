@@ -5,7 +5,8 @@ Authors: RH  = Rowan Haigh
          LL  = Lisa Lacko
          JTS = Jon T. Schnute
 ------------------------------
-1.25  2013-08-22
+1.25  2013-11-25
+  - Modified functions `showIndices` and `getBootRuns` to use survey series; also modified `gfb_boot.sql`. (RH 11/25)
   - Modified function `weightBio` to fix some small bugs. (RH 8/22)
   - Added new function `texArray` to convert arrays, data frames and vectors into a two-dimensional longtable in LaTeX code. (RH 8/21)
   - Created new module called `M08_texCrap.r` to house functions related to LaTeX manipulation and document creation. (RH 8/20)

@@ -187,7 +187,7 @@ makeLTH <- function(xtab.table, table.caption, table.label) {
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~makeLTH
 
 
-#texArray-------------------------------2013-08-09
+#texArray-------------------------------2013-08-26
 # Flatten and format an array for latex output.
 #-----------------------------------------------RH
 texArray =function(x, table.caption="My table", table.label="tab:mytable",
@@ -322,7 +322,7 @@ texArray =function(x, table.caption="My table", table.label="tab:mytable",
 	)
 	writeLines(texmess,texout)
 	
-	require(xtable)
+	if (!require(xtable)) stop("`xtable` package is required")
 	if (is.null(collab)) collab = colnames(goo)
 	else if (length(collab)==ncol(goo)) colnames(goo) = collab
 	else stop("Length of `collab` does not match number of columns")
@@ -380,6 +380,6 @@ texArray =function(x, table.caption="My table", table.label="tab:mytable",
 	)
 	cat("\\end{document}\n",file=texout,append=TRUE)
 	texfile = readLines(texout)
-	return(list(goo=goo,texfile=texfile))
+	invisible(list(goo=goo,texfile=texfile))
 }
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~texArray

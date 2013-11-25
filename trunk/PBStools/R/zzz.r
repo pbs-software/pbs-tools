@@ -52,7 +52,7 @@ if(getRversion() >= "2.15.1") utils::globalVariables(names=c(
 	"nage","Nat","Nboot","nc","nC","nd","nepacLL","nepacLLhigh","nper","nRP","nspec","nT","nyr",
 	"obs","oma","orfhistory",
 	"pa.obs","pa.raw","parVec","path","pathN","PBSdat","PBStool","PBSmin","Pfig","phi","pi.obs","pix","pjsa","PLIM","pmfc","pmon","pnam","poi","pop.age","pop.pmr.qcss","popa","powr","prefix","pset","psize","Pstart","pwd","pyr",
-	"q2","qtName","quants",
+	"q2","qq","qtName","quants",
 	"rate","rates","reltol","repN","rho","RkB","Roff","RPmax","RPmin","ryrs",
 	"s1","s2","samplesGetFirstChain","samplesGetLastChain","samplesHistory","samplesSet","SB","Scat","Sdat","sdate","seepa","seepi","set","sex","SG","SGdat","showC","showD","showE","showH","showL","showQ","SID","sigma","species","spn","spp","SSB","steptol","sthin","storageID","strArea","strat","strGear","strSpp","strYear","stype","surveys",
 	"t0","tcl","tdate","theta","tran","trusted","tstar","ttype","type",

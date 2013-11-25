@@ -122,7 +122,7 @@ calcMA = function(x,y,y2,period=270,every=10) {
 #-----------------------------------------------RH
 imputeRate <- function(qtName="Ex03_Portfolio", dbName="Examples", AID=1, pathN=2, hnam=NULL) {
 
-	if (!require(PBSmodelling)) stop("`PBSmodelling` package is required")
+	#if (!require(PBSmodelling)) stop("`PBSmodelling` package is required")
 	if (!require(stats)) stop("`stats` package is required")
 	assign("PBStool",list(module="M06_Temporal",call=match.call(),args=args(imputeRate),plotname="impute"),envir=.PBStoolEnv)
 	wdir <- paste(system.file(package="PBStools"),"/win",sep="")

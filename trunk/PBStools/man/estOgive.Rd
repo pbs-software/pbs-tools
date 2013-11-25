@@ -8,10 +8,11 @@
   (iii) fit proportion-at-age data to a double normal curve using the minimizer \code{nlm}.
 }
 \usage{
-estOgive(dat=pop.age, strSpp="", method=c("empir","dblnorm"), 
-     sex=list(1,2,1:2), mos=list(1:12,1:12,1:12), mat=3:7, 
-     ofld="age", obin=1, xlim=c(0,60), fg=c("blue","red","black"), 
-     bg=c("cyan","pink","grey85"), wmf=FALSE, ioenv=.GlobalEnv, ...)
+estOgive(dat=pop.age, strSpp="", method=c("empir","dblnorm"),
+   sex=list(1,2,1:2), mos=list(1:12,1:12,1:12), mat=3:7, raw=FALSE,
+   ofld="age", obin=1, xlim=c(0,60), figdim=c(8,5),
+   fg=c("blue","red","black"), bg=c("cyan","pink","grey85"),
+   eps=FALSE, wmf=FALSE, ioenv=.GlobalEnv, ...)
 }
 \arguments{
   \item{dat}{biological data set with fields \code{mat} and \code{age}.}
@@ -25,14 +26,17 @@ estOgive(dat=pop.age, strSpp="", method=c("empir","dblnorm"),
   \item{mos}{list of months from which maturity data are used; 
     list length matches that of list argument \code{sex}.}
   \item{mat}{codes that define maturity (e.g., 3+).}
+  \item{raw}{\emph{logical}: if \code{TRUE}, add the input data, used to fit the curve, as points.}
   \item{ofld}{ogive field (usually \code{age} or \code{len}).}
   \item{obin}{bin size (in x-units) to group \code{age} or \code{len}.}
   \item{xlim}{range of the x-metric (x-axis).}
+  \item{figdim}{dimensions (width and height in inches) of output figure.}
   \item{fg}{vector of three foreground colours for the sexes listed in order.}
   \item{bg}{vector of three background colours for the sexes listed in order.}
-  \item{wmf}{logical: if \code{TRUE}, send plot to a \code{.wmf} file.}
+  \item{eps}{logical -- if \code{TRUE}, send plot to a postscript \code{.eps} file.}
+  \item{wmf}{logical -- if \code{TRUE}, send plot to a vector \code{.wmf} file.}
   \item{ioenv}{input/output environment for function input data and output results.}
-  \item{...}{additional arguments for use in \code{estOgive}.}
+  \item{...}{additional arguments for use in \code{text} within \code{flagIt}.}
 }
 \details{
   The cumulative distribution of mature fish is plotted and the point at 
@@ -43,7 +47,7 @@ estOgive(dat=pop.age, strSpp="", method=c("empir","dblnorm"),
   to a double normal curve (which is the default method used in Coleraine).
 }
 \value{
-  No value is explictly returned by the function. A global list object \code{PBStool}
+  No value is explicitly returned by the function. A global list object \code{PBStool}
   provides the following:
   \item{mdxy}{Last median x-y values.}
   \item{mbin }{Maturities binned by age (or length) group.}
@@ -74,7 +78,7 @@ pbsfun()
 }
 \seealso{
   \code{\link[PBSdata]{pop.age}}, \code{\link[PBStools]{fitLogit}}, 
-  \code{\link[PBStools]{mapMaturity}}, \code{\link[PBStools]{getData}}
+  \code{\link[PBStools]{mapMaturity}}, \code{\link[PBStools]{flagIt}}
 }
 \keyword{hplot}
 
