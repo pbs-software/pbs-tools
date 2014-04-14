@@ -1,25 +1,53 @@
--- Query GFBioSQL for otoliths taken but not aged (2013-02-20)
+-- Query GFBioSQL for otoliths taken but not aged (2014-01-28)
 -- Show only those that can be identified by FOS TRIP_ID
 
 SET NOCOUNT ON  -- prevents timeout errors
 
--- CONTAINER_ID in SAMPLE_COLLECTED = Bin, CONTAINER_ID in SPECIMEN_COLLECTED = Tray
+-- CONTAINER_ID in SAMPLE_COLLECTED = Bin, CONTAINER_ID in SPECIMEN_COLLECTED = Tray (UB=Unknown Bin, UT=Unknown Tray)
+-- CONTAINER_ID for samples and specimens have no consistent relationship, therefore group sample bins first.
+SELECT DISTINCT
+      SAMPLE_ID,
+      STUFF((
+        SELECT '+' + CAST([STORAGE_CONTAINER_ID] AS VARCHAR(20))
+        FROM SAMPLE_COLLECTED f2
+        WHERE f1.SAMPLE_ID = f2.SAMPLE_ID ---- string with grouping by SAMPLE_ID
+        FOR XML PATH ('')), 1, 1, '') AS BinID
+INTO #Unique_Bin
+FROM SAMPLE_COLLECTED f1
+--WHERE f1.SAMPLE_ID IN (181641) --237530) --173642) --408357)
+
 SELECT
-  SAC.SAMPLE_ID,
+  COALESCE(UB.SAMPLE_ID,SPC.SAMPLE_ID) AS SAMPLE_ID,
   SPC.SPECIMEN_ID,
-  SP.SPECIMEN_SERIAL_NUMBER,
-  SAC.STORAGE_CONTAINER_ID AS SAMPLE_CONTAINER,
-  ISNULL(SPC.STORAGE_CONTAINER_ID,CEILING(SP.SPECIMEN_SERIAL_NUMBER/100)*100) AS SPECIMEN_TRAY,
-  ISNULL(SAC.STORAGE_CONTAINER_ID,'UNK')+':'+ISNULL(SPC.STORAGE_CONTAINER_ID,CEILING(SP.SPECIMEN_SERIAL_NUMBER/100)*100) AS TRAYS
+  ISNULL(SP.SPECIMEN_SERIAL_NUMBER,0) AS SPECIMEN_SERIAL_NUMBER,
+  ISNULL(UB.BinID,'UB'+CAST(SPC.SAMPLE_ID as varchar(6))) AS SAMPLE_CONTAINER,
+  ISNULL(SPC.STORAGE_CONTAINER_ID,'UT'+CAST(SPC.SAMPLE_ID as varchar(6))) AS SPECIMEN_TRAY,
+  ISNULL(UB.BinID,'UB'+CAST(SPC.SAMPLE_ID as varchar(6)))+':'+ISNULL(SPC.STORAGE_CONTAINER_ID,'UT'+CAST(SPC.SAMPLE_ID as varchar(6))) AS TRAYS
 INTO #Unique_Storage
 FROM
-  
-  SAMPLE_COLLECTED SAC INNER JOIN 
+  #Unique_Bin UB RIGHT OUTER JOIN 
   SPECIMEN_COLLECTED SPC INNER JOIN
   SPECIMEN SP ON
     SP.SAMPLE_ID = SPC.SAMPLE_ID AND
     SP.SPECIMEN_ID = SPC.SPECIMEN_ID ON
-    SPC.SAMPLE_ID = SAC.SAMPLE_ID
+    SPC.SAMPLE_ID = UB.SAMPLE_ID
+WHERE SPC.COLLECTED_ATTRIBUTE_CODE IN (20)
+--AND SPC.SAMPLE_ID IN (181641) --237530) --173642) --408357)
+
+-- Collect TRIP_IDs for each SURVEY_ID
+-- Unfortunately, SURVEY_ID not unique to TRIP_ID (e.g., Shrimp Trawl surveys) therefore cannot use
+SELECT --TOP 100
+  B01.TRIP_ID,
+  TS.SURVEY_ID,
+  ISNULL(S.SURVEY_SERIES_ID,0) AS SURVEY_SERIES_ID
+INTO #TRIPS_BY_SURVEY
+FROM 
+  B01_TRIP B01 INNER JOIN
+  TRIP_SURVEY TS LEFT OUTER JOIN
+  SURVEY S ON
+    TS.SURVEY_ID = S.SURVEY_ID ON 
+    B01.TRIP_ID = TS.TRIP_ID
+WHERE S.ORIGINAL_IND IN ('Y')
 
 -- Collect unadulterated values from B01 to B05
 SELECT --TOP 100
@@ -46,6 +74,7 @@ SELECT --TOP 100
   B03.CATCH_WEIGHT,
   B04.SAMPLE_TYPE_CODE,
   B04.SAMPLE_DATE,
+  B05.SPECIMEN_AGE,
   B05.AGEING_METHOD_CODE,
   B05.SPECIMEN_SERIAL_PREFIX,
   B05.SPECIMEN_SERIAL_NUMBER,
@@ -70,6 +99,7 @@ FROM
     B01.SUFFIX = V.SUFFIX
 WHERE 
   B03.SPECIES_CODE IN (@sppcode)
+  --AND B04.SAMPLE_ID IN (181641)
 
 SELECT 
   AA.TRIP_ID AS TID_gfb,                          -- B01_TRIP
@@ -92,21 +122,24 @@ SELECT
   AA.CATCH_WEIGHT AS catchKg,                     -- B03_CATCH
   AA.SPECIES_CODE AS spp,                         -- B03_CATCH
   -- Following from B05_Specimen
-  SUM(CASE WHEN SCA.COLLECTED_ATTRIBUTE_CODE IN (20) THEN 1 ELSE 0 END) AS Noto,                                    -- count otoliths collected
-  SUM(CASE WHEN SCA.COLLECTED_ATTRIBUTE_CODE IN (20) AND AA.SPECIMEN_SEX_CODE IN (2) THEN 1 ELSE 0 END) AS Foto,    -- Noto females
-  SUM(CASE WHEN SCA.COLLECTED_ATTRIBUTE_CODE IN (20) AND AA.SPECIMEN_SEX_CODE IN (1) THEN 1 ELSE 0 END) AS Moto,    -- Noto males
+  SUM(CASE WHEN SCA.COLLECTED_ATTRIBUTE_CODE IN (20) THEN 1 ELSE 0 END) AS Noto,                                  -- count otoliths collected
+  SUM(CASE WHEN SCA.COLLECTED_ATTRIBUTE_CODE IN (20) AND AA.SPECIMEN_SEX_CODE IN (2) THEN 1 ELSE 0 END) AS Foto,  -- Noto females
+  SUM(CASE WHEN SCA.COLLECTED_ATTRIBUTE_CODE IN (20) AND AA.SPECIMEN_SEX_CODE IN (1) THEN 1 ELSE 0 END) AS Moto,  -- Noto males
   --SUM(CASE WHEN SCA.COLLECTED_ATTRIBUTE_CODE IN (21) THEN 1 ELSE 0 END) AS Nsca,
-  SUM(CASE WHEN AA.AGEING_METHOD_CODE IN (3) THEN 1 ELSE 0 END) as Nbba,                                            -- count broken & burnt ages
-  SUM(CASE WHEN AA.AGEING_METHOD_CODE IN (3) AND AA.SPECIMEN_SEX_CODE IN (2) THEN 1 ELSE 0 END) as Fbba,            -- Nbba females
-  SUM(CASE WHEN AA.AGEING_METHOD_CODE IN (3) AND AA.SPECIMEN_SEX_CODE IN (1) THEN 1 ELSE 0 END) as Mbba,            -- Nbba females
-  SUM(CASE WHEN AA.AGEING_METHOD_CODE IN (1,2,3,4,5,16) THEN 1 ELSE 0 END) as Nage,                                 -- count any otolith aged
-  SUM(CASE WHEN AA.AGEING_METHOD_CODE IN (1,2,3,4,5,16) AND AA.SPECIMEN_SEX_CODE IN (2) THEN 1 ELSE 0 END) as Fage, -- Nage females
-  SUM(CASE WHEN AA.AGEING_METHOD_CODE IN (1,2,3,4,5,16) AND AA.SPECIMEN_SEX_CODE IN (1) THEN 1 ELSE 0 END) as Mage, -- Nage males
-  SUM(CASE WHEN AA.AGEING_METHOD_CODE BETWEEN 0 AND 16 THEN 1 ELSE 0 END) as Xage,     -- count any ageing
-  SUM(IsNull(AA.AGEING_METHOD_CODE,0)) as T_ameth,                                     -- sum the ageing method codes
-  SUM(CASE WHEN AA.AGEING_METHOD_CODE BETWEEN 0 AND 16 THEN 1 ELSE 0 END) as N_ameth,  -- count the ageing method codes
-  AA.SAMPLE_ID AS SID,                            -- B04_SAMPLE
-  AA.SAMPLE_TYPE_CODE AS stype,                   -- B04_SAMPLE
+  SUM(CASE WHEN AA.AGEING_METHOD_CODE IN (3) THEN 1 ELSE 0 END) as Nbba,                                          -- count broken & burnt ages
+  SUM(CASE WHEN AA.AGEING_METHOD_CODE IN (3) AND AA.SPECIMEN_SEX_CODE IN (2) THEN 1 ELSE 0 END) as Fbba,          -- Nbba females
+  SUM(CASE WHEN AA.AGEING_METHOD_CODE IN (3) AND AA.SPECIMEN_SEX_CODE IN (1) THEN 1 ELSE 0 END) as Mbba,          -- Nbba females
+  SUM(CASE WHEN AA.SPECIMEN_AGE BETWEEN 1 AND 500 THEN 1 ELSE 0 END) as Nage,                                     -- count any otolith aged
+  SUM(CASE WHEN AA.SPECIMEN_AGE BETWEEN 1 AND 500  AND AA.SPECIMEN_SEX_CODE IN (2) THEN 1 ELSE 0 END) as Fage,    -- Nage females
+  SUM(CASE WHEN AA.SPECIMEN_AGE BETWEEN 1 AND 500  AND AA.SPECIMEN_SEX_CODE IN (1) THEN 1 ELSE 0 END) as Mage,    -- Nage males
+  --SUM(CASE WHEN AA.AGEING_METHOD_CODE IN (1,2,3,4,5,16) THEN 1 ELSE 0 END) as Nage,                                 -- count any otolith aged
+  --SUM(CASE WHEN AA.AGEING_METHOD_CODE IN (1,2,3,4,5,16) AND AA.SPECIMEN_SEX_CODE IN (2) THEN 1 ELSE 0 END) as Fage, -- Nage females
+  --SUM(CASE WHEN AA.AGEING_METHOD_CODE IN (1,2,3,4,5,16) AND AA.SPECIMEN_SEX_CODE IN (1) THEN 1 ELSE 0 END) as Mage, -- Nage males
+  --SUM(CASE WHEN AA.AGEING_METHOD_CODE BETWEEN 0 AND 16 THEN 1 ELSE 0 END) as Xage,                              -- count any ageing (same as Nage now)
+  SUM(IsNull(AA.AGEING_METHOD_CODE,0)) as T_ameth,                                                                -- sum the ageing method codes
+  SUM(CASE WHEN IsNull(AA.AGEING_METHOD_CODE,0) BETWEEN 0 AND 16 THEN 1 ELSE 0 END) as N_ameth,                   -- count the ageing method codes
+  AA.SAMPLE_ID AS SID,                                                     -- B04_SAMPLE
+  AA.SAMPLE_TYPE_CODE AS stype,                                            -- B04_SAMPLE
   CONVERT(char(10),ISNULL(AA.SAMPLE_DATE, AA.SAMPLE_DATE),20) AS sdate,    -- B04_SAMPLE
   IsNull(AA.SPECIMEN_SERIAL_PREFIX,'') AS prefix,                          -- B05_SPECIMEN
   MIN(ISNULL(AA.SPECIMEN_SERIAL_NUMBER,2e9)) AS firstSerial,               -- B05_SPECIMEN
@@ -131,6 +164,7 @@ WHERE
 --  (AA.MAJOR_STAT_AREA_CODE IN ('05','06','07') OR 
 --    (AA.MAJOR_STAT_AREA_CODE IN ('09') AND AA.MINOR_STAT_AREA_CODE IN ('34') )) AND 
   AA.SPECIES_CODE IN (@sppcode) AND
+  --AA.SAMPLE_ID IN(181641) AND
   SCA.COLLECTED_ATTRIBUTE_CODE IN (20)  -- otoliths collected
   -- SA.N_Ages_Collected > 0 --AND
   --(AA.AGEING_METHOD_CODE Is Null OR AA.AGEING_METHOD_CODE IN (3)) -- either not aged or aged via broken-burnt (cannot exclude NAs when others are not 3)
@@ -208,7 +242,7 @@ SELECT
   GFB.FEID, GFB.hail, GFB.[set], GFB.GC, GFB.vessel, GFB.cfv,
   CONVERT(smalldatetime,GFB.gfb_date) AS tdate,
   GFB.ttype, GFB.major, GFB.minor, GFB.spp, GFB.catchKg,
-  GFB.SID, GFB.Noto, GFB.Foto, GFB.Moto, GFB.Nbba, GFB.Fbba, GFB.Mbba, GFB.Nage, GFB.Fage, GFB.Mage, GFB.Xage,
+  GFB.SID, GFB.Noto, GFB.Foto, GFB.Moto, GFB.Nbba, GFB.Fbba, GFB.Mbba, GFB.Nage, GFB.Fage, GFB.Mage, --GFB.Xage,
   CASE WHEN GFB.N_ameth IN (0) THEN 0 ELSE GFB.T_ameth / GFB.N_ameth END AS ameth, -- mean ageing method (flags samnples with mixtures of ageing method)
   GFB.stype, CONVERT(smalldatetime,GFB.sdate) AS sdate,
   GFB.prefix, GFB.firstSerial, GFB.lastSerial, GFB.storageID
@@ -229,4 +263,3 @@ SELECT
 --select * from #GFB_Otoliths
 
 -- getData("gfb_age_request.sql",dbName="GFBioSQL",strSpp="401")
-

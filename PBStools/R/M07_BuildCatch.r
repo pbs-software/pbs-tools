@@ -782,7 +782,7 @@ plotData =function(x,description="something",
 	if (eps) 
 		postscript(file=paste(plotname,".eps",sep = ""), width=6.5,height=5,paper="special")
 	else if (wmf)
-		win.metafile(filename=paste(plotname,".wmf",sep = ""), width=6.5,height=5)
+		do.call("win.metafile",list(filename=paste(plotname,".wmf",sep = ""), width=6.5,height=5))
 	expandGraph()
 	if (!is.null(dots$type) && dots$type=="bars") {
 		xpos = barplot(t(xx),beside=TRUE,col=col,ylim=ylim,xlab=xlab,ylab=ylab,space=c(0,1.5))
@@ -832,7 +832,7 @@ plotRecon = function(dat=cat440rec, strSpp="440", major=c(1,3:9), fidout=10,
 		plotname=paste(strSpp,"-Catch-History-",fidnam[i],"-years(",min(years),"-",max(years),")-major(",paste(major,collapse=""),")",sep="")
 		if (eps)       postscript(file=paste(plotname,".eps",sep=""),width=PIN[1],height=PIN[2],fonts="mono",paper="special")
 		else if (pix)  png(filename=paste(plotname,".png",sep=""),width=round(100*PIN[1]),height=round(100*PIN[2]))
-		else if (wmf)  win.metafile(paste(plotname,".wmf",sep=""),width=PIN[1],height=PIN[2])
+		else if (wmf)  do.call("win.metafile",list(filename=paste(plotname,".wmf",sep=""),width=PIN[1],height=PIN[2]))
 		else  resetGraph()
 		expandGraph(mar=c(3,3,.5,.5))
 		barplot(t(dat[,mm,ii]),col=0,space=0,xaxt="n",yaxt="n",xaxs="i")

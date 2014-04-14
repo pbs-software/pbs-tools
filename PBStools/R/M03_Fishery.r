@@ -96,7 +96,7 @@ calcRatio <- function(dat, nfld, dfld, nzero=TRUE, dzero=TRUE, sumF=mean,
 		if (is.null(ylim)) ylim=c(0,max(apply(psum,2,extendrange,f=0.25)))
 		nplt=length(stored)
 		if (nplt>1) {rc=c(ceiling(nplt/2),2); if (wmf) rc=rev(rc)}
-		if (wmf) win.metafile(paste(nfld,"-",dfld,"-major",paste(major,collapse=""),".wmf",sep=""),width=8,height=2.5*rc[1])
+		if (wmf) do.call("win.metafile",list(filename=paste(nfld,"-",dfld,"-major",paste(major,collapse=""),".wmf",sep=""),width=8,height=2.5*rc[1]))
 		else resetGraph()
 		if (nplt==1) expandGraph(mfrow=c(1,1),mar=c(3,5,.5,.5),oma=c(0,0,0,0),las=1)
 		else         expandGraph(mfrow=rc,mar=c(1.5,0,.5,.5),oma=c(2,5,0,0),las=1)
@@ -477,9 +477,9 @@ glimmer <- function(file, facs=c("year","month","depth","vessel"),
 	stuff=c("dat","coeffs","lmres","lmsum","aovres","facmin")
 	packList(stuff,"PBStool",tenv=.PBStoolEnv)
 
-	if (wmf) win.metafile(paste(spp,"-GLM-",ifelse(Uplot,"Cpue-","Para-"),
+	if (wmf) do.call("win.metafile",list(filename=paste(spp,"-GLM-",ifelse(Uplot,"Cpue-","Para-"),
 		substring(faclab,1,ifelse(Ionly,1,nchar(faclab))),".wmf",sep=""),
-		width=ifelse(Ionly,6.5,nfac*2.75),height=4)
+		width=ifelse(Ionly,6.5,nfac*2.75),height=4))
 	else resetGraph()
 	expandGraph(mfrow=c(1,ifelse(Ionly,1,nfac)),mgp=c(2.5,.5,0),las=1)
 	if (Uplot && Ionly)   par(mai=c(.75,.75,.1,.05), omi=c(0,0,0,0))
@@ -695,7 +695,7 @@ plotCatch=function(dat="dbr.rem", flds=c("CAtrawl","UStrawl","TotalHL"),
 	leg=c("CA Trawl","US Trawl","Zn H&L","Sched II","Halibut","Total H&L","Trawl + H&L")
 	names(leg)=c("CAtrawl","UStrawl","ZnHL","ShedII","Halibut","TotalHL","Total")
 
-	if (wmf) win.metafile(paste(spp,"-Removals-",paste(flds,collapse="-"),".wmf",sep=""),width=8,height=6)
+	if (wmf) do.call("win.metafile",list(filename=paste(spp,"-Removals-",paste(flds,collapse="-"),".wmf",sep=""),width=8,height=6))
 	else resetGraph()
 	expandGraph(mfrow=c(1,1),mar=c(3,4,.5,.5),oma=c(0,0,0,0),las=1)
 
@@ -916,7 +916,7 @@ plotFOScatch <- function(strSpp="453", majors=c(1,3:9), space=0.5,
 	packList(stuff,"PBStool",tenv=.PBStoolEnv)
 	print(yrcat)
 
-	if(wmf) win.metafile(plotname,height=8,width=8)
+	if (wmf) do.call("win.metafile",list(filename=plotname,height=8,width=8))
 	else resetGraph()
 	expandGraph(mfrow=c(m,n),mar=c(4,4,.5,.5),oma=c(0,0,1.5,0))
 	for (i in fplot) {
@@ -1205,8 +1205,8 @@ runCCA = function(fnam="nage394", hnam=NULL, ioenv=.GlobalEnv, ...) {
 	# Plot the results
 	plotname=paste(c("NLM.",suff,".mods",mods),collapse="")
 	packList("plotname","PBStool",tenv=.PBStoolEnv)
-	if (wmf) win.metafile(filename=paste(plotname,".wmf",sep=""),
-		width=6.5,height=switch(nmods,5,8,9.5),pointsize=12)
+	if (wmf) do.call("win.metafile",list(filename=paste(plotname,".wmf",sep=""),
+		width=6.5,height=switch(nmods,5,8,9.5),pointsize=12))
 	if (names(dev.cur())=="null device") { windows(width=6,height=8); frame() }
 	din = par()$din; xmarg = 1*c(0.5,0.6)
 	ymarg = switch(nmods,max(1,par()$din[2]-4),2,1); ymarg = c(.6,.4)*ymarg

@@ -45,7 +45,7 @@ calcLenWt <- function(dat=bio440, strSpp="440",
 	# Setup the png device for import to word, half page with 2 plots side by side
 	createWMF <- function(plotName,rc=c(1,2)) {
 		plotName <- paste(plotName,"wmf",sep=".")
-		win.metafile(plotName, width=9, height=5)
+		do.call("win.metafile",list(filename=plotName, width=9, height=5))
 		par(mfrow=rc,cex=1.5)
 		par(mar=c(4,4,1,1),oma=c(1,1,1,1)) }
 
@@ -238,7 +238,7 @@ calcSG <- function(dat=pop.age, strSpp="", yfld="len", tau=c(5,40),
 		expandGraph(mfrow=rc,mar=c(2.75,2.5,1.5,.1),oma=c(0,0,0,0),mgp=c(1.5,.5,0),cex=0.8) }
 	createWMF <- function(plotName,rc=c(1,3)) {
 		plotName <- paste(plotName,"wmf",sep=".")
-		win.metafile(plotName, width=6.5, height=3*rc[1])
+		do.call("win.metafile",list(filename=plotName, width=6.5, height=3*rc[1]))
 		expandGraph(mfrow=rc,mar=c(2.75,2.5,1.5,.1),oma=c(0,0,0,0),mgp=c(1.5,.5,0),cex=0.8) }
 	#----------------------------------Subfunctions
 
@@ -473,7 +473,7 @@ calcVB <- function(dat=pop.age, strSpp="", yfld="len", fixt0=FALSE,
 		expandGraph(mfrow=rc,mar=c(2.75,2.5,1.5,.1),oma=c(0,0,0,0),mgp=c(1.5,.5,0),cex=0.8) }
 	createWMF <- function(plotName,rc=c(1,3)) {
 		plotName <- paste(plotName,"wmf",sep=".")
-		win.metafile(plotName, width=6.5, height=3*rc[1])
+		do.call("win.metafile",list(filename=plotName, width=6.5, height=3*rc[1]))
 		expandGraph(mfrow=rc,mar=c(2.75,2.5,1.5,.1),oma=c(0,0,0,0),mgp=c(1.5,.5,0),cex=0.8) }
 	# Setup the eps device for import to word, half page with 2 plots side by side
 	createEPS <- function(plotName,rc=c(1,3)) {
@@ -720,7 +720,7 @@ compCsum <- function(dat=pop.age, pro=TRUE, strSpp="", xfld="age", plus=60,
 		expandGraph(mfrow=rc,mar=mar,oma=oma,mgp=c(1.5,.5,0),cex=0.8) }
 	createWMF <- function(plotname,rc=c(1,3),rheight=4.5,mar=c(2,2,.5,.5),oma=c(2,1.5,0,0)) {
 		plotname <- paste(plotname,"wmf",sep=".")
-		win.metafile(plotname, width=6.5, height=rheight*rc[1])
+		do.call("win.metafile",list(filename=plotname, width=6.5, height=rheight*rc[1]))
 		expandGraph(mfrow=rc,mar=mar,oma=oma,mgp=c(1.5,.5,0),cex=0.8) }
 	csum=function(x,N,yspc=1){ # transform x-data to relative cumulative sums
 		pos=attributes(x)$pos; lab=attributes(x)$lab
@@ -1054,7 +1054,7 @@ estOgive <- function(dat=pop.age, strSpp="", method=c("empir","dblnorm"),
 
 		if (s==1) {
 			if (eps) postscript(paste(onam,".eps",sep=""),width=figdim[1],height=figdim[2],paper="special")
-			else if (wmf) win.metafile(paste(onam,".wmf",sep=""),width=figdim[1],height=figdim[2])
+			else if (wmf) do.call("win.metafile",list(filename=paste(onam,".wmf",sep=""),width=figdim[1],height=figdim[2]))
 			else resetGraph()
 			expandGraph(mfrow=c(1,1),mai=c(.6,.7,0.05,0.05),omi=c(0,0,0,0),las=1,lwd=1)
 			plot(xpos,pemp,type="n",xlab="",ylab="",xaxt="n",yaxt="n",xlim=xlim,ylim=c(0,1))
@@ -1233,7 +1233,7 @@ histMetric <- function(dat=pop.age, xfld="age", xint=1, minN=50,
 	fnam=paste(spp,"-",xfld,"-",ptype,"-tt",paste(ttype,collapse=""),
 		"-bin",xint,"-year(",YRS[1],"-",YRS[NYR],")",ifelse(length(yarea)==0,"",paste("-area(",
 		paste(yarea,collapse=","),")",sep="")),sep="")
-	if (wmf) win.metafile(paste(fnam,".wmf",sep=""),width=6.5,height=min(hrow*m,hpage))
+	if (wmf) do.call("win.metafile",list(filename=paste(fnam,".wmf",sep=""),width=6.5,height=min(hrow*m,hpage)))
 	else if (pix) png(paste(fnam,".png",sep=""),units="in",res=300,width=6.5,height=min(hrow*m,hpage))
 	else resetGraph()
 
@@ -1312,7 +1312,7 @@ histTail <-function(dat=pop.age, xfld="age", tailmin=NULL,
 	xlab = paste(toupper(substring(xfld,1,1)),substring(xfld,2),sep="",collapse=" ")
 	spp = attributes(dat)$spp
 	fnam=paste(spp,"-Hist-",xlab,sep="")
-	if (wmf) win.metafile(paste(fnam,".wmf",sep=""),width=6.5,height=hpage)
+	if (wmf) do.call("win.metafile",list(filename=paste(fnam,".wmf",sep=""),width=6.5,height=hpage))
 	else if (pix) png(paste(fnam,".png",sep=""),units="in",res=300,width=6.5,height=hpage)
 	else resetGraph()
 	expandGraph(mfrow=c(1,1),mar=c(3,5,.5,.5),oma=c(0,0,0,0),las=1,xaxs="i",yaxs="i")
@@ -1380,7 +1380,7 @@ mapMaturity <- function (dat=pop.age, strSpp="", mats=1:7, sex=1:2,
 	yspc <- .4
 
 	fnam=paste(strSpp,"-Mats",sep="")
-	if (wmf) win.metafile(paste(fnam,".wmf",sep=""), width=8.5, height=hpage)
+	if (wmf) do.call("win.metafile",list(filename=paste(fnam,".wmf",sep=""), width=8.5, height=hpage))
 	else if (pix) png(paste(fnam,".png",sep=""),units="in",res=300,width=8.5,height=hpage)
 	else resetGraph()
 	par(mfrow=c(nsex,1),mar=c(0,4.5,0,0),oma=c(1,0,3,0))
@@ -1624,7 +1624,7 @@ plotProp <- function(fnam="pop.age",hnam=NULL, ioenv=.GlobalEnv,...) {
 
 	plotname=paste(paste(c(spp,xy[2],plaster(areas,sep="+"),plaster(strat),plaster(sex),
 		plaster(ttype),plaster(stype)),collapse="-"),sep="")
-	if (wmf) win.metafile(width=8,height=8,filename=paste(plotname,".wmf",sep=""))
+	if (wmf) do.call("win.metafile",list(filename=paste(plotname,".wmf",sep=""),width=8,height=8))
 	else resetGraph()
 	expandGraph(mfrow=c(1,1),mai=c(.6,.7,0.1,0.1),las=1)
 
@@ -2100,22 +2100,23 @@ reportCatchAge <- function(prefix="pop", path=getwd(), hnam=NULL, ...) {
 #-----------------------------------reportCatchAge
 
 
-#requestAges----------------------------2013-07-04
+#requestAges----------------------------2014-01-27
 # Determine which otoliths to sample for ageing requests.
 # Note: only have to use sql=TRUE once for each species 
 # using any year before querying a group of years.
-# Note: ageing methdology is not a sensible selection criterion because the fish selected have not been aged.
+# Note: ageing methdology is not a sensible selection 
+# criterion because the fish selected have not been aged.
 #-----------------------------------------------RH
 requestAges=function(strSpp, nage=500, year=2012, 
      areas=list(major=3:9, minor=NULL), ttype=c(1,4),
      sex=1:2, nfld = "nallo", sql=TRUE, only.sql=FALSE, bySID=FALSE,
-     spath=.getSpath(), uid=Sys.info()["user"], pwd=uid, ...)
-{
+     spath=.getSpath(), uid=Sys.info()["user"], pwd=uid, ...) {
+
 	on.exit(gc())
 	if (!only.sql) {
 	assign("PBStool",list(module="M02_Biology",call=match.call(),args=args(requestAges)),envir=.PBStoolEnv)
 
-	#Subfunctions -----------------------
+#Subfunctions --------------------------
 	adjustN = function(a,b){           # a=available , b=desired
 		if (round(sum(b),5) > round(sum(a),5)) {
 			showMessage(paste("There are only",sum(round(a,0)),"otoliths available.\n",
@@ -2147,7 +2148,7 @@ requestAges=function(strSpp, nage=500, year=2012,
 		return(C) }
 
 	catnip = function(...) {cat(... ,sep="")}
-	#------------------------subfunctions
+#---------------------------subfunctions
 	}
 
 	if (sql || only.sql) {
@@ -2221,21 +2222,29 @@ requestAges=function(strSpp, nage=500, year=2012,
 		samp$tid  = paste(samp$TID_gfb,samp$FEID,sep=".")
 		catch$tid = paste(catch$TID,catch$FEID,sep=".")
 	}
+	unpackList(list(...))
+	for (i in intersect(c("TID_gfb","TID_fos"),ls())) {
+		eval(parse(text=paste("samp=biteData(samp,",i,")",sep="")))
+		eval(parse(text=paste("catch=biteData(catch,",i,")",sep="")))
+		areas = list(major=.su(samp$major)) # if TID is specified, areas become defined in terms of PMFCs
+	}
 #browser();return()
 	spooler(areas,"area",samp) # creates a column called 'area' and populates based on argument 'areas'.
 	spooler(areas,"area",catch)
 	area=sort(unique(samp$area))
-	unpackList(list(...))
-	for (i in intersect(c("year","area","ttype","TID_gfb","TID_fos"),ls())) {
+	for (i in intersect(c("year","area","ttype"),ls())) {
 		eval(parse(text=paste("samp=biteData(samp,",i,")",sep="")))
 		if (i!="ttype") eval(parse(text=paste("catch=biteData(catch,",i,")",sep="")))
 	}
 	if (nrow(samp)==0)  showError("No records left in 'samp'. Ease your restrictions")
-	if (nrow(catch)==0) showError("No records left in 'catch'. Ease your restrictions")
+	if (nrow(catch)==0) {
+		showMessage("No records left in 'catch'. Ease your restrictions")
+		return(samp) }
 
 	samp=samp[order(samp[[ifelse(type=="C","tdate","FEID")]]),]
 	z0=is.element(samp$tid,0)
 	if (any(z0)) samp$tid[z0] = 1:sum(z0)
+#browser();return()
 
 	catch=catch[order(catch$date),]
 	z0=is.element(catch$tid,0)
@@ -2264,7 +2273,6 @@ requestAges=function(strSpp, nage=500, year=2012,
 	S=is.element(names(C),ulev)
 
 	CC   = moveCat(C,S)
-#browser();return()
 	if (round(sum(C),5)!=round(sum(CC),5)) showError("Catch shuffling amongst periods not successful")
 	ccat = catch$catKg; names(ccat) = catch$tid         # trip catch of species
 	zper = is.element(clev,ulev)                        # index of unique periods
@@ -2282,10 +2290,21 @@ requestAges=function(strSpp, nage=500, year=2012,
 	samp$ncat=samp$pcat=samp$tcat=rep(0,nrow(samp))     # prepare blank columns in data frame
 	for (i in names(qC)) {                              # loop through periods (quarters)
 		zc = is.element(names(qcat[[i]]),samp$tid)       # index the trips from the comm.catch in each period
-		if (!any(zc)) next
-		tcat = qcat[[i]][zc]                             # can contain multiple catches per trip due to areas
-#if (i=="2005-04") {browser();return()}
-		tcat = sapply(split(tcat,names(tcat)),sum)       # rollup area catches
+		#if (!any(zc)) next
+		zl   = is.element(samp$lev,i)
+		if (!any(zc)) {                                  # If commercial catch is not matched assume that they at least caught the sampled catch
+			tcat = split(samp$catchKg[zl],samp$tid[zl])
+			tcat = sapply(tcat,sum)
+		} else {
+			tcat = qcat[[i]][zc]                             # can contain multiple catches per trip due to areas
+			zt = samp$tid[zl] %in% names(tcat)
+			if (!all(zt)) {
+				xcat=samp$catchKg[zl][!zt]; names(xcat)=samp$tid[zl][!zt]
+				tcat = c(tcat,xcat)
+			}
+#if (i=="2009-02") {browser();return()}
+			tcat = sapply(split(tcat,names(tcat)),sum)       # rollup area catches
+		}
 		pcat = tcat/sum(tcat)                            # proportion of period catch taken by each trip
 		ncat = pcat*nC[i]                                # allocate fish to age based on proportion of trip catch in period
 		zs   = is.element(samp$tid,names(tcat))          # index the trips from the sample data in each period
@@ -2300,9 +2319,10 @@ requestAges=function(strSpp, nage=500, year=2012,
 	samp$ndone = samp$NBBA                                       # No. otoliths broken & burnt
 	samp$nfree = round(samp$NOTO-samp$NAGE)                      # No. of free/available otoliths not yet processed
 	samp$ncalc = pmin(pmax(0,samp$nwant-samp$ndone),samp$nfree)  # No. of otoliths calculated to satisfy Nwant given constraint of Nfree
-#browser();return()
 	nardwuar = samp$ncalc > 0 & !is.na(samp$ncalc)
 	samp$nallo = rep(0,nrow(samp))
+#browser();return()
+	
 	samp$nallo[nardwuar] = adjustN(a=samp$nfree[nardwuar],b=samp$ncat[nardwuar])    # No. of otoliths allocated to satisfy user's initial request, given constraint of Nfree
 	# Adjust for many small n-values (<1) using median rather than 0.5 as the determinant of 0 vs.1
 	zsmall = samp$nallo[nardwuar] < 1.
@@ -2326,28 +2346,74 @@ requestAges=function(strSpp, nage=500, year=2012,
 	save("samp",file=paste("Sdat",strSpp,describe,".rda",sep=""))
 	write.csv(samp,  paste("Sdat",strSpp,describe,".csv",sep=""))
 
-	tid=unique(sampuse[["tid"]])
-	sid=unique(sampuse[["SID"]])
-	# Get list of available otoliths.
-	expr=paste("SELECT B5.SAMPLE_ID AS SID, B5.SPECIMEN_SERIAL_NUMBER AS SN FROM B05_SPECIMEN B5 WHERE B5.SAMPLE_ID IN (",
-		paste(sid,collapse=","),") AND B5.AGEING_METHOD_CODE IS NULL AND B5.SPECIMEN_SEX_CODE IN (", paste(sex,collapse=","),")",sep="")
-	getData(expr,"GFBioSQL",strSpp=strSpp,type="SQLX",tenv=penv())
-	Opool = split(PBSdat$SN,PBSdat$SID)                       # Pool of available otoliths
+	tid = sampuse[["tid"]]
+	if (bySID) {
+		tid = sapply(split(sampuse[["SID"]],sampuse[["tid"]]),unique,simplify=FALSE)
+	}
+	else {
+		tid = sapply(split(sampuse[["storageID"]],sampuse[["tid"]]),unique,simplify=FALSE)
+	}
+	usid     =.su(sampuse[["SID"]])
+	tripsids = sapply(split(sampuse[["SID"]],sampuse[["tid"]]),unique,simplify=FALSE)
+	#utray    = .su(sampuse[["storageID"]])
+	traytids = sapply(split(sampuse[["tid"]],sampuse[["storageID"]]),unique,simplify=FALSE)
+	#traysids = sapply(split(sampuse[["SID"]],sampuse[["storageID"]]),unique,simplify=FALSE)
+#PBSdat=PBSdatT2
+	# Get list of available otoliths. 
+	#expr=paste("SELECT B5.SAMPLE_ID AS SID, B5.SPECIMEN_SERIAL_NUMBER AS SN FROM B05_SPECIMEN B5 WHERE B5.SAMPLE_ID IN (",
+	#	paste(usid,collapse=","),") AND B5.AGEING_METHOD_CODE IS NULL AND B5.SPECIMEN_SEX_CODE IN (", paste(sex,collapse=","),")",sep="")
+	
+	# CONTAINER_ID in SAMPLE_COLLECTED = Bin, CONTAINER_ID in SPECIMEN_COLLECTED = Tray
+	# Note: SAMPLE_COLLECTED sometimes misses samples
+	expr = c("SET NOCOUNT ON",
+	"SELECT DISTINCT",
+		"SAMPLE_ID,",
+		"STUFF((",
+			"SELECT '+' + CAST([STORAGE_CONTAINER_ID] AS VARCHAR(20))",
+			"FROM SAMPLE_COLLECTED f2",
+			"WHERE f1.SAMPLE_ID = f2.SAMPLE_ID",
+			"FOR XML PATH ('')), 1, 1, '') AS BinID",
+		"INTO #Unique_Bin",
+		"FROM SAMPLE_COLLECTED f1",
+	"WHERE f1.SAMPLE_ID IN (",
+	paste(usid,collapse=","),")",
+	"SELECT",
+		"COALESCE(UB.SAMPLE_ID,SPC.SAMPLE_ID) AS SID,",
+		"ISNULL(UB.BinID,'UB'+CAST(SPC.SAMPLE_ID as varchar(6)))+':'+ISNULL(SPC.STORAGE_CONTAINER_ID,'UT'+CAST(SPC.SAMPLE_ID as varchar(6))) AS storageID,",
+		"ISNULL(SP.SPECIMEN_SERIAL_NUMBER,0) AS SN",
+	"FROM",
+		"#Unique_Bin UB RIGHT OUTER JOIN",
+		"SPECIMEN_COLLECTED SPC INNER JOIN",
+		"SPECIMEN SP ON",
+		"SP.SAMPLE_ID = SPC.SAMPLE_ID AND",
+		"SP.SPECIMEN_ID = SPC.SPECIMEN_ID ON",
+		"SPC.SAMPLE_ID = UB.SAMPLE_ID",
+	"WHERE SPC.COLLECTED_ATTRIBUTE_CODE IN (20)",
+		"AND SPC.SAMPLE_ID IN (",
+		paste(usid,collapse=","),")"
+	)
+#browser();return()
+
+	getData(paste(expr,collapse=" "),"GFBioSQL",strSpp=strSpp,type="SQLX",tenv=penv())
+	SNdat = PBSdat
+	Opool=split(paste(PBSdat$storageID,PBSdat$SN,sep="."),PBSdat$SID)
+#browser();return()
 	Npool = Opool[.su(as.character(sampuse$SID))]             # Pool relevant to the n field
 	Nsamp = sapply(split(sampuse[,nfld],sampuse$SID),sum)     # Number of otoliths to sample from the pool (sapply-split: because samples might be split across trays)
 	Nsamp = Nsamp[order(names(Nsamp))]
-	names(sid)=tid
-#browser();return()
-	Osamp = sapply(sid,function(x,O,N){                       # Otoliths sampled randomly from pool
+	#names(sid)=tid
+	Osamp = sapply(usid,function(x,O,N){                       # Otoliths sampled randomly from pool
 		xx=as.character(x); oo=O[[xx]]; nn=N[xx]; olen=length(oo)
 		if (nn==0) return(NA)
 		else if (olen==1) return(oo)
 		else return(sample(x=oo,size=min(nn,olen),replace=FALSE)) }, 
 		O=Npool, N=Nsamp, simplify=FALSE)
+	names(Osamp)=usid
 #browser();return()
-	packList(c("Opool","Nsamp","Osamp"),"PBStool",tenv=.PBStoolEnv)
+	packList(c("expr","SNdat","Opool","Nsamp","Osamp"),"PBStool",tenv=.PBStoolEnv)
 
 	fnam = paste("oto",strSpp,describe,".csv",sep="")
+	#fnam = "test.csv"
 	data(species,pmfc,envir=penv())
 	catnip(paste("Otolith Samples for", species[strSpp,]["name"],"(", species[strSpp,]["latin"],")"),"\n\n",file=fnam)
 	if (bySID) {
@@ -2357,6 +2423,7 @@ requestAges=function(strSpp, nage=500, year=2012,
 		if ( all(is.na(otos))) next
 		x=sampuse[is.element(sampuse$tid,i),]
 		unpackList(x); ntray=0; ser1=NULL
+#browser();return()
 		for (j in 1:length(firstSerial)) {
 			sers = firstSerial[j]:lastSerial[j]
 			ser1 = c(ser1, sers[seq(1,length(sers),100)]) } # first serials including n samples > 100 (tray)
@@ -2390,21 +2457,29 @@ requestAges=function(strSpp, nage=500, year=2012,
 		catnip("First serial,",paste(firstSerial,collapse=" | "),",",file=fnam,append=TRUE)
 		catnip("E,",paste(TRAY[5,],collapse=","),"\n",file=fnam,append=TRUE)
 		catnip("Last serial,",paste(lastSerial,collapse=" | "),"\n\n",file=fnam,append=TRUE)
-#if (storageID=="17Q+17R") {browser();return()}
 	} }
 	else {
 		isUNK = is.element(sampuse$storageID,"UNK")
-		if (any(isUNK)) sampuse$storageID[isUNK] = paste("UNK",sampuse$TID_gfb,sep="")
-		tray = sampuse$storageID; names(tray)=sampuse$tid
-		oldtrid = sort(unique(tray))
+		#if (any(isUNK)) sampuse$storageID[isUNK] = paste("UNK",sampuse$TID_gfb,sep="")
+		if (any(isUNK)) stop("Unknown storageID needs debugging")
+			#sampuse$storageID[isUNK] = paste("UNK_",sampuse$SID[isUNK],sep="")
+		#utray = .su(sampuse[["storageID"]])
 		tdate.storage=sapply(split(sampuse$tdate,sampuse$storageID),function(x){ xmin=min(x);substring(xmin,1,10)})
 		trid = names(tdate.storage[order(tdate.storage)])
 #browser();return()
 		for (i in trid) {
-			ii = names(tray[is.element(tray,i)])
-			Otos = sort(unique(as.vector(unlist(Osamp[ii]))))
-			if ( all(is.na(Otos))) next
-			#x = sampuse[is.element(sampuse$tid,ii),]
+			Otos = NULL
+			itid = as.character(traytids[[i]])
+			for (j in itid) {
+				jsid = as.character(tripsids[[j]])
+				for (k in jsid) {
+					ksamp = Osamp[[k]]
+					ktemp = ksamp[grep(i,ksamp)]
+					if (length(ktemp)==0) next
+					Otos = c(Otos,gsub(paste(i,".",sep=""),"",ktemp))
+				}
+			}
+			if ( is.null(Otos) || all(is.na(Otos))) next
 			x = sampuse[is.element(sampuse$storageID,i),] # use because some samples span trays
 			unpackList(x)
 			ocells = min(firstSerial):max(lastSerial)     # available otoliths
@@ -2415,19 +2490,22 @@ requestAges=function(strSpp, nage=500, year=2012,
 			serT   = matrix(seq(ocells[1],ocells[1]+99,1),nrow=5,ncol=20,byrow=TRUE)
 			#if (i=="16X:1") {browser();return()}         # there are apparently 103 Shortraker otoliths in this trip (16X:1)
 			otos   = otos[otos%in%serT]                   # tray only has room for 100; be sure extras are excluded
+#browser();return()
+			if (any(is.na(pmatch(otos,serT)))) {print("NAs generated, probably duplicated oto numbers");browser();return()}
 			TRAY[pmatch(otos,serT)] = otos
+#if (i=="9H:11100") {browser();return()}
 			catnip("Vessel,",vessel[1],",\n",file=fnam,append=TRUE)
 			catnip("Trip date,",format(tdate[1],format="%d-%b-%Y"),",",file=fnam,append=TRUE)
 			catnip("Otoliths","\n",file=fnam,append=TRUE)
 			catnip("Sample date,",format(sdate[1],"%d-%b-%Y"),",",file=fnam,append=TRUE)
 			catnip("<",length(otos),">","\n",file=fnam,append=TRUE)
-			catnip("Sample ID,",paste(min(SID),max(SID),sep=" to "),",",file=fnam,append=TRUE)
+			catnip("Sample ID,",ifelse(min(SID)==max(SID),SID,paste(min(SID),max(SID),sep=" to ")),",",file=fnam,append=TRUE)
 			catnip("Tray,",paste(1:20,collapse=","),"\n",file=fnam,append=TRUE)
-			catnip("Set,",paste(min(set),max(set),sep=" to "),",",file=fnam,append=TRUE)
+			catnip("Set,",ifelse(min(set)==max(set),set,paste(min(set),max(set),sep=" to ")),",",file=fnam,append=TRUE)
 			catnip("A,",paste(TRAY[1,],collapse=","),"\n",file=fnam,append=TRUE)
 			catnip("PMFC,",paste(pmfc[as.character(.su(major)),"gmu"],collapse="+"),",",file=fnam,append=TRUE)
 			catnip("B,",paste(TRAY[2,],collapse=","),"\n",file=fnam,append=TRUE)
-			catnip("Storage box,",storageID[1],",",file=fnam,append=TRUE)
+			catnip("Bin:Tray,",storageID[1],",",file=fnam,append=TRUE)
 			catnip("C,",paste(TRAY[3,],collapse=","),"\n",file=fnam,append=TRUE)
 			catnip("Prefix,",prefix[1],",",file=fnam,append=TRUE)
 			catnip("D,",paste(TRAY[4,],collapse=","),"\n",file=fnam,append=TRUE)
@@ -2975,8 +3053,8 @@ weightBio = function(adat, cdat, sunit="TID", sweight="catch",
 		shortside=switch(nlay,min(1+1*length(xuse)*0.5,0.80*longside), 0.80*longside, 0.80*longside)
 		longside=switch(nlay, longside, min(2+2*length(xuse)*0.5,longside), longside)
 #browser();return()
-		if (wmf) win.metafile(plotname, width=switch(nlay,shortside,longside,longside),
-			height=switch(nlay,longside,shortside,longside))
+		if (wmf) do.call("win.metafile",list(filename=plotname, width=switch(nlay,shortside,longside,longside),
+			height=switch(nlay,longside,shortside,longside)))
 		else if (pix) {
 			ppi=100; pnt=ppi*10/72; zoom=ppi/72
 			#zoom = (longside*200)/480      # zoom factor to scale picture up to 200 pixels
