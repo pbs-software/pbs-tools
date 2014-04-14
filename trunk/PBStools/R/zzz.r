@@ -8,12 +8,13 @@
 		pkg_date <- strsplit( pkg_info$Packaged, " " )[[1]][1]
 	else
 		pkg_date  <- date()
-	
+
 	userguide_path <- system.file( "doc/PBStools-UG.pdf", package = "PBStools" )
-	
+	year <- substring(date(),nchar(date())-3,nchar(date()))
+
 	packageStartupMessage("
 -----------------------------------------------------------
-PBS Tools ", pkg_info$Version, " -- Copyright (C) 2007-2013 Fisheries and Oceans Canada
+PBS Tools ", pkg_info$Version, " -- Copyright (C) 2007-",year," Fisheries and Oceans Canada
 
 A complete user guide 'PBStools-UG.pdf' is located at 
 ", userguide_path, "

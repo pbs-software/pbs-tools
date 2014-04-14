@@ -57,7 +57,7 @@ calcHabitat <- function(topofile="bctopo", isob=c(150,435),
 		for (i in names(devs)[devs]) {
 			if (i=="eps")      postscript(file=paste(fout,".eps",sep=""),width=pin[1],height=pin[2],fonts="mono",paper="special") 
 			else if (i=="pix") png(paste(fout,".png",sep =""), width=round(100*pin[1]), height=round(100*pin[2])) 
-			else if (i=="wmf") win.metafile(paste(fout,".wmf",sep=""),width=pin[1],height=pin[2])
+			else if (i=="wmf") do.call("win.metafile",list(filename=paste(fout,".wmf",sep=""),width=pin[1],height=pin[2]))
 			else          resetGraph()
 			expandGraph(mar=c(3,3.5,0.5,0.5),mgp=c(3,.5,0),las=1)
 			plotMap(box,type="n",plt=NULL,cex.axis=1.2,cex.lab=1.5)
@@ -211,7 +211,7 @@ calcSurficial <- function(surf="qcb", hab,
 	stuff=c("surfhab","areasum","area","leg","legarea")
 	packList(stuff,"PBStool",tenv=.PBStoolEnv)
 
-	if(wmf) win.metafile(paste(fout,".wmf",sep=""),width=6.75,height=8.5)
+	if (wmf) do.call("win.metafile",list(filename=paste(fout,".wmf",sep=""),width=6.75,height=8.5))
 	else if (pix) {
 		pin <- par()$pin; PIN <- 7.5 * pin/max(pin)
 		png(paste(fout,".png",sep =""), width=round(100*PIN[1]), height=round(100*PIN[2])) }
@@ -358,7 +358,7 @@ clarify <- function(dat, cell=c(0.1,0.075), nG=8,
 	PIN = par()$pin/max(par()$pin)*hpage
 	fn = paste(fnam,ifelse(is.null(targ),"",targ),"-Clara-nG",nG,"-(",paste(round(PIN,1),collapse="x"),")",sep="")
 	if (i=="eps" && ii) postscript(paste(fn,".eps",sep=""),width=PIN[1],height=PIN[2],paper="special") 
-	else if (i=="wmf" && ii) win.metafile(paste(fn,".wmf",sep=""),width=PIN[1],height=PIN[2])
+	else if (i=="wmf" && ii) do.call("win.metafile",list(filename=paste(fn,".wmf",sep=""),width=PIN[1],height=PIN[2]))
 	else resetGraph()
 	getFile(nepacLL,use.pkg=TRUE,tenv=penv())
 
@@ -512,7 +512,7 @@ plotTernary <- function(x=c(3,2,1), connect=FALSE, show.geometry=TRUE,
 	#----------------------------------------------
 
 	if (eps) postscript(file="ternary.eps", width=8,height=7,paper="special")
-	else if (wmf) win.metafile(filename="ternary.wmf",width=10,height=8.7,pointsize=12)
+	else if (wmf) do.call("win.metafile",list(filename="ternary.wmf",width=10,height=8.7,pointsize=12))
 	par( mfrow=c(1,1), mai=c(.2,.2,.2,.2), omi=c(0,0,0,0))
 	plotMap(triangle,axes=FALSE,xlab="",ylab="",xlim=extendrange(xlim),ylim=extendrange(ylim),plt=NULL,lwd=lwd*2)
 	#xpts <- c(x1,x2,x3); ypts <- c(y1,y2,y3)
@@ -689,7 +689,7 @@ plotTertiary = function(x=c(100,5,25,10,50), pC=c(0.5,0.5), r=0.5,
 	packList(stuff,target="PBStool",tenv=.PBStoolEnv)
 
 	if (eps) postscript(file="tertiary.eps", width=8,height=8,paper="special")
-	else if (wmf) win.metafile(filename="tertiary.wmf",width=10,height=10,pointsize=12)
+	else if (wmf) do.call("win.metafile",list(filename="tertiary.wmf",width=10,height=10,pointsize=12))
 	par( mfrow=c(1,1), mai=c(.2,.2,.2,.2), omi=c(0,0,0,0))
 	plotMap(shape,axes=FALSE,xlab="",ylab="",xlim=extendrange(xlim),ylim=extendrange(ylim),plt=NULL,lwd=lwd*2)
 	if (diag) {
@@ -856,7 +856,7 @@ preferDepth = function(strSpp="410", fqtName="pht_fdep.sql", dbName="PacHarvest"
 	}
 	if (eps)      postscript(file=paste(plotname,"eps",sep="."),width=10,height=6*nrow^0.25,horizontal=FALSE,paper="special")
 	else if (pix) png(filename=paste(plotname,"png",sep="."),width=10,height=6*nrow^0.25,units="in",res=100)
-	else if (wmf) win.metafile(filename=paste(plotname,"wmf",sep="."),width=10,height=6*nrow^0.25)
+	else if (wmf) do.call("win.metafile",list(filename=paste(plotname,"wmf",sep="."),width=10,height=6*nrow^0.25))
 	else resetGraph()
 
 	if (nrow*ncol==1)

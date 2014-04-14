@@ -64,7 +64,7 @@ boxSeason <- function (fqtName="Ex01_Sample_Info", dbName="Examples.mdb",
 	packList(stuff,"PBStool",tenv=.PBStoolEnv)
 
 	if (pdf) pdf(file=paste(fnam,".pdf",sep=""),width=11,height=8.5)
-	else if (wmf) win.metafile(paste(fnam,".wmf",sep=""),width=11,height=8.5)
+	else if (wmf) do.call("win.metafile",list(filename=paste(fnam,".wmf",sep=""),width=11,height=8.5))
 	else resetGraph()
 	expandGraph(mar=c(6,5,2,1.5),mgp=c(2.75,.75,0))
 	boxplot(bag[ii],las=2,range=0,lty=1,boxwex=0.5,staplewex=0,
@@ -429,7 +429,7 @@ plotDiversity <- function (fqtName="Ex01_Sample_Info",dbName="Examples.mdb",
 	
 	#if (eps) postscript(file=paste(fnam,".eps",sep=""),width=11,height=8.5,paper="special")
 	if (pdf) pdf(file=paste(fnam,".pdf",sep=""),width=11,height=8.5)
-	else if (wmf) win.metafile(paste(fnam,".wmf",sep=""),width=11,height=8.5)
+	else if (wmf) do.call("win.metafile",list(filename=paste(fnam,".wmf",sep=""),width=11,height=8.5))
 	else resetGraph()
 	expandGraph(mar=c(max(3.5,ceiling(xchar^.7)),3.75,1,3.75),mgp=c(2.75,.75,0))
 	x=barplot(height=dat[,bars],names.arg=xshow,space=0,col=clrs[1],cex.names=0.7,
@@ -518,7 +518,7 @@ trackComp = function(fqtName=c("Ex01_Sample_Info","Ex02_Species_Abundance"),
 #browser();return()
 	
 	if (pdf) pdf(file=paste(fnam,".pdf",sep=""),width=11,height=8.5)
-	else if (wmf) win.metafile(paste(fnam,".wmf",sep=""),width=11,height=8.5)
+	else if (wmf) do.call("win.metafile",list(filename=paste(fnam,".wmf",sep=""),width=11,height=8.5))
 	else resetGraph()
 	expandGraph(mar=c(4.5,3.5,0.5,1.25),oma=c(0,0,0,0),las=1,fig=c(0,1,0,.95))
 	plot(dfpic$x,dfpic$base,ylim=c(0,100),xlab="",ylab="",type="l",xaxs="i",yaxs="i",xaxt="n")

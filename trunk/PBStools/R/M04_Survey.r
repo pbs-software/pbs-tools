@@ -845,7 +845,7 @@ trend <- function(strSpp="442", fqtName="gfb_iphc.sql",
 			"eps"  = { postscript(file=paste(oname,"eps",sep="."),width=6.5,height=7,paper="special") },
 			"pdf"  = { pdf(file=paste(oname,"pdf",sep="."),width=6.5,height=7,paper="special") },
 			"png"  = { png(filename=paste(oname,"png",sep="."),width=6.5*150,height=7*150,pointsize=18) },
-			"wmf"  = { win.metafile(filename=paste(oname,"wmf",sep="."),width=6.5,height=7) },
+			"wmf"  = { do.call("win.metafile",list(filename=paste(oname,"wmf",sep="."),width=6.5,height=7)) },
 			"gdev" = { resetGraph() }
 		)
 		expandGraph(mfrow=c(1,1),mar=c(4,4,4,3),omi=c(0,0,0,0),mgp=c(2.5,.5,0));
@@ -933,7 +933,7 @@ trend <- function(strSpp="442", fqtName="gfb_iphc.sql",
 			"eps"  = { postscript(file=paste(oname,"eps",sep="."),width=6.5,height=7,paper="special") },
 			"pdf"  = { pdf(file=paste(oname,"pdf",sep="."),width=6.5,height=7,paper="special") },
 			"png"  = { png(filename=paste(oname,"png",sep="."),width=6.5*150,height=7*150,pointsize=18) },
-			"wmf"  = { win.metafile(filename=paste(oname,"wmf",sep="."),width=6.5,height=7) },
+			"wmf"  = { do.call("win.metafile",list(filename=paste(oname,"wmf",sep="."),width=6.5,height=7)) },
 			"gdev" = { resetGraph() }
 		)
 		expandGraph(mfrow=c(2,1),mar=c(3,4,.5,.5),omi=c(0,0,0,0),mgp=c(2.5,.5,0))
