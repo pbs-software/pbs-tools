@@ -1,4 +1,4 @@
--- Get commercial catch from PacHarvest; match trip IDs in GFBioSQL & GFFOS.  (2013-02-20)
+-- Get commercial catch from PacHarvest; match trip IDs in GFBioSQL & GFFOS.  (2014-06-04)
 SET NOCOUNT ON  -- prevents timeout errors
 
 -- Get GFB Trip ID for selected species from Hail-Vessel-Date combo
@@ -124,7 +124,8 @@ SELECT
   PHT.major,
   PHT.minor,
   PHT.spp,
-  Sum(CONVERT(real,PHT.catKg)) AS catKg
+  --Sum(CONVERT(real,PHT.catKg)) AS catKg
+  CAST(ROUND(SUM(CONVERT(real,PHT.catKg)),7)  AS NUMERIC(15,7)) AS catKg
 FROM
   #TIDS TID RIGHT OUTER JOIN  -- needs to be a right join to get all catch records for species
   #PHT  PHT ON
@@ -144,5 +145,5 @@ GROUP BY
   PHT.spp
 
 
--- getData("gfb_pht_catch.sql","GFBioSQL",strSpp="4010")
+-- getData("gfb_pht_catch.sql","GFBioSQL",strSpp="451")
 

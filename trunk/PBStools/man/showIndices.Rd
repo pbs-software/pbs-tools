@@ -6,8 +6,8 @@
   estimates stored in the SQL database \code{GFBioSQL}.
 }
 \usage{
-showIndices(strSpp="396", serID=1, survID=c(1,2,3,121,167),
-   bootID, tenv=.PBStoolEnv)
+showIndices(strSpp="396",serID=1, survID=NULL, bootID, 
+   tenv=.PBStoolEnv, quiet=FALSE, addN=FALSE)
 }
 \arguments{
   \item{strSpp}{string specifying species code (\code{species$code}).}
@@ -16,6 +16,8 @@ showIndices(strSpp="396", serID=1, survID=c(1,2,3,121,167),
   \item{survID}{numeric survey ID assigned to each survey by the GFBio team.}
   \item{bootID}{numeric boot run ID assigned to each record in the BOOT header table.}
   \item{tenv}{temporary working environment.}
+  \item{quiet}{logical: if \code{TRUE}, plot an empty panel in and multi-panel figure; if \code{FALSE}, print species boot results to the console.}
+  \item{addN}{logical: if \code{TRUE}, report the number of specimens below each boxplot.}
 }
 \details{
   The function relies on a short query function called \code{getBootRuns} 

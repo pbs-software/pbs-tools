@@ -1,3 +1,4 @@
+-- Last modified by RH (2014-06-06)
 -- PacHarvHL query for fisherlog catch (KG) of a target species, POP, and ORF (other rockfish)
 -- fisheryid: 2=Halibut, 3=Sablefish, 4=Schdeule II, 5=ZN, 
 --            6=Sablefish+ZN, 7=Sablefish+Halibut, 8=Dogfish, 9=Lingcod
@@ -92,14 +93,15 @@ SELECT
   C.fid, C.lic,
   --'date' = CAST( COALESCE(C.date, T.OBFL_OFFLOAD_DT) AS smalldatetime),
   'date' = CONVERT(char(10),COALESCE(C.date, T.OBFL_OFFLOAD_DT),20),
-  C.major, C.minor, C.region, C.fdep,
+  C.major, C.minor, C.region, 
+  'fdep' =  CAST(ROUND(C.fdep,7) AS NUMERIC(15,7)),
   'cfv' = CAST(IsNull(T.OBFL_VSL_CFV_NO,'0') AS VARCHAR(6)),
   C.eff,
-  'landed' = C.landed,   --/2.20459,
-  'discard' = C.discard, --/2.20459,
-  'POP' = C.POP, --/2.20459,
-  'ORF' = C.ORF, --/2.20459,
-  'TAR' = C.TAR  --/2.20459
+  'landed'  = CAST(ROUND(C.landed,7) AS NUMERIC(15,7)),   --/2.20459,
+  'discard' = CAST(ROUND(C.discard,7) AS NUMERIC(15,7)), --/2.20459,
+  'POP' = CAST(ROUND(C.POP,7) AS NUMERIC(15,7)), --/2.20459,
+  'ORF' = CAST(ROUND(C.ORF,7) AS NUMERIC(15,7)), --/2.20459,
+  'TAR' = CAST(ROUND(C.TAR,7) AS NUMERIC(15,7))  --/2.20459
 FROM 
     B2_Trips T RIGHT OUTER JOIN
     #Catch C ON 

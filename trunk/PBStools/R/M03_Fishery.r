@@ -288,7 +288,7 @@ getCatch = function(strSpp="394", dbs=c("gfb","gfc","pht","fos"),
 #-----------------------------------------getCatch
 
 
-#glimmer--------------------------------2013-01-28
+#glimmer--------------------------------2014-05-06
 # Performs an lm/aov on a predefined dataset
 # Arguments:
 #   file   = name of file or data object containing fields for GLM analysis:
@@ -319,7 +319,7 @@ getCatch = function(strSpp="394", dbs=c("gfb","gfc","pht","fos"),
 #   wmf    = logical: if TRUE, send the plot to a WMF file.
 #-----------------------------------------------RH
 glimmer <- function(file, facs=c("year","month","depth","vessel"),
-     afld="latitude", yrs=1996:2010, mos=1:12, mo1=1, dbrks=seq(100,500,100), gear=c(0,1,3), 
+     afld="latitude", yrs=1996:2014, mos=1:12, mo1=1, dbrks=seq(100,500,100), gear=c(0,1,3), 
      catch="catch", areas=NULL, Vpro=0.03, Uplot=TRUE, Upanel=0.4, Ionly=FALSE, Imax=NULL,
      crange=c(-2,2), erange=c(0,5), facmin=10, effmax=1440, vline=NULL, wmf=FALSE, ioenv=.GlobalEnv) {
 
@@ -355,6 +355,10 @@ glimmer <- function(file, facs=c("year","month","depth","vessel"),
 	file <- file[is.element(file$month,mos),]
 	file <- chewData(file,"month",facmin["month"])
 	if(nrow(file)==0) showError("year:month","nodata")
+
+	if (is.null(gear)) gear = .su(file$gear)
+	else file = biteData(file,gear)
+	if(nrow(file)==0) showError("year:month:gear","nodata")
 
 	if (any(facs=="gear")) {
 		z1 = file$year<=1995 & is.element(file$gear,c(1:5,9))  # GFCatch trawl
@@ -625,7 +629,7 @@ glimmer <- function(file, facs=c("year","month","depth","vessel"),
 	box()
 	if (wmf) dev.off()
 }
-#------------------------------------------glimmer
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~glimmer
 
 #makeCATtables--------------------------2010-06-02
 # Make CSV files containing catch from commercial fisheries

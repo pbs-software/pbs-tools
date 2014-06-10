@@ -488,10 +488,11 @@ showAlpha <- function(lims=c("emp","bca")) {
 #----------------------------------------showAlpha
 
 
-#showIndices----------------------------2013-11-25
+#showIndices----------------------------2014-05-08
 # Show survey indices from Norm's bootstrap tables
 #-----------------------------------------------RH
-showIndices =  function(strSpp="396",serID=1, survID=c(1,2,3,121,167), bootID, tenv=.PBStoolEnv)
+showIndices =  function(strSpp="396",serID=1, survID=NULL, bootID, 
+   tenv=.PBStoolEnv, quiet=FALSE, addN=FALSE)
 {
 	assign("PBStool",list(module="M04_Survey",call=match.call(),args=args(showIndices)),envir=tenv)
 	data(spn,envir=penv())
@@ -501,11 +502,23 @@ showIndices =  function(strSpp="396",serID=1, survID=c(1,2,3,121,167), bootID, t
 	# Selected survey
 	if (!is.null(serID))
 		sppBoot=surveys[is.element(surveys$serID,serID),]
-	else
+	if (!is.null(survID)) 
 		sppBoot=surveys[is.element(surveys$survID,survID),]
-	if (!missing(bootID)) 
+	if (!missing(bootID)) {
+		if (bootID %in% c("last","first")) {
+			runBoot=substring(sppBoot$runDate,1,10); names(runBoot)=sppBoot$bootID
+			booties = split(runBoot,sppBoot$survID)
+			if (bootID=="last") zuse = sapply(booties,function(x){match(max(x),x)[1]})
+			if (bootID=="first") zuse = sapply(booties,function(x){match(min(x),x)[1]})
+			bootID = sapply(names(booties),function(x,y,z){as.numeric(names(y[[x]])[z[x]])},y=booties,z=zuse)
+		}
 		sppBoot=sppBoot[is.element(sppBoot$bootID,bootID),]
-	if (nrow(sppBoot)==0) showError(paste("No index for species '",strSpp,"'",sep=""))
+	}
+#browser();return()
+	if (nrow(sppBoot)==0) {
+		if (quiet) {plot(0,0,type="n",axes=F,xlab="",ylab=""); return("nada") }
+		else showError(paste("No index for species '",strSpp,"'",sep=""))
+	}
 	noDesc = is.na(sppBoot$runDesc)
 	if (any(noDesc)) {
 		for (i in grep(TRUE,noDesc)) {
@@ -571,13 +584,16 @@ showIndices =  function(strSpp="396",serID=1, survID=c(1,2,3,121,167), bootID, t
 	}
 
 	# Plot the results
-	resetGraph(); expandGraph(mar=c(4,5,1,1),las=1)
+	#resetGraph()
+	expandGraph(mar=c(4,5,1,1),las=1)
 	plot(xy,xlim=xlim,ylim=ylim,type="n",xlab="",ylab="")
 	if (diff(xlim)<25) axis(1,at=seq(min(x),max(x),1),labels=FALSE,tcl=-.2)
 	else axis(1,at=pretty(x,n=10),labels=FALSE,tcl=-.01)
 	abline(h=pretty(ylim,6)[-1],col="grey85")
 	lines(xci,yci,col="cornflowerblue",lwd=2)
 	points(xy,pch=21,cex=1.5,col=fg[clr$y],bg=bg[clr$y])
+	if (addN)
+		text(x,sppBoot$bootLoCI/1000,sppBoot$numPosSets,col="red",adj=c(.5,1.5))
 	if (isFit) {
 		lines(xfit,yfit,col=ifelse(neg,"red","green4"),lwd=2)
 		addLabel(ifelse(neg,.95,.05),ifelse(neg,.05,.05),paste(round(r*100,1),"%/y"),
@@ -591,7 +607,8 @@ showIndices =  function(strSpp="396",serID=1, survID=c(1,2,3,121,167), bootID, t
 	box()
 	packList(c("surveys","sppBoot","survBoot","xy","cil","cih","clr","llab","ulab"),"PBStool",tenv=tenv)
 	names(y)=x
-	print(sppBoot); invisible(y)
+	if (!quiet) print(sppBoot)
+	invisible(y)
 }
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~showIndices
 

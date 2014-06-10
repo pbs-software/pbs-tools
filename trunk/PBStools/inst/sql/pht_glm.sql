@@ -20,16 +20,17 @@ GROUP BY
 SELECT -- Top 20
   'year'  = IsNull(Year(COALESCE(E.Start_FE,E.OBFL_START_DT,E.OBFL_END_DT,T.OBFL_DEPARTURE_DT,T.OBFL_OFFLOAD_DT)),9999),
   'month' = IsNull(Month(COALESCE(E.Start_FE,E.OBFL_START_DT,E.OBFL_END_DT,T.OBFL_DEPARTURE_DT,T.OBFL_OFFLOAD_DT)),0),
-  'depth' = CASE
+  'depth' = CAST(ROUND(CASE
     WHEN E.Fishing_Depth > 0 AND E.Fishing_Depth Is Not Null THEN E.Fishing_Depth
     WHEN E.OBFL_MIN_DTH >0 AND E.OBFL_MIN_DTH Is Not Null AND E.OBFL_MAX_DTH >0 AND E.OBFL_MAX_DTH Is Not Null THEN 
       (E.OBFL_MIN_DTH + E.OBFL_MAX_DTH) / 2.
-    ELSE 0 END,
+    ELSE 0 END ,7) AS NUMERIC(12,7)),
   'major' = IsNull(E.OBFL_MAJOR_STAT_AREA_CDE,0),
   'minor' = IsNull(E.OBFL_MINOR_STAT_AREA_CDE,0),
   'locality' = IsNull(E.OBFL_LOCALITY_CDE,0),
   'gear'  = IsNull(E.OBFL_GEAR_SUBTYPE_CDE,0),
-  'latitude' = COALESCE(E.OBFL_START_LATITUDE, E.OBFL_END_LATITUDE),
+  'latitude' = CAST(ROUND(COALESCE(E.OBFL_START_LATITUDE, E.OBFL_END_LATITUDE),7) AS NUMERIC(11,7)),
+  --'latitude' = COALESCE(E.OBFL_START_LATITUDE, E.OBFL_END_LATITUDE),
   'vessel' = IsNull(T.OBFL_VSL_CFV_NO,0),
   'effort' = IsNull(E.Duration, 0), 
   C.catch, C.bycatch
@@ -48,5 +49,5 @@ WHERE
   -- IsNull(T.OBFL_VSL_CFV_NO,0) > 0 AND
   ISNULL(E.Duration, 0) > 0
 
--- getData("pht_glm.sql","PacHarvest",strSpp="440",tarSpp="396")
+-- getData("pht_glm.sql","PacHarvest",strSpp="453",tarSpp="455")
 

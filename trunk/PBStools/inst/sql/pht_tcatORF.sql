@@ -1,3 +1,4 @@
+-- Last modified by RH (2014-06-06)
 -- PacHarvest query for landed catch of a target species, POP, and ORF (other rockfish)
 SET NOCOUNT ON  -- prevents timeout errors
 
@@ -40,7 +41,10 @@ SELECT
   CONVERT(char(10),COALESCE(E.Start_FE, E.OBFL_START_DT, E.OBFL_END_DT, C.OFFLOAD_DATE), 20) AS [date],
   COALESCE(E.OBFL_MAJOR_STAT_AREA_CDE, C.MAJOR_STAT_AREA, 0) AS major,
   COALESCE(E.OBFL_MINOR_STAT_AREA_CDE, C.MINOR_STAT_AREA, 0) AS minor,
-  IsNull(E.Fishing_Depth, Null) AS fdep, 
+  --IsNull(E.Fishing_Depth, Null) AS fdep, 
+  (CASE
+    WHEN E.Fishing_Depth IS NULL OR E.Fishing_Depth<=0 THEN NULL
+    ELSE CAST(ROUND(E.Fishing_Depth,7) AS NUMERIC(15,7)) END) AS fdep,
 --  T.OBFL_VSL_CFV_NO AS cfv, 
   IsNull(E.Duration, Null) AS eff, 
   C.landed,

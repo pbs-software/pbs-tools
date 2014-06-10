@@ -1,4 +1,4 @@
--- Get specimen biological data from GFBioSQL (2013-07-30)
+-- Get specimen biological data from GFBioSQL (2014-06-06)
 SET NOCOUNT ON
 
 -- Trawl Specs (returns same # records as B02_FISHING_EVENT)
@@ -325,7 +325,7 @@ SELECT
   'density' = (CASE -- this calculation is sensitive to zero-values 
     WHEN AA.CATCH_WEIGHT IS NULL OR TSP.DISTANCE IS NULL OR TSP.DISTANCE<=0 
       OR TSP.DOORSPREAD IS NULL OR TSP.DOORSPREAD<=0 THEN NULL
-    ELSE 1000.*AA.CATCH_WEIGHT / (TSP.DISTANCE*TSP.DOORSPREAD) END)
+    ELSE CAST(ROUND(1000.*AA.CATCH_WEIGHT / (TSP.DISTANCE*TSP.DOORSPREAD),7) AS NUMERIC(15,7)) END)
 FROM 
   #B01B05 AA 
   LEFT OUTER JOIN

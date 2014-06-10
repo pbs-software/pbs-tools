@@ -1,4 +1,5 @@
 -- Get Norm's bootstrap results
+-- Modified 2014-05-08 to deal with R-3.1.0's handling of floats and precision
 SET NOCOUNT ON
 
 SELECT
@@ -7,16 +8,17 @@ SELECT
   BH.BOOT_ID AS bootID,
   T.TRIP_START_DATE AS [date],
   Year(T.TRIP_START_DATE) AS [year],
+  BH.RUN_DATE AS runDate,
+  BH.RUN_DESC AS runDesc,
   BH.DEFAULT_DOORSPREAD AS defDoor,
   BH.DEFAULT_SPEED AS defSpeed,
-  BH.RUN_DESC AS runDesc,
-  BD.BIOMASS AS biomass,
-  BD.BOOT_MEAN AS bootMean,
-  BD.BOOT_MEDIAN AS bootMedian,
-  BD.BOOT_LOWER_CI AS bootLoCI,
-  BD.BOOT_UPPER_CI AS bootHiCI,
-  BD.BOOT_RE AS bootRE,
-  BD.CATCH_WEIGHT AS catchWt,
+  CAST(ROUND(BD.BIOMASS,7) AS NUMERIC(20,7)) AS biomass,
+  CAST(ROUND(BD.BOOT_MEAN,7) AS NUMERIC(20,7)) AS bootMean,
+  CAST(ROUND(BD.BOOT_MEDIAN,7) AS NUMERIC(20,7)) AS bootMedian,
+  CAST(ROUND(BD.BOOT_LOWER_CI,7) AS NUMERIC(20,7)) AS bootLoCI,
+  CAST(ROUND(BD.BOOT_UPPER_CI,7) AS NUMERIC(20,7)) AS bootHiCI,
+  CAST(ROUND(BD.BOOT_RE,7) AS NUMERIC(20,7)) AS bootRE,
+  CAST(ROUND(BD.CATCH_WEIGHT,7) AS NUMERIC(20,7)) AS catchWt,
   BD.NUM_SETS AS numSets,
   BD.NUM_POS_SETS AS numPosSets
 FROM 
