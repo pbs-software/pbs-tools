@@ -6,7 +6,11 @@ Authors: RH  = Rowan Haigh
          JTS = Jon T. Schnute
 ------------------------------
 
-1.26  2014-04-14
+1.26  2014-06-06
+  - Updated SQL code to handle R-3.1.0's large-precision nonsense; specific files:
+	`fos_catch_records.sql', `gfb_bio.sql', `gfb_fos_catch.sql', `gfb_pht_catch.sql', `gfb_age_request.sql',
+	`pht_tcatORF.sql', `phhl_hcatORF.sql', `phhl_vcatORF.sql', `phhl_fcatORF.sql'.
+  - Updated functions `glimmer' (pht_glm.sql) and `showIndices' (gfb_boot.sql) to handle R-3.1.0's new (and stupid) handling of large-precision numbers. (RH 5/8)
   - Wrapped calls to `win.metafile' with a call to `do.call' to avoid Rcheck NOTES about platform-specific devices. (RH 4/14)
   - Imported `PBSmapping', `PBSmodelling', `PBSdat', and `RODBC' in NAMESPACE file, as per Rcheck instructions. (RH 4/14)
 	(The message in R-exts.pdf: ``Packages declared in the `Depends' field should not also be in the `Imports' field'' must only pertain to the DESCRIPTION file.)

@@ -10,14 +10,14 @@
 }
 \usage{
 weightBio(adat, cdat, sunit="TID", sweight="catch", 
-     ttype=NULL, stype=c(0,1,2,5:8), ameth=3, sex=1:2, major=NULL, 
+     ttype=NULL, stype=c(0,1,2,5:8), ameth=3, sex=2:1, major=NULL, 
      wSP=c(TRUE,TRUE), wN=TRUE, plus=60, Nmin=0, Amin=NULL, 
      ctype="C", per=90, SSID=32, tabs=TRUE, 
      plot=TRUE, ptype="bubb", size=0.15, powr=0.5, zfld="wp", 
      clrs=list(c("blue","cyan"),c("green4","chartreuse")),
      cohorts=NULL, regimes=list(1900:1908,1912:1915,1923:1929,1934:1943,
      1957:1960,1976:1988,1992:1998,2002:2006),  #PDO
-     layout="portrait", wmf=FALSE, pix=FALSE, eps=FALSE, pdf=FALSE,
+     layout="portrait", eps=FALSE, pdf=FALSE, pix=FALSE, wmf=FALSE, 
      longside=10, ioenv=.GlobalEnv, ...)
 }
 \arguments{
@@ -79,8 +79,8 @@ weightBio(adat, cdat, sunit="TID", sweight="catch",
   \item{ctype}{catch type where \code{"C"} = commercial and \code{"S"} = survey.}
   \item{per}{period length (days) within a year (e.g., 90 for quarterly periods).}
   \item{SSID}{survey series ID (can be a restratification series).}
-  \item{tabs}{logical -- if \code{TRUE}, create formatted tables for use in other applications.}
-  \item{plot}{logical -- if \code{TRUE}, plot the results as bubble plots.}
+  \item{tabs}{logical: if \code{TRUE}, create formatted tables for use in other applications.}
+  \item{plot}{logical: if \code{TRUE}, plot the results as bubble plots.}
   \item{ptype}{plot type where \code{"bubb"} = bubbles and \code{"bars"} = horizontal bars.}
   \item{size}{specify size (inches) of largest bubble in all panels.}
   \item{powr}{power to scale bubbles, where \code{powr=0.5} makes bubble area roughly proportional to the z-value.}
@@ -92,14 +92,15 @@ weightBio(adat, cdat, sunit="TID", sweight="catch",
     \code{"portrait"} for vertically stacked plots, \cr
     \code{"landscape"} for plot placed horizontally side-by-side, \cr
     \code{"juxtapose"} for plots overlaid on each other (not implemented at present).}
-  \item{wmf}{logical -- if \code{TRUE}, send figure to a vector \code{.wmf} file.}
-  \item{pix}{logical -- if \code{TRUE}, send figure to a raster \code{.png} file.}
-  \item{eps}{logical -- if \code{TRUE}, send figure to a postscript \code{.eps} file.}
-  \item{pdf}{logical -- if \code{TRUE}, send figure to a postscript \code{.pdf} file.}
+  \item{eps}{logical: if \code{TRUE}, send figure to a postscript \code{.eps} file.}
+  \item{pdf}{logical: if \code{TRUE}, send figure to a postscript \code{.pdf} file.}
+  \item{pix}{logical: if \code{TRUE}, send figure to a raster \code{.png} file.}
+  \item{wmf}{logical: if \code{TRUE}, send figure to a vector \code{.wmf} file.}
   \item{longside}{dimension (inches) of the longest side of the figure.}
   \item{ioenv}{input/output environment for function input data and output results.}
   \item{...}{additional arguments to pass to the function \code{plotBubbles}.}
 }
+
 \details{
   The function uses values in the field specified by \code{sweight} to weight the 
   proportions-at-age (or frequencies-at-age). For example, if 

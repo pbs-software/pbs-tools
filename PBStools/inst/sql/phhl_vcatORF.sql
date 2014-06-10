@@ -1,3 +1,4 @@
+-- Last modified by RH (2014-06-06)
 -- PacHarvHL query for validation catch (LBS) of a target species, POP, and ORF (other rockfish)
 -- Note: validation tables do not contain information at the tow level.
 -- fisheryid: 2=Halibut, 3=Sablefish, 4=Schdeule II, 5=ZN, 
@@ -52,32 +53,32 @@ SELECT
   CONVERT(char(10),IsNull(VH.vrec_offload_dt,VH.vrec_departure_dt),20) AS 'date',
   C.phhl_major AS 'major',
   C.phhl_minor AS 'minor',
-  landed = Sum(CASE
+  landed = CAST(ROUND(Sum(CASE
     WHEN C.spp IN (@sppcode) THEN IsNull(C.catKg,0)
-    ELSE 0 END ),
+    ELSE 0 END ),7) AS NUMERIC(15,7)),
   discard = 0,
   -- target landings reference for discard calculations
-  POP = Sum( CASE
+  POP = CAST(ROUND(Sum( CASE
     WHEN C.spp IN ('396') THEN IsNull(C.catKg,0)
-    ELSE 0 END ),
-  ORF = Sum(CASE -- all rockfish other than POP
+    ELSE 0 END ),7) AS NUMERIC(15,7)),
+  ORF = CAST(ROUND(Sum(CASE -- all rockfish other than POP
     WHEN C.spp IN (@orfcode)
-    THEN IsNull(C.catKg,0) ELSE 0 END ),
-  PAH = Sum(CASE -- Pacific halibut
+    THEN IsNull(C.catKg,0) ELSE 0 END ),7) AS NUMERIC(15,7)),
+  PAH = CAST(ROUND(Sum(CASE -- Pacific halibut
     WHEN C.spp IN ('614') 
-    THEN IsNull(C.catKg,0) ELSE 0 END),
-  SBF = Sum(CASE  -- Sablefish
+    THEN IsNull(C.catKg,0) ELSE 0 END),7) AS NUMERIC(15,7)),
+  SBF = CAST(ROUND(Sum(CASE  -- Sablefish
     WHEN C.spp IN ('454','455') 
-    THEN IsNull(C.catKg,0) ELSE 0 END),
-  DOG = Sum(CASE  -- Spiny dogfish
+    THEN IsNull(C.catKg,0) ELSE 0 END),7) AS NUMERIC(15,7)),
+  DOG = CAST(ROUND(Sum(CASE  -- Spiny dogfish
     WHEN C.spp IN ('042','044') 
-    THEN IsNull(C.catKg,0) ELSE 0 END),
-  LIN = Sum(CASE  -- Lingcod
+    THEN IsNull(C.catKg,0) ELSE 0 END),7) AS NUMERIC(15,7)),
+  LIN = CAST(ROUND(Sum(CASE  -- Lingcod
     WHEN C.spp IN ('467') 
-    THEN IsNull(C.catKg,0) ELSE 0 END),
-  RFA = Sum(CASE
+    THEN IsNull(C.catKg,0) ELSE 0 END),7) AS NUMERIC(15,7)),
+  RFA = CAST(ROUND(Sum(CASE
     WHEN C.spp IN ('424','407','431','433','442')
-    THEN IsNull(C.catKg,0) ELSE 0 END)
+    THEN IsNull(C.catKg,0) ELSE 0 END),7) AS NUMERIC(15,7))
 INTO #Vcat
 FROM
   B5_Validation_Header VH INNER JOIN

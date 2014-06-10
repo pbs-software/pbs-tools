@@ -6,7 +6,7 @@
 }
 \usage{
 glimmer(file, facs=c("year","month","depth","vessel"),
-     afld="latitude", yrs=1996:2010, mos=1:12, mo1=1, 
+     afld="latitude", yrs=1996:2014, mos=1:12, mo1=1, 
      dbrks=seq(100,500,100), gear=c(0,1,3), catch="catch", 
      areas=NULL, Vpro=0.03, Uplot=TRUE, Upanel=0.4, 
      Ionly=FALSE, Imax=NULL, crange=c(-2,2), erange=c(0,5), 

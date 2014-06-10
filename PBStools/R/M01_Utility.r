@@ -46,6 +46,10 @@
 .PBSserver = c("199.60.95.134", "199.60.95.200", "PAC03450/GFDB", "199.60.95.134")
 names(.PBSserver) = c("GFDB", "PACPBSGFDB", "GFDBtemp", "SVBCPBSGFIIS")
 
+.rgbBlind = list(black=c(0,0,0),orange=c(230,159,0),skyblue=c(86,180,233),bluegreen=c(0,158,115),
+	yellow=c(240,228,66),blue=c(0,114,178),vermillion=c(213,94,0),redpurple=c(204,121,167))
+.colBlind = sapply(.rgbBlind,function(x){rgb(x[1],x[2],x[3],maxColorValue=255)})
+
 #biteData-------------------------------2008-11-10
 # Subsets a data matrix/frame using input vector.
 #-----------------------------------------------RH
@@ -228,7 +232,7 @@ flagIt = function(a, b, A=45, r=0.2, n=1, ...){
 	return(invisible(list(xvec=xvec,yvec=yvec,rads=rads,x0=x0,x=x,y=y)))
 }
 
-#getData--------------------------------2013-03-11
+#getData--------------------------------2014-05-14
 # Get data from a variety of sources.
 #-----------------------------------------------RH
 getData <-function(fqtName, dbName="PacHarvest", strSpp=NULL, server=NULL,
@@ -236,8 +240,9 @@ getData <-function(fqtName, dbName="PacHarvest", strSpp=NULL, server=NULL,
      noFactors=TRUE, noLogicals=TRUE, rownum=0, mindep=NULL, 
      maxdep=NULL, surveyid=NULL, survserid=NULL, fisheryid=NULL, 
      logtype=NULL, doors=NULL, speed=NULL, mnwt=NULL, tarSpp=NULL, 
-     major=NULL, top=NULL, dummy=NULL, senv=NULL, tenv=.GlobalEnv, ...) {
-
+     major=NULL, top=NULL, dummy=NULL, senv=NULL, tenv=.GlobalEnv, ...)
+{
+	on.exit(odbcCloseAll())
 	if (missing(fqtName)) showError("Specify 'fqtName'")
 	if (dbName=="") showError("Specify 'dbName'")
 	timeF0=proc.time()[1:3]                ### start timing getData
@@ -286,7 +291,7 @@ getData <-function(fqtName, dbName="PacHarvest", strSpp=NULL, server=NULL,
 				",qtName=", ifelse(isExpr,"NULL",paste("\"",fqtName,"\"",sep="")),
 				",strSQL=", ifelse(isExpr,paste("\"",fqtName,"\"",sep=""),"NULL"),
 				",server=\"",server,"\",type=\"",substring(type,1,3),"\",rownum=",rownum,
-				",trusted=",trusted,",uid=\"",uid,"\",pwd=\"",pwd,"\")"),collapse="")
+				",trusted=",trusted,",uid=\"",uid,"\",pwd=\"",pwd,"\",...)"),collapse="")
 			timeQ0=proc.time()[1:3]  ### start timing SQL query
 			eval(parse(text=expr)) 
 			timeQ = round(proc.time()[1:3]-timeQ0,2) }
@@ -435,11 +440,11 @@ getData <-function(fqtName, dbName="PacHarvest", strSpp=NULL, server=NULL,
 			else
 				strQ <- gsub(pattern="@originid",replacement="'Y','N'",x=strQ)
 			if (is.null(surveyid)){
-				getData("select SURVEY_ID FROM SURVEY","GFBioSQL",type="SQLX",tenv=penv())
+				getData("select SURVEY_ID FROM SURVEY","GFBioSQL",type="SQLX",tenv=penv(),server="SVBCPBSGFIIS")
 				surveyid=PBSdat[[1]] }
 			strQ <- gsub(pattern="@surveyid",replacement=paste(surveyid,collapse=","),x=strQ)
 			if (is.null(survserid)){
-				getData("select SURVEY_SERIES_ID FROM SURVEY","GFBioSQL",type="SQLX",tenv=penv())
+				getData("select SURVEY_SERIES_ID FROM SURVEY","GFBioSQL",type="SQLX",tenv=penv(),server="SVBCPBSGFIIS")
 				survserid=sort(unique(PBSdat[[1]])) }
 			strQ <- gsub(pattern="@survserid",replacement=paste(survserid,collapse=","),x=strQ)
 			strQ <- gsub(pattern="@fisheryid",replacement=ifelse(is.null(fisheryid),
@@ -461,6 +466,7 @@ getData <-function(fqtName, dbName="PacHarvest", strSpp=NULL, server=NULL,
 			"\",server=\"",server,"\",type=\"",type,"\",trusted=",trusted,
 			",uid=\"",uid,"\",pwd=\"",pwd,"\",...)",sep="")
 			timeQ0=proc.time()[1:3]  ### start timing SQL query
+#browser();return()
 			eval(parse(text=expr)) 
 			timeQ = round(proc.time()[1:3]-timeQ0,2)
 		}
@@ -493,7 +499,7 @@ getData <-function(fqtName, dbName="PacHarvest", strSpp=NULL, server=NULL,
 	invisible(strQ) }
 #------------------------------------------getData
 
-#.getSQLdata----------------------------2013-06-25
+#.getSQLdata----------------------------2014-05-01
 # Retrieves a data frame from SQL Server
 #-----------------------------------------------RH
 .getSQLdata <- function(dbName, qtName=NULL, strSQL=NULL,
@@ -517,6 +523,7 @@ getData <-function(fqtName, dbName="PacHarvest", strSpp=NULL, server=NULL,
 	if (type=="ORA") syntax = paste(syntax,";TLO=0;QTO=F",sep="")
 	syntax=gsub("/","\\\\",syntax) ### finally convert "/" to "\\"
 	assign("cns",syntax,envir=.PBStoolEnv)
+#if (type=="ORA") {browser();return()}
 	cnn <- odbcDriverConnect(connection=syntax)
 	if (is.null(qtName) && is.null(strSQL))
 		showError("Must specify either 'qtName' or 'strSQL'")
@@ -529,7 +536,17 @@ getData <-function(fqtName, dbName="PacHarvest", strSpp=NULL, server=NULL,
 			query=paste("SELECT ",ifelse(rownum>0,paste("TOP",rownum),"")," * FROM ",qtName,sep="")
 		dat <- sqlQuery(cnn, query, rows_at_time=1) }
 	else { 
-		dat <- sqlQuery(cnn, strSQL, list(...)[!is.element(names(list(...)),"driver")] ) #...) #, believeNRows=ifelse(type=="ORA",FALSE,TRUE))
+		arg.list = list(...)[!is.element(names(list(...)),"driver")]
+		# seems you cannot just pass a list into ..., even if ... is rendered as a list by the function.
+		if (length(arg.list)>0) { 
+			arg.vec = sapply(names(arg.list),function(x){paste(x,"=",paste(deparse(arg.list[[x]]),collapse=""),sep="")}) # deparse breaks lines
+			args = paste(arg.vec,collapse=", ")
+			expr = paste("dat = sqlQuery(cnn, strSQL, ",args,")",sep="")
+#print(expr); #browser()
+			eval(parse( text=expr ))
+		} else {
+			dat <- sqlQuery(cnn, strSQL) #, list(...)[!is.element(names(list(...)),"driver")] ) #...) #, believeNRows=ifelse(type=="ORA",FALSE,TRUE))
+		}
 		if (is.data.frame(dat) && nrow(dat)==0) 
 			showMessage("No records returned. Maybe try again with 'rows_at_time=1'.",col="blue")
 	}

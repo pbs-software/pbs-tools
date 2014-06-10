@@ -1,4 +1,4 @@
--- Get commercial catch from GFFOS and try to match TIDs in GFBioSQL. (2013-02-20)
+-- Get commercial catch from GFFOS and try to match TIDs in GFBioSQL. (2014-06-04)
 SET NOCOUNT ON  -- prevents timeout errors
 
 -- Get GFB Trip ID for selected species from Hail-Vessel-Date combo
@@ -174,7 +174,8 @@ SELECT
   FCAT.major,
   FCAT.minor,
   FCAT.spp,
-  SUM(CONVERT(real,FCAT.catKg)) AS catKg
+  --SUM(CONVERT(real,FCAT.catKg)) AS catKg
+  CAST(ROUND(SUM(CONVERT(real,FCAT.catKg)),7) AS NUMERIC(15,7)) AS catKg
 FROM
   #TIDS TID RIGHT OUTER JOIN  -- needs to be a right join to get all catch records for species
   #FOS_CAT FCAT ON
@@ -192,6 +193,6 @@ GROUP BY
   FCAT.spp
 
 
---getData("gfb_fos_catch.sql","GFBioSQL",strSpp="440")
+--getData("gfb_fos_catch.sql","GFBioSQL",strSpp="451")
 --select * from #FOS_CAT
 

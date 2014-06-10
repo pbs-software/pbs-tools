@@ -6,9 +6,9 @@
 }
 \usage{
 mapMaturity(dat=pop.age, strSpp="", mats=1:7, sex=1:2, 
-    brks=c(0,.05,.1,.25,.5,1),
-    clrs=c("aliceblue","lightblue","skyblue3","steelblue4","black"),
-    hpage=6, wmf=FALSE, pix=FALSE, ioenv=.GlobalEnv) 
+   brks=c(0,.05,.1,.25,.5,1), byrow=FALSE,
+   clrs=c("aliceblue","lightblue","skyblue3","steelblue4","black"),
+   hpage=6, eps=FALSE, pix=FALSE, wmf=FALSE, ioenv=.GlobalEnv)
 }
 \arguments{
   \item{dat}{biological data set with fields \code{mat} and \code{age}.}
@@ -17,15 +17,21 @@ mapMaturity(dat=pop.age, strSpp="", mats=1:7, sex=1:2,
   \item{mats}{maturity codes to map.}
   \item{sex}{sex code: 1 = males, 2 = females.}
   \item{brks}{relative breaks from 0 to 1 to partition the maturity data.}
+  \item{byrow}{logical: if \code{TRUE}, for each month standardize its fequency by maturity code; 
+    if \code{FALSE}, for each maturity code standardize its frequency by month.}
   \item{clrs}{colours to use for relative intervals defined by \code{brks}.}
   \item{hpage}{height of page in inches if figure is sent to an image file.}
-  \item{wmf}{logical: if \code{TRUE}, send plot to a \code{.wmf} file.}
+  \item{eps}{logical: if \code{TRUE}, send plot to an \code{.eps} file.}
   \item{pix}{logical: if \code{TRUE}, send plot to a \code{.png} file.}
+  \item{wmf}{logical: if \code{TRUE}, send plot to a \code{.wmf} file.}
   \item{ioenv}{input/output environment for function input data and output results.}
 }
 \details{
-  For each maturity code the function plots a row of monthly boxes colour-
+  If \code{byrow=TRUE} (original deault), for each maturity code the function plots a row of monthly boxes colour-
   coded by the relative occurrence of the code in that month compared to the year.
+  
+  Alternatively, if \code{byrow=FALSE} (current default), the function plots a column of monthly boxes colour-
+  coded by the relative occurrence of the code in that month alone.
 }
 \value{
   No value is explictly returned by the function. A global list object \code{PBStool}

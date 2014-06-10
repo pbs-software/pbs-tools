@@ -1,4 +1,4 @@
--- Query GFBioSQL for otoliths taken but not aged (2014-01-28)
+-- Query GFBioSQL for otoliths taken but not aged (2014-06-06)
 -- Show only those that can be identified by FOS TRIP_ID
 
 SET NOCOUNT ON  -- prevents timeout errors
@@ -132,10 +132,6 @@ SELECT
   SUM(CASE WHEN AA.SPECIMEN_AGE BETWEEN 1 AND 500 THEN 1 ELSE 0 END) as Nage,                                     -- count any otolith aged
   SUM(CASE WHEN AA.SPECIMEN_AGE BETWEEN 1 AND 500  AND AA.SPECIMEN_SEX_CODE IN (2) THEN 1 ELSE 0 END) as Fage,    -- Nage females
   SUM(CASE WHEN AA.SPECIMEN_AGE BETWEEN 1 AND 500  AND AA.SPECIMEN_SEX_CODE IN (1) THEN 1 ELSE 0 END) as Mage,    -- Nage males
-  --SUM(CASE WHEN AA.AGEING_METHOD_CODE IN (1,2,3,4,5,16) THEN 1 ELSE 0 END) as Nage,                                 -- count any otolith aged
-  --SUM(CASE WHEN AA.AGEING_METHOD_CODE IN (1,2,3,4,5,16) AND AA.SPECIMEN_SEX_CODE IN (2) THEN 1 ELSE 0 END) as Fage, -- Nage females
-  --SUM(CASE WHEN AA.AGEING_METHOD_CODE IN (1,2,3,4,5,16) AND AA.SPECIMEN_SEX_CODE IN (1) THEN 1 ELSE 0 END) as Mage, -- Nage males
-  --SUM(CASE WHEN AA.AGEING_METHOD_CODE BETWEEN 0 AND 16 THEN 1 ELSE 0 END) as Xage,                              -- count any ageing (same as Nage now)
   SUM(IsNull(AA.AGEING_METHOD_CODE,0)) as T_ameth,                                                                -- sum the ageing method codes
   SUM(CASE WHEN IsNull(AA.AGEING_METHOD_CODE,0) BETWEEN 0 AND 16 THEN 1 ELSE 0 END) as N_ameth,                   -- count the ageing method codes
   AA.SAMPLE_ID AS SID,                                                     -- B04_SAMPLE
@@ -242,7 +238,7 @@ SELECT
   GFB.FEID, GFB.hail, GFB.[set], GFB.GC, GFB.vessel, GFB.cfv,
   CONVERT(smalldatetime,GFB.gfb_date) AS tdate,
   GFB.ttype, GFB.major, GFB.minor, GFB.spp, GFB.catchKg,
-  GFB.SID, GFB.Noto, GFB.Foto, GFB.Moto, GFB.Nbba, GFB.Fbba, GFB.Mbba, GFB.Nage, GFB.Fage, GFB.Mage, --GFB.Xage,
+  GFB.SID, GFB.Noto, GFB.Foto, GFB.Moto, GFB.Nbba, GFB.Fbba, GFB.Mbba, GFB.Nage, GFB.Fage, GFB.Mage,
   CASE WHEN GFB.N_ameth IN (0) THEN 0 ELSE GFB.T_ameth / GFB.N_ameth END AS ameth, -- mean ageing method (flags samnples with mixtures of ageing method)
   GFB.stype, CONVERT(smalldatetime,GFB.sdate) AS sdate,
   GFB.prefix, GFB.firstSerial, GFB.lastSerial, GFB.storageID

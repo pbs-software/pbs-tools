@@ -16,7 +16,7 @@ exportPattern("^\\.set")
 exportPattern("^\\.trend")
 exportPattern("^\\.win")
 
-export(.su)
+export(.su,.rgbBlind,.colBlind)
 
 # Packages declared in the 'Depends' field should not also be in the 'Imports' field (I guess in DESCRIPTION file only) (from R-exts.pdf).
 import(

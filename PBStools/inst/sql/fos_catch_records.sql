@@ -114,6 +114,7 @@ WHERE
 
 ORDER BY FC.TRIP_ID, FC.FISHING_EVENT_ID
 ;
--- getData("fos_catch_records.sql","GFFOS",strSpp="415",server="GFSH",type="ORA",path=.getSpath(),trusted=F,uid=Sys.info()["user"],pwd=)
--- getData("fos_catch_records.sql","GFFOS",strSpp="396",server="GFSH",type="ORA",trusted=F,uid=Sys.info()["user"],pwd=)
+-- getData("fos_catch_records.sql","GFFOS",strSpp="415",server="GFSH",type="ORA",path=.getSpath(),trusted=F,uid=Sys.info()["user"],pwd="")
+-- getData("fos_catch_records.sql","GFFOS",strSpp="396",server="GFSH",type="ORA",trusted=F,uid=Sys.info()["user"],pwd="")
+-- getData("fos_catch_records.sql","GFFOS",strSpp="418",server="GFSH",type="ORA",path=.getSpath(),trusted=F,uid=Sys.info()["user"],pwd="")
 
