@@ -1,3 +1,4 @@
+-- Last modified by RH (2014-06-23)
 SET NOCOUNT ON 
 
 -- Get Trip_ID and Fishing_Event_ID
@@ -86,8 +87,8 @@ SELECT
     WHEN 'FISHERLOG'  THEN 105   -- Change to codes used by FOS
     WHEN 'OBSERVRLOG' THEN 106
     END,T.DEF_LOG) AS [log],
-  NULLIF(COALESCE(-E.OBFL_START_LONGITUDE, -E.OBFL_END_LONGITUDE, T.DEF_X),0) AS X, 
-  NULLIF(COALESCE(E.OBFL_START_LATITUDE, E.OBFL_END_LATITUDE, T.DEF_Y),0) AS Y,
+  CAST(ROUND(COALESCE(-E.OBFL_START_LONGITUDE, -E.OBFL_END_LONGITUDE, T.DEF_X),7) AS NUMERIC(15,7)) AS X, 
+  CAST(ROUND(COALESCE(E.OBFL_START_LATITUDE, E.OBFL_END_LATITUDE, T.DEF_Y),7) AS NUMERIC(15,7)) AS Y,
 --  IsNull(CONVERT(char(10),COALESCE(E.Start_FE,T.DATE), 20),Null) AS [date], 
   IsNull(COALESCE(E.Start_FE,T.DATE),Null) AS [date], 
   IsNull(Year(COALESCE(E.Start_FE,T.DATE)),9999) AS [year],
@@ -105,7 +106,7 @@ SELECT
   T.VESSEL AS vessel,
   COALESCE(E.OBFL_GEAR_SUBTYPE_CDE,T.DEF_GEAR)AS gear,  -- 1=bottom trawl, 3=midwater trawl
   COALESCE(E.OBFL_FE_SUCCESS_CDE,T.DEF_SUCCESS) AS success,
-  ISNULL(COALESCE(E.Duration,T.DEF_EFFORT),0) AS effort,  -- minutes
+  CAST(ROUND(COALESCE(E.Duration,T.DEF_EFFORT),5) AS NUMERIC(15,5)) AS effort,  -- minutes
   C.SPPCAT AS catKg,
   C.SPPDIS/C.SPPCAT AS pdis, -- proportion discarded
   C.SPPCAT/C.TOTCAT AS pcat  -- proportion of total catch
@@ -124,5 +125,5 @@ WHERE
 ORDER BY
   C.HAIL_IN_NO, C.SET_NO
 
--- getData("pht_catch_records.sql",strSpp="415")
+-- getData("pht_catch_records.sql",strSpp="401")
 

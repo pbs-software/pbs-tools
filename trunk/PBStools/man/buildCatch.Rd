@@ -1,19 +1,21 @@
 \name{buildCatch}
 \alias{buildCatch}
 \title{
-  Catch Reconstruction Algorithm for BC Rockfish
+  Commercial Catch Reconstruction for BC Rockfish
 }
 \description{
-  A catch reconstruction algorithm for BC rockfish that uses: \cr
-  (i) reliable landings from modern databases, \cr
-  (ii) estimated landings using ratios of species catch to ORF/TRF catch, \cr
-  (iii) estimated discards using discard ratios from observer logs.
+  Build a catch reconstruction for one BC rockfish species (\code{RRF}) that uses: \cr
+  (i) reliable landings of \code{RRF} from modern databases, \cr
+  (ii) estimated landings of \code{RRF} using ratios of \code{RRF} to a reference 
+   species catch (\code{TRF}, \code{ORF}, or \code{POP}), \cr
+  (iii) estimated discards of \code{RRF} using discard ratios from observer logs.
 }
 \usage{
-buildCatch(dbdat, sql=FALSE, strSpp="424", dfld="ORF", 
+buildCatch(dbdat, strSpp="396", dfld="ORF", 
    major=c(1,3:9), refyrs=1997:2005, fidout=c(1:5,10), 
    saveinfo=TRUE, eps=FALSE, pix=FALSE, wmf=FALSE, 
-   uid=Sys.info()["user"], pwd=uid, only.sql=FALSE,
+   sql=FALSE, spath=.getSpath(), only.sql=FALSE,
+   uid=Sys.info()["user"], pwd=uid, 
    reconstruct=TRUE, diagnostics=TRUE, ioenv=.GlobalEnv)
 }
 \arguments{
@@ -27,8 +29,6 @@ buildCatch(dbdat, sql=FALSE, strSpp="424", dfld="ORF",
     (6) \code{phhdat} = \code{PacHarvHL} (validated landings Sched II & ZN) on the \code{SVBCPBSGFIIS} SQL server, \cr
     (7) \code{phfdat} = \code{PacHarvHL} (fisherlog records Sched II & ZN) on the \code{SVBCPBSGFIIS} SQL server, \cr
     (8) \code{fosdat} = \code{GFFOS} (all fisheries) on the \code{GFSH} Oracle server.}
-  \item{sql}{logical: if \code{TRUE} query the databases, otherwise load 
-    catch records from binary files saved from a previous query run (saves time).}
   \item{strSpp}{character string specifying the Hart species code for the rockfish to be reconstructed (\dQuote{RRF}).}
   \item{dfld}{field name of the denominator in the ratio of RRF 
     to other rockfish (usually \dQuote{ORF} but can be \dQuote{TRF} if total rockfish is more appropriate).}
@@ -46,8 +46,12 @@ buildCatch(dbdat, sql=FALSE, strSpp="424", dfld="ORF",
   \item{eps}{logical: if \code{TRUE} send the figures to \code{.eps} files.}
   \item{pix}{logical: if \code{TRUE} send the figures to \code{.png} files.}
   \item{wmf}{logical: if \code{TRUE} send the figures to \code{.wmf} files.}
-  \item{uid, pwd}{user ID and password for Oracle DB account authentication.}
+  \item{sql}{logical: if \code{TRUE} query the databases, otherwise load 
+    catch records from binary files saved from a previous query run (saves time).}
+  \item{spath}{character: path to SQL code files -- defaults to the \code{sql} 
+    directory under \cr \code{system.file(package="PBStools")}.}
   \item{only.sql}{logical: if \code{TRUE}, then only execute the queries to download catch data from remote databases.}
+  \item{uid, pwd}{user ID and password for Oracle DB account authentication.}
   \item{reconstruct}{logical: if \code{TRUE} (default) complete the reconstruction as previously, \cr
 	if \code{FALSE}, terminate the code once the modern catch array has been compiled and saved 
 	(to a binary file \code{cat123mod.rda}, where \code{123} = species code). }
@@ -105,13 +109,18 @@ buildCatch(dbdat, sql=FALSE, strSpp="424", dfld="ORF",
 }
 \note{
   The function only has one argument for an Oracle database user ID and one for 
-  its password. If the user's authentication credentials are different for 
-  \code{PacHarv3} and \code{GFFOS}, specify \code{uid} and \code{pwd} as two-
-  element vectors. The SQL servers assume a trusted relationship with the user's 
-  DFO login identity.
+  its password. If the user's authentication credentials are different for different
+  Oracle databases, specify \code{uid} and \code{pwd} as \emph{n}-element vectors. 
+  
+  The function now queries the \code{GFFOS} database hosted on the SQL Server 
+  \code{SVBCPBSGFIIS} rather than the version hosted on the Oracale server \code{GFSH} previously.
+  
+  The SQL server \code{SVBCPBSGFIIS} does not require a password if the server recognises 
+  a user's DFO login credentials.
 }
 \seealso{
-  \code{\link[PBStools]{getCatch}}, \code{\link[PBStools]{getData}}, \code{\link[PBSdata]{orfhistory}} \cr
+  \code{\link[PBStools]{getCatch}}, \code{\link[PBStools]{getData}}, 
+  \code{\link[PBSdata]{orfhistory}}, \code{\link[PBStools]{surveyCatch}} \cr
   Available SQL queries: \code{\link[PBStools]{SQLcode}}
 }
 \keyword{manip}

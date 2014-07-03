@@ -213,26 +213,28 @@ dumpRat = function(strSpp="396", rats=c("alpha","beta","gamma","delta","lambda")
 #------------------------------------------dumpRat
 
 
-#getCatch-------------------------------2013-01-28
+#getCatch-------------------------------2014-06-24
 # Extract catch records for a species from various 
 # databases and combine them into one catch file.
 #-----------------------------------------------RH
-getCatch = function(strSpp="394", dbs=c("gfb","gfc","pht","fos"),
-     sql=FALSE, proBio=TRUE, uid=Sys.info()["user"], pwd=uid, ioenv=.GlobalEnv) {
-
+getCatch = function(strSpp="396", dbs=c("gfb","gfc","pht","fos"),
+   sql=FALSE, sqlpath=.getSpath(), proBio=TRUE, ioenv=.GlobalEnv)
+   #uid=Sys.info()["user"], pwd=uid, ioenv=.GlobalEnv) 
+{
 	sysyr=as.numeric(substring(Sys.time(),1,4)) # maximum possible year
 	if (sql) {
 	for (i in dbs) {
 		qnam = paste(i,"_catch_records.sql",sep="")
-		if (i=="gfb")      qstr = "dbName=\"GFBioSQL\""
+		if (i=="gfb")      qstr = "dbName=\"GFBioSQL\",noLogicals=FALSE,as.is=c(rep(FALSE,13),TRUE,rep(FALSE,3))"
 			else if (i=="gfc") qstr = "dbName=\"GFCatch\""
 			else if (i=="pht") qstr = "dbName=\"PacHarvest\""
-			else if (i=="fos") qstr = paste("dbName=\"GFFOS\",server=\"GFSH\",type=\"ORA\",trusted=FALSE,uid=\"",
-				uid,"\",pwd=\"",pwd,"\"",sep="")
+			else if (i=="fos") qstr = "dbName=\"GFFOS\""
+				#paste("dbName=\"GFFOS\",server=\"GFSH\",type=\"ORA\",trusted=FALSE,uid=\"",uid,"\",pwd=\"",pwd,"\"",sep="")
 			else showError(paste("Database '",i,"' not currently supported.",sep=""))
-		expr = paste("getData(\"",qnam,"\",strSpp=\"",strSpp,"\",",qstr,",path=.getSpath(),tenv=penv()); ",sep="")
+		expr = paste("getData(\"",qnam,"\",strSpp=\"",strSpp,"\",",qstr,",path=\"",sqlpath,"\",tenv=penv()); ",sep="")
 		expr = c(expr,paste("assign(\"cat",strSpp,i,".wB\",PBSdat,envir=ioenv); ",sep=""))
 		expr = c(expr,paste("save(\"cat",strSpp,i,".wB\",file=\"cat",strSpp,i,".wB.rda\"); ",sep=""))
+#browser();return()
 		eval(parse(text=paste(expr,collapse="")))
 	}	}
 	else {
@@ -284,8 +286,9 @@ getCatch = function(strSpp="394", dbs=c("gfb","gfc","pht","fos"),
 	expr = c(expr,paste(Snam,"=cat",strSpp,"gfb.wB; ",sep=""))
 	expr = c(expr,paste("save(\"",Snam,"\",file=\"",Snam,".rda\"); ",sep=""))
 	expr = c(expr,paste("invisible(list(Ccat=",Cnam,",Scat=",Snam,")); ",sep=""))
-	eval(parse(text=paste(expr,collapse=""))) }
-#-----------------------------------------getCatch
+	eval(parse(text=paste(expr,collapse=""))) 
+}
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~getCatch
 
 
 #glimmer--------------------------------2014-05-06

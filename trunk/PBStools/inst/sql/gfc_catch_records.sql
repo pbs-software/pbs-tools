@@ -83,5 +83,5 @@ WHERE
 ORDER BY
   C.Trip, C.Event
 
--- getData("gfc_catch_records.sql","GFCatch",strSpp="415")
+-- getData("gfc_catch_records.sql","GFCatch",strSpp="401")
 
