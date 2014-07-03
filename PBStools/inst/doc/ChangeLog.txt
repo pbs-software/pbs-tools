@@ -6,7 +6,12 @@ Authors: RH  = Rowan Haigh
          JTS = Jon T. Schnute
 ------------------------------
 
-1.26  2014-06-06
+1.26  2014-07-03
+  - Created new function `surveyCatch' to call query `gfb_rcatORF.sql' and produce a summary table of survey catch for a specified species. (RH 7/3)
+  - Modified the SQL query `gfb_bio.sql' to better identify Surevy Series ID (SSID) and to ignore Fishing Event IDs (FEID) that describe individual hooks and traps. (RH 7/2)
+  - Modified the SQL query `fos_vcatORF.sql' and the function `buildCatch' to use the SQL Server database GFFOS. (RH 7/2)
+  - Modified the function `getCatch' to query the GFFOS database on the SVBCPBSGFIIS server. (RH 6/24)
+  - Modified four SQL queries called by `getCatch' -- `gfb_catch_records.sql', `gfc_catch_records.sql', `pht_catch_records.sql', `fos_catch_records.sql'. (RH 6/23)
   - Updated SQL code to handle R-3.1.0's large-precision nonsense; specific files:
 	`fos_catch_records.sql', `gfb_bio.sql', `gfb_fos_catch.sql', `gfb_pht_catch.sql', `gfb_age_request.sql',
 	`pht_tcatORF.sql', `phhl_hcatORF.sql', `phhl_vcatORF.sql', `phhl_fcatORF.sql'.

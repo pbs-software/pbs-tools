@@ -1,4 +1,4 @@
--- Research survey catch for catch reconstructon. (2013-08-20)
+-- Research survey catch for catch reconstructon. (last modified 2014-07-02)
 
 SET NOCOUNT ON  -- prevents timeout errors
 
@@ -41,8 +41,9 @@ FROM
     T.TRIP_ID = E.TRIP_ID
 WHERE
   C.SPECIES_CODE IN (@sppcode) AND 
-  T.TRIP_SUB_TYPE_CODE IN (2,3)
+  T.TRIP_SUB_TYPE_CODE IN (2,3) AND 
+  E.FE_SUB_LEVEL_ID IS NULL  -- FISHING_EVENT_ID REPEATED MANY TIMES FOR HOOKS AND TRAPS IF NOT NULL (STUPID IDEA)
 
---getData("gfb_rcatORF.sql","GFBioSQL",strSpp="405")
+--getData("gfb_rcatORF.sql","GFBioSQL",strSpp="442")
 
 

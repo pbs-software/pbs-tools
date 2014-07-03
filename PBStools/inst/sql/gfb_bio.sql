@@ -1,4 +1,4 @@
--- Get specimen biological data from GFBioSQL (2014-06-06)
+-- Get specimen biological data from GFBioSQL (2014-07-02)
 SET NOCOUNT ON
 
 -- Trawl Specs (returns same # records as B02_FISHING_EVENT)
@@ -17,25 +17,54 @@ FROM
   B02e_Trawl_Specs B02e ON
   B02.FISHING_EVENT_ID = B02e.FISHING_EVENT_ID) ON
   B01.TRIP_ID = B02.TRIP_ID
+WHERE B02.FE_SUB_LEVEL_ID IS NULL  -- FISHING_EVENT_ID REPEATED MANY TIMES FOR HOOKS AND TRAPS IF NOT NULL (STUPID IDEA)
 
--- Get survey information by trip (TRIP_ID and GROUPING_CODE are key fields)
+
+-- =====ASSOCIATE TRIPS WITH SURVEYS=====
+
+-- Merge tables to get TRIP_ID, SURVEY_ID, and SURVEY_SERIES_ID
 SELECT
   TS.TRIP_ID, 
   TS.SURVEY_ID, 
   IsNull(S.SURVEY_SERIES_ID,0) AS SURVEY_SERIES_ID,
-  IsNull(SG.GROUPING_CODE,0) AS GROUPING_CODE,
-  IsNull(G.AREA_KM2,0) AS AREA_KM2
-INTO #TripSurv
+  CASE 
+    WHEN S.ORIGINAL_IND='Y' THEN 1
+    WHEN S.ORIGINAL_IND='N' THEN 2
+    ELSE 3 END AS ORIGINAL_IND
+INTO #TempTripSurv
 FROM 
-  SURVEY S RIGHT OUTER JOIN 
-  (TRIP_SURVEY TS LEFT OUTER JOIN 
-  (SURVEY_GROUPING SG INNER JOIN
-  GROUPING G ON
-  SG.GROUPING_CODE = G.GROUPING_CODE) ON
-  TS.SURVEY_ID = SG.SURVEY_ID) ON 
+  SURVEY S RIGHT OUTER JOIN
+  TRIP_SURVEY TS ON
   S.SURVEY_ID = TS.SURVEY_ID 
-WHERE S.ORIGINAL_IND='Y' 
 
+-- TRIP_ID can be associated with more than one SURVEY_ID, which can include the original index or not.
+-- Choose one SURVEY_ID per TRIP_ID, preferably the orginal index.
+-- When the orginal is not avialable, choose a non-original index.
+SELECT
+  TS.TRIP_ID, 
+  TS.SURVEY_ID, 
+  TS.SURVEY_SERIES_ID,
+  TS.ORIGINAL_IND
+INTO #TripSurvSer
+FROM
+  (SELECT *,
+    ROW_NUMBER() OVER (PARTITION BY TTS.TRIP_ID ORDER BY TTS.ORIGINAL_IND, TTS.SURVEY_ID) AS RN
+  FROM #TempTripSurv TTS) AS TS
+WHERE TS.RN = 1
+ORDER BY TS.TRIP_ID
+
+-- Gather latest GROUPING_CODE by FISHING_EVENT_ID
+SELECT *
+INTO #FishEventGroup
+FROM
+  (SELECT *,
+    ROW_NUMBER() OVER (PARTITION BY LEG.FISHING_EVENT_ID ORDER BY LEG.GROUPING_CODE DESC) AS RN
+  FROM FISHING_EVENT_GROUPING LEG) AS FEG
+WHERE FEG.RN = 1
+ORDER BY FEG.FISHING_EVENT_ID
+
+
+-- =====BEST VALUES FROM FISHING EVENTS=====
 -- Derive `Best` values from B02 Fishing Events
 SELECT --TOP 40
   B02.TRIP_ID,
@@ -76,6 +105,7 @@ SELECT --TOP 40
 INTO #BestEvents
 FROM 
   B02_FISHING_EVENT B02
+WHERE B02.FE_SUB_LEVEL_ID IS NULL  -- FISHING_EVENT_ID REPEATED MANY TIMES FOR HOOKS AND TRAPS IF NOT NULL (STUPID IDEA)
 
 ---------------------------SPECIMEN QUERIES---------------------------
 
@@ -87,6 +117,7 @@ SELECT --TOP 40
   B04.SAMPLE_ID,
   B05.SPECIMEN_ID,
   B02.GROUPING_CODE,
+  B02.BLOCK_DESIGNATION,
   B01.HAIL_IN_NO,
   B02.FE_MAJOR_LEVEL_ID,
   B02.FE_SUB_LEVEL_ID,
@@ -127,7 +158,16 @@ FROM
     B02.TRIP_ID = B01.TRIP_ID
 WHERE 
   B03.SPECIES_CODE IN (@sppcode) AND
-  B02.MAJOR_STAT_AREA_CODE IN (@major)
+  B02.MAJOR_STAT_AREA_CODE IN (@major) AND
+  B02.FE_SUB_LEVEL_ID IS NULL  -- FISHING_EVENT_ID REPEATED MANY TIMES FOR HOOKS AND TRAPS IF NOT NULL (STUPID IDEA)
+
+-- Add in missing Gouping Codes to main skeleton table B01B05
+UPDATE #B01B05
+SET GROUPING_CODE = COALESCE( #B01B05.GROUPING_CODE,
+   (SELECT #FishEventGroup.GROUPING_CODE 
+    FROM #FishEventGroup
+    WHERE #FishEventGroup. FISHING_EVENT_ID = #B01B05. FISHING_EVENT_ID) )
+
 
 -- Collect specimen IDs for ONLY strSpp (to speed up some later queries)
 SELECT --TOP 40
@@ -216,16 +256,36 @@ GROUP BY
   SM.SAMPLE_ID,
   SM.SPECIMEN_ID
 
------ Tie everything together ------------------------------
+
+-- ===== Tie everything together =====
 SELECT 
   'TID'  = AA.TRIP_ID,                                      -- B01_TRIP
   'FEID' = AA.FISHING_EVENT_ID,                             -- B02_FISHING_EVENT
   'CID'  = AA.CATCH_ID,                                     -- B03_CATCH
   'SID'  = AA.SAMPLE_ID,                                    -- B04_SAMPLE
   'SPID' = AA.SPECIMEN_ID,                                  -- B05_SPECIMEN
-  'SVID' = IsNull(TSG.SURVEY_ID,0),                         -- TRIP_SURVEY
-  'SSID' = IsNull(TSG.SURVEY_SERIES_ID,0),                  -- SURVEY
-  'GC'   = COALESCE(AA.GROUPING_CODE,TSG.GROUPING_CODE,0),  -- SURVEY_GROUPING
+  'SVID' = TSS.SURVEY_ID,                                   -- TRIP_SURVEY
+  'SSID' = CASE                                             -- SURVEY
+    WHEN TSS.SURVEY_SERIES_ID IS NULL OR TSS.SURVEY_SERIES_ID IN (0) THEN (CASE
+      WHEN AA.BLOCK_DESIGNATION IN ('TASU','FLAMINGO') THEN 22
+      WHEN AA.BLOCK_DESIGNATION IN ('TRIANGLE','BROOKS') THEN 36
+      ELSE TSS.SURVEY_SERIES_ID END)
+    ELSE TSS.SURVEY_SERIES_ID END,
+  'GC'   = CASE                                             -- SURVEY_GROUPING
+    WHEN AA.GROUPING_CODE IS NOT NULL THEN AA.GROUPING_CODE
+    --WHEN TSSG.GROUPING_CODE IS NOT NULL THEN TSSG.GROUPING_CODE
+    WHEN AA.BLOCK_DESIGNATION IN ('TASU','FLAMINGO') THEN (CASE
+      WHEN BB.Best_Depth BETWEEN 20 AND 70 THEN 321
+      WHEN BB.Best_Depth BETWEEN 70.001 AND 150 THEN 322
+      WHEN BB.Best_Depth BETWEEN 150.001 AND 260 THEN 323
+      ELSE NULL END)
+    WHEN AA.BLOCK_DESIGNATION IN ('TRIANGLE','BROOKS') THEN (CASE
+      WHEN BB.Best_Depth BETWEEN 20 AND 70 THEN 324
+      WHEN BB.Best_Depth BETWEEN 70.001 AND 150 THEN 325
+      WHEN BB.Best_Depth BETWEEN 150.001 AND 260 THEN 326
+      ELSE NULL END)
+    ELSE NULL END,
+  'block'= AA.BLOCK_DESIGNATION,                            -- B02_FISHING_EVENT
   'hail' = IsNull(AA.HAIL_IN_NO,0),                         -- B01_Trip
   'set'  = IsNull(AA.FE_MAJOR_LEVEL_ID,0),                  -- B02_Fishing_Event
   'subset' = IsNull(AA.FE_SUB_LEVEL_ID,1),                  -- B02_Fishing_Event
@@ -235,7 +295,7 @@ SELECT
     WHEN AA.SAMPLE_DATE Is Null Or 
          AA.TRIP_END_DATE-AA.SAMPLE_DATE < 0 Or 
          AA.TRIP_START_DATE-AA.SAMPLE_DATE > 0 THEN 
-      convert(smalldatetime,convert(varchar(10),AA.TRIP_END_DATE,20),20)          -- B01_Trip
+      convert(smalldatetime,convert(varchar(10),AA.TRIP_END_DATE,20),20)        -- B01_Trip
     ELSE convert(smalldatetime,convert(varchar(10),AA.SAMPLE_DATE,20),20) END,  -- B04_Sample
   'year' = Year(CASE 
     WHEN AA.SAMPLE_DATE Is Null Or AA.TRIP_END_DATE-AA.SAMPLE_DATE<0 Or
@@ -256,7 +316,6 @@ SELECT
   'use'   = IsNull(TSP.USABILITY,0),                        -- B02e_Trawl_Specs
   'dist'  = IsNull(TSP.DISTANCE,0),                         -- B02e_Trawl_Specs
   'door'  = IsNull(TSP.DOORSPREAD,0),                       -- B02e_Trawl_Specs
-  'area'  = IsNull(TSG.AREA_KM2,0),                         -- GROUPING
   'major' = IsNull(AA.MAJOR_STAT_AREA_CODE,0),              -- B02_Fishing_Event
   'minor' = IsNull(AA.MINOR_STAT_AREA_CODE,0),              -- B02_Fishing_Event
   'locality' = IsNull(AA.LOCALITY_CODE,0),                  -- B02_Fishing_Event
@@ -326,6 +385,7 @@ SELECT
     WHEN AA.CATCH_WEIGHT IS NULL OR TSP.DISTANCE IS NULL OR TSP.DISTANCE<=0 
       OR TSP.DOORSPREAD IS NULL OR TSP.DOORSPREAD<=0 THEN NULL
     ELSE CAST(ROUND(1000.*AA.CATCH_WEIGHT / (TSP.DISTANCE*TSP.DOORSPREAD),7) AS NUMERIC(15,7)) END)
+INTO #BIOSPP
 FROM 
   #B01B05 AA 
   LEFT OUTER JOIN
@@ -333,14 +393,13 @@ FROM
      AA.TRIP_ID = BB.TRIP_ID AND
      AA.FISHING_EVENT_ID = BB.FISHING_EVENT_ID AND
     AA.FE_MAJOR_LEVEL_ID = BB.FE_MAJOR_LEVEL_ID 
+  LEFT OUTER JOIN
+  #TripSurvSer TSS  ON
+    AA.TRIP_ID = TSS.TRIP_ID 
   LEFT OUTER JOIN 
   #TSpecs TSP  ON
      AA.TRIP_ID = TSP.TRIP_ID AND
      AA.FISHING_EVENT_ID = TSP.FISHING_EVENT_ID
-  LEFT OUTER JOIN
-  #TripSurv TSG  ON
-    AA.TRIP_ID = TSG.TRIP_ID AND
-    AA.GROUPING_CODE = TSG.GROUPING_CODE
   LEFT OUTER JOIN
   #BestMorpho BM  ON
     AA.SAMPLE_ID = BM.SAMPLE_ID AND
@@ -353,7 +412,16 @@ WHERE
   AA.SPECIES_CODE IN (@sppcode) AND
   AA.MAJOR_STAT_AREA_CODE IN (@major)
 
+SELECT 
+  BS.*,
+  'area'  = G.AREA_KM2 --IsNull(G.AREA_KM2,0)   -- GROUPING
+FROM
+  #BIOSPP BS LEFT OUTER JOIN
+  GROUPING G ON
+    BS.GC = G.GROUPING_CODE
+ORDER BY
+  BS.TID, BS.FEID, BS.CID, BS.SID, BS.SPID
 
--- getData("gfb_bio.sql","GFBioSQL",strSpp="415")
 
+-- getData("gfb_bio.sql","GFBioSQL",strSpp="401")
 

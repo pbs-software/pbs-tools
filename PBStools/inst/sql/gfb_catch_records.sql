@@ -90,6 +90,6 @@ WHERE
   C.SPECIES_CODE IN (@sppcode) AND 
   T.TRIP_SUB_TYPE_CODE IN (2,3)
 
---getData("gfb_catch_records.sql","GFBioSQL",strSpp="396",noLogicals=F)
+--getData("gfb_catch_records.sql","GFBioSQL",strSpp="401",noLogicals=F,as.is=c(rep(F,13),T,rep(F,3)))
 
 

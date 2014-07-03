@@ -6,15 +6,16 @@
 #  plotRecon....Plot reconstructed catch using barplots stacked by PMFC area.
 #===============================================================================
 
-#buildCatch-----------------------------2013-03-15
+#buildCatch-----------------------------2014-07-02
 # Catch reconstruction algorithm for BC rockfish.
 # Use ratios of species catch to ORF catch for multiple fisheries.
 # Matrix indices: i=year, j=major, k=fid, l='spp'
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~RH
-buildCatch=function(dbdat, sql=FALSE, strSpp="424", dfld="ORF", 
+buildCatch=function(dbdat, strSpp="396", dfld="ORF", 
    major=c(1,3:9), refyrs=1997:2005, fidout=c(1:5,10), 
    saveinfo=TRUE, eps=FALSE, pix=FALSE, wmf=FALSE, 
-   uid=Sys.info()["user"], pwd=uid, only.sql=FALSE,
+   sql=FALSE, spath=.getSpath(), only.sql=FALSE,
+   uid=Sys.info()["user"], pwd=uid, 
    reconstruct=TRUE, diagnostics=TRUE, ioenv=.GlobalEnv){
 
 	if (!only.sql) {
@@ -57,7 +58,7 @@ buildCatch=function(dbdat, sql=FALSE, strSpp="424", dfld="ORF",
 			if(nrow(bdat)==0) next
 			for (i in sou) {
 				ii=as.character(i)
-				idat=bdat[is.element(bdat$sou,i),]
+				idat=bdat[is.element(bdat$source,i),]
 				if(nrow(idat)==0) next
 				for (j in majhis) {
 					jj=as.character(j)
@@ -149,47 +150,47 @@ buildCatch=function(dbdat, sql=FALSE, strSpp="424", dfld="ORF",
 		### NOTE: Currently the Oracle call to PacHarv3 creates an instability so that a second call to Oracle crashes.
 
 		### PacHarv3 catch summary for fids 1:5 and 0 (unknown)
-		getData("ph3_fcatORF.sql",dbName="HARVEST_V2_0",strSpp=strSpp,path=.getSpath(),
+		getData("ph3_fcatORF.sql",dbName="HARVEST_V2_0",strSpp=strSpp,path=spath,
 			server="ORAPROD",type="ORA",trusted=FALSE,uid=uid[1],pwd=pwd[1],tenv=penv())
 			assign("ph3dat",PBSdat);  rm(PBSdat) ### just to be safe
 			dimnames(ph3dat)[[1]]=1:nrow(ph3dat)
 			save("ph3dat",file="ph3dat.rda")
 
 		### GFCatch records for fids (1,3,5)
-		getData("gfc_fcatORF.sql","GFCatch",strSpp=strSpp,path=.getSpath(),tenv=penv())
+		getData("gfc_fcatORF.sql","GFCatch",strSpp=strSpp,path=spath,tenv=penv())
 			assign("gfcdat",PBSdat); rm(PBSdat) ### just to be safe
 			#gfcdat$year=as.numeric(substring(gfcdat$date,1,4))  ### doesn't appear to be used
 			dimnames(gfcdat)[[1]]=1:nrow(gfcdat)
 			save("gfcdat",file="gfcdat.rda")
 		
 		### PacHarvest records for fids (1)
-		getData("pht_tcatORF.sql","PacHarvest",strSpp=strSpp,path=.getSpath(),tenv=penv())
+		getData("pht_tcatORF.sql","PacHarvest",strSpp=strSpp,path=spath,tenv=penv())
 			assign("phtdat",PBSdat); rm(PBSdat) ### just to be safe
 			save("phtdat",file="phtdat.rda")
 
 		### PacHarvHL halibut validation records for fids (2,7)
-		getData("phhl_hcatORF.sql","PacHarvHL",strSpp=strSpp,path=.getSpath(),tenv=penv())   ### validated (DMP) catch
+		getData("phhl_hcatORF.sql","PacHarvHL",strSpp=strSpp,path=spath,tenv=penv())   ### validated (DMP) catch
 			assign("phhdat",PBSdat); rm(PBSdat) ### just to be safe
 			save("phhdat",file="phhdat.rda")
 
 		### PacHarvSable fisherlogs for fids (3)
-		getData("phs_scatORF.sql","PacHarvSable",strSpp=strSpp,path=.getSpath(),fisheryid=3,logtype="FISHERLOG",tenv=penv())
+		getData("phs_scatORF.sql","PacHarvSable",strSpp=strSpp,path=spath,fisheryid=3,logtype="FISHERLOG",tenv=penv())
 			assign("phsdat",PBSdat); rm(PBSdat) ### just to be safe
 			save("phsdat",file="phsdat.rda")
 
 		### PacHarvHL validation records for fids (2,4,5)
-		getData("phhl_vcatORF.sql","PacHarvHL",strSpp=strSpp,path=.getSpath(),tenv=penv())   ### validated (DMP) catch
+		getData("phhl_vcatORF.sql","PacHarvHL",strSpp=strSpp,path=spath,tenv=penv())   ### validated (DMP) catch
 			assign("phvdat",PBSdat); rm(PBSdat) ### just to be safe
 			save("phvdat",file="phvdat.rda")
 
 		### PacHarvHL fisherlog records for fids (4,5)
-		getData("phhl_fcatORF.sql","PacHarvHL",strSpp=strSpp,path=.getSpath(),logtype="FISHERLOG",tenv=penv()) ### fisherlog catch
+		getData("phhl_fcatORF.sql","PacHarvHL",strSpp=strSpp,path=spath,logtype="FISHERLOG",tenv=penv()) ### fisherlog catch
 			assign("phfdat",PBSdat); rm(PBSdat) ### just to be safe
 			save("phfdat",file="phfdat.rda")
 
-		### FOS catch from all fisheries (fid=1:5)
-		getData("fos_vcatORF.sql",dbName="GFFOS",strSpp=strSpp,path=.getSpath(),
-			server="GFSH",type="ORA",trusted=FALSE,uid=uid[2],pwd=pwd[2],tenv=penv())
+		### FOS catch from all fisheries (fid=1:5) -- now use GFFOS on SQL Server, not Oracle
+		getData("fos_vcatORF.sql", dbName="GFFOS", strSpp=strSpp, path=spath, tenv=penv())
+			#server="GFSH",type="ORA",trusted=FALSE,uid=uid[2],pwd=pwd[2])
 			assign("fosdat",PBSdat); rm(PBSdat) ### just to be safe
 			dimnames(fosdat)[[1]]=1:nrow(fosdat)
 			save("fosdat",file="fosdat.rda")
@@ -506,10 +507,10 @@ buildCatch=function(dbdat, sql=FALSE, strSpp="424", dfld="ORF",
 		else if (any(k==c(2:5))) {
 			if (any(k==c(2,4,5))) 
 				getData("phhl_fcatORF.sql","PacHarvHL",strSpp=strSpp,
-					path=.getSpath(),fisheryid=k,logtype="OBSERVRLOG",tenv=penv())
+					path=spath,fisheryid=k,logtype="OBSERVRLOG",tenv=penv())
 			if (k==3)
 				getData("phs_scatORF.sql","PacHarvSable",strSpp=strSpp,
-					path=.getSpath(),fisheryid=k,logtype="OBSERVRLOG",tenv=penv())
+					path=spath,fisheryid=k,logtype="OBSERVRLOG",tenv=penv())
 			discat=PBSdat; dyrs=2000:2004 }
 		if (nrow(discat)==0) next
 		ologs[[kk]] = discat
@@ -851,44 +852,66 @@ plotRecon = function(dat=cat440rec, strSpp="440", major=c(1,3:9), fidout=10,
 }
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotRecon
 
+
+#surveyCatch----------------------------2014-07-03
+# Query GFBioSQL for survey catch and summarise
+# catches by year and PMFC area.
+#-----------------------------------------------RH
+surveyCatch = function(strSpp="396", spath=.getSpath())
+{
+	if (isThere("PBSdat")) rm(PBSdat) ### remove from current environment
+	### GFBioSQL catch summary for surveys
+	getData("gfb_rcatORF.sql",dbName="GFBioSQL",strSpp=strSpp,path=spath,,tenv=penv())
+	assign("gfbdat",PBSdat);  rm(PBSdat) ### just to be safe
+	gfbtab = crossTab(gfbdat,c("year","major"),"catKg") # summarise catch (t)
+	gfbcat = as.data.frame(gfbtab[,-1])
+	row.names(gfbcat) = gfbtab[,1]
+	data(pmfc,package="PBSdata",envir=penv())
+	names(gfbcat) = pmfc[names(gfbcat),"gmu"]
+	save("gfbdat",file="gfbdat.rda")
+	save("gfbcat",file="gfbcat.rda")
+	write.csv(gfbcat,file=paste("Catch-Survey-",strSpp,".csv",sep=""))
+	invisible(gfbcat)
+}
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~surveyCatch
+
 #===============================================================================
-# SGR - Silvergrey Rockfish
-#x=buildCatch(sql=TRUE,strSpp="405",dfld="ORF",wmf=FALSE,pwd=c("pwd1","pdw2"),only.sql=TRUE)
-#x=buildCatch(cat405orf,strSpp="405",dfld="TRF",eps=TRUE)
+#5RF
+# Splitnose (412), Greenstriped (414), Redstripe (439), Harlequin (446), Sharpchin (450)
+#x=buildCatch(sql=T,strSpp="414",wmf=T,pwd=c(pwd1,pwd2))
+#x=buildCatch(cat412orf,strSpp="412",wmf=T,pwd=c(pwd1,pwd2))
 
-# YYR - Yelloweye rockfish
-#x=buildCatch(sql=TRUE,strSpp="442",dfld="ORF",wmf=FALSE,pwd=c("pwd1","pwd2"),only.sql=TRUE)
-#x=buildCatch(cat442orf,strSpp="442",dfld="ORF",eps=TRUE)
-#x=buildCatch(sql=T,strSpp="442",refyrs=1982:2009,wmf=T,pwd=c("pwd1","pwd2"))  # --trial only
-
-# RBR - Redbanded Rockfish
-#x=buildCatch(sql=TRUE,strSpp="401",dfld="ORF",wmf=FALSE,pwd=c("pwd1","pwd2"))
-#x=buildCatch(cat401orf,strSpp="401",dfld="ORF",eps=TRUE)
+# LST - Longspine thornyhead
+#x=buildCatch(sql=T,strSpp="453",wmf=T,pwd=c(pwd1,pwd2))
+#x=buildCatch(cat453orf,strSpp="453",wmf=T)
 
 # POP - Pacific Ocean Perch
-#x=buildCatch(sql=TRUE,strSpp="396",dfld="TRF",wmf=TRUE,pwd=c("pwd1","pwd2"))
+#x=buildCatch(sql=TRUE,strSpp="396",dfld="TRF",wmf=TRUE,pwd=c(pwd1,pwd2))
 #x=buildCatch(cat396orf,strSpp="396",dfld="TRF",wmf=TRUE)
 #x=buildCatch(cat396orf,strSpp="396",dfld="TRF",wmf=TRUE) #---not good
 
-# YMR - Yellowmouth Rockfish
-#x=buildCatch(sql=T,strSpp="440",dfld="TRF",wmf=T,pwd=c("pwd1","pwd2"))
-#x=buildCatch(cat440orf,strSpp="440",dfld="TRF",wmf=T)
-
-# LST - Longspine thornyhead
-#x=buildCatch(sql=T,strSpp="453",wmf=T,pwd=c("pwd1","pwd2"))
-#x=buildCatch(cat453orf,strSpp="453",wmf=T)
-
-# RER - Rougheye rockfish
-#x=buildCatch(sql=T,strSpp="394",wmf=T,pwd=c("pwd1","pwd2"))
-#x=buildCatch(cat439orf,strSpp="394",wmf=T)
-
 # QBR - Quilback rockfish
-#x=buildCatch(sql=T,strSpp="424",dfld="ORF",wmf=T,pwd=c("pwd1","pwd2"))
+#x=buildCatch(sql=T,strSpp="424",dfld="ORF",wmf=T,pwd=c(pwd1,pwd2))
 #x=buildCatch(cat424orf,strSpp="424",dfld="ORF",wmf=T)
 
-# Nathan Taylor
-# Splitnose (412), Greenstriped (414), Redstripe (439), Harlequin (446), Sharpchin (450)
-#x=buildCatch(sql=T,strSpp="414",wmf=T,pwd=c("pwd1","pwd2"))
-#x=buildCatch(cat412orf,strSpp="412",wmf=T,pwd=c("pwd1","pwd2"))
+# RBR - Redbanded Rockfish
+#x=buildCatch(sql=TRUE,strSpp="401",dfld="ORF",only.sql=TRUE)
+#x=buildCatch(cat401orf,strSpp="401",dfld="ORF",eps=TRUE)
+#y=surveyCatch(strSpp="401")
 
-#source("getFile.r"); source("getData.r"); source("calcRatio.r")
+# RER - Rougheye rockfish
+#x=buildCatch(sql=T,strSpp="394",wmf=T,pwd=c(pwd1,pwd2))
+#x=buildCatch(cat439orf,strSpp="394",wmf=T)
+
+# SGR - Silvergrey Rockfish
+#x=buildCatch(sql=TRUE,strSpp="405",dfld="ORF",wmf=FALSE,pwd=c(pwd1,pwd2),only.sql=TRUE)
+#x=buildCatch(cat405orf,strSpp="405",dfld="TRF",eps=TRUE)
+
+# YMR - Yellowmouth Rockfish
+#x=buildCatch(sql=T,strSpp="440",dfld="TRF",wmf=T,pwd=c(pwd1,pwd2))
+#x=buildCatch(cat440orf,strSpp="440",dfld="TRF",wmf=T)
+
+# YYR - Yelloweye rockfish
+#x=buildCatch(sql=TRUE,strSpp="442",dfld="ORF",pwd=c(pwd1,pwd2),only.sql=TRUE)
+#x=buildCatch(cat442orf,strSpp="442",dfld="ORF",eps=TRUE)
+
