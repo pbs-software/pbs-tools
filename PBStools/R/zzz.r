@@ -51,7 +51,7 @@ if(getRversion() >= "2.15.1") utils::globalVariables(names=c(
 	"las","lastSerial","lin","lmres","ltype","lwd",
 	"m","major","mar","mata","maxit","mdbName","MDL","method","mfrow","mgp","mmor","modelCheck","modelCompile","modelData","modelGenInits","modelUpdate","modT","mpd","mu",
 	"nage","Nat","Nboot","nc","nC","nd","nepacLL","nepacLLhigh","nper","nRP","nspec","nT","nyr",
-	"obs","oma","orfhistory",
+	"obs","oma","orfhistory","out",
 	"pa.obs","pa.raw","parVec","path","pathN","PBSdat","PBStool","PBSmin","Pfig","phi","pi.obs","pix","pjsa","PLIM","pmfc","pmon","pnam","poi","pop.age","pop.pmr.qcss","popa","powr","prefix","pset","psize","Pstart","pwd","pyr",
 	"q2","qq","qtName","quants",
 	"rate","rates","reltol","repN","rho","RkB","Roff","RPmax","RPmin","ryrs",
@@ -61,7 +61,7 @@ if(getRversion() >= "2.15.1") utils::globalVariables(names=c(
 	"VBdat","Vend","vessel","Vstart",
 	"wgta","wgtat","wmf","wted",
 	"x","xfun","XLIM","xlsName","xobs","xwid","xy","XYopt",
-	"y","year","years","yfld","yfun","yinf","ylim","YLIM","ypos","yr","ystar","ytck",
+	"y","year","years","yfld","yfun","yinf","ylim","YLIM","Ymax","Ymin","Ymod","ypos","yr","ystar","ytck",
 	"z","Z","za","zero","zfill","Zlim","zsho","zstar","zstn"
 	), package="PBStools")
 

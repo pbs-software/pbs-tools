@@ -6,13 +6,13 @@
   data using a von Bertalanffy growth model.
 }
 \usage{
-calcVB( dat=pop.age, strSpp="", yfld="len", fixt0=FALSE, 
-     areas=list(major=NULL, minor=NULL, locality=NULL, srfa=NULL,
-     srfs=NULL, popa=NULL), ttype=list(c(1,4),c(2,3)), stype=NULL,
-     year=NULL, ameth=3, allTT=TRUE, jit=c(0,0), 
-     pix=FALSE, wmf=FALSE, eps=FALSE, pdf=FALSE,
-     singles=FALSE, pages=FALSE, ioenv=.GlobalEnv )
-
+calcVB(dat=pop.age, strSpp="", yfld="len", fixt0=FALSE, 
+   areas=list(major=NULL, minor=NULL, locality=NULL, srfa=NULL,srfs=NULL, popa=NULL),
+   ttype=list(Commercial=c(1,4),Research=c(2,3)), stype=c(1,2,6,7), scat=NULL,
+   sex=list(Females=2,Males=1), rm.studs=NULL,
+   year=NULL, ylim=NULL, ameth=3, allTT=TRUE, jit=c(0,0), 
+   eps=FALSE, pdf=FALSE, pix=FALSE, wmf=FALSE,
+   plotname, singles=FALSE, pages=FALSE, ioenv=.GlobalEnv)
 }
 \arguments{
   \item{dat}{biological data set with fields \code{yfld} and \code{age}.}
@@ -24,16 +24,23 @@ calcVB( dat=pop.age, strSpp="", yfld="len", fixt0=FALSE,
   \item{areas}{list of listed area codes; choices can be any/all of
     \code{major}, \code{minor}, \code{locality}, \code{srfa}, \code{srfs}, \code{popa}.}
   \item{ttype}{list of trip type codes to use from field \code{ttype}.}
-  \item{stype}{list of sample type codes to use from field \code{stype}.}
+  \item{stype}{vector of sample type codes to use from field \code{stype}.}
+  \item{scat}{numeric code(s) for species category (usually to identify sorted vs. unsorted samples).}
+  \item{sex}{list of sex codes, where \cr
+    0=not looked at, 1=male, 2=female, 3=looked at but unknown \cr
+    e.g. \code{list(Females=2, Males=1, Unknown=c(0,3))}.}
+  \item{rm.studs}{numeric \emph{n}, if specified, remove Studentized residuals lying outside \emph{n} standard deviations.}
   \item{year}{numeric integer vector of years used to subset \code{dat}.}
+  \item{ylim}{numeric vector specifying the limits of the y-axis.}
   \item{ameth}{code specifying ageing method protocol (defaults to \code{3}, specifying break & burn only).}
   \item{allTT}{logical: if \code{TRUE}, force the display of all trip types either specified or available.}
   \item{jit}{two-element vector specifying amount of jittering to apply in the 
     x- and -y-directions respectively. (See \code{jitter} in the \pkg{base} package.)}
-  \item{pix}{logical -- if \code{TRUE}, send plot to a raster \code{.png} file.}
-  \item{wmf}{logical -- if \code{TRUE}, send plot to a vector \code{.wmf} file.}
   \item{eps}{logical -- if \code{TRUE}, send plot to a postscript \code{.eps} file.}
   \item{pdf}{logical -- if \code{TRUE}, send plot to a postscript \code{.pdf} file.}
+  \item{pix}{logical -- if \code{TRUE}, send plot to a raster \code{.png} file.}
+  \item{wmf}{logical -- if \code{TRUE}, send plot to a vector \code{.wmf} file.}
+  \item{plotname}{explicit image file name to override an internally generated one.}
   \item{singles}{logical: if \code{TRUE} and \code{eps|pdf|pix|wmf}, send each area/trip type combination to separate files.}
   \item{pages}{logical: if \code{TRUE} and \code{eps|pdf|pix|wmf}, send each page of area plots to separate files.}
   \item{ioenv}{input/output environment for function input data and output results.}

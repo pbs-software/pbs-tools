@@ -1,4 +1,4 @@
--- Get specimen biological data from GFBioSQL (2014-07-02)
+-- Get specimen biological data from GFBioSQL (2014-08-15)
 SET NOCOUNT ON
 
 -- Trawl Specs (returns same # records as B02_FISHING_EVENT)
@@ -191,6 +191,7 @@ WHERE
 SELECT --TOP 40
   SC.SAMPLE_ID,
   SC.SPECIMEN_ID,
+  'notavail'  = AVG (CASE WHEN SC.NOT_AVAILABLE_REASON_CODE IS NOT NULL THEN SC.NOT_AVAILABLE_REASON_CODE ELSE ISNULL(SC.NOT_AVAILABLE_REASON_CODE,0) END), -- not different over third key field COLLECTED_ATTRIBUTE_CODE
   'otoliths'  = SUM(CASE WHEN SC.COLLECTED_ATTRIBUTE_CODE IN (20) THEN 1 ELSE 0 END),
   'scales'    = SUM(CASE WHEN SC.COLLECTED_ATTRIBUTE_CODE IN (21) THEN 1 ELSE 0 END),
   'fins'      = SUM(CASE WHEN SC.COLLECTED_ATTRIBUTE_CODE IN (22,23,27,28) THEN 1 ELSE 0 END),
@@ -299,13 +300,14 @@ SELECT
     ELSE convert(smalldatetime,convert(varchar(10),AA.SAMPLE_DATE,20),20) END,  -- B04_Sample
   'year' = Year(CASE 
     WHEN AA.SAMPLE_DATE Is Null Or AA.TRIP_END_DATE-AA.SAMPLE_DATE<0 Or
-    AA.TRIP_START_DATE-AA.SAMPLE_DATE>0 THEN AA.TRIP_END_DATE                   -- B01_Trip
-    ELSE AA.SAMPLE_DATE END),                                                   -- B04_Sample
-  'sex'   = IsNull(AA.SPECIMEN_SEX_CODE,0),                 -- B05_Specimen
-  'mat'   = IsNull(AA.MATURITY_CODE,0),                     -- B05_Specimen
-  'oto'   = IsNull(TT.otoliths,0),
-  'age'   = AA.SPECIMEN_AGE,                                -- B05_Specimen
-  'ameth' = CASE WHEN AA.SPECIMEN_AGE Is Null THEN NULL ELSE IsNull(AA.AGEING_METHOD_CODE,0) END,      -- B05_Specimen
+    AA.TRIP_START_DATE-AA.SAMPLE_DATE>0 THEN AA.TRIP_END_DATE         -- B01_Trip
+    ELSE AA.SAMPLE_DATE END),                                         -- B04_Sample
+  'sex'   = IsNull(AA.SPECIMEN_SEX_CODE,0),                           -- B05_Specimen
+  'mat'   = IsNull(AA.MATURITY_CODE,0),                               -- B05_Specimen
+  'oto'   = IsNull(TT.otoliths,0),                                    -- B05e_Specimen_Collected
+  'narc'  = CASE WHEN TT.notavail = 0 THEN NULL ELSE TT.notavail END, -- B05e_Specimen_Collected
+  'age'   = AA.SPECIMEN_AGE,                                          -- B05_Specimen
+  'ameth' = CASE WHEN AA.SPECIMEN_AGE Is Null THEN NULL ELSE IsNull(AA.AGEING_METHOD_CODE,0) END,  -- B05_Specimen
   'len'   = CASE WHEN IsNull(BM.Best_Length,0)=0 THEN NULL ELSE BM.Best_Length END,    -- B05d_Specimen_Morphometrics
   'wt'    = CASE WHEN IsNull(BM.Round_Weight,0)=0 THEN NULL ELSE BM.Round_Weight END, -- B05d_Specimen_Morphometrics
   'scat'  = IsNull(AA.SPECIES_CATEGORY_CODE,0),                          -- B03_Catch
@@ -421,7 +423,6 @@ FROM
     BS.GC = G.GROUPING_CODE
 ORDER BY
   BS.TID, BS.FEID, BS.CID, BS.SID, BS.SPID
-
 
 -- getData("gfb_bio.sql","GFBioSQL",strSpp="401")
 

@@ -4,13 +4,14 @@
   Flatten and Format Array for LaTeX Output
 }
 \description{
-  Flatten and format an array for LaTeX output.
+  Flatten and format an array (or data frame) for LaTeX output.
 }
 \usage{
-texArray(x, table.caption="My table", table.label="tab:mytable", 
-   strSpp=NULL, sigdig=3, zero="---", collab=NULL, dash.delim=NULL,
-   rm.empty=TRUE, start.page=1, select.rows=NULL, use.row.names=FALSE,
-   name.row.names="row", add.header.column=FALSE, outnam="mytable")
+texArray(x, table.caption="My table", table.label="tab:mytable",
+   strSpp=NULL, sigdig=3, zero="---", collab=NULL, dash.delim=NULL, 
+   rm.empty=TRUE, start.page=1, ignore.col=NULL,
+   select.rows=NULL, use.row.names=FALSE, name.row.names="row",
+   add.header.column=FALSE, outnam="mytable")
 }
 \arguments{
   \item{x}{numeric array, matrix, or data frame.}
@@ -23,6 +24,7 @@ texArray(x, table.caption="My table", table.label="tab:mytable",
   \item{dash.delim}{character pattern in data \code{rownames} that identify where to place a dashed line.}
   \item{rm.empty}{logical -- if \code{TRUE}, remove rows without any positive numeric data.}
   \item{start.page}{page number to start the LaTeX document at.}
+  \item{ignore.col}{numeric vector indicating which columns (by position) to \emph{not} run \code{formatCatch} on (e.g., columns of class \code{character}).}
   \item{select.rows}{select rows depending on either a numeric vector of rows or a character vector of row names.}
   \item{use.row.names}{logical -- if \code{TRUE}, use the \code{rownames} from the input data table.}
   \item{name.row.names}{table header name for column comprising the data table row names.}
