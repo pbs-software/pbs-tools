@@ -16,7 +16,7 @@ buildCatch(dbdat, strSpp="396", dfld="ORF",
    saveinfo=TRUE, eps=FALSE, pix=FALSE, wmf=FALSE, 
    sql=FALSE, spath=.getSpath(), only.sql=FALSE,
    uid=Sys.info()["user"], pwd=uid, 
-   reconstruct=TRUE, diagnostics=TRUE, ioenv=.GlobalEnv)
+   reconstruct=TRUE, diagnostics=TRUE, ioenv=.GlobalEnv, ...)
 }
 \arguments{
   \item{dbdat}{a list object of landing records from eight DFO databases: \cr
@@ -53,13 +53,14 @@ buildCatch(dbdat, strSpp="396", dfld="ORF",
   \item{only.sql}{logical: if \code{TRUE}, then only execute the queries to download catch data from remote databases.}
   \item{uid, pwd}{user ID and password for Oracle DB account authentication.}
   \item{reconstruct}{logical: if \code{TRUE} (default) complete the reconstruction as previously, \cr
-	if \code{FALSE}, terminate the code once the modern catch array has been compiled and saved 
-	(to a binary file \code{cat123mod.rda}, where \code{123} = species code). }
+ if \code{FALSE}, terminate the code once the modern catch array has been compiled and saved 
+ (to a binary file \code{cat123mod.rda}, where \code{123} = species code). }
   \item{diagnostics}{logical: if \code{TRUE} (default) create automatically-numbered diagnostic
     images files (prefaced with \code{pD000}, where \code{000} is the automatic number) to 
     a subdirectory called \code{CRdiag}. Subsequent calls to \code{buildCatch} remove all \code{pD...}
     files created by previous builds.}
   \item{ioenv}{input/output environment for function input data and output results.}
+  \item{...}{additional ad hoc arguments to deal with PJS issues.}
 }
 \details{
   For the time period 1918--1949, landings of other rockfish (ORF) and total rockfish (TRF) 
@@ -117,6 +118,57 @@ buildCatch(dbdat, strSpp="396", dfld="ORF",
   
   The SQL server \code{SVBCPBSGFIIS} does not require a password if the server recognises 
   a user's DFO login credentials.
+}
+\section{Yellowtail Rockfish}{
+  Rob Kronlund and Paul Starr met on Aug 12, 2014 with Brian Mose who made several important
+  points regarding reconstruction results from \code{buildCatch}:
+
+  A) Midwater trawling for YTR did not really begin in the domestic fishery until the mid-1980s.
+  This is evident in the rapid rise of YTR landings from the mid-1980s of the reconstruction.
+  It is not known if the foreign fleet which fished rockfish from the early 1960s to 1977 used 
+  mid-water gear, but it is thought to be unlikely.
+
+  B) The foreign fleet fished the outside waters off Vancouver Island and Queen Charlotte Islands
+  and did not enter very far into Queen Charlotte Sound.  They also tended to fish deeper than
+  the preferred depths for YTR, apparently preferring POP and allied species.
+
+  Brian made several useful suggestions to improve the historical estimation method:
+
+  A) Only include bottom trawl catches of YTR in the ratio estimation process, discarding all 
+  midwater trawl catches of YTR as well as other rockfish species;
+
+  B) Make the calculations based on the outside bottom trawl catches of rockfish, ignoring catches
+  in the three Queen Charlotte Sound gullies (Goose, Mitchell and Moresby) and in Dixon Entrance.
+
+  On the basis of these recommendations, Brian thought that very little YTR catches should come from
+  the west coast of the Charlottes or from 5C which covers most the lower half of Hecate Strait.  
+  He thought that most of the YTR catches should come from the outer parts of 3D, 5A and 5B.
+
+  Paul's calculations:\cr
+  Proportion of Yellowtail Rockfish in the catch, based on the catch composition in each PMFC area
+  for the years 1997-2005 calculated using (a) outside localities only and (b) all localities.
+
+  \tabular{crrrr}{
+  PMFC \tab TRF Outside \tab TRF All \tab ORF Outside \tab ORF All\cr
+  3C  \tab  0.260  \tab  0.260  \tab  0.314  \tab  0.314\cr
+  3D  \tab  0.229  \tab  0.229  \tab  0.253  \tab  0.253\cr
+  5A  \tab  0.039  \tab  0.160  \tab  0.047  \tab  0.220\cr
+  5B  \tab  0.001  \tab  0.102  \tab  0.003  \tab  0.235\cr
+  5C  \tab   ---   \tab  0.124  \tab   ---   \tab  0.186\cr
+  5D  \tab  0.167  \tab  0.240  \tab  0.445  \tab  0.461\cr
+  5E  \tab  0.003  \tab  0.003  \tab  0.005  \tab  0.005
+  }
+
+  These trawl \code{gamma} values are currently hardwired in the code and
+  can be activated by the following arguments: 
+
+  \tabular{rl}{
+  \code{pjs}     \tab logical: if \code{TRUE},\cr
+                 \tab replace the first column of the matrix \code{gamma} with one of the columns above.\cr
+  \code{outside} \tab logical: if \code{TRUE}, \cr
+                 \tab use the column above marked \sQuote{Outside}, otherwise use \sQuote{All}; \cr
+                 \tab the denominator TRF or ORF is determined by the argument \code{dfld}.
+  }
 }
 \seealso{
   \code{\link[PBStools]{getCatch}}, \code{\link[PBStools]{getData}}, 

@@ -1,14 +1,15 @@
 \name{formatCatch}
 \alias{formatCatch}
 \title{
-  Format Table of Numeric Catch as Strings
+  Format Numeric Catch Values as Strings
 }
 \description{
   Format a table of numeric values so that each cell displays \emph{N}
   significant figures in character format.
 }
 \usage{
-formatCatch(dat, N=3, X=0, zero="0", na="---", K=",")
+formatCatch(dat, N=3, X=0, zero="0", na="---",
+   K=",", exInt=TRUE)
 }
 \arguments{
   \item{dat}{data frame/matrix/vector of raw (catch) numbers}
@@ -17,6 +18,7 @@ formatCatch(dat, N=3, X=0, zero="0", na="---", K=",")
   \item{zero}{character replacement for zero-values}
   \item{na}{character replacement for \code{NA} values}
   \item{K}{big mark separator (see \code{format})}
+  \item{exInt}{logical: exclude integers from manipulation to signicant digits}
 }
 \details{
   The algorithm relies on string manipulation to achieve a result that

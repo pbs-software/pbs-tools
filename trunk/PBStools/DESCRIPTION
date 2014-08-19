@@ -1,15 +1,14 @@
 Package: PBStools
 Version: 1.26
-Date: 2014-07-03
-Title: Tools for Semi-Serious Marine Scientists et al.
+Date: 2014-08-19
+Title: Tools for the Efficient Execution of Onerous Tasks
 Author: Rowan Haigh, Jon T. Schnute, Norm Olsen, and Lisa Lacko
 Maintainer: Rowan Haigh <rowan.haigh@dfo-mpo.gc.ca>
 Depends: R (>= 3.0.0), PBSmapping, PBSmodelling, PBSdata, RODBC
 Suggests: boot, BRugs, cluster, MASS, reshape, sp, utils, xtable
-Description: Provides tools for exploring fisheries data.
-    This package provides screening and 
-    summary tools for fisheries stock assessments, 
-    species at risk reports, and exploratory data analyses.
+Description: Provides tools for exploring data from fisheries and beyond.
+   The focus is on screening and summary tools for fisheries stock assessments, 
+   species at risk reports, and exploratory data analyses.
 License: GPL (>= 2)
 URL: http://code.google.com/p/pbs-tools/,
      http://code.google.com/p/pbs-data/,

@@ -6,7 +6,7 @@
 #  plotRecon....Plot reconstructed catch using barplots stacked by PMFC area.
 #===============================================================================
 
-#buildCatch-----------------------------2014-07-02
+#buildCatch-----------------------------2014-08-18
 # Catch reconstruction algorithm for BC rockfish.
 # Use ratios of species catch to ORF catch for multiple fisheries.
 # Matrix indices: i=year, j=major, k=fid, l='spp'
@@ -16,8 +16,8 @@ buildCatch=function(dbdat, strSpp="396", dfld="ORF",
    saveinfo=TRUE, eps=FALSE, pix=FALSE, wmf=FALSE, 
    sql=FALSE, spath=.getSpath(), only.sql=FALSE,
    uid=Sys.info()["user"], pwd=uid, 
-   reconstruct=TRUE, diagnostics=TRUE, ioenv=.GlobalEnv){
-
+   reconstruct=TRUE, diagnostics=TRUE, ioenv=.GlobalEnv, ...)
+{
 	if (!only.sql) {
 	### Global list object 'PBStool' stores results from the analysis
 	assign("PBStool",list(module="M07_BuildCatch",call=match.call(),args=args(buildCatch),
@@ -402,6 +402,17 @@ buildCatch=function(dbdat, strSpp="396", dfld="ORF",
 			qcat=apply(catmod1[iii,jj,kk,ll,aaa,drop=FALSE],1:4,function(x){ max(x[1:2]) + x[3] }) }
 		catmod[iii,jj,kk,ll] = qcat 
 	}
+	### Make sure that TRF = ORF + POP
+	TOPmod = apply(catmod[,,,c("POP","ORF","TRF")],1:3,function(x){
+		if(round(x[1]+x[2],5)==round(x[3],5)) return(x)
+		else {
+			x[3] = max(x[3],x[1]+x[2]) # ensure TRF is the largest value
+			x[1] = x[3] - x[2]         # assume ORF is now correct, POP is residual
+			return(x) } })
+	kk = dimnames(catmod)$fid
+	for (ll in c("POP","ORF","TRF"))
+		catmod[ii,jj,kk,ll] = TOPmod[ll,ii,jj,kk]
+#browser();return()
 	expr=paste("cat",strSpp,"mod=catmod; save(\"cat",strSpp,"mod\",file=\"cat",strSpp,"mod.rda\")",sep="")
 	eval(parse(text=expr))
 
@@ -479,6 +490,7 @@ buildCatch=function(dbdat, strSpp="396", dfld="ORF",
 		z1  = cref[,,,i]==0
 		z2  = z0&z1
 		rtmp = cref[,,,"landed"]/cref[,,,i]
+#if(i=="TRF") {browser();return()}
 		### order is important here (process equalities, zero-denominator, then zero-numerator)
 		rtmp[z2]=0; rtmp[!z2&z1]=1; rtmp[!z2&!z1&z0]=0 
 		rmat = apply(rtmp,2:3,mean)
@@ -486,6 +498,24 @@ buildCatch=function(dbdat, strSpp="396", dfld="ORF",
 	### gamma - Ratio of RRF to a larger group (e.g., other rockfish)
 	rfac=rtar[[dfld]]
 	gamma=rfac[mm,,drop=FALSE]  ### use only specified majors
+
+	# Special trawl calculations by Paul Starr for YTR based on Brian Mose's suggestions
+	if (strSpp=="418" && !is.null(list(...)$pjs) && list(...)$pjs) {
+		if (dfld=="ORF") {
+			if (!is.null(list(...)$outside) && list(...)$outside)
+				gamma[,1]=matrix(c(0,0.3139525,0.253063,0.0467262,0.0034517,0,0.4451063,0.0049684),ncol=1)
+			else
+				gamma[,1]=matrix(c(0,0.3138979,0.253063,0.2196372,0.2346488,0.1861062,0.4605869,0.0049684),ncol=1)
+		}
+		if (dfld=="TRF") {
+			if (!is.null(list(...)$outside) && list(...)$outside)
+				gamma[,1]=matrix(c(0,0.2596861,0.2291434,0.0388679,0.0009657,0,0.1670699,0.0029361),ncol=1)
+			else
+				gamma[,1]=matrix(c(0,0.2596484,0.2291434,0.1595966,0.1024332,0.1238941,0.239913,0.0029361),ncol=1)
+		}
+	}
+	write.csv(gamma,file=paste0("gamma",dfld,".csv")) #;return(gamma)
+#browser();return()
 	if (diagnostics){
 		plotData(gamma,"gamma (fishery in major)",col=clrs.fishery,type="bars")
 		plotData(t(gamma),"gamma (major in fishery)",col=clrs.major[mm],type="bars")
@@ -693,7 +723,7 @@ buildCatch=function(dbdat, strSpp="396", dfld="ORF",
 	eval(parse(text=expr))
 
 	if (saveinfo) packList(c("HISYRS","MODYRS","ALLYRS","inone","icalc","idata",
-		"disC","disD","sppnew"),"PBStool",tenv=.PBStoolEnv)
+		"disC","disD","sppnew","beta.gamma"),"PBStool",tenv=.PBStoolEnv)
 #browser(); return()
 
 	###-----Plot results-----
@@ -756,8 +786,9 @@ buildCatch=function(dbdat, strSpp="396", dfld="ORF",
 # Plot diagnostic data for catch reconstructions.
 #-----------------------------------------------RH
 plotData =function(x,description="something",
-	col=c("red","coral","gold","green2","skyblue","blue","blueviolet","purple4"),...){
-	oldpar=par(no.readonly=TRUE); on.exit(par(oldpar))
+	col=c("red","coral","gold","green2","skyblue","blue","blueviolet","purple4"),...)
+{
+	if (dev.cur()>1) { oldpar=par(no.readonly=TRUE); on.exit(par(oldpar)) }
 	dots=list(...)
 	if (!is.matrix(x) & !is.data.frame(x)) {
 		stop(cat(paste(deparse(substitute(x)), "is not a matrix or a data frame.\n")))
@@ -813,9 +844,10 @@ plotData =function(x,description="something",
 # Plot reconstructed catch using barplots stacked by PMFC area.
 #-----------------------------------------------RH
 plotRecon = function(dat=cat440rec, strSpp="440", major=c(1,3:9), fidout=10, 
-     years=1918:2011, xlab=seq(1920,2010,5),
-     eps=FALSE, pix=FALSE, wmf=FALSE, PIN=c(10,5)) {
-
+   years=1918:2011, xlab=seq(1920,2010,5),
+   eps=FALSE, pix=FALSE, wmf=FALSE, PIN=c(10,5))
+{
+	if (dev.cur()>1) { oldpar=par(no.readonly=TRUE); on.exit(par(oldpar)) }
 	fshnam=c("trawl","h&l","trap",rep("h&l",6),"combined") #general category vector
 	fidnam=c("trawl","halibut","sablefish","sched2","zn","sabzn","sabhal","dogfish","lingcod","combined")
 	fidlab=c("Trawl","Halibut","Sablefish","Dogfish-Lingcod","H&L Rockfish","Sablefish + ZN",
@@ -911,7 +943,13 @@ surveyCatch = function(strSpp="396", spath=.getSpath())
 #x=buildCatch(sql=T,strSpp="440",dfld="TRF",wmf=T,pwd=c(pwd1,pwd2))
 #x=buildCatch(cat440orf,strSpp="440",dfld="TRF",wmf=T)
 
-# YYR - Yelloweye rockfish
-#x=buildCatch(sql=TRUE,strSpp="442",dfld="ORF",pwd=c(pwd1,pwd2),only.sql=TRUE)
+# YTR - Yellowtail Rockfish
+#x=buildCatch(sql=TRUE,strSpp="418",dfld="ORF",only.sql=TRUE)
+#x=buildCatch(cat418orf,strSpp="418",dfld="ORF",eps=TRUE ,pjs=TRUE,outside=TRUE)
+#y=surveyCatch(strSpp="418")
+
+# YYR - Yelloweye Rockfish
+#x=buildCatch(sql=TRUE,strSpp="442",dfld="ORF",only.sql=TRUE)
 #x=buildCatch(cat442orf,strSpp="442",dfld="ORF",eps=TRUE)
+#y=surveyCatch(strSpp="442")
 

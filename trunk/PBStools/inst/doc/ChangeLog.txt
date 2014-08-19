@@ -6,7 +6,19 @@ Authors: RH  = Rowan Haigh
          JTS = Jon T. Schnute
 ------------------------------
 
-1.26  2014-07-03
+1.26  2014-08-18
+  - Renamed module `M08_texCrap.r' to `M08_LaTeX.r'. (RH 8/19)
+  - Modified  function `buildCatch' to accept extra parameters through `...'; specifically to allow introduction of modified trawl ratios of RRF/TRF and RRF/ORF. (RH 8/18)
+	These ratios form the first row of the function matrix object `gamma'.
+	PJS calculated reference ratios of YTR/TRF and YTR/ORF that exclude midwater trawls and use only the offshore localities withinn PMFCs rather than the entire PMFCs.
+	The alteration to `gamma' should only be a temporary measure; the code should calculate these variations automatically, if chosen, but will not be implemented right away.
+  - Added new field to `gfb_bio.sql' query -- `narc' = NOT_AVAILABLE_REASON_CODE in table B05a_Specimen_Collected. (RH 8/15)
+  - Modified functions `getCatch', `mapMaturity', `cacLenWt', `calcVB', `estOgive', `weightBio', `texArray', and `formatCatch' to further automate building CSAP RD's `Appendix D. Biology' using Sweave. (RH 8/13)
+  - Updated functions `calcLenWt', `calcVB', `mapMaturity', and `estOgive'; can now yield user-defined output names for easier building of Sweave documents. (RH 7/9)
+  - Updated function `texArray', which had actually been revised in Aug 2013 but not incorporated into package. (RH 7/9)
+  - Updated SQL code `gfb_rcatORF.sql' to include `SVID' and `SSID` fields. (RH 7/8)
+  - Updated function `formatCatch' to deal with `cast_df' class objects. (RH 7/8)
+  - Updated functions `calcLenWt' and `calcVB' for better visual output. (RH 7/4)
   - Created new function `surveyCatch' to call query `gfb_rcatORF.sql' and produce a summary table of survey catch for a specified species. (RH 7/3)
   - Modified the SQL query `gfb_bio.sql' to better identify Surevy Series ID (SSID) and to ignore Fishing Event IDs (FEID) that describe individual hooks and traps. (RH 7/2)
   - Modified the SQL query `fos_vcatORF.sql' and the function `buildCatch' to use the SQL Server database GFFOS. (RH 7/2)

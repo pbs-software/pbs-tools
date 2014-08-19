@@ -213,7 +213,7 @@ dumpRat = function(strSpp="396", rats=c("alpha","beta","gamma","delta","lambda")
 #------------------------------------------dumpRat
 
 
-#getCatch-------------------------------2014-06-24
+#getCatch-------------------------------2014-07-14
 # Extract catch records for a species from various 
 # databases and combine them into one catch file.
 #-----------------------------------------------RH
@@ -225,68 +225,82 @@ getCatch = function(strSpp="396", dbs=c("gfb","gfc","pht","fos"),
 	if (sql) {
 	for (i in dbs) {
 		qnam = paste(i,"_catch_records.sql",sep="")
-		if (i=="gfb")      qstr = "dbName=\"GFBioSQL\",noLogicals=FALSE,as.is=c(rep(FALSE,13),TRUE,rep(FALSE,3))"
+		if (i=="gfb")      qstr = "dbName=\"GFBioSQL\",as.is=c(rep(FALSE,14),TRUE,rep(FALSE,3))"
 			else if (i=="gfc") qstr = "dbName=\"GFCatch\""
 			else if (i=="pht") qstr = "dbName=\"PacHarvest\""
 			else if (i=="fos") qstr = "dbName=\"GFFOS\""
 				#paste("dbName=\"GFFOS\",server=\"GFSH\",type=\"ORA\",trusted=FALSE,uid=\"",uid,"\",pwd=\"",pwd,"\"",sep="")
 			else showError(paste("Database '",i,"' not currently supported.",sep=""))
 		expr = paste("getData(\"",qnam,"\",strSpp=\"",strSpp,"\",",qstr,",path=\"",sqlpath,"\",tenv=penv()); ",sep="")
-		expr = c(expr,paste("assign(\"cat",strSpp,i,".wB\",PBSdat,envir=ioenv); ",sep=""))
-		expr = c(expr,paste("save(\"cat",strSpp,i,".wB\",file=\"cat",strSpp,i,".wB.rda\"); ",sep=""))
-#browser();return()
+		expr = c(expr,paste("assign(\"cat",strSpp,i,".wB\",PBSdat,envir=.PBStoolEnv); ",sep=""))
+		expr = c(expr,paste("save(\"cat",strSpp,i,".wB\",file=\"cat",strSpp,i,".wB.rda\",envir=.PBStoolEnv); ",sep=""))
 		eval(parse(text=paste(expr,collapse="")))
 	}	}
 	else {
 		for (i in dbs) {
-			expr=paste(c("getFile(cat",strSpp,i,".wB,senv=ioenv,tenv=penv())"),collapse="")
+			expr=paste(c("getFile(\"cat",strSpp,i,".wB\",senv=ioenv,tenv=.PBStoolEnv)"),collapse="")
 			eval(parse(text=expr))
 	}	}
-	dbs.merge = setdiff(dbs,"gfb")
-	tnames = paste("cat",strSpp,dbs.merge,".wB",sep="")
-	FLDS=list()
-	for (i in tnames) {
-		expr=paste("flds=names(",i,"); FLDS=c(FLDS,list(",i,"=flds))",sep="")
-		eval(parse(text=expr))
+	if (any(dbs=="gfb")) {
+		Snam = paste("Scat",strSpp,".wB",sep="")  # Survey catch
+		expr = paste(Snam,"=ttcall(cat",strSpp,"gfb.wB); ",sep="")
+#browser();return()
+		expr = c(expr,paste("save(\"",Snam,"\",file=\"",Snam,".rda\"); ",sep=""))
+		if (all(dbs=="gfb"))
+			expr = c(expr,paste("out=list(Scat=",Snam,"); ",sep=""))
+		eval(parse(text=paste(expr,collapse=""))) 
 	}
-	Uflds = unique(as.vector(unlist(FLDS)))  # Union of all available fields
-	uflds = sapply(FLDS,function(x,U){x[is.element(x,U)]},U=Uflds,simplify=FALSE) # fields in Uflds
-	iflds = Uflds # find intersection of all fields
-	for (i in names(uflds)) {
-		iflds = intersect(iflds,uflds[[i]])
-		if (length(iflds)==0) showError("No fields in common among the specified tables") }
-
-	newtab=NULL
-	for (i in tnames) {
-		itab = get(i, pos=1)[,iflds]
-		db = substring(i,7,9)
-		if (any(db==c("pht","fos"))) {
-			mos = as.numeric(substring(itab[,"date"],6,7))
-			if (db=="pht") itab = itab[is.element(itab[,"year"],1996:2006) | 
-				(is.element(itab[,"year"],2007) & is.element(mos,1:3)),]
-			if (db=="fos") {
-				z1 = is.element(itab[,"FID"],1) &                               # Trawl
-					(is.element(itab[,"year"],2008:sysyr) | 
-					(is.element(itab[,"year"],2007) & is.element(mos,4:12)))
-				z2 = is.element(itab[,"FID"],2:5) &                             # H&L + Trap
-					(is.element(itab[,"year"],2007:sysyr) | 
-					(is.element(itab[,"year"],2006) & is.element(mos,4:12)))
-				itab = itab[z1 | z2,]
-		} }
-		newtab = rbind(newtab, itab) }
-	newtab = newtab[!(is.element(newtab$FID,2:5) & !is.element(newtab$log,105)),] # exclude H&L catch not reported by fisherlogs
-	row.names(newtab) = 1:nrow(newtab)
-	if (is.element("EID",iflds)) newtab[,"EID"] = 1:nrow(newtab)
-	#--- save results ---
-	Snam = paste("Scat",strSpp,".wB",sep="")  # Survey catch
-	Cnam = paste("Ccat",strSpp,".wB",sep="")  # Commercial catch
-	if (proBio) expr=paste(Cnam,"=processBio(newtab); ",sep="")
-	else expr=paste(Cnam,"=newtab; ",sep="")
-	expr = c(expr,paste("save(\"",Cnam,"\",file=\"",Cnam,".rda\"); ",sep=""))
-	expr = c(expr,paste(Snam,"=cat",strSpp,"gfb.wB; ",sep=""))
-	expr = c(expr,paste("save(\"",Snam,"\",file=\"",Snam,".rda\"); ",sep=""))
-	expr = c(expr,paste("invisible(list(Ccat=",Cnam,",Scat=",Snam,")); ",sep=""))
-	eval(parse(text=paste(expr,collapse=""))) 
+	dbs.merge = setdiff(dbs,"gfb")
+	if (length(dbs.merge)>0) {
+		tnames = paste("cat",strSpp,dbs.merge,".wB",sep="")
+		FLDS=list()
+		for (i in tnames) {
+			
+			expr=paste("flds=names(ttcall(",i,")); FLDS=c(FLDS,list(",i,"=flds))",sep="")
+			eval(parse(text=expr))
+		}
+		Uflds = unique(as.vector(unlist(FLDS)))  # Union of all available fields
+		uflds = sapply(FLDS,function(x,U){x[is.element(x,U)]},U=Uflds,simplify=FALSE) # fields in Uflds
+		iflds = Uflds # find intersection of all fields
+		for (i in names(uflds)) {
+			iflds = intersect(iflds,uflds[[i]])
+			if (length(iflds)==0) showError("No fields in common among the specified tables") }
+		newtab=NULL
+		for (i in tnames) {
+			#itab = get(i, envir=.PBStoolEnv)[,iflds]
+			eval(parse(text=paste0("itab = ttcall(",i,")[,iflds]")))
+			db = substring(i,7,9)
+			if (any(db==c("pht","fos"))) {
+				mos = as.numeric(substring(itab[,"date"],6,7))
+				if (db=="pht") itab = itab[is.element(itab[,"year"],1996:2006) | 
+					(is.element(itab[,"year"],2007) & is.element(mos,1:3)),]
+				if (db=="fos") {
+					z1 = is.element(itab[,"FID"],1) &                               # Trawl
+						(is.element(itab[,"year"],2008:sysyr) | 
+						(is.element(itab[,"year"],2007) & is.element(mos,4:12)))
+					z2 = is.element(itab[,"FID"],2:5) &                             # H&L + Trap
+						(is.element(itab[,"year"],2007:sysyr) | 
+						(is.element(itab[,"year"],2006) & is.element(mos,4:12)))
+					itab = itab[z1 | z2,]
+				}
+			}
+			newtab = rbind(newtab, itab)
+		}
+		newtab = newtab[!(is.element(newtab$FID,2:5) & !is.element(newtab$log,105)),] # exclude H&L catch not reported by fisherlogs
+		row.names(newtab) = 1:nrow(newtab)
+		if (is.element("EID",iflds)) newtab[,"EID"] = 1:nrow(newtab)
+		#--- save results ---
+		Cnam = paste("Ccat",strSpp,".wB",sep="")  # Commercial catch
+		if (proBio) expr=paste(Cnam,"=processBio(newtab); ",sep="")
+		else expr=paste(Cnam,"=newtab; ",sep="")
+		expr = c(expr,paste("save(\"",Cnam,"\",file=\"",Cnam,".rda\"); ",sep=""))
+		if (any(dbs=="gfb"))
+			expr = c(expr,paste("out=list(Ccat=",Cnam,",Scat=",Snam,"); ",sep=""))
+		else
+			expr = c(expr,paste("out=list(Ccat=",Cnam,"); ",sep=""))
+		eval(parse(text=paste(expr,collapse="")))
+	}
+	invisible(out)
 }
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~getCatch
 

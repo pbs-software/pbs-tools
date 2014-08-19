@@ -1,7 +1,7 @@
 \name{weightBio}
 \alias{weightBio}
 \title{
-  Weight Age Frequencies/Proportions by Catch/Density
+  Weight Age Proportions by Catch or Density
 }
 \description{
   Weight age or length frequencies\eqn{\Vert}{|}proportions by: \cr
@@ -10,15 +10,15 @@
 }
 \usage{
 weightBio(adat, cdat, sunit="TID", sweight="catch", 
-     ttype=NULL, stype=c(0,1,2,5:8), ameth=3, sex=2:1, major=NULL, 
-     wSP=c(TRUE,TRUE), wN=TRUE, plus=60, Nmin=0, Amin=NULL, 
-     ctype="C", per=90, SSID=32, tabs=TRUE, 
-     plot=TRUE, ptype="bubb", size=0.15, powr=0.5, zfld="wp", 
-     clrs=list(c("blue","cyan"),c("green4","chartreuse")),
-     cohorts=NULL, regimes=list(1900:1908,1912:1915,1923:1929,1934:1943,
-     1957:1960,1976:1988,1992:1998,2002:2006),  #PDO
-     layout="portrait", eps=FALSE, pdf=FALSE, pix=FALSE, wmf=FALSE, 
-     longside=10, ioenv=.GlobalEnv, ...)
+   ttype=NULL, stype=c(0,1,2,5:8), ameth=3, sex=2:1, major=NULL, 
+   wSP=c(TRUE,TRUE), wN=TRUE, plus=60, Nmin=0, Amin=NULL, 
+   ctype="C", per=90, SSID=NULL, tabs=TRUE, 
+   plot=TRUE, ptype="bubb", size=0.05, powr=0.5, zfld="wp", 
+   clrs=list(c(.colBlind["blue"],"cyan"),c(.colBlind["bluegreen"],"chartreuse")),
+   cohorts=NULL, regimes=list(1900:1908,1912:1915,1923:1929,1934:1943,1957:1960,
+   1976:1988,1992:1998,2002:2006), layout="portrait", 
+   rgr=TRUE, eps=FALSE, pdf=FALSE, pix=FALSE, wmf=FALSE,
+   longside=10, outnam, ioenv=.GlobalEnv, ...)
 }
 \arguments{
   \item{adat}{data object of ageing information with fields that must include: \cr
@@ -92,11 +92,13 @@ weightBio(adat, cdat, sunit="TID", sweight="catch",
     \code{"portrait"} for vertically stacked plots, \cr
     \code{"landscape"} for plot placed horizontally side-by-side, \cr
     \code{"juxtapose"} for plots overlaid on each other (not implemented at present).}
+  \item{rgr}{logical: if \code{TRUE}, send figure to the R graphics device.}
   \item{eps}{logical: if \code{TRUE}, send figure to a postscript \code{.eps} file.}
   \item{pdf}{logical: if \code{TRUE}, send figure to a postscript \code{.pdf} file.}
   \item{pix}{logical: if \code{TRUE}, send figure to a raster \code{.png} file.}
   \item{wmf}{logical: if \code{TRUE}, send figure to a vector \code{.wmf} file.}
   \item{longside}{dimension (inches) of the longest side of the figure.}
+  \item{outnam}{explicit output name to override an internally generated one.}
   \item{ioenv}{input/output environment for function input data and output results.}
   \item{...}{additional arguments to pass to the function \code{plotBubbles}.}
 }
@@ -141,7 +143,7 @@ weightBio(adat, cdat, sunit="TID", sweight="catch",
 }
 \author{
   Rowan Haigh, Pacific Biological Station, Fisheries and Oceans Canada, Nanaimo BC \cr
-  Paul J. Star, Canadian Groundfish Research and Conservation Society, New Westminster BC
+  Paul J. Starr, Canadian Groundfish Research and Conservation Society, Nanaimo BC
 }
 \seealso{
   \code{\link[PBStools]{plotProp}}, \code{\link[PBStools]{reportCatchAge}}, \code{\link[PBStools]{requestAges}} \cr

@@ -74,7 +74,7 @@ collectFigs = function(path=".", ext="eps", is.fnum=FALSE,
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~collectFigs
 
 
-#formatCatch----------------------------2013-08-20
+#formatCatch----------------------------2014-08-13
 # Format a numeric table so that each cell 
 # displays N significnat figures in character format.
 # Arguments:
@@ -84,9 +84,16 @@ collectFigs = function(path=".", ext="eps", is.fnum=FALSE,
 #  zero = character replacement for zero-values
 #  na   = character replacement for NAs
 #  K    = big mark separator (see 'format')
+#  exInt = exclude integers from manipulation to signicant digits
 #-----------------------------------------------RH
-formatCatch = function(dat,N=3,X=0,zero="0",na="---",K=",")
+formatCatch = function(dat, N=3, X=0, zero="0", na="---",
+   K=",", exInt=TRUE)
 {
+	makeCmat =function(x,colname="Y") {
+		matrix(x,ncol=1,dimnames=list(names(x),colname)) }
+	makeRmat =function(x,rowname="Y") {
+		matrix(x,nrow=1,dimnames=list(rowname,names(x))) }
+
 	if (is.vector(dat)) {
 		#datnam = as.character(substitute(dat))
 		dat = matrix(dat,ncol=1); #colnames(dat)=datnam
@@ -102,14 +109,23 @@ formatCatch = function(dat,N=3,X=0,zero="0",na="---",K=",")
 	}
 	# When user wants to convert all columns
 	if (is.null(X) || all(X==0)) X = -(1:ncol(dat))
+	# Check for character columns and exclude
+	strcol=sapply(dat[,-(X)],is.character)
+	if (any(strcol)) X = match(TRUE,strcol)
 	
 	# Detect, remember, and remove negative signs
-	nadat  = is.na(dat[,-(X)])
-	negdat = dat[,-(X)] < 0 & !nadat
+	nadat  = is.na(dat[,-(X),drop=FALSE])
+	negdat = dat[,-(X),drop=FALSE] < 0 & !nadat
 	dat[,-(X)][negdat] = -dat[,-(X)][negdat]
+	if (class(dat)[1]=="cast_df") attr(dat,"class") = "data.frame"
 
+	flat=FALSE
+	if (nrow(dat)==1) flat=TRUE
 	cdat = apply(dat,2,as.character)
+	if (flat)
+		cdat = makeRmat(cdat,rownames(dat))
 	cdat = as.data.frame(cdat); dimnames(cdat) = dnam
+#browser();return()
 	for (i in dnam[[2]][-(X)]) {
 		idat = dat[,i]
 		istr = strsplit(as.character(idat),split="\\.")
@@ -118,11 +134,12 @@ formatCatch = function(dat,N=3,X=0,zero="0",na="---",K=",")
 			x1 = format(round(as.numeric(x[1])),big.mark=K,trim=TRUE,scientific=FALSE)
 			X1 = format(as.numeric(paste(x,collapse=".")),digits=N,big.mark=K,trim=TRUE,scientific=FALSE)
 			n2 = N - nchar(x[1])
-#browser(); return()
 			if (length(x)==1) {
-				if (x[1]=="0") ival=zero
+				if (x[1]=="0") ival = zero
+				else if(exInt) ival = x[1]
 				else if (n2>=1) ival = format(as.numeric(gsub(",","",x1)),nsmall=n2,big.mark=K,trim=TRUE,scientific=FALSE)
 				else ival = x1
+#browser();return()
 			}
 			else {
 				if (nchar(x[1])>=N) ival = X1
@@ -191,14 +208,22 @@ makeLTH <- function(xtab.table, table.caption, table.label) {
 # Flatten and format an array for latex output.
 #-----------------------------------------------RH
 texArray =function(x, table.caption="My table", table.label="tab:mytable",
-	strSpp=NULL, sigdig=3, zero="---", collab=NULL, dash.delim=NULL, rm.empty=TRUE,
-	start.page=1,
-	select.rows=NULL, use.row.names=FALSE, name.row.names="row",
-	add.header.column=FALSE, outnam="mytable")
+   strSpp=NULL, sigdig=3, zero="---", collab=NULL, dash.delim=NULL, 
+   rm.empty=TRUE, start.page=1, ignore.col=NULL,
+   select.rows=NULL, use.row.names=FALSE, name.row.names="row",
+   add.header.column=FALSE, outnam="mytable")
 {
 	if (!is.array(x) && !is.matrix(x) && !is.data.frame(x)) stop("input an array or a matrix")
 	N = dim(x)
 	L = length(N)
+	fn.select.rows = function(x,r) {  # select rows from 2-dimensional table
+		if (is.null(r)) return(x)
+		if (is.numeric(r))
+			s = x[r,]
+		else
+			s = x[is.element(rownames(x),r),]
+		return(s)
+	}
 	for (i in 1:L) {
 		if (is.null(dimnames(x)[[i]])) 
 			dimnames(x)[[i]] = paste("R",1:N[i],sep="")
@@ -216,7 +241,8 @@ texArray =function(x, table.caption="My table", table.label="tab:mytable",
 			xnum[,is.fac]  = no.fac
 			x = xnum
 		}
-		goo = x
+		poo = fn.select.rows(x,select.rows)
+		goo = poo
 	}
 	else {
 		Z = N[3:L]; names(Z) = 3:L
@@ -238,10 +264,10 @@ texArray =function(x, table.caption="My table", table.label="tab:mytable",
 			foo = foo[,order(colnames(foo))]
 		}
 		if (add.header.column) {
-			data(pmfc,envir=lenv())
+			here = lenv()
+			data(pmfc,envir=here)
 			dnams = dimnames(x)[as.numeric(names(Zsort))]
 			dlist = sapply(names(dnams),function(d,dd){paste(d,dd[[d]],sep=":")},dd=dnams,simplify=FALSE)
-#browser();return()
 			names(dlist) = names(Zsort)
 			for (i in names(dlist)){ 
 				dtmp=dlist[[i]][foo[,i]]
@@ -282,14 +308,13 @@ texArray =function(x, table.caption="My table", table.label="tab:mytable",
 			koo = foo[k,]
 			xoo = paste("x[,,",paste(koo,collapse=","),"]",sep="")
 			poo = eval(parse(text=xoo))
-#browser();return()
-			if (!is.null(select.rows)){
-				if (is.numeric(select.rows))
-					poo = poo[select.rows,]
-				else
-					poo = poo[is.element(rownames(poo),select.rows),]
-			}
-#browser();return()
+			poo = fn.select.rows(poo,select.rows)
+			#if (!is.null(select.rows)){
+			#	if (is.numeric(select.rows))
+			#		poo = poo[select.rows,]
+			#	else
+			#		poo = poo[is.element(rownames(poo),select.rows),]
+			#}
 			rownames(poo)=paste(k,rownames(poo),sep="-")
 			#bad = apply(poo,1,function(x){all(is.na(x))})
 			#poo = poo[!bad,drop=FALSE,exact=TRUE]
@@ -321,12 +346,20 @@ texArray =function(x, table.caption="My table", table.label="tab:mytable",
 		"\\usefont{\\encodingdefault}{\\familydefault}{\\seriesdefault}{\\shapedefault}\\small"
 	)
 	writeLines(texmess,texout)
-	
-	if (!require(xtable)) stop("`xtable` package is required")
+
+	require(xtable)
 	if (is.null(collab)) collab = colnames(goo)
 	else if (length(collab)==ncol(goo)) colnames(goo) = collab
 	else stop("Length of `collab` does not match number of columns")
-	goo = formatCatch(goo,N=sigdig,zero=zero)
+	goonum = sapply(goo,function(x){grepl("numeric",class(x))})
+	if (any(goonum)) {
+		if (all(goonum)) X=0
+		else X = grep(FALSE,goonum)
+		if (!is.null(ignore.col))
+			X = union(X[X!=0],ignore.col)
+#browser();return()
+		goo = formatCatch(goo,N=sigdig,zero=zero,X=X)
+	}
 	if (use.row.names) {
 		rows = dimnames(goo)[[1]]
 #browser();return()
@@ -359,17 +392,33 @@ texArray =function(x, table.caption="My table", table.label="tab:mytable",
 	else
 		rows.line=NULL
 	rows.line = setdiff(rows.line,nrow(goo)) # don't draw a dashed line along the last row
-#browser();return()
-	xtab = xtable(goo,align=paste("c",ifelse(add.header.column,"l",""),ifelse(use.row.names,"c",""),paste(rep("r",ncol),collapse=""),sep=""))
+	tabalign = paste("c",ifelse(add.header.column,"l",""),ifelse(use.row.names,"c",""),paste(rep("r",ncol),collapse=""),sep="")
+	fldsize  = newsize = c(0,sapply(goo,function(x){max(nchar(x))})) # due to extra column nonsense
+	fldfix   = fldsize>80
+	if (any(fldfix)) {
+		newsize[fldfix] = 80
+		fldprop  = round(0.9*newsize/sum(newsize),2)
+		fldalign = strsplit(tabalign,"")[[1]]
+		fldalign[fldfix] = paste(">{\\raggedright\\arraybackslash}p{",fldprop[fldfix],"\\textwidth}",sep="")
+		tabalign = fldalign #paste(fldalign,collapse="")
+		#tabalign = paste(">{\\raggedright\\arraybackslash}",tabalign,sep="")
+	}
+#browser(); return()
+	xtab = xtable(goo,align=tabalign)
 	longtable.header=makeLTH(xtab,table.caption,table.label)
+	add.to.row = if (length(rows.line)==0) list(pos = list(-1, nrow(xtab)), command = c( longtable.header, "%"))
+		else list(pos = list(-1, rows.line, nrow(xtab)), command = c( longtable.header, "\\hdashline[0.5pt/2pt]", "%"))
+	#if (!is.null(add.to.row)) {
+	#	ADD.TO.ROW[["pos"]] = c(add.to.row[["pos"]], ADD.TO.ROW[["pos"]])
+	#	ADD.TO.ROW[["command"]] = c(add.to.row[["command"]], ADD.TO.ROW[["command"]]) }
+#browser();return()
 #colnames(goo)=rep("",dim(goo)[2])
 	print(xtab, 
 		file = texout, append=TRUE,
 		floating = FALSE, # longtable never floats
 		hline.after = NULL,
 		#add.to.row = list(pos = list(-1, nrow(xtab)), command = c(longtable.header, "%")),
-		add.to.row = {if (length(rows.line)==0) list(pos = list(-1, nrow(xtab)), command = c( longtable.header, "%"))
-			else list(pos = list(-1, rows.line, nrow(xtab)), command = c( longtable.header, "\\hdashline[.4pt/1pt]", "%"))},
+		add.to.row = add.to.row,
 		#add.to.row = list(pos = list(-1, rows.sara, nrow(xtab)), command = c(longtable.header, "\\rowcolor{rowclr}", "%")),
 		include.rownames = FALSE,
 		include.colnames = FALSE,
@@ -380,6 +429,10 @@ texArray =function(x, table.caption="My table", table.label="tab:mytable",
 	)
 	cat("\\end{document}\n",file=texout,append=TRUE)
 	texfile = readLines(texout)
-	invisible(list(goo=goo,texfile=texfile))
+	ltdelim=grep("\\{longtable}",texfile)
+	tabfile=texfile[ltdelim[1]:ltdelim[2]]
+#browser();return()
+	invisible(list(goo=goo,texfile=texfile,tabfile=tabfile))
 }
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~texArray
+
