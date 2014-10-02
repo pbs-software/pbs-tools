@@ -11,7 +11,7 @@ texArray(x, table.caption="My table", table.label="tab:mytable",
    strSpp=NULL, sigdig=3, zero="---", collab=NULL, dash.delim=NULL, 
    rm.empty=TRUE, start.page=1, ignore.col=NULL,
    select.rows=NULL, use.row.names=FALSE, name.row.names="row",
-   add.header.column=FALSE, outnam="mytable")
+   add.header.column=FALSE, new.header=NULL, outnam="mytable")
 }
 \arguments{
   \item{x}{numeric array, matrix, or data frame.}
@@ -30,6 +30,7 @@ texArray(x, table.caption="My table", table.label="tab:mytable",
   \item{name.row.names}{table header name for column comprising the data table row names.}
   \item{add.header.column}{logical -- if \code{TRUE}, add a first column that delineates the various 
     dimensions of an array (> 2 dimensions) using the \code{names} of the \code{dimnames}.}
+  \item{new.header}{character vector of replacement labels if the user knows the table header columns and wants to replace them with specific labels.}
   \item{outnam}{character prefix for an output LaTeX file (\code{strSpp} will be appended to the prefix,
     and the file extension \code{.tex} will be appended to the file name composition).}
 }
@@ -43,7 +44,8 @@ texArray(x, table.caption="My table", table.label="tab:mytable",
 \value{
   Aside from the LaTeX file, the function invisibly returns a list of: \cr
   \code{goo} -- the flattened and re-formatted data file, and \cr
-  \code{texfile} -- a vector of latex lines that make the output LaTeX file.
+  \code{texfile} -- a vector of latex lines that make the output LaTeX file. \cr
+  \code{tabfile} -- a vector of latex lines that describes the table only (i.e., a subset of \code{texfile}).
 }
 \references{
   Hart, J.L. (1973) Pacific fishes of Canada. \emph{Fisheries Research Board of Canada} \bold{180}: ix + 740 p.

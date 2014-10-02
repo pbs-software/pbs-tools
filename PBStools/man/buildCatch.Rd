@@ -11,9 +11,9 @@
   (iii) estimated discards of \code{RRF} using discard ratios from observer logs.
 }
 \usage{
-buildCatch(dbdat, strSpp="396", dfld="ORF", 
-   major=c(1,3:9), refyrs=1997:2005, fidout=c(1:5,10), 
-   saveinfo=TRUE, eps=FALSE, pix=FALSE, wmf=FALSE, 
+buildCatch(dbdat, strSpp="396", dfld="TRF", 
+   major=c(1,3:9), refyrs=1997:2005, useYR1=NULL, 
+   fidout=c(1:5,10), saveinfo=TRUE, eps=FALSE, pix=FALSE, wmf=FALSE, 
    sql=FALSE, spath=.getSpath(), only.sql=FALSE,
    uid=Sys.info()["user"], pwd=uid, 
    reconstruct=TRUE, diagnostics=TRUE, ioenv=.GlobalEnv, ...)
@@ -34,6 +34,8 @@ buildCatch(dbdat, strSpp="396", dfld="ORF",
     to other rockfish (usually \dQuote{ORF} but can be \dQuote{TRF} if total rockfish is more appropriate).}
   \item{major}{major PMFC area codes in which catch is reconstructed (usually \code{c(1,3:9)}).}
   \item{refyrs}{reference years to use for ratio calculations.}
+  \item{useYR1}{if specified, use this year to start accepting landings reported in the databases 
+    instead of reconstructing landings from reference ratios of RRF to TRF or ORF.}
   \item{fidout}{fishery IDs for which an annual series barplot stacked by PMFC area is produced: \cr
     \code{1}  = groundfish trawl, \cr
     \code{2}  = Halibut longline, \cr

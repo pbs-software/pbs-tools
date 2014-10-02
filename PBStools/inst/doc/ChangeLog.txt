@@ -6,7 +6,13 @@ Authors: RH  = Rowan Haigh
          JTS = Jon T. Schnute
 ------------------------------
 
-1.26  2014-08-18
+1.26  2014-10-02
+  - Modified functions `weightBio' to recognise gear type and `texArray' to address a small bug and add custom column header labels. (RH 10/2)
+  - Modified query `fos_vcatORF.sql' to use calculated mean weights from GFBioSQL rather than calculating them from data in GFFOS. (RH 9/8)
+  - Added new query `gfb_mean_weight.sql' to calculate the mean weight of a fish species from GFBioSQL to convert discarded pieces to kg in GFFOS. (RH 9/5)
+	Based on Paul Starr's algorithm.
+  - Modified function `buildCatch' to incorporate species-specific catches not represented in the modern catch databases. (RH 8/25)
+	Also added a new argument `useYR1' to specifying a starting year (one for each fishery) that credible landing data is available (e.g., 1967 for YTR, 1956 for POP).
   - Renamed module `M08_texCrap.r' to `M08_LaTeX.r'. (RH 8/19)
   - Modified  function `buildCatch' to accept extra parameters through `...'; specifically to allow introduction of modified trawl ratios of RRF/TRF and RRF/ORF. (RH 8/18)
 	These ratios form the first row of the function matrix object `gamma'.

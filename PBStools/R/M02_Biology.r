@@ -1226,6 +1226,7 @@ estOgive <- function(dat=pop.age, strSpp="", method=c("dblnorm"),
 			if (!(length(parList)==4 && all(sapply(parList,length)==3)))
 				showError("Input list `parList' must have 4 vectors\n\nnamed `val', `min', `max' and `active',\n\neach with 3 elements for `mu', `nuL', and `nuR'",as.is=TRUE)
 			parVec = data.frame(parList,row.names=c("mu","nuL","nuR"), stringsAsFactors=FALSE)
+#browser();return()
 			dlist = calcMin(pvec=parVec,func=fitDN,method="nlm",repN=10)
 			Pend  = dlist$Pend
 			p50 = page(0.5,Pend[[1]],Pend[[2]])
@@ -1574,7 +1575,7 @@ histTail <-function(dat=pop.age, xfld="age", tailmin=NULL,
 	invisible() }
 #-----------------------------------------histTail
 
-#mapMaturity----------------------------2014-08-19
+#mapMaturity----------------------------2014-10-02
 # Plot maturity chart to see relative occurrence
 # of maturity stages by month.
 # Notes:
@@ -1714,6 +1715,10 @@ mapMaturity <- function (dat=pop.age, strSpp="", type="map",
 				freqmat = apply(bubbmat,ifelse(byrow,1,2),function(x){if (all(x==0)) x else x/sum(x)})  # proportions by column
 				fishsum = apply(bubbmat,2,sum) # number of specimens by month
 				lout = paste0("Bubbles: largest = ",round(max(freqmat),3),", smallest = ",round(min(freqmat[freqmat>0]),3))
+
+				matdat = crossTab(sdat,c("month","mat","ttype"),"mat",length)
+				CALCS[[paste0("sex",ss,"matdat")]] = matdat
+				save("matdat", file=paste0("sex",ss,"matdat.rda"))
 
 				par(mfrow=c(nsex,1),mar=c(4,6,0,0),oma=c(0,0,2,0))
 				xlim=c(1,12) + c(-0.25,0.25)
@@ -2919,7 +2924,7 @@ sumBioTabs=function(dat, fnam="sumBioTab.csv", samps=TRUE, specs=TRUE,
 #---------------------------------------sumBioTabs
 
 
-#weightBio------------------------------2014-08-15
+#weightBio------------------------------2014-10-01
 # Weight age|length frequencies|proportions by catch|density.
 #   adat = age123 from query 'gfb_bio.sql'    -- e.g., getData("gfb_bio.sql","GFBioSQL",strSpp="439",path=.getSpath()); bio439=processBio()
 #   cdat = cat123.wB from function 'getCatch' -- e.g., getCatch("439",pwd="myGFSHpwd",sql=TRUE)
@@ -2927,14 +2932,14 @@ sumBioTabs=function(dat, fnam="sumBioTab.csv", samps=TRUE, specs=TRUE,
 weightBio = function(adat, cdat, sunit="TID", sweight="catch", 
    ttype=NULL, stype=c(0,1,2,5:8), ameth=3, sex=2:1, major=NULL, 
    wSP=c(TRUE,TRUE), wN=TRUE, plus=60, Nmin=0, Amin=NULL, 
-   ctype="C", per=90, SSID=NULL, tabs=TRUE, 
+   ctype="C", per=90, SSID=NULL, tabs=TRUE, gear=NULL,
    plot=TRUE, ptype="bubb", size=0.05, powr=0.5, zfld="wp", 
    clrs=list(c(.colBlind["blue"],"cyan"),c(.colBlind["bluegreen"],"chartreuse")),
    cohorts=NULL, #list(x=c(1962,1970,1977,1989,1990,1992,1999),y=rep(0,7)),
    #regimes=list(1926:1929,1939:1946,1977:1978,1980:1981,1983:1984,1986:1988,1991:1992,1995:2006), #ALPI
    regimes=list(1900:1908,1912:1915,1923:1929,1934:1943,1957:1960,1976:1988,1992:1998,2002:2006),  #PDO
    #regimes=list(1912:1915,1923:1929,1931,1934:1943,1947,1957:1958,1960,1976:1988,1992:1993,1995:1998,2002:2006,2010), #PDO
-   layout="portrait", rgr=TRUE, eps=FALSE, pdf=FALSE, pix=FALSE, wmf=FALSE,
+   layout="portrait", rgr=TRUE, eps=FALSE, pdf=FALSE, png=FALSE, wmf=FALSE,
    longside=10, outnam, ioenv=.GlobalEnv, ...)
 {
 	expr = paste("getFile(",substitute(adat),",",substitute(cdat),",ioenv=ioenv,try.all.frames=TRUE,tenv=penv())",sep="")
@@ -2956,7 +2961,7 @@ weightBio = function(adat, cdat, sunit="TID", sweight="catch",
 	adat$SVID[is.na(adat$SVID)]=0; adat$GC[is.na(adat$GC)]=0; adat$area[is.na(adat	$area)]=1 # to avoid grouping errors later on
 	ages = adat
 	names(ages)[grep("scat",names(ages))] = "sort" #rename `scat' field to `sort' to avoid conflict with object`scat' later in code.
-	flds=c("ttype","stype","sex","major"); if (ctype=="S" && !is.null(SSID)) flds=c(flds,"SSID")
+	flds=c("ttype","gear","stype","sex","major"); if (ctype=="S" && !is.null(SSID)) flds=c(flds,"SSID")
 #browser();return()
 	for (i in flds) {
 		expr=paste("ages=biteData(ages,",i,")",sep=""); eval(parse(text=expr)) }
@@ -3287,6 +3292,7 @@ weightBio = function(adat, cdat, sunit="TID", sweight="catch",
 		wpanam=paste(c(wpanam,"-ssid(",SSID,")"),collapse="")
 	else
 		wpanam=paste(c(wpanam,"-tt(",ttype,")"),collapse="")
+	if (!is.null(gear)) wpanam=paste(c(wpanam,"-gear(",paste(gear,collapse=""),")"),collapse="")
 	if (!is.null(major)) wpanam=paste(c(wpanam,"-major(",paste(major,collapse=""),")"),collapse="")
 	#-----------------
 #browser();return()
@@ -3323,7 +3329,7 @@ weightBio = function(adat, cdat, sunit="TID", sweight="catch",
 	}
 	wpatxt = wpatab[wpatab[,"nsid"]>0 & !is.na(wpatab[,"nsid"]),,drop=FALSE]
 	if (nrow(wpatxt)==0) showError("No records with # SIDs > 0")
-	wpacsv = sub("output","coleraine",wpanam)
+	wpacsv = sub("output","awatea",wpanam)
 	wpacsv = paste(wpacsv,".csv",sep="")
 
 	write.table(wpatxt,file=wpacsv,sep=",",na="",row.names=FALSE,col.names=TRUE)
@@ -3389,13 +3395,9 @@ weightBio = function(adat, cdat, sunit="TID", sweight="catch",
 			plotname = sub("output",paste("age",ptype,sep=""),wpanam)
 			plotname = paste(c(plotname,"-sex(",sex,")"),collapse="")
 		} else plotname=outnam
-		#plotname=paste(c("age",ptype,strSpp,"-sex(",sex,")"),collapse="")
-		#if (ctype=="S")
-		#	plotname=paste(c(plotname,"-ssid(",SSID,")"),collapse="")
-		#else
-		#	plotname=paste(c(plotname,"-tt(",ttype,")"),collapse="")
-		#if (!is.null(major)) plotname=paste(c(plotname,"-major(",paste(major,collapse=""),")"),collapse="")
-		#plotname=paste(plotname,ifelse(wmf,".wmf",ifelse(pix,".png",ifelse(eps,".eps",ifelse(pdf,".pdf","")))),sep="")
+
+		plt.noto = crossTab(ages,c("year","sex"),"SPID",function(x){length(.su(x))})
+		plt.nsam = crossTab(ages,c("year","sex"),sunit,function(x){length(.su(x))})
 
 		display = agetab
 		reject  = apply(display[,,,"n",drop=FALSE],2:3,sum) < Nmin # do not display these years
@@ -3421,7 +3423,7 @@ weightBio = function(adat, cdat, sunit="TID", sweight="catch",
 		shortside=switch(nlay,min(1+1*length(xuse)*0.5,0.80*longside), 0.80*longside, 0.80*longside)
 		longside=switch(nlay, longside, min(2+2*length(xuse)*0.5,longside), longside)
 
-		devs=c(rgr=rgr,eps=eps,pdf=pdf,pix=pix,wmf=wmf); unpackList(devs)
+		devs=c(rgr=rgr,eps=eps,pdf=pdf,png=png,wmf=wmf); unpackList(devs)
 		for (d in 1:length(devs)) {
 			dev = devs[d]; devnam=names(dev)
 			if (!dev) next
@@ -3432,7 +3434,7 @@ weightBio = function(adat, cdat, sunit="TID", sweight="catch",
 			else if (devnam=="pdf") # PDF file for convenience
 				pdf(paste(plotname,".pdf",sep=""),width=switch(nlay,shortside,longside,longside),
 					height=switch(nlay,longside,shortside,longside),paper="special")
-			else if (devnam=="pix") {
+			else if (devnam=="png") {
 				ppi=100; pnt=ppi*10/72; zoom=ppi/72
 				width=ifelse(layout=="landscape",longside,shortside)
 				height=ifelse(layout=="landscape",shortside,longside)
@@ -3514,21 +3516,26 @@ weightBio = function(adat, cdat, sunit="TID", sweight="catch",
 						abline(a=a, b=1, col=.colBlind["orange"]) 
 						xcoho = plus-1-a; ycoho = plus-1
 						if (xcoho>xlim[1] & xcoho<xlim[2] & ycoho>ylim[1] & ycoho<ylim[2])
-							text(plus+1-a,plus+1,-a,cex=ifelse(pix,0.7,0.8),col=.colBlind["orange"],font=2) #,adj=c(0.6,1.5))
+							text(plus+1-a,plus+1,-a,cex=ifelse(png,0.7,0.8),col=.colBlind["orange"],font=2) #,adj=c(0.6,1.5))
 						else
-							text(YRS[length(YRS)]+0.5,a+YRS[length(YRS)]+0.5,-a,cex=ifelse(pix,0.7,0.8),col=.colBlind["orange"],font=2) #,adj=c(0.5,1.4)) 
+							text(YRS[length(YRS)]+0.5,a+YRS[length(YRS)]+0.5,-a,cex=ifelse(png,0.7,0.8),col=.colBlind["orange"],font=2) #,adj=c(0.5,1.4)) 
 				} }
-				nototab = agetab[,,kk,"n"]
-				if (length(YRS)==1)  nototab = makeCmat(nototab,dimnames(agetab)[2])
-				noto = apply(nototab,2,sum,na.rm=TRUE); noto = noto[noto>0 & !is.na(noto)]
+				#nototab = agetab[,,kk,"n"]
+				#if (length(YRS)==1)  nototab = makeCmat(nototab,dimnames(agetab)[2])
+				#noto = apply(nototab,2,sum,na.rm=TRUE); noto = noto[noto>0 & !is.na(noto)]
 				#text(as.numeric(names(noto)),(par()$usr[3]+ylim[1])/2,noto,cex=0.9,font=2,col=clrs[[k]][1])
-				text(as.numeric(names(noto)),par()$usr[3]+0.06*abs(diff(par()$usr[3:4])),noto,font=2,col=clrs[[k]][1],adj=1,srt=90,
+				noto = plt.noto[,kk]; names(noto)=plt.noto[,"year"]
+				noto = noto[noto>0 & !is.na(noto)]
+				nsam = plt.nsam[,kk]; names(nsam)=plt.nsam[,"year"]
+				nsam = nsam[nsam>0 & !is.na(nsam)]
+
+#browser();return()
+				text(as.numeric(names(noto)),par()$usr[3]+0.08*abs(diff(par()$usr[3:4])),paste0(noto,":",nsam),font=2,col=clrs[[k]][1],adj=1,srt=90,
 					cex=ifelse(is.null(list(...)$cex.noto),0.9,list(...)$cex.noto))
-				box(lwd=ifelse(devnam=="pix",max(1,floor(zoom/2)),1))
+				box(lwd=ifelse(devnam=="png",max(1,floor(zoom/2)),1))
 				mtext(paste("Age (",ifelse(k==1,"Males",ifelse(k==2,"Females","Unknown")),")"),
 					side=2,line=1.5,las=3,cex=ifelse(is.null(list(...)$cex.lab),1,list(...)$cex.lab))
 				#addLabel(0.05,0.05,txt=switch(k,"M","F","U"),cex=1.2,col=clrs[k],font=2)
-#browser();return()
 				par(new=FALSE)
 			}
 			if (devnam!="rgr") dev.off()
