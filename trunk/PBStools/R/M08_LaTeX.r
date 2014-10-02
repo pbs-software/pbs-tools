@@ -204,14 +204,14 @@ makeLTH <- function(xtab.table, table.caption, table.label) {
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~makeLTH
 
 
-#texArray-------------------------------2013-08-26
+#texArray-------------------------------2014-10-02
 # Flatten and format an array for latex output.
 #-----------------------------------------------RH
 texArray =function(x, table.caption="My table", table.label="tab:mytable",
    strSpp=NULL, sigdig=3, zero="---", collab=NULL, dash.delim=NULL, 
    rm.empty=TRUE, start.page=1, ignore.col=NULL,
    select.rows=NULL, use.row.names=FALSE, name.row.names="row",
-   add.header.column=FALSE, outnam="mytable")
+   add.header.column=FALSE, new.header=NULL, outnam="mytable")
 {
 	if (!is.array(x) && !is.matrix(x) && !is.data.frame(x)) stop("input an array or a matrix")
 	N = dim(x)
@@ -230,7 +230,6 @@ texArray =function(x, table.caption="My table", table.label="tab:mytable",
 		if (is.null(names(dimnames(x))[i]) || is.na(names(dimnames(x))[i]) )
 			names(dimnames(x))[i] = paste("D",i,sep="")
 	}
-#browser();return()
 	if (L==2) { #2-dimensional (flat) table
 		add.header.column=FALSE
 		is.fac=sapply(x,function(x){any("factor" %in% class(x))})
@@ -249,6 +248,7 @@ texArray =function(x, table.caption="My table", table.label="tab:mytable",
 		Zsort = sort(Z)
 		LL = length(Zsort) # temporary
 		Dsort = sapply(Zsort,function(x){1:x},simplify=FALSE)
+#browser();return()
 		if (LL==1) {
 			foo = matrix(Dsort[[1]],ncol=1)
 			colnames(foo)="3"
@@ -264,6 +264,9 @@ texArray =function(x, table.caption="My table", table.label="tab:mytable",
 			foo = foo[,order(colnames(foo))]
 		}
 		if (add.header.column) {
+			if (!is.null(new.header))
+				c1 = new.header
+			else{
 			here = lenv()
 			data(pmfc,envir=here)
 			dnams = dimnames(x)[as.numeric(names(Zsort))]
@@ -278,6 +281,11 @@ texArray =function(x, table.caption="My table", table.label="tab:mytable",
 			c1 = gsub("ttype:1|4","Com",c1,fixed=TRUE)
 			c1 = gsub("ttype:23","R/S",c1,fixed=TRUE)
 			c1 = gsub("ttype:2|3","R/S",c1,fixed=TRUE)
+			c1 = gsub("ttype:1","Com.Unob",c1,fixed=TRUE)
+			c1 = gsub("ttype:2","Surv.Res",c1,fixed=TRUE)
+			c1 = gsub("ttype:3","Surv.Cht",c1,fixed=TRUE)
+			c1 = gsub("ttype:4","Comm.Obs",c1,fixed=TRUE)
+#browser();return()
 			c1 = gsub("area:major_","PMFC ",c1,fixed=TRUE)
 			c1 = gsub("area:major","PMFC ",c1,fixed=TRUE)
 			lablist = strsplit(c1," ")
@@ -302,6 +310,7 @@ texArray =function(x, table.caption="My table", table.label="tab:mytable",
 			c1 = gsub("PMFC ","",c1,fixed=TRUE)
 			c1 = gsub("3CD+5ABCDE","Coast",c1,fixed=TRUE)
 			c1 = gsub("stat:Ntid","Number of trips",gsub("stat:Scat","Sample catch (t)",gsub("stat:Fcat","Fisheries catch (t)",c1)))
+			}
 		}
 #browser();return()
 		for (k in 1:nrow(foo)) {
@@ -340,7 +349,6 @@ texArray =function(x, table.caption="My table", table.label="tab:mytable",
 		paste("\\setcounter{page}{", start.page, "}  % set the page numbering", sep=""),
 		"\\usepackage{arydshln} % dashed lines in tables (load after other shit)",
 		"\\begin{document}",
-		"% Some Arial thing I presume: (from resDocSty.sty by AME)",
 		"\\renewcommand{\\familydefault}{phv}",
 		"\\renewcommand{\\rmdefault}{phv}",
 		"\\usefont{\\encodingdefault}{\\familydefault}{\\seriesdefault}{\\shapedefault}\\small"
@@ -351,7 +359,8 @@ texArray =function(x, table.caption="My table", table.label="tab:mytable",
 	if (is.null(collab)) collab = colnames(goo)
 	else if (length(collab)==ncol(goo)) colnames(goo) = collab
 	else stop("Length of `collab` does not match number of columns")
-	goonum = sapply(goo,function(x){grepl("numeric",class(x))})
+	#goonum = sapply(goo,function(x){grepl("numeric",class(x))}) 
+	goonum = sapply(goo, is.numeric)
 	if (any(goonum)) {
 		if (all(goonum)) X=0
 		else X = grep(FALSE,goonum)
@@ -374,7 +383,6 @@ texArray =function(x, table.caption="My table", table.label="tab:mytable",
 		Ngroups = prod(Zsort)
 		Nsexes  = nrow(goo)/Ngroups
 		description = as.vector(matrix(c(c1,rep("",Ngroups*(Nsexes-1))),ncol=Ngroups,byrow=TRUE))
-#browser();return()
 		goo = data.frame(description,goo,check.names=FALSE,stringsAsFactors=FALSE)
 		names(goo)[1] = ""
 		if (use.row.names) names(goo)[2] = name.row.names
@@ -383,6 +391,11 @@ texArray =function(x, table.caption="My table", table.label="tab:mytable",
 	if (rm.empty) {
 		keep = apply(goo[(ncol(goo)-ncol+1):ncol(goo)],1,function(x){any(!x%in%zero & !x%in%"---")})
 		goo = goo[keep,]
+		if (exists("description")) {
+			new.head.pos = !duplicated(rep(1:Ngroups,each=Nsexes)[keep])
+			goo[new.head.pos,1] = c1
+#browser();return()
+		}
 	}
 	if (is.null(dash.delim) && L>2) {
 		rowflag = sapply(strsplit(rownames(goo),"-"),function(x){as.numeric(x[1])})

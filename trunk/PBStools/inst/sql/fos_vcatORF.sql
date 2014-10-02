@@ -1,30 +1,49 @@
 -- Query FOS catch from the merged catch table GF_D_OFFICIAL_FE_CATCH
 -- Query species catch from GFFOS on SVBCPBSGFIIS
+-- Last modified: 2014-09-08
 SET NOCOUNT ON 
 
+-- Mean species weight calculated using `gfb_mean_weight.sql', which emulates PJS algorithm for GFBIO data
+DECLARE @MEAN_WEIGHT TABLE (SPECIES_CODE VARCHAR(5), MNWT REAL)
+INSERT INTO @MEAN_WEIGHT VALUES
+  ('222', 1.759289),   -- ttype=c(1,4), gear=1
+  ('396', 0.8536203),  -- ttype=c(1,4), gear=1
+  ('401', 1.724491),   -- ttype=c(1,4), gear=1
+  ('405', 1.916324),   -- ttype=c(1,4), gear=1
+  ('418', 1.45),       -- Paul Starr conversion for 2014 YTR assessment
+  ('602', 1.121828),   -- ttype=c(1,4), gear=1
+  ('621', 0.5346079)   -- ttype=c(1,4), gear=1
+  --('222', 1.596781),  -- ttype=c(1,2,3,4), gear=1
+  --('401', 1.453529),  -- ttype=c(1,2,3,4), gear=1
+  --('405', 1.787811),  -- ttype=c(1,2,3,4), gear=1
+  --('418', 1.484357),  -- ttype=c(1,2,3,4), gear=1
+  --('621', 0.458456)   -- ttype=c(1,2,3,4), gear=1
+
+-- Usage: SELECT FW.MEAN_WEIGHT FROM @MEAN_WEIGHT FW WHERE FW.SPECIES_CODE IN('222')
+
 -- MEAN SPECIES WEIGHT MW
-SELECT
-  MW.spp as \"spp\",
-  Avg(CASE
-    WHEN MW.unit='PND' THEN MW.mnwt/2.20459  -- standardises mean species weight in kg
-    ELSE MW.mnwt END) as \"mnwt\",
-  Sum(MW.n) as \"n\"
-INTO #MEAN_WEIGHT
-FROM
-  (SELECT  -- inline view calculates empirical mean weights for species (in lbs and/or kg)
-    C.SPECIES_CODE AS spp,
-    C.WEIGHT_UNIT_CODE AS unit,
-    Sum(C.CATCH_WEIGHT) AS wt,
-    Sum(C.CATCH_COUNT) AS n,
-    ISNULL(Avg(C.CATCH_WEIGHT/C.CATCH_COUNT),0) AS mnwt
-    FROM GF_FE_CATCH C
-    WHERE
-      (C.CATCH_WEIGHT>0 And C.CATCH_WEIGHT Is Not Null) AND 
-      (C.CATCH_COUNT>1 And C.CATCH_COUNT Is Not Null) AND    -- only calculate means from records with more than one fish
-      C.WEIGHT_UNIT_CODE IN ('PND','KGM')
-    GROUP BY C.SPECIES_CODE, C.WEIGHT_UNIT_CODE) MW
-GROUP BY MW.spp
-ORDER BY MW.spp
+--SELECT
+--  MW.spp as \"spp\",
+--  Avg(CASE
+--    WHEN MW.unit='PND' THEN MW.mnwt/2.20459  -- standardises mean species weight in kg
+--    ELSE MW.mnwt END) as \"mnwt\",
+--  Sum(MW.n) as \"n\"
+--INTO #MEAN_WEIGHT
+--FROM
+--  (SELECT  -- inline view calculates empirical mean weights for species (in lbs and/or kg)
+--    C.SPECIES_CODE AS spp,
+--    C.WEIGHT_UNIT_CODE AS unit,
+--    Sum(C.CATCH_WEIGHT) AS wt,
+--    Sum(C.CATCH_COUNT) AS n,
+--    ISNULL(Avg(C.CATCH_WEIGHT/C.CATCH_COUNT),0) AS mnwt
+--    FROM GF_FE_CATCH C
+--    WHERE
+--      (C.CATCH_WEIGHT>0 And C.CATCH_WEIGHT Is Not Null) AND 
+--      (C.CATCH_COUNT>1 And C.CATCH_COUNT Is Not Null) AND    -- only calculate means from records with more than one fish
+--      C.WEIGHT_UNIT_CODE IN ('PND','KGM')
+--    GROUP BY C.SPECIES_CODE, C.WEIGHT_UNIT_CODE) MW
+--GROUP BY MW.spp
+--ORDER BY MW.spp
 
 -- Gather catch of RRF, POP, ORF, TAR
 SELECT -- TOP 20
@@ -36,15 +55,15 @@ SELECT -- TOP 20
   Sum(CASE
     WHEN OC.SPECIES_CODE IN (@sppcode) THEN
       COALESCE(OC.TOTAL_RELEASED_ROUND_KG,
-      (ISNULL(OC.SUBLEGAL_RELEASED_COUNT,0) + ISNULL(OC.LEGAL_RELEASED_COUNT,0)) * FW.MNWT, 0)
+      (ISNULL(OC.SUBLEGAL_RELEASED_COUNT,0) + ISNULL(OC.LEGAL_RELEASED_COUNT,0)) * ISNULL(FW.MNWT,1), 0)
     ELSE 0 END) AS released,
   Sum(CASE
     WHEN OC.SPECIES_CODE IN (@sppcode) THEN
-      (ISNULL(OC.SUBLEGAL_LICED_COUNT,0) + ISNULL(OC.LEGAL_LICED_COUNT,0)) * FW.MNWT
+      (ISNULL(OC.SUBLEGAL_LICED_COUNT,0) + ISNULL(OC.LEGAL_LICED_COUNT,0)) * ISNULL(FW.MNWT,1)
     ELSE 0 END) AS liced,
   Sum(CASE
     WHEN OC.SPECIES_CODE IN (@sppcode) THEN
-      (ISNULL(OC.SUBLEGAL_BAIT_COUNT,0) + ISNULL(OC.LEGAL_BAIT_COUNT,0)) * FW.MNWT
+      (ISNULL(OC.SUBLEGAL_BAIT_COUNT,0) + ISNULL(OC.LEGAL_BAIT_COUNT,0)) * ISNULL(FW.MNWT,1)
     ELSE 0 END) AS bait,
   SUM(CASE
     WHEN OC.SPECIES_CODE IN ('396') THEN ISNULL(OC.LANDED_ROUND_KG,0)
@@ -68,9 +87,9 @@ SELECT -- TOP 20
     ELSE 0 END) AS TAR
 INTO #CATCH_CORE
 FROM 
-  GF_D_OFFICIAL_FE_CATCH OC INNER JOIN
-  #MEAN_WEIGHT FW ON
-    OC.SPECIES_CODE = FW.SPP
+  GF_D_OFFICIAL_FE_CATCH OC LEFT OUTER JOIN
+  @MEAN_WEIGHT FW ON
+    OC.SPECIES_CODE = FW.SPECIES_CODE
 GROUP BY OC.TRIP_ID, OC.FISHING_EVENT_ID 
 
 -- Combine event information with catch
