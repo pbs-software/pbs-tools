@@ -927,7 +927,7 @@ buildCatch=function(dbdat, strSpp="396", dfld="TRF",
 		if (strSpp=="396" && k==1) useYRstart = 1956
 
 		### YYR H&L catch relatively well known back to 1982
-		if (any(strSpp==c("442","396")) && any(k==c(4,5))) useYRstart = 1956
+		if (any(strSpp==c("442","396")) && any(k==c(4,5))) useYRstart = 1982
 
 		estYRend   = useYRstart - 1
 		estYRS = HISYRS[1]:estYRend
@@ -1176,7 +1176,7 @@ plotRecon = function(dat=cat440rec, strSpp="440", major=c(1,3:9), fidout=10,
 		else if (png)  png(filename=paste(plotname,".png",sep=""),width=round(100*PIN[1]),height=round(100*PIN[2]))
 		else if (wmf)  do.call("win.metafile",list(filename=paste(plotname,".wmf",sep=""),width=PIN[1],height=PIN[2]))
 		else  resetGraph()
-		expandGraph(mar=c(3,3,.5,.5))
+		expandGraph(mar=c(3,3.2,.5,.5),mgp=c(1.6,.5,0))
 		barplot(idat,col=0,space=0,xaxt="n",yaxt="n",xaxs="i")
 		yaxp=par()$yaxp; yint=yaxp[2]/yaxp[3]; hlin=seq(yint,yaxp[2],yint)
 		segments(rep(0,length(hlin)),hlin,rep(par()$usr[2],length(hlin)),hlin,col="gainsboro")
@@ -1295,6 +1295,6 @@ surveyCatch = function(strSpp="396", spath=.getSpath())
 
 # YYR - Yelloweye Rockfish
 #x=buildCatch(sql=TRUE,strSpp="442",dfld="ORF",only.sql=TRUE)
-#x=buildCatch(cat442orf,strSpp="442",dfld="ORF",eps=TRUE)
+#x=buildCatch(cat442dat,strSpp="442",dfld="ORF",eps=TRUE,major=3:9,diagnostics=FALSE)
 #y=surveyCatch(strSpp="442")
 
