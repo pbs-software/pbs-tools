@@ -8,8 +8,8 @@
 }
 \usage{
 plotRecon(dat=cat440rec, strSpp="440", major=c(1,3:9), fidout=10,
-    years=1918:2011, xlab=seq(1920,2010,5), 
-    eps=FALSE, pix=FALSE, wmf=FALSE, PIN=c(10,5))
+   years=1918:2014, xlab=seq(1920,2015,5), 
+   eps=FALSE, png=FALSE, wmf=FALSE, PIN=c(10,5))
 }
 \arguments{
   \item{dat}{numerix array of annual catch by PMFC area and fishery ID. }
@@ -20,7 +20,7 @@ plotRecon(dat=cat440rec, strSpp="440", major=c(1,3:9), fidout=10,
   \item{years}{numeric vector of years for which the catch reconstruction will be plotted. }
   \item{xlab}{numeric vector of years to use for major tick labels. }
   \item{eps}{logical: if \code{TRUE}, send the figure to a postscript file (\code{.eps}). }
-  \item{pix}{logical: if \code{TRUE}, send the figure to a raster file (\code{.png}). }
+  \item{png}{logical: if \code{TRUE}, send the figure to a raster file (\code{.png}). }
   \item{wmf}{logical: if \code{TRUE}, send the figure to a windows metafile (\code{.wmf}). }
   \item{PIN}{numeric vector indicating figure size (width, height) specified in inches; 
     only applies if the figure is sent to an output file.}

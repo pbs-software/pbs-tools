@@ -4,6 +4,7 @@
 #  biteData........Subsets a data matrix/frame using input vector.
 #  chewData........Remove records that contribute little information to factor categories.
 #  confODBC........Set up an ODBC User Data Source Name (DSN).
+#  convCT          Convert a crossTab object to regular matrix or data frame.
 #  convFY..........Convert dates into fishing years.
 #  convYM..........Convert date limits into a vector of year-months (YYY-MM).
 #  convYP..........Convert dates into year periods.
@@ -92,6 +93,20 @@ confODBC <- function(dsn="PacHarvest",server="GFDB",db="PacHarvest",
 	cmd <- paste("odbcconf.exe /a",syntax)
 	system(cmd)
 	invisible() }
+
+#convCT---------------------------------2014-12-12
+# Convert a crossTab object to regular matrix or data frame.
+#-----------------------------------------------RH
+convCT = function(CT, fn=as.matrix, colAsRowName=TRUE) {
+	fnam = as.character(substitute(fn))
+	if (!is.element(fnam,c("as.matrix","as.data.frame"))) return(CT)
+	NT = fn(CT[,-1])
+	class(NT) = sub("as\\.","",fnam)
+	if (colAsRowName) dimnames(NT) = list(CT[,1],dimnames(CT)[[2]][-1])
+	else  dimnames(NT) = list(dimnames(CT)[[1]],dimnames(CT)[[2]][-1])
+	return(NT)
+}
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~convCT
 
 #convFY---------------------------------2011-12-05
 # Convert dates into fishing years.
@@ -232,19 +247,29 @@ flagIt = function(a, b, A=45, r=0.2, n=1, ...){
 	return(invisible(list(xvec=xvec,yvec=yvec,rads=rads,x0=x0,x=x,y=y)))
 }
 
-#getData--------------------------------2014-05-14
+#getData--------------------------------2014-10-07
 # Get data from a variety of sources.
+# subQtrust -- if user has no DFO trusted credentials:
+#   if (type=="SQL"), c(trusted, uid, pwd) copied to `subQtrust'
+#   if (type=="ORA") user MUST supply `subQtrust' list.
 #-----------------------------------------------RH
 getData <-function(fqtName, dbName="PacHarvest", strSpp=NULL, server=NULL,
-     type="SQL", path=getwd(), trusted=TRUE, uid="", pwd="",
-     noFactors=TRUE, noLogicals=TRUE, rownum=0, mindep=NULL, 
-     maxdep=NULL, surveyid=NULL, survserid=NULL, fisheryid=NULL, 
-     logtype=NULL, doors=NULL, speed=NULL, mnwt=NULL, tarSpp=NULL, 
-     major=NULL, top=NULL, dummy=NULL, senv=NULL, tenv=.GlobalEnv, ...)
+   type="SQL", path=getwd(), trusted=TRUE, uid="", pwd="",
+   subQtrust = list(trusted=TRUE, uid="", pwd=""),
+   noFactors=TRUE, noLogicals=TRUE, rownum=0, mindep=NULL, 
+   maxdep=NULL, surveyid=NULL, survserid=NULL, fisheryid=NULL, 
+   logtype=NULL, doors=NULL, speed=NULL, mnwt=NULL, tarSpp=NULL, 
+   major=NULL, top=NULL, dummy=NULL, senv=NULL, tenv=.GlobalEnv, ...)
 {
 	on.exit(odbcCloseAll())
+	if (!is.null(getPBSoptions("showError")) && getPBSoptions("showError")) {
+		setPBSoptions("showError", FALSE); frame()  }# clear any previous error messages
 	if (missing(fqtName)) showError("Specify 'fqtName'")
 	if (dbName=="") showError("Specify 'dbName'")
+	# For people who have SQL Server accounts instead of trusted credentials:
+	if (!trusted && type=="SQL")
+		subQtrust = list( trusted=FALSE, uid=uid, pwd=pwd )
+
 	timeF0=proc.time()[1:3]                ### start timing getData
 	strQ=as.character(substitute(fqtName)) ### string name
 	if (length(strQ)>1 && any(strQ=="paste"))
@@ -439,13 +464,15 @@ getData <-function(fqtName, dbName="PacHarvest", strSpp=NULL, server=NULL,
 				strQ <- gsub(pattern="@originid",replacement="'Y'",x=strQ)
 			else
 				strQ <- gsub(pattern="@originid",replacement="'Y','N'",x=strQ)
-			if (is.null(surveyid)){
-				getData("select SURVEY_ID FROM SURVEY","GFBioSQL",type="SQLX",tenv=penv(),server="SVBCPBSGFIIS")
-				surveyid=PBSdat[[1]] }
-			strQ <- gsub(pattern="@surveyid",replacement=paste(surveyid,collapse=","),x=strQ)
-			if (is.null(survserid)){
-				getData("select SURVEY_SERIES_ID FROM SURVEY","GFBioSQL",type="SQLX",tenv=penv(),server="SVBCPBSGFIIS")
-				survserid=sort(unique(PBSdat[[1]])) }
+			if (is.null(surveyid)) {
+				SQLdat = .getSQLdata(dbName="GFBioSQL", qtName=NULL, strSQL="select SURVEY_ID FROM SURVEY", 
+					server="SVBCPBSGFIIS", type="SQL", trusted=subQtrust[["trusted"]], uid=subQtrust[["uid"]], pwd=subQtrust[["pwd"]])
+				surveyid = SQLdat[[1]] }
+			if (is.null(survserid)) {
+				SQLdat = .getSQLdata(dbName="GFBioSQL", qtName=NULL, strSQL="select SURVEY_SERIES_ID FROM SURVEY", 
+					server="SVBCPBSGFIIS", type="SQL", trusted=subQtrust[["trusted"]], uid=subQtrust[["uid"]], pwd=subQtrust[["pwd"]])
+				survserid = sort(unique(SQLdat[[1]])) }
+#browser();return()
 			strQ <- gsub(pattern="@survserid",replacement=paste(survserid,collapse=","),x=strQ)
 			strQ <- gsub(pattern="@fisheryid",replacement=ifelse(is.null(fisheryid),
 				paste(0:9,collapse=","), paste(fisheryid,collapse=",") ),x=strQ)
@@ -461,7 +488,7 @@ getData <-function(fqtName, dbName="PacHarvest", strSpp=NULL, server=NULL,
 			strQ <- gsub(pattern="@dummy",replacement=ifelse(is.null(dummy),"''",
 				ifelse(is.numeric(dummy),paste(dummy,collapse=","),
 				ifelse(is.character(dummy),paste("'",paste(dummy,collapse="','"),"'",sep=""),"''"))),x=strQ)
-			assign("sql",strQ,envir=tenv)
+			#assign("sql",strQ,envir=tenv)
 			expr <-paste("datt=.getSQLdata(dbName=\"",dbName,"\",strSQL=\"",strQ,
 			"\",server=\"",server,"\",type=\"",type,"\",trusted=",trusted,
 			",uid=\"",uid,"\",pwd=\"",pwd,"\",...)",sep="")
@@ -495,9 +522,10 @@ getData <-function(fqtName, dbName="PacHarvest", strSpp=NULL, server=NULL,
 	if (type %in% c("SQL","ORA"))  FQtime = rbind(timeF,timeQ)
 	else FQtime = timeF
 	assign("FQtime",FQtime,envir=tenv)
+	assign("sql",strQ,envir=tenv)
 	junk=gc(verbose=FALSE) ### garbage collection (shunt messages to junk also)
 	invisible(strQ) }
-#------------------------------------------getData
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~getData
 
 #.getSQLdata----------------------------2014-05-01
 # Retrieves a data frame from SQL Server
@@ -512,6 +540,7 @@ getData <-function(fqtName, dbName="PacHarvest", strSpp=NULL, server=NULL,
 		#getFile(".PBSserver", path = .getSpath(),tenv=penv())
 		server = .PBSserver[1]; type="SQL" }
 	driver= list(...)$driver
+#browser();return()
 	if (type=="SQL") driver=ifelse(is.null(driver),"SQL Server",driver)
 	#else if (type=="ORA") driver="Oracle ODBC Driver" ### "Microsoft ODBC for Oracle"
 	else if (type=="ORA") driver=ifelse(is.null(driver),"Oracle in OraClient11g_home1",driver)
@@ -552,7 +581,7 @@ getData <-function(fqtName, dbName="PacHarvest", strSpp=NULL, server=NULL,
 	}
 	odbcClose(cnn)
 	return(dat) }
-#--------------------------------------.getSQLdata
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~.getSQLdata
 
 #.getMDBdata----------------------------2010-07-22
 # Retrieves a data frame from MDB query or table
@@ -874,7 +903,7 @@ scaleVec = function(V, Tmin=0, Tmax=1) {
 	return(Tval) }
 #-----------------------------------------scaleVec
 
-#showError------------------------------2011-09-15
+#showError------------------------------2014-10-07
 # Display error message on device surface
 #-----------------------------------------------RH
 showMessage <- function(str, type="", as.is=FALSE, err=FALSE, ...) {
@@ -891,6 +920,7 @@ showMessage <- function(str, type="", as.is=FALSE, err=FALSE, ...) {
 	invisible()}
 
 showError=function(str, type="", as.is=FALSE, err=TRUE, ...) {
+	setPBSoptions("showError", TRUE)
 	showMessage(str=str, type=type, as.is=as.is, err=err, ...) 
 	invisible()}
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~showError

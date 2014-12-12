@@ -11,12 +11,13 @@
   (iii) estimated discards of \code{RRF} using discard ratios from observer logs.
 }
 \usage{
-buildCatch(dbdat, strSpp="396", dfld="TRF", 
-   major=c(1,3:9), refyrs=1997:2005, useYR1=NULL, 
-   fidout=c(1:5,10), saveinfo=TRUE, eps=FALSE, pix=FALSE, wmf=FALSE, 
-   sql=FALSE, spath=.getSpath(), only.sql=FALSE,
-   uid=Sys.info()["user"], pwd=uid, 
-   reconstruct=TRUE, diagnostics=TRUE, ioenv=.GlobalEnv, ...)
+buildCatch( dbdat, strSpp="396", dfld="TRF", 
+   major=c(1,3:9), fidout=c(1:5,10), refyrs=1997:2005,
+   refarea=NULL, refgear=NULL, useYR1=NULL, useBG=FALSE,
+   saveinfo=TRUE, eps=FALSE, png=FALSE, wmf=FALSE,
+   sql=FALSE, only.sql=FALSE, spath=.getSpath(), dpath=getwd(),
+   uid=Sys.info()["user"], pwd=uid,
+   reconstruct=TRUE, diagnostics=TRUE, ioenv=.GlobalEnv, ... )
 }
 \arguments{
   \item{dbdat}{a list object of landing records from eight DFO databases: \cr
@@ -33,9 +34,6 @@ buildCatch(dbdat, strSpp="396", dfld="TRF",
   \item{dfld}{field name of the denominator in the ratio of RRF 
     to other rockfish (usually \dQuote{ORF} but can be \dQuote{TRF} if total rockfish is more appropriate).}
   \item{major}{major PMFC area codes in which catch is reconstructed (usually \code{c(1,3:9)}).}
-  \item{refyrs}{reference years to use for ratio calculations.}
-  \item{useYR1}{if specified, use this year to start accepting landings reported in the databases 
-    instead of reconstructing landings from reference ratios of RRF to TRF or ORF.}
   \item{fidout}{fishery IDs for which an annual series barplot stacked by PMFC area is produced: \cr
     \code{1}  = groundfish trawl, \cr
     \code{2}  = Halibut longline, \cr
@@ -43,24 +41,40 @@ buildCatch(dbdat, strSpp="396", dfld="TRF",
     \code{4}  = Dogfish-Lingcod, \cr
     \code{5}  = hook and line (H&L) rockfish, \cr
     \code{10} = all fisheries combined.}
+  \item{refyrs}{reference years to use for ratio calculations.}
+  \item{refarea}{list (by fishery) of file names of files containing reference
+    areas to use when calculating RRF/ORF(TRF) 
+    (e.g., \code{list(`1`="A418trawl.csv")}).}
+  \item{refgear}{list (by fishery) of reference gear types to use for ratio
+    calculations (e.g., \code{list(`1`=1)}).}
+  \item{useYR1}{if specified, use this year to start accepting landings reported in the databases 
+    instead of reconstructing landings from reference ratios of RRF to TRF or ORF.}
+  \item{useBG}{logical: if \code{TRUE}, then sample from the binomial-gamma to estimate ratios RRF/ORF or RRF/TRF.}
   \item{saveinfo}{logical: if \code{TRUE}, save various data objects created within the function
     to a list object called \code{PBStool}; setting to \code{FALSE} may speed reconstruction.}
   \item{eps}{logical: if \code{TRUE} send the figures to \code{.eps} files.}
-  \item{pix}{logical: if \code{TRUE} send the figures to \code{.png} files.}
+  \item{png}{logical: if \code{TRUE} send the figures to \code{.png} files.}
   \item{wmf}{logical: if \code{TRUE} send the figures to \code{.wmf} files.}
   \item{sql}{logical: if \code{TRUE} query the databases, otherwise load 
-    catch records from binary files saved from a previous query run (saves time).}
+    catch records from binary files saved from a previous query run (saves time;
+    also see \code{dpath}).}
+  \item{only.sql}{logical: if \code{TRUE}, then only execute the queries to
+    download catch data from remote databases.}
   \item{spath}{character: path to SQL code files -- defaults to the \code{sql} 
     directory under \cr \code{system.file(package="PBStools")}.}
-  \item{only.sql}{logical: if \code{TRUE}, then only execute the queries to download catch data from remote databases.}
+  \item{dpath}{character: path to database (\code{.rda} files) already queried;
+    useful when user wants to build alternative catch histories (in another 
+    directory) using data already queried.}
   \item{uid, pwd}{user ID and password for Oracle DB account authentication.}
-  \item{reconstruct}{logical: if \code{TRUE} (default) complete the reconstruction as previously, \cr
- if \code{FALSE}, terminate the code once the modern catch array has been compiled and saved 
- (to a binary file \code{cat123mod.rda}, where \code{123} = species code). }
-  \item{diagnostics}{logical: if \code{TRUE} (default) create automatically-numbered diagnostic
-    images files (prefaced with \code{pD000}, where \code{000} is the automatic number) to 
-    a subdirectory called \code{CRdiag}. Subsequent calls to \code{buildCatch} remove all \code{pD...}
-    files created by previous builds.}
+  \item{reconstruct}{logical: if \code{TRUE} (default) complete the 
+    reconstruction as previously, \cr  if \code{FALSE}, terminate the code once
+    the modern catch array has been compiled and saved (to a binary file 
+    \code{cat123mod.rda}, where \code{123} = species code). }
+  \item{diagnostics}{logical: if \code{TRUE} (default) create automatically-
+    numbered diagnostic images files (prefaced with \code{pD000}, where
+    \code{000} is the automatic number) to a subdirectory called \code{CRdiag}.
+    Subsequent calls to \code{buildCatch} remove all \code{pD...} files created
+    by previous builds.}
   \item{ioenv}{input/output environment for function input data and output results.}
   \item{...}{additional ad hoc arguments to deal with PJS issues.}
 }
@@ -106,6 +120,12 @@ buildCatch(dbdat, strSpp="396", dfld="TRF",
   binary files \code{.rda}. The final reconstructed catch array is also flattened to a 
   comma-delimited text file \code{Catch-History-123.csv}, where \code{123} 
   represents the species code.
+}
+\references{
+  Haigh, R., and Yamanaka, K.L. 2011. Catch history reconstruction for rockfish
+  (\emph{Sebastes} spp.) caught in British Columbia coastal waters. 
+  \emph{Canadian Technical Report of Fisheries and Aquatic Sciences}
+  \bold{2943}: viii + 124p.
 }
 \author{
   Rowan Haigh, Pacific Biological Station, Fisheries and Oceans Canada, Nanaimo BC

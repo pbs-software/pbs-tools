@@ -1,4 +1,5 @@
 -- Query GFCatch landings for rockfish reconstruction.
+-- Last modified: 2014-10-15
 
 SET NOCOUNT ON  -- prevents timeout errors
 
@@ -60,6 +61,7 @@ SELECT
   'date' = CONVERT(char(10),ISNULL(T.Date,Null),20), 
   'major' = IsNull(E.Major_Area,0),
   'minor' = IsNull(E.Minor_Area,0),
+  'locality' = IsNull(E.Locality,0),
   C.landed, C.discard, 
   C.POP, C.ORF, C.PAH, C.SBF, C.DOG, C.RFA
 FROM 
@@ -74,6 +76,6 @@ FROM
 
 
 -- getData("gfc_fcatORF.sql","GFCatch",strSpp="396")
-
+-- qu("gfc_fcatORF.sql",dbName="GFCatch",strSpp="418")
 
 

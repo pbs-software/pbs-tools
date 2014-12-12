@@ -6,7 +6,13 @@ Authors: RH  = Rowan Haigh
          JTS = Jon T. Schnute
 ------------------------------
 
-1.26  2014-10-02
+1.26  2014-12-12
+  - Added new argument `dpath' to `buildCatch' specifying a database path for times when user wants to build alternative catch histories (in another directory) using data already queried. (RH 12/9)
+  - Added query `gfb_iphc_hooks.sql' to get IPHC hook data (2003-present) for AME to devleop IPHC survey index. (RH 10/17)
+  - Modified various queries for `buildCtach' to return `locality' codes. (RH 10/15)
+  - Modified function `getData' to handle subqueries for SQL account holders (no DFO credenntials, thanks Chris G). (RH 10/7)
+  - Modified function `showError' to keep track of when an error message is displayed on the device using `setPBSoptions("showError",TRUE)'. (RH 10/7)
+  - Added an option to calculate RRF/ORF (RRF/TRF) using the binomial-gamma. (RH 10/2)
   - Modified functions `weightBio' to recognise gear type and `texArray' to address a small bug and add custom column header labels. (RH 10/2)
   - Modified query `fos_vcatORF.sql' to use calculated mean weights from GFBioSQL rather than calculating them from data in GFFOS. (RH 9/8)
   - Added new query `gfb_mean_weight.sql' to calculate the mean weight of a fish species from GFBioSQL to convert discarded pieces to kg in GFFOS. (RH 9/5)

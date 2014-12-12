@@ -1,4 +1,4 @@
--- Last modified by RH (2014-06-06)
+-- Last modified by RH (2014-10-15)
 -- PacHarvHL query for validation catch (LBS) of a target species, POP, and ORF (other rockfish)
 -- Note: validation tables do not contain information at the tow level.
 -- fisheryid: 2=Halibut, 3=Sablefish, 4=Schdeule II, 5=ZN, 
@@ -11,11 +11,15 @@ SELECT
   E.OBFL_HAIL_IN_NO AS phhl_hail, 
   IsNull(E.OBFL_MAJOR_STAT_AREA_CDE,0) AS phhl_major, 
   IsNull(E.OBFL_MINOR_STAT_AREA_CDE,0) AS phhl_minor, 
+  IsNull(E.OBFL_LOCALITY_CDE,0) AS phhl_locality, 
   Count(E.OBFL_SET_NO) AS phhl_mset 
 INTO #Msets
 FROM B3_Fishing_Events E 
 GROUP BY 
-  E.OBFL_HAIL_IN_NO, E.OBFL_MAJOR_STAT_AREA_CDE, E.OBFL_MINOR_STAT_AREA_CDE
+  E.OBFL_HAIL_IN_NO,
+  IsNull(E.OBFL_MAJOR_STAT_AREA_CDE,0), 
+  IsNull(E.OBFL_MINOR_STAT_AREA_CDE,0), 
+  IsNull(E.OBFL_LOCALITY_CDE,0)
 ORDER BY 
   E.OBFL_HAIL_IN_NO
 
@@ -53,6 +57,7 @@ SELECT
   CONVERT(char(10),IsNull(VH.vrec_offload_dt,VH.vrec_departure_dt),20) AS 'date',
   C.phhl_major AS 'major',
   C.phhl_minor AS 'minor',
+  C.phhl_locality AS 'locality',
   landed = CAST(ROUND(Sum(CASE
     WHEN C.spp IN (@sppcode) THEN IsNull(C.catKg,0)
     ELSE 0 END ),7) AS NUMERIC(15,7)),
@@ -92,12 +97,13 @@ GROUP BY
   VH.vrec_ext_lic_option_cde,
   IsNull(VH.vrec_offload_dt,VH.vrec_departure_dt),
   C.phhl_major,
-  C.phhl_minor
-
+  C.phhl_minor,
+  C.phhl_locality
 SELECT * FROM #Vcat V
 WHERE V.landed>0 OR V.POP>0 OR V.ORF>0 OR V.PAH>0 OR V.SBF>0 OR V.DOG>0 OR V.LIN>0 OR V.RFA>0
 
 -- getData("phhl_vcatORF.sql","PacHarvHL",strSpp="442",fisheryid=5)
+-- qu("phhl_vcatORF.sql",dbName="PacHarvHL",strSpp="418")   ### validated (DMP) catch
 
 
 

@@ -1,6 +1,6 @@
 -- Calculate mean weight of a fish species from GFBioSQL 
 -- for converting discarded pieces to kg in GFFOS.
--- Last modified: 2014-09-05
+-- Last modified: 2014-12-12
 SET NOCOUNT ON
 
 -- Create data table for calculating mean weight from lengths
@@ -30,8 +30,8 @@ FROM
     B21.SAMPLE_ID = B22.SAMPLE_ID
 WHERE
   B21.TRIP_SUB_TYPE_CODE IN (1,4) AND
-  B21.MAJOR_STAT_AREA_CODE IN (1,3,4,5,6,7,8,9) AND
-  B21.GEAR_CODE IN (1) AND
+  B21.MAJOR_STAT_AREA_CODE IN (@major) AND
+  B21.GEAR_CODE IN (1,2,4,5) AND
   B21.SPECIES_CATEGORY_CODE IN (1) AND
   B21.SAMPLE_TYPE_CODE IN (1,2,6,7) AND
   YEAR(B21.TRIP_START_DATE) >= 2007 AND
@@ -388,4 +388,4 @@ GROUP BY
 SELECT * FROM #mean_weight
 
 --qu("lm.sql",dbName="GFBioSQL",strSpp=c("222","401","405","418","602","621"))
---qu("gfb_mean_weight.sql",dbName="GFBioSQL",strSpp="602")
+--qu("gfb_mean_weight.sql",dbName="GFBioSQL",strSpp="442",major=3:9)
