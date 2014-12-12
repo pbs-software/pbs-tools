@@ -7,6 +7,8 @@ Authors: RH  = Rowan Haigh
 ------------------------------
 
 1.26  2014-12-12
+  - Fixed a bug (recently introduced -- Oct 2014?) in `buildCatch' that affected YYR reconstruction (first year for fid=4:5 is 1982 not 1956). (RH 12/12)
+  - Added query `gfb_jcatORF.sql' for `buildCatch' (forgot in subversion 31). (RH 12/12)
   - Added new argument `dpath' to `buildCatch' specifying a database path for times when user wants to build alternative catch histories (in another directory) using data already queried. (RH 12/9)
   - Added query `gfb_iphc_hooks.sql' to get IPHC hook data (2003-present) for AME to devleop IPHC survey index. (RH 10/17)
   - Modified various queries for `buildCtach' to return `locality' codes. (RH 10/15)
