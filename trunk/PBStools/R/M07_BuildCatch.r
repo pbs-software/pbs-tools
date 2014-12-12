@@ -6,7 +6,7 @@
 #  plotRecon....Plot reconstructed catch using barplots stacked by PMFC area.
 #===============================================================================
 
-#buildCatch-----------------------------2014-09-24
+#buildCatch-----------------------------2014-12-12
 # Catch reconstruction algorithm for BC rockfish.
 # Use ratios of species catch to ORF catch for multiple fisheries.
 # Matrix indices: i=year, j=major, k=fid, l='spp'
@@ -15,16 +15,20 @@
 #  strSpp   - character string specifying the Hart species code for the rockfish to be reconstructed (RRF).
 #  dfld     - field name of the denominator in the ratio of RRF to other rockfish (usually ORF but can be TRF or POP if these are more appropriate).
 #  major    - major PMFC area codes in which catch is reconstructed (usually c(1,3:9)).
-#  refyrs   - reference years to use for ratio calculations (e.g., RRF/ORF).
-#  useYR1   - first year to start using reported landings (i.e. not estimated from RRF/ORF or RRF/TRF), one for each fishery.
 #  fidout   - fishery IDs for which an annual series barplot stacked by PMFC area is produced.
+#  refyrs   - reference years to use for ratio calculations (e.g., RRF/ORF).
+#  refarea  - name of file containing reference areas to use when calculating RRF/ORF.
+#  refgear  - reference gear types years to use for ratio calculations (e.g., RRF/ORF).
+#  useYR1   - first year to start using reported landings (i.e. not estimated from RRF/ORF or RRF/TRF), one for each fishery.
+#  useBG    - sample from the binomial-gamma to estimate ratios RRF/ORF or RRF/TRF.
 #  saveinfo - if TRUE, save various data function objects to a list object called `PBStool'.
 #  eps      - if TRUE send the figures to `.eps' files.
-#  pix      - if TRUE send the figures to `.png' files.
+#  png	      - if TRUE send the figures to `.png' files.
 #  wmf      - if TRUE send the figures to `.wmf' files.
 #  sql      - if TRUE query the databases, otherwise load catch records from binary files saved from a previous query run (saves time).
-#  spath    - path to SQL code files -- defaults to the `sql' directory under `system.file(package="PBStools")'.
 #  only.sql - if TRUE, only execute the queries to download catch data from remote databases.
+#  spath    - path to SQL code files -- defaults to the `sql' directory under `system.file(package="PBStools")'.
+#  dpath    - database path for times when user wants to build alternative catch histories (in another directory) using data already queried.
 #  uid, pwd - user ID and password for Oracle DB account authentication.
 #  reconstruct - if TRUE, complete the reconstruction to its end, otherwise terminate the code once the modern catch array has been compiled and saved.
 #  diagnostics - if TRUE, create automatically-numbered diagnostic images files to a subdirectory called `CRdiag'.
@@ -32,10 +36,11 @@
 #  \dots    - additional ad hoc arguments to deal with PJS issues.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~RH
 buildCatch=function(dbdat, strSpp="396", dfld="TRF", 
-   major=c(1,3:9), refyrs=1997:2005, useYR1=NULL, 
-   fidout=c(1:5,10), saveinfo=TRUE, eps=FALSE, pix=FALSE, wmf=FALSE, 
-   sql=FALSE, spath=.getSpath(), only.sql=FALSE,
-   uid=Sys.info()["user"], pwd=uid, 
+   major=c(1,3:9), fidout=c(1:5,10), refyrs=1997:2005,
+   refarea=NULL, refgear=NULL, useYR1=NULL, useBG=FALSE,
+   saveinfo=TRUE, eps=FALSE, png=FALSE, wmf=FALSE,
+   sql=FALSE, only.sql=FALSE, spath=.getSpath(), dpath=getwd(),
+   uid=Sys.info()["user"], pwd=uid,
    reconstruct=TRUE, diagnostics=TRUE, ioenv=.GlobalEnv, ...)
 {
 	fidnam=c("trawl","halibut","sablefish","sched2","zn","sabzn","sabhal","dogfish","lingcod","combined")
@@ -204,6 +209,7 @@ buildCatch=function(dbdat, strSpp="396", dfld="TRF",
 			"'phvdat' = PacHarvHL database (validated landings Sched II & ZN)\n",
 			"'phfdat' = PacHarvHL database (fisherlog records Sched II & ZN)\n",
 			"'fosdat' = GFFOS database on the GFSH server (all fisheries)\n",
+			"'jvhdat' = GFBioSQL database (joint-venture hake)\n",
 			"with fields:\nc( 'fid', 'date', 'major', 'landed', 'discard', 'POP', 'ORF', 'TAR' )",sep="")
 		showError(mess,as.is=TRUE,x=0.05,adj=0,cex=1.2) }
 
@@ -211,7 +217,7 @@ buildCatch=function(dbdat, strSpp="396", dfld="TRF",
 	cflds = c("landed","discard","POP","ORF","TAR")
 	keep  = c("fid","date","major","minor",cflds)
 	ufos  = c("POP","PAH","SBF","DOG","RFA","RFA","PAH","DOG","LIN")
-	dbs   = c("ph3cat","gfccat","phtcat","phhcat","phscat","phvcat","phfcat","foscat")
+	dbs   = c("ph3cat","gfccat","phtcat","phhcat","phscat","phvcat","phfcat","foscat","jvhdat")
 	} # end skip if only.sql
 #browser();return()
 
@@ -237,6 +243,11 @@ buildCatch=function(dbdat, strSpp="396", dfld="TRF",
 			dimnames(gfcdat)[[1]]=1:nrow(gfcdat)
 			save("gfcdat",file="gfcdat.rda")
 		
+		### GFBioSQL records for fids (1) and TRIP_SUB_TYPE_CODE (5,7,8,9,10,12) -- 5=Canada, 7=Polish, 8-9=Russian, 10=Polish, 12=Japanese
+		getData("gfb_jcatORF.sql","GFBioSQL",strSpp=strSpp,path=spath,tenv=penv())
+			assign("jvhdat",PBSdat); rm(PBSdat) ### just to be safe
+			save("jvhdat",file="jvhdat.rda")
+
 		### PacHarvest records for fids (1)
 		getData("pht_tcatORF.sql","PacHarvest",strSpp=strSpp,path=spath,tenv=penv())
 			assign("phtdat",PBSdat); rm(PBSdat) ### just to be safe
@@ -269,16 +280,21 @@ buildCatch=function(dbdat, strSpp="396", dfld="TRF",
 			dimnames(fosdat)[[1]]=1:nrow(fosdat)
 			save("fosdat",file="fosdat.rda")
 
-		### Wrap up the fisheries landings into a list object
-		blob=list(ph3dat=ph3dat,gfcdat=gfcdat,phtdat=phtdat,phhdat=phhdat,phsdat=phsdat,phvdat=phvdat,phfdat=phfdat,fosdat=fosdat)
-		eval(parse(text=paste("dbdat=\"cat",strSpp,"orf\"",sep="")))
+		### Get the survey catches which will be added to the combined catch near the end
+		surveyCatch(strSpp=strSpp)
+		getFile(gfbdat)
+
+		### Wrap up the fisheries and survey landings into a list object
+		blob=list(ph3dat=ph3dat,gfcdat=gfcdat,phtdat=phtdat,phhdat=phhdat,phsdat=phsdat,phvdat=phvdat,phfdat=phfdat,fosdat=fosdat,gfbdat=gfbdat,jvhdat=jvhdat)
+		eval(parse(text=paste("dbdat=\"cat",strSpp,"dat\"",sep="")))
 		expr=paste(dbdat,"=blob; save(\"",dbdat,"\",file=\"",dbdat,".rda\")",sep="")
 		eval(parse(text=expr))
+		
 		###-----Stop querying the databases-----
 	}
 	else {
 		dbdat=as.character(substitute(dbdat)) ### database list object name
-		expr=paste("getFile(",dbdat,",senv=ioenv,try.all.frames=TRUE,tenv=penv()); fnam=names(",dbdat,"); unpackList(",dbdat,")",sep="")
+		expr=paste("getFile(",dbdat,",senv=ioenv,try.all.frames=TRUE,tenv=penv(),path=dpath); fnam=names(",dbdat,"); unpackList(",dbdat,")",sep="")
 		eval(parse(text=expr)) 
 	}
 	if (only.sql) return()
@@ -322,6 +338,12 @@ buildCatch=function(dbdat, strSpp="396", dfld="TRF",
 	trash  = apply(phtcat[,cflds],1,function(x){all(x==0)})
 	phtcat = phtcat[!trash,] ; dimnames(phtcat)[[1]] = 1:nrow(phtcat)
 	save("phtcat",file="phtcat.rda")
+
+	### Consolidate GFBioSQL JV Hake landings (fid=1)
+	jvhcat = jvhdat[,keep]
+	trash  = apply(jvhcat[,cflds],1,function(x){all(x==0)})
+	jvhcat = jvhcat[!trash,] ; dimnames(jvhcat)[[1]] = 1:nrow(jvhcat)
+	save("jvhcat",file="jvhcat.rda")
 
 	### Consolidate PacHarvHL halibut bycatch (fid=2)
 	phhcat = phhdat
@@ -468,6 +490,13 @@ buildCatch=function(dbdat, strSpp="396", dfld="TRF",
 			dbs[c(2,3,8)], dbs[c(1,4,6,8)], dbs[c(2,5,8)], dbs[c(1,6,7,8)], dbs[c(1,2,6,7,8)] ) # drop PacHarv3 for Trawl and Trap (see Rutherford 1999)
 			#dbs[c(1,2,3,8)], dbs[c(1,4,6,8)], dbs[c(1,2,5,8)], dbs[c(1,6,7,8)], dbs[c(1,2,6,7,8)] )
 		fcat = apply(catmod1[ii,jj,kk,ll,dbmerge,drop=FALSE],1:4,max)
+		dbadd = switch(k, 
+			dbs[c(9)], NULL, NULL, NULL, NULL ) # databases that are strictly additive (e.g., J-V Hake)
+		if (!is.null(dbadd)) {
+			xcat = apply(catmod1[ii,jj,kk,ll,dbadd,drop=FALSE],1:4,sum)
+			fcat = fcat + xcat
+		}
+#browser();return()
 		catmod[ii,jj,kk,ll]=fcat
 		### adjust for quirks in DB transitions
 		if (any(k==c(1,3))) {
@@ -520,9 +549,6 @@ buildCatch=function(dbdat, strSpp="396", dfld="TRF",
 			plotData(apply(catmod[,mm,,spp],c(1,3),sum),paste("catmod ",spp," by fishery",sep=""),col=clrs.fishery)
 	}	}
 	
-	if (isThere("refyrs") && !is.null(refyrs) ) 
-		ctab = catmod[as.character(refyrs),,,,drop=FALSE] 
-	else ctab=catmod
 
 	### Get three historical time lines : trawl, trap, & H&L
 	tmp0=hismax[,mm,,,drop=FALSE]
@@ -544,7 +570,7 @@ buildCatch=function(dbdat, strSpp="396", dfld="TRF",
 	orfhis=allhis[,,,dfld]
 	if (any(strSpp==c("396"))) rawhis=allhis[,,,"POP"]
 	if (saveinfo)
-		packList(c("catmod","catmod0","catmod1","ctab","MM","mm","allhis"),"PBStool",tenv=.PBStoolEnv)
+		packList(c("catmod","catmod0","catmod1","MM","mm","allhis"),"PBStool",tenv=.PBStoolEnv)
 	### Terminate here if all you want are the modern landings
 	if (!reconstruct) return(list(catmod0=catmod0,catmod1=catmod1,catmod=catmod)) 
 #browser();return()
@@ -553,18 +579,115 @@ buildCatch=function(dbdat, strSpp="396", dfld="TRF",
 	### 3. Calculate ratios
 	### -------------------
 
+	# Extract catch (ctab) for reference catch
+	if (isThere("refyrs") && !is.null(refyrs) ) 
+		ctab = catmod[as.character(refyrs),,,,drop=FALSE] 
+	else ctab=catmod
+
+	# Revise reference catch based on user-suppplied areas (e.g., B.Mose via P.J.Starr)
+	# ********* USE BOTTOM TRAWL ONLY -- not implemented yet  *************
+	RAWDAT = REFDAT = list()
+	aflds = c("major","minor","locality")
+	#dbs   = c("ph3cat","gfccat","phtcat","phhcat","phscat","phvcat","phfcat","foscat")
+	for (kk in dimnames(catmod)$fid) {
+		k = as.numeric(kk)
+		if (k==1) {
+			tmpdat = gfcdat[is.element(gfcdat$fid,1),]
+			tmpdat$TAR = tmpdat$RFA
+			kfld = intersect(intersect(names(tmpdat),names(phtdat)),names(fosdat))
+			rawdat = rbind(tmpdat[,kfld],phtdat[,kfld],fosdat[is.element(fosdat$fid,1),kfld])
+		} else if (k==2) {
+			kfld = intersect(names(phhdat),names(phvdat))
+			tmpdat = rbind(phhdat[,kfld],phvdat[,kfld])
+			tmpdat$TAR = tmpdat$PAH
+			kfld = intersect(names(tmpdat),names(fosdat))
+			rawdat = rbind(tmpdat[,kfld],fosdat[is.element(fosdat$fid,2),kfld])
+		} else if (k==3) {
+			tmpdat = gfcdat[is.element(gfcdat$fid,3),]
+			tmpdat$TAR = tmpdat$SBF
+			kfld = intersect(intersect(names(tmpdat),names(phsdat)),names(fosdat))
+			rawdat = rbind(tmpdat[,kfld],phsdat[,kfld],fosdat[is.element(fosdat$fid,3),kfld])
+		} else if (k==4) {
+			tmpdat = phvdat[is.element(phvdat$fid,4),]
+			tmpdat$TAR = tmpdat$DOG
+			kfld = intersect(intersect(names(tmpdat),names(phfdat)),names(fosdat))
+			rawdat = rbind(tmpdat[,kfld],phfdat[is.element(phfdat$fid,4),kfld],fosdat[is.element(fosdat$fid,4),kfld])
+		} else if (k==5) {
+			tmpda1 = gfcdat[is.element(gfcdat$fid,5),]
+			tmpda1$TAR = tmpda1$RFA
+			tmpda2 = phvdat[is.element(phvdat$fid,5),]
+			tmpda2$TAR = tmpda2$RFA
+			kfld = intersect(intersect(intersect(names(tmpda1),names(tmpda2)),names(phfdat)),names(fosdat))
+			rawdat = rbind(tmpda1[,kfld],tmpda2[,kfld],phfdat[is.element(phfdat$fid,5),kfld],fosdat[is.element(fosdat$fid,5),kfld])
+		}
+		rawdat$TRF = rawdat$ORF + rawdat$POP
+		rawdat$aindex   = .createIDs(rawdat,aflds)
+		RAWDAT[[kk]] = refdat = rawdat
+		refdat$year = as.numeric(substring(refdat$date,1,4))
+		refdat = refdat[is.element(refdat$year,refyrs),]
+		#refdat = refdat[refdat[[dfld]]>0 & !is.na(refdat[[dfld]]),]
+		#refdat$ratio = refdat$landed / refdat[[dfld]]
+		REFDAT[[kk]] = refdat
+	}
+	#}
+	if ( !is.null(refgear) ) {  # refgear must be a named list (named by fid)
+		kkk = names(refgear)
+		for (kk in kkk) {
+			k = as.numeric(kk)
+			if ( !k%in%fid ) next
+			refdat = REFDAT[[kk]]
+			refdat = refdat[is.element(refdat$gear, refgear[[kk]]),]
+			if (nrow(refdat)>0) REFDAT[[kk]] = refdat
+		}
+	}
+	if ( !is.null(refarea) ){
+		#aflds = c("major","minor","locality")
+		kkk = names(refarea)
+		for (kk in kkk) {
+			k = as.numeric(kk)
+			if (!file.exists(refarea[[kk]])) next
+			kareas = read.csv(refarea[[kk]])
+			if (!all(aflds %in% names(kareas)))
+			showError(paste0("User-specified file `",refarea[[kk]],"' does not have the required fields\n",deparse(aflds)))
+			kareas$aindex = .createIDs(kareas,aflds)
+			refdat = REFDAT[[kk]]
+			refdat = refdat[is.element(refdat$aindex,kareas$aindex),]
+			REFDAT[[kk]]=refdat
+		}
+	}
+	if ( !is.null(refarea) || !is.null(refgear) ) {
+		if (is.null(refgear)) kkk1 = "" else kkk1 = names(refgear)
+		if (is.null(refarea)) kkk2 = "" else kkk2 = names(refarea)
+		ctab.orig = ctab
+		ii =as.character(refyrs)
+		for (kk in dimnames(catmod)$fid) {
+			if ( !kk %in% kkk1 & !kk %in% kkk2 ) next
+			k = as.numeric(kk)
+			for (ll in dimnames(catmod)$catch) {
+				CTdat = crossTab(refdat,c("year","major"),ll)
+				LLdat = convCT(CTdat)[ii,]
+				jj = dimnames(LLdat)[[2]]
+				ctab[ii,jj,kk,ll] = LLdat
+				jj0 = setdiff(major,jj)
+				if (ll=="landed" && length(jj0)>0)
+					ctab[ii,as.character(jj0),kk,ll] = 0
+			}
+		}
+	}
+#browser();return()
+
 	### Catch reference summary tables
-	cref=ctab[,mm,,,drop=FALSE]                ### catch reference (start with ctab which is a subset of catmod using reference years)
-	catMF=apply(cref,2:4,sum,na.rm=TRUE)       ### total catch by major and fid
-	catYM=apply(cref,c(1:2,4),sum,na.rm=TRUE)  ### total catch by year and major
-	catYF=apply(cref,c(1,3:4),sum,na.rm=TRUE)  ### total catch by year and fid
+	cref  = ctab[,mm,,,drop=FALSE]               ### catch reference (start with ctab which is a subset of catmod using reference years)
+	catMF = apply(cref,2:4,sum,na.rm=TRUE)       ### total catch by major and fid
+	catYM = apply(cref,c(1:2,4),sum,na.rm=TRUE)  ### total catch by year and major (NOT USED CURRENTLY)
+	catYF = apply(cref,c(1,3:4),sum,na.rm=TRUE)  ### total catch by year and fid   (NOT USED CURRENTLY)
 	if (saveinfo)
 		packList(c("cref","catYM","catMF","catYF"),"PBStool",tenv=.PBStoolEnv)
 
 	### alpha - Proportion RRF caught in a major area for each fid
 	alpha=apply(catMF[,,"landed"],2,function(x){
 		if (all(x==0)) rep(0,length(x)) else x/sum(x)}) ### columns (fids) sum to 1
-	dimnames(alpha)=dimnames(catMF)[1:2]
+	dimnames(alpha) = dimnames(catMF)[1:2]
 	if (diagnostics){
 		plotData(alpha,"alpha (fishery in major)",col=clrs.fishery,type="bars")
 		plotData(t(alpha),"alpha (major in fishery)",col=clrs.major[mm],type="bars")
@@ -581,21 +704,58 @@ buildCatch=function(dbdat, strSpp="396", dfld="TRF",
 	}
 
 	### Ratio RRF catch to other catch (rtar)
-	rtar=list() 
+	rtar=list()
 	### Use cref instead of catMF
-	for (i in c("POP","ORF","TRF","TAR")) {
-		z0  = cref[,,,"landed"]==0
-		z1  = cref[,,,i]==0
-		z2  = z0&z1
-		rtmp = cref[,,,"landed"]/cref[,,,i]
-#if(i=="TRF") {browser();return()}
-		### order is important here (process equalities, zero-denominator, then zero-numerator)
-		rtmp[z2]=0; rtmp[!z2&z1]=1; rtmp[!z2&!z1&z0]=0 
-		rmat = apply(rtmp,2:3,mean)
-		rtar[[i]] = rmat }
+	for (ll in c("POP","ORF","TRF","TAR")) {
+		if (useBG) { ### use binomial-gamma for estimating RRF/ORF or RRF/TRF (2014-10-02)
+			getPMRrat = function(x) {
+				if (length(x)==0)      pmr = 0 #c(n=0,p=NA,mu=NA,rho=NA)
+				#else if (length(x)==1) pmr = c(n=1,p=as.numeric(x==0),mu=x,rho=0)
+				else pmr = calcPMR(x)
+				return(pmr)
+			}
+			getBGrat = function(x) {
+				rat = mean(sampBG(n=1e5,p=x[2],mu=x[3],rho=x[4]))
+				return(rat)
+			}
+			rmat = array(0,dim=c(length(mm),length(fid)), dimnames=list(major=mm,fid=fid))
+			for (k in fid) {
+				kk = as.character(k)
+				refdat = REFDAT[[kk]]
+				if (k==2) refdat$fid[is.element(refdat$fid,7)] = 2
+				refdat = refdat[is.element(refdat$major,mm) & is.element(refdat$fid,k),]
+				refdat = refdat[refdat[[ll]]>0 & !is.na(refdat[[ll]]),]
+				if (nrow(refdat)==0) next
+				refdat$ratio = refdat$landed / refdat[[ll]]
+				#refrat = crossTab(refdat,c("major","fid"),"ratio",getBGrat)
+				refpmr = crossTab(refdat,c("major","fid"),"ratio",getPMRrat)
+				refpmr = convCT(refpmr)
+				refmat = t(t(apply(refpmr,1,getBGrat)))
+				dimnames(refmat)[[2]] = kk
+				#reffid = intersect(kk,dimnames(refmat)[[2]]) # redundant
+				#if (length(reffid)==0) next
+				#refmat = refmat[,reffid,drop=FALSE]
+#if (k==1 && ll=="ORF"){browser();return()}
+#print(c(ll,k)); print(refmat)
+				rmat[dimnames(refmat)[[1]],dimnames(refmat)[[2]]] = refmat
+			}
+		}
+		else {
+			z0  = cref[,,,"landed"]==0
+			z1  = cref[,,,ll]==0
+			z2  = z0&z1
+			rtmp = cref[,,,"landed"]/cref[,,,ll]
+			### order is important here (process equalities, zero-denominator, then zero-numerator)
+			rtmp[z2]=0; rtmp[!z2&z1]=1; rtmp[!z2&!z1&z0]=0 
+			rmat = apply(rtmp,2:3,mean)
+		}
+		rtar[[ll]] = rmat
+	}
+#browser();return()
 	### gamma - Ratio of RRF to a larger group (e.g., other rockfish)
 	rfac=rtar[[dfld]]
 	gamma=rfac[mm,,drop=FALSE]  ### use only specified majors
+
 
 	### Special trawl calculations by Paul Starr for YTR based on Brian Mose's suggestions
 	if (strSpp=="418" && !is.null(list(...)$pjs) && list(...)$pjs) {
@@ -612,8 +772,9 @@ buildCatch=function(dbdat, strSpp="396", dfld="TRF",
 				gamma[,1]=matrix(c(0,0.2596484,0.2291434,0.1595966,0.1024332,0.1238941,0.239913,0.0029361),ncol=1)
 		}
 	}
-	write.csv(gamma,file=paste0("gamma",dfld,".csv")) #;return(gamma)
+	write.csv(gamma,file=paste0("gamma-",strSpp,"_",dfld,".csv")) #;return(gamma)
 #browser();return()
+
 	if (diagnostics){
 		plotData(gamma,"gamma (fishery in major)",col=clrs.fishery,type="bars")
 		plotData(t(gamma),"gamma (major in fishery)",col=clrs.major[mm],type="bars")
@@ -627,30 +788,43 @@ buildCatch=function(dbdat, strSpp="396", dfld="TRF",
 	dfac=array(0,dim=c(length(mm),length(fid),drN+1),
 		dimnames=list(major=mm,fid=fid,rate=c(drate,"dr")))
 	ologs=as.list(rep(NA,length(fid))); names(ologs)=fid
+	DRATES=list()
 	for (k in fid) {
 		kk=as.character(k); jj=dimnames(dfac)[[1]]; j=as.numeric(jj)
 		if (k==1) {
-			discat=phtcat[is.element(phtdat$log,1),]
-			dyrs=1996:2006 }
+			discat=phtdat[is.element(phtdat$fid,k) & is.element(phtdat$log,1),] # observerlogs
+			dyrs=1997:2006 
+		}
 		else if (any(k==c(2:5))) {
-			if (any(k==c(2,4,5))) 
-				getData("phhl_fcatORF.sql","PacHarvHL",strSpp=strSpp,
-					path=spath,fisheryid=k,logtype="OBSERVRLOG",tenv=penv())
-			if (k==3)
-				getData("phs_scatORF.sql","PacHarvSable",strSpp=strSpp,
-					path=spath,fisheryid=k,logtype="OBSERVRLOG",tenv=penv())
-			discat=PBSdat; dyrs=2000:2004 }
+			discat=fosdat[is.element(fosdat$fid,k) & is.element(fosdat$log,105),] # fisherlogs (supposed to record all discards, electronic monitoring)
+			dyrs=2007:2013
+			#if (any(k==c(2,4,5))) 
+			#	getData("phhl_fcatORF.sql","PacHarvHL",strSpp=strSpp,
+			#		path=spath,fisheryid=k,logtype="OBSERVRLOG",tenv=penv())
+			#if (k==3)
+			#	getData("phs_scatORF.sql","PacHarvSable",strSpp=strSpp,
+			#		path=spath,fisheryid=k,logtype="OBSERVRLOG",tenv=penv())
+			#discat=PBSdat; dyrs=2000:2004 }
+		}
+		if (nrow(discat)==0) next
+		discat$year = as.numeric(substring(discat$date,1,4))
+		discat = discat[is.element(discat$year,dyrs) & is.element(discat$major,major),]
 		if (nrow(discat)==0) next
 		ologs[[kk]] = discat
 		for (d in 1:drN) { ### discard ratio combos 'drSpp'
 			dd=drate[d]
+			dnum = convCT(crossTab(discat,c("year","major"),drSpp[[d]][1],sum))
+			dden = convCT(crossTab(discat,c("year","major"),drSpp[[d]][2],sum))
+			DRAT = dnum/dden                     # annual discard rates by major
+			DRATES[[kk]] = DRAT
+			drat = apply(DRAT,2,mean,na.rm=TRUE) # mean rate by major
 			### if denominator is landed catch, allow zero-value denominators:
-			dzero=nzero=ifelse(drSpp[[d]][2]=="landed",TRUE,FALSE)
-#browser();return()
-			DRAT=calcRatio(discat,drSpp[[d]][1],drSpp[[d]][2],major=j,dzero=dzero,quiet=TRUE)
-			if (is.null(DRAT)) next
-			drat=apply(DRAT[is.element(rownames(DRAT),as.character(dyrs)),,drop=FALSE],2,mean,na.rm=TRUE)
-			drat=drat[intersect(names(drat),jj)]
+			#dzero=nzero=ifelse(drSpp[[d]][2]=="landed",TRUE,FALSE)
+#if (k==2) {browser();return()}
+			#DRAT=calcRatio(discat,drSpp[[d]][1],drSpp[[d]][2],major=j,dzero=dzero,quiet=TRUE)
+			#if (is.null(DRAT)) next
+			#drat=apply(DRAT[is.element(rownames(DRAT),as.character(dyrs)),,drop=FALSE],2,mean,na.rm=TRUE)
+			#drat=drat[intersect(names(drat),jj)]
 			dfac[names(drat),kk,dd]=drat 
 		}
 		if (any(k==c(1,5)))
@@ -658,9 +832,11 @@ buildCatch=function(dbdat, strSpp="396", dfld="TRF",
 		if (any(k==c(2,3,4)))
 			dfac[jj,kk,"dr"]=dfac[jj,kk,"discard:TAR"]
 	}
+#browser();return()
+	dfac[is.na(dfac) | !is.finite(dfac)] = 0; delta = dfac
 	assign("PBStool",PBStool,envir=.PBStoolEnv); rm(PBStool) ### restore to .PBStoolEnv and remove local copy
 	save("ologs",file=paste("ologs",strSpp,".rda",sep=""))   ### save observerlogs  with discard information
-	dfac[is.na(dfac)] = 0; delta = dfac
+	write.csv(delta[,,"dr"],file=paste0("delta-",strSpp,"_",dfld,".csv")) # save discard rate used in CR
 	if (diagnostics){
 		for (rate in dimnames(delta)$rate) {
 			rr = sub(":","2",rate)
@@ -668,7 +844,7 @@ buildCatch=function(dbdat, strSpp="396", dfld="TRF",
 			plotData(t(delta[,,rate]),paste("delta ",rr," (major in fishery)",sep=""),col=clrs.major[mm],type="bars")
 	}	}
 	if (saveinfo)
-		packList(c("alpha","beta","rtar","gamma","delta"),"PBStool",tenv=.PBStoolEnv)
+		packList(c("ctab","alpha","beta","rtar","gamma","delta"),"PBStool",tenv=.PBStoolEnv)
 
 #browser();return()
 
@@ -835,6 +1011,17 @@ buildCatch=function(dbdat, strSpp="396", dfld="TRF",
 		}
 	}
 	sppnew[,,"10"] = apply(sppnew[,,as.character(fid)],1:2,sum)  ### sum across fisheries
+	data(pmfc,envir=penv())
+	pmfc.major=pmfc$major; names(pmfc.major)=pmfc$gmu
+	if (!exists("gfbcat")) getFile(gfbcat,path=dpath)  # data.frame
+	gfbcat = as.matrix(gfbcat)
+	names(dimnames(gfbcat))=c("year","major")
+	dimnames(gfbcat)$major = pmfc.major[dimnames(gfbcat)$major]
+
+	iii=intersect(dimnames(sppnew)$year,dimnames(gfbcat)$year)
+	jjj=intersect(dimnames(sppnew)$major,dimnames(gfbcat)$major)
+	sppnew[iii,jjj,"10"] = sppnew[iii,jjj,"10"] + gfbcat[iii,jjj]  # add survey catches to combined only
+#browser(); return()
 	if (diagnostics){
 		plotData(sppnew[,,"10"],paste("sppnew for ",fidnam[10]," by major",sep=""),col=clrs.major[mm])
 		collectFigs(path="./CRdiag",width=5,capskip=-20,is.fnum=TRUE)
@@ -844,15 +1031,14 @@ buildCatch=function(dbdat, strSpp="396", dfld="TRF",
 
 	if (saveinfo) packList(c("HISYRS","MODYRS","ALLYRS","inone","icalc","idata",
 		"disC","disD","sppnew","beta.gamma"),"PBStool",tenv=.PBStoolEnv)
-#browser(); return()
 
 	###-----Plot results-----
 	for (k in fidout) {
 		yrs = as.numeric(dimnames(sppnew)$year)
-		plotRecon(sppnew,strSpp=strSpp,major=major,fidout=k,years=yrs,eps=eps,pix=pix,wmf=wmf)
+		plotRecon(sppnew,strSpp=strSpp,major=major,fidout=k,years=yrs,eps=eps,png=png,wmf=wmf)
 	}
 	fidlab=c("Trawl","Halibut","Sablefish","Dogfish-Lingcod","H&L Rockfish","Sablefish + ZN",
-		"Sablefish + Halibut","Dogfish","Lingcod","Combined Fisheries")
+		"Sablefish + Halibut","Dogfish","Lingcod","Combined Fisheries + Surveys")
 	data(pmfc,species,envir=penv())
 
 	### ADMB catch data file for the combined fishery
@@ -960,12 +1146,12 @@ plotData =function(x,description="something",
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotData
 
 
-#plotRecon------------------------------2011-06-15
+#plotRecon------------------------------2014-12-12
 # Plot reconstructed catch using barplots stacked by PMFC area.
 #-----------------------------------------------RH
 plotRecon = function(dat=cat440rec, strSpp="440", major=c(1,3:9), fidout=10, 
-   years=1918:2011, xlab=seq(1920,2010,5),
-   eps=FALSE, pix=FALSE, wmf=FALSE, PIN=c(10,5))
+   years=1918:2014, xlab=seq(1920,2015,5), 
+   eps=FALSE, png=FALSE, wmf=FALSE, PIN=c(10,5))
 {
 	if (dev.cur()>1) { oldpar=par(no.readonly=TRUE); on.exit(par(oldpar)) }
 	fshnam=c("trawl","h&l","trap",rep("h&l",6),"combined") #general category vector
@@ -985,9 +1171,9 @@ plotRecon = function(dat=cat440rec, strSpp="440", major=c(1,3:9), fidout=10,
 		ii=as.character(i)
 		if (length(dim(dat))==2) idat = t(dat)
 		else idat = t(dat[,mm,ii])
-		plotname=paste(strSpp,"-Catch-History-",fidnam[i],"-years(",min(years),"-",max(years),")-major(",paste(major,collapse=""),")",sep="")
+		plotname=paste(strSpp,"-Catch-History",ifelse(i==10,0,i),"-",fidnam[i],"-years(",min(years),"-",max(years),")-major(",paste(major,collapse=""),")",sep="")
 		if (eps)       postscript(file=paste(plotname,".eps",sep=""),width=PIN[1],height=PIN[2],fonts="mono",paper="special")
-		else if (pix)  png(filename=paste(plotname,".png",sep=""),width=round(100*PIN[1]),height=round(100*PIN[2]))
+		else if (png)  png(filename=paste(plotname,".png",sep=""),width=round(100*PIN[1]),height=round(100*PIN[2]))
 		else if (wmf)  do.call("win.metafile",list(filename=paste(plotname,".wmf",sep=""),width=PIN[1],height=PIN[2]))
 		else  resetGraph()
 		expandGraph(mar=c(3,3,.5,.5))
@@ -1002,7 +1188,7 @@ plotRecon = function(dat=cat440rec, strSpp="440", major=c(1,3:9), fidout=10,
 		addLabel(.05,.90,fidlab[i],cex=1.2,col="#400080",adj=0)
 		mtext("Year",side=1,line=1.75,cex=1.2)
 		mtext("Catch (t)",side=2,line=2,cex=1.3)
-		if (eps|pix|wmf) dev.off()
+		if (eps|png|wmf) dev.off()
 	}
 }
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotRecon
@@ -1083,8 +1269,10 @@ surveyCatch = function(strSpp="396", spath=.getSpath())
 #x=buildCatch(cat424orf,strSpp="424",dfld="ORF",wmf=T)
 
 # RBR - Redbanded Rockfish
-#x=buildCatch(sql=TRUE,strSpp="401",dfld="ORF",only.sql=TRUE)
-#x=buildCatch(cat401orf,strSpp="401",dfld="ORF",eps=TRUE,diagnostics=FALSE)
+#x=buildCatch(sql=TRUE,strSpp="401",dfld="ORF",only.sql=TRUE,spath=Scode[["tools"]])
+#x=buildCatch(cat401dat,strSpp="401",dfld="ORF",eps=TRUE,diagnostics=FALSE,useBG=T,refarea=list(`1`="A401trawl.csv"),refgear=list(`1`=1)) # don't use mean of ratios (BG) or Outer for RBR 2014
+#x=buildCatch(cat401dat,strSpp="401",dfld="ORF",eps=TRUE,diagnostics=FALSE)
+#x=buildCatch(cat401dat,strSpp="401",dfld="TRF",eps=TRUE,diagnostics=FALSE,dpath="../")
 #y=surveyCatch(strSpp="401")
 
 # RER - Rougheye rockfish
@@ -1101,6 +1289,7 @@ surveyCatch = function(strSpp="396", spath=.getSpath())
 
 # YTR - Yellowtail Rockfish
 #x=buildCatch(sql=TRUE,strSpp="418",dfld="ORF",only.sql=TRUE)
+#x=buildCatch(cat418dat,strSpp="418",dfld="ORF",eps=TRUE,pjs=TRUE,outside=TRUE,diagnostics=FALSE,useYR1=1970,refarea=list(`1`="A418trawl.csv"),refgear=list(`1`=1),useBG=T)
 #x=buildCatch(cat418orf,strSpp="418",dfld="ORF",eps=TRUE,pjs=TRUE,outside=TRUE,diagnostics=FALSE,useYR1=1970)
 #y=surveyCatch(strSpp="418")
 

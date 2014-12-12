@@ -1,4 +1,5 @@
 -- PacHarvSable query for landed catch (KG) of a target species, POP, and ORF (other rockfish)
+-- Last modified: 2014-10-15
 
 DECLARE @logtype VARCHAR(10)  --, @fisheryid VARCHAR(1)
 SET @logtype   = @logtypeval
@@ -15,6 +16,7 @@ SELECT
   'date'  = CONVERT(char(10),OC.OFFLOAD_DT,20),
   'major' = IsNull(OC.MAJOR_STAT_AREA_CDE,0),
   'minor' = IsNull(OC.MINOR_STAT_AREA_CDE,0),
+  'locality' = IsNull(OC.LOCALITY_CDE,0),
   'cfv' = CAST(COALESCE(OC.VRN,T.VSL_CFV_NO,'0') AS VARCHAR(6)),
   -- 'eff' = Sum(IsNull(OC.Duration,0)),
   'landed' = Sum( CASE OC.SPECIES_CODE
@@ -51,6 +53,7 @@ SELECT
     CAST(OC.OFFLOAD_DT AS smalldatetime),
     IsNull(OC.MAJOR_STAT_AREA_CDE,0),
     IsNull(OC.MINOR_STAT_AREA_CDE,0),
+    IsNull(OC.LOCALITY_CDE,0),
     CAST(COALESCE(OC.VRN,T.VSL_CFV_NO,'0') AS VARCHAR(6))
 
 SELECT * FROM #Catch C
@@ -59,4 +62,5 @@ SELECT * FROM #Catch C
 
 -- getData("phs_scatORF.sql","PacHarvSable",strSpp="424",fisheryid=3) -- logtype default is 'FISHERLOG'
 -- getData("phs_scatORF.sql","PacHarvSable",strSpp="424",fisheryid=3,logtype="OBSERVRLOG")
+-- qu("phs_scatORF.sql",dbName="PacHarvSable",strSpp="418",fisheryid=3,logtype="FISHERLOG")
 

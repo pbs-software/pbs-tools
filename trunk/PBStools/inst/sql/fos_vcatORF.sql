@@ -1,6 +1,6 @@
 -- Query FOS catch from the merged catch table GF_D_OFFICIAL_FE_CATCH
 -- Query species catch from GFFOS on SVBCPBSGFIIS
--- Last modified: 2014-09-08
+-- Last modified: 2014-12-12
 SET NOCOUNT ON 
 
 -- Mean species weight calculated using `gfb_mean_weight.sql', which emulates PJS algorithm for GFBIO data
@@ -8,10 +8,11 @@ DECLARE @MEAN_WEIGHT TABLE (SPECIES_CODE VARCHAR(5), MNWT REAL)
 INSERT INTO @MEAN_WEIGHT VALUES
   ('222', 1.759289),   -- ttype=c(1,4), gear=1
   ('396', 0.8536203),  -- ttype=c(1,4), gear=1
-  ('401', 1.724491),   -- ttype=c(1,4), gear=1
+  ('401', 1.724491),   -- ttype=c(1,4), gear=1, major=3:9
   ('405', 1.916324),   -- ttype=c(1,4), gear=1
   ('418', 1.45),       -- Paul Starr conversion for 2014 YTR assessment
-  ('602', 1.121828),   -- ttype=c(1,4), gear=1
+  ('442', 3.529231),   -- ttype=c(1,4), gear=5, major=3:9
+  ('602', 1.124977),   -- ttype=c(1,4), gear=1, major=3:9
   ('621', 0.5346079)   -- ttype=c(1,4), gear=1
   --('222', 1.596781),  -- ttype=c(1,2,3,4), gear=1
   --('401', 1.453529),  -- ttype=c(1,2,3,4), gear=1
@@ -115,6 +116,7 @@ SELECT
   CONVERT(VARCHAR(10),FC.BEST_DATE,20) as \"date\",
   ISNULL(FC.MAJOR_STAT_AREA_CODE,'0') AS \"major\",
   ISNULL(FC.MINOR_STAT_AREA_CODE,'0') AS \"minor\",
+  ISNULL(FC.LOCALITY_CODE,'0') AS \"locality\",
   CC.landed AS \"landed\",
   CC.released + CC.liced + CC.bait AS \"discard\",
   CC.POP, CC.ORF, CC.TAR
@@ -136,6 +138,7 @@ WHERE
   ORF.\"landed\">0 OR ORF.\"discard\">0 OR ORF.POP>0 OR ORF.ORF>0 OR ORF.TAR>0
 
 -- getData("fos_vcatORF.sql","GFFOS",strSpp="442")
+-- qu("fos_vcatORF.sql",dbName="GFFOS",strSpp="418")
 
 
 
