@@ -13,7 +13,7 @@
 \usage{
 buildCatch( dbdat, strSpp="396", dfld="TRF", 
    major=c(1,3:9), fidout=c(1:5,10), refyrs=1997:2005,
-   refarea=NULL, refgear=NULL, useYR1=NULL, useBG=FALSE,
+   refarea=NULL, refgear=NULL, useYR1=NULL, useBG=FALSE, useSM=FALSE,
    saveinfo=TRUE, eps=FALSE, png=FALSE, wmf=FALSE,
    sql=FALSE, only.sql=FALSE, spath=.getSpath(), dpath=getwd(),
    uid=Sys.info()["user"], pwd=uid,
@@ -50,6 +50,7 @@ buildCatch( dbdat, strSpp="396", dfld="TRF",
   \item{useYR1}{if specified, use this year to start accepting landings reported in the databases 
     instead of reconstructing landings from reference ratios of RRF to TRF or ORF.}
   \item{useBG}{logical: if \code{TRUE}, then sample from the binomial-gamma to estimate ratios RRF/ORF or RRF/TRF.}
+  \item{useSM}{logical: if \code{TRUE}, use catch data from seamounts.}
   \item{saveinfo}{logical: if \code{TRUE}, save various data objects created within the function
     to a list object called \code{PBStool}; setting to \code{FALSE} may speed reconstruction.}
   \item{eps}{logical: if \code{TRUE} send the figures to \code{.eps} files.}

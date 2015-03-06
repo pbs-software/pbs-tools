@@ -188,23 +188,23 @@ createDSN <- function(trusted=TRUE) {
 	confODBC(dsn="PacHarvSable",server="GFDB",db="PacHarvSable", driver="SQL Server",descr="Created for PBStools",trusted=trusted)
 }
 
-#crossTab-------------------------------2011-03-01
+#crossTab-------------------------------2015-03-06
 # Use package 'reshape' to summarize z using crosstab values y.
 #-----------------------------------------------RH
 crossTab = function(x=PBSdat, y=c("year","major"), 
-     z="landed", func=function(x){sum(x)/1000.}, ...) {
-	if (!require(reshape, quietly=TRUE)) stop("`reshape` package is required")
+   z="landed", func=function(x){sum(x)/1000.}, ...) {
+	if (!requireNamespace("reshape", quietly = TRUE)) stop("`reshape` package is required")
 	x=x;  flds=names(x)
 	if (!all(is.element(setdiff(y,"year"),flds)))
 		stop ("Not all specified 'z' in dataframe")
 	if (is.element("year",y) && !is.element("year",names(x))) {
 		if (is.element("date",flds)) x$year=convFY(x$date,1)
 		else stop("Need 'date' field to calculate 'year'") }
-	Y=melt.data.frame(x,y,z)
-	expr=paste("Z=cast(Y,", paste(paste(ifelse(length(y)==1,"~",""),y,sep=""),collapse="~"), ",func,...)",sep="")
+	Y=reshape::melt.data.frame(x,y,z)
+	expr=paste("Z=reshape::cast(Y,", paste(paste(ifelse(length(y)==1,"~",""),y,sep=""),collapse="~"), ",func,...)",sep="")
 	eval(parse(text=expr))
 	return(Z) }
-#-----------------------------------------crossTab
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~crossTab
 
 #fitLogit-------------------------------2009-11-09
 # Fit binomial data using logit link function
@@ -533,14 +533,12 @@ getData <-function(fqtName, dbName="PacHarvest", strSpp=NULL, server=NULL,
 .getSQLdata <- function(dbName, qtName=NULL, strSQL=NULL,
      server=NULL, type="SQL", trusted=TRUE, uid="", pwd="", 
      rownum=0,...) {
-	#if (!require(RODBC, quietly=TRUE)) stop("`RODBC` package is required")
 	### Use forward slashes "/" for server otherwise the translation
 	### is too dependent on the number of times "\" is escaped
 	if (is.null(server) || server=="") {
 		#getFile(".PBSserver", path = .getSpath(),tenv=penv())
 		server = .PBSserver[1]; type="SQL" }
 	driver= list(...)$driver
-#browser();return()
 	if (type=="SQL") driver=ifelse(is.null(driver),"SQL Server",driver)
 	#else if (type=="ORA") driver="Oracle ODBC Driver" ### "Microsoft ODBC for Oracle"
 	else if (type=="ORA") driver=ifelse(is.null(driver),"Oracle in OraClient11g_home1",driver)
@@ -587,7 +585,6 @@ getData <-function(fqtName, dbName="PacHarvest", strSpp=NULL, server=NULL,
 # Retrieves a data frame from MDB query or table
 #-----------------------------------------------RH
 .getMDBdata <- function(mdbTable, qtName, rownum=0, ...) {
-	#if (!require(RODBC, quietly=TRUE)) stop("`RODBC` package is required")
 	cnn <- odbcConnectAccess(access.file=mdbTable)
 	query=paste("SELECT ",ifelse(rownum>0,paste("TOP",rownum),"")," * FROM ",qtName,sep="")
 	dat <- sqlQuery(cnn, query, ...)
@@ -599,7 +596,6 @@ getData <-function(fqtName, dbName="PacHarvest", strSpp=NULL, server=NULL,
 #-----------------------------------------------RH
 .getDBFdata <- function(dbfTable, qtName, ...) {
 	if (nchar(qtName)>8) showError("Rename DBF file using 8 or less characters")
-	#if (!require(RODBC, quietly=TRUE)) stop("`RODBC` package is required")
 	cnn <- odbcConnectDbase(dbf.file=dbfTable)
 	dat <- sqlQuery(cnn, paste("SELECT * FROM",qtName),...)
 	odbcClose(cnn)
@@ -613,7 +609,6 @@ getData <-function(fqtName, dbName="PacHarvest", strSpp=NULL, server=NULL,
 # Set TypeGuessRows DWORD Value to 0 (scan all rows). OK for most small tables.
 #-----------------------------------------------RH
 .getXLSdata <- function(xlsTable, qtName, ...) {
-	#if (!require(RODBC, quietly=TRUE)) stop("`RODBC` package is required")
 	cnn <- odbcConnectExcel(xls.file=xlsTable)
 	dat <- sqlFetch(cnn, qtName, ...)
 	odbcClose(cnn)
@@ -796,7 +791,6 @@ listTables <- function (dbName, pattern=NULL, path=getwd(),
    server=NULL, type="SQL", ttype=NULL, trusted=TRUE, uid="", 
    pwd="", silent=FALSE, tenv=.GlobalEnv)
 {
-	#if (!require(RODBC, quietly=TRUE)) stop("`RODBC` package is required")
 	if (is.null(server)) {
 		#getFile(".PBSserver", path=.getSpath(), tenv=penv())
 		server = .PBSserver[1] }
@@ -851,7 +845,6 @@ revStr <- function(x)
 # runModules: Display a master GUI to display modules
 #-----------------------------------------------RH
 runModules <- function () {
-	#if (!require(PBStools, quietly=TRUE)) stop("PBStools package is required")
 	.runModHelper <- function() {
 		getWinVal(scope = "L");  act <- getWinAct()[1]
 		if (!exists("act") || !exists("eN")) return()

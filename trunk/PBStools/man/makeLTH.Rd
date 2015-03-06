@@ -36,7 +36,7 @@ makeLTH(xtab.table, table.caption, table.label)
    from user 10824 (chepec) on \code{tex.stackexchange} (http://tex.stackexchange.com/users/10824/chepec)
 }
 \seealso{
-  \pkg{PBSawatea}: \code{\link[PBSawatea]{runSweaveMCMC}} \cr
+  \pkg{PBSawatea}: \code{runSweaveMCMC} \cr
   \pkg{xtable}: \code{\link[xtable]{xtable}}, \code{\link[xtable]{print.xtable}} \cr
 }
 \examples{

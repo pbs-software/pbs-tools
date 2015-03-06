@@ -7,7 +7,6 @@
 #  texArray       Flatten and format an array for latex output.
 #===============================================================================
 
-
 #collectFigs----------------------------2013-07-19
 #  Collect encapsulated postscript figures into one document.
 #-----------------------------------------------RH
@@ -203,8 +202,7 @@ makeLTH <- function(xtab.table, table.caption, table.label) {
 }
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~makeLTH
 
-
-#texArray-------------------------------2014-10-02
+#texArray-------------------------------2015-03-06
 # Flatten and format an array for latex output.
 #-----------------------------------------------RH
 texArray =function(x, table.caption="My table", table.label="tab:mytable",
@@ -355,7 +353,7 @@ texArray =function(x, table.caption="My table", table.label="tab:mytable",
 	)
 	writeLines(texmess,texout)
 
-	require(xtable)
+	if (!requireNamespace("xtable", quietly=TRUE)) stop("`xtable` package is required")
 	if (is.null(collab)) collab = colnames(goo)
 	else if (length(collab)==ncol(goo)) colnames(goo) = collab
 	else stop("Length of `collab` does not match number of columns")
@@ -417,8 +415,8 @@ texArray =function(x, table.caption="My table", table.label="tab:mytable",
 		#tabalign = paste(">{\\raggedright\\arraybackslash}",tabalign,sep="")
 	}
 #browser(); return()
-	xtab = xtable(goo,align=tabalign)
-	longtable.header=makeLTH(xtab,table.caption,table.label)
+	xtab = xtable::xtable(goo,align=tabalign)
+	longtable.header = makeLTH(xtab,table.caption,table.label)
 	add.to.row = if (length(rows.line)==0) list(pos = list(-1, nrow(xtab)), command = c( longtable.header, "%"))
 		else list(pos = list(-1, rows.line, nrow(xtab)), command = c( longtable.header, "\\hdashline[0.5pt/2pt]", "%"))
 	#if (!is.null(add.to.row)) {

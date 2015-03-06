@@ -64,7 +64,8 @@ boxSeason <- function (fqtName="Ex01_Sample_Info", dbName="Examples.mdb",
 	packList(stuff,"PBStool",tenv=.PBStoolEnv)
 
 	if (pdf) pdf(file=paste(fnam,".pdf",sep=""),width=11,height=8.5)
-	else if (wmf) do.call("win.metafile",list(filename=paste(fnam,".wmf",sep=""),width=11,height=8.5))
+	else if (wmf && .Platform$OS.type=="windows")
+		do.call("win.metafile",list(filename=paste(fnam,".wmf",sep=""),width=11,height=8.5))
 	else resetGraph()
 	expandGraph(mar=c(6,5,2,1.5),mgp=c(2.75,.75,0))
 	boxplot(bag[ii],las=2,range=0,lty=1,boxwex=0.5,staplewex=0,
@@ -115,15 +116,12 @@ calcMA = function(x,y,y2,period=270,every=10) {
 	return(ma) }
 #-------------------------------------------calcMA
 
-
 #imputeRate-----------------------------2010-10-20
 # Impute the rate of return from an investment 
 # with irregular contributions/withdrawals.
 #-----------------------------------------------RH
-imputeRate <- function(qtName="Ex03_Portfolio", dbName="Examples", AID=1, pathN=2, hnam=NULL) {
-
-	#if (!require(PBSmodelling)) stop("`PBSmodelling` package is required")
-	if (!require(stats)) stop("`stats` package is required")
+imputeRate <- function(qtName="Ex03_Portfolio", dbName="Examples", AID=1, pathN=2, hnam=NULL)
+{
 	assign("PBStool",list(module="M06_Temporal",call=match.call(),args=args(imputeRate),plotname="impute"),envir=.PBStoolEnv)
 	wdir <- paste(system.file(package="PBStools"),"/win",sep="")
 	sdir <- switch(pathN,getwd(),.getSpath())
@@ -198,7 +196,7 @@ imputeRate <- function(qtName="Ex03_Portfolio", dbName="Examples", AID=1, pathN=
 	ddat=adat[adat$date>=dlim[1] & adat$dat<=dlim[2] & !is.na(adat$date),] # date-delimited account data
 	if (nrow(ddat)==0) showError("date limits","nodata")
 	plim=range(ddat$period,na.rm=TRUE); v0=plim[1]; v1=plim[2]
-	pyr=365/median(as.vector(diff(ddat$date)))
+	pyr = 365./median(as.vector(diff(ddat$date)))
 	setWinVal(list(d0=d0,d1=d1,v0=v0,v1=v1,pyr=round(pyr,1)))
 
 	x <- ddat$period; y <- ddat$value; names(x)=names(y)=as.character(ddat$date)
@@ -382,8 +380,7 @@ imputeRate <- function(qtName="Ex03_Portfolio", dbName="Examples", AID=1, pathN=
 	.imputeRate.getIR(); .imputeRate.impIR()
 	invisible()}
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~.imputeRate.simR
-#=======================================imputeRate
-
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~imputeRate
 
 #plotDiversity--------------------------2013-01-28
 # Plot diversity as barplots and overlay species richness.
@@ -429,7 +426,8 @@ plotDiversity <- function (fqtName="Ex01_Sample_Info",dbName="Examples.mdb",
 	
 	#if (eps) postscript(file=paste(fnam,".eps",sep=""),width=11,height=8.5,paper="special")
 	if (pdf) pdf(file=paste(fnam,".pdf",sep=""),width=11,height=8.5)
-	else if (wmf) do.call("win.metafile",list(filename=paste(fnam,".wmf",sep=""),width=11,height=8.5))
+	else if (wmf && .Platform$OS.type=="windows")
+		do.call("win.metafile",list(filename=paste(fnam,".wmf",sep=""),width=11,height=8.5))
 	else resetGraph()
 	expandGraph(mar=c(max(3.5,ceiling(xchar^.7)),3.75,1,3.75),mgp=c(2.75,.75,0))
 	x=barplot(height=dat[,bars],names.arg=xshow,space=0,col=clrs[1],cex.names=0.7,
@@ -518,7 +516,8 @@ trackComp = function(fqtName=c("Ex01_Sample_Info","Ex02_Species_Abundance"),
 #browser();return()
 	
 	if (pdf) pdf(file=paste(fnam,".pdf",sep=""),width=11,height=8.5)
-	else if (wmf) do.call("win.metafile",list(filename=paste(fnam,".wmf",sep=""),width=11,height=8.5))
+	else if (wmf && .Platform$OS.type=="windows")
+		do.call("win.metafile",list(filename=paste(fnam,".wmf",sep=""),width=11,height=8.5))
 	else resetGraph()
 	expandGraph(mar=c(4.5,3.5,0.5,1.25),oma=c(0,0,0,0),las=1,fig=c(0,1,0,.95))
 	plot(dfpic$x,dfpic$base,ylim=c(0,100),xlab="",ylab="",type="l",xaxs="i",yaxs="i",xaxt="n")

@@ -1,6 +1,6 @@
 -- Query FOS catch from the merged catch table GF_D_OFFICIAL_FE_CATCH
 -- Query species catch from GFFOS on SVBCPBSGFIIS
--- Last modified: 2014-12-12
+-- Last modified: 2015-02-18 (RH)
 SET NOCOUNT ON 
 
 -- Mean species weight calculated using `gfb_mean_weight.sql', which emulates PJS algorithm for GFBIO data
@@ -50,6 +50,7 @@ INSERT INTO @MEAN_WEIGHT VALUES
 SELECT -- TOP 20
   OC.TRIP_ID,
   OC.FISHING_EVENT_ID,
+  --ISNULL(L.LOCALITY_DESCRIPTION,'MOOSE COUNTY') AS LOCAL_NAME,
   Sum(CASE
     WHEN OC.SPECIES_CODE IN (@sppcode) THEN ISNULL(OC.LANDED_ROUND_KG,0)
     ELSE 0 END) AS landed,
@@ -88,10 +89,16 @@ SELECT -- TOP 20
     ELSE 0 END) AS TAR
 INTO #CATCH_CORE
 FROM 
-  GF_D_OFFICIAL_FE_CATCH OC LEFT OUTER JOIN
+  --LOCALITY L RIGHT OUTER JOIN
+  (GF_D_OFFICIAL_FE_CATCH OC LEFT OUTER JOIN
   @MEAN_WEIGHT FW ON
-    OC.SPECIES_CODE = FW.SPECIES_CODE
-GROUP BY OC.TRIP_ID, OC.FISHING_EVENT_ID 
+    OC.SPECIES_CODE = FW.SPECIES_CODE) --ON
+  --L.MAJOR_STAT_AREA_CODE = OC.MAJOR_STAT_AREA_CODE AND
+  --L.MINOR_STAT_AREA_CODE = OC.MINOR_STAT_AREA_CODE AND
+  --L.LOCALITY_CODE = OC.LOCALITY_CODE
+--WHERE ISNULL(L.LOCALITY_DESCRIPTION,'MOOSE COUNTY') NOT LIKE '%MOUNT%'
+GROUP BY OC.TRIP_ID, OC.FISHING_EVENT_ID--,
+  --ISNULL(L.LOCALITY_DESCRIPTION,'MOOSE COUNTY')
 
 -- Combine event information with catch
 SELECT
@@ -117,6 +124,7 @@ SELECT
   ISNULL(FC.MAJOR_STAT_AREA_CODE,'0') AS \"major\",
   ISNULL(FC.MINOR_STAT_AREA_CODE,'0') AS \"minor\",
   ISNULL(FC.LOCALITY_CODE,'0') AS \"locality\",
+  --CC.LOCAL_NAME, -- for debugging locality names
   CC.landed AS \"landed\",
   CC.released + CC.liced + CC.bait AS \"discard\",
   CC.POP, CC.ORF, CC.TAR
@@ -138,7 +146,7 @@ WHERE
   ORF.\"landed\">0 OR ORF.\"discard\">0 OR ORF.POP>0 OR ORF.ORF>0 OR ORF.TAR>0
 
 -- getData("fos_vcatORF.sql","GFFOS",strSpp="442")
--- qu("fos_vcatORF.sql",dbName="GFFOS",strSpp="418")
+-- qu("fos_vcatORF.sql",dbName="GFFOS",strSpp="442")
 
 
 

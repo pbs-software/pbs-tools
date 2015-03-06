@@ -7,12 +7,16 @@
   Query the \code{GFBioSQL} database for survey catches of the specified species.
 }
 \usage{
-surveyCatch( strSpp="396", spath=.getSpath() )
+surveyCatch(strSpp="396", spath=.getSpath(), gfbdat=NULL)
 }
 \arguments{
   \item{strSpp}{character string specifying the Hart species code for a species in the \code{GFBioSQL} database.}
   \item{spath}{character string of path to the SQL code file \code{gfb_rcatORF.sql}; \cr
-  defaults to the \code{sql} directory under \code{system.file(package="PBStools")} }
+    defaults to the \code{sql} directory under \code{system.file(package="PBStools")} }
+  \item{gfbdat}{data frame object of survey data extracted from GFBioSQL; \cr
+    if \code{NULL} run the query \code{gfb_rcatORF.sql} and save \code{gfbdat} to 
+    \code{gfbdat.rda} and \code{Survey-Records-123.csv}, where \code{123} is the 
+    three-character Hart code. }
 }
 \details{
   Needs the SQL code file \code{gfb_rcatORF.sql}, which is designed to return 

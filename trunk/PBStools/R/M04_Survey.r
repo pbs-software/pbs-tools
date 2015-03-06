@@ -15,7 +15,7 @@
 #  trend...........Simple trend analysis for annnual IPHC indices.
 #===============================================================================
 
-#bootBG---------------------------------2013-01-28
+#bootBG---------------------------------2015-03-06
 # Bootstraps binomial-gamma variates from (p, mu, rho) for each stratum.
 # Arguments:
 #  dat : Data file containing p, mu, rho, A, k for each stratum h, where
@@ -48,7 +48,7 @@ bootBG <- function (dat="pop.pmr.qcss", K=100, S=100, R=500, SID=NULL,
 	#--------------------------
 	assign("PBStool",list(module="M04_Survey",call=match.call(),args=args(bootBG),ioenv=ioenv),envir=.PBStoolEnv)
 
-	if (!require(boot, quietly=TRUE)) stop("`boot` package is required")
+	if (!requireNamespace("boot", quietly=TRUE)) stop("`boot` package is required")
 	snam=as.character(substitute(dat))
 	if (length(snam)==0 || snam=="") showError("Supply a file name or \n run 'getPMR' to create the file.")
 
@@ -126,7 +126,7 @@ bootBG <- function (dat="pop.pmr.qcss", K=100, S=100, R=500, SID=NULL,
 		names(zvars)=index=as.character(group)
 
 		Bhi   <- zvars[is.element(names(zvars),index)] * (A[index] / n[index]) # factor out n before summing
-		Bboot <- boot(data=Bhi,statistic=mysum,R=R,stype="f",strata=group)
+		Bboot <- boot::boot(data=Bhi,statistic=mysum,R=R,stype="f",strata=group)
 		Bboot.all[[Bs]] = Bboot # collect the bootstrap results
 		if (all(diff(Bhi)==0)) {
 			for (i in lims) {
@@ -135,8 +135,8 @@ bootBG <- function (dat="pop.pmr.qcss", K=100, S=100, R=500, SID=NULL,
 				Bqnt[Bs,"Btrue",i] <- Btrue
 				Bqnt[Bs,"Qtrue",i] <- ifelse(Btrue<Bhi[1],0,1) }
 		} else {
-			L=GT0(empinf(data=Bhi,statistic=mysum,stype="f",strata=group))
-			Bconf <- boot.ci(boot.out=Bboot,conf=qint,type=setdiff(lims,"emp"),L=L)
+			L=GT0(boot::empinf(data=Bhi,statistic=mysum,stype="f",strata=group))
+			Bconf <- boot::boot.ci(boot.out=Bboot,conf=qint,type=setdiff(lims,"emp"),L=L)
 			for (i in lims) {
 				if (i=="emp") {
 					Blims=quantile(Bboot$t,qnt)
@@ -157,7 +157,7 @@ bootBG <- function (dat="pop.pmr.qcss", K=100, S=100, R=500, SID=NULL,
 	bgtab=x; dStab=y; BStab=z; Bboot=Bboot.all; Bobs=Btrue
 	packList(c("dat","bgtab","dStab","BStab","bgsamp","Bboot","Bqnt","Best","Bobs","group"),"PBStool",tenv=.PBStoolEnv)
 	invisible() }
-#-------------------------------------------bootBG
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~bootBG
 
 #calcMoments----------------------------2010-06-02
 # Calculate survey strata population moments,
@@ -714,7 +714,6 @@ simBGtrend <- function(pmr=pop.pmr.qcss, Npred=15, genT=NULL,
 trend <- function(strSpp="442", fqtName="gfb_iphc.sql",
    dbName="GFBioSQL", spath=NULL, type="SQL", ioenv=.GlobalEnv, hnam=NULL)
 {
-	#if (!require(PBSmodelling, quietly=TRUE)) stop("`PBSmodelling` package is required")
 	warn <- options()$warn; options(warn=-1)
 	data(spn,envir=ioenv)
 	if (exists("PBSdat",envir=ioenv)) rm(PBSdat,pos=ioenv)
