@@ -57,7 +57,8 @@ calcHabitat <- function(topofile="bctopo", isob=c(150,435),
 		for (i in names(devs)[devs]) {
 			if (i=="eps")      postscript(file=paste(fout,".eps",sep=""),width=pin[1],height=pin[2],fonts="mono",paper="special") 
 			else if (i=="pix") png(paste(fout,".png",sep =""), width=round(100*pin[1]), height=round(100*pin[2])) 
-			else if (i=="wmf") do.call("win.metafile",list(filename=paste(fout,".wmf",sep=""),width=pin[1],height=pin[2]))
+			else if (i=="wmf" && .Platform$OS.type=="windows")
+				do.call("win.metafile",list(filename=paste(fout,".wmf",sep=""),width=pin[1],height=pin[2]))
 			else          resetGraph()
 			expandGraph(mar=c(3,3.5,0.5,0.5),mgp=c(3,.5,0),las=1)
 			plotMap(box,type="n",plt=NULL,cex.axis=1.2,cex.lab=1.5)
@@ -211,7 +212,8 @@ calcSurficial <- function(surf="qcb", hab,
 	stuff=c("surfhab","areasum","area","leg","legarea")
 	packList(stuff,"PBStool",tenv=.PBStoolEnv)
 
-	if (wmf) do.call("win.metafile",list(filename=paste(fout,".wmf",sep=""),width=6.75,height=8.5))
+	if (wmf && .Platform$OS.type=="windows")
+		do.call("win.metafile",list(filename=paste(fout,".wmf",sep=""),width=6.75,height=8.5))
 	else if (pix) {
 		pin <- par()$pin; PIN <- 7.5 * pin/max(pin)
 		png(paste(fout,".png",sep =""), width=round(100*PIN[1]), height=round(100*PIN[2])) }
@@ -228,10 +230,9 @@ calcSurficial <- function(surf="qcb", hab,
 	box()
 	if (pix|wmf) dev.off()
 	invisible() }
-#------------------------------------calcSurficial
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~calcSurficial
 
-
-#clarify--------------------------------2013-03-11
+#clarify--------------------------------2015-03-06
 #  Analyse catch proportions in blocks, then cluster into fisheries groups.
 #  Initially, done to address the CASSIS proposal and its impact (John Pringle).
 #  CASSIS = CAScadia SeISmic experiment
@@ -255,7 +256,7 @@ clarify <- function(dat, cell=c(0.1,0.075), nG=8,
 	if (length(clrs)<nG) showError("Supply more colours 'clrs' or reduce number of groups 'nG'")
 	parlist=list(mfrow=c(1,1),mar=c(2.5,2.5,.5,.5),oma=c(0,0,0,0),las=0,cex=1.4,mgp=c(1,.2,0))
 
-	if (!require(cluster, quietly=TRUE)) stop("`cluster` package is required")
+	if (!requireNamespace("cluster", quietly=TRUE)) stop("`cluster` package is required")
 	assign("PBStool",list(module="M05_Spatial",call=match.call(),args=args(clarify),ioenv=ioenv,plotname="Rplot"),envir=.PBStoolEnv)
 	fnam=as.character(substitute(dat))
 	expr=paste("getFile(",fnam,",senv=ioenv,use.pkg=TRUE,try.all.frames=TRUE,tenv=penv()); dat=",fnam,sep="") # input file made global cause it's big
@@ -297,7 +298,7 @@ clarify <- function(dat, cell=c(0.1,0.075), nG=8,
 	spp  <- names(ppos[z])
 	psub <- pcat[,spp]
 
-	ptree  <- clara(psub, k=nG, pamLike=TRUE, metric="euclidean")
+	ptree  <- cluster::clara(psub, k=nG, pamLike=TRUE, metric="euclidean")
 	clus   <- ptree$clustering
 	groups <- split(as.numeric(names(clus)),clus)
 
@@ -358,7 +359,8 @@ clarify <- function(dat, cell=c(0.1,0.075), nG=8,
 	PIN = par()$pin/max(par()$pin)*hpage
 	fn = paste(fnam,ifelse(is.null(targ),"",targ),"-Clara-nG",nG,"-(",paste(round(PIN,1),collapse="x"),")",sep="")
 	if (i=="eps" && ii) postscript(paste(fn,".eps",sep=""),width=PIN[1],height=PIN[2],paper="special") 
-	else if (i=="wmf" && ii) do.call("win.metafile",list(filename=paste(fn,".wmf",sep=""),width=PIN[1],height=PIN[2]))
+	else if (i=="wmf" && ii && .Platform$OS.type=="windows")
+		do.call("win.metafile",list(filename=paste(fn,".wmf",sep=""),width=PIN[1],height=PIN[2]))
 	else resetGraph()
 	getFile(nepacLL,use.pkg=TRUE,tenv=penv())
 
@@ -379,7 +381,6 @@ clarify <- function(dat, cell=c(0.1,0.075), nG=8,
 	gc(verbose=FALSE)
 	invisible() }
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~clarify
-
 
 #findHoles------------------------------2012-09-24
 # Find holes and place them under correct parents.
@@ -512,7 +513,8 @@ plotTernary <- function(x=c(3,2,1), connect=FALSE, show.geometry=TRUE,
 	#----------------------------------------------
 
 	if (eps) postscript(file="ternary.eps", width=8,height=7,paper="special")
-	else if (wmf) do.call("win.metafile",list(filename="ternary.wmf",width=10,height=8.7,pointsize=12))
+	else if (wmf && .Platform$OS.type=="windows")
+		do.call("win.metafile",list(filename="ternary.wmf",width=10,height=8.7,pointsize=12))
 	par( mfrow=c(1,1), mai=c(.2,.2,.2,.2), omi=c(0,0,0,0))
 	plotMap(triangle,axes=FALSE,xlab="",ylab="",xlim=extendrange(xlim),ylim=extendrange(ylim),plt=NULL,lwd=lwd*2)
 	#xpts <- c(x1,x2,x3); ypts <- c(y1,y2,y3)
@@ -689,7 +691,8 @@ plotTertiary = function(x=c(100,5,25,10,50), pC=c(0.5,0.5), r=0.5,
 	packList(stuff,target="PBStool",tenv=.PBStoolEnv)
 
 	if (eps) postscript(file="tertiary.eps", width=8,height=8,paper="special")
-	else if (wmf) do.call("win.metafile",list(filename="tertiary.wmf",width=10,height=10,pointsize=12))
+	else if (wmf && .Platform$OS.type=="windows")
+		do.call("win.metafile",list(filename="tertiary.wmf",width=10,height=10,pointsize=12))
 	par( mfrow=c(1,1), mai=c(.2,.2,.2,.2), omi=c(0,0,0,0))
 	plotMap(shape,axes=FALSE,xlab="",ylab="",xlim=extendrange(xlim),ylim=extendrange(ylim),plt=NULL,lwd=lwd*2)
 	if (diag) {
@@ -741,10 +744,8 @@ plotTertiary = function(x=c(100,5,25,10,50), pC=c(0.5,0.5), r=0.5,
 # Histogram showing depth-of-capture
 #-----------------------------------------------RH
 preferDepth = function(strSpp="410", fqtName="pht_fdep.sql", dbName="PacHarvest",
-     spath=NULL, type="SQL", hnam=NULL, get.effort=TRUE) {
-
-	#if (!require(PBSmodelling, quietly=TRUE)) stop("`PBSmodelling` package is required")
-	#if (!require(PBStools, quietly=TRUE))     stop("`PBStools` package is required")
+   spath=NULL, type="SQL", hnam=NULL, get.effort=TRUE)
+{
 	warn <- options()$warn; options(warn=-1)
 	assign("PBStool",list(module="M05_Spatial",call=match.call(),args=args(preferDepth),plotname="Rplot"),envir=.PBStoolEnv)
 
@@ -856,7 +857,8 @@ preferDepth = function(strSpp="410", fqtName="pht_fdep.sql", dbName="PacHarvest"
 	}
 	if (eps)      postscript(file=paste(plotname,"eps",sep="."),width=10,height=6*nrow^0.25,horizontal=FALSE,paper="special")
 	else if (pix) png(filename=paste(plotname,"png",sep="."),width=10,height=6*nrow^0.25,units="in",res=100)
-	else if (wmf) do.call("win.metafile",list(filename=paste(plotname,"wmf",sep="."),width=10,height=6*nrow^0.25))
+	else if (wmf && .Platform$OS.type=="windows")
+		do.call("win.metafile",list(filename=paste(plotname,"wmf",sep="."),width=10,height=6*nrow^0.25))
 	else resetGraph()
 
 	if (nrow*ncol==1)

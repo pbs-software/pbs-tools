@@ -96,7 +96,8 @@ calcRatio <- function(dat, nfld, dfld, nzero=TRUE, dzero=TRUE, sumF=mean,
 		if (is.null(ylim)) ylim=c(0,max(apply(psum,2,extendrange,f=0.25)))
 		nplt=length(stored)
 		if (nplt>1) {rc=c(ceiling(nplt/2),2); if (wmf) rc=rev(rc)}
-		if (wmf) do.call("win.metafile",list(filename=paste(nfld,"-",dfld,"-major",paste(major,collapse=""),".wmf",sep=""),width=8,height=2.5*rc[1]))
+		if (wmf && .Platform$OS.type=="windows")
+			do.call("win.metafile",list(filename=paste(nfld,"-",dfld,"-major",paste(major,collapse=""),".wmf",sep=""),width=8,height=2.5*rc[1]))
 		else resetGraph()
 		if (nplt==1) expandGraph(mfrow=c(1,1),mar=c(3,5,.5,.5),oma=c(0,0,0,0),las=1)
 		else         expandGraph(mfrow=rc,mar=c(1.5,0,.5,.5),oma=c(2,5,0,0),las=1)
@@ -210,15 +211,15 @@ dumpRat = function(strSpp="396", rats=c("alpha","beta","gamma","delta","lambda")
 		}
 	}
 }
-#------------------------------------------dumpRat
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~dumpRat
 
-
-#getCatch-------------------------------2014-07-14
-# Extract catch records for a species from various 
-# databases and combine them into one catch file.
+#getCatch-------------------------------2015-03-05
+# Extract catch records for a species from various
+# databases and combine them into one commercial 
+# catch data frame and one survey catch data frame.
 #-----------------------------------------------RH
 getCatch = function(strSpp="396", dbs=c("gfb","gfc","pht","fos"),
-   sql=FALSE, sqlpath=.getSpath(), proBio=TRUE, ioenv=.GlobalEnv)
+   sql=FALSE, sqlpath=.getSpath(), proBio=FALSE, ioenv=.GlobalEnv)
    #uid=Sys.info()["user"], pwd=uid, ioenv=.GlobalEnv) 
 {
 	sysyr=as.numeric(substring(Sys.time(),1,4)) # maximum possible year
@@ -303,7 +304,6 @@ getCatch = function(strSpp="396", dbs=c("gfb","gfc","pht","fos"),
 	invisible(out)
 }
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~getCatch
-
 
 #glimmer--------------------------------2014-05-06
 # Performs an lm/aov on a predefined dataset
@@ -498,7 +498,8 @@ glimmer <- function(file, facs=c("year","month","depth","vessel"),
 	stuff=c("dat","coeffs","lmres","lmsum","aovres","facmin")
 	packList(stuff,"PBStool",tenv=.PBStoolEnv)
 
-	if (wmf) do.call("win.metafile",list(filename=paste(spp,"-GLM-",ifelse(Uplot,"Cpue-","Para-"),
+	if (wmf && .Platform$OS.type=="windows")
+		do.call("win.metafile",list(filename=paste(spp,"-GLM-",ifelse(Uplot,"Cpue-","Para-"),
 		substring(faclab,1,ifelse(Ionly,1,nchar(faclab))),".wmf",sep=""),
 		width=ifelse(Ionly,6.5,nfac*2.75),height=4))
 	else resetGraph()
@@ -716,7 +717,8 @@ plotCatch=function(dat="dbr.rem", flds=c("CAtrawl","UStrawl","TotalHL"),
 	leg=c("CA Trawl","US Trawl","Zn H&L","Sched II","Halibut","Total H&L","Trawl + H&L")
 	names(leg)=c("CAtrawl","UStrawl","ZnHL","ShedII","Halibut","TotalHL","Total")
 
-	if (wmf) do.call("win.metafile",list(filename=paste(spp,"-Removals-",paste(flds,collapse="-"),".wmf",sep=""),width=8,height=6))
+	if (wmf && .Platform$OS.type=="windows")
+		do.call("win.metafile",list(filename=paste(spp,"-Removals-",paste(flds,collapse="-"),".wmf",sep=""),width=8,height=6))
 	else resetGraph()
 	expandGraph(mfrow=c(1,1),mar=c(3,4,.5,.5),oma=c(0,0,0,0),las=1)
 
@@ -937,7 +939,8 @@ plotFOScatch <- function(strSpp="453", majors=c(1,3:9), space=0.5,
 	packList(stuff,"PBStool",tenv=.PBStoolEnv)
 	print(yrcat)
 
-	if (wmf) do.call("win.metafile",list(filename=plotname,height=8,width=8))
+	if (wmf && .Platform$OS.type=="windows")
+		do.call("win.metafile",list(filename=plotname,height=8,width=8))
 	else resetGraph()
 	expandGraph(mfrow=c(m,n),mar=c(4,4,.5,.5),oma=c(0,0,1.5,0))
 	for (i in fplot) {
@@ -962,20 +965,18 @@ plotFOScatch <- function(strSpp="453", majors=c(1,3:9), space=0.5,
 	invisible(dat) }
 #-------------------------------------plotFOScatch
 
-#runCCA---------------------------------2013-01-28
+#runCCA---------------------------------2015-03-06
 # Catch-curve model based on Schnute, J.T., and Haigh, R. 2006.
 # Compositional analysis of catch curve data with an application to Sebastes maliger.
 # ICES Journal of Marine Science.
 # Code allows user to perform frequentist (NLM) and Bayesian (BRugs) analyses.
 #-----------------------------------------------RH
-
-runCCA = function(fnam="nage394", hnam=NULL, ioenv=.GlobalEnv, ...) {
+runCCA = function(fnam="nage394", hnam=NULL, ioenv=.GlobalEnv, ...)
+{
 	assign("PBStool",list(module="M03_Fishery",call=match.call(),args=args(runCCA),ioenv=ioenv,plotname="CCAplot",dots=list(...)),envir=.PBStoolEnv)
 	fnam=as.character(substitute(fnam))
 	if (!is.character(fnam)) stop("Argument 'fnam' must be a string name of an R dataset")
-	#if (!require(PBSmodelling, quietly=TRUE)) stop("`PBSmodelling` package is required")
-	#if (!require(PBStools,   quietly=TRUE))   stop("`PBStools` package is required")
-	if (!require(BRugs,        quietly=TRUE)) stop("`BRugs` package is required")
+	if (!requireNamespace("BRugs",        quietly=TRUE)) stop("`BRugs` package is required")
 
 	path <- .getWpath() # win path
 	rtmp <- tempdir(); rtmp <- gsub("\\\\","/",rtmp)
@@ -1018,7 +1019,7 @@ runCCA = function(fnam="nage394", hnam=NULL, ioenv=.GlobalEnv, ...) {
 	pa = .runCCA.model(P=c(Z,alpha,betak,tau,rho1,rho2,rho3,rho4,rho5))
 	if (Pcur==1) {
 		out = -nspec * sum(pa.obs * log(pa))
-		pi1=pa; packList("pi1","PBStool",tenv=.PBStoolEnv) }
+		pi1 = pa; packList("pi1","PBStool",tenv=.PBStoolEnv) }
 	if (any(Pcur==c(2,3))) {
 		z = as.numeric(cut(a,acut))
 		pi = sapply(split(pa,z),sum)
@@ -1077,7 +1078,7 @@ runCCA = function(fnam="nage394", hnam=NULL, ioenv=.GlobalEnv, ...) {
 	xmod = phi[paste("b",1:5,sep="")]; xmod = xmod[xmod>0]  #[1:phi["m"]]
 	ymod = y[is.element(x,xmod)]
 
-	plotname=paste("Data",fnam,year,sep="-")
+	plotname = paste("Data",fnam,year,sep="-")
 	packList("plotname","PBStool",tenv=.PBStoolEnv)
 	par(mfrow=c(1,1),mai=c(.6,.6,.1,.1),omi=c(0,0,0,0))
 	plot(x,y,xlim=c(0,xmax),ylim=c(0,ymax),type="h",xlab="",ylab="",xaxt="n",cex=.7,las=1,adj=1,mgp=c(0,.4,0),tck=.02)
@@ -1226,7 +1227,8 @@ runCCA = function(fnam="nage394", hnam=NULL, ioenv=.GlobalEnv, ...) {
 	# Plot the results
 	plotname=paste(c("NLM.",suff,".mods",mods),collapse="")
 	packList("plotname","PBStool",tenv=.PBStoolEnv)
-	if (wmf) do.call("win.metafile",list(filename=paste(plotname,".wmf",sep=""),
+	if (wmf && .Platform$OS.type=="windows")
+		do.call("win.metafile",list(filename=paste(plotname,".wmf",sep=""),
 		width=6.5,height=switch(nmods,5,8,9.5),pointsize=12))
 	if (names(dev.cur())=="null device") { windows(width=6,height=8); frame() }
 	din = par()$din; xmarg = 1*c(0.5,0.6)
@@ -1331,14 +1333,14 @@ runCCA = function(fnam="nage394", hnam=NULL, ioenv=.GlobalEnv, ...) {
 				list(k=k,B=B,b0=b0,g=g,ai=ai,y=y),
 				list(k=k,B=B,m=m,b=bh,g=g,ai=ai,y=y),
 				list(k=k,B=B,b0=b0,m=m,b=bh,g=g,ai=ai,y=y) )
-	bugsData(dat,"CCAdat.txt")
+	BRugs::bugsData(dat,"CCAdat.txt")
 	mnam = paste(.getEpath(),"/CCAmod-",c("M","D","L")[MDL],case,".txt",sep="") # model name in examples directory
 	file.copy(mnam,"CCAmod.txt",overwrite=TRUE)
-	modelCheck("CCAmod.txt")   # check model syntax
-	modelData("CCAdat.txt")    # load current data
-	modelCompile(nc)           # compile with nc chains
-	modelGenInits()            # generate randoms inits
-	samplesSet(pmon)           # parameters to monitor
+	BRugs::modelCheck("CCAmod.txt")   # check model syntax
+	BRugs::modelData("CCAdat.txt")    # load current data
+	BRugs::modelCompile(nc)           # compile with nc chains
+	BRugs::modelGenInits()            # generate randoms inits
+	BRugs::samplesSet(pmon)           # parameters to monitor
 	setWinVal(list(clen=100,cthin=1,ctot=0,s1=1,s2=100,sthin=1,chn2=nc))
 	par(ask=FALSE)
 	invisible() }
@@ -1351,8 +1353,8 @@ runCCA = function(fnam="nage394", hnam=NULL, ioenv=.GlobalEnv, ...) {
 	if ( !is.null(Batts$nc) && ( Batts$nc!=nc || 
 	!all(is.element(Batts$Pmon,Pmon)) || !all(is.element(Pmon,Batts$Pmon)) ) )
 		.runCCA.compileMod()
-	modelUpdate(clen,cthin)
-	Shist = samplesHistory("*",beg=0,plot=FALSE)
+	BRugs::modelUpdate(clen,cthin)
+	Shist = BRugs::samplesHistory("*",beg=0,plot=FALSE)
 	names(Shist) = gsub("[]\\[]","",names(Shist))
 	Bhist = as.data.frame(Shist)
 	if (nc==1) names(Bhist) = paste(names(Bhist),1,sep=".")
@@ -1470,7 +1472,7 @@ runCCA = function(fnam="nage394", hnam=NULL, ioenv=.GlobalEnv, ...) {
 				points(xmd,ymd,col="black",pch=2,cex=1.2) } } )
 	invisible() }
 
-.runCCA.getChains = function(chains=samplesGetFirstChain():samplesGetLastChain()) { # amalgamates chains
+.runCCA.getChains = function(chains=BRugs::samplesGetFirstChain():BRugs::samplesGetLastChain()) { # amalgamates chains
 	if (is.null(ttcall(PBStool)$CCAhist)) return(FALSE)
 	getWinVal(scope="L")
 	unpackList(ttcall(PBStool)$FP,scope="L")
@@ -1541,7 +1543,7 @@ runCCA = function(fnam="nage394", hnam=NULL, ioenv=.GlobalEnv, ...) {
 		sqn = sqrt(nc); m = ceiling(sqn); n = ceiling(nc/m)
 		return(c(m, n)) }
 	}
-#-------------------------------------------runCCA
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~runCCA
 
 #sumCatTabs-----------------------------2010-06-21
 # Summarize catch by year and PMFC area from modern 

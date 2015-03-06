@@ -21,49 +21,39 @@ weightBio(adat, cdat, sunit="TID", sweight="catch",
    longside=10, outnam, ioenv=.GlobalEnv, ...)
 }
 \arguments{
-  \item{adat}{data object of ageing information with fields that must include: \cr
-    \code{TID}   = trip ID, \cr
-    \code{FEID}  = fishing event ID, \cr
-    \code{date}  = trip or fishing event date, \cr
-    \code{age}   = age of fish, \cr
-    \code{ameth} = ageing method code, \cr
-    \code{sex}   = sex code (1 = males, 2 = females), \cr
-    \code{major} = PMFC major area code, \cr
-    \code{ttype} = trip type code, \cr
-    \code{catch} = trip catch or fishing event catch. }
-  \item{cdat}{data object of catch information with fields that must include: \cr
-    \code{TID}   = trip ID, \cr
-    \code{date}  = trip or fishing event date, \cr
-    \code{year}  = trip or fishing event year, \cr
-    \code{major} = PMFC major area code, \cr
-    \code{catch} = trip catch or fishing event catch. }
-  \item{sunit}{sample unit (e.g., \code{TID} for sampling at the trip level).}
+  \item{adat}{data frame of ageing information (fields returned by 
+    \code{gfb_bio.sql} are described in the Details section). }
+  \item{cdat}{data object of catch information (fields returned by 
+    \code{getCatch} are described in the Details section). }
+  \item{sunit}{sample unit:\cr
+    \code{TID} -- samples identified by trip ID (commercial);\cr
+    \code{SID} -- samples identified by sample ID (surveys).}
   \item{sweight}{sample weighting field (e.g., \code{catch} or \code{density}).}
   \item{ttype}{trip type where: \cr
-    \code{1}  = non-observed domestic, \cr
-    \code{2}  = research, \cr
-    \code{3}  = charter, \cr
-    \code{4}  = observed domestic, \cr
-    \code{5}  = observed j-v, \cr
-    \code{6}  = non-observed j-v, \cr
-    \code{7}  = Polish commercial national, \cr
-    \code{8}  = Russian commercial national, \cr
-    \code{9}  = Russian commercial supplemental, \cr
-    \code{10}  = Polish commercial supplemental, \cr
-    \code{11}  = recreational, \cr
-    \code{12}  = Japanese observed national, \cr
-    \code{13}  = Japanese commercial, \cr
+    \code{1}  = non-observed domestic,\cr
+    \code{2}  = research,\cr
+    \code{3}  = charter,\cr
+    \code{4}  = observed domestic,\cr
+    \code{5}  = observed j-v,\cr
+    \code{6}  = non-observed j-v,\cr
+    \code{7}  = Polish commercial national,\cr
+    \code{8}  = Russian commercial national,\cr
+    \code{9}  = Russian commercial supplemental,\cr
+    \code{10}  = Polish commercial supplemental,\cr
+    \code{11}  = recreational,\cr
+    \code{12}  = Japanese observed national,\cr
+    \code{13}  = Japanese commercial,\cr
     \code{14}  = unknown foreign.}
   \item{stype}{sample type where: \cr
-    \code{0}  = unknown, \cr
-    \code{1}  = total catch, \cr
-    \code{2}  = random, \cr
-    \code{4}  = selected, \cr
-    \code{5}  = stratified, \cr
-    \code{6}  = random from randomly assigned set, \cr
-    \code{7}  = random from set after randomly assigned set, \cr
-    \code{8}  = random from set requested by vessel master, \cr
-    \code{9}  = selected juveniles, \cr
+    \code{0}  = unknown,\cr
+    \code{1}  = total catch,\cr
+    \code{2}  = random,\cr
+    \code{4}  = selected,\cr
+    \code{5}  = stratified,\cr
+    \code{6}  = random from randomly assigned set,\cr
+    \code{7}  = random from set after randomly assigned set,\cr
+    \code{8}  = random from set requested by vessel master,\cr
+    \code{9}  = selected juveniles,\cr
     \code{10} = selected adults.}
   \item{ameth}{ageing method code (\code{ameth=3} denotes break and burn).}
   \item{sex}{sex codes (1 = males, 2 = females).}
@@ -90,8 +80,8 @@ weightBio(adat, cdat, sunit="TID", sweight="catch",
   \item{cohorts}{diagonal lines to plot indicating year-class cohorts (list of x- and y-values).}
   \item{regimes}{diagonal periods to plot indicating regime periods (e.g., positive PDO periods).}
   \item{layout}{string describing figure layout; one of: \cr
-    \code{"portrait"} for vertically stacked plots, \cr
-    \code{"landscape"} for plot placed horizontally side-by-side, \cr
+    \code{"portrait"} for vertically stacked plots,\cr
+    \code{"landscape"} for plot placed horizontally side-by-side,\cr
     \code{"juxtapose"} for plots overlaid on each other (not implemented at present).}
   \item{rgr}{logical: if \code{TRUE}, send figure to the R graphics device.}
   \item{eps}{logical: if \code{TRUE}, send figure to an encapsulated postscript \code{.eps} file.}
@@ -103,8 +93,135 @@ weightBio(adat, cdat, sunit="TID", sweight="catch",
   \item{ioenv}{input/output environment for function input data and output results.}
   \item{...}{additional arguments to pass to the function \code{plotBubbles}.}
 }
-
 \details{
+  \bold{Input Data}
+
+  \code{adat} -- Age data (e.g., \code{age396} for Pacific Ocean Perch) is best
+  derived from the query \code{gfb_bio.sql} using the command line calls:
+  \preformatted{
+  getData("gfb_bio.sql","GFBioSQL",strSpp="396",path=.getSpath())
+  bio396 = PBSdat; age396 = bio396[bio396$age>0 & !is.na(bio396$age),]
+  save("bio396","age396",file="bio396.rda") # save objects for future sessions
+  }
+  The fields returned by \code{gfb_bio.sql} include:
+  \tabular{lrl}{
+    \code{TID}      \tab integer   \tab trip identifier,\cr
+    \code{FEID}     \tab integer   \tab fishing event identifier,\cr
+    \code{CID}      \tab integer   \tab catch identifier,\cr
+    \code{SID}      \tab integer   \tab sample identifier,\cr
+    \code{SPID}     \tab integer   \tab specimen identifier,\cr
+    \code{SVID}     \tab integer   \tab survey identifier,\cr
+    \code{SSID}     \tab integer   \tab survey series identifier,\cr
+    \code{GC}       \tab integer   \tab grouping code,\cr
+    \code{block}    \tab character \tab block designator,\cr
+    \code{hail}     \tab integer   \tab hail number used by vessels,\cr
+    \code{set}      \tab integer   \tab set number within a trip/hail,\cr
+    \code{subset}   \tab integer   \tab subset -- usually referencing hooks or traps within a set,\cr
+    \code{ttype}    \tab integer   \tab trip type code,\cr
+    \code{stype}    \tab integer   \tab sample type code,\cr
+    \code{date}     \tab POSIXt    \tab trip or fishing event date,\cr
+    \code{year}     \tab integer   \tab calendar year,\cr
+    \code{sex}      \tab integer   \tab sex code (1 = males, 2 = females),\cr
+    \code{mat}      \tab integer   \tab maturity code,\cr
+    \code{oto}      \tab integer   \tab otolith collected (1) or not (0),\cr
+    \code{narc}     \tab numeric   \tab not available reason code,\cr
+    \code{age}      \tab integer   \tab age of fish,\cr
+    \code{ameth}    \tab integer   \tab ageing method code,\cr
+    \code{len}      \tab numeric   \tab specimen length (cm),\cr
+    \code{wt}       \tab numeric   \tab specimen weight (kg),\cr
+    \code{scat}     \tab integer   \tab species category code,\cr
+    \code{fdep}     \tab numeric   \tab fishing depth (m),\cr
+    \code{bwt}      \tab numeric   \tab bottom water temperature (\eqn{^\circ}{deg}C),\cr
+    \code{gear}     \tab integer   \tab gear code,\cr
+    \code{use}      \tab integer   \tab trawl usability,\cr
+    \code{dist}     \tab numeric   \tab trawl distance towed (km),\cr
+    \code{door}     \tab numeric   \tab doorspread (m),\cr
+    \code{major}    \tab integer   \tab PMFC major area code,\cr
+    \code{minor}    \tab integer   \tab PMFC minor area code,\cr
+    \code{locality} \tab integer   \tab fishing locality code,\cr
+    \code{X}        \tab numeric   \tab longitude (\eqn{^\circ}{deg}W),\cr
+    \code{Y}        \tab numeric   \tab latitude (\eqn{^\circ}{deg}N),\cr
+    \code{PMFC}     \tab character \tab Pacific Marine Fisheries Commission area,\cr
+    \code{PFMA}     \tab integer   \tab Pacific Fishery Management Areas,\cr
+    \code{PFMS}     \tab integer   \tab Pacific Fishery Management Subareas,\cr
+    \code{GMA}      \tab character \tab Groundfish Management Areas,\cr
+    \code{catch}    \tab numeric   \tab trip catch or fishing event catch,\cr
+    \code{density}  \tab numeric   \tab species catch density (kg/km\eqn{^2}) per fishing event,\cr
+    \code{area}     \tab integer   \tab survey stratum area (km\eqn{^2}).
+  }
+  \code{cdat} -- Catch data (e.g., \code{cat396}) is best derived from the 
+  function \code{getCatch} using the command line calls:
+  \preformatted{
+  cat396 = getCatch("396", sql=TRUE)
+  Ccat396 = cat396$Ccat; Scat396 = cat396$Scat
+  save("cat396","Ccat396","Scat396",file="cat396.rda") # save objects
+  }
+  The call to \code{getCatch} internally calls \code{getData}, which calls
+  various queries:\cr
+  \code{  gfb_catch_records.sql} -- GFBioSQL (survey catches); \cr
+  \code{  gfc_catch_records.sql} -- GFCatch (commercial trawl and trap catch 1954--1995);\cr
+  \code{  pht_catch_records.sql} -- PacHarvest (commercial trawl catch 1996--2007);\cr
+  \code{  fos_catch_records.sql} -- GFFOS (commercial all-fisheries data 2006--present).
+
+  Note that the \code{getCatch} call above returns a list object containing
+  two data frames. 
+  Each list element is called \code{Ccat} (for the commercial catch) and 
+  \code{Scat} (for the survey catch). The input \code{cdat} to the function
+  \code{weightBio} uses one or the other of these data frames, depending on the 
+  argument \code{ctype} (catch type).
+
+  The fields returned by \code{getCatch} for commercial catch are:
+  \tabular{lrl}{
+    \code{EID}      \tab integer   \tab \code{\link[PBSmapping]{EventData}} field,\cr
+    \code{X}        \tab numeric   \tab longitude (\eqn{^\circ}{deg}W),\cr
+    \code{Y}        \tab numeric   \tab latitude (\eqn{^\circ}{deg}N),\cr
+    \code{FID}      \tab integer   \tab fishery identifier:\cr
+                    \tab           \tab 1=trawl, 2=halibut, 3=sablefish, 4=dogfish/lingcod, 5=H&L rockfish,\cr
+    \code{TID}      \tab integer   \tab trip identifier,\cr
+    \code{FEID}     \tab integer   \tab fishing event identifier,\cr
+    \code{hail}     \tab integer   \tab hail number used by vessels,\cr
+    \code{set}      \tab integer   \tab set number within a trip/hail,\cr
+    \code{log}      \tab integer   \tab log type code or data source,\cr
+    \code{date}     \tab POSIXt    \tab comercial fishing event date,\cr
+    \code{year}     \tab integer   \tab calendar year,\cr
+    \code{major}    \tab integer   \tab PMFC major area code,\cr
+    \code{minor}    \tab integer   \tab PMFC minor area code,\cr
+    \code{locality} \tab integer   \tab fishing locality code,\cr
+    \code{pfma}     \tab integer   \tab Pacific Fishery Management Areas,\cr
+    \code{pfms}     \tab integer   \tab Pacific Fishery Management Subareas,\cr
+    \code{depth}    \tab numeric   \tab fishing depth (m),\cr
+    \code{vessel}   \tab numeric   \tab vessel registration number,\cr
+    \code{gear}     \tab integer   \tab gear code,\cr
+    \code{success}  \tab integer   \tab trawl success code,\cr
+    \code{effort}   \tab numeric   \tab fishing event effort (min),\cr
+    \code{catKg}    \tab numeric   \tab fishing event catch (kg),\cr
+    \code{pdis}     \tab numeric   \tab proportion of species total catch discarded in fishing event,\cr
+    \code{pcat}     \tab numeric   \tab proportion of species total catch to fishing event total catch.
+  }
+  The fields returned by \code{getCatch} for survey catch are:
+  \tabular{lrl}{
+    \code{TID}      \tab integer   \tab trip identifier,\cr
+    \code{FEID}     \tab integer   \tab fishing event identifier,\cr
+    \code{set}      \tab integer   \tab set number within a trip,\cr
+    \code{CID}      \tab integer   \tab catch identifier,\cr
+    \code{SSID}     \tab integer   \tab survey series identifier,\cr
+    \code{SVID}     \tab integer   \tab survey identifier,\cr
+    \code{OI}       \tab integer   \tab original index (1) or not (0) for survey series,\cr
+    \code{GC}       \tab integer   \tab grouping code,\cr
+    \code{block}    \tab character \tab block designator,\cr
+    \code{date}     \tab POSIXt    \tab survey fishing event date,\cr
+    \code{year}     \tab integer   \tab calendar year,\cr
+    \code{major}    \tab integer   \tab PMFC major area code,\cr
+    \code{minor}    \tab integer   \tab PMFC minor area code,\cr
+    \code{locality} \tab integer   \tab fishing locality code,\cr
+    \code{spp}      \tab character \tab species Hart code,\cr
+    \code{wt}       \tab numeric   \tab species catch (kg) in fishing event,\cr
+    \code{pcs}      \tab integer   \tab species catch (pieces) in fishing events,\cr
+    \code{catKg}    \tab numeric   \tab species catch (kg) -- if \code{wt} not reported, use \code{pcs} converted to kg.
+  }
+  See examples below for guidance on how to call the function \code{weightBio}.
+}
+\note{
   The function uses values in the field specified by \code{sweight} to weight the 
   proportions-at-age (or frequencies-at-age). For example, if 
   \code{sweight="catch"} then the first weighting for commercial samples might 
@@ -136,18 +253,31 @@ weightBio(adat, cdat, sunit="TID", sweight="catch",
     by sex for input to the Awatea/Coleraine population model. \cr
   \code{sumtab} = supplementary array with dimensions \code{year}, \code{per}
     = period (quarters), and \code{stat} = statistic, where statistic is one of the following: \cr
-    \code{Nsid}  = no. samples, \cr
-    \code{Ntid}  = no. trips (which roughly equates to number of samples in the non-observed fishery), \cr
-    \code{Scat}  = sample unit catch (in our case the sample unit is the trip), \cr
-    \code{Fcat}  = commercial fishery catch, \cr
+    \code{Nsid}  = no. samples,\cr
+    \code{Ntid}  = no. trips (which roughly equates to number of samples in the non-observed fishery),\cr
+    \code{Scat}  = sample unit catch (in our case the sample unit is the trip),\cr
+    \code{Fcat}  = commercial fishery catch,\cr
     \code{Psamp} = trip catch/fishery catch.
 }
+\examples{\dontrun{
+# Commercial age data
+# -------------------
+out = weightBio(age396, Ccat396, major=c(3:9), ttype=c(1,4), gear=1, 
+   stype=c(1,2,6,7), sunit="TID", Nmin=0, plus=60, ameth=3, size=0.20, lwd=2)
+
+# Survey age data
+# ---------------
+out = weightBio(age396, Scat396, ctype="S", sunit="SID", SSID=1, 
+   stype=c(1,2,6,7), Nmin=0, plus=60, ameth=3, sweight="density", size=0.15)
+}}
 \author{
   Rowan Haigh, Pacific Biological Station, Fisheries and Oceans Canada, Nanaimo BC \cr
   Paul J. Starr, Canadian Groundfish Research and Conservation Society, Nanaimo BC
 }
 \seealso{
-  \code{\link[PBStools]{plotProp}}, \code{\link[PBStools]{reportCatchAge}}, \code{\link[PBStools]{requestAges}} \cr
+  \code{\link[PBStools]{getCatch}}, \code{\link[PBStools]{getData}},
+  \code{\link[PBStools]{plotProp}}, \code{\link[PBStools]{reportCatchAge}},
+  \code{\link[PBStools]{requestAges}} \cr
   Available SQL queries: \code{\link[PBStools]{SQLcode}}
 }
 \keyword{datagen}

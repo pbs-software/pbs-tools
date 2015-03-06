@@ -1,4 +1,4 @@
--- SQL code to get IPHC hooh data (for index calculation)(originally bt by NO) to grab IPHC survey data from GFBioSQL
+-- SQL code to get IPHC longline hook data (for AME's IPHC index calculation) from GFBioSQL
 -- Last modified: 2014-10-17
 
 SET NOCOUNT ON -- prevents timeout errors
@@ -175,4 +175,5 @@ ORDER BY
   C.SPECIES_CODE
 
 --qu("gfb_iphc_hooks.sql",dbName="GFBioSQL",strSpp="401")
+--qu("gfb_iphc_hooks.sql",dbName="GFBioSQL",strSpp="442")
 

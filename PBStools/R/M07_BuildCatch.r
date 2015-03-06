@@ -4,9 +4,10 @@
 #  buildCatch   Build a catch history of BC rockfish 1918--present.
 #  plotData     Plot diagnostic data for catch reconstructions.
 #  plotRecon....Plot reconstructed catch using barplots stacked by PMFC area.
+#  surveyCatch  Query the survey catch data and make summary tables.
 #===============================================================================
 
-#buildCatch-----------------------------2014-12-12
+#buildCatch-----------------------------2015-02-19
 # Catch reconstruction algorithm for BC rockfish.
 # Use ratios of species catch to ORF catch for multiple fisheries.
 # Matrix indices: i=year, j=major, k=fid, l='spp'
@@ -21,6 +22,7 @@
 #  refgear  - reference gear types years to use for ratio calculations (e.g., RRF/ORF).
 #  useYR1   - first year to start using reported landings (i.e. not estimated from RRF/ORF or RRF/TRF), one for each fishery.
 #  useBG    - sample from the binomial-gamma to estimate ratios RRF/ORF or RRF/TRF.
+#  useSM    - use catch data from seamounts.
 #  saveinfo - if TRUE, save various data function objects to a list object called `PBStool'.
 #  eps      - if TRUE send the figures to `.eps' files.
 #  png	      - if TRUE send the figures to `.png' files.
@@ -37,7 +39,7 @@
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~RH
 buildCatch=function(dbdat, strSpp="396", dfld="TRF", 
    major=c(1,3:9), fidout=c(1:5,10), refyrs=1997:2005,
-   refarea=NULL, refgear=NULL, useYR1=NULL, useBG=FALSE,
+   refarea=NULL, refgear=NULL, useYR1=NULL, useBG=FALSE, useSM=FALSE,
    saveinfo=TRUE, eps=FALSE, png=FALSE, wmf=FALSE,
    sql=FALSE, only.sql=FALSE, spath=.getSpath(), dpath=getwd(),
    uid=Sys.info()["user"], pwd=uid,
@@ -54,11 +56,14 @@ buildCatch=function(dbdat, strSpp="396", dfld="TRF",
 	### Function to convert numbers to proportions
 	pcalc=function(x){if (all(x==0)) rep(0,length(x)) else x/sum(x)}
 	sysyr=as.numeric(substring(Sys.time(),1,4)) ### maximum possible year
-	if (!file.exists("./CRdiag")) dir.create("CRdiag")
-	else {
-		diag.files = list.files("./CRdiag")
-		if (length(diag.files)>0) 
-			junk = file.remove(paste("./CRdiag/",diag.files,sep=""))
+
+	if (diagnostics){
+		if (!file.exists("./CRdiag")) dir.create("CRdiag")
+		else {
+			diag.files = list.files("./CRdiag")
+			if (length(diag.files)>0) 
+				junk = file.remove(paste("./CRdiag/",diag.files,sep=""))
+		}
 	}
 	clrs.fishery=c("red","blue","orange","green","yellow"); names(clrs.fishery)=1:5
 
@@ -281,7 +286,7 @@ buildCatch=function(dbdat, strSpp="396", dfld="TRF",
 			save("fosdat",file="fosdat.rda")
 
 		### Get the survey catches which will be added to the combined catch near the end
-		surveyCatch(strSpp=strSpp)
+		gfbcat = surveyCatch(strSpp=strSpp)
 		getFile(gfbdat)
 
 		### Wrap up the fisheries and survey landings into a list object
@@ -298,6 +303,37 @@ buildCatch=function(dbdat, strSpp="396", dfld="TRF",
 		eval(parse(text=expr)) 
 	}
 	if (only.sql) return()
+	
+	### Remove seamounts if useSM=FALSE
+	if (!useSM){
+		seamounts = t(data.frame(
+			heck=c(3,24,11), eickel=c(3,24,12), union=c(4,27,5), dell=c(5,11,8), bowie=c(9,31,10),
+			pratt=c(10,33,6), surv=c(10,33,7), durgin=c(10,33,8), murray=c(10,40,4), cowie=c(10,40,5),
+			path=c(11,42,1), morton=c(11,42,2), miller=c(11,42,3), cobb=c(67,67,1), bear=c(67,67,2), 
+			row.names=c("major","minor","locality"), stringsAsFactors=FALSE))
+		nSMrec=rep(0,length(fnam)); names(nSMrec)=fnam; tSMcat=nSMrec
+		for (i in fnam){
+			idat = get(i)
+			if (!all(c("major","minor","locality") %in% names(idat))) { 
+				nSMrec[i]=NA; tSMcat[i]=NA; next }
+			for (j in 1:nrow(seamounts)) {
+				jj = seamounts[j,]
+				seamo = is.element(idat$major,jj[1]) & is.element(idat$minor,jj[2]) & is.element(idat$locality,jj[3])
+				if (sum(seamo)==0) next
+				nSMrec[i] = nSMrec[i] + sum(seamo)
+				catflds = names(idat)[is.element(names(idat),c("landed","discard","catKg"))]
+				if (length(catflds)>0)
+					tSMcat[i] = tSMcat[i] + sum(idat[seamo,catflds],na.rm=TRUE)
+				idat = idat[!seamo,]
+			}
+			assign(i,idat)
+		}
+		tSMcat = tSMcat/1000. # convert total catch from seamounts into tonnes
+		packList(c("seamounts","nSMrec","tSMcat"),"PBStool",tenv=.PBStoolEnv)
+	}
+	if (!sql | !useSM)
+		gfbcat = surveyCatch(strSpp=strSpp, gfbdat=gfbdat)
+#browser();return()
 
 	### Consolidate PacHarv3 records (fid=c(1:5))
 	ph3cat = as.data.frame(t(apply(ph3dat,1,function(x){
@@ -860,7 +896,7 @@ buildCatch=function(dbdat, strSpp="396", dfld="TRF",
 	cobra=htab[as.character(1951:1952),mm,"Obradovich","max",gear,"ORF"]
 	major.gear=t(apply(apply(cobra,2:3,sum),1,function(x){if (all(x==0)) rep(0,length(x)) else x/sum(x)}))
 
-	### lambda – Proportion of early catch by general gear type
+	### lambda - Proportion of early catch by general gear type
 	lambda=array(0,dim=c(dim(major.gear),2),dimnames=list(major=mm,gear=gear,epoch=epoch))
 	lambda[,"h&l","prewar"]=0.9; lambda[,"trap","prewar"]=0; lambda[,"trawl","prewar"]=0.1
 	lambda[rownames(major.gear),colnames(major.gear),"postwar"]=major.gear
@@ -1013,7 +1049,7 @@ buildCatch=function(dbdat, strSpp="396", dfld="TRF",
 	sppnew[,,"10"] = apply(sppnew[,,as.character(fid)],1:2,sum)  ### sum across fisheries
 	data(pmfc,envir=penv())
 	pmfc.major=pmfc$major; names(pmfc.major)=pmfc$gmu
-	if (!exists("gfbcat")) getFile(gfbcat,path=dpath)  # data.frame
+	#if (!exists("gfbcat")) getFile(gfbcat,path=dpath)  # data.frame
 	gfbcat = as.matrix(gfbcat)
 	names(dimnames(gfbcat))=c("year","major")
 	dimnames(gfbcat)$major = pmfc.major[dimnames(gfbcat)$major]
@@ -1119,7 +1155,7 @@ plotData =function(x,description="something",
 #browser();return()
 	if (eps) 
 		postscript(file=paste(plotname,".eps",sep = ""), width=6.5,height=5,paper="special")
-	else if (wmf)
+	else if (wmf && .Platform$OS.type=="windows")
 		do.call("win.metafile",list(filename=paste(plotname,".wmf",sep = ""), width=6.5,height=5))
 	expandGraph()
 	if (!is.null(dots$type) && dots$type=="bars") {
@@ -1174,7 +1210,8 @@ plotRecon = function(dat=cat440rec, strSpp="440", major=c(1,3:9), fidout=10,
 		plotname=paste(strSpp,"-Catch-History",ifelse(i==10,0,i),"-",fidnam[i],"-years(",min(years),"-",max(years),")-major(",paste(major,collapse=""),")",sep="")
 		if (eps)       postscript(file=paste(plotname,".eps",sep=""),width=PIN[1],height=PIN[2],fonts="mono",paper="special")
 		else if (png)  png(filename=paste(plotname,".png",sep=""),width=round(100*PIN[1]),height=round(100*PIN[2]))
-		else if (wmf)  do.call("win.metafile",list(filename=paste(plotname,".wmf",sep=""),width=PIN[1],height=PIN[2]))
+		else if (wmf && .Platform$OS.type=="windows")
+			do.call("win.metafile",list(filename=paste(plotname,".wmf",sep=""),width=PIN[1],height=PIN[2]))
 		else  resetGraph()
 		expandGraph(mar=c(3,3.2,.5,.5),mgp=c(1.6,.5,0))
 		barplot(idat,col=0,space=0,xaxt="n",yaxt="n",xaxs="i")
@@ -1194,26 +1231,27 @@ plotRecon = function(dat=cat440rec, strSpp="440", major=c(1,3:9), fidout=10,
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotRecon
 
 
-#surveyCatch----------------------------2014-09-24
+#surveyCatch----------------------------2015-02-19
 # Query GFBioSQL for survey catch and summarise
 # catches by year and PMFC area.
 #-----------------------------------------------RH
-surveyCatch = function(strSpp="396", spath=.getSpath())
+surveyCatch = function(strSpp="396", spath=.getSpath(), gfbdat=NULL)
 {
-	if (isThere("PBSdat")) rm(PBSdat) ### remove from current environment
-	### GFBioSQL catch summary for surveys
-	getData("gfb_rcatORF.sql",dbName="GFBioSQL",strSpp=strSpp,path=spath,,tenv=penv())
-	assign("gfbdat",PBSdat)
-	write.csv(gfbdat,paste0("Survey-Records-",strSpp,".csv"),row.names=F)
-	#rcat = gfbdat # used for summaries by SSID and SVID down below
-	rm(PBSdat) ### just to be safe
-	
+	if (is.null(gfbdat)) {
+		if (isThere("PBSdat")) rm(PBSdat) ### remove from current environment
+		### GFBioSQL catch summary for surveys
+		getData("gfb_rcatORF.sql",dbName="GFBioSQL",strSpp=strSpp,path=spath,,tenv=penv())
+		assign("gfbdat",PBSdat)
+		save("gfbdat",file="gfbdat.rda")
+		write.csv(gfbdat,paste0("Survey-Records-",strSpp,".csv"),row.names=FALSE)
+		#rcat = gfbdat # used for summaries by SSID and SVID down below
+		rm(PBSdat) ### just to be safe
+	}
 	gfbtab = crossTab(gfbdat,c("year","major"),"catKg") # summarise catch (t)
 	gfbcat = as.data.frame(gfbtab[,-1])
 	row.names(gfbcat) = gfbtab[,1]
 	data(pmfc,package="PBSdata",envir=penv())
 	names(gfbcat) = pmfc[names(gfbcat),"gmu"]
-	save("gfbdat",file="gfbdat.rda")
 	save("gfbcat",file="gfbcat.rda")
 	write.csv(gfbcat,file=paste0("Catch-Survey-",strSpp,"-(Year-PMFC).csv"))
 
@@ -1295,6 +1333,6 @@ surveyCatch = function(strSpp="396", spath=.getSpath())
 
 # YYR - Yelloweye Rockfish
 #x=buildCatch(sql=TRUE,strSpp="442",dfld="ORF",only.sql=TRUE)
-#x=buildCatch(cat442dat,strSpp="442",dfld="ORF",eps=TRUE,major=3:9,diagnostics=FALSE)
+#x=buildCatch(cat442dat,strSpp="442",dfld="ORF",eps=TRUE,major=3:9,diagnostics=FALSE,dpath="./CR150218/")
 #y=surveyCatch(strSpp="442")
 
