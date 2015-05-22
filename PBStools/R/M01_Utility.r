@@ -247,7 +247,7 @@ flagIt = function(a, b, A=45, r=0.2, n=1, ...){
 	return(invisible(list(xvec=xvec,yvec=yvec,rads=rads,x0=x0,x=x,y=y)))
 }
 
-#getData--------------------------------2014-10-07
+#getData--------------------------------2015-05-22
 # Get data from a variety of sources.
 # subQtrust -- if user has no DFO trusted credentials:
 #   if (type=="SQL"), c(trusted, uid, pwd) copied to `subQtrust'
@@ -467,12 +467,15 @@ getData <-function(fqtName, dbName="PacHarvest", strSpp=NULL, server=NULL,
 			if (is.null(surveyid)) {
 				SQLdat = .getSQLdata(dbName="GFBioSQL", qtName=NULL, strSQL="select SURVEY_ID FROM SURVEY", 
 					server="SVBCPBSGFIIS", type="SQL", trusted=subQtrust[["trusted"]], uid=subQtrust[["uid"]], pwd=subQtrust[["pwd"]])
-				surveyid = SQLdat[[1]] }
+				surveyid = sort(unique(SQLdat[[1]]))
+			}
+			strQ <- gsub(pattern="@surveyid",replacement=paste(surveyid,collapse=","),x=strQ)
+#browser();return()
 			if (is.null(survserid)) {
 				SQLdat = .getSQLdata(dbName="GFBioSQL", qtName=NULL, strSQL="select SURVEY_SERIES_ID FROM SURVEY", 
 					server="SVBCPBSGFIIS", type="SQL", trusted=subQtrust[["trusted"]], uid=subQtrust[["uid"]], pwd=subQtrust[["pwd"]])
-				survserid = sort(unique(SQLdat[[1]])) }
-#browser();return()
+				survserid = sort(unique(SQLdat[[1]]))
+			}
 			strQ <- gsub(pattern="@survserid",replacement=paste(survserid,collapse=","),x=strQ)
 			strQ <- gsub(pattern="@fisheryid",replacement=ifelse(is.null(fisheryid),
 				paste(0:9,collapse=","), paste(fisheryid,collapse=",") ),x=strQ)
@@ -533,12 +536,14 @@ getData <-function(fqtName, dbName="PacHarvest", strSpp=NULL, server=NULL,
 .getSQLdata <- function(dbName, qtName=NULL, strSQL=NULL,
      server=NULL, type="SQL", trusted=TRUE, uid="", pwd="", 
      rownum=0,...) {
+	#if (!require(RODBC, quietly=TRUE)) stop("`RODBC` package is required")
 	### Use forward slashes "/" for server otherwise the translation
 	### is too dependent on the number of times "\" is escaped
 	if (is.null(server) || server=="") {
 		#getFile(".PBSserver", path = .getSpath(),tenv=penv())
 		server = .PBSserver[1]; type="SQL" }
 	driver= list(...)$driver
+#browser();return()
 	if (type=="SQL") driver=ifelse(is.null(driver),"SQL Server",driver)
 	#else if (type=="ORA") driver="Oracle ODBC Driver" ### "Microsoft ODBC for Oracle"
 	else if (type=="ORA") driver=ifelse(is.null(driver),"Oracle in OraClient11g_home1",driver)
@@ -585,6 +590,7 @@ getData <-function(fqtName, dbName="PacHarvest", strSpp=NULL, server=NULL,
 # Retrieves a data frame from MDB query or table
 #-----------------------------------------------RH
 .getMDBdata <- function(mdbTable, qtName, rownum=0, ...) {
+	#if (!require(RODBC, quietly=TRUE)) stop("`RODBC` package is required")
 	cnn <- odbcConnectAccess(access.file=mdbTable)
 	query=paste("SELECT ",ifelse(rownum>0,paste("TOP",rownum),"")," * FROM ",qtName,sep="")
 	dat <- sqlQuery(cnn, query, ...)
@@ -596,6 +602,7 @@ getData <-function(fqtName, dbName="PacHarvest", strSpp=NULL, server=NULL,
 #-----------------------------------------------RH
 .getDBFdata <- function(dbfTable, qtName, ...) {
 	if (nchar(qtName)>8) showError("Rename DBF file using 8 or less characters")
+	#if (!require(RODBC, quietly=TRUE)) stop("`RODBC` package is required")
 	cnn <- odbcConnectDbase(dbf.file=dbfTable)
 	dat <- sqlQuery(cnn, paste("SELECT * FROM",qtName),...)
 	odbcClose(cnn)
@@ -609,12 +616,12 @@ getData <-function(fqtName, dbName="PacHarvest", strSpp=NULL, server=NULL,
 # Set TypeGuessRows DWORD Value to 0 (scan all rows). OK for most small tables.
 #-----------------------------------------------RH
 .getXLSdata <- function(xlsTable, qtName, ...) {
+	#if (!require(RODBC, quietly=TRUE)) stop("`RODBC` package is required")
 	cnn <- odbcConnectExcel(xls.file=xlsTable)
 	dat <- sqlFetch(cnn, qtName, ...)
 	odbcClose(cnn)
 	return(dat) };
 #====================================getData group
-
 
 #getFile--------------------------------2013-01-25
 # If a user specifies a source environment (senv)

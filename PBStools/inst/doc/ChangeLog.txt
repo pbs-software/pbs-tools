@@ -6,8 +6,14 @@ Authors: RH  = Rowan Haigh
          JTS = Jon T. Schnute
 ------------------------------
 
-1.27  2015-03-06
-  - Changed calls from `require' to `requireNamespace' as requested by CRAN's R check. Fixed othe R check issues. (RH 150306)
+1.27  2015-05-22
+  • Debugged `requestAges' and `getData' to properly get survey IDs and to calculate number of otoliths when trips contain multiple samples. (RH 150522)
+  • Modified extensively the function `buildCatch' to deal with issues arising from concerns by trawl and hook & line industry personnel that fish Yelloweye Outside. (TH 150521)
+	- Introduced depth-stratified estimates of gamma and delta;
+	- Allowed for exclusion of ORF landings by the foreign and Langara Spit experimental fisheries;
+	- Modified queries to include depth information.
+  • Changed the call to six modern catch databases to use the single table `GF_MERGED_CATCH' from the `GFFOS' database via `fos_mcatORF.sql'. (RH 150414)
+  • Changed calls from `require' to `requireNamespace' as requested by CRAN's R check. Fixed othe R check issues. (RH 150306)
   - Revised functions and documentation for `weightBio' and `getCatch'. (RH 150305)
   - Added queries `gfb_iphc_skate_data.sql' and `gfb_iphc_set_data.sql' to get IPHC skate ad set data (2003-present) for AME to develop an IPHC survey index series. (RH 150304)
 	Note that 13 fields in the longline skate and set data overlap and there are 4 fields in each set that are not found in the other:

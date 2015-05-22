@@ -7,11 +7,11 @@
 #  texArray       Flatten and format an array for latex output.
 #===============================================================================
 
-#collectFigs----------------------------2013-07-19
+#collectFigs----------------------------2015-04-14
 #  Collect encapsulated postscript figures into one document.
 #-----------------------------------------------RH
 collectFigs = function(path=".", ext="eps", is.fnum=FALSE, 
-   fout="collectFigs", width=6, capskip=0, pattern=NULL) {
+   fout="collectFigs", width=6, capskip=0, pattern=NULL, show.output=FALSE) {
 	cwd = getwd(); on.exit(setwd(cwd))
 	suffix = paste("\\.",ext,"$",sep="")
 	figs = list.files(path=path,pattern=suffix)
@@ -22,7 +22,7 @@ collectFigs = function(path=".", ext="eps", is.fnum=FALSE,
 	fnam = fcap = gsub(suffix,"",figs)
 	if (is.fnum)  # figure number already in file name
 		fcap = sub("-",": ",fcap) 
-	fcap = gsub("-"," ",fcap)
+	#fcap = gsub("-"," ",fcap)
 	fcap = gsub("&","\\\\&",fcap)
 
 	# Start build tex file
@@ -58,15 +58,15 @@ collectFigs = function(path=".", ext="eps", is.fnum=FALSE,
 	debris = list.files(pattern=paste("^",fout,sep=""))
 	debris = setdiff(debris,paste(fout,".tex",sep=""))
 	if (length(debris)>0)  file.remove(debris)
-	err = shell(cmd=paste("latex ",fout,".tex",sep=""),wait=TRUE)
+	err = system(command=paste("latex ",fout,".tex",sep=""),wait=TRUE,show.output.on.console=show.output)
 		if (err>0) stop("===== First latex call failed =====")
-	err = shell(cmd=paste("latex ",fout,".tex",sep=""),wait=TRUE)
+	err = system(command=paste("latex ",fout,".tex",sep=""),wait=TRUE,show.output.on.console=show.output)
 		if (err>0) stop("===== Second latex call failed =====")
 	# Create a ps file from a dvi file
-	err = shell(cmd=paste("dvips ",fout,".dvi",sep=""),wait=TRUE)
+	err = system(command=paste("dvips ",fout,".dvi",sep=""),wait=TRUE,show.output.on.console=show.output)
 		if (err>0) stop("===== The dvips call failed =====")
 	# Create a pdf from a ps file
-	err = shell(cmd=paste("ps2pdf ",fout,".ps",sep=""),wait=TRUE)
+	err = system(command=paste("ps2pdf ",fout,".ps",sep=""),wait=TRUE,show.output.on.console=show.output)
 		if (err>0) stop("===== The ps2pdf call failed =====")
 	invisible(ftex)
 }

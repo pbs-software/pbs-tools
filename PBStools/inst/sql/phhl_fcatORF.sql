@@ -1,10 +1,12 @@
--- Last modified by RH (2014-10-15)
+-- Last modified by RH (2015-04-23)
 -- PacHarvHL query for fisherlog catch (KG) of a target species, POP, and ORF (other rockfish)
 -- fisheryid: 2=Halibut, 3=Sablefish, 4=Schdeule II, 5=ZN, 
 --            6=Sablefish+ZN, 7=Sablefish+Halibut, 8=Dogfish, 9=Lingcod
 
 DECLARE @logtype VARCHAR(10)
 SET @logtype   = @logtypeval
+
+-- declare a temp table for discard codes... (see fos_vcatORF.sql for an example)
 
 SET NOCOUNT ON -- prevents timeout errors
 
@@ -29,7 +31,14 @@ SELECT
     WHEN 3 THEN '3C'
     WHEN 1 THEN '4B'
     ELSE '' END,
-  'fdep' = FE.Fishing_Depth,
+  'fdep' = CASE
+    WHEN FE.Fishing_Depth IS NOT NULL AND FE.Fishing_Depth>=0 THEN FE.Fishing_Depth
+    WHEN FE.OBFL_START_BOTTOM_DTH IS NOT NULL AND FE.OBFL_START_BOTTOM_DTH>=0 AND
+         FE.OBFL_END_BOTTOM_DTH IS NOT NULL AND FE.OBFL_END_BOTTOM_DTH>=0 THEN
+         (FE.OBFL_START_BOTTOM_DTH + FE.OBFL_END_BOTTOM_DTH) / 2.
+    WHEN FE.OBFL_START_BOTTOM_DTH IS NOT NULL AND FE.OBFL_START_BOTTOM_DTH>=0 THEN FE.OBFL_START_BOTTOM_DTH
+    WHEN FE.OBFL_END_BOTTOM_DTH IS NOT NULL AND FE.OBFL_END_BOTTOM_DTH>=0 THEN FE.OBFL_END_BOTTOM_DTH
+    ELSE 0. END,
   'eff'  = FE.Duration
   INTO #Events
   FROM
@@ -37,7 +46,6 @@ SELECT
     B3_Fishing_Events FE ON
     FE.OBFL_HAIL_IN_NO = VH.vrec_hail_in_no
   WHERE
-    --FE.OBFL_LOG_TYPE_CDE LIKE @logtype
     FE.OBFL_LOG_TYPE_CDE IN (@logtype)
 
 -- Compile the catch stats for target, POP, ORF, TAR
@@ -45,32 +53,32 @@ SELECT
   E.hail_in, E.set_no, E.log, E.fid, E.lic, 
   E.date, E.major, E.minor, E.locality, E.region, E.fdep, E.eff,
   'landed' = Sum( CASE 
-    WHEN FC.OBFL_SPECIES_CDE IN (@sppcode) AND FC.OBFL_CATCH_UTILIZATION_CDE NOT IN (4,6,9,22,23,24,27,28)
+    WHEN FC.OBFL_SPECIES_CDE IN (@sppcode) AND FC.OBFL_CATCH_UTILIZATION_CDE NOT IN (5,6,8,9,22,23,24,27,28)
     THEN IsNull(FC.OBFL_EST_WEIGHT,0)
     ELSE 0 END ),
   'discard' = Sum( CASE 
-    WHEN FC.OBFL_SPECIES_CDE IN (@sppcode) AND FC.OBFL_CATCH_UTILIZATION_CDE IN (4,6,9,22,23,24,27,28) -- discard codes
+    WHEN FC.OBFL_SPECIES_CDE IN (@sppcode) AND FC.OBFL_CATCH_UTILIZATION_CDE IN (5,6,8,9,22,23,24,27,28) -- discard codes
     THEN IsNull(FC.OBFL_EST_WEIGHT,0)
     ELSE 0 END ),
   'POP' = Sum( CASE 
-    WHEN FC.OBFL_SPECIES_CDE IN ('396') AND FC.OBFL_CATCH_UTILIZATION_CDE NOT IN (4,6,9,22,23,24,27,28)
+    WHEN FC.OBFL_SPECIES_CDE IN ('396') AND FC.OBFL_CATCH_UTILIZATION_CDE NOT IN (5,6,8,9,22,23,24,27,28)
     THEN IsNull(FC.OBFL_EST_WEIGHT,0)
     ELSE 0 END ),
   'ORF' = Sum(   -- all rockfish other than POP
-    CASE WHEN FC.OBFL_SPECIES_CDE IN (@orfcode) AND FC.OBFL_CATCH_UTILIZATION_CDE NOT IN (4,6,9,22,23,24,27,28)
+    CASE WHEN FC.OBFL_SPECIES_CDE IN (@orfcode) AND FC.OBFL_CATCH_UTILIZATION_CDE NOT IN (5,6,8,9,22,23,24,27,28)
     THEN IsNull(FC.OBFL_EST_WEIGHT,0)
     -- CASE WHEN FC.OBFL_SPECIES_CDE <> '396' AND S.Rockfish=1 THEN IsNull(FC.OBFL_EST_WEIGHT,0)
     ELSE 0 END ),
   'TAR' = Sum( CASE  -- target landings reference for discard calculations
-    WHEN E.fid=2 AND FC.OBFL_SPECIES_CDE IN ('614') AND FC.OBFL_CATCH_UTILIZATION_CDE NOT IN (4,6,9,22,23,24,27,28)
+    WHEN E.fid=2 AND FC.OBFL_SPECIES_CDE IN ('614') AND FC.OBFL_CATCH_UTILIZATION_CDE NOT IN (5,6,8,9,22,23,24,27,28)
       THEN IsNull(FC.OBFL_EST_WEIGHT,0)
-    WHEN E.fid=4 AND E.lic='D' AND FC.OBFL_SPECIES_CDE IN ('042','044') AND FC.OBFL_CATCH_UTILIZATION_CDE NOT IN (4,6,9,22,23,24,27,28)
+    WHEN E.fid=4 AND E.lic='D' AND FC.OBFL_SPECIES_CDE IN ('042','044') AND FC.OBFL_CATCH_UTILIZATION_CDE NOT IN (5,6,8,9,22,23,24,27,28)
       THEN IsNull(FC.OBFL_EST_WEIGHT,0)
-    WHEN E.fid=4 AND E.lic='L' AND FC.OBFL_SPECIES_CDE IN ('467') AND FC.OBFL_CATCH_UTILIZATION_CDE NOT IN (4,6,9,22,23,24,27,28)
+    WHEN E.fid=4 AND E.lic='L' AND FC.OBFL_SPECIES_CDE IN ('467') AND FC.OBFL_CATCH_UTILIZATION_CDE NOT IN (5,6,8,9,22,23,24,27,28)
       THEN IsNull(FC.OBFL_EST_WEIGHT,0)
-    WHEN E.fid=4 AND E.lic NOT IN ('D','L') AND FC.OBFL_SPECIES_CDE IN ('042','044','467') AND FC.OBFL_CATCH_UTILIZATION_CDE NOT IN (4,6,9,22,23,24,27,28)
+    WHEN E.fid=4 AND E.lic NOT IN ('D','L') AND FC.OBFL_SPECIES_CDE IN ('042','044','467') AND FC.OBFL_CATCH_UTILIZATION_CDE NOT IN (5,6,8,9,22,23,24,27,28)
       THEN IsNull(FC.OBFL_EST_WEIGHT,0)
-    WHEN E.fid=5 AND FC.OBFL_SPECIES_CDE IN ('424','407','431','433','442') AND FC.OBFL_CATCH_UTILIZATION_CDE NOT IN (4,6,9,22,23,24,27,28)
+    WHEN E.fid=5 AND FC.OBFL_SPECIES_CDE IN ('424','407','431','433','442') AND FC.OBFL_CATCH_UTILIZATION_CDE NOT IN (5,6,8,9,22,23,24,27,28)
       THEN IsNull(FC.OBFL_EST_WEIGHT,0)
     ELSE 0 END)
   INTO #Catch
@@ -114,6 +122,7 @@ WHERE
 -- SELECT * FROM #Catch
 -- getData("phhl_fcatORF.sql","PacHarvHL",strSpp="424",fisheryid=4)
 -- getData("phhl_fcatORF.sql","PacHarvHL",strSpp="424",fisheryid=5)
--- qu("phhl_fcatORF.sql",dbName="PacHarvHL",strSpp="418",logtype="FISHERLOG") ### fisherlog catch
+-- qu("phhl_fcatORF.sql",dbName="PacHarvHL",strSpp="418",logtype="FISHERLOG") --- fisherlog catch
+-- qu("phhl_fcatORF.sql",dbName="PacHarvHL",strSpp="442",logtype="OBSERVRLOG",fisheryid=4) --- observer log catch
 
 
