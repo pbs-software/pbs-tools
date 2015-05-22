@@ -2437,8 +2437,7 @@ reportCatchAge <- function(prefix="pop", path=getwd(), hnam=NULL, ...) {
 	invisible() }
 #-----------------------------------reportCatchAge
 
-
-#requestAges----------------------------2014-01-27
+#requestAges----------------------------2015-05-22
 # Determine which otoliths to sample for ageing requests.
 # Note: only have to use sql=TRUE once for each species 
 # using any year before querying a group of years.
@@ -2460,6 +2459,7 @@ requestAges=function(strSpp, nage=500, year=2012,
 			showMessage(paste("There are only",sum(round(a,0)),"otoliths available.\n",
 				"All were selected."),as.is=TRUE)
 			return(a) }
+		target = sum(b)                 # total number desired
 		za = b>a                        # restricted to available
 		if (any(za)) {
 			aN = rep(0,length(a))        # adjusted N
@@ -2468,6 +2468,7 @@ requestAges=function(strSpp, nage=500, year=2012,
 			pb = b[!za]/sum(b[!za])      # proportion of non-restricted desired
 			sN = sum(b[za]-a[za])        # surplus desired
 			aN[!za] = aN[!za] + pb*sN    # allocate surplus
+#browser();return()
 			adjustN(a,aN)                # re-iterate
 		}
 		else return(b) }
@@ -2528,8 +2529,11 @@ requestAges=function(strSpp, nage=500, year=2012,
 		samp$NOTO=samp$Moto; samp$NBBA=samp$Mbba; samp$NAGE=samp$Mage}  # males
 	else if (all(sex==2)){
 		samp$NOTO=samp$Foto; samp$NBBA=samp$Fbba; samp$NAGE=samp$Fage}  # females
-	else if (all(sex==c(1,2))) {
-		samp$NOTO=samp$Moto+samp$Foto; samp$NBBA=samp$Mbba+samp$Fbba; samp$NAGE=samp$Mage+samp$Fage } # males and females only
+	else if (all(sex==c(1,2))) {  # males and females only
+		samp$NOTO = ifelse((samp$Moto+samp$Foto)==0,samp$Noto,samp$Moto+samp$Foto)
+		samp$NBBA = ifelse((samp$Mbba+samp$Fbba)==0,samp$Nbba,samp$Mbba+samp$Fbba)
+		samp$NAGE = ifelse((samp$Mage+samp$Fage)==0,samp$Nage,samp$Mage+samp$Fage)
+	}
 	else {
 		samp$NOTO=samp$Noto; samp$NBBA=samp$Nbba; samp$NAGE=samp$Nage; sex=0:3}  # all available
 	samp$year=convFY(samp$tdate,1)
@@ -2564,10 +2568,10 @@ requestAges=function(strSpp, nage=500, year=2012,
 	for (i in intersect(c("TID_gfb","TID_fos"),ls())) {
 		eval(parse(text=paste("samp=biteData(samp,",i,")",sep="")))
 		eval(parse(text=paste("catch=biteData(catch,",i,")",sep="")))
-		areas = list(major=.su(samp$major)) # if TID is specified, areas become defined in terms of PMFCs
+		areas = list(major=.su(samp$major))              # if TID is specified, areas become defined in terms of PMFCs
 	}
 #browser();return()
-	spooler(areas,"area",samp) # creates a column called 'area' and populates based on argument 'areas'.
+	spooler(areas,"area",samp)                          # creates a column called 'area' and populates based on argument 'areas'.
 	spooler(areas,"area",catch)
 	area=sort(unique(samp$area))
 	for (i in intersect(c("year","area","ttype"),ls())) {
@@ -2589,9 +2593,9 @@ requestAges=function(strSpp, nage=500, year=2012,
 	if (any(z0)) catch$tid[z0] = catch$hail[z0]
 
 	if (type=="C") {
-		Clev = convYP(catch$date)                             # all periods in commercial catch
+		Clev = convYP(catch$date)                        # all periods in commercial catch
 		clev = names(Clev)
-		Slev = convYP(samp$tdate)                             # periods in sample data
+		Slev = convYP(samp$tdate)                        # periods in sample data
 		slev= names(Slev)
 	}
 	if (type=="S") {
@@ -2602,14 +2606,15 @@ requestAges=function(strSpp, nage=500, year=2012,
 		#group=catch$GC; names(group)=cid
 		#samp$GC=group[sid]; samp=samp[!is.na(samp$GC),] #get rid of unidentified groups (strata)
 		Clev  = paste(catch$year,pad0(catch$GC,3),sep="-") # all groups in survey catch
-		Slev  = paste(samp$year,pad0(samp$GC,3),sep="-")   # groups in sample data
+		Slev  = paste(samp$year,pad0(samp$GC,3),sep="-") # groups in sample data
 		clev=names(Clev)=Clev; slev=names(Slev)=Slev
 	}
 	samp$lev = slev
-	ulev = sort(unique(samp$lev))                            # unique periods in sample data
+	ulev = sort(unique(samp$lev))                       # unique periods in sample data
 	C=sapply(split(catch$catKg,clev),sum)/ifelse(type=="C",1000.,1.) # total catch at each level
 	S=is.element(names(C),ulev)
 
+	### Quarterly catch (t)
 	CC   = moveCat(C,S)
 	if (round(sum(C),5)!=round(sum(CC),5)) showError("Catch shuffling amongst periods not successful")
 	ccat = catch$catKg; names(ccat) = catch$tid         # trip catch of species
@@ -2624,7 +2629,9 @@ requestAges=function(strSpp, nage=500, year=2012,
 	samp[["Tcat"]] = qC[samp$lev]                       # populate the data frame with period/strata catches
 	samp[["Pcat"]] = pC[samp$lev]                       # populate the data frame with period/strata catches
 	samp[["Ncat"]] = nC[samp$lev]                       # populate the data frame with period/strata catches
+#browser();return()
 
+	### Trip catch (t)
 	samp$ncat=samp$pcat=samp$tcat=rep(0,nrow(samp))     # prepare blank columns in data frame
 	for (i in names(qC)) {                              # loop through periods (quarters)
 		zc = is.element(names(qcat[[i]]),samp$tid)       # index the trips from the comm.catch in each period
@@ -2634,34 +2641,42 @@ requestAges=function(strSpp, nage=500, year=2012,
 			tcat = split(samp$catchKg[zl],samp$tid[zl])
 			tcat = sapply(tcat,sum)
 		} else {
-			tcat = qcat[[i]][zc]                             # can contain multiple catches per trip due to areas
+			tcat = qcat[[i]][zc]                          # can contain multiple catches per trip due to areas
 			zt = samp$tid[zl] %in% names(tcat)
 			if (!all(zt)) {
 				xcat=samp$catchKg[zl][!zt]; names(xcat)=samp$tid[zl][!zt]
 				tcat = c(tcat,xcat)
 			}
-#if (i=="2009-02") {browser();return()}
-			tcat = sapply(split(tcat,names(tcat)),sum)       # rollup area catches
+			tcat = sapply(split(tcat,names(tcat)),sum)/ifelse(type=="C",1000.,1.)  # rollup area catches
 		}
 		pcat = tcat/sum(tcat)                            # proportion of period catch taken by each trip
 		ncat = pcat*nC[i]                                # allocate fish to age based on proportion of trip catch in period
+		
 		zs   = is.element(samp$tid,names(tcat))          # index the trips from the sample data in each period
 		zss  = as.character(samp$tid[zs])                # tid can have more than one sample
+		nsamp = sapply(split(samp$NOTO[zs],zss),length)  # determine how many samples per trip
+		if (any(nsamp>1)){
+			pcat = pcat/nsamp
+			ncat = ncat/nsamp
+		}
 		samp[["tcat"]][zs] = tcat[zss]                   # populate the data frame with trip catches
 		samp[["pcat"]][zs] = pcat[zss]                   # populate the data frame with trip catch proportions
 		samp[["ncat"]][zs] = ncat[zss]                   # populate the data frame with number of specimens to age
+#if (i=="2012-02") {browser();return()}
 	}
 	packList(c("Sdat","catch","C"),"PBStool",tenv=.PBStoolEnv)
-	samp$ncat  = nage*samp$ncat/sum(samp$ncat)                   # Force the calculated otoliths back to user's desired number (nage)
-	samp$nwant = round(pmax(1,samp$ncat))                        # No. otoliths wanted by the selection algorithm (inflated when many values are <1)
-	samp$ndone = samp$NBBA                                       # No. otoliths broken & burnt
-	samp$nfree = round(samp$NOTO-samp$NAGE)                      # No. of free/available otoliths not yet processed
+#browser();return()
+	samp$ncat  = nage*samp$ncat/sum(samp$ncat)          # Force the calculated otoliths back to user's desired number (nage)
+	samp$nwant = round(pmax(1,samp$ncat))               # No. otoliths wanted by the selection algorithm (inflated when many values are <1)
+	samp$ndone = samp$NBBA                              # No. otoliths broken & burnt
+	samp$nfree = round(samp$NOTO-samp$NAGE)             # No. of free/available otoliths not yet processed
 	samp$ncalc = pmin(pmax(0,samp$nwant-samp$ndone),samp$nfree)  # No. of otoliths calculated to satisfy Nwant given constraint of Nfree
 	nardwuar = samp$ncalc > 0 & !is.na(samp$ncalc)
 	samp$nallo = rep(0,nrow(samp))
-#browser();return()
 	
-	samp$nallo[nardwuar] = adjustN(a=samp$nfree[nardwuar],b=samp$ncat[nardwuar])    # No. of otoliths allocated to satisfy user's initial request, given constraint of Nfree
+	samp$nallo = adjustN(a=samp$nfree,b=samp$ncat)      # No. of otoliths allocated to satisfy user's initial request, given constraint of Nfree
+	#samp$nallo[nardwuar] = adjustN(a=samp$nfree[nardwuar],b=samp$ncat[nardwuar])    # No. of otoliths allocated to satisfy user's initial request, given constraint of Nfree
+
 	# Adjust for many small n-values (<1) using median rather than 0.5 as the determinant of 0 vs.1
 	zsmall = samp$nallo[nardwuar] < 1.
 	if (any(zsmall)) {
@@ -2736,11 +2751,11 @@ requestAges=function(strSpp, nage=500, year=2012,
 	SNdat = PBSdat
 	Opool=split(paste(PBSdat$storageID,PBSdat$SN,sep="."),PBSdat$SID)
 #browser();return()
-	Npool = Opool[.su(as.character(sampuse$SID))]             # Pool relevant to the n field
-	Nsamp = sapply(split(sampuse[,nfld],sampuse$SID),sum)     # Number of otoliths to sample from the pool (sapply-split: because samples might be split across trays)
+	Npool = Opool[.su(as.character(sampuse$SID))]       # Pool relevant to the n field
+	Nsamp = sapply(split(sampuse[,nfld],sampuse$SID),sum) # Number of otoliths to sample from the pool (sapply-split: because samples might be split across trays)
 	Nsamp = Nsamp[order(names(Nsamp))]
 	#names(sid)=tid
-	Osamp = sapply(usid,function(x,O,N){                       # Otoliths sampled randomly from pool
+	Osamp = sapply(usid,function(x,O,N){                # Otoliths sampled randomly from pool
 		xx=as.character(x); oo=O[[xx]]; nn=N[xx]; olen=length(oo)
 		if (nn==0) return(NA)
 		else if (olen==1) return(oo)
@@ -2851,9 +2866,8 @@ requestAges=function(strSpp, nage=500, year=2012,
 			catnip("E,",paste(TRAY[5,],collapse=","),"\n",file=fnam,append=TRUE)
 			catnip("Last serial,",max(lastSerial),"\n\n",file=fnam,append=TRUE)
 	}	}
-	invisible(sampuse) }
+	invisible(samp) }
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~requestAges
-
 
 #simBSR---------------------------------2011-06-14
 # Simulate Blackspotted Rockfish biological data.
