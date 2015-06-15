@@ -1058,6 +1058,13 @@ buildCatch=function(
 				gamma[,1]=matrix(c(0,0.2596484,0.2291434,0.1595966,0.1024332,0.1238941,0.239913,0.0029361),ncol=1)
 		}
 	}
+	### Explicit gamma ratios for YYR/ORF (5ABCD) from the Halibut fishery provided by Chris Sporer (PHMA) and deemed appropriate by their caucus
+	if (strSpp=="442") {
+		if (orfSpp=="ORF") {
+			gamma.phma = matrix(c(0.25,0.25,0.375,0.3),nrow=4,ncol=1,dimnames=list(major=5:8,fid=2))
+			gamma[row.names(gamma.phma),colnames(gamma.phma)] = gamma.phma
+		}
+	}
 	write.csv(gamma,file=paste0("./tables/gamma-",strSpp,"_",orfSpp,"-",numdate,".csv")) #;return(gamma)
 #browser();return()
 
@@ -1895,6 +1902,7 @@ zapSeamounts = function(dat) {
 
 #so("collectFigs.r")
 #source(paste0(cwd,"collectFigs.r"))
+
 # YYR - Yelloweye Rockfish
 #x=buildCatch(sql=TRUE,strSpp="442",orfSpp="ORF",only.sql=TRUE,useGFM=TRUE)
 #x=buildCatch(cat442dat,strSpp="442",orfSpp="ORF",eps=TRUE,major=c(3:9),useGFM=TRUE,useYR1=c(1979,1982,1996,1982,1982),strat.gamma=T,strat.delta=T,useFF=F,useLS=F) #) # start using the new merged catch table
