@@ -1230,7 +1230,7 @@ runCCA = function(fnam="nage394", hnam=NULL, ioenv=.GlobalEnv, ...)
 	if (wmf && .Platform$OS.type=="windows")
 		do.call("win.metafile",list(filename=paste(plotname,".wmf",sep=""),
 		width=6.5,height=switch(nmods,5,8,9.5),pointsize=12))
-	if (names(dev.cur())=="null device") { windows(width=6,height=8); frame() }
+	if (names(dev.cur())=="null device") { do.call("windows",list(width=6,height=8)); frame() }
 	din = par()$din; xmarg = 1*c(0.5,0.6)
 	ymarg = switch(nmods,max(1,par()$din[2]-4),2,1); ymarg = c(.6,.4)*ymarg
 	ymarg = max(.8,par()$din[2]-4*nmods); ymarg = c(.7,.3)*ymarg

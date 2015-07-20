@@ -23,3 +23,9 @@ import(
   PBSmapping, PBSmodelling, PBSdata, RODBC
 )
 
+# writeLines(imports_for_undefined_globals(txt))
+importFrom("graphics", "abline", "arrows", "axis", "barplot", "box", "boxplot", "frame", "hist", "legend", "lines", "mtext", "pairs", "par", "plot", "points", "polygon", "rect", "text")
+importFrom("grDevices", "col2rgb", "colorRamp", "colorRampPalette", "contourLines", "dev.cur", "dev.off", "extendrange", "jpeg", "pdf", "png", "postscript", "rgb", "savePlot")
+importFrom("stats", "AIC", "approx", "contr.sum", "hat", "lm", "lowess", "median", "na.omit", "nls", "predict.lm", "qnorm", "qqnorm", "quantile", "rbinom", "residuals", "rgamma", "rnorm", "rstudent", "runif", "sd", "start", "var")
+importFrom("utils", "flush.console", "write.csv", "write.table")
+

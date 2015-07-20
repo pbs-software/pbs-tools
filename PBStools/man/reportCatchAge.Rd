@@ -70,7 +70,7 @@ reportCatchAge(prefix="pop", path=getwd(), hnam=NULL, ...)
   Schnute, J.T., Haigh, R., Krishka, B.A., and Starr, P. (2001) Pacific
   ocean perch assessment for the west coast of Canada in 2001. \emph{Canadian
   Science Advisory Secretariat, Research Document} \bold{2001/138}. 90 pp.\cr
-  \url{http://www.dfo-mpo.gc.ca/csas/Csas/publications/ResDocs-DocRech/2001/2001_138_e.htm}
+  \url{http://www.dfo-mpo.gc.ca/csas-sccs/Publications/ResDocs-DocRech/2001/2001_138-eng.htm}
 }
 \seealso{
   \code{\link{plotProp}}, \code{\link{pop.age}} \cr

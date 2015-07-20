@@ -11,13 +11,13 @@
   (iii) estimated discards of \code{RRF} using discard ratios from observer logs.
 }
 \usage{
-buildCatch( dbdat, strSpp="396", dfld="TRF", 
-   major=c(1,3:9), fidout=c(1:5,10), refyrs=1997:2005,
-   refarea=NULL, refgear=NULL, useYR1=NULL, useBG=FALSE, useSM=FALSE,
-   saveinfo=TRUE, eps=FALSE, png=FALSE, wmf=FALSE,
-   sql=FALSE, only.sql=FALSE, spath=.getSpath(), dpath=getwd(),
-   uid=Sys.info()["user"], pwd=uid,
-   reconstruct=TRUE, diagnostics=TRUE, ioenv=.GlobalEnv, ... )
+buildCatch(dbdat, strSpp="396", orfSpp="TRF", major=c(1,3:9), fidout=c(1:5,10),
+   refyrs=1997:2005, refarea=NULL, refgear=NULL, useYR1=NULL, useBG=FALSE,
+   useSM=FALSE, useGFM=TRUE, useLS=TRUE, useFF=TRUE, strat.gamma=FALSE,
+   strat.delta=FALSE, depbin=100, reconstruct=TRUE, diagnostics=FALSE,
+   ascii.tables=TRUE, saveinfo=TRUE, sql=FALSE, only.sql=FALSE, sql.force=FALSE,
+   spath=.getSpath(), dpath=getwd(), eps=FALSE, png=FALSE, wmf=FALSE,
+   uid=Sys.info()["user"], pwd=uid, ioenv=.GlobalEnv, ...)
 }
 \arguments{
   \item{dbdat}{a list object of landing records from eight DFO databases: \cr
@@ -31,7 +31,7 @@ buildCatch( dbdat, strSpp="396", dfld="TRF",
     (7) \code{phfdat} = \code{PacHarvHL} (fisherlog records Sched II & ZN) on the \code{SVBCPBSGFIIS} SQL server, \cr
     (8) \code{fosdat} = \code{GFFOS} (all fisheries) on the \code{GFSH} Oracle server.}
   \item{strSpp}{character string specifying the Hart species code for the rockfish to be reconstructed (\dQuote{RRF}).}
-  \item{dfld}{field name of the denominator in the ratio of RRF 
+  \item{orfSpp}{field name of the denominator in the ratio of RRF 
     to other rockfish (usually \dQuote{ORF} but can be \dQuote{TRF} if total rockfish is more appropriate).}
   \item{major}{major PMFC area codes in which catch is reconstructed (usually \code{c(1,3:9)}).}
   \item{fidout}{fishery IDs for which an annual series barplot stacked by PMFC area is produced: \cr
@@ -51,22 +51,12 @@ buildCatch( dbdat, strSpp="396", dfld="TRF",
     instead of reconstructing landings from reference ratios of RRF to TRF or ORF.}
   \item{useBG}{logical: if \code{TRUE}, then sample from the binomial-gamma to estimate ratios RRF/ORF or RRF/TRF.}
   \item{useSM}{logical: if \code{TRUE}, use catch data from seamounts.}
-  \item{saveinfo}{logical: if \code{TRUE}, save various data objects created within the function
-    to a list object called \code{PBStool}; setting to \code{FALSE} may speed reconstruction.}
-  \item{eps}{logical: if \code{TRUE} send the figures to \code{.eps} files.}
-  \item{png}{logical: if \code{TRUE} send the figures to \code{.png} files.}
-  \item{wmf}{logical: if \code{TRUE} send the figures to \code{.wmf} files.}
-  \item{sql}{logical: if \code{TRUE} query the databases, otherwise load 
-    catch records from binary files saved from a previous query run (saves time;
-    also see \code{dpath}).}
-  \item{only.sql}{logical: if \code{TRUE}, then only execute the queries to
-    download catch data from remote databases.}
-  \item{spath}{character: path to SQL code files -- defaults to the \code{sql} 
-    directory under \cr \code{system.file(package="PBStools")}.}
-  \item{dpath}{character: path to database (\code{.rda} files) already queried;
-    useful when user wants to build alternative catch histories (in another 
-    directory) using data already queried.}
-  \item{uid, pwd}{user ID and password for Oracle DB account authentication.}
+  \item{useGFM}{logical: if \code{TRUE}, use the latest official GF_MERGED_CATCH table (compiled by Norm and Kate).}
+  \item{useLS}{logical: if \code{TRUE}, use ORF catch from Langara Spit in \code{gamma} calculation.}
+  \item{useFF}{logical: if \code{TRUE}, use ORF catch from the foreign (not CA/US) fleet.}
+  \item{strat.gamma}{logical: if \code{TRUE}, stratify the RRF numerator and ORF denominator by depth zone and weight by frequency of RRF landed > 0.}
+  \item{strat.delta}{logical: if \code{TRUE}, stratify the discard numerator and denominator by depth zone and weight by frequency of RRF discards > 0.}
+  \item{depbin}{integer: depth (m) bin to use for \code{strat.gamma} and \code{strat.delta}.}
   \item{reconstruct}{logical: if \code{TRUE} (default) complete the 
     reconstruction as previously, \cr  if \code{FALSE}, terminate the code once
     the modern catch array has been compiled and saved (to a binary file 
@@ -76,8 +66,26 @@ buildCatch( dbdat, strSpp="396", dfld="TRF",
     \code{000} is the automatic number) to a subdirectory called \code{CRdiag}.
     Subsequent calls to \code{buildCatch} remove all \code{pD...} files created
     by previous builds.}
+  \item{ascii.tables}{logical: if \code{TRUE}, create ASCII ouput tables and dump them into the subdirectory called `tables'.}
+  \item{saveinfo}{logical: if \code{TRUE}, save various data objects created within the function
+    to a list object called \code{PBStool}; setting to \code{FALSE} may speed reconstruction.}
+  \item{sql}{logical: if \code{TRUE} query the databases, otherwise load 
+    catch records from binary files saved from a previous query run (saves time;
+    also see \code{dpath}).}
+  \item{only.sql}{logical: if \code{TRUE}, then only execute the queries to
+    download catch data from remote databases.}
+  \item{sql.force}{logical: if \code{TRUE}, force the SQL query even if the data file (.rda) exists.}
+  \item{spath}{character: path to SQL code files -- defaults to the \code{sql} 
+    directory under \cr \code{system.file(package="PBStools")}.}
+  \item{dpath}{character: path to database (\code{.rda} files) already queried;
+    useful when user wants to build alternative catch histories (in another 
+    directory) using data already queried.}
+  \item{eps}{logical: if \code{TRUE} send the figures to \code{.eps} files.}
+  \item{png}{logical: if \code{TRUE} send the figures to \code{.png} files.}
+  \item{wmf}{logical: if \code{TRUE} send the figures to \code{.wmf} files.}
+  \item{uid, pwd}{user ID and password for Oracle DB account authentication.}
   \item{ioenv}{input/output environment for function input data and output results.}
-  \item{...}{additional ad hoc arguments to deal with PJS issues.}
+  \item{...}{additional \emph{ad hoc} arguments to deal with PJS issues.}
 }
 \details{
   For the time period 1918--1949, landings of other rockfish (ORF) and total rockfish (TRF) 
@@ -142,7 +150,7 @@ buildCatch( dbdat, strSpp="396", dfld="TRF",
   The SQL server \code{SVBCPBSGFIIS} does not require a password if the server recognises 
   a user's DFO login credentials.
 }
-\section{Yellowtail Rockfish}{
+\section{Yellowtail Rockfish 2014}{
   Rob Kronlund and Paul Starr met on Aug 12, 2014 with Brian Mose who made several important
   points regarding reconstruction results from \code{buildCatch}:
 
@@ -190,7 +198,19 @@ buildCatch( dbdat, strSpp="396", dfld="TRF",
                  \tab replace the first column of the matrix \code{gamma} with one of the columns above.\cr
   \code{outside} \tab logical: if \code{TRUE}, \cr
                  \tab use the column above marked \sQuote{Outside}, otherwise use \sQuote{All}; \cr
-                 \tab the denominator TRF or ORF is determined by the argument \code{dfld}.
+                 \tab the denominator TRF or ORF is determined by the argument \code{orfSpp}.
+  }
+}
+\section{Yelloweye Rockfish 2015}{
+  On May 14th, 2015, the YYR working group held a workshop on catch 
+  reconstruction with members from the five fishery sectors.
+  
+  Changes to the catch reconstruction from this meeting and subsequent follow-ups include:
+  \itemize{
+    \item Merging of six DFO database sources into one catch table called \code{GF_MERGED_CATCH};
+    \item Development of a depth-stratified \code{gamma} (RRF landed/ORF landed) and delta (RRF discarded/TAR landed);
+    \item Optional exclusion of ORF landings by the foreign and Langara Spit experimental fisheries;
+    \item Optional exclusion of seamount catch records.
   }
 }
 \seealso{

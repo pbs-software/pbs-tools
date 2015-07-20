@@ -43,10 +43,6 @@ dlisp(...)
   transferring, which is useful when the object is a function that the
   user may wish to call, for example, \code{dtcall(myfunc)()}.
 }
-\references{
-  CRAN Repository Policy: 
-  \url{http://cran.r-project.org/web/packages/policies.html}
-}
 \author{
   Rowan Haigh, Pacific Biological Station, Fisheries and Oceans Canada, Nanaimo BC
 }

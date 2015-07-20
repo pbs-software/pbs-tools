@@ -1259,7 +1259,7 @@ estOgive <- function(dat=pop.age, strSpp="", method=c("dblnorm"),
 			if (s==1 && i==1) {
 				if (eps) postscript(paste0(onam,".eps"),width=figdim[1],height=figdim[2],paper="special")
 				else if (wmf && .Platform$OS.type=="windows")
-					win.metafile(paste0(onam,".wmf"),width=figdim[1],height=figdim[2])
+					do.call("win.metafile",list(filename=paste0(onam,".wmf"),width=figdim[1],height=figdim[2]))
 				else if (png) png(filename=paste0(onam,".png"),width=figdim[1]*100,height=figdim[2]*100,res=100)
 				else resetGraph()
 				expandGraph(mfrow=c(1,1),mai=c(.6,.7,0.05,0.05),omi=c(0,0,0,0),las=1,lwd=1)
@@ -1669,7 +1669,7 @@ mapMaturity <- function (dat=pop.age, strSpp="", type="map",
 		if (devnam=="eps") postscript(paste(fnam,".eps",sep=""), width=8.5, height=hpage, paper="special")
 		else if (devnam=="pix") png(paste(fnam,".png",sep=""),units="in",res=300,width=8.5,height=hpage)
 		else if (devnam=="wmf" && .Platform$OS.type=="windows")
-			win.metafile(paste(fnam,".wmf",sep=""), width=8.5, height=hpage)
+			do.call("win.metafile",list(filename=paste(fnam,".wmf",sep=""), width=8.5, height=hpage))
 		else resetGraph()
 		par(mfrow=c(nsex,1),mar=c(0,4,0,0),oma=c(0,0,2,0))
 
@@ -3473,8 +3473,8 @@ weightBio = function(adat, cdat, sunit="TID", sweight="catch",
 #browser();return()
 				png(paste(plotname,".png",sep=""),width=width,height=height,units="in",res=ppi,pointsize=pnt) }
 			else if (devnam=="wmf" && .Platform$OS.type=="windows")
-				win.metafile(paste(plotname,".wmf",sep=""), width=switch(nlay,shortside,longside,longside),
-				height=switch(nlay,longside,shortside,longside))
+				do.call("win.metafile",list(filename=paste(plotname,".wmf",sep=""), width=switch(nlay,shortside,longside,longside),
+				height=switch(nlay,longside,shortside,longside)))
 			else resetGraph()
 			expandGraph(mfrow=c(rows,cols),mar=c(2.25,2.5,0.25,0.5),mgp=c(1.5,0.25,0),oma=c(1,1,1,1))
 			clrs=rep(clrs,length(sex))[1:length(sex)]
