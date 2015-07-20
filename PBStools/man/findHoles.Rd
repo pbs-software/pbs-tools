@@ -4,12 +4,12 @@
   Find Holes in Parent Polygons
 }
 \description{
-  Identifies polygons within polygons of the same PID, and transforms them 
-  into holes, if they are not already set that way. Also weeds out small polygons
-  before the hole identification routine runs.
+  Calculate a unique ID for each polygon using PID and SID, and then identify
+  solid polygons (without holes) and polygons enclosing other polygons to create
+  swiss cheese polygons (polygons with holes).
 }
 \usage{
-findHoles(polyset, minVerts = 10)
+findHoles(polyset, minVerts=25)
 }
 \arguments{
   \item{polyset}{a valid PBSmapping PolySet.}
@@ -17,16 +17,18 @@ findHoles(polyset, minVerts = 10)
     before the algorithm identifying holes begins.}
 }
 \details{
-  This function can become very slow when there are hundreds of polygons.
-  Hence the argument \code{minVerts} can reduce the number of candidate polygons.
-  Ideally, \code{findHoles} should be programmed in C.
+  This function use an outer product routine and is faster than it was 
+  previously; however, it can become slow when there are hundreds of polygons.
+  
+  The original PID and SID values are reset but can be inferred from an 
+  added field called \code{ID} which comprises the original PID and SID.
 }
 \value{
-  A PolySet that identifies parents and holes based on the position 
+  A PolySet that identifies solids and holes based on the position 
   of polygons within polygons.
 }
 \author{
-  Rowan Haigh, Pacific Biological Station, Nanaimo BC
+  Rowan Haigh, Pacific Biological Station, Fisheries and Oceans Canada, Nanaimo BC
 }
 \seealso{
   \code{\link{calcHabitat}} \cr

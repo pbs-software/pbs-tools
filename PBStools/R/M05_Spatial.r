@@ -382,60 +382,95 @@ clarify <- function(dat, cell=c(0.1,0.075), nG=8,
 	invisible() }
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~clarify
 
-#findHoles------------------------------2012-09-24
+#findHoles------------------------------2015-07-17
 # Find holes and place them under correct parents.
 #-----------------------------------------------RH
-findHoles = function(polyset, minVerts=10) {
-	newpoly = list()
-	pid = sort(unique(polyset$PID))
-	for (i in pid) {
-		ipoly = polyset[is.element(polyset$PID,i),]
-		ipoly$PID = ipoly$SID
-		ipoly$SID = rep(1, nrow(ipoly))
-		ilst = split(1:nrow(ipoly),ipoly$PID)
-		ilen = rev(sort(sapply(ilst,length)))
-		if(!any(ilen>minVerts)) next
-		ilen = ilen[ilen>=minVerts]
-		olst = ilst[names(ilen)]
-		ivec = unlist(olst,use.names=FALSE)
-		opoly = ipoly[ivec,]
-		ihole = rep(0,length(ilen)); names(ihole)=names(ilen)
-		parents = NULL               # keep track of identified parents
-		for (a in names(ihole)) {    # potential hole
-			zsmall=is.element(opoly$PID,a)
-			for (b in names(ihole)) { # potential parent
-				if  (b==a || ihole[b]>0) next
-				zbig=is.element(opoly$PID,b)
-				is.in = sp::point.in.polygon(opoly$X[zsmall],opoly$Y[zsmall],opoly$X[zbig],opoly$Y[zbig]) # is a in b ?
-				if (all(is.in>0)) {
-					ihole[a] = as.numeric(b)          # reverse the role of a & b so that every potential hole a shows its parent b
-					next }
-			}
-			if (ihole[a]==0) parents = c(parents,a) # potential hole is in fact a parent
-		}
-		bigs = ihole[ihole==0]
-		inew = list()
-		for (j in names(bigs)) {
-			jj = as.numeric(j)
-			inew = rbind(inew,opoly[is.element(opoly$PID,jj),])
-			holes = ihole[ihole==jj]
-			if (length(holes)==0) next
-			for (k in names(holes)) {
-				kk = as.numeric(k)
-				hole = opoly[is.element(opoly$PID,kk),]
-				if (hole$POS[1]==1)
-					hole$POS = rev(hole$POS)
-				inew = rbind(inew,hole)
+findHoles = function(polyset, minVerts=25) 
+{
+	on.exit(gc(verbose=FALSE))
+	findHope = function(X,Y,Z){
+		znames = names(Z)
+		slop = array(FALSE,dim=c(length(X),length(Y)),dimnames=list(hole=znames,solid=znames))
+		for (i in X){
+			for(j in Y) {
+				slop[i,j] = all(sp::point.in.polygon(
+					point.x=Z[[i]]["X"][,1],
+					point.y=Z[[i]]["Y"][,1],
+					pol.x=Z[[j]]["X"][,1],
+					pol.y=Z[[j]]["Y"][,1]))
 			}
 		}
-		inew$SID = inew$PID
-		inew$PID = rep(i,nrow(inew))
-		newpoly = rbind(newpoly,inew)
-		attr(newpoly,paste("holes_in_",i,sep="")) = ihole
+		return(slop)
 	}
-	return(newpoly) }
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~findHoles
+	polyset$ID = .createIDs(polyset,c("PID","SID"))
+	poly0 = split( polyset , f = polyset$ID )
+	bad   = sapply(poly0,nrow) < minVerts
+	polyG = poly0[!bad]
+	npoly = length(polyG)
 
+	#cents = sapply(polyG,function(x){calcCentroid(x,rollup=1)[c("X","Y")]},simplify=F)
+	HinP = findHope(X=1:npoly, Y=1:npoly, Z=polyG)
+
+	## Cols = solids, Rows = holes
+	sumC  = apply(HinP,2,sum)
+	sumR  = apply(HinP,1,sum)
+	allGs = names(polyG)
+
+	## Sum(Cols)==1 and Sum(Rows)==1 are essentially solid land masses (no holes)
+	solidGs = allGs[sumC==1 & sumR==1]
+
+	## Sum(Cols)>1 are polygons with holes in them -- definite solids with holes
+	swissGs = allGs[sumC>1]
+	if (length(swissGs) > 0) {
+		warnout = options()$warn; options(warn=-1)  ## temporarily disable warnings from calcArea
+		#swissAs = rev(sort(sapply(polyG[swissGs],function(x){calcArea(x,rollup=2)$area})))
+		swissAs = rev(sort(sapply(polyG[swissGs],function(x){abs(sum(calcArea(x)$area))})))
+		options(warn=warnout)
+		swissGs = names(swissAs)
+		holes   = sapply(swissGs,function(x){setdiff(allGs[HinP[,x]],x)},simplify=FALSE)
+		aholes  = character() ## keep track of holes assigned (sometimes swissGs can be holes in larger swissGs)
+	}
+
+	## Start building the final polygon
+	rnames = names(polyset)
+	if (length(solidGs) > 0) {
+		## https://stat.ethz.ch/pipermail/r-help/2008-March/156337.html
+		lis   = lapply(polyG[solidGs], "names<-", value = rnames)
+#browser();return()
+		slis  = lapply(1:length(lis),function(x){xlis=lis[[x]]; xlis$PID=x; xlis$SID=1; xlis})
+		pid   = length(slis)
+		polyF = do.call("rbind", lapply(slis, data.frame, stringsAsFactors = FALSE))
+	} else {
+		pid = 0
+		polyF = list()
+	}
+	
+	if (length(swissGs) > 0) {
+		## Go through swiss cheese polygons and put the holes in the right place
+		for (i in names(holes)) {
+			if (any(i %in% aholes)) next  # skip smaller swissGs within larger swissGs
+			pid = pid + 1; sid = 1
+			iswiss = polyG[[i]]
+			iswiss$PID = pid
+			iswiss$SID = sid
+			aholes = c(aholes,holes[[i]]) # keep track of holes assigned to a swissG
+			for (j in holes[[i]]) {
+				sid = sid + 1
+				jhole = polyG[[j]]
+				jhole$PID = pid
+				jhole$SID = sid
+				if (all(diff(jhole$POS)>0))
+					jhole$POS = rev(jhole$POS) ## reverse POS means hole in PBSmapping
+				iswiss = rbind(iswiss,jhole)
+			}
+			polyF = rbind(polyF,iswiss)
+		}
+	}
+	polyF = as.PolySet(polyF,projection="LL")
+#browser();return
+	return(polyF) 
+}
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~findHoles
 
 #plotGMA--------------------------------2013-02-26
 # Plot the Groundfish Management Areas

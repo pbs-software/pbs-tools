@@ -6,6 +6,10 @@ Authors: RH  = Rowan Haigh
          JTS = Jon T. Schnute
 ------------------------------
 
+1.28  2015-07-17
+  • Updated function `findHoles' to be be more efficient and faster than previously using outer product concept. (RH 150717)
+  • Updated query `pht_fdep.sql' to get depths from all fisheries in GFFOS. (RH 150716)
+
 1.27  2015-06-15
   • Last update to Google Code before transferring pbs-tools repository to GitHub. (RH 150615)
   • Updated `buildCatch' to incorporate PHMA's estimate of gamma for Yelloweye Rockfish caught by the Halibut fishery in 5ABCD. (RH 150615)
