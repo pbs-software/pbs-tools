@@ -1,4 +1,4 @@
--- Sales slip catch summary from PacHarv3 (HARVEST_V2_0) (RH: 2012-11-22)
+-- Sales slip catch summary from PacHarv3 (HARVEST_V2_0) (RH: 2015-06-16)
 SELECT * FROM
 (SELECT
   (CASE  -- in order of priority
@@ -8,7 +8,7 @@ SELECT * FROM
     WHEN TAR.GR_GEAR_CDE IN (86,90,91,92,97,98) THEN 3                -- originally TRAP (experimental, salmon, longline, shrimp & prawn, crab)
     WHEN TAR.GR_GEAR_CDE IN (30,31)  THEN 4                           -- originally TROLL (salmon, freezer salmon)
     WHEN TAR.GR_GEAR_CDE IN (36) OR (TAR.GR_GEAR_CDE IN (40) AND 
-         TAR.Target NOT IN ('614','455')) THEN 5                      -- originally JIG (hand non-salmon) and LONGLINE
+         TAR.Target NOT IN ('614','455','044','467')) THEN 5          -- originally JIG (hand non-salmon) and LONGLINE
     WHEN TAR.Target IN ('455') THEN 3                                 -- Sablefish
     WHEN TAR.Target IN ('044','467') THEN 4                           -- Dogfish-Lingcod
     WHEN TAR.Target IN ('388','437','405','440','394','403','451','453','401','442','424','407','431','433') THEN 5  -- ZN TAC species
@@ -51,7 +51,7 @@ SELECT * FROM
 
 FROM
   @table.CATCH_SUMMARY CS INNER JOIN
-  (SELECT  FA.CATSUM_ID,
+  (SELECT  FA.CATSUM_ID,   -- 703,475 unique IDs
    (CASE
     WHEN FA.SFA_MSFA_MIDSIZE_FA_CDE IN (13,14,15,16,17,18,19,20,28,29,9200,9791,9792,9793,9794) OR
         (FA.SFA_MSFA_MIDSIZE_FA_CDE IN (11) AND FA.SFA_SMALL_FA_CDE BETWEEN 3 AND 10) OR
@@ -106,28 +106,23 @@ FROM
   FROM
   @table.CATCH_SUMMARY FA) AREA ON
     CS.CATSUM_ID = AREA.CATSUM_ID INNER JOIN
-  (SELECT
-    TC.STP_SPER_YR,
-    TC.STP_SPER_PERIOD_CDE,
-    TC.SFA_MSFA_MIDSIZE_FA_CDE,
-    TC.SFA_SMALL_FA_CDE,
-    TC.GR_GEAR_CDE,
-    NVL(TC.SP_SPECIES_CDE,'UNK') AS Target,
-    TC.MaxCat
-  FROM
-    (SELECT
+  -- Revised Target species code now returns 192,206 unique partitions (vs. 193,512 previously -> potential inflation)
+  -- See Frank Schmitt answer (110601) -- http://stackoverflow.com/questions/6198320/how-to-use-partition-by-or-max
+  (SELECT * FROM (
+    SELECT 
       YC.STP_SPER_YR,
       YC.STP_SPER_PERIOD_CDE,
       YC.SFA_MSFA_MIDSIZE_FA_CDE,
       YC.SFA_SMALL_FA_CDE,
       YC.GR_GEAR_CDE,
-      YC.SP_SPECIES_CDE,
+      YC.SP_SPECIES_CDE AS Target,
       YC.CATSUM_ROUND_LBS_WT,
-      MAX(YC.CATSUM_ROUND_LBS_WT) OVER 
-      (PARTITION BY YC.STP_SPER_YR, YC.STP_SPER_PERIOD_CDE, YC.SFA_MSFA_MIDSIZE_FA_CDE, YC.SFA_SMALL_FA_CDE, YC.GR_GEAR_CDE) MaxCat
+      ROW_NUMBER()
+    OVER
+      (PARTITION BY YC.STP_SPER_YR, YC.STP_SPER_PERIOD_CDE, YC.SFA_MSFA_MIDSIZE_FA_CDE, YC.SFA_SMALL_FA_CDE, YC.GR_GEAR_CDE ORDER BY YC.CATSUM_ROUND_LBS_WT DESC) RN
     FROM
-      @table.CATCH_SUMMARY YC) TC
-  WHERE TC.CATSUM_ROUND_LBS_WT = TC.MaxCat) TAR ON                -- target species
+      @table.CATCH_SUMMARY YC )
+    WHERE RN = 1 ) TAR ON
 
     CS.STP_SPER_YR = TAR.STP_SPER_YR AND
     CS.STP_SPER_PERIOD_CDE = TAR.STP_SPER_PERIOD_CDE AND
@@ -135,8 +130,8 @@ FROM
     CS.SFA_SMALL_FA_CDE = TAR.SFA_SMALL_FA_CDE AND
     CS.GR_GEAR_CDE = TAR.GR_GEAR_CDE
 WHERE
-  CS.CU_CATCH_UTLZTN_CDE NOT IN (6,22,23,24,27,28) AND
-  CS.CATSUM_FISHERY_TYPE_CDE IN ('01','02')
+  --CS.CU_CATCH_UTLZTN_CDE NOT IN (6,22,23,24,27,28) AND
+  CS.CATSUM_FISHERY_TYPE_CDE IN ('01','02','03','25') -- 1=commercial, 2=test, 3=research, 25=recreational
 GROUP BY
   (CASE 
     WHEN TAR.GR_GEAR_CDE IN (50,51,57,59) THEN 1                      -- originally TRAWL (otter bottom, midwater, shrimp, herring)
@@ -145,9 +140,9 @@ GROUP BY
     WHEN TAR.GR_GEAR_CDE IN (86,90,91,92,97,98) THEN 3                -- originally TRAP (experimental, salmon, longline, shrimp & prawn, crab)
     WHEN TAR.GR_GEAR_CDE IN (30,31)  THEN 4                           -- originally TROLL (salmon, freezer salmon)
     WHEN TAR.GR_GEAR_CDE IN (36) OR (TAR.GR_GEAR_CDE IN (40) AND 
-         TAR.Target NOT IN ('614','455')) THEN 5                      -- originally JIG (hand non-salmon) and LONGLINE
+         TAR.Target NOT IN ('614','455','044','467')) THEN 5          -- originally JIG (hand non-salmon) and LONGLINE
     WHEN TAR.Target IN ('455') THEN 3                                 -- Sablefish
-    WHEN TAR.Target IN ('044','467') THEN 4                           -- Dogfish-Lingcod
+    WHEN TAR.Target IN ('044','467') THEN 4                           -- Dogfish-Lingcod	
     WHEN TAR.Target IN ('388','437','405','440','394','403','451','453','401','442','424','407','431','433') THEN 5  -- ZN TAC species
     ELSE 0 END),
   CS.STP_SPER_YR,

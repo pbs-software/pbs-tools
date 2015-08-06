@@ -6,7 +6,10 @@ Authors: RH  = Rowan Haigh
          JTS = Jon T. Schnute
 ------------------------------
 
-1.28  2015-07-23
+1.28  2015-08-06
+  • Set explicit `semantic' version in DESCRIPTION file ; JTS insists. (RH 150806)
+  • Modified function `buildCatch' for assessment of Shortspine Thornyhead. (RH 150806)
+  • Forgot to add modified queries `fos_mcatORF.sql' (2015-06-11) and `ph3_fcatORF.sql' (2015-06-16). (RH 150806)
   • Updated (and debugged) the SQL query `gfb_bio.sql', which had choked on species 442 aka Yelloweye Rockfish. (RH 150723)
   • Fixed items flagged by Rcheck (defunct URLs, missing `zapSeamounts.Rd', imports_for_undefined_globals, codoc mismatches between Code and Docs) (RH 150720)
   • Updated function `findHoles' to be be more efficient and faster than previously using outer product concept. (RH 150717)

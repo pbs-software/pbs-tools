@@ -14,7 +14,7 @@
 buildCatch(dbdat, strSpp="396", orfSpp="TRF", major=c(1,3:9), fidout=c(1:5,10),
    refyrs=1997:2005, refarea=NULL, refgear=NULL, useYR1=NULL, useBG=FALSE,
    useSM=FALSE, useGFM=TRUE, useLS=TRUE, useFF=TRUE, strat.gamma=FALSE,
-   strat.delta=FALSE, depbin=100, reconstruct=TRUE, diagnostics=FALSE,
+   strat.delta=FALSE, depbin=100, sensitivity=NULL, reconstruct=TRUE, diagnostics=FALSE,
    ascii.tables=TRUE, saveinfo=TRUE, sql=FALSE, only.sql=FALSE, sql.force=FALSE,
    spath=.getSpath(), dpath=getwd(), eps=FALSE, png=FALSE, wmf=FALSE,
    uid=Sys.info()["user"], pwd=uid, ioenv=.GlobalEnv, ...)
@@ -57,6 +57,7 @@ buildCatch(dbdat, strSpp="396", orfSpp="TRF", major=c(1,3:9), fidout=c(1:5,10),
   \item{strat.gamma}{logical: if \code{TRUE}, stratify the RRF numerator and ORF denominator by depth zone and weight by frequency of RRF landed > 0.}
   \item{strat.delta}{logical: if \code{TRUE}, stratify the discard numerator and denominator by depth zone and weight by frequency of RRF discards > 0.}
   \item{depbin}{integer: depth (m) bin to use for \code{strat.gamma} and \code{strat.delta}.}
+  \item{sensitivity}{character: sensitivity name for tweaking decisions}
   \item{reconstruct}{logical: if \code{TRUE} (default) complete the 
     reconstruction as previously, \cr  if \code{FALSE}, terminate the code once
     the modern catch array has been compiled and saved (to a binary file 
