@@ -1705,23 +1705,22 @@ plotData =function(x,description="something",
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotData
 
 
-#plotRecon------------------------------2015-05-06
+#plotRecon------------------------------2015-12-01
 # Plot reconstructed catch using barplots stacked by PMFC area.
 #-----------------------------------------------RH
 plotRecon = function(dat=cat440rec, strSpp="440", major=c(1,3:9), fidout=10, 
    years=1918:2015, xlab=seq(1920,2050,5), yrs.rec=attributes(dat)$yrs.rec,
-   shade=TRUE, shadier=FALSE,
+   shade=FALSE, shadier=FALSE,
    eps=FALSE, png=FALSE, wmf=FALSE, PIN=c(10,5))
 {
 	if (dev.cur()>1) { oldpar=par(no.readonly=TRUE); on.exit(par(oldpar)) }
 	fshnam=c("trawl","h&l","trap",rep("h&l",6),"combined") #general category vector
 	fidnam=c("trawl","halibut","sablefish","sched2","zn","sabzn","sabhal","dogfish","lingcod","combined")
-	fidlab=c("Trawl","Halibut","Sablefish","Dogfish-Lingcod","H&L Rockfish","Sablefish + ZN",
-		"Sablefish + Halibut","Dogfish","Lingcod","Combined Fisheries")
+	fidlab=c(paste0(c("Trawl","Halibut","Sablefish","Dogfish-Lingcod","H&L Rockfish","Sablefish + ZN",
+		"Sablefish + Halibut","Dogfish","Lingcod")," Fishery"),"All Commercial Groundfish Fisheries")
 	yy  = as.character(years)
 	if (length(dim(dat))==2) ydat = dat[yy,,drop=FALSE]
 	else                     ydat = dat[yy,,,drop=FALSE]
-#browser();return()
 	MAJ = as.character(1:10); mm=as.character(major)
 	clrs = rep("gainsboro",length(MAJ)); names(clrs)=MAJ
 	clrs[as.character(c(1,3:9))]=c("moccasin","blue","lightblue","yellow","orange","red","seagreen","lightgreen")
@@ -1734,7 +1733,7 @@ plotRecon = function(dat=cat440rec, strSpp="440", major=c(1,3:9), fidout=10,
 		else idat = t(ydat[,mm,ii])
 		plotname=paste(strSpp,"-Catch-History",ifelse(i==10,0,i),"-",fidnam[i],"-years(",min(years),"-",max(years),")-major(",paste(major,collapse=""),")",sep="")
 		if (eps)       postscript(file=paste(plotname,".eps",sep=""),width=PIN[1],height=PIN[2],fonts="mono",paper="special")
-		else if (png)  png(filename=paste(plotname,".png",sep=""),width=round(100*PIN[1]),height=round(100*PIN[2]))
+		else if (png)  png(filename=paste(plotname,".png",sep=""),width=round(100*PIN[1]),height=round(100*PIN[2]),pointsize=16)
 		else if (wmf && .Platform$OS.type=="windows")
 			do.call("win.metafile",list(filename=paste(plotname,".wmf",sep=""),width=PIN[1],height=PIN[2]))
 		else  resetGraph()
@@ -1748,22 +1747,35 @@ plotRecon = function(dat=cat440rec, strSpp="440", major=c(1,3:9), fidout=10,
 			if (nanc>1)
 				polygon(panc[c(1,1,nanc,nanc)]+c(-1,-1,0,0),c(0,rep(par()$usr[4],2),0),border=FALSE,col=ifelse(shadier,"aliceblue","#FAFCFF"))
 
+			getRange = function(xyrs) {
+				if (is.list(xyrs))
+					xrange = max(sapply(xyrs,function(x){min(x)})) : min(sapply(xyrs,function(x){max(x)}))
+				else
+					xrange = xyrs
+				#return((xrec))
+				return(as.numeric(xrange))
+			}
 			## shade the reconstructed years
-			if (ii=="10")
-				xrec = max(sapply(yrs.rec,function(x){min(x[["xrec"]])})) : min(sapply(yrs.rec,function(x){max(x[["xrec"]])}))
-			else
-				xrec = yrs.rec[[ii]][["xrec"]]
+			if (ii=="10") {
+				xrec = list()
+				for (j in 1:5)
+					xrec[[j]] = getRange(yrs.rec[[as.character(j)]][["xrec"]])
+				xrec = getRange(xrec)
+			} else
+				xrec = getRange(yrs.rec[[ii]][["xrec"]])
 			prec = (1:length(yy))[is.element(yy,xrec)]
 			nrec = length(prec)
 			if (nrec>1)
 				polygon(prec[c(1,1,nrec,nrec)]+c(-1,-1,0,0),c(0,rep(par()$usr[4],2),0),border=FALSE,col=ifelse(shadier,"lightyellow","ivory"))
-#browser();return()
 
 			## shade the reported years
-			if (ii=="10")
-				xrep = max(sapply(yrs.rec,function(x){min(x[["xrep"]])})) : min(sapply(yrs.rec,function(x){max(x[["xrep"]])}))
-			else
-				xrep = yrs.rec[[ii]][["xrep"]]
+			if (ii=="10") {
+				xrep = list()
+				for (j in 1:5)
+					xrep[[j]] = getRange(yrs.rec[[as.character(j)]][["xrep"]])
+				xrep = getRange(xrep)
+			} else
+				xrep = getRange(yrs.rec[[ii]][["xrep"]])
 			prep = (1:length(yy))[is.element(yy,xrep)]
 			nrep = length(prep)
 			if (nrep>1)
@@ -1784,12 +1796,11 @@ plotRecon = function(dat=cat440rec, strSpp="440", major=c(1,3:9), fidout=10,
 		segments(rep(0,length(hlin)),hlin,rep(par()$usr[2],length(hlin)),hlin,col="gainsboro")
 		barplot(idat,col=mclrs,space=0,cex.names=.8,mgp=c(1.5,.5,0),xaxt="n",xaxs="i",border="grey30",add=TRUE,lwd=0.3)
 		axis(1,at=xpos[zlab],labels=XLAB[zlab],tick=FALSE,las=3,mgp=c(0,.2,0),cex.axis=.8,hadj=1)
-		legend("topleft",fill=rev(mclrs),legend=paste("PMFC",rev(pmfc[mm,"gmu"])),
-			bty="n", cex=0.8, xjust=0, inset=c(.04,.20))
 		addLabel(.05,.95,species[strSpp,"latin"],font=3,cex=1,col="#400080",adj=0)
 		addLabel(.05,.90,fidlab[i],cex=1.2,col="#400080",adj=0)
 		mtext("Year",side=1,line=1.75,cex=1.2)
 		mtext("Catch (t)",side=2,line=2,cex=1.3)
+		addStrip(.05, 0.85, col=mclrs, lab=pmfc[mm,"gmu"]) ## RH: New function addition (151201)
 		if (eps|png|wmf) dev.off()
 	}
 }
@@ -1894,10 +1905,12 @@ zapSeamounts = function(dat) {
 #x=buildCatch(cat412orf,strSpp="412",wmf=T,pwd=c(pwd1,pwd2))
 
 # ARF - Arrowtooth Flounder
-#x=buildCatch(sql=TRUE,strSpp="602",orfSpp="TRF",only.sql=TRUE)
+#x=buildCatch(sql=TRUE,strSpp="602",orfSpp="TRF",only.sql=TRUE,useGFM=TRUE)
 #y=surveyCatch(strSpp="602")
 
 # LST - Longspine thornyhead
+#x=buildCatch(sql=TRUE,strSpp="453",orfSpp="ORF",only.sql=TRUE,useGFM=TRUE)
+#x=buildCatch(cat453dat,strSpp="453",orfSpp="ORF",eps=TRUE,major=c(3:9),useGFM=TRUE, useYR1=c(1996),strat.gamma=F,strat.delta=F,useFF=F,useLS=T) ##~Run04 (for SST)
 #x=buildCatch(sql=T,strSpp="453",wmf=T,pwd=c(pwd1,pwd2))
 #x=buildCatch(cat453orf,strSpp="453",wmf=T)
 
@@ -1929,6 +1942,12 @@ zapSeamounts = function(dat) {
 #x=buildCatch(sql=TRUE,strSpp="451",orfSpp="ORF",only.sql=TRUE,useGFM=TRUE,sql.force=F)
 #x=buildCatch(cat451dat,strSpp="451",orfSpp="ORF",eps=TRUE,major=c(3:9),useGFM=TRUE, useYR1=c(1983,1986,2000,1987,1986),strat.gamma=T,strat.delta=T,useFF=T,useLS=T, refarea=list(`1`="A451trawl.csv")) ##~Run01
 #x=buildCatch(cat451dat,strSpp="451",orfSpp="ORF",eps=TRUE,major=c(3:9),useGFM=TRUE, useYR1=c(1983,1986,2000,1987,1986),strat.gamma=T,strat.delta=T,useFF=F,useLS=T) ##~Run02
+#x=buildCatch(cat451dat,strSpp="451",orfSpp="ORF",eps=TRUE,major=c(3:9),useGFM=TRUE, useYR1=c(1996),strat.gamma=T,strat.delta=T,useFF=F,useLS=T) ##~Run03
+#x=buildCatch(cat451dat,strSpp="451",orfSpp="ORF",eps=TRUE,major=c(3:9),useGFM=TRUE, useYR1=c(1996),strat.gamma=F,strat.delta=F,useFF=F,useLS=T) ##~Run04
+
+# WWR - Widow Rockfish
+#x=buildCatch(sql=TRUE,strSpp="417",orfSpp="ORF",only.sql=TRUE,useGFM=TRUE) # start using the new merged catch table
+#x=buildCatch(cat417dat,strSpp="417",orfSpp="ORF",eps=TRUE,major=c(3:9),useGFM=TRUE,useYR1=NULL,strat.gamma=T,strat.delta=T,useFF=T,useLS=T)
 
 # YMR - Yellowmouth Rockfish
 #x=buildCatch(sql=T,strSpp="440",orfSpp="TRF",wmf=T,pwd=c(pwd1,pwd2))

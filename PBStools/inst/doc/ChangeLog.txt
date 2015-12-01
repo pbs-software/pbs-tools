@@ -6,7 +6,21 @@ Authors: RH  = Rowan Haigh
          JTS = Jon T. Schnute
 ------------------------------
 
-1.28  2015-08-06
+1.29.1  2015-12-01
+  • Added a new function `addStrip' that adds a vertical colour strip as a legend to plots like barplots. (RH 151201)
+  • Fixed bug in function `plotRecon' to properly shade reconstruction backgrounds. (RH 151201)
+  • Virtualization of the Groundfish server SVBCPBSGFIIS. (NO 151130)
+  • Revised function `formatCatch' to deal with zero when it gets converted to `0.00000'. (RH 151113)
+  • Revised `meanSppWt.sql' to include all thornyheads; forgot to post `pht_fdep.sql' last time. (RH 151112)
+
+1.29.0  2015-10-28
+  • Revised function `getData' to allow insertion of SQL code from other files into an SQL file that specifies @INSERT('someCode.sql') (RH 151028)
+  • Revised SQL files `pht_fdep.sql' and `pht_concurrent.sql' to INSERT `meanSppWt.sql' (new SQL file) and to use the GFFOS database on the SQL server. (RH 151028)
+  • Very slightly modifed the function `plotConcur'. (RH 151028)
+  • Revised `buildCatch.Rd' documentation. (RH 150810)
+
+1.28  2015-08-10
+  • Revised `buildCatch.Rd'. (RH 150810)
   • Set explicit `semantic' version in DESCRIPTION file ; JTS insists. (RH 150806)
   • Modified function `buildCatch' for assessment of Shortspine Thornyhead. (RH 150806)
   • Forgot to add modified queries `fos_mcatORF.sql' (2015-06-11) and `ph3_fcatORF.sql' (2015-06-16). (RH 150806)

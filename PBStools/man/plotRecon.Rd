@@ -9,7 +9,7 @@
 \usage{
 plotRecon(dat=cat440rec, strSpp="440", major=c(1,3:9), fidout=10, 
    years=1918:2015, xlab=seq(1920,2050,5), yrs.rec=attributes(dat)$yrs.rec,
-   shade=TRUE, shadier=FALSE,
+   shade=FALSE, shadier=FALSE,
    eps=FALSE, png=FALSE, wmf=FALSE, PIN=c(10,5))
 }
 \arguments{
@@ -37,7 +37,7 @@ plotRecon(dat=cat440rec, strSpp="440", major=c(1,3:9), fidout=10,
 \references{
   Haigh, R. and Yamanaka, K.L. (2011) Catch history reconstruction for rockfish
   (\emph{Sebastes} spp.) caught in British Columbia coastal waters. 
-  \emph{Canadian Technical Report of Fisheries and Aquatic Sciences} \bold{0000}: xx + 00 p.
+  \emph{Canadian Technical Report of Fisheries and Aquatic Sciences} \bold{2943}: viii + 124 p.
 }
 \author{
   Rowan Haigh, Pacific Biological Station, Fisheries and Oceans Canada, Nanaimo BC.

@@ -1,7 +1,7 @@
 Package: PBStools
-Version: 1.28.45
-Date: 2015-08-06
-Title: Tools for the Efficient Execution of Onerous Tasks
+Version: 1.29.1
+Date:    2015-12-01
+Title:   Tools for the Efficient Execution of Onerous Tasks
 Authors@R: c(
    person("Rowan", "Haigh", role = c("aut", "cre"), email = "rowan.haigh@dfo-mpo.gc.ca"),
    person(c("Jon", "T."), "Schnute", role = "ctb", email = "schnutej-dfo@shaw.ca"),

@@ -73,7 +73,7 @@ collectFigs = function(path=".", ext="eps", is.fnum=FALSE,
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~collectFigs
 
 
-#formatCatch----------------------------2014-08-13
+#formatCatch----------------------------2015-11-13
 # Format a numeric table so that each cell 
 # displays N significnat figures in character format.
 # Arguments:
@@ -124,15 +124,16 @@ formatCatch = function(dat, N=3, X=0, zero="0", na="---",
 	if (flat)
 		cdat = makeRmat(cdat,rownames(dat))
 	cdat = as.data.frame(cdat); dimnames(cdat) = dnam
-#browser();return()
 	for (i in dnam[[2]][-(X)]) {
-		idat = dat[,i]
+		idat = cdat[,i]
 		istr = strsplit(as.character(idat),split="\\.")
 		inum = sapply(istr, function(x,N,K,zero,na){
 			if (is.na(x[1])) return(na)
 			x1 = format(round(as.numeric(x[1])),big.mark=K,trim=TRUE,scientific=FALSE)
 			X1 = format(as.numeric(paste(x,collapse=".")),digits=N,big.mark=K,trim=TRUE,scientific=FALSE)
+			if (x1=="0" && X1=="0") return(zero) ## RH (151113) catch instances when 0 has been changed to "0.00000" by as.character
 			n2 = N - nchar(x[1])
+#browser();return()
 			if (length(x)==1) {
 				if (x[1]=="0") ival = zero
 				else if(exInt) ival = x[1]

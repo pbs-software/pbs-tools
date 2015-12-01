@@ -1,23 +1,8 @@
--- Query to get the fishing depth of species. (RH 2015-07-16)
+-- Query to get the fishing depth of species. (RH 2015-10-28)
 -- Eventually just query Norm's `GF_MERGED_CATCH' in GFFOS
 SET NOCOUNT ON
 
--- Mean species weight calculated using `gfb_mean_weight.sql', which emulates PJS algorithm for GFBIO data
-DECLARE @MEAN_WEIGHT TABLE (SPECIES_CODE VARCHAR(5), MNWT REAL)
-INSERT INTO @MEAN_WEIGHT VALUES
-  ('222', 1.759289),   -- ttype=c(1,4), gear=1
-  ('396', 0.8536203),  -- ttype=c(1,4), gear=1
-  ('401', 1.724491),   -- ttype=c(1,4), gear=1, major=3:9
-  ('405', 1.916324),   -- ttype=c(1,4), gear=1
-  ('418', 1.45),       -- Paul Starr conversion for 2014 YTR assessment
-  ('442', 3.575088),   -- ttype=c(1,4), gear=5, major=3:9 (queried 150409)
-  ('602', 1.124977),   -- ttype=c(1,4), gear=1, major=3:9
-  ('621', 0.5346079)   -- ttype=c(1,4), gear=1
-  --('222', 1.596781),  -- ttype=c(1,2,3,4), gear=1
-  --('401', 1.453529),  -- ttype=c(1,2,3,4), gear=1
-  --('405', 1.787811),  -- ttype=c(1,2,3,4), gear=1
-  --('418', 1.484357),  -- ttype=c(1,2,3,4), gear=1
-  --('621', 0.458456)   -- ttype=c(1,2,3,4), gear=1
+@INSERT('meanSppWt.sql')  -- getData now inserts the specified SQL file assuming it's on the path specified in getData
 
 -- Grab the depth data from PacHarvest
 SELECT
@@ -94,7 +79,8 @@ SELECT --TOP 100
   COALESCE(C.BEST_DEPTH_FM,C.START_DEPTH_FM,0)*1.8288 AS \"depth\",
   SETS.LANDED + SETS.DISCARDED AS \"catch\",
   (CASE WHEN
-    (C.GEAR_SUBTYPE IN ('HARD BOTTOM TRAWL','SOFT BOTTOM TRAWL') OR   -- bottom
+    --(C.GEAR_SUBTYPE IN ('HARD BOTTOM TRAWL','SOFT BOTTOM TRAWL') OR   -- bottom --NO deprecated HARD and SOFT
+    (C.GEAR_SUBTYPE IN ('BOTTOM TRAWL') OR   -- bottom
     (C.GEAR_SUBTYPE IN ('UNSPECIFIED') AND 
     C.TRIP_CATEGORY NOT IN ('OPT A - HAKE QUOTA (GULF)','OPT A - HAKE QUOTA (SHORESIDE)','OPT A - HAKE QUOTA (JV)')))
    THEN 1

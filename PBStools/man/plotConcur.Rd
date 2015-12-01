@@ -10,9 +10,9 @@
 }
 \usage{
 plotConcur(strSpp="410", dbName="PacHarvest", 
-     mindep=150, maxdep=435, major=NULL, top=NULL, trawl=1,
-     saraSpp=c("027","394","410","424","435","437","440","442","453"),
-     reset.mf=TRUE, eps=FALSE, pix=FALSE)
+   mindep=150, maxdep=435, major=NULL, top=NULL, trawl=1,
+   saraSpp=c("027","034","394","410","424","435","437","440","442","453"),
+   reset.mf=TRUE, eps=FALSE, pix=FALSE)
 }
 \arguments{
   \item{strSpp}{string code specifying species of interest (often a Hart code for fish).}

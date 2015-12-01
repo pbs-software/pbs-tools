@@ -1,6 +1,7 @@
 #===============================================================================
 # Module 1: Utility
 # -----------------
+#  addStrip........Add a vertical colour strip as a legend.
 #  biteData........Subsets a data matrix/frame using input vector.
 #  chewData........Remove records that contribute little information to factor categories.
 #  confODBC........Set up an ODBC User Data Source Name (DSN).
@@ -44,12 +45,49 @@
 #  .su.............Shortcut for sort(unique(x))
 #===============================================================================
 
-.PBSserver = c("199.60.95.134", "199.60.95.200", "PAC03450/GFDB", "199.60.95.134")
-names(.PBSserver) = c("GFDB", "PACPBSGFDB", "GFDBtemp", "SVBCPBSGFIIS")
+### RH: 2015-11-30 -- Virtualization of SVBCPBSGFIIS
+.PBSserver = c(
+  GFDB="199.60.94.98",
+  SVBCPBSGFIIS="199.60.94.98",
+  PACPBSGFDB="199.60.95.200",
+  GFDBtemp="PAC03450/GFDB",
+  oldSVBCPBSGFIIS="199.60.95.134")
 
 .rgbBlind = list(black=c(0,0,0),orange=c(230,159,0),skyblue=c(86,180,233),bluegreen=c(0,158,115),
 	yellow=c(240,228,66),blue=c(0,114,178),vermillion=c(213,94,0),redpurple=c(204,121,167))
 .colBlind = sapply(.rgbBlind,function(x){rgb(x[1],x[2],x[3],maxColorValue=255)})
+
+#addStrip-------------------------------2015-12-01
+# Add a vertical colour strip as a legend.
+#-----------------------------------------------RH
+addStrip = function (x, y, col, lab, xwidth=0.01, yheight=0.3, ...) 
+{
+	if (dev.cur()>1) { oldpar=par(no.readonly=TRUE); on.exit(par(oldpar)) }
+	uxy <- par()$usr
+	x1 <- uxy[1];  x2 <- uxy[2]
+	y1 <- uxy[3];  y2 <- uxy[4]
+	x0 <- x1 + x * (x2 - x1)
+	y0 <- y1 + y * (y2 - y1)
+	xw0 = xwidth * (x2-x1)
+	yh0 = yheight * (y2-y1)
+	if (par()$xlog){
+		x0 <- 10^x0; xw0 = 10^xw0 }
+	if (par()$ylog){
+		y0 <- 10^y0; yh0 = 10^yh0 }
+	xval = x0 + c(0,xw0)
+	yval = seq(y0-yh0,y0,len=length(col)+1)
+	ncol = length(col)
+	xpol = c(x0,x0,xval[2],xval[2],NA)
+	xpol = rep(xpol,ncol)
+	ypol = numeric()
+	for (i in 1:ncol)
+		ypol = c(ypol, c(yval[i],rep(yval[i+1],2),yval[i],NA))
+	polygon(xpol,ypol,border="gray30",col=col)
+	text(xval[2]+0.25*xw0, yval[1:ncol]+diff(yval)/2,labels=lab,cex=0.9,adj=0)
+#browser();return()
+	invisible()
+}
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~addStrip
 
 #biteData-------------------------------2008-11-10
 # Subsets a data matrix/frame using input vector.
@@ -247,7 +285,7 @@ flagIt = function(a, b, A=45, r=0.2, n=1, ...){
 	return(invisible(list(xvec=xvec,yvec=yvec,rads=rads,x0=x0,x=x,y=y)))
 }
 
-#getData--------------------------------2015-05-22
+#getData--------------------------------2015-10-28
 # Get data from a variety of sources.
 # subQtrust -- if user has no DFO trusted credentials:
 #   if (type=="SQL"), c(trusted, uid, pwd) copied to `subQtrust'
@@ -317,6 +355,7 @@ getData <-function(fqtName, dbName="PacHarvest", strSpp=NULL, server=NULL,
 				",strSQL=", ifelse(isExpr,paste("\"",fqtName,"\"",sep=""),"NULL"),
 				",server=\"",server,"\",type=\"",substring(type,1,3),"\",rownum=",rownum,
 				",trusted=",trusted,",uid=\"",uid,"\",pwd=\"",pwd,"\",...)"),collapse="")
+#browser();return()
 			timeQ0=proc.time()[1:3]  ### start timing SQL query
 			eval(parse(text=expr)) 
 			timeQ = round(proc.time()[1:3]-timeQ0,2) }
@@ -402,6 +441,28 @@ getData <-function(fqtName, dbName="PacHarvest", strSpp=NULL, server=NULL,
 			qnam <- paste(path,fqtName,sep="/")
 			strQ <- readLines(qnam)
 			strQ <- PBSmodelling::.trimWhiteSpace(strQ)
+			##+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+			## 2015-10-28 -- RH added code to allow insertion of other SQL files.
+			if(any(grepl("@INSERT",strQ))) {
+				in.ids   = grep("@INSERT",strQ)
+				in.lines = strQ[in.ids]
+				in.list  = strsplit(in.lines,split="'"); names(in.list)= in.ids
+				in.names = sapply(in.list,function(x){x[grep("\\.sql$",x)]})
+				k = 1:length(strQ)
+				g = cut(k,breaks=c(0,in.ids,length(k)),labels=FALSE)
+				g[in.ids] = NA
+				keep = split(k,g)
+				newQ = as.character()
+				for (i in 1:length(in.ids)) {
+					ii = in.ids[i]
+					if (i==1 && ii>1) newQ = strQ[keep[[i]]]
+					strI = readLines(paste0(path,"/",in.names[i]))
+					if (length(strI)>0)  newQ = c(newQ, strI)
+					if (ii<length(strQ)) newQ = c(newQ, strQ[keep[[i+1]]])
+				}
+				strQ = newQ
+			}
+			##+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 			begC <- regexpr("--",strQ)
 			isC  <- begC>0                               ### identify comments
 			strQ[isC]=substring(strQ[isC],0,begC[isC]-1) ### strip comments
@@ -492,6 +553,7 @@ getData <-function(fqtName, dbName="PacHarvest", strSpp=NULL, server=NULL,
 				ifelse(is.numeric(dummy),paste(dummy,collapse=","),
 				ifelse(is.character(dummy),paste("'",paste(dummy,collapse="','"),"'",sep=""),"''"))),x=strQ)
 			#assign("sql",strQ,envir=tenv)
+#browser();return()
 			expr <-paste("datt=.getSQLdata(dbName=\"",dbName,"\",strSQL=\"",strQ,
 			"\",server=\"",server,"\",type=\"",type,"\",trusted=",trusted,
 			",uid=\"",uid,"\",pwd=\"",pwd,"\",...)",sep="")

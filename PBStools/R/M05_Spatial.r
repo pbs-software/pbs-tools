@@ -818,7 +818,7 @@ preferDepth = function(strSpp="410", fqtName="pht_fdep.sql", dbName="PacHarvest"
 		ttget(PBStool); PBStool$effort <- effort; ttput(PBStool)
 		frame(); addLabel(.5,.5,"Effort loaded",col="darkgreen",cex=1.2) }
 
-#.preferDepth.getDepth------------------2012-09-19
+#.preferDepth.getDepth------------------2015-11-12
 .preferDepth.getDepth <- function() { 
 	getWinVal(scope="L",winName="window"); act <- getWinAct()[1]
 	if (!is.null(act) && act=="getdata") getdata <- TRUE else getdata <- FALSE
@@ -847,6 +847,7 @@ preferDepth = function(strSpp="410", fqtName="pht_fdep.sql", dbName="PacHarvest"
 			setWinVal(list(strSpp=spp),winName="window") } }
 	assign("dat",PBSdat)
 	if (nrow(dat)==0) showError(paste("Species =",spp),type="nodata")
+	packList("dat","PBStool",tenv=.PBStoolEnv) ## RH: save the raw data for manual sunsetting
 	eff = ttcall(PBStool)$effort
 	isE = ifelse(is.null(eff),FALSE,TRUE)
 	if (!isE) setWinVal(list(showE=FALSE),winName="window")
@@ -860,9 +861,14 @@ preferDepth = function(strSpp="410", fqtName="pht_fdep.sql", dbName="PacHarvest"
 		dat <- dat[is.element(dat$year,year),]
 		if (nrow(dat)==0) showError(paste("year =",paste(year,collapse=", ")),type="nodata") }
 	if (disA=="all") {
-		if (isE) eff$area = rep("CST",nrow(eff))
-		dat$area <- rep("CST",nrow(dat)) }
-	else {
+		## RH: At least make sure that the majors match
+		majors = .su(dat$major)
+		if (isE){
+			eff = eff[is.element(eff$major,majors),]
+			eff$area = rep("CST",nrow(eff))
+		}
+		dat$area <- rep("CST",nrow(dat))
+	} else {
 		if (isE) eff$area <- eff[,disA]
 		dat$area <- dat[,disA]
 		if (!is.null(area)) {
@@ -871,7 +877,8 @@ preferDepth = function(strSpp="410", fqtName="pht_fdep.sql", dbName="PacHarvest"
 		else {
 			if (isE) eff <- eff[!is.na(eff$area),]
 			dat <- dat[!is.na(dat$area),] }
-		if (nrow(dat)==0) showError(paste(disA,"=",paste(area,collapse=", ")),type="nodata") }
+		if (nrow(dat)==0) showError(paste(disA,"=",paste(area,collapse=", ")),type="nodata")
+	}
 	if (is.null(year)) year <- 0 else year <- sort(unique(dat$year)); nyr <- length(year);
 	if (is.null(area)) area <- 0 else area <- sort(unique(dat$area)); nar <- length(area);
 

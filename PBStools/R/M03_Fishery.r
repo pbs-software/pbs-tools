@@ -749,12 +749,12 @@ plotCatch=function(dat="dbr.rem", flds=c("CAtrawl","UStrawl","TotalHL"),
 	invisible() }
 #----------------------------------------plotCatch
 
-#plotConcur-----------------------------2012-09-19
+#plotConcur-----------------------------2015-10-28
 # Horizontal barplot of concurrent species in tows.
 #-----------------------------------------------RH
 plotConcur = function(strSpp="410", dbName="PacHarvest", 
      mindep=150, maxdep=435, major=NULL, top=NULL, trawl=1,
-     saraSpp=c("027","394","410","424","435","437","440","442","453"),
+     saraSpp=c("027","034","394","410","424","435","437","440","442","453"),
      reset.mf=TRUE, eps=FALSE, pix=FALSE) {
 
 	### Setup the png device for import to word
@@ -820,7 +820,7 @@ plotConcur = function(strSpp="410", dbName="PacHarvest",
 	if (eps|pix) dev.off()
 	packList(c("dat","xy","z"),"PBStool",tenv=.PBStoolEnv)
 	invisible(dat) }
-#^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^plotConcur
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotConcur
 
 #plotFOScatch---------------------------2010-06-02
 # Plot catch as monthly barplots from 'fos_catch.sql' query to GFFOS
