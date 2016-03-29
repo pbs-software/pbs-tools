@@ -3,7 +3,7 @@
 # -------------------
 #  collectFigs    Collect encapsulated postscript figures into one document.
 #  formatCatch    Format numeric table so that entries display N significnat figures.
-#  makeLHT        Make a longtable header for printing an xtable
+#  makeLTH        Make a longtable header for printing an xtable
 #  texArray       Flatten and format an array for latex output.
 #===============================================================================
 
@@ -176,24 +176,24 @@ formatCatch = function(dat, N=3, X=0, zero="0", na="---",
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~formatCatch
 
 
-#makeLTH--------------------------------2013-07-24
+#makeLTH--------------------------------2016-01-27
 # Make a longtable header for Sweave, source:
 # http://tex.stackexchange.com/questions/41067/caption-for-longtable-in-sweave?rq=1
 #-----------------------------------------------RH
-makeLTH <- function(xtab.table, table.caption, table.label) {
+makeLTH <- function(xtab.table, table.caption, table.label, struts=FALSE) {
 	longtable.header <- paste(
 		paste("\\caption{", table.caption, "}",sep = "", collapse = ""),
 		paste("\\label{", table.label, "}\\\\ ",sep = "", collapse = ""),
 		"\\hline\\\\[-2.2ex] ",
 		attr(xtab.table, "names")[1],
 		paste(" & ",attr(xtab.table, "names")[2:length(attr(xtab.table, "names"))],collapse="",sep=""),
-		"\\\\[0.2ex]\\hline ",
+		paste0(ifelse(struts," \\Tstrut\\Bstrut ",""),"\\\\[0.2ex]\\hline\\\\[-1.5ex] "),
 		"\\endfirsthead ",
 		paste("\\multicolumn{",ncol(xtab.table),"}{l}{{\\tablename\\ \\thetable{} -- continued from previous page}}\\\\ ",sep = ""),
 		"\\hline ",
 		attr(xtab.table, "names")[1],
 		paste(" & ",attr(xtab.table, "names")[2:length(attr(xtab.table, "names"))],collapse="",sep=""),
-		"\\\\[0.2ex]\\hline ",
+		paste0(ifelse(struts," \\Tstrut\\Bstrut ",""),"\\\\[0.2ex]\\hline\\\\[-1.5ex] "),
 		"\\endhead ",
 		"\\hline\\\\[-2.2ex] ",
 		paste("\\multicolumn{",ncol(xtab.table),"}{r}{{\\footnotesize \\emph{Continued on next page}}}\\\\ ",sep=""),
@@ -203,13 +203,14 @@ makeLTH <- function(xtab.table, table.caption, table.label) {
 }
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~makeLTH
 
-#texArray-------------------------------2015-03-06
+
+#texArray-------------------------------2016-01-27
 # Flatten and format an array for latex output.
 #-----------------------------------------------RH
 texArray =function(x, table.caption="My table", table.label="tab:mytable",
    strSpp=NULL, sigdig=3, zero="---", collab=NULL, dash.delim=NULL, 
    rm.empty=TRUE, start.page=1, ignore.col=NULL,
-   select.rows=NULL, use.row.names=FALSE, name.row.names="row",
+   select.rows=NULL, use.row.names=FALSE, name.row.names="row", struts=FALSE,
    add.header.column=FALSE, new.header=NULL, outnam="mytable")
 {
 	if (!is.array(x) && !is.matrix(x) && !is.data.frame(x)) stop("input an array or a matrix")
@@ -341,18 +342,21 @@ texArray =function(x, table.caption="My table", table.label="tab:mytable",
 		"\\captionsetup[table]{position=above, skip=5pt}",
 		"\\usepackage{amsmath}",
 		"\\raggedright",
-		"%\\newcommand\\tstrut{\\rule{0pt}{2.4ex}}       % top strut for table row",
-		"%\\newcommand\\bstrut{\\rule[-1.0ex]{0pt}{0pt}} % bottom strut for table row",
+		"\\newcommand\\Tstrut{\\rule{0pt}{2.6ex}}       % top strut for table row",
+		"\\newcommand\\Bstrut{\\rule[-1.1ex]{0pt}{0pt}} % bottom strut for table row",
 		"\\usepackage{longtable,array} % need array when specifying a ragged right column",
 		"\\setlength{\\LTleft}{0pt}     % left justify longtable",
 		paste("\\setcounter{page}{", start.page, "}  % set the page numbering", sep=""),
 		"\\usepackage{arydshln} % dashed lines in tables (load after other shit)",
+		"\\usepackage[T1]{fontenc}",
+		"\\usepackage[scaled=1.00]{uarial}",
 		"\\begin{document}",
-		"\\renewcommand{\\familydefault}{phv}",
-		"\\renewcommand{\\rmdefault}{phv}",
+		"\\renewcommand{\\familydefault}{ua1}",
+		"\\renewcommand{\\rmdefault}{ua1}",
 		"\\usefont{\\encodingdefault}{\\familydefault}{\\seriesdefault}{\\shapedefault}\\small"
 	)
 	writeLines(texmess,texout)
+#browser();return()
 
 	if (!requireNamespace("xtable", quietly=TRUE)) stop("`xtable` package is required")
 	if (is.null(collab)) collab = colnames(goo)
@@ -415,9 +419,9 @@ texArray =function(x, table.caption="My table", table.label="tab:mytable",
 		tabalign = fldalign #paste(fldalign,collapse="")
 		#tabalign = paste(">{\\raggedright\\arraybackslash}",tabalign,sep="")
 	}
-#browser(); return()
 	xtab = xtable::xtable(goo,align=tabalign)
-	longtable.header = makeLTH(xtab,table.caption,table.label)
+	longtable.header = makeLTH(xtab,table.caption,table.label,struts=struts)
+#browser(); return()
 	add.to.row = if (length(rows.line)==0) list(pos = list(-1, nrow(xtab)), command = c( longtable.header, "%"))
 		else list(pos = list(-1, rows.line, nrow(xtab)), command = c( longtable.header, "\\hdashline[0.5pt/2pt]", "%"))
 	#if (!is.null(add.to.row)) {
@@ -443,7 +447,6 @@ texArray =function(x, table.caption="My table", table.label="tab:mytable",
 	texfile = readLines(texout)
 	ltdelim=grep("\\{longtable}",texfile)
 	tabfile=texfile[ltdelim[1]:ltdelim[2]]
-#browser();return()
 	invisible(list(goo=goo,texfile=texfile,tabfile=tabfile))
 }
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~texArray

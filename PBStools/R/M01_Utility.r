@@ -22,6 +22,7 @@
 #  lenv............Get the local/parent/global environment.
 #  listTables......List tables in specified SQL, ORA, or MDB database.
 #  prime...........Report the prime numbers given an integer vector.
+#  quantBox        Redefine boxplot to show quantiles.
 #  revStr..........Reverse characters in a string.
 #  runModules......Display a master GUI to display modules.
 #  scaleVec........Scales a vector to span a target minimum and maximum.
@@ -903,6 +904,27 @@ prime = function(x=2:100){
 	z = sapply(x,is.prime) 
 	if (any(z)) return(x[z])
 	else return(NULL) }
+
+
+##quantBox------------------------------2016-03-24
+## Redefine boxplot to show quantiles (RH 150910)
+## http://r.789695.n4.nabble.com/Box-plot-with-5th-and-95th-percentiles-instead-of-1-5-IQR-problems-implementing-an-existing-solution-td3456123.html
+##----------------------------------------------RH
+quantBox = function (x, use.cols = TRUE, ...) ## taken from boxplot.matrix
+{
+	ttget(qboxplot)
+	if (rev(class(x))[1]=="matrix") {
+		groups <- if (use.cols) 
+			split(x, rep.int(1L:ncol(x), rep.int(nrow(x), ncol(x))))
+		else split(x, seq(nrow(x)))
+		if (length(nam <- dimnames(x)[[1 + use.cols]])) 
+		names(groups) <- nam
+		qboxplot(groups, ...)
+	}
+	else qboxplot(x, ...)
+}
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~quantBox
+
 
 #revStr---------------------------------2008-11-26
 # Reverse characters in a string (see 'strsplit()' in base package).

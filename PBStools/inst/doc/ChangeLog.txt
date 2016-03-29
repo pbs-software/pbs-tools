@@ -6,7 +6,21 @@ Authors: RH  = Rowan Haigh
          JTS = Jon T. Schnute
 ------------------------------
 
-1.29.1  2015-12-01
+1.30.1 (2016-03-29)
+  • Fixed examples that try to call 32-bit MDB drivers on 64-bit Windows -- `boxSeason.Rd', `calcMA.Rd', `listTables.Rd', `plotDiversity', `trackComp'. (RH 160329)
+  • Fixed Codoc mismatches from documentation objects: `estOgive', `makeLTH', `requestAges', `texArray'. (RH 160329)
+
+1.30.0 (2016-03-24)
+  • Added new function `quantBox' which essentially hijacks the code from `boxplot'. (RH 160324)
+  • Added Norm's ageing datasheet summary query `gfb_ageing_summary.sql' for header information. (NO 160307)
+  • Updated query `meanSppWt.sql' to include more species in virtual table. (RH 160307)
+  • Modified functions `makeLTH' and `texArray' to include struts in table headers. (RH 160127)
+  • Modified slightly function `calcVB'. (RH 160105)
+  • Modified function `estOgive' to qualify on `scat' (SPECIES_CATEGORY_CODE, sort vs. unsorted) and to output multiple image files. (RH 151216)
+  • Modified subfunction `adjustN' in function `requestAges'. (RH 151208)
+
+1.29.1  2015-12-16
+  • Improved plot routine in `.plotProp.plotP (RH 151216)
   • Added a new function `addStrip' that adds a vertical colour strip as a legend to plots like barplots. (RH 151201)
   • Fixed bug in function `plotRecon' to properly shade reconstruction backgrounds. (RH 151201)
   • Virtualization of the Groundfish server SVBCPBSGFIIS. (NO 151130)

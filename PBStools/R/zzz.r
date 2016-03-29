@@ -53,9 +53,9 @@ if(getRversion() >= "2.15.1") utils::globalVariables(names=c(
 	"nage","Nat","Nboot","nc","nC","nd","nepacLL","nepacLLhigh","nper","nRP","nspec","nT","nyr",
 	"obs","oma","orfhistory","out",
 	"pa.obs","pa.raw","parVec","path","pathN","PBSdat","PBStool","PBSmin","Pfig","phi","pi.obs","pix","pjsa","PLIM","pmfc","pmon","pnam","poi","pop.age","pop.pmr.qcss","popa","powr","prefix","pset","psize","Pstart","pwd","pyr",
-	"q2","qq","qtName","quants",
+	"q2","qboxplot","qq","qtName","quants",
 	"rate","rates","reltol","repN","rho","RkB","Roff","RPmax","RPmin","ryrs",
-	"s1","s2","samplesGetFirstChain","samplesGetLastChain","samplesHistory","samplesSet","SB","Scat","Sdat","sdate","seepa","seepi","set","sex","SG","SGdat","showC","showD","showE","showH","showL","showQ","SID","sigma","species","spn","spp","SSB","steptol","sthin","storageID","strArea","strat","strGear","strSpp","strYear","stype","surveys",
+	"s1","s2","samplesGetFirstChain","samplesGetLastChain","samplesHistory","samplesSet","SB","Scat","Sdat","sdate","seepa","seepi","set","sex","SG","SGdat","showC","showD","showE","showH","showL","showM","showQ","SID","sigma","species","spn","spp","SSB","steptol","sthin","storageID","strArea","strat","strGear","strSpp","strYear","stype","surveys",
 	"t0","tau","tcl","tdate","theta","tran","truehist","trusted","tstar","ttype","type",
 	"Ugear","uid","Umajor","Usex","Usrfa","Usrfs","Ustype","Uttype",
 	"VBdat","Vend","vessel","Vstart",
@@ -64,4 +64,23 @@ if(getRversion() >= "2.15.1") utils::globalVariables(names=c(
 	"y","year","years","yfld","yfun","yinf","ylim","YLIM","Ymax","Ymin","Ymod","ypos","yr","ystar","ytck",
 	"z","Z","za","zero","zfill","Zlim","zsho","zstar","zstn"
 	), package="PBStools")
+
+
+local(envir=.PBStoolEnv,expr={
+	myboxplot.stats <- function (x, coef=NULL, do.conf=TRUE, do.out=TRUE)
+	{
+		nna <- !is.na(x)
+		n <- sum(nna)
+		stats <- quantile(x, c(.05,.25,.5,.75,.95), na.rm = TRUE)
+		iqr <- diff(stats[c(2, 4)])
+		out <- x < stats[1] | x > stats[5]
+		conf <- if (do.conf)
+			stats[3] + c(-1.58, 1.58) * diff(stats[c(2, 4)])/sqrt(n)
+		list(stats = stats, n = n, conf = conf, out = x[out & nna])
+	}
+	boxcode = deparse(boxplot.default)
+	boxcode = gsub("boxplot\\.stats","myboxplot.stats",boxcode)
+	eval(parse(text=c("qboxplot=",boxcode)))
+})
+
 

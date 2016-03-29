@@ -10,9 +10,9 @@
 }
 \usage{
 requestAges(strSpp, nage=500, year=2012, 
-   areas=list(major=3:9, minor=NULL), ttype=c(1,4),
-   sex=1:2, nfld = "nallo", sql=TRUE, only.sql=FALSE, bySID=FALSE,
-   spath=.getSpath(), uid=Sys.info()["user"], pwd=uid, ...)
+     areas=list(major=3:9, minor=NULL), ttype=c(1,4),
+     sex=1:2, nfld = "nallo", run.sql=TRUE, only.sql=FALSE, bySID=FALSE,
+     spath=.getSpath(), uid=Sys.info()["user"], pwd=uid, ...)
 }
 \arguments{
   \item{strSpp}{string HART code of a species with sampled otoliths.}
@@ -31,7 +31,7 @@ requestAges(strSpp, nage=500, year=2012,
     \code{..........}{less the number of otoliths already aged by break & burn;} \cr
     \code{"nallo"...}{default: essentially \code{ncalc} scaled to the user-specified \code{nage}.} \cr
     Both \code{ncalc} and \code{nallo} are constrained by \code{nfree}. }
-  \item{sql}{logical: if \code{TRUE} query the databases for all otolith and catch information,
+  \item{run.sql}{logical: if \code{TRUE} query the databases for all otolith and catch information,
     otherwise grab the information from stored binaries (e.g., \code{Sdat396.rda} for POP
     otolith data, and \code{Ccat396.rda} for POP catch from \code{PacHarvest} and \code{GFFOS}.}
   \item{only.sql}{logical: if \code{TRUE} only query the databases for otolith and catch information;
@@ -46,7 +46,7 @@ requestAges(strSpp, nage=500, year=2012,
 }
 \value{
   Invisibly returns the otolith data with supplementary quarterly commercial / survey catch.
-  Also, writes this otolith data to binary \code{.rda} and ascii \code{.csv} files.
+  Also, writes this otolith data to binary \code{.rda} and ASCII \code{.csv} files.
   
   An ASCII file called \code{oto123-C(YYYY)-areas(0+0+0)--sex(1+2)-N999.csv} 
   (where \code{123} = species code, \code{C} = Commercial or \code{S} = Survey, \code{YYYY} = year, \code{0} = PMFC area code, 
@@ -66,7 +66,7 @@ requestAges(strSpp, nage=500, year=2012,
     \code{Nsamp}    \tab \code{vector}     \tab number of ages to sample from \code{Opool}; \cr
     \code{Osamp}    \tab \code{list}       \tab Otoliths chosen randomly from \code{Opool}.
   }
-  The otiliths in \code{Opool} are identified by \code{SPECIMEN_SERIAL_NUMBER} and are taken from the 
+  The otoliths in \code{Opool} are identified by \code{SPECIMEN_SERIAL_NUMBER} and are taken from the 
   \code{GFBioSQL} table \code{B05_SPECIMEN}:
   \preformatted{
   SELECT
@@ -80,7 +80,7 @@ requestAges(strSpp, nage=500, year=2012,
   }
 }
 \author{
-  Rowan Haigh & Brian Krishka \cr
+  Rowan Haigh and Brian Krishka \cr
   Pacific Biological Station, Fisheries and Oceans Canada, Nanaimo BC
 }
 \seealso{

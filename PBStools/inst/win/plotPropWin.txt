@@ -69,7 +69,7 @@ grid 3 1 sticky=NW
 		vector mode=numeric length=3 names="psize powr lwd" width=5 sticky=W values="0.03 0.5 2" vert=T
 		label text="Colours" 
 		vector mode=character length=3 names=bcol width=8 sticky=W values="blue grey coral" labels="pos neg zero" vert=T
-		vector mode=logical length=2 names="showH hide0" labels="line 'hide 0'" values="TRUE TRUE" vert=F
+		vector mode=logical length=3 names="showH hide0 showM" labels="line 'hide0' mean" values="TRUE TRUE FALSE" vert=F
 		label text="Legend (1,2,3)"
 		grid 1 3
 			radio name=ltype text="" value=1 function=.plotProp.plotP

@@ -9,9 +9,9 @@
 }
 \usage{
 estOgive(dat=pop.age, strSpp="", method=c("dblnorm"),
-   sex=list(Females=2,Males=1), mos=list(1:12,1:12), mat=3:7, 
-   ameth=3, amod=NULL, azero=NULL,
-   ttype=list(Commercial=c(1,4),Research=c(2:3)), stype=c(1,2,6,7), 
+   sex=list(Females=2,Males=1), mos=list(1:12,1:12),
+   mat=3:7, ameth=3, amod=NULL, azero=NULL,
+   ttype=list(Commercial=c(1,4),Research=c(2:3)), stype=c(1,2,6,7), scat=1, 
    SSID=NULL, surveys=NULL,
    ofld="age", obin=1, xlim=c(0,45), figdim=c(8,5),
    plines=TRUE, ppoints=TRUE, rpoints=FALSE, rtext=FALSE,
@@ -53,6 +53,7 @@ estOgive(dat=pop.age, strSpp="", method=c("dblnorm"),
     4 = West Coast Vancouver Island Synoptic Survey, \cr
     16 = West Coast Haida Gwaii Synoptic Survey, \cr
     e.g. \code{SSID=list(`QCS Synoptic`=1, `WCVI Synoptic`=4)}}
+  \item{scat}{Species category code in table \code{"SPECIES_CATEGORY"}; code for unsorted fish: 1= \code{"UNSORTED"}.}
   \item{surveys}{text to add to legend if multiple surveys combined into one category.}
   \item{ofld}{ogive field (usually \code{age} or \code{len}).}
   \item{obin}{bin size (in x-units) to group \code{age} or \code{len}.}

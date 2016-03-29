@@ -50,14 +50,16 @@ calcMA(x, y, y2, period = 270, every = 10)
 }
 \examples{
 local(envir=.PBStoolEnv,expr={
-pbsfun=function(os=.Platform$OS.type) {
-  if (os=="windows") {
+pbsfun=function(os=.Platform$OS.type, arch=.Platform$r_arch) {
+  if (os=="windows" && arch=="i386") {
     getData("Ex03_Portfolio","Examples",type="MDB",path=.getSpath())
     # Annual average every 2 months:
     ma=calcMA(PBSdat[[2]],PBSdat[[3]],period=365,every=60)
     dat=attributes(ma)$dat
     plot(dat$x,dat$y,type="l")
     lines(ma$x,ma$y,col="blue",lwd=2) }
+  else 
+    showMessage("Only functional for Microsoft Access on 32-bit Windows OS")
   invisible() }
 pbsfun()
 })

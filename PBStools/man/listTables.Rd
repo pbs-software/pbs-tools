@@ -46,14 +46,18 @@ listTables(dbName, pattern=NULL, path=getwd(), server=NULL,
 }
 \examples{
 local(envir=.PBStoolEnv,expr={
-pbsfun=function(os=.Platform$OS.type,dfo=FALSE) {
+pbsfun=function(os=.Platform$OS.type,arch=.Platform$r_arch,dfo=FALSE) {
   if (os=="windows") {
     if(dfo) {
       cat("Tables in 'PacHarvest' matching pattern 'Species'\n")
       listTables("PacHarvest",pattern="Species") }
-    else {
+    else if (arch=="i386") {
       cat("Tables in 'Examples.mdb'\n")
-      listTables("Examples",type="MDB",ttype=c("TABLE","VIEW"),path=.getSpath()) } }
+      listTables("Examples",type="MDB",ttype=c("TABLE","VIEW"),path=.getSpath())
+    }
+    else 
+      showMessage("Access to Examples.mdb only works for Microsoft Access on 32-bit Windows OS")
+  }
   else showMessage("If logged onto DFO network, set argument 'dfo=T'")
   invisible() }
 pbsfun()

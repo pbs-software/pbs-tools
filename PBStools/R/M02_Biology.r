@@ -475,7 +475,8 @@ calcSG <- function(dat=pop.age, strSpp="", yfld="len", tau=c(5,40),
 	invisible() }
 #-------------------------------------------calcSG
 
-#calcVB---------------------------------2014-08-11
+
+#calcVB---------------------------------2016-01-05
 # Calculate von Bertalanffy growth curve.
 # Note: ameth=3 otoliths broken & burnt
 # areas: list of lists
@@ -574,9 +575,8 @@ calcVB <- function(dat=pop.age, strSpp="", yfld="len", fixt0=FALSE,
 		if (any(i==aflds)) eval(parse(text=paste("yarea=union(yarea,",i,")"))) 
 	}
 	zam = is.element(dat$ameth,ameth)
-	if (any(ameth==3)) zam = zam | (is.element(dat$ameth,0) & dat$year>=1980)
+	if (any(ameth==3) && "year"%in%names(dat)) zam = zam | (is.element(dat$ameth,0) & dat$year>=1980)
 	dat = dat[zam,]
-#browser();return()
 	if (nrow(dat)==0) {
 		if (eps|pdf|pix|wmf) return()
 		else showError("No records selected for specified qualification") }
@@ -585,6 +585,7 @@ calcVB <- function(dat=pop.age, strSpp="", yfld="len", fixt0=FALSE,
 		z2 = is.element(dat$ttype,c(1,4)) & is.element(dat$scat,scat)
 		dat = dat[z1 | z2,]
 	}
+#browser();return()
 
 	if (!allTT) ttype=sort(unique(dat$ttype))
 	tlab=sapply(ttype,function(x){paste(paste(x,collapse="",sep=""),sep="")},simplify=TRUE); ntt=length(tlab)
@@ -782,7 +783,7 @@ calcVB <- function(dat=pop.age, strSpp="", yfld="len", fixt0=FALSE,
 				if (singles && (eps|pdf|pix|wmf)) dev.off()
 				cat(paste("\nArea: ",amat,"   Trip type: ",tmat,sep=""),"\n",file=csv,append=TRUE)
 				cat("age,females,males,both","\n",file=csv,append=TRUE)
-#browser();return()
+browser();return()
 				mf=cbind(sapply(fits[[amat]][[tmat]][["Females"]],function(x){x},simplify=TRUE),
 					sapply(fits[[amat]][[tmat]][["Males"]],function(x){x},simplify=TRUE)[,2],
 					sapply(fits[[amat]][[tmat]][["Both"]],function(x){x},simplify=TRUE)[,2])
@@ -1008,7 +1009,8 @@ compCsum <- function(dat=pop.age, pro=TRUE, strSpp="", xfld="age", plus=60,
 	invisible() }
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~compCsum
 
-#estOgive-------------------------------2014-08-12
+
+#estOgive-------------------------------2015-12-16
 # Creates ogives of some metric (e.g., % maturity at age).
 # Arguments:
 #   dat     - specimen morphometrics data from GFBio
@@ -1022,6 +1024,7 @@ compCsum <- function(dat=pop.age, pro=TRUE, strSpp="", xfld="age", plus=60,
 #   azero   - ages for assessment where pmat=0 (force anomalous raw values to zero)
 #   ttype   - list of trip types: 1=non-obs. commercial, 2=research, 3=survey, 4=obs. domestic
 #   stype   - sample type
+#   scat    - species category code (1 = unsorted samples)
 #   SSID    - Survey Series ID
 #   surveys - text to add to legend if multiple surveys combined
 #   ofld    - ogive field (usually age)
@@ -1042,7 +1045,8 @@ compCsum <- function(dat=pop.age, pro=TRUE, strSpp="", xfld="age", plus=60,
 #-----------------------------------------------RH
 estOgive <- function(dat=pop.age, strSpp="", method=c("dblnorm"),
    sex=list(Females=2,Males=1), mos=list(1:12,1:12), mat=3:7, ameth=3, amod=NULL, azero=NULL,
-   ttype=list(Commercial=c(1,4),Research=c(2:3)), stype=c(1,2,6,7), SSID=NULL, surveys=NULL,
+   ttype=list(Commercial=c(1,4),Research=c(2:3)), stype=c(1,2,6,7), scat = 1, 
+   SSID=NULL, surveys=NULL,
    ofld="age", obin=1, xlim=c(0,45), figdim=c(8,5),
    plines=TRUE, ppoints=TRUE, rpoints=FALSE, rtext=FALSE,
    fg=c("red","orange2","blue","green4"), Arcs=NULL, radius=0.2,
@@ -1070,7 +1074,6 @@ estOgive <- function(dat=pop.age, strSpp="", method=c("dblnorm"),
 		mu - sqrt(-nu*log(p)) }
 	doLab =function(x,y,x50,n=1,...) {
 		if (is.null(Arcs)) Arcs=c(150,165,315,330,135,120,345,360)
-#browser();return()
 		ldR=unlist(approx(x,y,min(xlim[2],x[length(x)],na.rm=TRUE),rule=2,ties="ordered"))
 		#text(ldR[1],ldR[2]+.01*dy,sexlab,cex=0.8,col=fg[s])
 		if (x50>xlim[1] & x50<xlim[2]) {
@@ -1114,17 +1117,20 @@ estOgive <- function(dat=pop.age, strSpp="", method=c("dblnorm"),
 		fldSpp=intersect(c("spp","species","sppcode"),flds)[1]
 		dat=dat[is.element(dat[,fldSpp],strSpp),] }
 
-	if (ofld=="len") dat$len=dat$len
+	#if (ofld=="len") dat$len=dat$len
 	if (ofld=="age") {
-		#dat=dat[is.element(dat$ameth,ameth),] # break and burn only
+		#dat=dat[is.element(dat$ameth,ameth),] # break and burn only 
 		zam = is.element(dat$ameth,ameth)
 		if (any(ameth==3)) zam = zam | (is.element(dat$ameth,0) & dat$year>=1980)
 		dat = dat[zam,]
 	}
 	dat$month <- as.numeric(substring(dat$date,6,7))
-	#dat = dat[is.element(dat$ttype,ttype),]
-	#if (!is.null(SSID)) dat = dat[is.element(dat$SSID,SSID),]
 
+	for (i in c("stype","scat")) {
+		mess = paste0("dat = biteData(dat,",i,")")
+		eval(parse(text=mess))
+		print(paste0("after bite ",i," : ",nrow(dat)," records left"))
+	}
 	dat$ogive <- dat[,ofld]
 	dat <- dat[is.element(dat$sex,sort(unique(unlist(sex)))),]
 	dat <- dat[is.element(dat$mat,1:7),]
@@ -1143,7 +1149,11 @@ estOgive <- function(dat=pop.age, strSpp="", method=c("dblnorm"),
 	if (is.null(mos)) mos = list(.su(dat$month))
 	mos=rep(mos,nsex)[1:nsex]
 	nsexsub = nsex*nsub
-	fg=rep(fg,nsexsub)[1:nsexsub]; #bg=rep(bg,nsexsub)[1:nsexsub]
+	if (length(fg) < nsexsub) {
+		fg = rep(fg,nsex)[1:nsex]
+		fg = rep(fg,each=nsub)
+	}
+	#fg=rep(fg,nsexsub)[1:nsexsub]; #bg=rep(bg,nsexsub)[1:nsexsub]
 	bg = lighten(fg,7,4)
 	smClrs = lighten(fg,7,ifelse(ppoints,5,6))
 	bigPch = rep(21:25,nsexsub)[1:nsexsub]
@@ -1164,15 +1174,31 @@ estOgive <- function(dat=pop.age, strSpp="", method=c("dblnorm"),
 	pend = CALCS = DATA = list() # create empty lists
 
 	if (!is.null(SSID))
-		sexmos = c(names(sex), paste("SSID(",paste(SSID,collapse="+"),")",sep=""))
+		sexmos = c(names(sex), paste0("SSID(",sapply(SSID,paste0,collapse="+"),")"))
 	else 
-		sexmos = paste(names(sex),"-mo(",sapply(mos,paste,collapse="+"),")",sep="")
+		sexmos = paste0(names(sex),"-mo(",sapply(mos,paste,collapse="+"),")")
 	if (missing(outnam))
-		onam=paste(strSpp,"-Ogive(",ofld,")-",paste(sexmos,collapse="-"),"-Mat(",mat[1],"+)",sep="")
+		onam=paste0(strSpp,"-Ogive(",ofld,")-",paste0(sexmos,collapse="-"),"-Mat(",mat[1],"+)")
 	else onam = outnam
 
-#browser(); return()
+	if (eps) postscript(paste0(onam,".eps"),width=figdim[1],height=figdim[2],paper="special")
+	else if (wmf && .Platform$OS.type=="windows")
+		win.metafile(paste0(onam,".wmf"),width=figdim[1],height=figdim[2])
+	else if (png) png(filename=paste0(onam,".png"),width=figdim[1]*100,height=figdim[2]*100,res=100)
+	else resetGraph()
+	expandGraph(mfrow=c(1,1),mai=c(.6,.7,0.05,0.05),omi=c(0,0,0,0),las=1,lwd=1)
+	plot(0,0,type="n",xlab="",ylab="",xaxt="n",yaxt="n",xlim=xlim,ylim=c(0,1))
+	abline(h=.5,col="gainsboro",lty=1,lwd=2)
+	abline(h=seq(0,1,.1),v=seq(0,xlim[2],ifelse(xlim[2]<30,1,2)),col="gainsboro",lty=2,lwd=1)
+	if(ofld=="age") axis(1,at=seq(floor(xlim[1]),ceiling(xlim[2]),1),tcl=-.2,labels=FALSE)
+	axis(1,at=seq(floor(xlim[1]),ceiling(xlim[2]),5),tcl=-.4,labels=FALSE)
+	axis(1,at=seq(floor(xlim[1]),ceiling(xlim[2]),10),tcl=-.5,mgp=c(0,.5,0),cex=.9)
+	axis(2,at=seq(0,1,.05),tcl=-.25,labels=FALSE)
+	axis(2,at=seq(0,1,.1),tcl=-.5,mgp=c(0,.7,0),cex=.9,adj=1)
+	mtext(ifelse(ofld=="age","Age","Length"),side=1,cex=1.2,line=1.75)
+	mtext("Proportion Mature",side=2,cex=1.2,line=2.5,las=0)
 
+	legtxt = character(); nleg = 0
 	for (s in 1:nsex) {
 		ss=names(sex)[s]
 		#above=as.logical(s%%2); #print(c(s,above))
@@ -1185,7 +1211,8 @@ estOgive <- function(dat=pop.age, strSpp="", method=c("dblnorm"),
 			sss = names(subsets)[i]
 			sin = (s-1)*nsub + i
 			idat = sdat[is.element(sdat[,ii],iii),]
-			if (nrow(idat)==0) next
+			if (nrow(idat)==0 || !any(idat$mat %in% mat) ) next
+#browser();return()
 			#if (ii=="ttype")
 				idat <- idat[is.element(idat$month,mos[[s]]),]
 			if (strSpp=="405" && ss=="Males")
@@ -1193,6 +1220,9 @@ estOgive <- function(dat=pop.age, strSpp="", method=c("dblnorm"),
 			mbin <- split(idat$mat,idat$obin)
 			nbin <- sapply(mbin,length) # number of maturity codes in each age bin
 			CALCS[[ss]][[sss]][["mbin"]] = mbin
+			CALCS[[ss]][[sss]][["nfish"]] = sum(nbin)
+			nleg = nleg +1
+			legtxt[nleg] = paste0(ss,": ",sss," (n=",sum(nbin),")")
 			x = as.numeric(names(mbin))
 			xpos = x - (obin-1)*.5   # mid-point of binned ogive
 
@@ -1256,24 +1286,6 @@ estOgive <- function(dat=pop.age, strSpp="", method=c("dblnorm"),
 			xout[,sss,ss,"year"] = range(idat$year,na.rm=TRUE)
 			xout[,sss,ss,"date"] = range(substring(idat$date,1,10),na.rm=TRUE)
 
-			if (s==1 && i==1) {
-				if (eps) postscript(paste0(onam,".eps"),width=figdim[1],height=figdim[2],paper="special")
-				else if (wmf && .Platform$OS.type=="windows")
-					do.call("win.metafile",list(filename=paste0(onam,".wmf"),width=figdim[1],height=figdim[2]))
-				else if (png) png(filename=paste0(onam,".png"),width=figdim[1]*100,height=figdim[2]*100,res=100)
-				else resetGraph()
-				expandGraph(mfrow=c(1,1),mai=c(.6,.7,0.05,0.05),omi=c(0,0,0,0),las=1,lwd=1)
-				plot(xpos,pemp,type="n",xlab="",ylab="",xaxt="n",yaxt="n",xlim=xlim,ylim=c(0,1))
-				abline(h=.5,col="gainsboro",lty=1,lwd=2)
-				abline(h=seq(0,1,.1),v=seq(0,xlim[2],ifelse(xlim[2]<30,1,2)),col="gainsboro",lty=2,lwd=1)
-				if(ofld=="age") axis(1,at=seq(floor(xlim[1]),ceiling(xlim[2]),1),tcl=-.2,labels=FALSE)
-				axis(1,at=seq(floor(xlim[1]),ceiling(xlim[2]),5),tcl=-.4,labels=FALSE)
-				axis(1,at=seq(floor(xlim[1]),ceiling(xlim[2]),10),tcl=-.5,mgp=c(0,.5,0),cex=.9)
-				axis(2,at=seq(0,1,.05),tcl=-.25,labels=FALSE)
-				axis(2,at=seq(0,1,.1),tcl=-.5,mgp=c(0,.7,0),cex=.9,adj=1)
-				mtext(ifelse(ofld=="age","Age","Length"),side=1,cex=1.2,line=1.75)
-				mtext("Proportion Mature",side=2,cex=1.2,line=2.5,las=0)
-			}
 			nmeth = 0
 			if (any(method=="logit")) {
 				nmeth = nmeth + 1
@@ -1322,14 +1334,16 @@ estOgive <- function(dat=pop.age, strSpp="", method=c("dblnorm"),
 		}
 	}
 	#addLegend(.7,.3,legend=paste("sex",sapply(strsplit(names(sex),""),paste,collapse="+")),lwd=ifelse(any(method==c("logit","dblnorm")),2,1),
-	if (nsex>1) legtxt = paste0(rep(names(sex),each=nsub),": ")
-	else legtxt = ""
-	legtxt = paste0(legtxt,rep(names(subsets),nsex))
-	if (length(SSID)==1)
-		legtxt=sub(names(SSID),paste0(names(SSID),"\n     ",paste(surveys,collapse="\n     "),"\n"),legtxt)
+	if (length(legtxt)==0) {
+		if (nsex>1) legtxt = paste0(rep(names(sex),each=nsub),": ")	
+		else legtxt = ""
+		legtxt = paste0(legtxt,rep(names(subsets),nsex))
+	}
+	#if (length(SSID)==1)
+	#	legtxt=sub(names(SSID),paste0(names(SSID),"\n     ",paste(surveys,collapse="\n     "),"\n"),legtxt)
+#browser();return()
 	addLegend(.55,ifelse(is.null(surveys),.30,.45),legend=legtxt,lty=1:nsexsub,lwd=ifelse(any(method==c("logit","dblnorm")),2,1),adj=c(0,ifelse(is.null(surveys),0.5,.95)),
 		pch=ifelse(any(method=="empir"),20,NA),col=fg[1:nsexsub],cex=ifelse(eps|png,0.9,1),bty="n",seg.len=5)
-#browser();return()
 	box()
 	if(eps|png|wmf) dev.off()
 
@@ -1364,6 +1378,7 @@ estOgive <- function(dat=pop.age, strSpp="", method=c("dblnorm"),
 	invisible(out)
 }
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~estOgive
+
 
 #genPa----------------------------------2013-01-18
 # Generate proportions-at-age using the catch curve 
@@ -1929,7 +1944,7 @@ plotProp <- function(fnam="pop.age",hnam=NULL, ioenv=.GlobalEnv,...) {
 	.plotProp.plotP()
 	invisible }
 
-#.plotProp.plotP------------------------2013-07-04
+#.plotProp.plotP------------------------2015-12-16
 # Guts of the plotting routine.
 #-----------------------------------------------RH
 .plotProp.plotP <- function(wmf=FALSE) {                # Start blowing bubbles
@@ -1968,6 +1983,7 @@ plotProp <- function(fnam="pop.age",hnam=NULL, ioenv=.GlobalEnv,...) {
 
 	xlim <- unlist(XYopt[1,c("lim1","lim2")])
 	ylim <- unlist(XYopt[2,c("lim1","lim2")])
+	ypretty = pretty(ylim)
 	px <- is.element(xval,xlim[1]:xlim[2])
 	py <- is.element(yval,ylim[1]:ylim[2])
 	pa <- subset(pa,select=px); Na <- subset(Na,select=px)
@@ -1979,15 +1995,21 @@ plotProp <- function(fnam="pop.age",hnam=NULL, ioenv=.GlobalEnv,...) {
 	dx <- max(1,diff(xlim)); xl <- xlim + c(-ad[1]*dx,ad[2]*dx)
 	dy <- max(1,diff(ylim)); yl <- ylim + c(-ad[3]*dy,ad[4]*dy)
 	zxt <- is.element(xval,seq(1950,2050,ifelse(length(xval)>20,5,ifelse(length(xval)>6,2,1))))
-	zyt <- is.element(yval,seq(0,5000,ifelse(any(xy[2]==c("wt")),100,
-		ifelse(any(xy[2]==c("len")),50,ifelse(any(xy[2]==c("age")),5,5)))))
+	zyt <- is.element(yval,seq(0,5000,ifelse(any(xy[2]==c("wt")),100, ifelse(any(xy[2]==c("len")),50, ifelse(any(xy[2]==c("age")),5,5)))))
 	xlab <- paste(LETTERS[is.element(letters,substring(xy[1],1,1))],substring(xy[1],2),sep="")
 	ylab <- paste(LETTERS[is.element(letters,substring(xy[2],1,1))],substring(xy[2],2),sep="")
 
 	plotBubbles(pa,dnam=TRUE,smo=1/100,size=psize*pin[1],lwd=lwd,powr=powr,
 		clrs=bcol,hide0=hide0,xlim=xl,ylim=yl,xlab="",ylab="",xaxt="n",yaxt="n")
 	usr=par()$usr; dyu=diff(usr[3:4])
-	if(showH) abline(h=yval[zyt],lty=3,col="grey30")
+	#if(showH) abline(h=yval[zyt],lty=3,col="grey30")
+	if (showH) abline(h=ypretty[ypretty>0],lty=3,col="grey30")
+	if (showM) {
+		ymean = apply(pa,2,function(x,y){sum(x*y)},y=yval)  ## calculate mean len|age
+#browser();return()
+		lines(xval,ymean,col="red",lwd=3)
+		points(xval,ymean,pch=22,col="darkred",bg="moccasin",cex=1.5)
+	}
 	tcol <- darken(bcol[1]); # text colour as darker RGB based on positive bubbles
 
    mtext(xlab,side=1,line=1.75,cex=1.5)
@@ -1995,8 +2017,10 @@ plotProp <- function(fnam="pop.age",hnam=NULL, ioenv=.GlobalEnv,...) {
 
    axis(1,at=xval,labels=FALSE,tck=-.005)
    axis(1,at=xval[zxt],mgp=c(0,.5,0),tck=-.02,adj=.5,cex=1)
-   axis(2,at=yval,tck=.005,labels=FALSE)
-   axis(2,at=yval[zyt],mgp=c(0,.5,0),tck=.02,adj=1,cex=1)
+   #axis(2,at=yval,tck=.005,labels=FALSE)
+   #axis(2,at=yval[zyt],mgp=c(0,.5,0),tck=.02,adj=1,cex=1)
+   axis(2,at=1:ylim[2],tck=.005,labels=FALSE)
+   axis(2,at=ypretty,mgp=c(0,.5,0),tck=.02,adj=1,cex=1)
 
 	mainlab <- paste(ttcall(spn)[spp],xy[2],ifelse(!is.null(strat),paste("\n...stratified ",
 		ifelse(wted,"& weighted ",""),"by ",strat,sep=""),"not stratified"))
@@ -2437,16 +2461,17 @@ reportCatchAge <- function(prefix="pop", path=getwd(), hnam=NULL, ...) {
 	invisible() }
 #-----------------------------------reportCatchAge
 
-#requestAges----------------------------2015-05-22
+
+#requestAges----------------------------2015-12-08
 # Determine which otoliths to sample for ageing requests.
-# Note: only have to use sql=TRUE once for each species 
+# Note: only have to use run.sql=TRUE once for each species 
 # using any year before querying a group of years.
 # Note: ageing methdology is not a sensible selection 
 # criterion because the fish selected have not been aged.
 #-----------------------------------------------RH
 requestAges=function(strSpp, nage=500, year=2012, 
      areas=list(major=3:9, minor=NULL), ttype=c(1,4),
-     sex=1:2, nfld = "nallo", sql=TRUE, only.sql=FALSE, bySID=FALSE,
+     sex=1:2, nfld = "nallo", run.sql=TRUE, only.sql=FALSE, bySID=FALSE,
      spath=.getSpath(), uid=Sys.info()["user"], pwd=uid, ...) {
 
 	on.exit(gc())
@@ -2454,22 +2479,30 @@ requestAges=function(strSpp, nage=500, year=2012,
 	assign("PBStool",list(module="M02_Biology",call=match.call(),args=args(requestAges)),envir=.PBStoolEnv)
 
 #Subfunctions --------------------------
-	adjustN = function(a,b){           # a=available , b=desired
+	adjustN = function(a,b,nmin=5){           # a=available , b=desired, nmin=minimum acceptable
+#print(a); print(b)
 		if (round(sum(b),5) > round(sum(a),5)) {
 			showMessage(paste("There are only",sum(round(a,0)),"otoliths available.\n",
 				"All were selected."),as.is=TRUE)
 			return(a) }
-		target = sum(b)                 # total number desired
-		za = b>a                        # restricted to available
-		if (any(za)) {
-			aN = rep(0,length(a))        # adjusted N
-			aN[za] = a[za]
-			aN[!za] = b[!za]
-			pb = b[!za]/sum(b[!za])      # proportion of non-restricted desired
-			sN = sum(b[za]-a[za])        # surplus desired
-			aN[!za] = aN[!za] + pb*sN    # allocate surplus
-#browser();return()
-			adjustN(a,aN)                # re-iterate
+		target = sum(b)           # Total number desired
+		za.use = a >= nmin        # Only use available samples with at least the acceptable minimum # ages
+		a[!za.use] = 0            # Automatically set low availablity to 0
+		zb.gta = b > a            # Determine which desired #ages exceed the available
+		zover  = za.use & zb.gta  # Index the over-desired
+		if (any(zover)) { 
+			aN = rep(0,length(a))         # adjusted N
+			aN[zover] = a[zover]
+			bnew = b[!zover]
+			bnew = pmin(bnew,a[!zover])   # make sure bnew doesn't exceed avaialble
+			pb = bnew/sum(bnew)           # proportion of non-restricted desired
+			sN = target - sum(a[zover])   # surplus desired
+			bnew = pb*(sN)                # rescale by surplus desired
+			bnew[bnew<nmin] = 0           # get rid of desired with less than minimum
+			bnew = sN*bnew/sum(bnew)      # rescale the desired again to achieve the surplus desired
+			aN[!zover] = bnew             # add the rescaled surplus to the desired vector
+#browser()
+			adjustN(a,aN)                 # re-iterate
 		}
 		else return(b) }
 
@@ -2490,7 +2523,8 @@ requestAges=function(strSpp, nage=500, year=2012,
 #---------------------------subfunctions
 	}
 
-	if (sql || only.sql) {
+	if (run.sql || only.sql) {
+#if(FALSE){
 		expr=paste(c("getData(\"gfb_age_request.sql\"",
 			",dbName=\"GFBioSQL\",strSpp=\"",strSpp,"\",path=\"",spath,"\",tenv=penv())"),collapse="")
 		expr=paste(c(expr,"; Sdat=PBSdat"),collapse="")
@@ -2507,7 +2541,8 @@ requestAges=function(strSpp, nage=500, year=2012,
 		expr=paste(c(expr,"; Ccat=rbind(phtcat,foscat[,names(phtcat)])"),collapse="")
 		expr=paste(c(expr,"; save(\"Ccat\",file=\"Ccat",strSpp,".rda\")"),collapse="")      # Commercial catch (binary)
 		expr=paste(c(expr,"; write.csv(Ccat,file=\"Ccat",strSpp,".csv\")"),collapse="")     # Commercial catch (ascii)
-
+#}
+#expr=as.character()
 		expr=paste(c(expr,"; getData(\"gfb_gfb_catch.sql\",\"",
 			"GFBioSQL\",strSpp=\"",strSpp,"\",path=\"",spath,"\",tenv=penv())"),collapse="")
 		expr=paste(c(expr,"; Scat=PBSdat"),collapse="")
@@ -2515,7 +2550,8 @@ requestAges=function(strSpp, nage=500, year=2012,
 		expr=paste(c(expr,"; write.csv(Scat,file=\"Scat",strSpp,".csv\")"),collapse="")     # Survey catch (ascii)
 		eval(parse(text=expr))
 	}
-	if (!only.sql && !sql) { 
+#browser();return()
+	if (!only.sql && !run.sql) { 
 		expr=paste(c("load(\"Sdat",strSpp,".rda\"); load(\"Ccat",strSpp,".rda\"); ",
 			"load(\"Scat",strSpp,".rda\")"),collapse="")
 		eval(parse(text=expr)) 
@@ -2564,16 +2600,18 @@ requestAges=function(strSpp, nage=500, year=2012,
 		samp$tid  = paste(samp$TID_gfb,samp$FEID,sep=".")
 		catch$tid = paste(catch$TID,catch$FEID,sep=".")
 	}
+#browser();return()
 	unpackList(list(...))
 	for (i in intersect(c("TID_gfb","TID_fos"),ls())) {
 		eval(parse(text=paste("samp=biteData(samp,",i,")",sep="")))
 		eval(parse(text=paste("catch=biteData(catch,",i,")",sep="")))
 		areas = list(major=.su(samp$major))              # if TID is specified, areas become defined in terms of PMFCs
+		year  = .su(samp$year)
 	}
-#browser();return()
 	spooler(areas,"area",samp)                          # creates a column called 'area' and populates based on argument 'areas'.
 	spooler(areas,"area",catch)
 	area=sort(unique(samp$area))
+
 	for (i in intersect(c("year","area","ttype"),ls())) {
 		eval(parse(text=paste("samp=biteData(samp,",i,")",sep="")))
 		if (i!="ttype") eval(parse(text=paste("catch=biteData(catch,",i,")",sep="")))
@@ -2665,7 +2703,6 @@ requestAges=function(strSpp, nage=500, year=2012,
 #if (i=="2012-02") {browser();return()}
 	}
 	packList(c("Sdat","catch","C"),"PBStool",tenv=.PBStoolEnv)
-#browser();return()
 	samp$ncat  = nage*samp$ncat/sum(samp$ncat)          # Force the calculated otoliths back to user's desired number (nage)
 	samp$nwant = round(pmax(1,samp$ncat))               # No. otoliths wanted by the selection algorithm (inflated when many values are <1)
 	samp$ndone = samp$NBBA                              # No. otoliths broken & burnt
@@ -2675,10 +2712,11 @@ requestAges=function(strSpp, nage=500, year=2012,
 	samp$nallo = rep(0,nrow(samp))
 	
 	samp$nallo = adjustN(a=samp$nfree,b=samp$ncat)      # No. of otoliths allocated to satisfy user's initial request, given constraint of Nfree
+#browser();return()
 	#samp$nallo[nardwuar] = adjustN(a=samp$nfree[nardwuar],b=samp$ncat[nardwuar])    # No. of otoliths allocated to satisfy user's initial request, given constraint of Nfree
 
 	# Adjust for many small n-values (<1) using median rather than 0.5 as the determinant of 0 vs.1
-	zsmall = samp$nallo[nardwuar] < 1.
+	zsmall = samp$nallo[nardwuar] < 1. & round(samp$nallo[nardwuar],5) > 0
 	if (any(zsmall)) {
 		msmall = median(samp$nallo[nardwuar][zsmall])
 		zzero  = samp$nallo[nardwuar][zsmall] < msmall
@@ -2688,11 +2726,15 @@ requestAges=function(strSpp, nage=500, year=2012,
 	samp$nallo[nardwuar] = round(samp$nallo[nardwuar])
 	narduse = samp[,nfld] > 0 & !is.na(samp[,nfld])
 	sampuse = samp[narduse,]
+
+	write.csv(t(t(rev(sort(sapply(split(samp$nallo,samp$SID),sum))))),file="nalloSID.csv")
+
 	### End sample calculations ###
 #browser();return()
 
 	yearmess = if (length(year)>3) paste(min(year),"-",max(year),sep="") else paste(year,collapse="+")
-	describe=paste("-",type,"(",yearmess,")-area(",area,")-sex(",paste(sex,collapse="+"),")-N",round(sum(samp[,nfld])),sep="")
+	if (is.null(list(...)$describe))
+		describe=paste("-",type,"(",yearmess,")-area(",area,")-sex(",paste(sex,collapse="+"),")-N",round(sum(samp[,nfld])),sep="")
 	attr(samp,"Q") = cbind(qC,pC,nC)
 	attr(samp,"call") = deparse(match.call())
 		packList(c("samp","describe"),"PBStool",tenv=.PBStoolEnv)
@@ -2838,7 +2880,7 @@ requestAges=function(strSpp, nage=500, year=2012,
 			ocells = min(firstSerial):max(lastSerial)     # available otoliths
 			pcells = match(Otos,ocells)                   # cell positions to take samples
 			pcells = pcells[pcells>0 & !is.na(pcells)]    # remove NAs caused by a samples spanning trays
-			otos   = ocells[pcells]                       # otoliths specific to this tray
+			otos   = unique(ocells[pcells])               # otoliths specific to this tray (forceably remove duplicates even though they should not be here)
 			TRAY   = array("",dim=c(5,20),dimnames=list(LETTERS[1:5],1:20))
 			serT   = matrix(seq(ocells[1],ocells[1]+99,1),nrow=5,ncol=20,byrow=TRUE)
 			#if (i=="16X:1") {browser();return()}         # there are apparently 103 Shortraker otoliths in this trip (16X:1)

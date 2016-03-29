@@ -49,9 +49,11 @@ trackComp(fqtName=c("Ex01_Sample_Info","Ex02_Species_Abundance"),
 }
 \examples{
 local(envir=.PBStoolEnv,expr={
-pbsfun=function(os=.Platform$OS.type) {
-  if (os=="windows") trackComp(ndays=15,path=.getSpath())
-  else showMessage("Only functional for Microsoft Access on Windows OS")
+pbsfun=function(os=.Platform$OS.type,arch=.Platform$r_arch) {
+  if (os=="windows" && arch=="i386")
+    trackComp(ndays=15,path=.getSpath())
+  else 
+    showMessage("Only functional for Microsoft Access on 32-bit Windows OS")
   invisible() }
 pbsfun()
 })

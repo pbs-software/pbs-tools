@@ -10,7 +10,7 @@
 texArray(x, table.caption="My table", table.label="tab:mytable",
    strSpp=NULL, sigdig=3, zero="---", collab=NULL, dash.delim=NULL, 
    rm.empty=TRUE, start.page=1, ignore.col=NULL,
-   select.rows=NULL, use.row.names=FALSE, name.row.names="row",
+   select.rows=NULL, use.row.names=FALSE, name.row.names="row", struts=FALSE,
    add.header.column=FALSE, new.header=NULL, outnam="mytable")
 }
 \arguments{
@@ -28,6 +28,7 @@ texArray(x, table.caption="My table", table.label="tab:mytable",
   \item{select.rows}{select rows depending on either a numeric vector of rows or a character vector of row names.}
   \item{use.row.names}{logical -- if \code{TRUE}, use the \code{rownames} from the input data table.}
   \item{name.row.names}{table header name for column comprising the data table row names.}
+  \item{struts}{logical: if \code{TRUE}, add vertical space before and after table header.}
   \item{add.header.column}{logical -- if \code{TRUE}, add a first column that delineates the various 
     dimensions of an array (> 2 dimensions) using the \code{names} of the \code{dimnames}.}
   \item{new.header}{character vector of replacement labels if the user knows the table header columns and wants to replace them with specific labels.}
@@ -51,7 +52,8 @@ texArray(x, table.caption="My table", table.label="tab:mytable",
   Hart, J.L. (1973) Pacific fishes of Canada. \emph{Fisheries Research Board of Canada} \bold{180}: ix + 740 p.
 }
 \author{
-  Rowan Haigh, Pacific Biological Station, Fisheries and Oceans Canada, Nanaimo BC.
+  Rowan Haigh, Research Biologist,\cr
+  Pacific Biological Station, Fisheries and Oceans Canada, Nanaimo BC.
 }
 \seealso{
   \code{\link[PBStools]{formatCatch}}, \code{\link[PBStools]{makeLTH}}, \code{\link[PBStools]{collectFigs}}

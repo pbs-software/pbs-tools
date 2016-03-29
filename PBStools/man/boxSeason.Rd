@@ -31,7 +31,8 @@ boxSeason(fqtName="Ex01_Sample_Info", dbName="Examples.mdb",
   \code{Date} that depicts the date values as strings with format \code{YYYY-MM-DD}.
 }
 \author{
-  Rowan Haigh, Pacific Biological Station, Fisheries and Oceans Canada, Nanaimo BC.
+  Rowan Haigh, Research Biologist, \cr
+  Pacific Biological Station, Fisheries and Oceans Canada, Nanaimo BC.
 }
 \seealso{
   \code{\link[PBStools]{trackComp}}, \code{\link[PBStools]{plotDiversity}}, 
@@ -39,10 +40,11 @@ boxSeason(fqtName="Ex01_Sample_Info", dbName="Examples.mdb",
 }
 \examples{
 local(envir=.PBStoolEnv,expr={
-pbsfun=function(os=.Platform$OS.type) {
-  if (os=="windows")
+pbsfun=function(os=.Platform$OS.type, arch=.Platform$r_arch) {
+  if (os=="windows" && arch=="i386")
     boxSeason(fld="S",brks="M",path=.getSpath())
-  else showMessage("Only functional for Microsoft Access on Windows OS")
+  else 
+    showMessage("Only functional for Microsoft Access on 32-bit Windows OS")
   invisible() }
 pbsfun()
 })
