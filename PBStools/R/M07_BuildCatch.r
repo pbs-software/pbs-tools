@@ -1,11 +1,11 @@
 #===============================================================================
 # Module 7: Catch Reconstruction
 # ------------------------------
-#  buildCatch   Build a catch history of BC rockfish 1918--present.
-#  plotData     Plot diagnostic data for catch reconstructions.
+#  buildCatch...Build a catch history of BC rockfish 1918--present.
+#  plotData.....Plot diagnostic data for catch reconstructions.
 #  plotRecon....Plot reconstructed catch using barplots stacked by PMFC area.
-#  surveyCatch  Query the survey catch data and make summary tables.
-#  zapSeamounts Remove seamount records using combinations of major, minor, and locality codes.
+#  surveyCatch..Query the survey catch data and make summary tables.
+#  zapSeamounts.Remove seamount records using combinations of major, minor, and locality codes.
 #===============================================================================
 
 #buildCatch-----------------------------2015-08-06

@@ -6,7 +6,7 @@
 #  calcVB..........Calculate von Bertalanffy growth curve.
 #  compCsum........Compare cumulative sum curves.
 #  estOgive........Creates ogives of some metric (e.g., % maturity at age).
-#  genPa           Generate proportions-at-age using catch curve composition.
+#  genPa...........Generate proportions-at-age using catch curve composition.
 #  histMetric......Create a matrix of histograms for a specified metric.
 #  histTail........Create a histogram showing tail details.
 #  mapMaturity.....Plot maturity chart of stages by month.
@@ -783,7 +783,7 @@ calcVB <- function(dat=pop.age, strSpp="", yfld="len", fixt0=FALSE,
 				if (singles && (eps|pdf|pix|wmf)) dev.off()
 				cat(paste("\nArea: ",amat,"   Trip type: ",tmat,sep=""),"\n",file=csv,append=TRUE)
 				cat("age,females,males,both","\n",file=csv,append=TRUE)
-browser();return()
+#browser();return()
 				mf=cbind(sapply(fits[[amat]][[tmat]][["Females"]],function(x){x},simplify=TRUE),
 					sapply(fits[[amat]][[tmat]][["Males"]],function(x){x},simplify=TRUE)[,2],
 					sapply(fits[[amat]][[tmat]][["Both"]],function(x){x},simplify=TRUE)[,2])

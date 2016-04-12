@@ -5,33 +5,33 @@
 #  biteData........Subsets a data matrix/frame using input vector.
 #  chewData........Remove records that contribute little information to factor categories.
 #  confODBC........Set up an ODBC User Data Source Name (DSN).
-#  convCT          Convert a crossTab object to regular matrix or data frame.
+#  convCT..........Convert a crossTab object to regular matrix or data frame.
 #  convFY..........Convert dates into fishing years.
 #  convYM..........Convert date limits into a vector of year-months (YYY-MM).
 #  convYP..........Convert dates into year periods.
-#  countLines      Count the number of lines in an ASCII file.
+#  countLines......Count the number of lines in an ASCII file.
 #  createDSN.......Create entire suite of DSNs for the groundfish databases.
 #  crossTab........Use package 'reshape' to summarize z using crosstab values y.
 #  fitLogit........Fit binomial data using logit link function.
-#  flagIt          Labels a coordinate using a diagonal line radiating from it.
+#  flagIt..........Labels a coordinate using a diagonal line radiating from it.
 #  getData.........Get data from a variety of sources.
 #  getFile.........Get a dataset (binary libraries, binary local, dumped data, comma-delimited text.
 #  getName.........Get the names of the input object.
-#  getODBC         Get a string vector of ODBC drivers on user's Windows system.
+#  getODBC.........Get a string vector of ODBC drivers on user's Windows system.
 #  isThere.........Check to see if object physically exists in the specified environment.
 #  lenv............Get the local/parent/global environment.
 #  listTables......List tables in specified SQL, ORA, or MDB database.
 #  prime...........Report the prime numbers given an integer vector.
-#  quantBox        Redefine boxplot to show quantiles.
+#  quantBox........Redefine boxplot to show quantiles.
 #  revStr..........Reverse characters in a string.
 #  runModules......Display a master GUI to display modules.
 #  scaleVec........Scales a vector to span a target minimum and maximum.
 #  showError.......Display error message on device surface.
 #  spooler.........Spools list objects into fields of data frames.
 #  stdConc.........Standardise a chemical concentration.
-#  subsetFile      Subset an ASCII file every n rows (enrow).
-#  toUpper         Capitalise first letter of each word in phrase
-#  ttget           Provide wrappers for PBSmodelling functions tget/tcall/tprint/tput/lisp
+#  subsetFile......Subset an ASCII file every n rows (enrow).
+#  toUpper.........Capitalise first letter of each word in phrase
+#  ttget...........Provide wrappers for PBSmodelling functions tget/tcall/tprint/tput/lisp
 #  wrapText........Wrap, mark and indent a long text string.
 #  zapDupes........Delete duplicated records based on specified index.
 #
@@ -803,7 +803,7 @@ getName=function(fnam){
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~getName
 
 
-#getODBC--------------------------------2013-06-26
+#getODBC--------------------------------2016-04-12
 # Get a string vector of ODBC drivers installed on user's Windows system.
 # Code: Scripting Guy
 # URL : http://blogs.technet.com/b/heyscriptingguy/archive/2005/07/07/how-can-i-get-a-list-of-the-odbc-drivers-that-are-installed-on-a-computer.aspx
@@ -832,6 +832,7 @@ getODBC <- function(os=.Platform$OS.type, pattern=NULL, status="Installed") {
 		isStatus = sapply(odbcList,function(x){x[2]==status})
 		odbcStat = odbcStat[isStatus]
 	}
+	odbcOut = odbcStat
 	if (!is.null(pattern))
 		odbcOut = odbcStat[grep(pattern,odbcStat)]
 	packList(c("odbcAll","odbcList","odbcStat","odbcOut"),target="PBStool",tenv=.PBStoolEnv)

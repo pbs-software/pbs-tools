@@ -1,4 +1,5 @@
 -- Norm's query (modified) to categorize trips into sectors
+-- Originally in Oracle SQL, converted to SQL Server (RH 160412)
 SELECT 
   TF.TRIP_ID,
   COUNT(TRIP_ID) AS NFID,
@@ -10,22 +11,24 @@ SELECT
     WHEN TF.FISHERY_CODE IN (23)       AND TF.FISHERY_CODE NOT IN (24,21,52,57,59,17) THEN 1
    ELSE 0 END) AS FID,
   (CASE 
-    WHEN COUNT(TF.TRIP_ID) >= 2 THEN INITCAP(MIN(F.FISHERY_NAME)) || ' & ' || INITCAP(MAX(F.FISHERY_NAME)) 
-    ELSE INITCAP(MIN(F.FISHERY_NAME)) END) || --'' || 
+    WHEN COUNT(TF.TRIP_ID) >= 2 THEN GFBioSQL.dbo.INITCAP(MIN(F.FISHERY_NAME)) + ' & ' + GFBioSQL.dbo.INITCAP(MAX(F.FISHERY_NAME)) 
+    ELSE GFBioSQL.dbo.INITCAP(MIN(F.FISHERY_NAME)) END) +
     (CASE MIN(FS.FISHERY_SUBTYPE_DESCRIPTION) 
       WHEN 'Unspecified' THEN '' 
-      ELSE ' ' || MIN(FS.FISHERY_SUBTYPE_DESCRIPTION) END) AS SECTOR
-  FROM 
-    @table.GF_TRIP_FISHERY TF
-    INNER JOIN @table.FISHERY F ON
+      ELSE ' ' + MIN(FS.FISHERY_SUBTYPE_DESCRIPTION) END) AS SECTOR
+FROM 
+  GF_TRIP_FISHERY TF
+    INNER JOIN FISHERY F ON
     TF.FISHERY_CODE = F.FISHERY_CODE
-    INNER JOIN @table.FISHERY_SUBTYPE FS ON
+    INNER JOIN FISHERY_SUBTYPE FS ON
     TF.FISHERY_SUBTYPE_CODE = FS.FISHERY_SUBTYPE_CODE
-  WHERE 
-    TF.FISHERY_CODE IN (17, 21, 23, 24, 52, 57, 59) AND -- Retain these fisheries
-    TF.TRIP_TYPE_CODE NOT IN (18, 12813, 5669) -- Omit IPHC, research, and seamount trips
-  GROUP BY 
-    TF.TRIP_ID
-;
--- getData("fos_sectors.sql","GFFOS",strSpp="424",server="ORADEV",type="ORA",trusted=F)
+WHERE 
+  TF.FISHERY_CODE IN (17, 21, 23, 24, 52, 57, 59) AND -- Retain these fisheries
+  TF.TRIP_TYPE_CODE NOT IN (18, 12813, 5669) -- Omit IPHC, research, and seamount trips
+GROUP BY
+  TF.TRIP_ID
+
+-- getData("fos_sectors.ora","GFFOS",strSpp="424",server="ORADEV",type="ORA",trusted=F)
+-- getData("fos_sectors.sql","GFFOS",strSpp="424")
+-- qu("fos_sectors.sql",dbName="GFFOS",strSpp="424")
 

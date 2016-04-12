@@ -18,9 +18,9 @@
   comprise the following: 
   \tabular{lclc}{
     \bold{Database}     \tab \bold{code} \tab \bold{Fishery}                     \tab \bold{Dates} \cr
-    \code{GFBioSQL}     \tab \code{gfb}  \tab JV Hake, research, surveys, etc.   \tab 1946--2011 \cr
+    \code{GFBioSQL}     \tab \code{gfb}  \tab Research, surveys, biology, JV hake catch, etc.   \tab 1946--2011 \cr
     \code{GFCatch}      \tab \code{gfc}  \tab Commercial fisheries data          \tab 1954--1975 \cr
-    \code{GFFOS}        \tab \code{fos}  \tab Commercial fisheries (all sectors) \tab 2002--2011 \cr
+    \code{GFFOS}        \tab \code{fos}  \tab Commercial fisheries (all sectors) \tab 2002--2016 \cr
     \code{PacHarv3}     \tab \code{ph3}  \tab Commercial sales slips data        \tab 1982--1994 \cr
     \code{PacHarvest}   \tab \code{pht}  \tab Commercial trawl fisheries         \tab 1996--2007 \cr
     \code{PacHarvHL}    \tab \code{phhl} \tab Commercial hook & line fisheries   \tab 1984--2006 \cr
@@ -36,11 +36,15 @@
 
   \tabular{ll}{
     \bold{SQL queries:} \tab \cr
+    \code{gfb_ageing_summary.sql}       \tab Norm's ageing datasheet summary. \cr
     \code{gfb_age_request.sql}          \tab Summarize and choose otoliths taken but not aged.\cr
+    \code{gfb_age_request_b21b22.sql}   \tab Same as previous but using summary tables as source.\cr
     \code{gfb_bio.sql}                  \tab Specimen biological data for a target species.\cr
+    \code{gfb_bio_b21b22.sql}           \tab Same as previous but using summary tables as source.\cr
     \code{gfb_boot.sql}                 \tab Bootstrapped survey indices from boot tables.\cr
     \code{gfb_bycatch.sql}              \tab Annual fish group catches as bycatch to target species' depth range.\cr
     \code{gfb_catch_records.sql}        \tab Research survey catch for \code{\link[PBStools]{getCatch}} and \code{\link[PBStools]{weightBio}}.\cr
+    \code{gfb_clara_survey.sql}         \tab Get survey catch from GFBioSQL for clara analysis.\cr
     \code{gfb_concat_rows_example.sql}  \tab Concatenate values when number of items is small and known upfront.\cr
                                         \tab \url{http://www.projectdmx.com/tsql/rowconcatenate.aspx} \cr
     \code{gfb_fishwt.sql}               \tab Mean weight of species sampled from commercial and research trips.\cr
@@ -51,20 +55,28 @@
     \code{gfb_fos_tid.sql}              \tab Match \code{GFBioSQL}'s \code{TRIP_ID}s with those in \code{GFFOS}.\cr
     \code{gfb_gfb_catch.sql}            \tab Research survey catch for \code{\link[PBStools]{requestAges}}.\cr
     \code{gfb_iphc.sql}                 \tab IPHC survey data for target species.\cr
-    \code{gfb_iphc_deprecated.sql}      \tab \bold{Deprecated} (use \code{gfb_iphc.sql}); query for IPHC survey data.\cr
+    \code{gfb_iphc_v01.sql}             \tab Precursor to previous query. \cr
+    \code{gfb_iphc_hook_data.sql}       \tab IPHC longline hook data (for AME's IPHC index calculation).\cr
+    \code{gfb_iphc_set_data.sql}        \tab IPHC longline set data (for AME's IPHC index calculation).\cr
+    \code{gfb_iphc_skate_data.sql}      \tab IPHC longline skate data (for AME's IPHC index calculation).\cr
+    \code{gfb_jcatORF.sql}              \tab Joint-venture hake fishery catch up to \& including 2006 only,\cr
+                                        \tab (GFFOS captures J-V hake catch thereafter).\cr
+    \code{gfb_mean_weight.sql}          \tab Calculate mean weight of a fish species for converting discarded pieces to kg in GFFOS.\cr
     \code{gfb_pht_catch.sql}            \tab Get commercial catch from \code{PacHarvest}; \cr
                                         \tab match trip IDs in \code{GFBioSQL} & \code{GFFOS}.\cr
     \code{gfb_pmr.sql}                  \tab Population parameters (\eqn{p}, \eqn{\mu}, \eqn{\rho}) for target species in survey strata.\cr
+    \code{gfb_rcatORF.sql}              \tab Research survey catch for catch reconstructon.\cr
+    \code{gfb_shrimp_trawl.sql}         \tab Get shrimp trawl catch GFBioSQL for clara analysis.\cr
     \code{gfb_survey_activity.sql}      \tab Summarise the annual survey catch for specified species.\cr
     \code{gfb_survey_catch.sql}         \tab Survey catch and density by species.\cr
     \code{gfb_survey_stratum.sql}       \tab Survey stratum information.\cr
     \code{gfb_tasu.sql}                 \tab Specimen biological data for LL surveys in Tasu, Flamingo, Triangle, Brooks.\cr
-    \code{gfb_tid_catch.sql}            \tab \bold{Deprecated} (use \code{gfb_pht_catch.sql}). \cr
-                                        \tab Commercial catch from \code{PacHarvest}; \cr
-                                        \tab match trip IDs in \code{GFBioSQL} & \code{FOS}.\cr
-    \code{gfb_YrWtAge.sql}              \tab Year, weight, age data for target species.
+    \code{gfb_YrWtAge.sql}              \tab Year, weight, age data for target species.\cr
+    \code{meanSppWt.sql}                \tab Table of mean species weight calculated using `gfb_mean_weight.sql',\cr
+                                        \tab which emulates PJS algorithm for GFBIO data.\cr
   }
 }
+
 \section{GFCatch}{
   \code{GFCatch} was originally a FORTRAN data compilation but is now housed on the SQL server
   \code{SVBCPBSGFIIS}. This database contains catch and effort data from three sources: logbooks
@@ -76,32 +88,36 @@
     \code{gfc_catch_fyear.sql}          \tab Catch of target species by fishing year.\cr
     \code{gfc_catch_records.sql}        \tab Species catch by tow (zero-catch records excluded).\cr
     \code{gfc_fcatORF.sql}              \tab \code{GFCatch} landings for rockfish reconstruction.\cr
-    \code{gfc_glm.sql}                  \tab Catch/effort data for a target species; used in a GLM analysis.
+    \code{gfc_glm.sql}                  \tab Catch/effort data for a target species; used in a GLM analysis.\cr
   }
 }
 \section{GFFOS}{
   This database is a subset of the Fishery Operations System (\code{FOS}), an Oracle database 
   on the server \code{ORADEV} in Vancouver. The subset \code{GFFOS} (Groundfish \code{FOS}) comprises Views
   to \code{FOS} that make the data more useful to stock assessment personnel, and is housed on 
-  the Oracle server \code{GFSH} located at PBS, Nanaimo.
+  the Oracle server \code{GFSH} located at PBS, Nanaimo. The Oracle version has largely been sidelined for
+  an SQL version of \code{GFFOS} on the SQL server \code{SVBCPBSGFIIS}
+  (now on the ``cloud'', but more likely in someone's leaky basement).
 
   \tabular{ll}{
     \bold{SQL queries:} \tab \cr
     \code{fos_bycatch.sql}              \tab Annual fish group catches as bycatch to target species' depth range.\cr
-    \code{fos_catch.sql}                \tab Commercial catch by year, month, and PMFC area.\cr
     \code{fos_catch_records.sql}        \tab Species catch by tow (zero-catch records excluded).\cr
+    \code{fos_catch_records.ora}        \tab Oracle version of previous query.\cr
+    \code{fos_checklist_catch.sql}      \tab Used for table of catches in DFO's 'checklist' nonsense.\cr
     \code{fos_fcatORF.sql}              \tab Species landings format for catch history reconstructions.\cr
     \code{fos_feid_catch.sql}           \tab Fishing event catch.\cr
-    \code{fos_fid_catch.sql}            \tab Total catch by weight of every Fishing Event ID.\cr
     \code{fos_fishwt.sql}               \tab Mean weight for every species with catch and count info.\cr
     \code{fos_glm.sql}                  \tab Catch/effort data for a target species; used in a GLM analysis.\cr
     \code{fos_map_density.sql}          \tab Catch/effort data for a target species; used to map spatial density.\cr
+    \code{fos_mcatORF.sql}              \tab Catch gathered from multiple DBs and housed in \code{GF_MERGED_CATCH}.\cr
     \code{fos_sectors.sql}              \tab Trips rationalised by sector and fishery ID.\cr
+    \code{fos_sectors.ora}              \tab Oracle version of previous query.\cr
     \code{fos_tid_catch.sql}            \tab Summarise \code{GFFOS} catch (kg) by trip ID, date, \cr
                                         \tab PMFC major and PMFC minor for a specified species.\cr
-    \code{fos_vcatORF.sql}              \tab Query catch from the merged catch table \cr
-                                        \tab \code{GF_D_OFFICIAL_FE_CATCH}.\cr
-    \code{fos_vess_year_trip.sql}       \tab Tally number of years and trips/year for each vessel.
+    \code{fos_vcatORF.sql}              \tab Query catch from the merged catch table \code{GF_D_OFFICIAL_FE_CATCH}.\cr
+    \code{fos_vcatORF.ora}              \tab Oracle version of previous query.\cr
+    \code{fos_vess_year_trip.sql}       \tab Tally number of years and trips/year for each vessel.\cr
   }
 }
 \section{PacHarv3}{
@@ -113,14 +129,17 @@
   \tabular{ll}{
     \bold{SQL queries:} \tab \cr
     \code{ph3_fcatORF.sql}              \tab Species landings format for catch history reconstructions.\cr
+    \code{ph3_fcatORF_v01.sql}          \tab First version of `ph3_fcatORF.sql'.\cr
+    \code{ph3_fcatORF_v02.sql}          \tab Second version of `ph3_fcatORF.sql'.\cr
+    \code{ph3_fcatORF_v03.sql}          \tab Third version of `ph3_fcatORF.sql'.\cr
     \code{ph3_orfhistory.sql}           \tab Catch table for other rockfish used in catch reconstructions.\cr
-    \code{ph3_target.sql}               \tab Determine target species by year, month, area, and gear.
+    \code{ph3_target.sql}               \tab Determine target species by year, month, area, and gear.\cr
   }
 }
 \section{PacHarvest}{
   The \code{PacHarvest} database (sometimes referred to as \code{PacHarvTrawl}) sits on the 
   SQL server \code{SVBCPBSGFIIS} and houses observer and fisher log catch and effort 
-  information for most trawl fishing events from Feb 1996 to Mar 2007. \cr
+  information for most trawl fishing events from Feb 1996 to Mar 2007.
   Details of the database can be found in Schnute et al. (1999).
 
   \tabular{ll}{
@@ -131,15 +150,19 @@
     \code{pht_catch_gullies_fyear.sql}  \tab Catch of target species by fishing year in QCS gullies.\cr
     \code{pht_catch_records.sql}        \tab Species catch by tow (zero-catch records excluded).\cr
     \code{pht_clara.sql}                \tab Catch data for use in \code{clara} clustering algorithm.\cr
+    \code{pht_clara_groundfish.sql}     \tab Groundfish catch data for use in \code{clara} clustering algorithm.\cr
+    \code{pht_clara_groups.sql}         \tab Catch data by group for use in \code{clara} clustering algorithm.\cr
+    \code{pht_clara_taxa.sql}           \tab Catch data by taxon for use in \code{clara} clustering algorithm.\cr
     \code{pht_concurrent.sql}           \tab Top 20 species caught concurrently with a target species.\cr
     \code{pht_effort.sql}               \tab Trawl effort used for background histogram in depth preference.\cr
     \code{pht_fdep.sql}                 \tab Catch of target species used to determine depth of capture.\cr
     \code{pht_fdep_pjs.sql}             \tab As for \code{pht_fdep.sql}, but vessels present \eqn{\ge} 3 years and \eqn{\ge} 5 trips/y.\cr
     \code{pht_glm.sql}                  \tab Catch/effort data for a target species; used in a GLM analysis.\cr
-    \code{pht_map.sql}                  \tab \bold{Deprecated} (use \code{pht_map_density.sql}); data to map spatial density.\cr
+    \code{pht_map_catch.sql}            \tab Catch data for a target species; used to map spatial density..\cr
     \code{pht_map_density.sql}          \tab Catch/effort data for a target species; used to map spatial density.\cr
+    \code{pht_obsORF.sql}               \tab Observer landed catch of a target species, POP, and ORF (other rockfish).\cr
     \code{pht_tcatORF.sql}              \tab Trawl landings of target species, POP, & ORF (other rockfish).\cr
-    \code{pht_vess_year_trip.sql}       \tab Tally number of years and trips/year for each vessel.
+    \code{pht_vess_year_trip.sql}       \tab Tally number of years and trips/year for each vessel.\cr
   }
 }
 \section{PacHarvHL}{
@@ -161,7 +184,7 @@
     \code{phhl_map_density.sql}         \tab Catch/effort data for a target species; used to map spatial density.\cr
     \code{phhl_ocatORF.sql}             \tab Offical (landed) catch of target species, POP, & ORF (other rockfish).\cr
     \code{phhl_vcatch_fyear.sql}        \tab Verified landings of target species by fishing year & PMFC area.\cr
-    \code{phhl_vcatORF.sql}             \tab Verified landings of target species, POP, & ORF (other rockfish).
+    \code{phhl_vcatORF.sql}             \tab Verified landings of target species, POP, & ORF (other rockfish).\cr
   }
 }
 \section{PacHarvSable}{

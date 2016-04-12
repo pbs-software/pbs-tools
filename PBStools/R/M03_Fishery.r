@@ -12,7 +12,7 @@
 #  plotFOScatch....Plot catch as monthly barplots from 'fos_catch.sql' query to GFFOS.
 #  runCCA..........Catch-curve model based on Schnute and Haigh (2006).
 #  sumCatTabs......Summarize catch by year & PMFC from modern catch data used in catch reconstruction.
-#  trackBycat      Track annual fish group catches between depth limits.
+#  trackBycat......Track annual fish group catches between depth limits.
 #===============================================================================
 
 #calcRatio------------------------------2013-07-19

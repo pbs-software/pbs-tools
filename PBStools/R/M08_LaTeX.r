@@ -1,10 +1,10 @@
 #===============================================================================
 # Module 8 : tex Crap
 # -------------------
-#  collectFigs    Collect encapsulated postscript figures into one document.
-#  formatCatch    Format numeric table so that entries display N significnat figures.
-#  makeLTH        Make a longtable header for printing an xtable
-#  texArray       Flatten and format an array for latex output.
+#  collectFigs....Collect encapsulated postscript figures into one document.
+#  formatCatch....Format numeric table so that entries display N significnat figures.
+#  makeLTH........Make a longtable header for printing an xtable
+#  texArray.......Flatten and format an array for latex output.
 #===============================================================================
 
 #collectFigs----------------------------2015-04-14

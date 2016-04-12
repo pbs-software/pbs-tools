@@ -8,10 +8,10 @@
 #  clarify.........Analyse catch proportions in blocks, then cluster into fisheries groups.
 #  findHoles.......Find holes and place them under correct parents.
 #  plotGMA.........Plot the Groundfish Management Areas.
-#  plotTernary     Plot a ternary diagram for data amalgamated into 3 groups.
-#  plotTertiary    Composition plots within a polygonal space.
+#  plotTernary.....Plot a ternary diagram for data amalgamated into 3 groups.
+#  plotTertiary....Composition plots within a polygonal space.
 #  preferDepth.....Histogram showing depth-of-capture.
-#  prepClara       Prepare a data object for use by `clarify`.
+#  prepClara.......Prepare a data object for use by `clarify`.
 #  zapHoles........Attempts to remove holes overwritten by solids.
 #===============================================================================
 

@@ -7,7 +7,7 @@
 #  getBootRuns.....Get Norm's survey bootstrap results.
 #  getPMR..........Get pmr values from survey data in GFBioSQL.
 #  makePMRtables...Make CSV files containg pmr values for survey strata.
-#  makeSSID        Make a data objest of survey series information.
+#  makeSSID........Make a data object of survey series information.
 #  sampBG..........Sample from the binomial-gamma distribution.
 #  showAlpha.......Show quantile confidence levels (alpha) for bootstrapped biomass.
 #  showIndices.....Show survey indices from Norm's bootstrap tables.
