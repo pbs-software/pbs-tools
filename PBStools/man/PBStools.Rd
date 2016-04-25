@@ -31,6 +31,7 @@
   \code{getFile}        \tab Get data from binaries or ASCII.\cr
   \code{getName}        \tab Get string names from literals or named objects.\cr
   \code{getODBC}        \tab Get a string vector of ODBC drivers on user's Windows system.\cr
+  \code{installPkgs}    \tab Istall specified packages if they are missing or if newer versions are available.\cr
   \code{isThere}        \tab Checks whether an object is physically present in a specified environment.\cr
   \code{lenv}           \tab Get the local/parent/global environment.\cr
   \code{listTables}     \tab List tables in specified SQL/ORA database.\cr

@@ -43,10 +43,12 @@ calcMA(x, y, y2, period = 270, every = 10)
   \code{z} = the numeric cumulative sum of the x-units starting at 0.
 }
 \author{
-  Rowan Haigh, Pacific Biological Station, Nanaimo BC
+  Rowan Haigh, Research Biologist,\cr
+  Fisheries and Oceans Canada, Pacific Biological Station, Nanaimo BC
 }
 \seealso{
-  \code{\link{glimmer}}, \code{\link{plotDiversity}}, \code{\link{simBGtrend}}
+  \code{\link[PBStools]{glimmer}}, 
+  \code{\link[PBStools]{simBGtrend}}
 }
 \examples{
 local(envir=.PBStoolEnv,expr={

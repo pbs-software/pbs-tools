@@ -26,10 +26,12 @@ convYP(x, ndays=90)
   Each element of the vector also has a name that specifies the year and bin number.
 }
 \author{
-  Rowan Haigh, Pacific Biological Station, Nanaimo BC
+  Rowan Haigh, Research Biologist,\cr
+  Fisheries and Oceans Canada, Pacific Biological Station, Nanaimo BC
 }
 \seealso{
-  \code{\link{trackComp}}, \code{\link{convYM}}, \code{\link{convFY}}
+  \code{\link[PBStools]{convFY}},
+  \code{\link[PBStools]{convYM}}
 }
 \examples{
 local(envir=.PBStoolEnv,expr={

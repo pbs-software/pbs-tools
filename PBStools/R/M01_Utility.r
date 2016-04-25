@@ -18,6 +18,7 @@
 #  getFile.........Get a dataset (binary libraries, binary local, dumped data, comma-delimited text.
 #  getName.........Get the names of the input object.
 #  getODBC.........Get a string vector of ODBC drivers on user's Windows system.
+#  installPkgs     Install specified packages if they are missing or if newer versions are available.
 #  isThere.........Check to see if object physically exists in the specified environment.
 #  lenv............Get the local/parent/global environment.
 #  listTables......List tables in specified SQL, ORA, or MDB database.
@@ -838,6 +839,51 @@ getODBC <- function(os=.Platform$OS.type, pattern=NULL, status="Installed") {
 	packList(c("odbcAll","odbcList","odbcStat","odbcOut"),target="PBStool",tenv=.PBStoolEnv)
 	invisible(odbcOut) }
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~getODBC
+
+
+#installPkgs----------------------------2016-04-13
+# Install specified packages if they are missing
+# or if newer versions are available.
+# Note: At some point the function should deal
+#   with attached packages (use sessionInfo()).
+#-----------------------------------------------RH
+installPkgs <- function(pkg, repos=getOption("repos"), locdir=tempdir(), also.load=FALSE, ...)
+{
+	old.ver = rep("0",length(pkg)); names(old.ver) = pkg
+	ins.pkg = pkg[(pkg %in% installed.packages()[, "Package"])]   ## installed
+	mis.pkg = pkg[!(pkg %in% installed.packages()[, "Package"])]  ## missing
+	if (is.null(repos)) {
+		bins    = list.files(locdir,pattern="\\.zip$")
+		if (length(bins)==0) stop("No zip files available")
+		pvlist  = strsplit(sub("\\.zip$","",sub("_","+",bins)),split="\\+")
+		new.ver = sapply(pvlist,function(x){v=x[2]; names(v)=x[1]; return(v)})
+	} else {
+		ava.pkg = available.packages() #type="binary")
+		new.ver = ava.pkg[,"Version"]
+	}
+	new.pkg= names(new.ver)
+	if (length(ins.pkg)>0) {
+		ins.ver = sapply(ins.pkg, function(x){as.character(packageVersion(x))})
+		old.ver[names(ins.ver)] = ins.ver
+		int.ver = ins.ver[names(ins.ver)%in%names(new.ver)]  ## intersection -- installed intersects newly available
+		int.pkg = names(int.ver)
+		upd.pkg = int.pkg[(ins.ver[int.pkg] < new.ver[int.pkg])]
+	} else
+	upd.pkg = as.character()
+	if (length(mis.pkg)>0)
+		upd.pkg = c(upd.pkg, intersect(mis.pkg,new.pkg))
+	if (length(upd.pkg)>0){
+		if (is.null(repos))
+			install.packages(paste0(locdir,"/",bins[sapply(upd.pkg,grep,bins)]), dependencies=TRUE, repos=NULL, ...)
+		 else
+			install.packages(upd.pkg, dependencies=TRUE, repos=repos, ...)
+	} else
+	cat("No new versions of requested packages installed\n")
+	if (also.load)
+		sapply(pkg, require, character.only = TRUE)
+	invisible(new.ver)
+}
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~installPkgs
 
 
 #isThere--------------------------------2009-06-18

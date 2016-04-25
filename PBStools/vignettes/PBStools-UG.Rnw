@@ -1,4 +1,4 @@
-\documentclass[letterpaper,12pt,fleqn]{article}
+\documentclass[letterpaper,11pt,fleqn]{article}
 %\VignetteIndexEntry{Introduction to PBStools}
 %\VignettePackage{PBStools}
 
@@ -9,6 +9,8 @@
 \usepackage[top=1in, bottom=1in, left=1in, right=1in]{geometry} %  page margins
 \usepackage[font=small,format=plain,labelfont=bf,indention=0.25in,labelsep=period,justification=raggedright]{caption}
 \usepackage{parskip}
+\renewcommand{\rmdefault}{phv}% Helvetica
+\renewcommand{\sfdefault}{phv}% Helvetica
 
 % http://tex.stackexchange.com/questions/49788/hyperref-url-long-url-with-dashes-wont-break?rq=1
 \usepackage[hyphens]{url}
@@ -73,7 +75,7 @@ pdfsubject={Software for semi-serious scientists}%
 \newcommand{\tcl}{{\tt Tcl/Tk}}
 
 % from RODBC.Rnw
-\newcommand{\code}[1]{\small\texttt{#1}\normalsize}
+\newcommand{\code}[1]{\normalsize\texttt{#1}\normalsize}
 \newcommand{\pkg}[1]{{\bf #1}}
 \newcommand{\var}[1]{\emph{#1}}
 \newcommand{\link}[1]{#1}
@@ -2199,24 +2201,7 @@ pbsfun()
 %-------------------------------------------------
 \section {Temporal functions}
 
-\tab Temporal functions help scientists see how populations change over time. Here we present a few that visualize changes in species composition and diversity for phytoplankton samples. The functions could be applied equally to any taxonomic collection. We often think of such collections as marine species portfolios. Monitoring the diversity of species portfolios can alert us to changes in an ecosystem's resilience. \citet{Haigh-Schnute:2003} explored diversity patterns for fish species composition of commercial catch tows in the longspine thornyhead (\emph{Sebastolobus altivelis}) fishery.
-
-\subsection {boxSeason}
-
-\tab Summarize time-dependent data using boxplots to group by a specified period pattern (Figure~\ref{fig:PBStools-boxSeason}). The data file imported from a Microsoft Access table or query called \code{fqtName} must contain a field called either \code{YMD} or \code{Date} that depicts the date values as strings with format \code{YYYY-MM-DD}.
-
-\begin{examplebox}
-\example{boxSeason}
-\begin{Verbatim}[fontsize=\footnotesize]
-pbsfun=function(os=.Platform$OS.type) {
-  if (os=="windows")
-    boxSeason(fld="S",brks="M",path=.getSpath())
-  else showMessage("Only functional for Microsoft Access on Windows OS")
-  invisible() }
-pbsfun()
-\end{Verbatim}
-\end{examplebox}
-\pbsfig{PBStools-boxSeason}{Number of phytoplankton species observed in samples grouped by month.}{3.0}{Number of phytoplankton species observed by month}
+\tab The temporal functions here are few, consisting of a moving average and an ad hoc method for calculating the rate of return on a portfolio of anything measurable (e.g. stocks). Other functions that help scientists visualize how populations change over time -- changes in species composition or the diversity of phytoplankton samples -- have been moved to a package called \pkg{PBSplankton}.
 
 \subsection {calcMA}
 
@@ -2255,39 +2240,6 @@ where:\\
 \pbsfig{GUI-imputeRate}{GUI menu Internal Rate of Return to estimate the annualized return on an investment that experiences episodic contributions.}{4.0}{GUI menu Internal Rate of Return}
 
 \pbsfig{PBStools-imputeRate}{Portfolio progress where green bars represent episodic contributions, the orange line shows the cumulative contributions, the grey dots report the monthly portfolio values, and the blue line shows a calculated fit using the estimated internal rate of return.}{3.5}{Portfolio performance using Internal Rate of Return}
-
-\subsection {plotDiversity}
-
-\tab Plot sample diversity (e.g., Shanon-Wiener diversity index $H$) as a barplot with an overlay of points using some other index (e.g., species richness $S$). The arguments \code{bars} and \code{pnts} can each be one of \code{H}~= Shannon-Diversity index, \code{S}~= species richness, or \code{E}~= species evenness. The user can also choose to add lowess-fitted lines through the bars and the points (Figure~\ref{fig:PBStools-plotDiversity}).
-
-\begin{examplebox}
-\example{plotDiversity}
-\begin{Verbatim}[fontsize=\footnotesize]
-pbsfun=function(os=.Platform$OS.type) {
-  if (os=="windows")
-    plotDiversity(bars="H",pnts="S",xnames="Batch",path=.getSpath())
-  else showMessage("Only functional for Microsoft Access on Windows OS")
-  invisible() }
-pbsfun()
-\end{Verbatim}
-\end{examplebox}
-\pbsfig{PBStools-plotDiversity}{Shannon-Wiener diversity index $H$ (bars) for phytoplankton samples. Species richness $S$ (numbers of species observed) appear as points. Smooth trend lines through $H$ and $S$ are calculated using the \pkg{stats} function \code{lowess}, which uses a locally-weighted polynomial regression.}{3.5}{Shannon-Wiener diversity index for phytoplankton samples}
-
-\subsection {trackComp}
-
-\tab Track the mean composition of phytoplankton groups over time using a specified binning interval. The function creates a stacked line plot of relative composition frequencies for each group (Figure~\ref{fig:PBStools-trackComp}).
-
-\begin{examplebox}
-\example{trackComp}
-\begin{Verbatim}[fontsize=\footnotesize]
-pbsfun=function(os=.Platform$OS.type) {
-  if (os=="windows") trackComp(ndays=15,path=.getSpath())
-  else showMessage("Only functional for Microsoft Access on Windows OS")
-  invisible() }
-pbsfun()
-\end{Verbatim}
-\end{examplebox}
-\pbsfig{PBStools-trackComp}{Relative composition frequency of major phytoplankton groups in samples over time. The binning interval spans 15 days.}{3.5}{Relative composition frequency of major phytoplankton groups}
 
 \clearpage
 

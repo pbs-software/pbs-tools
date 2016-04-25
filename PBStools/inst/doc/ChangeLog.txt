@@ -6,6 +6,18 @@ Authors: RH  = Rowan Haigh
          JTS = Jon T. Schnute
 ------------------------------
 
+1.31.2 (2016-04-25)
+  • Updated the User's Guide to remove the three functions. (RH 160425)
+  • Transferred functions `boxSeason', `plotDiversity', and `trackComp' from `PBStools' to `PBSplankton'. (RH 160425)
+
+1.31.1 (2016-04-22)
+  • Added new script files. (RH 160422)
+	RmakePDF.bat -- Revised script to make R documentation appendices for User's Guides.
+	ExportMail.vba -- Visual Basic for Applications script to export folders from Outlook PST files to MS Access database tables.
+
+1.31.0 (2016-04-13)
+  • Added new function `installPkgs' to install specified packages if they are missing or if newer versions are available. (RH 160413)
+
 1.30.2 (2016-04-12)
   • Updated `PBStools.Rd' and `SQLcode.Rd'. (RH 160412)
   • Fixed a small bug in `getODBC'. (RH 160412)

@@ -37,7 +37,7 @@ quantBox(x, use.cols = TRUE, ...)
 }
 \author{
   Rowan Haigh, Research Biologist,\cr
-  Pacific Biological Station, Fisheries and Oceans Canada, Nanaimo BC.
+  Fisheries and Oceans Canada, Pacific Biological Station, Nanaimo BC
 }
 \note{
   Why would anyone choose a boxplot over a quantile plot?
@@ -46,7 +46,6 @@ quantBox(x, use.cols = TRUE, ...)
   \code{\link[graphics]{boxplot}},
   \code{\link[graphics]{boxplot.matrix}},
   \code{\link[PBStools]{ttget}},
-  \code{\link[PBStools]{boxSeason}},
   \code{\link[PBStools]{histMetric}},
   \code{\link[PBStools]{mapMaturity}},
   \code{\link[PBStools]{plotTernary}}
