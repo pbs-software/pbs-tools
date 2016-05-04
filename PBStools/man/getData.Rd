@@ -13,13 +13,13 @@ getData(fqtName, dbName="PacHarvest", strSpp=NULL, server=NULL,
    noFactors=TRUE, noLogicals=TRUE, rownum=0, mindep=NULL, 
    maxdep=NULL, surveyid=NULL, survserid=NULL, fisheryid=NULL, 
    logtype=NULL, doors=NULL, speed=NULL, mnwt=NULL, tarSpp=NULL, 
-   major=NULL, top=NULL, dummy=NULL, senv=NULL, tenv=.GlobalEnv, ...)
+   major=NULL, top=NULL, gear=NULL, dummy=NULL, senv=NULL, tenv=.GlobalEnv, ...)
 }
 \arguments{
   \item{fqtName}{\emph{string}: Name of file, query, or table; 
     can also be an explicit SQL statement when \code{TYPE="SQLX"} or \code{TYPE="ORAX"}.}
   \item{dbName}{\emph{string}: Name of a remote database. Types supported:
-    \code{XLS} (Excel), \code{MDB} (ACCESS), \code{SQL} (Sequel Server), \code{ORA} (Oracle).}
+    \code{XLS} (Excel), \code{MDB} (ACCESS), \code{SQL} (SQL Server), \code{ORA} (Oracle).}
   \item{strSpp}{\emph{string}: Species code for the SQL variable \code{@sppcode}.
     If not specified, a table or query is retrieved.}
   \item{server}{\emph{string}: Name of a remote server (e.g., 
@@ -60,6 +60,8 @@ getData(fqtName, dbName="PacHarvest", strSpp=NULL, server=NULL,
   \item{tarSpp}{\emph{string}: Species code(s) for the SQL variable \code{@tarcode}.}
   \item{major}{\emph{numeric}: PMFC major area codes(s) for the SQL variable \code{@major}.}
   \item{top}{\emph{numeric}: Top \emph{N} records for the SQL variable \code{@top}.}
+  \item{gear}{\emph{numeric}: Gear codes used by various databases (see \code{\link[PBSdata]{gear}}) 
+    for the SQL variable \code{@gear}.}
   \item{dummy}{\emph{numeric} or \emph{string}: An \emph{ad hoc} value wherever the SQL variable \code{@dummy} appears.}
   \item{senv}{\emph{environment}: Source environment from which \code{fqtName} will be retrieved (if available).
     Only used when \code{type="FILE"}.}
@@ -77,8 +79,73 @@ getData(fqtName, dbName="PacHarvest", strSpp=NULL, server=NULL,
   No value is explicitly returned; data frame is retrieved and place in the 
   target environment as an object called \code{PBSdat}.
 }
+\section{SQL Code Variables}{
+  The function \code{getData} automatically substitutes a number of 
+  SQL code variables (if specified) in the called SQL script file 
+  using the function arguments specified by the user:
+  \preformatted{
+    @doorsval   <-  doors
+    @dummy      < - dummy
+    @fisheryid  <-  fisheryid
+    @gear       <-  gear
+    @logtypeval <-  logtype
+    @major      <-  major
+    @maxdep     <-  maxdep
+    @mindep     <-  mindep
+    @mnwt       <-  mnwt
+    @speedval   <-  speed
+    @sppcode    <-  strSpp
+    @surveyid   <-  surveyid
+    @survserid  <-  survserid
+    @table      <-  dbName
+    @tarcode    <-  tarSpp
+    @top        <-  top}
+
+  There are a number of SQL code variables that are not controlled 
+  directly by using \code{getData}'s arguments but will be substituted
+  by fixed values if specified:
+  \preformatted{
+    @alfcode <- all fish species
+    @trfcode <- total rockfish species  (Sebastes + Sebastolobus)
+    @orfcode <- other rockfish species  (excludes POP)
+    @tffcode <- total flatfish species
+    @offcode <- other flatfish species  (excludes Dover Sole)
+    @carcode <- cartilaginous species   (incl. sharks, skates, ratfish)
+    @ssscode <- shark and skate species (catilaginous excl. ratfish)
+    @invcode <- invertebrates
+    
+    @t01code <- taxon  1: Agnatha (hagfish, lampreys)
+    @t02code <- taxon  2: Chondrichthyes (sharks, rays, chimaeras)
+    @t03code <- taxon  3: Clupeiformes (herring, anchovies)
+    @t04code <- taxon  4: Salmonidae (salmon, trout)
+    @t05code <- taxon  5: Osmeridae (smelts)
+    @t06code <- taxon  6: Myctophidae (lanternfishes)
+    @t07code <- taxon  7: Gadidae (codfishes)
+    @t08code <- taxon  8: Macrouridae (grenadiers)
+    @t09code <- taxon  9: Scombridae (mackerels, tunas)
+    @t10code <- taxon 10: Scorpaenidae (scorpionfishes)
+    @t11code <- taxon 11: Hexagrammidae (greenlings)
+    @t12code <- taxon 12: Pleuronectiformes (flounders, soles, halibut)
+    @t00code <- taxon  0: All fish not part of a taxon group (above)
+    
+    @originid <- use original survey index or not
+       if(is.null(survserid) && is.null(surveyid)) "'Y'" else "'Y','N'"}
+
+  \bold{Note}: If Oracle SQL is called from SQL Server via \code{OPENQUERY},
+  insert a '\code{~}' symbol after '\code{@}'\cr (e.g. \code{@~sppcode}).
+
+  Additionally, the SQL code variable \code{@INSERT} acts a flag for a
+  place in the SQL code at which independent SQL code can be inserted.
+  For example,
+  
+  \code{@INSERT('meanSppWt.sql')}
+  
+  inserts the SQL file called \code{meanSppWt.sql}, assuming that it is
+  on the \code{path} specified by the call to \code{getData}.
+}
 \author{
-  Rowan Haigh, Pacific Biological Station, Fisheries and Oceans Canada, Nanaimo BC
+  Rowan Haigh, Research Biologist,\cr
+  Fisheries and Oceans Canada, Pacific Biological Station, Nanaimo BC
 }
 \seealso{ 
   \code{\link[PBStools]{getCatch}}, \code{\link[PBStools]{getFile}}, \code{\link[PBStools]{listTables}} \cr

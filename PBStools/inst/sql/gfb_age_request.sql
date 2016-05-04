@@ -1,5 +1,6 @@
 -- Query GFBioSQL for otoliths taken but not aged (2014-06-06)
 -- Show only those that can be identified by FOS TRIP_ID
+-- Last modified: 2016-04-27
 
 SET NOCOUNT ON  -- prevents timeout errors
 
@@ -70,6 +71,7 @@ SELECT --TOP 100
   B02.DFO_STAT_AREA_CODE,
   B02.DFO_STAT_SUBAREA_CODE,
   B02.GROUPING_CODE,
+  B02.GEAR_CODE,
   B03.SPECIES_CODE,
   B03.CATCH_WEIGHT,
   B04.SAMPLE_TYPE_CODE,
@@ -99,6 +101,7 @@ FROM
     B01.SUFFIX = V.SUFFIX
 WHERE 
   B03.SPECIES_CODE IN (@sppcode)
+  AND B02.GEAR_CODE IN (@gear)
   --AND B04.SAMPLE_ID IN (181641)
 
 SELECT 
@@ -119,6 +122,7 @@ SELECT
   AA.MINOR_STAT_AREA_CODE AS minor,               -- B02_FISHING_EVENT
   AA.FE_MAJOR_LEVEL_ID AS 'set',                  -- B02_FISHING_EVENT
   ISNULL(AA.GROUPING_CODE,0) AS 'GC',             -- B02_FISHING_EVENT
+  AA.GEAR_CODE AS 'gear',                         -- B02_FISHING_EVENT
   AA.CATCH_WEIGHT AS catchKg,                     -- B03_CATCH
   AA.SPECIES_CODE AS spp,                         -- B03_CATCH
   -- Following from B05_Specimen
@@ -183,6 +187,7 @@ GROUP BY
   AA.MINOR_STAT_AREA_CODE,
   AA.FE_MAJOR_LEVEL_ID,
   ISNULL(AA.GROUPING_CODE,0),
+  AA.GEAR_CODE,
   AA.CATCH_WEIGHT,
   AA.SPECIES_CODE,
   AA.SAMPLE_ID,
@@ -237,7 +242,7 @@ SELECT
   --GFB.hail, GFB.cfv, GFB.gfb_date
   GFB.FEID, GFB.hail, GFB.[set], GFB.GC, GFB.vessel, GFB.cfv,
   CONVERT(smalldatetime,GFB.gfb_date) AS tdate,
-  GFB.ttype, GFB.major, GFB.minor, GFB.spp, GFB.catchKg,
+  GFB.ttype, GFB.major, GFB.minor, GFB.gear, GFB.spp, GFB.catchKg,
   GFB.SID, GFB.Noto, GFB.Foto, GFB.Moto, GFB.Nbba, GFB.Fbba, GFB.Mbba, GFB.Nage, GFB.Fage, GFB.Mage,
   CASE WHEN GFB.N_ameth IN (0) THEN 0 ELSE GFB.T_ameth / GFB.N_ameth END AS ameth, -- mean ageing method (flags samnples with mixtures of ageing method)
   GFB.stype, CONVERT(smalldatetime,GFB.sdate) AS sdate,
@@ -259,3 +264,5 @@ SELECT
 --select * from #GFB_Otoliths
 
 -- getData("gfb_age_request.sql",dbName="GFBioSQL",strSpp="401")
+-- qu("gfb_age_request.sql",dbName="GFBioSQL",strSpp="396",gear=1)
+

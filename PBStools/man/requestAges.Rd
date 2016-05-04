@@ -9,10 +9,10 @@
   specified species.
 }
 \usage{
-requestAges(strSpp, nage=500, year=2012, 
-     areas=list(major=3:9, minor=NULL), ttype=c(1,4),
-     sex=1:2, nfld = "nallo", run.sql=TRUE, only.sql=FALSE, bySID=FALSE,
-     spath=.getSpath(), uid=Sys.info()["user"], pwd=uid, ...)
+requestAges(strSpp, nage=500, year=2016, 
+   areas=list(major=3:9, minor=NULL), ttype=c(1,4), gear=1,
+   sex=1:2, nfld = "nallo", run.sql=TRUE, only.sql=FALSE, bySID=FALSE,
+   spath=.getSpath(), uid=Sys.info()["user"], pwd=uid, ...)
 }
 \arguments{
   \item{strSpp}{string HART code of a species with sampled otoliths.}
@@ -24,6 +24,16 @@ requestAges(strSpp, nage=500, year=2012,
     1=non-observed commercial, 2=research, 3=charter, 4=observed commercial. \cr 
     Note that you can either choose purely 
     commercial samples (\code{ttype=c(1,4)}) OR survey samples (\code{ttype=c(2,3)}), not a mixture.}
+  \item{gear}{numeric gear code used by \code{GFBioSQL}:\cr
+    \preformatted{
+    0 = unknown
+    1 = bottom trawl     8 = unknown trawl
+    2 = trap             9 = seine
+    3 = gillnet         10 = jig
+    4 = handline        11 = shrimp trawl
+    5 = longline        12 = recreational rod & reel
+    6 = midwater trawl  13 = prawn trap
+    7 = troll           14 = tucker trawl}}
   \item{sex}{numeric sex code where 1=males, 2=females, c(1,2)=males + females.}
   \item{nfld}{string specifying field with number of otoliths to sample: \cr
     \code{"nfree"...}{number of otoliths available (not aged)}; \cr
@@ -81,7 +91,7 @@ requestAges(strSpp, nage=500, year=2012,
 }
 \author{
   Rowan Haigh and Brian Krishka \cr
-  Pacific Biological Station, Fisheries and Oceans Canada, Nanaimo BC
+  Fisheries and Oceans Canada, Pacific Biological Station, Nanaimo BC
 }
 \seealso{
   \code{\link[PBStools]{calcVB}}, \code{\link[PBStools]{estOgive}}, 

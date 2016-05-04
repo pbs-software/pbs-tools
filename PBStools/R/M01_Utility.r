@@ -287,7 +287,7 @@ flagIt = function(a, b, A=45, r=0.2, n=1, ...){
 	return(invisible(list(xvec=xvec,yvec=yvec,rads=rads,x0=x0,x=x,y=y)))
 }
 
-#getData--------------------------------2015-10-28
+#getData--------------------------------2016-04-27
 # Get data from a variety of sources.
 # subQtrust -- if user has no DFO trusted credentials:
 #   if (type=="SQL"), c(trusted, uid, pwd) copied to `subQtrust'
@@ -299,7 +299,7 @@ getData <-function(fqtName, dbName="PacHarvest", strSpp=NULL, server=NULL,
    noFactors=TRUE, noLogicals=TRUE, rownum=0, mindep=NULL, 
    maxdep=NULL, surveyid=NULL, survserid=NULL, fisheryid=NULL, 
    logtype=NULL, doors=NULL, speed=NULL, mnwt=NULL, tarSpp=NULL, 
-   major=NULL, top=NULL, dummy=NULL, senv=NULL, tenv=.GlobalEnv, ...)
+   major=NULL, top=NULL, gear=NULL, dummy=NULL, senv=NULL, tenv=.GlobalEnv, ...)
 {
 	on.exit(odbcCloseAll())
 	if (!is.null(getPBSoptions("showError")) && getPBSoptions("showError")) {
@@ -551,7 +551,9 @@ getData <-function(fqtName, dbName="PacHarvest", strSpp=NULL, server=NULL,
 			strQ <- gsub(pattern="@major",replacement=ifelse(is.null(major),
 				paste(c(1,3:9),collapse=","), paste(major,collapse=",") ),x=strQ)
 			strQ <- gsub(pattern="@top",replacement=ifelse(is.null(top),20,top),x=strQ)
-			strQ <- gsub(pattern="@dummy",replacement=ifelse(is.null(dummy),"''",
+			strQ <- gsub(pattern="@gear",replacement=ifelse(is.null(gear),
+				paste(0:99,collapse=","), paste(gear,collapse=",") ),x=strQ)
+			strQ <- gsub(pattern="@dummy",replacement=ifelse(is.null(dummy),"''",  ## default does not work for numeric
 				ifelse(is.numeric(dummy),paste(dummy,collapse=","),
 				ifelse(is.character(dummy),paste("'",paste(dummy,collapse="','"),"'",sep=""),"''"))),x=strQ)
 			#assign("sql",strQ,envir=tenv)
@@ -619,8 +621,8 @@ getData <-function(fqtName, dbName="PacHarvest", strSpp=NULL, server=NULL,
 	if (type=="ORA") syntax = paste(syntax,";TLO=0;QTO=F",sep="")
 	syntax=gsub("/","\\\\",syntax) ### finally convert "/" to "\\"
 	assign("cns",syntax,envir=.PBStoolEnv)
-#if (type=="ORA") {browser();return()}
 	cnn <- odbcDriverConnect(connection=syntax)
+#if (type=="ORA") {browser();return()}
 	if (is.null(qtName) && is.null(strSQL))
 		showError("Must specify either 'qtName' or 'strSQL'")
 	if (!is.null(qtName)) {
@@ -686,6 +688,7 @@ getData <-function(fqtName, dbName="PacHarvest", strSpp=NULL, server=NULL,
 	odbcClose(cnn)
 	return(dat) };
 #====================================getData group
+
 
 #getFile--------------------------------2013-01-25
 # If a user specifies a source environment (senv)

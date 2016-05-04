@@ -61,10 +61,10 @@ if not exist "%CURL_PATH%\curl.exe" (
    ECHO Cannot find curl - check CURL_PATH "%CURL_PATH%"
    set PBSERROR=1 )
 
-if "%2"=="" (
+if "%1"=="" (
 	SET arch=64
 	) else (
-	SET arch=%2
+	SET arch=%1
 	)
 if "%arch%"=="32" (
 	SET R_PATH=%R32_PATH%

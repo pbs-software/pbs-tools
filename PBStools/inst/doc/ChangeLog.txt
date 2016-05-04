@@ -6,6 +6,14 @@ Authors: RH  = Rowan Haigh
          JTS = Jon T. Schnute
 ------------------------------
 
+1.31.3 (2016-05-04)
+  • Updated VBA code `ExportMail.vba' to only write new messages from PST folders to MDB tables. (RH 160504)
+  • Modified function `requestAges' (yet again) to better deal with multiple samples taken during a commercial trip. (RH 160502)
+	Aside: Use Norm's revised ageing request `PBS Ageing Request (No Sex 0 or 3).xltm' to choose only males and females.
+  • Modified function `requestAges' to allow the user to specify a gear type. (RH 160427)
+  • Modified query `gfb_age_request.sql' to select a gear gear type, if specified. (RH 160427)
+  • Modified function `getData' to specify a gear type (defaulting to 0:99). (RH 160427)
+
 1.31.2 (2016-04-25)
   • Updated the User's Guide to remove the three functions. (RH 160425)
   • Transferred functions `boxSeason', `plotDiversity', and `trackComp' from `PBStools' to `PBSplankton'. (RH 160425)

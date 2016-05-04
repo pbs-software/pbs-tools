@@ -28,7 +28,7 @@ call RPathCheck.bat %arch%
 
 if not defined PBSERROR (
   if "%cran%"=="true" (
-    R CMD check --as-cran %1
+    R CMD check --as-cran %package%
   ) else (
     R CMD check %package%
   )

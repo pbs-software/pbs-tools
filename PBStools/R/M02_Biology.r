@@ -2462,15 +2462,15 @@ reportCatchAge <- function(prefix="pop", path=getwd(), hnam=NULL, ...) {
 #-----------------------------------reportCatchAge
 
 
-#requestAges----------------------------2015-12-08
+#requestAges----------------------------2016-05-02
 # Determine which otoliths to sample for ageing requests.
 # Note: only have to use run.sql=TRUE once for each species 
 # using any year before querying a group of years.
 # Note: ageing methdology is not a sensible selection 
 # criterion because the fish selected have not been aged.
 #-----------------------------------------------RH
-requestAges=function(strSpp, nage=500, year=2012, 
-     areas=list(major=3:9, minor=NULL), ttype=c(1,4),
+requestAges=function(strSpp, nage=500, year=2016, 
+     areas=list(major=3:9, minor=NULL), ttype=c(1,4), gear=1,
      sex=1:2, nfld = "nallo", run.sql=TRUE, only.sql=FALSE, bySID=FALSE,
      spath=.getSpath(), uid=Sys.info()["user"], pwd=uid, ...) {
 
@@ -2526,7 +2526,8 @@ requestAges=function(strSpp, nage=500, year=2012,
 	if (run.sql || only.sql) {
 #if(FALSE){
 		expr=paste(c("getData(\"gfb_age_request.sql\"",
-			",dbName=\"GFBioSQL\",strSpp=\"",strSpp,"\",path=\"",spath,"\",tenv=penv())"),collapse="")
+			",dbName=\"GFBioSQL\",strSpp=\"",strSpp,"\",path=\"",spath,"\",tenv=penv(),gear=",gear,")"),collapse="")
+#browser();return()
 		expr=paste(c(expr,"; Sdat=PBSdat"),collapse="")
 		expr=paste(c(expr,"; save(\"Sdat\",file=\"Sdat",strSpp,".rda\")"),collapse="")      # Sample data (binary)
 		expr=paste(c(expr,"; write.csv(Sdat,file=\"Sdat",strSpp,".csv\")"),collapse="")     # Sample data (ascii)
@@ -2558,7 +2559,10 @@ requestAges=function(strSpp, nage=500, year=2012,
 	}
 	else
 		return(invisible(list(expr=expr,Sdat=Sdat,Ccat=Ccat,Scat=Scat)))
-	
+
+	if (!is.null(gear))
+		Sdat = Sdat[is.element(Sdat$gear,gear),]
+
 	if (nrow(Sdat)==0 || nrow(Ccat)==0) showError("Not enough data")
 	samp=Sdat
 	if (all(sex==1)){
@@ -2670,36 +2674,48 @@ requestAges=function(strSpp, nage=500, year=2012,
 #browser();return()
 
 	### Trip catch (t)
-	samp$ncat=samp$pcat=samp$tcat=rep(0,nrow(samp))     # prepare blank columns in data frame
+	samp$ncat=samp$pcat=samp$pcat.sid=samp$pcat.tid=samp$tcat=rep(0,nrow(samp))     # prepare blank columns in data frame
 	for (i in names(qC)) {                              # loop through periods (quarters)
-		zc = is.element(names(qcat[[i]]),samp$tid)       # index the trips from the comm.catch in each period
+		iqcat = qcat[[i]]
+		zc = is.element(names(iqcat),samp$tid)           # index the trips from the comm.catch in each period
 		#if (!any(zc)) next
 		zl   = is.element(samp$lev,i)
-		if (!any(zc)) {                                  # If commercial catch is not matched assume that they at least caught the sampled catch
-			tcat = split(samp$catchKg[zl],samp$tid[zl])
-			tcat = sapply(tcat,sum)
+		tid.sid  = split(samp$SID[zl],samp$tid[zl])
+		scat.sid = samp$catchKg[zl]; names(scat.sid) = samp$SID[zl]
+		scat.sid = split(scat.sid,samp$tid[zl])          # sample catch by trip
+		pcat.sid = lapply(scat.sid,function(x){x/sum(x)})# prop. sample catch by trip
+		if (!any(zc)) {                                  # If commercial catch is not matched, assume that trip
+			tcat.tid = sapply(scat.sid,sum)               # at least caught the sampled catch.
 		} else {
-			tcat = qcat[[i]][zc]                          # can contain multiple catches per trip due to areas
-			zt = samp$tid[zl] %in% names(tcat)
-			if (!all(zt)) {
-				xcat=samp$catchKg[zl][!zt]; names(xcat)=samp$tid[zl][!zt]
-				tcat = c(tcat,xcat)
+			tcat.tid = iqcat[zc]                              # can contain multiple catches per trip due to areas or multiple samples
+			zt = samp$tid[zl] %in% names(tcat.tid)
+			if (!all(zt)) { #???
+				xcat = samp$catchKg[zl][!zt]; names(xcat) = samp$tid[zl][!zt]
+				tcat.tid = c(tcat.tid,xcat)
 			}
-			tcat = sapply(split(tcat,names(tcat)),sum)/ifelse(type=="C",1000.,1.)  # rollup area catches
+			#tcat = sapply(split(tcat,names(tcat)),sum)/ifelse(type=="C",1000.,1.)  # rollup area catches
+			tcat.tid = split(tcat.tid,names(tcat.tid))
+			tcat.tid = sapply(tcat.tid,function(x){as.vector(x[1])})/ifelse(type=="C",1000.,1.)  # rollup area catches with same TID
 		}
-		pcat = tcat/sum(tcat)                            # proportion of period catch taken by each trip
-		ncat = pcat*nC[i]                                # allocate fish to age based on proportion of trip catch in period
+		pcat.tid = tcat.tid/sum(tcat.tid)                    # proportion of period catch taken by each trip
+		#ncat = pcat*nC[i]                                # allocate fish to age based on proportion of trip catch in period
 		
-		zs   = is.element(samp$tid,names(tcat))          # index the trips from the sample data in each period
-		zss  = as.character(samp$tid[zs])                # tid can have more than one sample
-		nsamp = sapply(split(samp$NOTO[zs],zss),length)  # determine how many samples per trip
-		if (any(nsamp>1)){
-			pcat = pcat/nsamp
-			ncat = ncat/nsamp
+		zs   = is.element(samp$tid,names(tcat.tid))      # index the trips from the sample data in each period
+		zss  = as.character(.su(samp$tid[zs]))           # tid can have more than one sample
+		for (j in zss) {
+			zj = is.element(samp$tid,j)
+			for (k in tid.sid[[j]]){
+				kk = as.character(k)                       # sample ID
+				zjk = zj & is.element(samp$SID,k)
+				nsamp = length(pcat.sid)
+				samp[["tcat"]][zjk] = tcat.tid[j]          # populate the data frame with trip catches
+				samp[["pcat.tid"]][zjk] = pcat.tid[j]      # populate the data frame with trip catch proportions
+				samp[["pcat.sid"]][zjk] = pcat.sid[[j]][kk]# populate the data frame with trip catch proportions
+				samp[["pcat"]][zjk] = pcat.tid[j]*pcat.sid[[j]][kk] # populate the data frame with trip catch proportions
+				samp[["ncat"]][zjk] = pcat.tid[j]*pcat.sid[[j]][kk]*nC[i] # populate the data frame with number of specimens to age
+			}
 		}
-		samp[["tcat"]][zs] = tcat[zss]                   # populate the data frame with trip catches
-		samp[["pcat"]][zs] = pcat[zss]                   # populate the data frame with trip catch proportions
-		samp[["ncat"]][zs] = ncat[zss]                   # populate the data frame with number of specimens to age
+#browser();return()
 #if (i=="2012-02") {browser();return()}
 	}
 	packList(c("Sdat","catch","C"),"PBStool",tenv=.PBStoolEnv)
@@ -2910,6 +2926,7 @@ requestAges=function(strSpp, nage=500, year=2012,
 	}	}
 	invisible(samp) }
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~requestAges
+
 
 #simBSR---------------------------------2011-06-14
 # Simulate Blackspotted Rockfish biological data.
