@@ -6,6 +6,12 @@ Authors: RH  = Rowan Haigh
          JTS = Jon T. Schnute
 ------------------------------
 
+1.31.4 (2016-06-20)
+  • Fixed a small bug in function `texArray' where function `max' was used without specifying `na.rm=TRUE'. (RH 160620)
+  • Added new function `gatherVals' to gathers data from multiple columns into key-value pairs. (RH 160614)
+	Essentially a replacement function for tidyr::gather.
+  • Modified function `installPkgs' by removing explicit `dependencies=TRUE'. (RH 160518)
+
 1.31.3 (2016-05-04)
   • Updated VBA code `ExportMail.vba' to only write new messages from PST folders to MDB tables. (RH 160504)
   • Modified function `requestAges' (yet again) to better deal with multiple samples taken during a commercial trip. (RH 160502)

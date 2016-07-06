@@ -204,7 +204,7 @@ makeLTH <- function(xtab.table, table.caption, table.label, struts=FALSE) {
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~makeLTH
 
 
-#texArray-------------------------------2016-01-27
+#texArray-------------------------------2016-06-20
 # Flatten and format an array for latex output.
 #-----------------------------------------------RH
 texArray =function(x, table.caption="My table", table.label="tab:mytable",
@@ -397,7 +397,6 @@ texArray =function(x, table.caption="My table", table.label="tab:mytable",
 		if (exists("description")) {
 			new.head.pos = !duplicated(rep(1:Ngroups,each=Nsexes)[keep])
 			goo[new.head.pos,1] = c1
-#browser();return()
 		}
 	}
 	if (is.null(dash.delim) && L>2) {
@@ -409,8 +408,9 @@ texArray =function(x, table.caption="My table", table.label="tab:mytable",
 		rows.line=NULL
 	rows.line = setdiff(rows.line,nrow(goo)) # don't draw a dashed line along the last row
 	tabalign = paste("c",ifelse(add.header.column,"l",""),ifelse(use.row.names,"c",""),paste(rep("r",ncol),collapse=""),sep="")
-	fldsize  = newsize = c(0,sapply(goo,function(x){max(nchar(x))})) # due to extra column nonsense
+	fldsize  = newsize = c(0,sapply(goo,function(x){max(nchar(x),na.rm=TRUE)})) # due to extra column nonsense
 	fldfix   = fldsize>80
+#browser();return()
 	if (any(fldfix)) {
 		newsize[fldfix] = 80
 		fldprop  = round(0.9*newsize/sum(newsize),2)

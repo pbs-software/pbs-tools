@@ -14,7 +14,7 @@
 #  crossTab........Use package 'reshape' to summarize z using crosstab values y.
 #  fitLogit........Fit binomial data using logit link function.
 #  flagIt..........Labels a coordinate using a diagonal line radiating from it.
-#  getData.........Get data from a variety of sources.
+#  gatherVals......Gathers data from multiple columns into key-value pairs (replaces tidyr::gather).
 #  getFile.........Get a dataset (binary libraries, binary local, dumped data, comma-delimited text.
 #  getName.........Get the names of the input object.
 #  getODBC.........Get a string vector of ODBC drivers on user's Windows system.
@@ -286,6 +286,22 @@ flagIt = function(a, b, A=45, r=0.2, n=1, ...){
 	text(x,y,paste("(",signif(a,3),", ",signif(b,3),")",sep=""),...)
 	return(invisible(list(xvec=xvec,yvec=yvec,rads=rads,x0=x0,x=x,y=y)))
 }
+
+#gatherVals-----------------------------2016-06-14
+# Gathers data from multiple columns into key-value pairs.
+# Essentially a replacement function for tidyr::gather.
+#-----------------------------------------------RH
+gatherVals = function(x, columns){
+	if (missing(columns)) columns=1:ncol(x)  ## i.e. use all columns
+	xout = list(key=NULL, value=NULL)
+	for (i in columns) {
+		xout[["key"]] = c(xout[["key"]], rep(colnames(x)[i],nrow(x)))
+		xout[["value"]] =c (xout[["value"]], x[,i])
+	}
+	xout = as.data.frame(xout)
+	return(xout)
+}
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~gatherVals
 
 #getData--------------------------------2016-04-27
 # Get data from a variety of sources.
@@ -844,7 +860,7 @@ getODBC <- function(os=.Platform$OS.type, pattern=NULL, status="Installed") {
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~getODBC
 
 
-#installPkgs----------------------------2016-04-13
+#installPkgs----------------------------2016-05-18
 # Install specified packages if they are missing
 # or if newer versions are available.
 # Note: At some point the function should deal
@@ -877,9 +893,9 @@ installPkgs <- function(pkg, repos=getOption("repos"), locdir=tempdir(), also.lo
 		upd.pkg = c(upd.pkg, intersect(mis.pkg,new.pkg))
 	if (length(upd.pkg)>0){
 		if (is.null(repos))
-			install.packages(paste0(locdir,"/",bins[sapply(upd.pkg,grep,bins)]), dependencies=TRUE, repos=NULL, ...)
+			install.packages(paste0(locdir,"/",bins[sapply(upd.pkg,grep,bins)]), repos=NULL, ...)
 		 else
-			install.packages(upd.pkg, dependencies=TRUE, repos=repos, ...)
+			install.packages(upd.pkg, repos=repos, ...)
 	} else
 	cat("No new versions of requested packages installed\n")
 	if (also.load)
