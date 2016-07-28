@@ -4,6 +4,8 @@
 #  calcHabitat.....Calculate potential habitat using bathymetry.
 #  calcOccur.......Calculate percent occurrence of events in PolySet.
 #  calcSRFA........Determine SRF areas using major, minor, and locality areas.
+#  calcStockArea   Assign a stock area designation based on species HART code and PMFC major and/or minor areas.
+#  calcWAParea     Assign a stock area designation for Walleye Pollock using PMFC major and minor areas, a stratifying vector, and a weighting vector.
 #  calcSurficial...Calculate intersection of surficial geology and bathymetry interval.
 #  clarify.........Analyse catch proportions in blocks, then cluster into fisheries groups.
 #  findHoles.......Find holes and place them under correct parents.
@@ -166,6 +168,194 @@ calcSRFA <- function(major, minor=NULL, loc=NULL, subarea=FALSE) {
 	srfa <- apply(xin,1,fn)
 	return(srfa) }
 #-----------------------------------------calcSRFA
+
+
+#calcStockArea--------------------------2016-07-27
+# Assign a stock area designation based on species
+# HART code and PMFC major and/or minor areas.
+#-----------------------------------------------RH
+calcStockArea = function (strSpp, major, minor)
+{
+	if (missing(strSpp))
+		stop("Must specify a species to determine area allocation")
+	if (missing(major) && missing(minor))
+		stop("Must supply at least one vector of 'major' or 'minor' areas")
+	if (!missing(major) && !missing(minor)) {
+		## Allocations based on combinations of major and minor
+		if (length(major)!=length(minor))
+			stop("Vectors of 'major' and 'minor' must be equal length.")
+		newA = rep("UNK",length(major))
+		if (is.element(strSpp, c("228"))) {
+			newA[is.element(major,7:9)] = "5CDE"
+			newA[is.element(major,5:6) | is.element(minor,12)] = "5AB"
+			newA[is.element(major,3:4) | is.element(minor,20)] = "3CD"
+			newA[is.element(major,1) & !is.element(minor,c(12,20))] = "4B"
+		}
+	}
+	if (!missing(major) && missing(minor)) {
+		## Allocations based on major only (emulates the IFMP TAC areas)
+		newA = rep("UNK",length(major))
+		if (is.element(strSpp,c("059","056","222","228","626"))){
+			newA[is.element(major,7:9)] = "5CDE"
+			newA[is.element(major,5:6)] = "5AB"
+			newA[is.element(major,3:4)] = "3CD"
+			newA[is.element(major,1)]   = "4B"
+		}
+		else if (is.element(strSpp,c("396"))){
+			newA[is.element(major,8:9)] = "5DE"
+			newA[is.element(major,7)]   = "5C"
+			newA[is.element(major,5:6)] = "5AB"
+			newA[is.element(major,3:4)] = "3CD"
+			newA[is.element(major,1)]   = "4B"
+		}
+		else if (is.element(strSpp,c("405","437","621"))){
+			newA[is.element(major,9)]   = "5E"
+			newA[is.element(major,7:8)] = "5CD"
+			newA[is.element(major,5:6)] = "5AB"
+			newA[is.element(major,3:4)] = "3CD"
+			newA[is.element(major,1)]   = "4B"
+		}
+		else if (is.element(strSpp,c("439","440"))){
+			newA[is.element(major,9)]   = "5E"
+			newA[is.element(major,7:8)] = "5CD"
+			newA[is.element(major,4:6)] = "3D5AB"
+			newA[is.element(major,3)]   = "3C"
+			newA[is.element(major,1)]   = "4B"
+		}
+		else if (is.element(strSpp,c("407","424","431","433","442"))){
+			newA[is.element(major,9)]   = "5E"
+			newA[is.element(major,7:8)] = "5CD"
+			newA[is.element(major,6)]   = "5B"
+			newA[is.element(major,3:5)] = "3CD5A"
+			newA[is.element(major,1)]   = "4B"
+		}
+		else if (is.element(strSpp,c("465","467"))){
+			newA[is.element(major,7:9)] = "5CDE"
+			newA[is.element(major,5:6)] = "5AB"
+			newA[is.element(major,4)]   = "3D"
+			newA[is.element(major,3)]   = "3C"
+			newA[is.element(major,1)]   = "4B"
+		}
+		else if (is.element(strSpp,c("418"))){
+			newA[is.element(major,4:9)] = "3D5"
+			newA[is.element(major,3)]   = "3C"
+			newA[is.element(major,1)]   = "4B"
+		}
+		else if (is.element(strSpp,c("042","044","224","225"))){
+			newA[is.element(major,3:9)] = "OFFS"
+			newA[is.element(major,1)]   = "GULF"
+		}
+		else if (is.element(strSpp,c("394","401","403","435","451","453","454","455","602","607","614"))){
+			newA[is.element(major,c(1,3:9))] = "CST"
+		}
+	}
+	if (missing(major) && !missing(minor)) {
+		## Allocations based on minor only
+		newA = rep("UNK",length(minor))
+	}
+	return(newA)
+}
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~calcStockArea
+
+
+#calcWAParea----------------------------2016-07-28
+# Assign a stock area designation for Walleye Pollock
+# using PMFC major and minor areas, a stratifying vector,
+# and a weighting vector.
+#-----------------------------------------------RH
+calcWAParea = function (major, minor, strat, wts)
+{
+	stratify = function (major,minor,strat,wts,targ.major,targ.minor) {
+		area.good = is.element(major,targ.major) & !is.element(minor,c(0,99))
+		area.kno  = area.good & !is.element(minor,targ.minor)
+		area.bad  = is.element(major,targ.major) &  is.element(minor,c(0,99))
+		true.bad  = grep(TRUE,area.bad)
+		TRUE.bad  = rep(FALSE, length(true.bad))
+		names(TRUE.bad) = true.bad
+		TRUE.good = TRUE.bad
+		ttput(TRUE.good)
+		TRUE.targ = list()
+
+		for (gg in names(targ.minor)){
+			g = targ.minor[[gg]]
+			area.targ = is.element(major,targ.major) & is.element(minor,g)
+			if (!missing(strat) && !is.null(strat)){
+				strat.bad  = strat[area.bad]
+				strat.targ = strat[area.targ]
+				strat.good = strat[area.good]
+			} else {
+				strat.bad  = major[area.bad]
+				strat.targ = major[area.bad]
+				strat.good = major[area.bad]
+			}
+			if (!missing(wts) && !is.null(wts)){
+				wts.bad  = wts[area.bad]
+				wts.targ = wts[area.targ]
+				wts.good = wts[area.good]
+			} else {
+				wts.bad  = rep(1,sum(area.bad))
+				wts.targ = rep(1,sum(area.targ))
+				wts.good = rep(1,sum(area.good))
+			}
+			sum.bad  = sapply(split(wts.bad,strat.bad),sum)
+			sum.targ = sapply(split(wts.targ,strat.targ),sum)
+			sum.good = sapply(split(wts.good,strat.good),sum)
+
+			rec.bad   = sapply(split(rep(1,sum(area.bad)),strat.bad),sum)
+			pro.targ = sum.targ/GT0(sum.good[names(sum.targ)])
+			rec.targ = round(pro.targ[names(rec.bad)] * rec.bad)
+	
+			true.strat = split(true.bad,strat.bad)
+			true.targ  = sapply(names(true.strat),function(i){
+				if (rec.targ[i]>0) {
+					ttget(TRUE.good)
+					pos1 = match(F,TRUE.good[match(true.strat[[i]],names(TRUE.good))])
+					out  = true.strat[[i]][pos1:(rec.targ[i]+pos1-1)]
+					TRUE.good[as.character(out)] = TRUE
+					ttput(TRUE.good)
+					#if (i=="2010") browser()
+					return(out)
+				}
+			})
+			TRUE.targ[[gg]] = true.targ
+			ttget(TRUE.good)
+			area.true = area.bad
+			true.good = TRUE.bad    ## use the original untouched bad vector
+			true.good[as.character(as.vector(unlist(true.targ)))] = TRUE
+			area.true[as.numeric(names(true.good))] = true.good
+			ttget(newA)
+			newA[area.true] = gg
+			ttput(newA)
+#if (g==20) {browser();return()}
+		}
+		TRUE.unk = TRUE.good==TRUE.bad
+		area.unk = area.bad
+		true.unk = TRUE.bad    ## use the original untouched bad vector
+		true.unk[names(TRUE.unk[TRUE.unk])] = TRUE
+		area.unk[as.numeric(names(true.unk))] = true.unk
+		ttget(newA)
+		newA[area.unk] = names(targ.major)
+		newA[area.kno] = names(targ.major)
+		ttput(newA)
+#browser();return()
+	}
+	##-----------------------MAIN----------------------------
+	if (length(major)!=length(minor))
+		stop("Vectors of 'major' and 'minor' must be equal length.")
+	newA = rep("UNK",length(major))
+	newA[is.element(major,7:9)] = "5CDE"
+	newA[is.element(major,5:6) | is.element(minor,12)] = "5AB"
+	newA[is.element(major,3:4) | is.element(minor,20)] = "3CD"
+
+	if (!missing(strat) && !is.null(strat)) {
+		ttput(newA)
+		stratify(major=major, minor=minor, strat=strat, wts=wts, targ.major=c(`4B`=1), targ.minor=list(`5AB`=12,`3CD`=20))
+		ttget(newA)
+	} else 
+		newA[is.element(major,1) & !is.element(minor,c(0,12,20,99))] = "4B"
+	return(newA)
+}
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~calcWAParea
 
 
 #calcSurficial--------------------------2013-01-28

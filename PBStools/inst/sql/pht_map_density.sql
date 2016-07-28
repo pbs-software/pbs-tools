@@ -1,4 +1,4 @@
--- Get catch-effort data for mapping density (2015-01-06)
+-- Get catch-effort data for mapping density (last modified: 2016-07-19)
 SET NOCOUNT ON -- prevent timeout errors
 
 SELECT 
@@ -35,7 +35,14 @@ SELECT --TOP 100
   ISNULL(E.OBFL_DFO_MGMT_AREA_CDE,0) AS PFMA,
   ISNULL(E.OBFL_DFO_MGMT_SUBAREA_CDE,0) AS PFMS,
   ISNULL(E.Fishing_Depth,0) AS fdep,
-  ISNULL(E.OBFL_GEAR_SUBTYPE_CDE,0) AS gear,
+  CASE 
+    WHEN ISNULL(E.OBFL_GEAR_TYPE_CDE,0) IN (0) THEN 0
+    WHEN E.OBFL_GEAR_TYPE_CDE IN (1) AND ISNULL(E.OBFL_GEAR_SUBTYPE_CDE,0) NOT IN (3) THEN 1
+    WHEN E.OBFL_GEAR_TYPE_CDE IN (2) THEN 2
+    WHEN E.OBFL_GEAR_TYPE_CDE IN (1) AND ISNULL(E.OBFL_GEAR_SUBTYPE_CDE,0) IN (3) THEN 3
+    WHEN E.OBFL_GEAR_TYPE_CDE IN (4) THEN 4
+    WHEN E.OBFL_GEAR_TYPE_CDE IN (5) THEN 5
+    ELSE 8 END AS gear,
   CONVERT(smalldatetime,CONVERT(char(10),COALESCE(E.Start_FE, T.OBFL_OFFLOAD_DT, T.OBFL_DEPARTURE_DT), 20)) AS [date], 
   T.OBFL_VSL_CFV_NO AS cfv, 
   ISNULL(E.Duration, 0) AS eff, 
@@ -248,6 +255,7 @@ SELECT *,
     ELSE '00' END
 FROM #ALLMAP AM
 
---getData("pht_map_density.sql","PacHarvest",strSpp="396")
+-- qu("pht_map_density.sql",dbName="PacHarvest",strSpp="228")
+-- getData("pht_map_density.sql","PacHarvest",strSpp="396")
 -- getData("fos_map_density.sql","GFFOS",strSpp="394",server="GFSH",type="ORA",trusted=F)
 

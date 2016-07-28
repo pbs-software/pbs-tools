@@ -6,6 +6,12 @@ Authors: RH  = Rowan Haigh
          JTS = Jon T. Schnute
 ------------------------------
 
+1.32.0 (2016-06-28)
+  • Added new function `calcWAParea' to assign a stock area designation for Walleye Pollock using PMFC major and minor areas, a stratifying vector, and a weighting vector. (RH 160728)
+  • Added new function `calcStockArea' to assign a stock area designation based on species HART code and PMFC major and/or minor areas. (RH 160727)
+  • Modified queries `fos_mcatORF.sql' (incorrect gear specification), `gfb_mean_weight.sql' (added midwater -- gear type 6), and `meanSppWt.sql' (add Walleye Pollock -- code 228). (RH 160726)
+  • Modified SQL query `pht_map_density.sql' to more correctly differentiate bottom and midwater trawl gear types. (RH 160719)
+
 1.31.4 (2016-06-20)
   • Fixed a small bug in function `texArray' where function `max' was used without specifying `na.rm=TRUE'. (RH 160620)
   • Added new function `gatherVals' to gathers data from multiple columns into key-value pairs. (RH 160614)

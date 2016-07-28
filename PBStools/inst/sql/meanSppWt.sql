@@ -1,10 +1,12 @@
 -- Mean species weight calculated using `gfb_mean_weight.sql', which emulates PJS algorithm for GFBIO data
--- Last modified: 2016-03-07 (RH)
+-- Last modified: 2016-06-26 (RH)
 DECLARE @MEAN_WEIGHT TABLE (SPECIES_CODE VARCHAR(5), MNWT REAL)
 INSERT INTO @MEAN_WEIGHT VALUES
-  ('222', 1.759289),  -- ttype=c(1,4), gear=1
+  ('222', 2.190844),  -- ttype=c(1,4), gear=1, major=3:9 (queried 160726)
+  ('228', 0.507153),  -- ttype=c(1,4), gear=6, major=1   (queried 160726)
   ('394', 1.529992),  -- ttype=c(1,4), gear=1, major=3:9 (queried 160307)
-  ('396', 0.853620),  -- ttype=c(1,4), gear=1
+  -- ('396', 0.856856),  -- ttype=c(1,4), gear=1, major=3:9 (queried 160726)
+  ('396', 0.851637),  -- ttype=c(1,4), gear=1, major=5:7 (queried 160726)
   ('401', 1.724491),  -- ttype=c(1,4), gear=1, major=3:9
   ('405', 1.916324),  -- ttype=c(1,4), gear=1
   ('417', 1.392816),  -- ttype=c(1,4), gear=1, major=3:9 (queried 151123)

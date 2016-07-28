@@ -31,7 +31,7 @@ FROM
 WHERE
   B21.TRIP_SUB_TYPE_CODE IN (1,4) AND
   B21.MAJOR_STAT_AREA_CODE IN (@major) AND
-  B21.GEAR_CODE IN (1,2,4,5) AND
+  B21.GEAR_CODE IN (1,2,4,5,6) AND
   B21.SPECIES_CATEGORY_CODE IN (1) AND
   B21.SAMPLE_TYPE_CODE IN (1,2,6,7) AND
   YEAR(B21.TRIP_START_DATE) >= 2007 AND
@@ -389,3 +389,5 @@ SELECT * FROM #mean_weight
 
 --qu("lm.sql",dbName="GFBioSQL",strSpp=c("222","401","405","418","602","621"))
 --qu("gfb_mean_weight.sql",dbName="GFBioSQL",strSpp="442",major=3:9)
+--qu("gfb_mean_weight.sql",dbName="GFBioSQL",strSpp="440",major=3:9)
+--qu("gfb_mean_weight.sql",dbName="GFBioSQL",strSpp="228",major=1)
