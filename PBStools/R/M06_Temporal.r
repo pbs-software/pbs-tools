@@ -76,8 +76,9 @@ imputeRate <- function(qtName="Ex03_Portfolio", dbName="Examples", AID=1, pathN=
 	invisible() }
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~imputeRate
 
-#.imputeRate.impIR----------------------2013-02-01
+#.imputeRate.impIR----------------------2016-09-21
 # Impute the rate of return from an investment.
+# Now uses net future value instead of net present value
 #-----------------------------------------------RH
 .imputeRate.impIR <- function() {
 	IRRfun <- function(P){
@@ -87,24 +88,32 @@ imputeRate <- function(qtName="Ex03_Portfolio", dbName="Examples", AID=1, pathN=
 		N=nrow(ddat)
 		Ci=c(ddat$value[1],ddat$cont[2:N]) # initial value (includes 1st contributuon) + additioanl contributions
 		#Clast=Ci[N]; Ci[N]=0
-		Vlast=ddat$value[N]                # final value
-		#f=GT0(mean(abs(Ci)))               # scale factor for contributions
-		f=1
-		Ci=Ci/f
+		Vlast=ddat$value[N]          ## final value
+		#sfac=GT0(mean(abs(Ci)))     ## scale factor for contributions (not needed so set to 1)
+		sfac=1
+		Ci=Ci/sfac
 		Di=c(ddat$date)
-		ri = (1-r)^(as.numeric(Di-Di[1])/365)  # Discounts
-		ri[Ci<0] = 1                           # Do not discount removals
-		DCi=Ci/ri                              # NPV
-		Vcont=sum(DCi)
-		Vlast=Vlast/f
-		Yobs  = scalePar(matrix(c(Vlast,0,1.5*max(Vlast,Vcont),TRUE),nrow=1))
-		Ypred = scalePar(matrix(c(Vcont,0,1.5*max(Vlast,Vcont),TRUE),nrow=1))
-		fval = (Yobs-Ypred)^2
+		#ri = (1-r)^(as.numeric(Di-Di[1])/365)      ## Discount -- but if r>1 then formula blows up
+		#ri = 1/((1+r)^(as.numeric(Di-Di[1])/365))  ## Discount -- inverse of discounting (doesn't quite work)
+		ri = (1+r)^(as.numeric(rev(Di)[1]-Di)/365)  ## Growth   -- need to work backwads from end result to get true growth
+		ri[Ci<0] = 1                                ## Do not discount removals
+		#DCi=Ci/ri                                  ## NPV -- originally used net present value for IRR formula, but r is estimated high
+		FCi = Ci * ri                               ## FV  -- switched to future value (RH 160917)
+		Vcont = sum(FCi)                            ## Value of total contributions
+		Vlast = Vlast/sfac                          ## Value of the end portfolio
+		Vstd = c(Vcont,Vlast)/mean(c(Vcont,Vlast))  ## normalize the two values by the mean of the two (instead of using a scaling factor sfac)
+		fval = diff(Vstd)^2
+		IRRmin=c(r,fval,Vcont,Vlast); names(IRRmin)=c("r","fval","Vcont","Vlast")
+#browser();return()
+		#Yobs  = scalePar(matrix(c(Vlast,0,1.5*max(Vlast,Vcont),TRUE),nrow=1))
+		#Ypred = scalePar(matrix(c(Vcont,0,1.5*max(Vlast,Vcont),TRUE),nrow=1))
+#print(c(Yobs,Ypred))
+		#fval = (Yobs-Ypred)^2
 		#fval = (Vlast - Vcont)^2
-#		print(round(c(r,fval,Vcont,Vlast),5))
-		IRRmin=c(r,fval,f*Vcont,f*Vlast); names(IRRmin)=c("r","fval","Vcont","Vlast")
-		#packList("IRRmin","PBStool",tenv=.PBStoolEnv)
-		#eval(parse(text="PBStool$IRRmin <<- IRRmin"))  # weird results for SANN
+#print(round(c(r,fval,Vcont,Vlast),5))
+		#IRRmin=c(r,fval,sfac*Vcont,sfac*Vlast); names(IRRmin)=c("r","fval","Vcont","Vlast")
+#print(round(IRRmin,2))
+#browser();return()
 		ttget(PBStool); PBStool$IRRmin <- IRRmin; ttput(PBStool)  # weird results for SANN
 		return(fval) }
 	#----------------
@@ -125,18 +134,19 @@ imputeRate <- function(qtName="Ex03_Portfolio", dbName="Examples", AID=1, pathN=
 	ddat=adat[adat$date>=dlim[1] & adat$dat<=dlim[2] & !is.na(adat$date),] # date-delimited account data
 	if (nrow(ddat)==0) showError("date limits","nodata")
 	plim=range(ddat$period,na.rm=TRUE); v0=plim[1]; v1=plim[2]
-	pyr = 365./median(as.vector(diff(ddat$date)))
+	mdays = median(as.vector(diff(ddat$date)))
+	pyr = 365./mdays ## divide year by ave. days in month
 	setWinVal(list(d0=d0,d1=d1,v0=v0,v1=v1,pyr=round(pyr,1)))
 
 	x <- ddat$period; y <- ddat$value; names(x)=names(y)=as.character(ddat$date)
-	# Indexing with z redundant since 'ddat' is now a subet of 'adat'
+	## Indexing with z redundant since 'ddat' is now a subet of 'adat'
 	z <- is.element(x,v0:v1); zL <-sum(z);
 	z0 <- is.element(x,v0); z1 <- is.element(x,v1);
 	xobs <- x[z]; yobs <-y[z]; 
 	cobs <- ddat$cont[z]; cobs[1]=yobs[1] # initial value already includes 1st contribution
 	names(cobs)=as.character(ddat$date[z])
 	Vstart <- yobs[1]; Vend <- yobs[zL]; Vadj=Vend-cobs[zL]
-	packList(c("adat","ddat","Vstart","Vend","Vadj","x","y","z0","z1","z","zL","xobs","yobs","cobs"),"PBStool",tenv=.PBStoolEnv)
+	packList(c("adat","ddat","Vstart","Vend","Vadj","x","y","z0","z1","z","zL","xobs","yobs","cobs","mdays","pyr"),"PBStool",tenv=.PBStoolEnv)
 #browser();return()
 
 	Obag <- calcMin(pvec=parVec,func=IRRfun,method=method,trace=trace,maxit=maxit,reltol=reltol,steptol=steptol,repN=repN)
@@ -149,6 +159,7 @@ imputeRate <- function(qtName="Ex03_Portfolio", dbName="Examples", AID=1, pathN=
 	rates=c(Pend/pyr,Pend)  # period and annual rates
 
 	Pfig <- signif(rates*100,3)
+#browser();return()
 	if (sim==2) sim <- 1
 	unpackList(Obag,scope="L");
 	Gbag <- list(Git=iters, Gev=evals, Gct=round(cpuTime,nd), Get=round(elapTime,nd),
@@ -161,16 +172,20 @@ imputeRate <- function(qtName="Ex03_Portfolio", dbName="Examples", AID=1, pathN=
 	invisible() }
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~.imputeRate.impIR
 
-#.imputeRate.trajIR---------------------2011-06-10
+#.imputeRate.trajIR---------------------2016-09-17
 # Calculate the value trajectory.
 #-----------------------------------------------RH
 .imputeRate.trajIR=function(x,cw,y0,r){ 
 	# x=periods, cw=contributions/withdrawals, y0=starting value, r=period rate
 	cw[1]=y0 # initial value already includes 1st contribution
-	ri = (1-r)^(as.numeric(x-x[1])/365)
+	#ri = (1-r)^(as.numeric(x-x[1])/365)
+	#ri = 1/((1+r)^(as.numeric(x-x[1])/365))
+	ri = (1+r)^(as.numeric(rev(x)[1]-x)/365)
 	ri[cw<0] = 1
-	ypred=cw/ri  # NPV
+	#ypred=cw/ri    ## NPV
+	ypred=cw*ri     ## FV
 	y=cumsum(ypred)
+#browser();return()
 	return(y) }
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~.imputeRate.trajIR
 
@@ -195,7 +210,7 @@ imputeRate <- function(qtName="Ex03_Portfolio", dbName="Examples", AID=1, pathN=
 	invisible() }
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~.imputeRate.getIR
 
-#.imputeRate.plotIR---------------------2011-06-10
+#.imputeRate.plotIR---------------------2016-09-21
 # Plot the results of the imputed rate.
 #-----------------------------------------------RH
 .imputeRate.plotIR=function() {
@@ -245,10 +260,11 @@ imputeRate <- function(qtName="Ex03_Portfolio", dbName="Examples", AID=1, pathN=
 	ydif=diff(ylim); ypin=par()$pin[2]
 	yyy = ifelse(Vstart < (0.80*ydif+ylim[1]),.98,.50)
 	addLabel(.05,yyy,paste("Method =",method),cex=1.2,adj=0,col=clr);
-	addLabel(.05,yyy-.02*(6/ypin),paste(paste(c("Period rate","Annual rate")," = ",Pfig,"%",sep=""),collapse="\n"),adj=c(0,1),cex=0.8);
-	addLabel(.05,yyy-.08*(6/ypin),paste("Timing =",paste(round(ftime[1],2),collapse=", "),"sec"),adj=0,cex=0.7,col="grey35");
-	addLegend(.04,yyy-.09*(6/ypin),legend=c("Observed","Contributions","Growth"),bty="n",cex=.8,
-		lty=1,lwd=3,col=c(oclr[1],mclr[3],clr));
+	#addLabel(.05,yyy-.02*(6/ypin),paste(paste(c(paste0("Rate per ",round(mdays)," days"),"Annual rate")," = ",Pfig,"%",sep=""),collapse="\n"),adj=c(0,1),cex=0.8);
+	addLabel(.05,yyy-.025*(6/ypin),paste0("Annual rate = ",Pfig[2],"%"),adj=c(0,1),cex=0.8)
+	addLabel(.05,yyy-.06*(6/ypin),paste("Timing =",paste(round(ftime[1],2),collapse=", "),"sec"),adj=0,cex=0.7,col="grey35");
+	addLegend(.04,yyy-.06*(6/ypin),legend=c("Observed","Contributions","Future Value"),bty="n",cex=.8,
+		lty=1,lwd=3,col=c(oclr[1],mclr[3],clr))
 	clab=paste("Initial value = ",format(round(Vstart),big.mark=","),
 		"    Contributions = ",format(round(sum(ddat$cont[z][-1])),big.mark=","),
 		"    Final value = ",format(round(Vend),big.mark=","),sep="")

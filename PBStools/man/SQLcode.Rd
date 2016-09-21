@@ -46,7 +46,6 @@
     \code{gfb_catch_records.sql}        \tab Research survey catch for \code{\link[PBStools]{getCatch}} and \code{\link[PBStools]{weightBio}}.\cr
     \code{gfb_clara_survey.sql}         \tab Get survey catch from GFBioSQL for clara analysis.\cr
     \code{gfb_concat_rows_example.sql}  \tab Concatenate values when number of items is small and known upfront.\cr
-                                        \tab \url{http://www.projectdmx.com/tsql/rowconcatenate.aspx} \cr
     \code{gfb_fishwt.sql}               \tab Mean weight of species sampled from commercial and research trips.\cr
     \code{gfb_fos_age_request.sql}      \tab Otoliths taken but not aged; \cr
                                         \tab show only those that can be identified by \code{GFFOS}' \code{TRIP_ID}.\cr

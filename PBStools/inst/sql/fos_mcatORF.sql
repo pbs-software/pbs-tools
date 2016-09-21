@@ -140,7 +140,8 @@ SELECT --top 100
   ISNULL(A.MINOR_STAT_AREA_CODE,'0') AS \"minor\",
   ISNULL(A.LOCALITY_CODE,'0') AS \"locality\",
   --CC.LOCAL_NAME, -- for debugging locality names
-  ISNULL(MC.BEST_DEPTH,0) AS \"fdep\"
+  ISNULL(MC.BEST_DEPTH,0) AS \"fdep\",
+  ISNULL(DATEDIFF(n,MC.FE_START_DATE,MC.FE_END_DATE),0) AS \"eff\"
 INTO #EVENT_CORE
 FROM 
   GF_MERGED_CATCH MC INNER JOIN 
@@ -185,7 +186,8 @@ GROUP BY
   ISNULL(A.MINOR_STAT_AREA_CODE,'0'),
   ISNULL(A.LOCALITY_CODE,'0'),
   --CC.LOCAL_NAME, -- for debugging locality names
-  ISNULL(MC.BEST_DEPTH,0)
+  ISNULL(MC.BEST_DEPTH,0),
+  ISNULL(DATEDIFF(n,MC.FE_START_DATE,MC.FE_END_DATE),0)
 
 
 -- Combine event information with catch
@@ -203,6 +205,7 @@ SELECT
   EC.locality,
   --CC.LOCAL_NAME, -- for debugging locality names
   EC.fdep,
+  EC.eff,
   CC.landed,
   CC.discard,
   CC.POP, CC.ORF, CC.TAR
@@ -224,6 +227,7 @@ ORDER BY EC.TRIP_ID, EC.FISHING_EVENT_ID
 
 -- getData("fos_mcatORF.sql","GFFOS",strSpp="442")
 -- qu("fos_mcatORF.sql",dbName="GFFOS",strSpp="442")
+-- qu("fos_mcatORF.sql",dbName="GFFOS",strSpp="228")
 
 
 

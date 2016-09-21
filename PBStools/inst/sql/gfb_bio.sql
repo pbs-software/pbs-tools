@@ -1,4 +1,4 @@
--- Get specimen biological data from GFBioSQL (2015-07-23)
+-- Get specimen biological data from GFBioSQL (last revised 2016-08-03)
 -- Number in brackets = #records for YYR
 
 SET NOCOUNT ON
@@ -328,8 +328,13 @@ SELECT
     ELSE AA.SAMPLE_DATE END),                                         -- B04_Sample
   'sex'   = IsNull(AA.SPECIMEN_SEX_CODE,0),                           -- B05_Specimen
   'mat'   = IsNull(AA.MATURITY_CODE,0),                               -- B05_Specimen
-  'oto'   = IsNull(TT.otoliths,0),                                    -- B05a_Specimen_Collected
-  'narc'  = CASE WHEN TT.notavail = 0 THEN NULL ELSE TT.notavail END, -- B05a_Specimen_Collected
+  -- sometimes otoliths have been aged but they do not appear in the SPECIMEN_COLLECTED table
+  'oto'   = CASE
+              WHEN AA.SPECIMEN_AGE IS NOT NULL THEN 1
+              ELSE IsNull(TT.otoliths,0) END,                         -- B05a_Specimen_Collected
+  'narc'  = CASE 
+              WHEN AA.SPECIMEN_AGE IS NOT NULL OR ISNULL(TT.notavail,0) = 0 THEN NULL
+              ELSE TT.notavail END,                                   -- B05a_Specimen_Collected
   'age'   = AA.SPECIMEN_AGE,                                          -- B05_Specimen
   'ameth' = CASE WHEN AA.SPECIMEN_AGE Is Null THEN NULL ELSE IsNull(AA.AGEING_METHOD_CODE,0) END,  -- B05_Specimen
   'len'   = CASE WHEN IsNull(BM.Best_Length,0)=0 THEN NULL ELSE BM.Best_Length END,    -- B05d_Specimen_Morphometrics

@@ -1183,7 +1183,7 @@ estOgive <- function(dat=pop.age, strSpp="", method=c("dblnorm"),
 
 	if (eps) postscript(paste0(onam,".eps"),width=figdim[1],height=figdim[2],paper="special")
 	else if (wmf && .Platform$OS.type=="windows")
-		win.metafile(paste0(onam,".wmf"),width=figdim[1],height=figdim[2])
+		do.call("win.metafile",list(filename=paste0(onam,".wmf"), width=figdim[1], height=figdim[2]))
 	else if (png) png(filename=paste0(onam,".png"),width=figdim[1]*100,height=figdim[2]*100,res=100)
 	else resetGraph()
 	expandGraph(mfrow=c(1,1),mai=c(.6,.7,0.05,0.05),omi=c(0,0,0,0),las=1,lwd=1)
@@ -2128,10 +2128,13 @@ predictRER = function(S,L,N) {
 		   22.601*sL[5] - 10.203*sL[6] - 10.445
 	return(D) }
 
-#processBio-----------------------------2009-06-16
+
+#processBio-----------------------------2016-09-12
 # Process results from 'gfb_bio.sql' query.
 #-----------------------------------------------RH
-processBio = function(dat=PBSdat,addsrfa=TRUE,addsrfs=TRUE,addpopa=TRUE,maxrows=5e4) {
+processBio = function(dat=PBSdat, strSpp, addsrfa=TRUE, 
+   addsrfs=TRUE, addpopa=TRUE, addstock=TRUE, maxrows=5e4)
+{
 	f=function(x){format(x,scientific=FALSE,big.mark=",")}
 	atts=attributes(dat)[setdiff(names(attributes(dat)),c("names","row.names","class"))] # extra attributes to retain
 	N=nrow(dat); nloop=ceiling(nrow(dat)/maxrows)
@@ -2159,14 +2162,21 @@ processBio = function(dat=PBSdat,addsrfa=TRUE,addsrfs=TRUE,addpopa=TRUE,maxrows=
 				datpopa[names(pvec)]=pvec }
 			idat$popa=datpopa
 		}
+		if (addstock) {
+			if (missing(strSpp))
+				stop("Must specify a species to determine stock allocation")
+			idat$stock = calcStockArea(strSpp, major=idat$major, minor=idat$minor)
+		}
 		aflds=c("EID","X","Y")
 		idat=idat[,c(aflds,setdiff(names(idat),aflds))]
 		DAT=rbind(DAT,idat)
 	} # end nloop
 	if (!any(is.na(DAT$X)) && !any(is.na(DAT$Y))) DAT=as.EventData(DAT)
 	attributes(DAT)=c(attributes(DAT),atts)
-	return(DAT) }
-#---------------------------------------processBio
+	return(DAT)
+}
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~processBio
+
 
 #reportCatchAge-------------------------2010-10-20
 # Analyses and plots from catch-at-age report.

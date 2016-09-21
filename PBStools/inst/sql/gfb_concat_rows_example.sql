@@ -1,5 +1,5 @@
 -- Concatenating values when the number of items is small and known upfront 
--- http://www.projectdmx.com/tsql/rowconcatenate.aspx
+-- http://stackoverflow.com/questions/8868604/sql-group-concat-function-in-sql-server
 
 SET NOCOUNT ON  -- prevents timeout errors
 

@@ -170,14 +170,14 @@ calcSRFA <- function(major, minor=NULL, loc=NULL, subarea=FALSE) {
 #-----------------------------------------calcSRFA
 
 
-#calcStockArea--------------------------2016-07-27
+#calcStockArea--------------------------2016-09-12
 # Assign a stock area designation based on species
 # HART code and PMFC major and/or minor areas.
 #-----------------------------------------------RH
 calcStockArea = function (strSpp, major, minor)
 {
 	if (missing(strSpp))
-		stop("Must specify a species to determine area allocation")
+		stop("Must specify a species to determine stock allocation")
 	if (missing(major) && missing(minor))
 		stop("Must supply at least one vector of 'major' or 'minor' areas")
 	if (!missing(major) && !missing(minor)) {
@@ -191,8 +191,9 @@ calcStockArea = function (strSpp, major, minor)
 			newA[is.element(major,3:4) | is.element(minor,20)] = "3CD"
 			newA[is.element(major,1) & !is.element(minor,c(12,20))] = "4B"
 		}
+		else minor=NULL
 	}
-	if (!missing(major) && missing(minor)) {
+	if (!missing(major) && (missing(minor)||is.null(minor))) {
 		## Allocations based on major only (emulates the IFMP TAC areas)
 		newA = rep("UNK",length(major))
 		if (is.element(strSpp,c("059","056","222","228","626"))){
@@ -203,8 +204,8 @@ calcStockArea = function (strSpp, major, minor)
 		}
 		else if (is.element(strSpp,c("396"))){
 			newA[is.element(major,8:9)] = "5DE"
-			newA[is.element(major,7)]   = "5C"
-			newA[is.element(major,5:6)] = "5AB"
+			#newA[is.element(major,7)]   = "5C"
+			newA[is.element(major,5:7)] = "5ABC"
 			newA[is.element(major,3:4)] = "3CD"
 			newA[is.element(major,1)]   = "4B"
 		}
