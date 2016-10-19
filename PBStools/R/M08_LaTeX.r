@@ -4,20 +4,21 @@
 #  collectFigs....Collect encapsulated postscript figures into one document.
 #  formatCatch....Format numeric table so that entries display N significnat figures.
 #  makeLTH........Make a longtable header for printing an xtable
+#  splitTab.......Split a long data table into side-by-side pieces for printing in LaTeX.
 #  texArray.......Flatten and format an array for latex output.
 #===============================================================================
 
-#collectFigs----------------------------2015-04-14
-#  Collect encapsulated postscript figures into one document.
+#collectFigs----------------------------2016-10-17
+# Collect encapsulated postscript figures into one document.
 #-----------------------------------------------RH
 collectFigs = function(path=".", ext="eps", is.fnum=FALSE, 
-   fout="collectFigs", width=6, capskip=0, pattern=NULL, show.output=FALSE) {
+   fout="collectFigs", width=6.5, capskip=0, pattern=NULL, show.output=FALSE)
+{
 	cwd = getwd(); on.exit(setwd(cwd))
 	suffix = paste("\\.",ext,"$",sep="")
 	figs = list.files(path=path,pattern=suffix)
 	if (!is.null(pattern) && pattern!="")
 		figs = findPat(pattern,figs)
-#browser();return()
 	figs = sort(figs); Nfigs = length(figs)
 	fnam = fcap = gsub(suffix,"",figs)
 	if (is.fnum)  # figure number already in file name
@@ -29,18 +30,18 @@ collectFigs = function(path=".", ext="eps", is.fnum=FALSE,
 	ftex = c(
 	"\\documentclass[12pt]{article}",
 	"\\usepackage[top=0.8in, bottom=0.7in, left=1in, right=1in]{geometry} %  page margins",
-	"\\usepackage{epsfig}",
+	"\\usepackage{graphicx}",
 	"\\usepackage[font=sf,labelfont=bf,labelsep=period,justification=raggedright]{caption}",
 	"\\usepackage{hyperref}",
-	paste("\\captionsetup[figure]{position=bottom,skip=",capskip,"pt}",sep=""),
+	paste0("\\captionsetup[figure]{position=bottom,skip=",capskip,"pt}"),
 	"\\DeclareCaptionTextFormat{bookmark}{\\belowpdfbookmark{Fig \\thefigure. #1}{\\thefigure}#1}",
 	"\\captionsetup{textformat=bookmark}",
+	"\\makeatletter\\setlength{\\@fptop}{0pt}\\makeatother  %remove whitespace at top of page",
 	"",
 	"\\newcommand\\pbsfig[2]{ % filename is #1, text is #2",
-	"  \\begin{figure}[ht!]",
+	"  \\begin{figure}[t!]",
 	"  \\begin{center}",
-	paste("  \\epsfxsize=",width,"in",sep=""),
-	"  \\epsfbox{#1.eps}",
+	paste0("  \\includegraphics[width=",width,"in,height=",width,"in,keepaspectratio=TRUE]{{#1}.eps}\\\\"),
 	"  \\end{center}",
 	"  \\caption{#2 }",
 	"  \\label{fig:#1}",
@@ -58,15 +59,20 @@ collectFigs = function(path=".", ext="eps", is.fnum=FALSE,
 	debris = list.files(pattern=paste("^",fout,sep=""))
 	debris = setdiff(debris,paste(fout,".tex",sep=""))
 	if (length(debris)>0)  file.remove(debris)
-	err = system(command=paste("latex ",fout,".tex",sep=""),wait=TRUE,show.output.on.console=show.output)
+	#err = system(command=paste("latex ",fout,".tex",sep=""), wait=TRUE, show.output.on.console=show.output)
+#browser();return()
+	err = system2("latex",args=c(paste0(fout,".tex")), wait=TRUE, stdout=show.output)
 		if (err>0) stop("===== First latex call failed =====")
-	err = system(command=paste("latex ",fout,".tex",sep=""),wait=TRUE,show.output.on.console=show.output)
+	#err = system(command=paste("latex ",fout,".tex",sep=""),wait=TRUE,show.output.on.console=show.output)
+	err = system2("latex",args=c(paste0(fout,".tex")), wait=TRUE, stdout=show.output)
 		if (err>0) stop("===== Second latex call failed =====")
 	# Create a ps file from a dvi file
-	err = system(command=paste("dvips ",fout,".dvi",sep=""),wait=TRUE,show.output.on.console=show.output)
+	#err = system(command=paste("dvips ",fout,".dvi",sep=""),wait=TRUE,show.output.on.console=show.output)
+	err = system2("dvips",args=c(paste0(fout,".dvi")), wait=TRUE, stdout=show.output)
 		if (err>0) stop("===== The dvips call failed =====")
 	# Create a pdf from a ps file
-	err = system(command=paste("ps2pdf ",fout,".ps",sep=""),wait=TRUE,show.output.on.console=show.output)
+	#err = system(command=paste("ps2pdf ",fout,".ps",sep=""),wait=TRUE,show.output.on.console=show.output)
+	err = system2("ps2pdf",args=c(paste0(fout,".ps")), wait=TRUE, stdout=show.output)
 		if (err>0) stop("===== The ps2pdf call failed =====")
 	invisible(ftex)
 }
@@ -204,7 +210,51 @@ makeLTH <- function(xtab.table, table.caption, table.label, struts=FALSE) {
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~makeLTH
 
 
-#texArray-------------------------------2016-06-20
+#splitTab-------------------------------2016-10-18
+# Split a long data table into side-by-side pieces
+# for printing in LaTeX.
+#-----------------------------------------------RH
+splitTab = function(tab, np=3, row.names=TRUE, row.label="row", row.numeric=FALSE)
+{
+	## Deal with the rows
+	nr = nrow(tab)
+	nb = ceiling(nr/np)
+	er = nb * (1:np)
+	br = er - nb + 1
+	er[np] = nr
+
+	## Deal with the columns
+	nc = ncol(tab)
+	cnam = dimnames(tab)[[2]]
+	if(row.names){
+		nc = nc + 1
+		cnam = c(row.label,cnam)
+	}
+	nC = nc * np
+	ec = nc * (1:np)
+	bc = ec - nc + 1
+
+	## Create a new data frame repository and populate
+	newtab = as.data.frame(array(NA,dim=c(nb,nC),dimnames=list(1:nb,rep(cnam,np))),check.names=FALSE,stringsAsFactors=FALSE)
+	for (i in 1:np) {
+		irow = br[i]:er[i]
+		icol = bc[i]:ec[i]
+		itab  = tab[irow,]
+		if (row.names) {
+			inam  = rownames(itab)
+			if (row.numeric)
+				inam = as.numeric(inam)
+			newtab[1:nrow(itab),icol] = data.frame(inam,itab)
+		} else {
+			newtab[1:nrow(itab),icol] = data.frame(itab)
+		}
+	}
+	return(newtab)
+}
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~splitTab
+
+
+#texArray-------------------------------2016-10-18
 # Flatten and format an array for latex output.
 #-----------------------------------------------RH
 texArray =function(x, table.caption="My table", table.label="tab:mytable",
@@ -331,7 +381,6 @@ texArray =function(x, table.caption="My table", table.label="tab:mytable",
 			else      goo = rbind(goo,poo)
 		}
 	}
-#browser();return()
 	#----START making Latex crap-----------------------------
 	#texout = paste("LenWt-",strSpp,".tex",sep="")
 	texout = paste(outnam,ifelse(is.null(strSpp),"","-"),strSpp,".tex",sep="")
@@ -372,9 +421,11 @@ texArray =function(x, table.caption="My table", table.label="tab:mytable",
 #browser();return()
 		goo = formatCatch(goo,N=sigdig,zero=zero,X=X)
 	}
+	colnames(goo)=collab ## sapply can screw up colnames if they are not unique
+
+#browser();return()
 	if (use.row.names) {
 		rows = dimnames(goo)[[1]]
-#browser();return()
 		if (length(N)>2) {
 			rows = sapply(strsplit(rows,"-"),function(x){paste(x[-1],sep="",collapse="-")})
 			rows = gsub("Females","F",gsub("Males","M",rows))
@@ -391,6 +442,7 @@ texArray =function(x, table.caption="My table", table.label="tab:mytable",
 		if (use.row.names) names(goo)[2] = name.row.names
 	}
 	ncol = dim(goo)[[2]] - as.numeric(use.row.names) - as.numeric(add.header.column)
+#browser();return()
 	if (rm.empty) {
 		keep = apply(goo[(ncol(goo)-ncol+1):ncol(goo)],1,function(x){any(!x%in%zero & !x%in%"---")})
 		goo = goo[keep,]

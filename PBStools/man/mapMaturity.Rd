@@ -6,7 +6,8 @@
 }
 \usage{
 mapMaturity(dat=pop.age, strSpp="", type="map",
-   mats=1:7, sex=list(Females=2), ttype=1:4, stype=c(1,2,6,7),  major=c(3:9), 
+   mats=1:7, sex=list(Females=2), ttype=1:4, stype=c(1,2,6,7),
+   major=c(3:9), stock,
    brks=c(0,.05,.1,.25,.5,1), byrow=FALSE, hpage=6,
    clrs=list(colorRampPalette(c("honeydew","lightgreen","black"))(5),
    colorRampPalette(c("aliceblue","skyblue2","black"))(5)),
@@ -33,7 +34,10 @@ mapMaturity(dat=pop.age, strSpp="", type="map",
     8=random from set requested by vessel master, 9=selected juveniles, and 10=selected adults.}
   \item{major}{major PMFC area codes, where \cr
     3=3C, 4=3D, 5=5A, 6=5B, 7=5C, 8=5D, and 9=5E.}
-  \item{brks}{relative breaks from 0 to 1 to partition the maturity data (only used for \code{type="map")}).}
+  \item{stock}{stock label, usually a combination of PMFC \code{major} and \code{minor} areas specific to a species.
+    If this argument is specified, it precludes any specification of \code{major}
+    and assumes that a field called \code{"stock"} appears in the data file.}
+  \item{brks}{relative breaks from 0 to 1 to partition the maturity data (only used for \code{type="map"}).}
   \item{byrow}{logical: if \code{TRUE}, the observed monthly frequencies are transformed to proportions by maturity code; 
     if \code{FALSE}, the observed maturity frequencies are transformed to proportions by month.}
   \item{hpage}{height of page in inches if figure is sent to an image file.}
@@ -80,7 +84,7 @@ mapMaturity(dat=pop.age, strSpp="", type="map",
 \examples{
 local(envir=.PBStoolEnv,expr={
 pbsfun=function(){
-  data(pop.age,envir=.PBStoolEnv)
+  data(pop.age,package="PBSdata",envir=.PBStoolEnv)
   mapMaturity(brks=c(0,.01,.05,.25,.5,1),sex=list(Males=1,Females=2))
   invisible() }
 pbsfun()

@@ -6,6 +6,17 @@ Authors: RH  = Rowan Haigh
          JTS = Jon T. Schnute
 ------------------------------
 
+1.32.2 (2016-10-18)
+  • Fixed small bugs in `texArray' and `mapMaturity'. (RH 161018)
+  • Added new function `splitTab' to chop long data table into side-by-side pieces. (RH 161018)
+  • Updated functions `mapMaturity' and `estOgive' -- minor tweaks to output. (RH 161017)
+  • Revamped function `calcStockArea' to modify a data file (by adding stock) rather than inputing separate vector arguments. (RH 161017)
+  • Changed function `collectFigs' to better render the figures on a page. (RH 161014)
+  • Changed function `weightBio' to provide output closer to that used by Awatea. (RH 161013)
+  • Changed function `calcVB' to be more flexible with output and to parallel somwewhat the code in `calcLW'. (RH 160929)
+  • Changed function name from `calcLenWt' to `calcLW' and updated it to deal with Walleye Pollock. (RH 160927)
+  • Added SQL query `gfm_bigeffort.sql' to flag unusually large differences between start and end time of fishing events. (RH 160912)
+
 1.32.1 (2016-09-21)
   • Modified function `imputeRate' to use future value calculations rather then net present values. (RH 160921)
   • Modified query `fos_mcatORF.sql' to add new field called `eff' calculated as the difference bewteen FE_START_DATE and FE_END_DATE in GF_MERGED_CATCH. (RH 160912)

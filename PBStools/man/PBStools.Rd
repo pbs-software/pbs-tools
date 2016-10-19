@@ -51,7 +51,7 @@
   \code{zapDupes}       \tab Remove records with duplicated indices from a data frame.\cr
   \tab \cr
   \bold{2. Biology}     \tab \cr
-  \code{calcLenWt}      \tab Calculate length-weight relationship for a fish.\cr
+  \code{calcLW}         \tab Calculate length-weight relationship for a fish.\cr
   \code{calcSG}         \tab Calculate growth curve using Schnute growth model.\cr
   \code{calcVB}         \tab Calculate fits using a von Bertalanffy growth model.\cr
   \code{compCsum}       \tab Compare cumulative frequencies (e.g., of ages).\cr

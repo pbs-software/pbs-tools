@@ -896,7 +896,7 @@ getData("gfb_bio.sql", "GFBioSQL", strSpp="396", path=.getSpath())
 Substitute your species code for \code{strSpp}. The package contains an example dataset for Pacific ocean perch (POP, code = ``396'') \emph{Sebastes alutus} in PMFC areas 5A, 5B, 5C, and 5D. To make it available in the global environment, type \code{data(pop.age)}.
 \end{dfobox}
 
-\subsection {calcLenWt}
+\subsection {calcLW}
 
 \tab Calculate the length-weight relationship for a fish species.
 The functions spits results out to a comma-delimited text file (\code{.csv}). 
@@ -913,16 +913,16 @@ where\\
 \tab $b_s$ = the growth rate exponent for sex $s$.
 
 \begin{examplebox}
-\example{calcLenWt}
+\example{calcLW}
 \begin{Verbatim}[fontsize=\footnotesize]
 pbsfun=function(){
   data(pop.age)
-  calcLenWt(dat=pop.age,strSpp="396",ttype=list(c(2:3)),plotit=TRUE)
+  calcLW(dat=pop.age,strSpp="396",ttype=list(c(2:3)),plotit=TRUE)
   invisible()}
 pbsfun()
 \end{Verbatim}
 \end{examplebox}
-\pbsfig{PBStools-calcLenWt}{Regression analyses showing the fitted model and survey length-weight pairs used to estimate $a_s$ and $b_s$.}{3.0}{Allometric relationship between survey lengths and weights}
+\pbsfig{PBStools-calcLW}{Regression analyses showing the fitted model and survey length-weight pairs used to estimate $a_s$ and $b_s$.}{3.0}{Allometric relationship between survey lengths and weights}
 
 \subsection {calcSG}
 

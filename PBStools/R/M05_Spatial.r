@@ -170,20 +170,27 @@ calcSRFA <- function(major, minor=NULL, loc=NULL, subarea=FALSE) {
 #-----------------------------------------calcSRFA
 
 
-#calcStockArea--------------------------2016-09-12
+#calcStockArea--------------------------2016-10-17
 # Assign a stock area designation based on species
 # HART code and PMFC major and/or minor areas.
 #-----------------------------------------------RH
-calcStockArea = function (strSpp, major, minor)
+#calcStockArea = function (strSpp, major, minor, ...)
+calcStockArea = function (strSpp, dat, stockFld="stock")
 {
 	if (missing(strSpp))
 		stop("Must specify a species to determine stock allocation")
-	if (missing(major) && missing(minor))
-		stop("Must supply at least one vector of 'major' or 'minor' areas")
-	if (!missing(major) && !missing(minor)) {
+	if (missing(dat))
+		stop("Must specify a data file with location fields to determine stock allocation")
+	flds = names(dat)
+	#if (missing(major) && missing(minor))
+		#stop("Must supply at least one vector of 'major' or 'minor' areas")
+	if (!any(is.element(c("major","minor"),flds)))
+		stop("Data file must supply at least one field of 'major' or 'minor' areas")
+	if (all(is.element(c("major","minor"),flds))) {
 		## Allocations based on combinations of major and minor
-		if (length(major)!=length(minor))
-			stop("Vectors of 'major' and 'minor' must be equal length.")
+		#if (length(major)!=length(minor))
+		#	stop("Vectors of 'major' and 'minor' must be equal length.")
+		major = dat$major; minor = dat$minor
 		newA = rep("UNK",length(major))
 		if (is.element(strSpp, c("228"))) {
 			newA[is.element(major,7:9)] = "5CDE"
@@ -203,8 +210,15 @@ calcStockArea = function (strSpp, major, minor)
 			newA[is.element(major,1)]   = "4B"
 		}
 		else if (is.element(strSpp,c("396"))){
-			newA[is.element(major,8:9)] = "5DE"
-			#newA[is.element(major,7)]   = "5C"
+			if (is.element("Y",flds)) {
+				Y = dat$Y
+				newA[is.element(major,9) & Y>52.33333 & !is.na(Y)] = "5DE"
+				newA[is.element(major,9) & Y<=52.33333 & !is.na(Y)] = "5ABC"
+				newA[is.element(major,9) & is.na(Y)] = "5DE"
+			} else
+				newA[is.element(major,9)] = "5DE"
+			newA[is.element(major,8)]   = "5DE"
+			#newA[is.element(major,7)]  = "5C"  ## recent change to IFMP
 			newA[is.element(major,5:7)] = "5ABC"
 			newA[is.element(major,3:4)] = "3CD"
 			newA[is.element(major,1)]   = "4B"
@@ -254,7 +268,8 @@ calcStockArea = function (strSpp, major, minor)
 		## Allocations based on minor only
 		newA = rep("UNK",length(minor))
 	}
-	return(newA)
+	dat[,stockFld] = newA
+	return(dat)
 }
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~calcStockArea
 
