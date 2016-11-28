@@ -488,16 +488,17 @@ showAlpha <- function(lims=c("emp","bca")) {
 #----------------------------------------showAlpha
 
 
-#showIndices----------------------------2014-05-08
+#showIndices----------------------------2016-11-17
 # Show survey indices from Norm's bootstrap tables
 #-----------------------------------------------RH
 showIndices =  function(strSpp="396",serID=1, survID=NULL, bootID, 
-   tenv=.PBStoolEnv, quiet=FALSE, addN=FALSE)
+   tenv=.PBStoolEnv, quiet=FALSE, addN=FALSE, outnam)
 {
 	assign("PBStool",list(module="M04_Survey",call=match.call(),args=args(showIndices)),envir=tenv)
 	data(spn,envir=penv())
-	surveys=getBootRuns(strSpp)
-	survBoot=surveys[,c("serID","survID","bootID","runDesc")]
+	surveys  = getBootRuns(strSpp)
+	survBoot = surveys[,c("serID","survID","bootID","runDesc")]
+#browser();return()
 
 	# Selected survey
 	if (!is.null(serID))
@@ -513,6 +514,13 @@ showIndices =  function(strSpp="396",serID=1, survID=NULL, bootID,
 			bootID = sapply(names(booties),function(x,y,z){as.numeric(names(y[[x]])[z[x]])},y=booties,z=zuse)
 		}
 		sppBoot=sppBoot[is.element(sppBoot$bootID,bootID),]
+	}
+	if (!missing(outnam)){
+		fnam = paste0(outnam,".csv")
+		admBoot = sppBoot[,c("serID","year","biomass","bootRE")]
+		admBoot$biomass = admBoot$biomass/1000. ## convert to tonnes
+		names(admBoot) = c("series","year","value","CV")
+		write.csv(admBoot,fnam,row.names=FALSE)
 	}
 #browser();return()
 	if (nrow(sppBoot)==0) {
@@ -608,7 +616,7 @@ showIndices =  function(strSpp="396",serID=1, survID=NULL, bootID,
 	packList(c("surveys","sppBoot","survBoot","xy","cil","cih","clr","llab","ulab"),"PBStool",tenv=tenv)
 	names(y)=x
 	if (!quiet) print(sppBoot)
-	invisible(y)
+	invisible(sppBoot)
 }
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~showIndices
 

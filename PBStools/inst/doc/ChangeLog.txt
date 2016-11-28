@@ -6,7 +6,19 @@ Authors: RH  = Rowan Haigh
          JTS = Jon T. Schnute
 ------------------------------
 
-1.32.2 (2016-10-18)
+1.33.1 (2016-11-28)
+  • Modified object `.PBSserver' to reflect new GF DB server called `DFBCV9TWVASP001' <199.60.94.30>; DFO phased out Windows 2003 servers. (RH 161128)
+  • Modified function `showIndices' to allow for a user-named output file for Awatea/ADMB output of indices. (RH 161117)
+  • Modified function `calcVB' so that von Bertalanffy estimation includes a sigma (error) parameter. (RH 161117)
+  • Modified function `buildCatch' to keep track of landed catch by nation fleets instead of lumping them all together. (RH 161115)
+  • Added a condition in `buildCatch' that if a user wants to use foreign fleet (FF) TRF landings, then he can only use reported RRF landings after the FF TRF landings have ended. (RH 161107)
+  • Fixed small bug in function `estOgive'. (RH 161027)
+  • Fixed small bugs in function `mapMaturity'. (RH 161026)
+  • Modified functions `makeLTH' and `texArray' so that the user can choose whether or not to add `continued' messages on tables spanning pages. (RH 161024)
+  • Modified function `plotProp' to better repesent the mean line through the bubbles and to allow better PNG output. (RH 161019)
+
+1.33.0 (2016-10-19)
+  • Masked call to `win.metafile' using `do.call' to bypass R check. (RH 161019)
   • Fixed small bugs in `texArray' and `mapMaturity'. (RH 161018)
   • Added new function `splitTab' to chop long data table into side-by-side pieces. (RH 161018)
   • Updated functions `mapMaturity' and `estOgive' -- minor tweaks to output. (RH 161017)

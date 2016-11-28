@@ -15,6 +15,7 @@
 #  fitLogit........Fit binomial data using logit link function.
 #  flagIt..........Labels a coordinate using a diagonal line radiating from it.
 #  gatherVals......Gathers data from multiple columns into key-value pairs (replaces tidyr::gather).
+#  getData.........Get data from a variety of sources (mostly ODBC)
 #  getFile.........Get a dataset (binary libraries, binary local, dumped data, comma-delimited text.
 #  getName.........Get the names of the input object.
 #  getODBC.........Get a string vector of ODBC drivers on user's Windows system.
@@ -47,9 +48,11 @@
 #  .su.............Shortcut for sort(unique(x))
 #===============================================================================
 
-### RH: 2015-11-30 -- Virtualization of SVBCPBSGFIIS
+## RH: 2016-11-28 -- DFO phased out Windows 2003 servers; new server supports SQL Server 2008 and 2016
+## RH: 2015-11-30 -- Virtualization of SVBCPBSGFIIS
 .PBSserver = c(
-  GFDB="199.60.94.98",
+  GFDB="199.60.94.30",
+  DFBCV9TWVASP001="199.60.94.30",
   SVBCPBSGFIIS="199.60.94.98",
   PACPBSGFDB="199.60.95.200",
   GFDBtemp="PAC03450/GFDB",
@@ -545,14 +548,14 @@ getData <-function(fqtName, dbName="PacHarvest", strSpp=NULL, server=NULL,
 				strQ <- gsub(pattern="@originid",replacement="'Y','N'",x=strQ)
 			if (is.null(surveyid)) {
 				SQLdat = .getSQLdata(dbName="GFBioSQL", qtName=NULL, strSQL="select SURVEY_ID FROM SURVEY", 
-					server="SVBCPBSGFIIS", type="SQL", trusted=subQtrust[["trusted"]], uid=subQtrust[["uid"]], pwd=subQtrust[["pwd"]])
+					server="GFDB", type="SQL", trusted=subQtrust[["trusted"]], uid=subQtrust[["uid"]], pwd=subQtrust[["pwd"]])
 				surveyid = sort(unique(SQLdat[[1]]))
 			}
 			strQ <- gsub(pattern="@surveyid",replacement=paste(surveyid,collapse=","),x=strQ)
 #browser();return()
 			if (is.null(survserid)) {
 				SQLdat = .getSQLdata(dbName="GFBioSQL", qtName=NULL, strSQL="select SURVEY_SERIES_ID FROM SURVEY", 
-					server="SVBCPBSGFIIS", type="SQL", trusted=subQtrust[["trusted"]], uid=subQtrust[["uid"]], pwd=subQtrust[["pwd"]])
+					server="GFDB", type="SQL", trusted=subQtrust[["trusted"]], uid=subQtrust[["uid"]], pwd=subQtrust[["pwd"]])
 				survserid = sort(unique(SQLdat[[1]]))
 			}
 			strQ <- gsub(pattern="@survserid",replacement=paste(survserid,collapse=","),x=strQ)

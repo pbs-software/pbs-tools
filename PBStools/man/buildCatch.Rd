@@ -13,28 +13,29 @@
 \usage{
 buildCatch(dbdat, strSpp="396", orfSpp="TRF", major=c(1,3:9), fidout=c(1:5,10),
    refyrs=1997:2005, refarea=NULL, refgear=NULL, useYR1=NULL, useBG=FALSE,
-   useSM=FALSE, useGFM=TRUE, useLS=TRUE, useFF=TRUE, strat.gamma=FALSE,
-   strat.delta=FALSE, depbin=100, sensitivity=NULL, reconstruct=TRUE, diagnostics=FALSE,
-   ascii.tables=TRUE, saveinfo=TRUE, sql=FALSE, only.sql=FALSE, sql.force=FALSE,
-   spath=.getSpath(), dpath=getwd(), eps=FALSE, png=FALSE, wmf=FALSE,
-   uid=Sys.info()["user"], pwd=uid, ioenv=.GlobalEnv, ...)
+   useSM=FALSE, useGFM=TRUE, useLS=TRUE, useCA=TRUE, useUS=TRUE, useFF=TRUE,
+   strat.gamma=FALSE, strat.delta=FALSE, depbin=100, sensitivity=NULL,
+   reconstruct=TRUE, diagnostics=FALSE, ascii.tables=TRUE, saveinfo=TRUE,
+   sql=FALSE, only.sql=FALSE, sql.force=FALSE, spath=.getSpath(), dpath=getwd(),
+   eps=FALSE, png=FALSE, wmf=FALSE, uid=Sys.info()["user"], pwd=uid, 
+   ioenv=.GlobalEnv, ...)
 }
 \arguments{
   \item{dbdat}{a list object of landing records from various DFO databases: \cr
     (1) \code{ph3dat} = \code{PacHarv3} (all fisheries) actually called \code{HARVEST_V2_0}
       on the \code{ORAPROD} Oracle server, \cr\cr
-    If \code{useGM=TRUE}, then:\cr
-    (2) \code{gfmdat} = table \code{GF_MERGED_CATCH} from the \code{GFFOS} database on the \code{SVBCPBSGFIIS} SQL server,
+    If \code{useGM=TRUE}, then:\cr\cr
+    (2) \code{gfmdat} = table \code{GF_MERGED_CATCH} from the \code{GFFOS} database on the \code{DFBCV9TWVASP001} SQL server,
     which contains merged catch data from six databases:\cr
     \code{GFBioSQL}, \code{GFCatch}, \code{PacHarvest}, \code{PacharvHL}, \code{PacHarvSable}, \code{GFFOS}.\cr\cr
-    If \code{useGM=FALSE}, then:\cr
-    (2) \code{gfcdat} = \code{GFCatch} (trawl, trap, h&l) on the \code{SVBCPBSGFIIS} SQL server, \cr
-    (3) \code{phtdat} = \code{PacHarvest} (groundfish trawl) on the \code{SVBCPBSGFIIS} SQL server, \cr
-    (4) \code{phhdat} = \code{PacHarvHL} (Halibut bycatch from DMP validated landings) on the \code{SVBCPBSGFIIS} SQL server, \cr
-    (5) \code{phsdat} = \code{PacHarvSable} (Sablefish trap) on the \code{SVBCPBSGFIIS} SQL server, \cr
-    (6) \code{phhdat} = \code{PacHarvHL} (validated landings Sched II & ZN) on the \code{SVBCPBSGFIIS} SQL server, \cr
-    (7) \code{phfdat} = \code{PacHarvHL} (fisherlog records Sched II & ZN) on the \code{SVBCPBSGFIIS} SQL server, \cr
-    (8) \code{fosdat} = \code{GFFOS} (all fisheries) on the \code{GFSH} Oracle server.}
+    If \code{useGM=FALSE}, then (all on the \code{DFBCV9TWVASP001} SQL server):\cr\cr
+    (2) \code{gfcdat} = \code{GFCatch} (trawl, trap, h&l), \cr
+    (3) \code{phtdat} = \code{PacHarvest} (groundfish trawl), \cr
+    (4) \code{phhdat} = \code{PacHarvHL} (Halibut bycatch from DMP validated landings), \cr
+    (5) \code{phsdat} = \code{PacHarvSable} (Sablefish trap), \cr
+    (6) \code{phhdat} = \code{PacHarvHL} (validated landings Sched II & ZN), \cr
+    (7) \code{phfdat} = \code{PacHarvHL} (fisherlog records Sched II & ZN), \cr
+    (8) \code{fosdat} = \code{GFFOS} (all fisheries).}
   \item{strSpp}{character string specifying the Hart species code for the rockfish to be reconstructed (\dQuote{RRF}).}
   \item{orfSpp}{field name of the denominator in the ratio of RRF 
     to other rockfish (usually \dQuote{ORF} but can be \dQuote{TRF} if total rockfish is more appropriate).}
@@ -58,6 +59,8 @@ buildCatch(dbdat, strSpp="396", orfSpp="TRF", major=c(1,3:9), fidout=c(1:5,10),
   \item{useSM}{logical: if \code{TRUE}, use catch data from seamounts.}
   \item{useGFM}{logical: if \code{TRUE}, use the latest official \code{GF_MERGED_CATCH} table (compiled by Norm and Kate).}
   \item{useLS}{logical: if \code{TRUE}, use ORF catch from Langara Spit in \code{gamma} calculation.}
+  \item{useCA}{logical: if \code{TRUE}, use ORF catch from the Canadian fleet.}
+  \item{useUS}{logical: if \code{TRUE}, use ORF catch from the American fleet.}
   \item{useFF}{logical: if \code{TRUE}, use ORF catch from the foreign (not CA/US) fleet.}
   \item{strat.gamma}{logical: if \code{TRUE}, stratify the RRF numerator and ORF denominator by depth zone and weight by frequency of ORF landed > 0.}
   \item{strat.delta}{logical: if \code{TRUE}, stratify the discard numerator and denominator by depth zone and weight by frequency of TAR landed > 0.}
@@ -151,9 +154,9 @@ buildCatch(dbdat, strSpp="396", orfSpp="TRF", major=c(1,3:9), fidout=c(1:5,10),
   Oracle databases, specify \code{uid} and \code{pwd} as \emph{n}-element vectors. 
   
   The function now queries the \code{GFFOS} database hosted on the SQL Server 
-  \code{SVBCPBSGFIIS} rather than the version hosted on the Oracale server \code{GFSH} previously.
+  \code{DFBCV9TWVASP001} rather than the version hosted on the Oracle server \code{GFSH} previously.
   
-  The SQL server \code{SVBCPBSGFIIS} does not require a password if the server recognises 
+  The SQL server \code{DFBCV9TWVASP001} does not require a password if the server recognises 
   a user's DFO login credentials.
 }
 \section{Yellowtail Rockfish 2014}{

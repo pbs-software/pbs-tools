@@ -11,7 +11,7 @@ calcVB(dat=pop.age, strSpp="", yfld="len", fixt0=FALSE,
    ttype=list(commercial=c(1,4),research=c(2,3)), stype=c(1,2,6,7), scat=NULL,
    sex=list(Females=2,Males=1), rm.studs=NULL,
    year=NULL, ylim=NULL, ameth=c(3,17), allTT=TRUE, jit=c(0,0), 
-   eps=FALSE, pdf=FALSE, png=FALSE, wmf=FALSE,
+   eps=FALSE, jpg=FALSE, pdf=FALSE, png=FALSE, tif=FALSE, wmf=FALSE,
    plotname, singles=FALSE, pages=FALSE, ioenv=.GlobalEnv)
 }
 \arguments{
@@ -37,12 +37,14 @@ calcVB(dat=pop.age, strSpp="", yfld="len", fixt0=FALSE,
   \item{jit}{two-element vector specifying amount of jittering to apply in the 
     x- and -y-directions respectively. (See \code{jitter} in the \pkg{base} package.)}
   \item{eps}{logical -- if \code{TRUE}, send plot to a postscript \code{.eps} file.}
+  \item{jpg}{logical -- if \code{TRUE}, send plot to a raster \code{.jpg} file.}
   \item{pdf}{logical -- if \code{TRUE}, send plot to a postscript \code{.pdf} file.}
   \item{png}{logical -- if \code{TRUE}, send plot to a raster \code{.png} file.}
+  \item{tif}{logical -- if \code{TRUE}, send plot to a raster \code{.tif} file.}
   \item{wmf}{logical -- if \code{TRUE}, send plot to a vector \code{.wmf} file.}
   \item{plotname}{explicit image file name to override an internally generated one.}
-  \item{singles}{logical: if \code{TRUE} and \code{eps|pdf|png|wmf}, send each area/trip type combination to separate files.}
-  \item{pages}{logical: if \code{TRUE} and \code{eps|pdf|png|wmf}, send each page of area plots to separate files.}
+  \item{singles}{logical: if \code{TRUE} and \code{eps|jpg|pdf|png|tif|wmf}, send each area/trip type combination to separate files.}
+  \item{pages}{logical: if \code{TRUE} and \code{eps|jpg|pdf|png|tif|wmf}, send each page of area plots to separate files.}
   \item{ioenv}{input/output environment for function input data and output results.}
 }
 \details{

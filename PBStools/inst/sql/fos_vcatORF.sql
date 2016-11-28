@@ -1,5 +1,5 @@
 -- Query FOS catch from the merged catch table GF_D_OFFICIAL_FE_CATCH
--- Query species catch from GFFOS on SVBCPBSGFIIS
+-- Query species catch from GFFOS on DFBCV9TWVASP001
 -- Last modified: 2016-04-12 (RH)
 SET NOCOUNT ON 
 

@@ -23,7 +23,7 @@ getData(fqtName, dbName="PacHarvest", strSpp=NULL, server=NULL,
   \item{strSpp}{\emph{string}: Species code for the SQL variable \code{@sppcode}.
     If not specified, a table or query is retrieved.}
   \item{server}{\emph{string}: Name of a remote server (e.g., 
-    \code{SVBCPBSGFIIS} for an SQL server, \code{GFSH} or \code{ORAPROD} for an Oracle server.}
+    \code{DFBCV9TWVASP001} for an SQL server, \code{GFSH} or \code{ORAPROD} for an Oracle server.}
   \item{type}{\emph{string}: Type of file:\cr
     \code{"FILE"} = local data object, a saved binary file \code{*.rda},
       a dumped ASCII file \code{.r}, a comma-delimited file \code{.csv}
@@ -43,7 +43,7 @@ getData(fqtName, dbName="PacHarvest", strSpp=NULL, server=NULL,
   \item{uid, pwd}{\emph{string}: User ID and password for authentication (usually required on Oracle servers).}
   \item{subQtrust}{\emph{list}: List of credentials \emph{only} for users not \dQuote{trusted} on the DFO network. \cr
     If \code{(type=="SQL")}, then  \code{subQtrust=list(trusted=trusted, uid=uid, pwd=pwd)} automatically. \cr
-    If \code{(type=="ORA")}, then user \bold{must} supply a \code{subQtrust} list for an account on the SQL server SVBCPBSGFIIS. }
+    If \code{(type=="ORA")}, then user \bold{must} supply a \code{subQtrust} list for an account on the SQL server DFBCV9TWVASP001. }
   \item{noFactors}{\emph{logical}: If \code{TRUE}, convert all factor fields to character fields.}
   \item{noLogicals}{\emph{logical}: If \code{TRUE}, convert all logical fields to characters \dQuote{T} or \dQuote{F}.}
   \item{rownum}{\emph{numeric}: Value indicating how many rows of a table to return. The default 0 means all rows are 

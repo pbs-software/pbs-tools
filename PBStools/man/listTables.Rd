@@ -16,7 +16,7 @@ listTables(dbName, pattern=NULL, path=getwd(), server=NULL,
   \item{pattern}{string specifying search pattern for table names.}
   \item{path}{string specifying path to \code{MDB} database.}
   \item{server}{string specifying server name (\emph{e.g.}, \code{GFDB}, 
-    \code{SVBCPBSGFIIS}, \code{ORADEV}, or \code{ORAPROD}).}
+    \code{DFBCV9TWVASP001}, \code{ORADEV}, or \code{ORAPROD}).}
   \item{type}{type of server: \code{SQL}, \code{ORA} for Oracle, 
     or \code{MDB} for Microsoft ACCESS.}
   \item{ttype}{table type: \code{SEQUENCE}, \code{SYNONYM}, \code{SYSTEM TABLE},

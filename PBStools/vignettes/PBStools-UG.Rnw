@@ -446,7 +446,7 @@ Year periods based on numeric value of input dates
 
 \subsection {createDSN}
 
-\tab Create a suite of User DSNs for PBS groundfish databases, currently hosted on the server \db{SVBCPBSGFIIS}. This function uses \code{confODBC} and will overwrite existing DSNs if they exist. Currently, six DSNs for DFO databases will be created:
+\tab Create a suite of User DSNs for PBS groundfish databases, currently hosted on the server \db{DFBCV9TWVASP001}. This function uses \code{confODBC} and will overwrite existing DSNs if they exist. Currently, six DSNs for DFO databases will be created:
 
 \begin{Verbatim}[fontsize=\footnotesize]
 GFBioSQL   GFCatch   GFCruise   PacHarvest   PacHarvHL   PacHarvSable
@@ -519,7 +519,7 @@ pbsfun = function() {
   \code{dbName}     &  string specifying the name of a remote database; types supported: \code{XLS} (Excel), \code{MDB} (ACCESS), \code{SQL} (Sequel Server), \code{ORA} (Oracle).\\
   \code{strSpp}     &  string specifying species code for the SQL variable \code{@sppcode};\\
                     &  \bold{\db{IMPORTANT:}} to retrieve a remote table or query rather than send SQL code, set \code{strSpp=NULL}.\\
-  \code{server}     &  string specifying the name of a remote server (e.g., \db{SVBCPBSGFIIS} for an SQL server, \db{GFSH} or \db{ORAPROD} for an Oracle server.\\
+  \code{server}     &  string specifying the name of a remote server (e.g., \db{DFBCV9TWVASP001} for an SQL server, \db{GFSH} or \db{ORAPROD} for an Oracle server.\\
   \code{type}       &  type of file: \\
                     &  \code{FILE} = local data object, a saved binary file \code{*.rda}, a dumped ASCII file \code{.r}, a comma-delimited file \code{.csv} or \code{.txt}; specify the file name without the extension.\\
                     &  \code{XLS} = Microsoft Excel spreadsheet (specific worksheet is specified by \code{fqtName}).\\
@@ -2407,15 +2407,15 @@ getData("fos_vcatORF.sql",dbName="GFFOS",strSpp=strSpp,path=.getSpath(),
 
 \subsubsection {Argument details}
 \begin{longtable}[1]{l>{\raggedright\arraybackslash}p{0.75\textwidth} }
-  \code{dbdat}  &  a list object of landing records from eight DFO databases:\\
+  \code{dbdat}  &  a list object of landing records from eight DFO databases on the \db{DFBCV9TWVASP001} SQL server:\\
                 &  (1) \code{ph3dat} = \db{PacHarv3} (all fisheries) actually called \db{HARVEST\_V2\_0} on the \db{PROD} Oracle server (host= \code{vsbciosxd76.ent.dfo-mpo.ca},\\
-                &  (2) \code{gfcdat} = \db{GFCatch} (trawl, trap, h\&l) on the \db{SVBCPBSGFIIS} SQL server,\\
-                &  (3) \code{phtdat} = \db{PacHarvest} (groundfish trawl) on the \db{SVBCPBSGFIIS} SQL server,\\
-                &  (4) \code{phhdat} = \db{PacHarvHL} (Halibut bycatch from DMP validated landings) on the \db{SVBCPBSGFIIS} SQL server,\\
-                &  (5) \code{phs dat} = \db{PacHarvSable} (Sablefish trap) on the \db{SVBCPBSGFIIS} SQL server,\\
-                &  (6) \code{phhdat} = \db{PacHarvHL} (validated landings Sched II \& ZN) on the \db{SVBCPBSGFIIS} SQL server,\\
-                &  (7) \code{phfdat} = \db{PacHarvHL} (fisherlog records Sched II \& ZN) on the \db{SVBCPBSGFIIS} SQL server,\\
-                &  (8) \code{fosdat} = \db{GFFOS} (all fisheries) on the \db{GFSH} Oracle server.\\
+                &  (2) \code{gfcdat} = \db{GFCatch} (trawl, trap, h\&l),\\
+                &  (3) \code{phtdat} = \db{PacHarvest} (groundfish trawl),\\
+                &  (4) \code{phhdat} = \db{PacHarvHL} (Halibut bycatch from DMP validated landings),\\
+                &  (5) \code{phs dat} = \db{PacHarvSable} (Sablefish trap),\\
+                &  (6) \code{phhdat} = \db{PacHarvHL} (validated landings Sched II \& ZN),\\
+                &  (7) \code{phfdat} = \db{PacHarvHL} (fisherlog records Sched II \& ZN),\\
+                &  (8) \code{fosdat} = \db{GFFOS} (all fisheries).\\
   \code{sql}    &  logical: if \code{TRUE} query the databases, otherwise load catch records from binary files saved from a previous query run (saves time).\\
   \code{strSpp} &  character string specifying the Hart species code for the rockfish to be reconstructed (\code{RRF}).\\
   \code{dfld}   &  field name of the denominator in the ratio of RRF to other rockfish (usually \code{ORF} but can be \code{TRF} if total rockfish is more appropriate).\\

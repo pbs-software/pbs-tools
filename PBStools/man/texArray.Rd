@@ -10,8 +10,8 @@
 texArray(x, table.caption="My table", table.label="tab:mytable",
    strSpp=NULL, sigdig=3, zero="---", collab=NULL, dash.delim=NULL, 
    rm.empty=TRUE, start.page=1, ignore.col=NULL,
-   select.rows=NULL, use.row.names=FALSE, name.row.names="row", struts=FALSE,
-   add.header.column=FALSE, new.header=NULL, outnam="mytable")
+   select.rows=NULL, use.row.names=FALSE, name.row.names="row",
+   add.header.column=FALSE, new.header=NULL, outnam="mytable", ...)
 }
 \arguments{
   \item{x}{numeric array, matrix, or data frame.}
@@ -22,18 +22,20 @@ texArray(x, table.caption="My table", table.label="tab:mytable",
   \item{zero}{character replacement for zero-values.}
   \item{collab}{column headers for table; if \code{NULL}, use column names from input data.}
   \item{dash.delim}{character pattern in data \code{rownames} that identify where to place a dashed line.}
-  \item{rm.empty}{logical -- if \code{TRUE}, remove rows without any positive numeric data.}
+  \item{rm.empty}{logical: if \code{TRUE}, remove rows without any positive numeric data.}
   \item{start.page}{page number to start the LaTeX document at.}
   \item{ignore.col}{numeric vector indicating which columns (by position) to \emph{not} run \code{formatCatch} on (e.g., columns of class \code{character}).}
   \item{select.rows}{select rows depending on either a numeric vector of rows or a character vector of row names.}
-  \item{use.row.names}{logical -- if \code{TRUE}, use the \code{rownames} from the input data table.}
+  \item{use.row.names}{logical: if \code{TRUE}, use the \code{rownames} from the input data table.}
   \item{name.row.names}{table header name for column comprising the data table row names.}
-  \item{struts}{logical: if \code{TRUE}, add vertical space before and after table header.}
-  \item{add.header.column}{logical -- if \code{TRUE}, add a first column that delineates the various 
+  \item{add.header.column}{logical: if \code{TRUE}, add a first column that delineates the various 
     dimensions of an array (> 2 dimensions) using the \code{names} of the \code{dimnames}.}
   \item{new.header}{character vector of replacement labels if the user knows the table header columns and wants to replace them with specific labels.}
   \item{outnam}{character prefix for an output LaTeX file (\code{strSpp} will be appended to the prefix,
     and the file extension \code{.tex} will be appended to the file name composition).}
+  \item{...}{arguments to pass to function \code{makeLTH}, specifically:\cr
+    \code{struts} -- if \code{TRUE}, add vertical space before and after table header; and\cr
+    \code{add.continue} -- if \code{TRUE}, add `continued' messages on tables spanning pages.}
 }
 \details{
   The function converts the input data into a two-dimensional data frame, formats the 

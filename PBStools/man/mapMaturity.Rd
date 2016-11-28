@@ -5,13 +5,12 @@
   Map each maturity code to show its relative occurrence by month.
 }
 \usage{
-mapMaturity(dat=pop.age, strSpp="", type="map",
-   mats=1:7, sex=list(Females=2), ttype=1:4, stype=c(1,2,6,7),
-   major=c(3:9), stock,
-   brks=c(0,.05,.1,.25,.5,1), byrow=FALSE, hpage=6,
+mapMaturity(dat=pop.age, strSpp="", type="map", mats=1:7,
+   sex=list(Females=2), ttype=1:4, stype=c(1,2,6,7), major=c(3:9),
+   stock, brks=c(0,.05,.1,.25,.5,1), byrow=FALSE, hpage=6,
    clrs=list(colorRampPalette(c("honeydew","lightgreen","black"))(5),
    colorRampPalette(c("aliceblue","skyblue2","black"))(5)),
-   outnam, eps=FALSE, pix=FALSE, wmf=FALSE, ioenv=.GlobalEnv)
+   outnam, eps=FALSE, png=FALSE, wmf=FALSE, ioenv=.GlobalEnv)
 }
 \arguments{
   \item{dat}{biological data set with fields \code{mat} specifying maturity code.}
@@ -45,9 +44,9 @@ mapMaturity(dat=pop.age, strSpp="", type="map",
     If \code{type="map"}, the colour vectors should match the relative intervals defined by \code{brks}.
     \emph{This argument needs some work to accommodate the newly added "bubb" type.}}
   \item{outnam}{explicit output name to override an internally generated one.}
-  \item{eps}{logical: if \code{TRUE}, send plot to an \code{.eps} file.}
-  \item{pix}{logical: if \code{TRUE}, send plot to a \code{.png} file.}
-  \item{wmf}{logical: if \code{TRUE}, send plot to a \code{.wmf} file.}
+  \item{eps}{logical: if \code{TRUE}, send plot to a postscript \code{.eps} file.}
+  \item{png}{logical: if \code{TRUE}, send plot to a raster \code{.png} file.}
+  \item{wmf}{logical: if \code{TRUE}, send plot to a vector \code{.wmf} file.}
   \item{ioenv}{input/output environment for function input data and output results.}
 }
 \details{

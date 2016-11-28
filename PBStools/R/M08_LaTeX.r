@@ -182,11 +182,11 @@ formatCatch = function(dat, N=3, X=0, zero="0", na="---",
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~formatCatch
 
 
-#makeLTH--------------------------------2016-01-27
+#makeLTH--------------------------------2016-10-24
 # Make a longtable header for Sweave, source:
 # http://tex.stackexchange.com/questions/41067/caption-for-longtable-in-sweave?rq=1
 #-----------------------------------------------RH
-makeLTH <- function(xtab.table, table.caption, table.label, struts=FALSE) {
+makeLTH <- function(xtab.table, table.caption, table.label, struts=FALSE, add.continue = FALSE) {
 	longtable.header <- paste(
 		paste("\\caption{", table.caption, "}",sep = "", collapse = ""),
 		paste("\\label{", table.label, "}\\\\ ",sep = "", collapse = ""),
@@ -195,14 +195,16 @@ makeLTH <- function(xtab.table, table.caption, table.label, struts=FALSE) {
 		paste(" & ",attr(xtab.table, "names")[2:length(attr(xtab.table, "names"))],collapse="",sep=""),
 		paste0(ifelse(struts," \\Tstrut\\Bstrut ",""),"\\\\[0.2ex]\\hline\\\\[-1.5ex] "),
 		"\\endfirsthead ",
-		paste("\\multicolumn{",ncol(xtab.table),"}{l}{{\\tablename\\ \\thetable{} -- continued from previous page}}\\\\ ",sep = ""),
+		if (add.continue)
+			paste0("\\multicolumn{",ncol(xtab.table),"}{l}{{\\tablename\\ \\thetable{} -- continued from previous page}}\\\\ "),
 		"\\hline ",
 		attr(xtab.table, "names")[1],
 		paste(" & ",attr(xtab.table, "names")[2:length(attr(xtab.table, "names"))],collapse="",sep=""),
 		paste0(ifelse(struts," \\Tstrut\\Bstrut ",""),"\\\\[0.2ex]\\hline\\\\[-1.5ex] "),
 		"\\endhead ",
 		"\\hline\\\\[-2.2ex] ",
-		paste("\\multicolumn{",ncol(xtab.table),"}{r}{{\\footnotesize \\emph{Continued on next page}}}\\\\ ",sep=""),
+		if (add.continue)
+			paste("\\multicolumn{",ncol(xtab.table),"}{r}{{\\footnotesize \\emph{Continued on next page}}}\\\\ ",sep=""),
 		#"\\hline \\endfoot ",
 		"\\endfoot ","\\hline \\endlastfoot ",collapse = "")
 	return(longtable.header)
@@ -254,14 +256,14 @@ splitTab = function(tab, np=3, row.names=TRUE, row.label="row", row.numeric=FALS
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~splitTab
 
 
-#texArray-------------------------------2016-10-18
+#texArray-------------------------------2016-10-24
 # Flatten and format an array for latex output.
 #-----------------------------------------------RH
 texArray =function(x, table.caption="My table", table.label="tab:mytable",
    strSpp=NULL, sigdig=3, zero="---", collab=NULL, dash.delim=NULL, 
    rm.empty=TRUE, start.page=1, ignore.col=NULL,
-   select.rows=NULL, use.row.names=FALSE, name.row.names="row", struts=FALSE,
-   add.header.column=FALSE, new.header=NULL, outnam="mytable")
+   select.rows=NULL, use.row.names=FALSE, name.row.names="row",
+   add.header.column=FALSE, new.header=NULL, outnam="mytable", ...)
 {
 	if (!is.array(x) && !is.matrix(x) && !is.data.frame(x)) stop("input an array or a matrix")
 	N = dim(x)
@@ -472,7 +474,7 @@ texArray =function(x, table.caption="My table", table.label="tab:mytable",
 		#tabalign = paste(">{\\raggedright\\arraybackslash}",tabalign,sep="")
 	}
 	xtab = xtable::xtable(goo,align=tabalign)
-	longtable.header = makeLTH(xtab,table.caption,table.label,struts=struts)
+	longtable.header = makeLTH(xtab,table.caption,table.label,...)
 #browser(); return()
 	add.to.row = if (length(rows.line)==0) list(pos = list(-1, nrow(xtab)), command = c( longtable.header, "%"))
 		else list(pos = list(-1, rows.line, nrow(xtab)), command = c( longtable.header, "\\hdashline[0.5pt/2pt]", "%"))

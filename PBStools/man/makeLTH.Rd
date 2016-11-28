@@ -7,13 +7,16 @@
   Make a longtable header for printing an \code{xtable} in Sweave (see References).
 }
 \usage{
-makeLTH(xtab.table, table.caption, table.label, struts=FALSE)
+makeLTH(xtab.table, table.caption, table.label, 
+   struts=FALSE, add.continue=FALSE)
 }
+
 \arguments{
   \item{xtab.table}{table object created by \code{xtable}.}
   \item{table.caption}{table caption for the xtable (no need to specify this in the \code{xtable} command).}
   \item{table.label}{table label used to reference the table from other places in the document.}
   \item{struts}{logical: if \code{TRUE}, add vertical space before and after table header.}
+  \item{add.continue}{logical: if \code{TRUE}, add `continued' messages on tables spanning pages.}
 }
 \details{
   This code was provided by a clever Swedish fellow (pseudonym = \code{chepec}) to 

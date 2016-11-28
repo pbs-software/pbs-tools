@@ -16,7 +16,7 @@ preferDepth(strSpp="410", fqtName="pht_fdep.sql", dbName="PacHarvest",
   \item{fqtName}{string specifying the name of a local file (f), an SQL query 
     file (q), or an MDB table (t)}
   \item{dbName}{string specifying the name of an SQL DSN for an ODBC call to 
-    the SQL Server database \code{SVBCPBSGFIIS}, or an MDB database}
+    the SQL Server database \code{DFBCV9TWVASP001}, or an MDB database}
   \item{spath}{string specifying the path to the file \code{fqtName}}
   \item{type}{string specifying the file type: \code{"SQL"}, \code{"MDB"}, or \code{"FILE"}}
   \item{hnam}{string specifying the name of a history file}
@@ -25,7 +25,7 @@ preferDepth(strSpp="410", fqtName="pht_fdep.sql", dbName="PacHarvest",
 \details{
   The function \code{preferDepth()} creates an interactive GUI that can be used
   to display histograms of depth distribution for specified species that 
-  appear in SQL Server database \code{SVBCPBSGFIIS}. The use may also specify a 
+  appear in SQL Server database \code{DFBCV9TWVASP001}. The use may also specify a 
   local file (see \code{getFile}). The cumulative catch is 
   superimposed to show the depths at which the species is caught in relation to 
   the tow frequency histogram. The total fleet effort is displayed as a 
@@ -41,7 +41,7 @@ preferDepth(strSpp="410", fqtName="pht_fdep.sql", dbName="PacHarvest",
   \code{cwd}         \tab Button to set path to the current working directory.\cr
   \code{File/Query/Table} \tab Name of (i) data file, (ii) SQL code file or MDB query, or (iii) MDB table.\cr
   \code{DB/DSN}      \tab Descriptor Name Service that provides an ODBC connection to \cr
-                     \tab    the SQL Server database \code{SVBCPBSGFIIS}.\cr
+                     \tab    the SQL Server database \code{DFBCV9TWVASP001}.\cr
   \code{type}        \tab Type of file: \code{SQL}, \code{MDB}, or \code{FILE}.\cr
   \code{Trusted}     \tab Check if using a trusted DFO identity.\cr
   \code{SQL User ID} \tab SQL user ID assigned by the database server administrators.\cr

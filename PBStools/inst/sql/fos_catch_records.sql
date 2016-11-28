@@ -1,5 +1,5 @@
 -- Last modified by RH (2014-06-23)
--- Query species catch from GFFOS on SVBCPBSGFIIS
+-- Query species catch from GFFOS on DFBCV9TWVASP001
 SET NOCOUNT ON 
 
 -- Trip Hail

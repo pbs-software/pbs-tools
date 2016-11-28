@@ -1,5 +1,5 @@
 -- Query catch gathered from multiple DBs and housed in GF_MERGED_CATCH
--- Query species catch from GFFOS on SVBCPBSGFIIS
+-- Query species catch from GFFOS on DFBCV9TWVASP001
 -- Last modified: 2016-04-12 (RH)
 SET NOCOUNT ON 
 

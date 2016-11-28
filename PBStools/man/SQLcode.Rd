@@ -30,7 +30,7 @@
 }
 \section{GFBioSQL}{
   The \code{GFBioSQL} database is an SQL copy of the Oracle database \code{GFBIO}. The SQL version
-  is housed on the SQL server \code{SVBCPBSGFIIS} located at the Pacific Biological Station (PBS).
+  is housed on the SQL server \code{DFBCV9TWVASP001} located at the Pacific Biological Station (PBS).
   The database contains biological sample and specimen information, as well as catch from 
   fishing activity not housed in any other database (e.g., JV Hake, research, surveys, foreign fleets).
 
@@ -78,7 +78,7 @@
 
 \section{GFCatch}{
   \code{GFCatch} was originally a FORTRAN data compilation but is now housed on the SQL server
-  \code{SVBCPBSGFIIS}. This database contains catch and effort data from three sources: logbooks
+  \code{DFBCV9TWVASP001}. This database contains catch and effort data from three sources: logbooks
   (skippers, onboard observers), landing records (sales slips or validation records), and 
   anecdotal information (Rutherford 1999).
 
@@ -95,7 +95,7 @@
   on the server \code{ORADEV} in Vancouver. The subset \code{GFFOS} (Groundfish \code{FOS}) comprises Views
   to \code{FOS} that make the data more useful to stock assessment personnel, and is housed on 
   the Oracle server \code{GFSH} located at PBS, Nanaimo. The Oracle version has largely been sidelined for
-  an SQL version of \code{GFFOS} on the SQL server \code{SVBCPBSGFIIS}
+  an SQL version of \code{GFFOS} on the SQL server \code{DFBCV9TWVASP001}
   (now on the ``cloud'', but more likely in someone's leaky basement).
 
   \tabular{ll}{
@@ -137,7 +137,7 @@
 }
 \section{PacHarvest}{
   The \code{PacHarvest} database (sometimes referred to as \code{PacHarvTrawl}) sits on the 
-  SQL server \code{SVBCPBSGFIIS} and houses observer and fisher log catch and effort 
+  SQL server \code{DFBCV9TWVASP001} and houses observer and fisher log catch and effort 
   information for most trawl fishing events from Feb 1996 to Mar 2007.
   Details of the database can be found in Schnute et al. (1999).
 
@@ -169,7 +169,7 @@
   (1986--2006 for ZN license, 2001-2006 for Schedule II), observer log data (1999--2004 for ZN
   and Halibut, 2001--2004 for Schedule II), and the Dockside Monitoring Program 
   (1995--2005 for ZN, 1996--2005 for Schedule II, and 1991-2005 for Halibut). 
-  This database sits on the SQL server \code{SVBCPBSGFIIS}. 
+  This database sits on the SQL server \code{DFBCV9TWVASP001}. 
   See Haigh and Richards (1997) for some of the early history.
 
   \tabular{ll}{
@@ -187,7 +187,7 @@
   }
 }
 \section{PacHarvSable}{
-  The database \code{PacHarvSable} (on the SQL server \code{SVBCPBSGFIIS}) includes commercial trap and 
+  The database \code{PacHarvSable} (on the SQL server \code{DFBCV9TWVASP001}) includes commercial trap and 
   longline Sablefish catch and effort records from fisher logbooks (1990--2006), observer logbooks
   (2000--2005), and the Dockside Monitoring Program (1995--2002).
 

@@ -3,7 +3,7 @@
 \title{Create User DSNs for PBS Groundfish Databases}
 \description{
   Create a suite of User DSNs for PBS groundfish databases, currently 
-  hosted on the server \code{SVBCPBSGFIIS}.
+  hosted on the server \code{DFBCV9TWVASP001}.
 }
 \usage{
 createDSN(trusted=TRUE) 

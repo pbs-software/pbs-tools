@@ -18,7 +18,7 @@ weightBio(adat, cdat, sunit="TID", sweight="catch",
    cohorts=NULL, regimes=list(1900:1908,1912:1915,1923:1929,1934:1943,1957:1960,
    1976:1988,1992:1998,2002:2006), layout="portrait",
    rgr=TRUE, eps=FALSE, pdf=FALSE, png=FALSE, wmf=FALSE,
-   longside=10, outnam, ioenv=.GlobalEnv, ...)
+   longside=10, outnam, outres=200, ioenv=.GlobalEnv, ...)
 }
 \arguments{
   \item{adat}{data frame of ageing information (fields returned by 
@@ -90,6 +90,7 @@ weightBio(adat, cdat, sunit="TID", sweight="catch",
   \item{wmf}{logical: if \code{TRUE}, send figure to a Windows metafile \code{.wmf} file.}
   \item{longside}{dimension (inches) of the longest side of the figure.}
   \item{outnam}{explicit output name to override an internally generated one.}
+  \item{outres}{output resolution (dots per inch) for raster-based graphics.}
   \item{ioenv}{input/output environment for function input data and output results.}
   \item{...}{additional arguments to pass to the function \code{plotBubbles}.}
 }

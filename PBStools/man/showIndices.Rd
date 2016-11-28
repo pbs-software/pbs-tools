@@ -7,7 +7,7 @@
 }
 \usage{
 showIndices(strSpp="396",serID=1, survID=NULL, bootID, 
-   tenv=.PBStoolEnv, quiet=FALSE, addN=FALSE)
+   tenv=.PBStoolEnv, quiet=FALSE, addN=FALSE, outnam)
 }
 \arguments{
   \item{strSpp}{string specifying species code (\code{species$code}).}
@@ -18,6 +18,8 @@ showIndices(strSpp="396",serID=1, survID=NULL, bootID,
   \item{tenv}{temporary working environment.}
   \item{quiet}{logical: if \code{TRUE}, plot an empty panel in and multi-panel figure; if \code{FALSE}, print species boot results to the console.}
   \item{addN}{logical: if \code{TRUE}, report the number of specimens below each boxplot.}
+  \item{outnam}{string name of output file name prefix for a comma-delimited
+    file of Awatea/ADMB-style indices with field names \code{c("series", "year", "value", "CV")}.}
 }
 \details{
   The function relies on a short query function called \code{getBootRuns} 

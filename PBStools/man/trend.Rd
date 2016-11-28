@@ -17,7 +17,7 @@ trend(strSpp="442", fqtName="gfb_iphc.sql", dbName="GFBioSQL",
   \item{fqtName}{string specifying the name of a local file (f), an SQL query 
     file (q), or an MDB table (t)}
   \item{dbName}{string specifying the name of an SQL DSN for an ODBC call to 
-    the SQL Server database \code{SVBCPBSGFIIS}, or an MDB database}
+    the SQL Server database \code{DFBCV9TWVASP001}, or an MDB database}
   \item{spath}{string specifying the path to the file \code{fqtName}}
   \item{type}{string specifying the file type: \code{"SQL"}, \code{"MDB"}, or \code{"FILE"}}
   \item{ioenv}{input/output environment for function input data and output results.}
@@ -41,7 +41,7 @@ trend(strSpp="442", fqtName="gfb_iphc.sql", dbName="GFBioSQL",
   \code{sql}         \tab Button to set path to the library's \code{sql} directory.\cr
   \code{cwd}         \tab Button to set path to the current working directory.\cr
   \code{File/Query/Table} \tab Name of (i) data file, (ii) SQL code file or MDB query, or (iii) MDB table.\cr
-  \code{DB/DSN}      \tab Database name on the SQL server \code{SVBCPBSGFIIS}.\cr
+  \code{DB/DSN}      \tab Database name on the SQL server \code{DFBCV9TWVASP001}.\cr
   \code{type}        \tab Type of file: \code{"SQL"}, \code{"MDB"}, or \code{"FILE"}.\cr
   \code{GET}         \tab Button to run the code specified on this line of the GUI.\cr
   \code{Trusted}     \tab Check if using a trusted DFO identity.\cr
