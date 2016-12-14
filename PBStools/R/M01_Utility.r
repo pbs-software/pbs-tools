@@ -219,16 +219,19 @@ countLines = function(fnam,os=.Platform$OS.type)
 	return(Nrow)
 }
 
-#createDSN------------------------------2009-02-26
+#createDSN------------------------------2016-12-01
 # Create entire suite of DSNs for the groundfish databases
 #-----------------------------------------------RH
 createDSN <- function(trusted=TRUE) {
-	confODBC(dsn="GFBioSQL",    server="GFDB",db="GFBioSQL",     driver="SQL Server",descr="Created for PBStools",trusted=trusted)
-	confODBC(dsn="GFCatch",     server="GFDB",db="GFCatch",      driver="SQL Server",descr="Created for PBStools",trusted=trusted)
-	confODBC(dsn="GFCruise",    server="GFDB",db="GFCruise",     driver="SQL Server",descr="Created for PBStools",trusted=trusted)
-	confODBC(dsn="PacHarvest",  server="GFDB",db="PacHarvest",   driver="SQL Server",descr="Created for PBStools",trusted=trusted)
-	confODBC(dsn="PacHarvHL",   server="GFDB",db="PacHarvHL",    driver="SQL Server",descr="Created for PBStools",trusted=trusted)
-	confODBC(dsn="PacHarvSable",server="GFDB",db="PacHarvSable", driver="SQL Server",descr="Created for PBStools",trusted=trusted)
+	today = Sys.Date()
+	descr = paste0("Created for PBStools (",today,")")
+	confODBC(dsn="GFBioSQL",    server="GFDB",db="GFBioSQL",     driver="SQL Server", descr=descr, trusted=trusted)
+	confODBC(dsn="GFCatch",     server="GFDB",db="GFCatch",      driver="SQL Server", descr=descr, trusted=trusted)
+	confODBC(dsn="GFCruise",    server="GFDB",db="GFCruise",     driver="SQL Server", descr=descr, trusted=trusted)
+	confODBC(dsn="PacHarvest",  server="GFDB",db="PacHarvest",   driver="SQL Server", descr=descr, trusted=trusted)
+	confODBC(dsn="PacHarvHL",   server="GFDB",db="PacHarvHL",    driver="SQL Server", descr=descr, trusted=trusted)
+	confODBC(dsn="PacHarvSable",server="GFDB",db="PacHarvSable", driver="SQL Server", descr=descr, trusted=trusted)
+	confODBC(dsn="GFFOS",       server="GFDB",db="GFFOS",        driver="SQL Server", descr=descr, trusted=trusted)
 }
 
 #crossTab-------------------------------2015-03-06
@@ -306,7 +309,7 @@ gatherVals = function(x, columns){
 }
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~gatherVals
 
-#getData--------------------------------2016-04-27
+#getData--------------------------------2016-12-01
 # Get data from a variety of sources.
 # subQtrust -- if user has no DFO trusted credentials:
 #   if (type=="SQL"), c(trusted, uid, pwd) copied to `subQtrust'
@@ -546,16 +549,16 @@ getData <-function(fqtName, dbName="PacHarvest", strSpp=NULL, server=NULL,
 				strQ <- gsub(pattern="@originid",replacement="'Y'",x=strQ)
 			else
 				strQ <- gsub(pattern="@originid",replacement="'Y','N'",x=strQ)
+#browser();return()
 			if (is.null(surveyid)) {
 				SQLdat = .getSQLdata(dbName="GFBioSQL", qtName=NULL, strSQL="select SURVEY_ID FROM SURVEY", 
-					server="GFDB", type="SQL", trusted=subQtrust[["trusted"]], uid=subQtrust[["uid"]], pwd=subQtrust[["pwd"]])
+					server=.PBSserver[1], type="SQL", trusted=subQtrust[["trusted"]], uid=subQtrust[["uid"]], pwd=subQtrust[["pwd"]])
 				surveyid = sort(unique(SQLdat[[1]]))
 			}
 			strQ <- gsub(pattern="@surveyid",replacement=paste(surveyid,collapse=","),x=strQ)
-#browser();return()
 			if (is.null(survserid)) {
 				SQLdat = .getSQLdata(dbName="GFBioSQL", qtName=NULL, strSQL="select SURVEY_SERIES_ID FROM SURVEY", 
-					server="GFDB", type="SQL", trusted=subQtrust[["trusted"]], uid=subQtrust[["uid"]], pwd=subQtrust[["pwd"]])
+					server=.PBSserver[1], type="SQL", trusted=subQtrust[["trusted"]], uid=subQtrust[["uid"]], pwd=subQtrust[["pwd"]])
 				survserid = sort(unique(SQLdat[[1]]))
 			}
 			strQ <- gsub(pattern="@survserid",replacement=paste(survserid,collapse=","),x=strQ)

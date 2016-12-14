@@ -512,7 +512,7 @@ calcSG <- function(dat=pop.age, strSpp="", yfld="len", tau=c(5,40),
 #-------------------------------------------calcSG
 
 
-#calcVB---------------------------------2016-11-17
+#calcVB---------------------------------2016-12-07
 # Calculate von Bertalanffy growth curve.
 # Note: ameth=3 otoliths broken & burnt
 # areas: list of lists
@@ -606,7 +606,6 @@ calcVB <- function(dat=pop.age, strSpp="", yfld="len", fixt0=FALSE,
 		fldSpp=intersect(c("spp","species","sppcode"),FLDS)[1]
 		dat=dat[is.element(dat[,fldSpp],strSpp),] }
 
-#browser();return()
 	dat <- dat[!is.na(dat$age) & !is.na(dat$yval) & !is.na(dat$sex),]
 	# Qualify data
 	z=rep(TRUE,nrow(dat))
@@ -633,7 +632,7 @@ calcVB <- function(dat=pop.age, strSpp="", yfld="len", fixt0=FALSE,
 		if (any(i==aflds)) eval(parse(text=paste("yarea=union(yarea,",i,")"))) 
 	}
 	zam = is.element(dat$ameth,ameth)
-	if (any(ameth==3) && "year"%in%names(dat)) zam = zam | (is.element(dat$ameth,0) & dat$year>=1980)
+	if (fnam!="wapAKe" && any(ameth==3) && "year"%in%names(dat)) zam = zam | (is.element(dat$ameth,0) & dat$year>=1980)
 	dat = dat[zam,]
 	if (nrow(dat)==0) {
 		if (figgy) return()
@@ -660,14 +659,14 @@ calcVB <- function(dat=pop.age, strSpp="", yfld="len", fixt0=FALSE,
 	out <- array(NA,dim=c(length(SEX),8,ntt,nar),
 		dimnames=list(names(SEX),c("n","Yinf","K","t0","sig","Ymod","Ymin","Ymax"),tnams,anams))
 	names(dimnames(out)) <- c("sex","par","ttype","area")
-	xout = array(NA,dim=c(2,ntt,nar,2),dimnames=list(range=c("min","max"),ttype=tnams,area=anams,year=c("year","date" )))
+	xout = array(NA,dim=c(2,ntt,nar,2), dimnames=list(range=c("min","max"), ttype=tnams, area=anams, year=c("year","date" )))
 	plotNames = as.character()
 
 	getFile("parVec",senv=ioenv,use.pkg=TRUE,tenv=penv())
 	pVec <- parVec[["vonB"]][[names(yfld)]][[strSpp]]
 	if (is.null(pVec)) pVec=parVec[["vonB"]][[names(yfld)]][["POP"]] # default
-	#if (strSpp=="228") pVec["K","max"] = 1.
 	pVec = rbind(pVec,sig=data.frame(val=1,min=0,max=5,active=TRUE)) ## adding error component
+	if (strSpp=="228" && yfld=="len") {pVec[1,"max"] = 80; pVec["sig","max"] = 10}
 #browser();return()
 
 	# Labels & names --------------------
@@ -713,6 +712,7 @@ calcVB <- function(dat=pop.age, strSpp="", yfld="len", fixt0=FALSE,
 	for (a1 in 1:length(areas)) {
 		an = names(areas)[a1]; ar = areas[[a1]]
 		adat <- dat[is.element(dat[,an],ar),]
+#browser();return()
 		if (nrow(adat)==0) next
 		amat = paste(an,paste0(ar,collapse="|"),sep="_")
 		if (missing(plotname)) {
@@ -741,7 +741,8 @@ calcVB <- function(dat=pop.age, strSpp="", yfld="len", fixt0=FALSE,
 				ttName=plotname
 #browser();return()
 			xout[,tmat,amat,"year"] = range(tdat$year,na.rm=TRUE)
-			xout[,tmat,amat,"date"] = range(substring(tdat$date,1,10),na.rm=TRUE)
+			if ("date" %in% names(tdat))
+				xout[,tmat,amat,"date"] = range(substring(tdat$date,1,10),na.rm=TRUE)
 #browser();return()
 			if (singles && figgy) {
 				plotNames = c(plotNames,ttName)
@@ -785,7 +786,6 @@ calcVB <- function(dat=pop.age, strSpp="", yfld="len", fixt0=FALSE,
 						return(xVec)
 					}
 					ipVec = make.parVec(idat,pVec)
-#browser();return()
 					calcMin(pvec=ipVec,func=VBfun)
 					if (!is.null(rm.studs) && is.numeric(rm.studs)) {
 						if (length(rm.studs)==1) rm.studs = rep(rm.studs,2) * c(-1,1)
@@ -1096,7 +1096,7 @@ compCsum <- function(dat=pop.age, pro=TRUE, strSpp="", xfld="age", plus=60,
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~compCsum
 
 
-#estOgive-------------------------------2016-10-27
+#estOgive-------------------------------2016-12-08
 # Creates ogives of some metric (e.g., % maturity at age).
 # Arguments:
 #   dat     - specimen morphometrics data from GFBio
@@ -1193,6 +1193,8 @@ estOgive <- function(dat=pop.age, strSpp="", method=c("dblnorm"),
 	need=c(ofld,"date","sex","mat"); if (ofld=="age") need=c(need,"ameth")
 	if(!all(is.element(need,flds)))
 		showError(setdiff(need,flds),"nofields")
+	if(!is.element("year",flds))
+		dat$year = as.numeric(substring(dat$date,1,4))
 
 	attSpp=attributes(dat)$spp
 	if (is.null(strSpp) || strSpp=="") {
@@ -1212,6 +1214,7 @@ estOgive <- function(dat=pop.age, strSpp="", method=c("dblnorm"),
 		dat = dat[zam,]
 	}
 	dat$month <- as.numeric(substring(dat$date,6,7))
+#browser();return()
 
 	for (i in c("stype","scat")) {
 		mess = paste0("dat = biteData(dat,",i,")")
@@ -1284,6 +1287,8 @@ estOgive <- function(dat=pop.age, strSpp="", method=c("dblnorm"),
 	axis(2,at=seq(0,1,.1),tcl=-.5,mgp=c(0,.7,0),cex=.9,adj=1)
 	mtext(ifelse(ofld=="age","Age","Length"),side=1,cex=1.2,line=1.75)
 	mtext("Proportion Mature",side=2,cex=1.2,line=2.5,las=0)
+
+#browser();return()
 
 	legtxt = character(); nleg = 0
 	for (s in 1:nsex) {
@@ -3114,7 +3119,7 @@ sumBioTabs=function(dat, fnam="sumBioTab.csv", samps=TRUE, specs=TRUE,
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~sumBioTabs
 
 
-#weightBio------------------------------2016-11-01
+#weightBio------------------------------2016-12-14
 # Weight age|length frequencies|proportions by catch|density.
 #   adat = age123 from query 'gfb_bio.sql'    -- e.g., getData("gfb_bio.sql","GFBioSQL",strSpp="607",path=.getSpath()); bio607=processBio()
 #   cdat = cat123.wB from function 'getCatch' -- e.g., cat607 = getCatch("607",sql=TRUE)
@@ -3132,6 +3137,10 @@ weightBio = function(adat, cdat, sunit="TID", sweight="catch",
    layout="portrait", rgr=TRUE, eps=FALSE, pdf=FALSE, png=FALSE, wmf=FALSE,
    longside=10, outnam, outres=200, ioenv=.GlobalEnv, ...)
 {
+	## Determine function for level-1 weighting
+	#if (sweight=="density") func=mean else func=sum
+	if (sweight=="density") func=sum else func=sum
+
 	expr = paste("getFile(",substitute(adat),",",substitute(cdat),",ioenv=ioenv,try.all.frames=TRUE,tenv=penv())",sep="")
 	eval(parse(text=expr))
 	strSpp=attributes(adat)$spp; if(is.null(strSpp)) strSpp="000"
@@ -3147,10 +3156,10 @@ weightBio = function(adat, cdat, sunit="TID", sweight="catch",
 		else                 ttype = 1:14 }
 
 	# Age data
-	adat$SVID[is.na(adat$SVID)]=0; adat$GC[is.na(adat$GC)]=0; adat$area[is.na(adat	$area)]=1 # to avoid grouping errors later on
+	adat$SVID[is.na(adat$SVID)]=0; adat$GC[is.na(adat$GC)]=0; adat$area[is.na(adat$area)]=1 # to avoid grouping errors later on
 	ages = adat
 	names(ages)[grep("scat",names(ages))] = "sort" #rename `scat' field to `sort' to avoid conflict with object`scat' later in code.
-	if (any(sex==12)) { # thanks a lot brian
+	if (any(sex==12)) { # thanks brian
 		age12 = ages[is.element(ages$sex,1:2),]
 		age12$sex = 12
 		ages= rbind(ages,age12)
@@ -3170,22 +3179,23 @@ weightBio = function(adat, cdat, sunit="TID", sweight="catch",
 	ages$age[ages$age>=plus & !is.na(ages$age)] = plus
 
 	if (strSpp=="621" && ctype=="C") ages = ages[ages$age>=4 & !is.na(ages$age),]
-	# if weighting by [sweight], you need a positive [sweight] :
+	## If weighting by [sweight], you need a positive [sweight] :
 	if (wSP[1]) ages = ages[ages[,sweight]>0 & !is.na(ages[,sweight]),]
 
-	# Restratify the survey age data (because there are numerous restratification schemes not reflected in B21)
+	## Restratify the survey age data (because there are numerous restratification schemes not reflected in B21)
 	if (ctype=="S"){
-		cdat = cdat[is.element(cdat$SSID,SSID),]
-		cdat$SVID[is.na(cdat$SVID)]=0; cdat$GC[is.na(cdat$GC)]=0 # to avoid grouping errors later on
-		feid = cdat$FEID
-		strata = cdat$GC; names(strata) = feid      # take stratification scheme from survey catch data
-		SVID   = cdat$SVID;  names(SVID)   = feid
-		ages   = ages[is.element(ages$FEID,feid),]  # get ages associated with the survey series
+		cdat   = cdat[is.element(cdat$SSID,SSID),]
+		cdat$SVID[is.na(cdat$SVID)]=0; cdat$GC[is.na(cdat$GC)]=0 ## to avoid grouping errors later on
+		feid   = cdat$FEID
+		strata = cdat$GC; names(strata)  = feid     ## take stratification scheme from survey catch data
+		SVID   = cdat$SVID;  names(SVID) = feid
+		ages   = ages[is.element(ages$FEID,feid),]  ## get ages associated with the survey series
 		if (nrow(ages)==0) showError(paste("No age data matches survey series ",
 			SSID,"\n(catch linked to age via 'FEID')",sep=""),as.is=TRUE)
-		ages$SVID  = SVID[as.character(ages$FEID)]  # restratified survey IDs
-		ages$GC = strata[as.character(ages$FEID)]   # restratified survey IDs
-		# In ages for specified GC, some records are missing 'SSID' and 'area'
+#browser();return()
+		ages$SVID  = SVID[as.character(ages$FEID)]  ## restratified survey IDs
+		ages$GC = strata[as.character(ages$FEID)]   ## restratified survey IDs
+		## In ages for specified GC, some records are missing 'SSID' and 'area' (stratum area)
 		zSSID = !is.element(ages$SSID,SSID)
 		if (any(zSSID))
 			ages$SSID[zSSID] = SSID[1]
@@ -3205,38 +3215,42 @@ weightBio = function(adat, cdat, sunit="TID", sweight="catch",
 		}
 	}
 
-	# Derive sample unit (e.g., 'TID' or 'SID') data
-	sfeid = sapply(split(ages[,"FEID"],ages[,sunit]),function(x){as.character(sort(unique(x)))},simplify=FALSE)
+	## Derive sample unit (e.g., 'TID' or 'SID') data
+	sfeid = sapply(split(ages[,"FEID"], ages[,sunit]), function(x){as.character(sort(unique(x)))}, simplify=FALSE)
 	fcat  = sapply(split(ages[,sweight],ages$FEID),
-		function(x){if(all(is.na(x))) 0 else mean(x,na.rm=TRUE)})   # [sweight] by each fishing event (tow)
-	sfun = if (sweight=="density") mean else sum                   # use mean if sample weighting is a density, otherwise sum
-	scat  = sapply(sfeid,function(x,cvec){sfun(cvec[x])},cvec=fcat)# [sweight] by sample unit (i.e., catch or density) # in case more than one tow in sample unit
+		function(x){if(all(is.na(x))) 0 else mean(x,na.rm=TRUE)})   ## [sweight] by each fishing event (tow)
+	#sfun = if (sweight=="density") mean else sum                  ## in theory use mean if sample weighting is a density, otherwise sum (now deined at beginning of weighBio)
+
+	## [sweight] by sample unit (i.e., catch or density)
+	## Just in case a sample covers more than one tow (fishing event)
+	## Not likely to happen in surveys and so using sum or mean will have no effect *****
+	scat  = sapply(sfeid,function(x,cvec){func(cvec[x],na.rm=TRUE)},cvec=fcat)
 	sdate = sapply(split(ages[,"date"],ages[,sunit]),function(x){as.character(rev(sort(unique(x)))[1])})
-	ages$scat  = scat[as.character(ages[,sunit])]                  # populate age data with sample unit [sweight]
-	ages$sdate = sdate[as.character(ages[,sunit])]                 # populate age data with sample unit dates
-#browser();return()
+	ages$scat  = scat[as.character(ages[,sunit])]                  ## populate age data with sample unit [sweight]
+	ages$sdate = sdate[as.character(ages[,sunit])]                 ## populate age data with sample unit dates
+
 	if (ctype=="S"){
-		slev = paste(ages$year,pad0(ages$SVID,3),pad0(ages$GC,3),sep=".")    # sample survey year.survey.group
+		slev = paste(ages$year,pad0(ages$SVID,3),pad0(ages$GC,3),sep=".")  ## sample survey year.survey.group
 		names(slev) = paste(ages$year,pad0(ages$SVID,3),pad0(ages$GC,3),sep="-")
 		attr(slev,"Ylim") = range(ages$year,na.rm=TRUE)
 		attr(slev,"years") = .su(ages$year)
 		SLEV = paste(adat$year,pad0(adat$SVID,3),pad0(adat$GC,3),sep=".")  ## larger dataset
 	} else {
-		slev = convYP(ages$sdate,per)     # sample commercial year.period (e.g. quarter)
+		slev = convYP(ages$sdate,per)     ## sample commercial year.period (e.g. quarter)
 		SLEV = convYP(ages$date,per)
 	}
-	agelev=sort(unique(slev))            # unique sample unit periods
+	agelev=sort(unique(slev))            ## unique sample unit periods
 	ages$slev = slev
 	if (ctype=="S") {
 		ageLEV=sort(unique(SLEV))
-		adat$SLEV = SLEV                  # only used for surveys to get all portential stratum areas later
+		adat$SLEV = SLEV                  ## only used for surveys to get all portential stratum areas later
 	}
 	packList("ages","PBStool",tenv=.PBStoolEnv)
 	major = .su(ages$major)
 
-	# Collect age frequency by sample unit and calculate proportions
+	## Collect age frequency by sample unit and calculate proportions
 	sagetab=array(0,dim=c(plus,length(scat),length(sex),2),
-		dimnames=list(age=1:plus,sunit=names(scat),sex=sex,np=c("n","p")))   # age nos. & props. by year-level
+		dimnames=list(age=1:plus,sunit=names(scat),sex=sex,np=c("n","p")))   ## age nos. & props. by year-level
 	ii=as.character(1:plus)
 	for (k in sex) {
 		kk=as.character(k)
@@ -3247,34 +3261,40 @@ weightBio = function(adat, cdat, sunit="TID", sweight="catch",
 		jj=colnames(knat)
 		sagetab[ii,jj,kk,"n"] = knat[ii,jj]
 	}
-	sN=apply(sagetab[,,,"n",drop=FALSE],2,sum)     # total aged fish by sample (thanks Andy)
+	sN = apply(sagetab[,,,"n",drop=FALSE],2,sum)   ## total aged fish by sample (thanks Andy)
 	for (k in sex) {
 		kk=as.character(k)
 		sagetab[ii,names(sN),kk,"p"] = t(apply(sagetab[ii,names(sN),kk,"n",drop=FALSE],1,function(x){x/sN}))
 	}
-	# Sample unit [sweight] (from 'scat' above)
+	## Sample unit [sweight] (from 'scat' above)
 	punits=split(ages[,sunit],ages$slev)
 	punit=sapply(punits,function(x){as.character(sort(unique(x)))},simplify=FALSE)
 
-	# proportion sample unit [sweight] by level -- treat catch and density the same in standardisation
+	## Proportion sample unit [sweight] by level -- treat catch and density the same in standardisation
+	## Note that `scat' is likely the same whether it is a sum or a mean because a sample usually only covers one fishing event.
 	pprop=sapply(punit,simplify=FALSE,function(x,cvec){
 		if (sum(cvec[x])==0) cvec[x] else cvec[x]/sum(cvec[x])},cvec=scat)
 
-	# sample unit [sweight] by level (total catch (t) or mean density (t/km2)
+	## Sample unit [sweight] by level -- total catch (t) or mean density (t/km2)
 	pcat = atmp = sapply(punit,function(x,cvec){
 		xval = cvec[x]/ifelse(sweight=="catch",1000.,1000.)  ## convert catch and density to tonnes
-		if (sweight=="density") return(mean(xval,na.rm=TRUE))
-		else return(sum(xval,na.rm=TRUE)) },  cvec=scat)
-#	if (round(sum(pcat),5)!=round(sum(scat)/ifelse(sweight=="density",1.,1000.),5))
-#		showError("Sample unit catch was not allocated correctly")
+		#if (sweight=="density") return(mean(xval,na.rm=TRUE))
+		#if (sweight=="density") return(mean(xval,na.rm=TRUE))
+		#else return(sum(xval,na.rm=TRUE)) },  cvec=scat)
+		return(func(xval,na.rm=TRUE)) },  cvec=scat)         ## func now defined at beginning of weightBio
+	vcat = sapply(punit,function(x,cvec){                   ## just for debugging (not used any where else)
+		xval = cvec[x]/ifelse(sweight=="catch",1000.,1000.)
+		return(xval) },  cvec=scat)
+	#if (round(sum(pcat),5)!=round(sum(scat)/ifelse(sweight=="density",1.,1000.),5))
+		#showError("Sample unit catch was not allocated correctly")
 
 	pagetab=array(0,dim=c(plus,length(pprop),length(sex),3),
-		dimnames=list(age=1:plus,lev=names(pprop),sex=sex,np=c("n","p","w"))) # nos., props, weighted n or p by year-level
+		dimnames=list(age=1:plus,lev=names(pprop),sex=sex,np=c("n","p","w"))) ## nos., props, weighted n or p by year-level
 	for (j in names(pprop)){
 		jvec=pprop[[j]];  jj=names(jvec)
 		jone=rep(1,length(jvec)); names(jone)=jj; jpro=jone/length(jone)
-		if (!wSP[1]) jvec=jpro   # if no weighting use equal proportions
-		if (all(jvec==0)) next   # happens when survey recorded no weight of strSpp
+		if (!wSP[1]) jvec=jpro   ## if no weighting use equal proportions
+		if (all(jvec==0)) next   ## happens when survey recorded no weight of strSpp
 		for (k in sex) {
 			kk=as.character(k)
 			ntab=sagetab[,,kk,"n"]; ptab=sagetab[,,kk,"p"]; wtab=sagetab[,,kk,ifelse(wN,"n","p")]
@@ -3283,13 +3303,13 @@ weightBio = function(adat, cdat, sunit="TID", sweight="catch",
 				ptab=array(ptab,dim=dim(sagetab)[1:2],dimnames=dimnames(sagetab)[1:2])
 				wtab=array(wtab,dim=dim(sagetab)[1:2],dimnames=dimnames(sagetab)[1:2])
 			}
-			kpro=wtab[,jj,drop=FALSE]%*%jvec  # for each sex, weight each level n/p vector and sum
-			pagetab[1:plus,j,kk,"n"] = ntab[1:plus,jj,drop=FALSE] %*% jone # row sum
-			pagetab[1:plus,j,kk,"p"] = ptab[1:plus,jj,drop=FALSE] %*% jpro # row mean
+			kpro=wtab[,jj,drop=FALSE]%*%jvec  ## for each sex, weight each level n/p vector and sum
+			pagetab[1:plus,j,kk,"n"] = ntab[1:plus,jj,drop=FALSE] %*% jone ## row sum
+			pagetab[1:plus,j,kk,"p"] = ptab[1:plus,jj,drop=FALSE] %*% jpro ## row mean
 			pagetab[1:plus,j,kk,"w"] = kpro[1:plus,1]
 		}
 	}
-	psums=apply(pagetab,c(2,4),sum)  # calculate sum by 'lev' and 'np'
+	psums=apply(pagetab,c(2,4),sum)  ## calculate sum by 'lev' and 'np'
 	if (wN) {
 		inflate=psums[,"n"]/psums[,"w"]
 		inflate[is.na(inflate)]=1
@@ -3302,10 +3322,10 @@ weightBio = function(adat, cdat, sunit="TID", sweight="catch",
 		}
 	}
 
-	yrs=floor(as.numeric(substring(names(pcat),1,8))-.001)
+	yrs  = floor(as.numeric(substring(names(pcat),1,8))-.001)
 	names(atmp)=yrs
-	acat=sapply(split(pcat,yrs),sum,na.rm=TRUE)   # total sample [sweight] per year
-	pvec=pcat/acat[names(atmp)]                    # proportion of annual sample tow [sweight] in level (quarter/stratum)
+	acat = sapply(split(pcat,yrs),func,na.rm=TRUE) ## total sample [sweight] per year
+	pvec = pcat/acat[names(atmp)]                  ## proportion of annual sample tow [sweight] in level (quarter/stratum)
 #browser();return()
 
 	## Fishery catch data
@@ -3313,29 +3333,29 @@ weightBio = function(adat, cdat, sunit="TID", sweight="catch",
 	catdat = cdat[!is.na(cdat$date),]
 	catdat = catdat[is.element(catdat$year,yrs) & is.element(catdat$major,major),]
 	if (ctype=="S"){
-		clev = paste(catdat$year,pad0(catdat$SVID,3),pad0(catdat$GC,3),sep=".") # catch level year.survey.group
+		clev = paste(catdat$year,pad0(catdat$SVID,3),pad0(catdat$GC,3),sep=".") ## catch level year.survey.group
 		names(clev) = paste(catdat$year,pad0(catdat$SVID,3),pad0(catdat$GC,3),sep="-")
 		attr(clev,"Ylim") = range(catdat$year,na.rm=TRUE)
 		attr(clev,"years") = .su(catdat$year)
 	} else
-		clev   = convYP(catdat$date,per)       # catch level year.period
+		clev   = convYP(catdat$date,per)  ## catch level year.period
 	catdat$lev = clev
-	#catdat=catdat[is.element(catdat$per,agelev),]  # only look at fishery catch that matches age periods
+	#catdat=catdat[is.element(catdat$per,agelev),]  ## only look at fishery catch that matches age periods
 	packList("catdat","PBStool",tenv=.PBStoolEnv)
 #browser();return()
 
-	# Fishery catch proportions
+	## Fishery catch proportions
 	if (is.element("catKg",names(catdat)))      Ccat = split(catdat$catKg,catdat$lev)
 	else if (is.element("catch",names(catdat))) Ccat = split(catdat$catch,catdat$lev)
 	else showError("Fishery catch field 'catKg' or 'catch' is not available")
-	PCAT=sapply(Ccat,function(x){sum(x,na.rm=TRUE)/1000.})  # fishery catch (t) for all levels
+	PCAT = sapply(Ccat,function(x){sum(x,na.rm=TRUE)/1000.})  ## fishery catch (t) for all levels
 
-	# Second reweighting by Quarter if commercial or by Stratum if survey
-	if (wSP[2]) {
+	## Second reweighting by Quarter if commercial or by Stratum Area if survey
+	#if (wSP[2]) {
 		wtdMA = function(A){
 			zA = A>0; zA1 = A==1; zA2 = A>1
 			if (any(zA1) && !all(zA1)) {
-					pAList = sapply(split(A[zA2],A[zA2]),function(x,y){x/y},y=sum(A[zA2]),simplify=FALSE)
+				pAList = sapply(split(A[zA2],A[zA2]),function(x,y){x/y},y=sum(A[zA2]),simplify=FALSE)
 				pArea  = sapply(pAList,sum)
 				mA = sum(pArea * as.numeric(names(pArea)))
 				A[zA1] = mA
@@ -3343,31 +3363,38 @@ weightBio = function(adat, cdat, sunit="TID", sweight="catch",
 			return(A)
 		}
 		if (sweight=="catch")
-			Pcat = PCAT[as.character(agelev)]   # only levels that were sampled
+			Pcat = PCAT[as.character(agelev)]      ## only levels that were sampled
 		else if  (sweight=="density") {
 			alev = paste(ages$year,pad0(ages$SVID,3),pad0(ages$GC,3),sep=".")
-			Alst = split(ages$area,alev)        # use area (km^2) from age object
-			areaRaw = sapply(Alst[agelev],unique)  # get unique stratum area values
+			Alst = split(ages$area,alev)           ## use area (km^2) from age object
+			areaRaw = sapply(Alst[agelev],unique)  ## get unique stratum area values
 			if (is.list(areaRaw))
 				areaRaw = sapply(areaRaw,function(x){.su(wtdMA(x))})
 			area = wtdMA(areaRaw)
-			PcatRaw = sapply(area,mean,na.rm=TRUE) # fornow just use function terminology 'Pcat'
+			PcatRaw = sapply(area,mean,na.rm=TRUE) ## fornow just use function terminology 'Pcat'
 			Pcat = wtdMA(PcatRaw)
-			AREAraw = sapply(split(adat$area,adat$SLEV),function(x){if(all(is.na(x))) 1 else mean(x,na.rm=TRUE)}) # all potential stratum A from original age data file (still not complete)
+			AREAraw = sapply(split(adat$area,adat$SLEV),function(x){if(all(is.na(x))) 1 else mean(x,na.rm=TRUE)}) ## all potential stratum A from original age data file (still not complete)
 			AREA = wtdMA(AREAraw)
-#browser();return()
 		}
 		Atmp = Pcat
 		Fyrs = floor(as.numeric(substring(names(Pcat),1,8))-.001)
 		names(Atmp)=Fyrs
 		Acat = sapply(split(Pcat,Fyrs),sum,na.rm=TRUE)
-		Pvec = Pcat/Acat[names(Atmp)]          # proportion of annual fishery tow catch|area in level (quarter|stratum)
-	}
+		Pvec = Pcat/Acat[names(Atmp)]          ## proportion of annual fishery tow catch|area in level (quarter|stratum)
+	#}
+## Already done below (line 277)
+#	if (!wSP[2]) {
+#		Pone = split(Pvec,substring(names(Pvec),1,4))
+#		Pone = unlist(sapply(Pone,function(x){rep(1/length(x),length(x))},simplify=FALSE))
+#		names(Pone) = names(Pvec)
+#		Pvec.wSP2 = Pvec                       ## Save weighted Pvec for debugging only
+#		Pvec = Pone
+#	}
 
-	# Annual proportions weighted by commercial catch|area in levels (quarter|stratum)
+	## Annual proportions weighted by commercial catch|area in levels (quarter|stratum)
 	names(yrs)=agelev; YRS=min(yrs):max(yrs)
-	agetab=array(0,dim=c(plus,length(YRS),length(sex),4),
-		dimnames=list(age=1:plus,year=YRS,sex=sex,np=c("n","p","w","wp")))  # nos., props., weighted n or p by year
+	agetab = array(0, dim=c(plus,length(YRS),length(sex),4),
+		dimnames=list(age=1:plus,year=YRS,sex=sex,np=c("n","p","w","wp")))  ## nos., props., weighted n or p by year
 	for (j in YRS){
 		jj = as.character(j)
 		jyr=yrs[is.element(yrs,j)]
@@ -3375,10 +3402,9 @@ weightBio = function(adat, cdat, sunit="TID", sweight="catch",
 		jjj = names(jyr)
 		jone=rep(1,length(jjj)); names(jone)=jjj; jpro=jone/length(jone)
 		if (wSP[2]) jvec=Pvec[jjj]
-		else        jvec=jpro   # if no weighting use equal proportions
+		else        jvec=jpro   ## if no weighting use equal proportions
 		for (k in sex) {
 			kk=as.character(k)
-			#if (length(YRS)==1) {
 			if (dim(pagetab)[2]==1) {
 				agetab[1:plus,jj,kk,"n"] = pagetab[,,kk,"n"] # transfet n
 				agetab[1:plus,jj,kk,"p"] = pagetab[,,kk,"p"] # transfer p
@@ -3386,14 +3412,14 @@ weightBio = function(adat, cdat, sunit="TID", sweight="catch",
 			}
 			else {
 				ntab=pagetab[,,kk,"n"]; ptab=pagetab[,,kk,"p"]; wtab=pagetab[,,kk,"w"]
-				kpro=wtab[,jjj,drop=FALSE]%*%jvec  # for each sex, weight each level n/p vector and sum
-				agetab[1:plus,jj,kk,"n"] = ntab[1:plus,jjj,drop=FALSE] %*% jone # row sum
-				agetab[1:plus,jj,kk,"p"] = ptab[1:plus,jjj,drop=FALSE] %*% jpro # row mean
+				kpro=wtab[,jjj,drop=FALSE]%*%jvec  ## for each sex, weight each level n/p vector and sum
+				agetab[1:plus,jj,kk,"n"] = ntab[1:plus,jjj,drop=FALSE] %*% jone ## row sum
+				agetab[1:plus,jj,kk,"p"] = ptab[1:plus,jjj,drop=FALSE] %*% jpro ## row mean
 				agetab[1:plus,jj,kk,"w"] = kpro[1:plus,1]
 			}
 		}
 	}
-	asums=apply(agetab,c(2,4),sum)  # calculate sum by 'year' and 'np'
+	asums=apply(agetab,c(2,4),sum)  ## calculate sum by 'year' and 'np'
 	if (wN) {
 		inflate=asums[,"n"]/asums[,"w"]
 		inflate[is.na(inflate)]=1
@@ -3405,7 +3431,7 @@ weightBio = function(adat, cdat, sunit="TID", sweight="catch",
 				agetab[ii,names(inflate),kk,"w"] = t(apply(agetab[ii,names(inflate),kk,"w"],1,function(x){x*inflate}))
 		}
 	}
-	aN=apply(agetab,c(2,4),sum)[,"w"]  # calculate sum by 'year' and 'np', then grab 'w'
+	aN=apply(agetab,c(2,4),sum)[,"w"]  ## calculate sum by 'year' and 'np', then grab 'w'
 	aN[is.element(aN,0)]=1
 	for (k in sex) {
 		kk=as.character(k)
@@ -3415,38 +3441,37 @@ weightBio = function(adat, cdat, sunit="TID", sweight="catch",
 			agetab[ii,names(aN),kk,"wp"] = t(apply(agetab[ii,names(aN),kk,"w"],1,function(x){x/aN}))
 	}
 
-	#Summary stats per year
+	## Summary stats per year
 	atid = sapply(split(ages$TID,ages$year),
-		function(x){as.character(sort(unique(x)))},simplify=FALSE)          # trips in each year
-	Atid = sapply(atid,length)                                             # no. trips in each year
+		function(x){as.character(sort(unique(x)))},simplify=FALSE)      ## trips in each year
+	Atid = sapply(atid,length)                                         ## no. trips in each year
 	asid = sapply(split(ages$SID,ages$year),
-		function(x){as.character(sort(unique(x)))},simplify=FALSE)          # samples in each year
-	Asid = sapply(asid,length)                                             # no. samples in each year
+		function(x){as.character(sort(unique(x)))},simplify=FALSE)      ## samples in each year
+	Asid = sapply(asid,length)                                         ## no. samples in each year
 
-	#Summary stats per level (e.g., quarter/stratum)
+	## Summary stats per level (e.g., quarter/stratum)
 	nsid = sapply(split(ages$SID,ages$slev),
-		function(x){as.character(sort(unique(x)))},simplify=FALSE)          # samples in each level
-	Nsid = sapply(nsid,length)                                             # no. samples in each year
+		function(x){as.character(sort(unique(x)))},simplify=FALSE)      ## samples in each level
+	Nsid = sapply(nsid,length)                                         ## no. samples in each year
 	ntid = sapply(split(ages$TID,ages$slev),
-		function(x){as.character(sort(unique(x)))},simplify=FALSE)          # trips in each level
-	Ntid = sapply(ntid,length)                                             # no. trips in each year
-	Scat = pcat                                                            # sample unit (trip|sample) catch|density
-	Fcat = if (sweight=="density") AREA else PCAT                          # fishery commercial catch (complete set) or stratum area
+		function(x){as.character(sort(unique(x)))},simplify=FALSE)      ## trips in each level
+	Ntid = sapply(ntid,length)                                         ## no. trips in each year
+	Scat = pcat                                                        ## sample unit (trip|sample) catch|density
+#browser();return()
+	Fcat = if (sweight=="density") AREA else PCAT                      ## fishery commercial catch (complete set) or stratum area
 
-	stats= c("Nsid","Ntid","Scat","Fcat","Psamp")                          # summary table stats
+	stats= c("Nsid","Ntid","Scat","Fcat","Psamp")                      ## summary table stats
 
-	acyr = range(c(attributes(slev)$Ylim)) #,attributes(clev)$Ylim))       # range of years in age data & catch data
-	#acy  = acyr[1]:acyr[length(acyr)                                      # year vector for summary tab
-	acy  = attributes(slev)$years                                          # year vector for summary tab
+	acyr = range(c(attributes(slev)$Ylim)) #,attributes(clev)$Ylim))   ## range of years in age data & catch data
+	acy  = attributes(slev)$years                                      ## year vector for summary tab
 	if (ctype=="S") {
 		levs = pad0(sort(unique(ages$GC)),3)
-		#levs = sort(unique(paste(ages$SVID,ages$GC,sep=".")))
 		lpy  = length(levs) }
 	else {
-		lpy  = attributes(slev)$Nper                                        # no. levels per year
+		lpy  = attributes(slev)$Nper                                    ## no. levels per year
 		levs = 1:lpy }
 	sumtab=array(0,dim=c(length(acy),lpy,length(stats)),
-		dimnames=list(year=acy, lev=levs, stat=stats))                      # summary table
+		dimnames=list(year=acy, lev=levs, stat=stats))                  ## summary table
 
 	for (k in setdiff(stats,"Psamp")) {
 		kdat = get(k)
@@ -3458,7 +3483,6 @@ weightBio = function(adat, cdat, sunit="TID", sweight="catch",
 			x = as.character(floor(as.numeric(nxy)-.001))
 			y = as.character((as.numeric(nxy)-as.numeric(x))*lpy) }
 		for (j in levs) {
-			#jj = pad0(j,3)
 			z=is.element(y,j)
 			ii=x[z]
 			idat=kdat[z]; names(idat)=ii
@@ -3466,8 +3490,8 @@ weightBio = function(adat, cdat, sunit="TID", sweight="catch",
 			for (i in unique(ii)) {
 				#print(c(i,j,k))
 				if (!i%in%acy) next
-				if (sweight=="density") func=mean else func=sum
-				sumtab[i,j,k] = func(idat[is.element(names(idat),i)]) # necessary when more than one survey per year
+				#if (sweight=="density") func=mean else func=sum
+				sumtab[i,j,k] = func(idat[is.element(names(idat),i)]) ## necessary when more than one survey per year (func defined at beginning of weightBio)
 			}
 		}
 	}
@@ -3479,24 +3503,13 @@ weightBio = function(adat, cdat, sunit="TID", sweight="catch",
 			Fcat.tmp[i,] = Fcat.use
 		sumtab[,,"Fcat"] = Fcat.tmp
 	}
-#browser();return()
-#	if (sweight=="density") { # ensure all stratum areas are populated
-#		if (dim(sumtab)[1]>1) { #areas = sumtab[,,"Fcat"]
-#			areas = apply(sumtab[,,"Fcat",drop=FALSE],2,function(x){mean(x[!is.na(x)&x>0])})
-#			Ftab  = sumtab[,names(areas),"Fcat",drop=FALSE]
-#			Atab  = array(rep(areas,each=dim(Ftab)[[1]]),dim=dim(sumtab)[1:2],dimnames=dimnames(sumtab)[1:2])
-#			#Atab  = array(rep(areas,each=dim(Ftab)[[1]]),dim=dim(Ftab),dimnames=dimnames(Ftab))
-#			Atab[apply(Ftab,1,function(x){all(x==0)}),]=0 # revert to zero for non-sampled years (easier for reporting later)
-#			sumtab[,,"Fcat"]=Atab
-#		}
-#	}
-	# proportion of trip:fishery catch (commercial) or expanded catch (sample density times stratum area)
+	## Proportion of trip:fishery catch (commercial) or expanded catch (sample density times stratum area) ***** review
 	Psamp = if (sweight=="density") sumtab[,,"Scat"]*sumtab[,,"Fcat"] else sumtab[,,"Scat"]/sumtab[,,"Fcat"]
 	Psamp[is.nan(Psamp)]=0
 	sumtab[,,"Psamp"]=Psamp
 #browser();return()
 
-	#---output name---
+	##---output name---
 	if (missing(outnam)) {
 		wpanam = paste("output-wpa",strSpp,"(",substring(sweight,1,3),")",sep="")
 		if (ctype=="S")
@@ -3509,10 +3522,10 @@ weightBio = function(adat, cdat, sunit="TID", sweight="catch",
 		wpanam = paste0("output-",outnam)
 		save("sumtab",file=paste0(outnam,".rda"))
 	}
-	#-----------------
+	##-----------------
 #browser();return()
 
-	if (tabs){ #-----Start Tables-----
+	if (tabs){ ##-----Start Tables-----
 		sumsum = sub("output","sumtab",wpanam)
 		sumcsv = paste(sumsum,".csv",sep="")
 		sumrda = paste(sumsum,".rda",sep="")
@@ -3525,12 +3538,11 @@ weightBio = function(adat, cdat, sunit="TID", sweight="catch",
 			apply(cbind(year=rownames(sumtab),sumtab[,,k]),1,function(x){cat(paste(x,collapse=","),"\n",sep="",file=sumcsv,append=TRUE)})
 			cat("\n",file=sumcsv,append=TRUE)
 		}
-		# Coleraine data file: weighted proportions-at-age to CSV
+		## Coleraine data file: weighted proportions-at-age to CSV
 		yy=dimnames(agetab)[[2]]; y=as.numeric(yy)
 		sexy =  sapply(sex,function(s){switch(as.character(s),'0'="u",'1'="m",'2'="f",'3'="nd",'12'="mf")})
 		wpatab=array(0,dim=c(length(y),5+nsex*plus), dimnames=list(year=yy,cols=c("year","ntid","nsid","age1","ageN",
 			paste0(rep(sexy,each=plus),rep(pad0(1:plus,2),nsex)) )))
-			#paste("f",pad0(1:plus,2),sep=""),paste("m",pad0(1:plus,2),sep=""))))
 		wpatab[yy,"year"]=y
 		wpatab[names(Atid),"ntid"]=Atid
 		wpatab[names(Asid),"nsid"]=Asid
@@ -3561,10 +3573,10 @@ weightBio = function(adat, cdat, sunit="TID", sweight="catch",
 		save("agetab",file=paste("agetab",strSpp,".rda",sep=""))
 		packList(c("acat","pvec","Acat","Pvec","pagetab","sagetab","agetab","sumtab","wpatab","wpatxt"),"PBStool",tenv=.PBStoolEnv)
 
-		# ADMB data file: weighted proportions-at-age to DAT
+		## ADMB data file: weighted proportions-at-age to DAT
 		sidyrs = wpatab[,"year"]
 		sidtab = agetab[,,,zfld,drop=FALSE]
-		sidtab=array(sidtab,dim=dim(sidtab)[1:3],dimnames=dimnames(sidtab)[1:3]) # needed when only 1 year is available
+		sidtab=array(sidtab,dim=dim(sidtab)[1:3],dimnames=dimnames(sidtab)[1:3]) ## needed when only 1 year is available
 		sidtab=sidtab[,as.character(sidyrs),,drop=FALSE]
 #browser();return()
 		admdat = sub("output","admb",wpanam)
@@ -3601,9 +3613,9 @@ weightBio = function(adat, cdat, sunit="TID", sweight="catch",
 		cat(paste(mess,collapse=""),file=admdat,append=TRUE)
 		mess=apply(format(wpatab[,c("year","ntid","nsid"),drop=FALSE]),1,paste,collapse="")
 		cat(paste(mess,collapse="\n"),"\n\n",file=admdat,append=TRUE)
-	} #-----End Tables-----
+	} ##-----End Tables-----
 
-	# Test for bubbles of same size
+	## Test for bubbles of same size
 	#z=agetab[,,"1","wp"]==agetab[,,"2","wp"]
 	#agetab[,,"1","wp"][z] = -agetab[,,"1","wp"][z]
 	#agetab[,,"2","wp"][z] = -agetab[,,"2","wp"][z]
@@ -3611,8 +3623,8 @@ weightBio = function(adat, cdat, sunit="TID", sweight="catch",
 	makeCmat =function(x,colname="Y") {
 		matrix(x,ncol=1,dimnames=list(names(x),colname)) }
 
-	# Plot weighted proportions-at-age
-	if (plot) { # eventually make an independent function `plot<Something>` and call here
+	## Plot weighted proportions-at-age
+	if (plot) { ## eventually make an independent function `plot<Something>` and call here
 		if (missing(outnam)) {
 			plotname = sub("output",paste("age",ptype,sep=""),wpanam)
 			plotname = paste(c(plotname,"-sex(",sex,")"),collapse="")
@@ -3622,7 +3634,7 @@ weightBio = function(adat, cdat, sunit="TID", sweight="catch",
 		plt.nsam = crossTab(ages,c("year","sex"),sunit,function(x){length(.su(x))})
 
 		display = agetab
-		reject  = apply(display[,,,"n",drop=FALSE],2:3,sum) < Nmin # do not display these years
+		reject  = apply(display[,,,"n",drop=FALSE],2:3,sum) < Nmin ## do not display these years
 
 		for (k in dimnames(display)$sex)
 			display[,reject[,k],k,]=0
@@ -3632,13 +3644,11 @@ weightBio = function(adat, cdat, sunit="TID", sweight="catch",
 		if (length(xuse)==1) xlim = xlim + c(-.5,.5)
 		if (is.null(Amin)) 
 			Amin = as.numeric(names(clipVector(apply(display[,,,"n"],1,sum),0,1))[1])
-		#ylim=extendrange(c(Amin,plus),f=ifelse(is.null(list(...)$f),0.05,rev(list(...)$f)[1]))
 		ylim=extendrange(c(0,plus),f=ifelse(is.null(list(...)$f),0.05,rev(list(...)$f)[1]))
-		bigBub = max(apply(display[!is.element(rownames(display),plus),,,zfld,drop=FALSE],3,max))   # smallest maximum bubble across sexes (???)
+		bigBub = max(apply(display[!is.element(rownames(display),plus),,,zfld,drop=FALSE],3,max)) ## smallest maximum bubble across sexes (???)
 		#bigBub = max(apply(display[,,,zfld,drop=FALSE],3,max))   # largest maximum bubble across sexes (including plus class)
 
 		LAYOUT = 1:3; names(LAYOUT)=c("portrait","landscape","juxstapose")
-		#nsex   = length(sex)
 		nlay   = LAYOUT[layout]
 		rows=switch(nlay,nsex,1,1)
 		cols=switch(nlay,1,nsex,1)
@@ -3650,10 +3660,10 @@ weightBio = function(adat, cdat, sunit="TID", sweight="catch",
 			dev = devs[d]; devnam=names(dev)
 			if (!dev) next
 #browser();return()
-			if (devnam=="eps") # ps2pdf orientation is largely controlled by Ghostscript (see GS_OPTIONS env var)
+			if (devnam=="eps") ## ps2pdf orientation is largely controlled by Ghostscript (see GS_OPTIONS env var)
 				postscript(paste(plotname,".eps",sep=""),width=switch(nlay,shortside,longside,longside),
 					height=switch(nlay,longside,shortside,longside),horizontal=FALSE,paper="special")
-			else if (devnam=="pdf") # PDF file for convenience
+			else if (devnam=="pdf") ## PDF file for convenience
 				pdf(paste(plotname,".pdf",sep=""),width=switch(nlay,shortside,longside,longside),
 					height=switch(nlay,longside,shortside,longside),paper="special")
 			else if (devnam=="png") {
@@ -3661,7 +3671,6 @@ weightBio = function(adat, cdat, sunit="TID", sweight="catch",
 				width=ifelse(layout=="landscape",longside,shortside)
 				height=ifelse(layout=="landscape",shortside,longside)
 #browser();return()
-				#png(paste(plotname,".png",sep=""),width=width,height=height,units="in",res=ppi,pointsize=pnt)
 				png(filename=paste0(plotname,".png"), units="px", res=outres, width=width*outres, height=height*outres, pointsize=ifelse(outres>100,14,12))
 			} else if (devnam=="wmf")
 				do.call("win.metafile",list(filename=paste0(plotname,".wmf"), width=switch(nlay,shortside,longside,longside), height=switch(nlay,longside,shortside,longside)))
@@ -3672,7 +3681,7 @@ weightBio = function(adat, cdat, sunit="TID", sweight="catch",
 			for (k in 1:nsex) {
 				kk  = sex[k]
 				kkk = as.character(kk)
-				sexBub = max(display[,,kkk,zfld,drop=FALSE])     # largest bubble for sex k
+				sexBub = max(display[,,kkk,zfld,drop=FALSE])     ## largest bubble for sex k
 				zval = display[,,kkk,zfld]
 				if (length(xuse)==1) zval=makeCmat(zval,xuse)
 				if (!is.null(regimes)) {
@@ -3691,14 +3700,10 @@ weightBio = function(adat, cdat, sunit="TID", sweight="catch",
 #browser();return()
 					plotBubbles(zval,dnam=TRUE,hide0=TRUE,size=inch,xlim=xlim,ylim=ylim,
 						clrs=ifelse(kk==0,1,clrs[[k]][1]),las=3,ylab="",tcl=.25, ...)
-					#plotBubbles(makeCmat(display[,,kkk,"n"],xuse),dnam=TRUE,hide0=TRUE,size=inch,xlim=xlim,ylim=ylim,
-					#	clrs=ifelse(k==0,1,clrs[[k]][1]),las=3,cex.axis=.8,ylab="",tcl=.25,cpro=TRUE,...)
 				}
 				if (ptype=="bars") {
-					#zval[zval>bigBub] = bigBub # does nothing now because no values will be > bigBub
 					zmax = zval[-plus,] # exclude the plus class
 					if (length(xuse)==1) zmax=makeCmat(zmax,xuse)
-					#imax = apply(zmax,2,function(x){x>0 & round(x,5)==round(max(x),5)})
 					imax = apply(zmax,2,function(x){x >= quantile(x,0.95) })
 					zmax[!imax] = 0
 #if (k==1) {browser();return()}
@@ -3708,7 +3713,6 @@ weightBio = function(adat, cdat, sunit="TID", sweight="catch",
 						xdif = ifelse(length(xval)==1,1,diff(xval)[1])
 						yval = as.numeric(dimnames(amat)[[1]])
 						ydif = ifelse(length(yval)==1,1,diff(yval)[1])
-						#if (rel) xoff = amat = (amat/bigBub) * (xdif*ifelse(length(xval)==1,0.25,size)/2) #((par()$fin[1]/length(xval)*size)/2)
 						if (rel) xoff = amat = (amat/bigBub) * (size*par()$fin[1]/2)
 						else     xoff = (amat/bigBub) * (size/2)
 						xL   = t(apply(xoff,1,function(x){xval-x})); xLvec = as.vector(xL)
@@ -3720,12 +3724,11 @@ weightBio = function(adat, cdat, sunit="TID", sweight="catch",
 					poly1 = makePoly(zval,rel=TRUE)
 #browser();return()
 					poly2 = makePoly(zmax,rel=TRUE)
-					# TODO: bar width should be nyr * .5/par()$fin[1] for consistency
+					## TODO: bar width should be nyr * .5/par()$fin[1] for consistency
 					sclr = ifelse(kk==0,"black",clrs[[k]][1])
 					aclr = ifelse(kk==0,"grey",clrs[[k]][2])
 					#aclr = c(as.vector(col2rgb(sclr)/255),0.5) # transparent alpha colour
 					#aclr = rgb(aclr[1],aclr[2],aclr[3],alpha=aclr[4])
-					#xlim = xlim + c(- 0.1*diff(par()$usr[1:2]),0)
 					plot(0,0,type="n",axes=FALSE,xlim=xlim,ylim=ylim,xlab="",ylab="")
 					xpos=intersect(min(xuse):max(xuse),round(pretty(xlim,n=10),5))
 					axis(1,at=xpos,las=3,cex.axis=ifelse(is.null(list(...)$cex.axis),0.8,list(...)$cex.axis),tcl=0.25)
@@ -3745,17 +3748,12 @@ weightBio = function(adat, cdat, sunit="TID", sweight="catch",
 						else
 							text(YRS[length(YRS)]+0.5,a+YRS[length(YRS)]+0.5,-a,cex=ifelse(png,0.7,0.8),col=.colBlind["orange"],font=2) #,adj=c(0.5,1.4)) 
 				} }
-				#nototab = agetab[,,kkk,"n"]
-				#if (length(YRS)==1)  nototab = makeCmat(nototab,dimnames(agetab)[2])
-				#noto = apply(nototab,2,sum,na.rm=TRUE); noto = noto[noto>0 & !is.na(noto)]
-				#text(as.numeric(names(noto)),(par()$usr[3]+ylim[1])/2,noto,cex=0.9,font=2,col=clrs[[k]][1])
 				noto = plt.noto[,kkk]; names(noto)=plt.noto[,"year"]
 				noto = noto[noto>0 & !is.na(noto)]
 				nsam = plt.nsam[,kkk]; names(nsam)=plt.nsam[,"year"]
 				nsam = nsam[nsam>0 & !is.na(nsam)]
 
 #browser();return()
-				#text(as.numeric(names(noto)),par()$usr[3]+0.10*abs(diff(par()$usr[3:4])),paste0(noto,":",nsam),font=2,col=clrs[[k]][1],adj=1,srt=90,
 				text(as.numeric(names(noto)), par()$usr[3]+0.02*abs(diff(par()$usr[3:4])), paste0(noto,":",nsam), font=1, adj=0, srt=90,
 					cex=ifelse(is.null(list(...)$cex.noto),0.9,list(...)$cex.noto), col="grey15") #clrs[[k]][1])
 				box(lwd=ifelse(devnam=="png",max(1,floor(zoom/2)),1))

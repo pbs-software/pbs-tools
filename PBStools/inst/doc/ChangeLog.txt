@@ -6,7 +6,17 @@ Authors: RH  = Rowan Haigh
          JTS = Jon T. Schnute
 ------------------------------
 
-1.33.1 (2016-11-28)
+1.34.2 (2016-12-14)
+  • Revised function `weightBio' to better deal with Level 1 and 2 weighting of props-at-age; also fixed a few bugs. (RH 161214)
+  • Revised function `estOgive' to create a year field form date (thanks NO). (RH 161208)
+  • Modified function `calcVB' to handle a few quirks with Alaskan Walleye Pollock data. (RH 161207)
+  • Revised SQL query `pht_map_density.sql' to use GFFOS on SQL server. (RH 161205)
+
+1.34.1 (2016-12-01)
+  • Added GFFOS to function `createDSN' as it's now an SQL database and not an Oracle one. (RH 161201)
+  • Corrected a stupid mistake (mea culpa) in function `getData' in small preparatory calls to `.getSQLdata' using `server="GFDB"' instead of the correct `server=.PBSserver[1]'. (RH 161201)
+
+1.34.0 (2016-11-28)
   • Modified object `.PBSserver' to reflect new GF DB server called `DFBCV9TWVASP001' <199.60.94.30>; DFO phased out Windows 2003 servers. (RH 161128)
   • Modified function `showIndices' to allow for a user-named output file for Awatea/ADMB output of indices. (RH 161117)
   • Modified function `calcVB' so that von Bertalanffy estimation includes a sigma (error) parameter. (RH 161117)
@@ -15,7 +25,7 @@ Authors: RH  = Rowan Haigh
   • Fixed small bug in function `estOgive'. (RH 161027)
   • Fixed small bugs in function `mapMaturity'. (RH 161026)
   • Modified functions `makeLTH' and `texArray' so that the user can choose whether or not to add `continued' messages on tables spanning pages. (RH 161024)
-  • Modified function `plotProp' to better repesent the mean line through the bubbles and to allow better PNG output. (RH 161019)
+  • Modified function `plotProp' to better represent the mean line through the bubbles and to allow better PNG output. (RH 161019)
 
 1.33.0 (2016-10-19)
   • Masked call to `win.metafile' using `do.call' to bypass R check. (RH 161019)
