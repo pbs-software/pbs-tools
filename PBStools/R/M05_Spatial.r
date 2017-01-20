@@ -18,14 +18,15 @@
 #===============================================================================
 
 
-#calcHabitat----------------------------2013-01-28
+#calcHabitat----------------------------2017-01-16
 # Calculate potential habitat using bathymetry.
 #-----------------------------------------------RH
 calcHabitat <- function(topofile="bctopo", isob=c(150,435),
-     digits=1, minVerts=10, col.hab="greenyellow", col.land="moccasin",
+     digits=1, minVerts=25, col.hab="greenyellow", col.land="moccasin",
      xlim=NULL, ylim=NULL,areas=list(), col.areas="red", isolab=TRUE, labtit="",
-     plot=TRUE, pin=c(7,8), eps=FALSE, pix=FALSE, wmf=FALSE, ioenv=.GlobalEnv) {
-
+     plot=TRUE, pin=c(7,8), eps=FALSE, png=FALSE, wmf=FALSE, ioenv=.GlobalEnv)
+{
+	on.exit(gc(verbose=FALSE))
 	assign("PBStool",list(module="M05_Spatial",call=match.call(),args=args(calcHabitat),ioenv=ioenv),envir=.PBStoolEnv)
 	icol = rgb(t(round(col2rgb(col.hab)*.65)),maxColorValue=255) # darker than col.hab
 	expr=paste("getFile(",topofile,",senv=ioenv,use.pkg=TRUE,try.all.frames=TRUE,tenv=penv()); ",
@@ -38,12 +39,14 @@ calcHabitat <- function(topofile="bctopo", isob=c(150,435),
 	if (is.null(xlim)) xlim=rng[,"X"]
 	if (is.null(ylim)) ylim=rng[,"Y"]
 
-	box=as.PolySet(data.frame(PID=rep(3,4),POS=1:4,X=xlim[c(1:2,2:1)],Y=ylim[c(1,1,2,2)]),projection="LL",zone=9)
-	poly0 = closePolys(fixBound(bPoly,.00001))
+	box=as.PolySet(data.frame(PID=rep(1,4),POS=1:4,X=xlim[c(1:2,2:1)],Y=ylim[c(1,1,2,2)]),projection="LL",zone=9)
+	poly0 = closePolys(fixBound(bPoly,.00001))   ## PolySet of outer-depth polygons
+#browser();return()
 	polyA = clipPolys(poly0,xlim=xlim,ylim=ylim)
 	polyB = findHoles(polyA,minVerts=minVerts)
-	polyC = joinPolys(polyB,operation="UNION")
-	habitat = joinPolys(box,polyC,operation="DIFF")
+	#polyC = joinPolys(polyB,operation="UNION")
+	habitat = joinPolys(box,polyB,operation="DIFF") ### There is still a bug in joinPolys!!!
+	habitat = findHoles(habitat)
 
 	warn <- options()$warn; options(warn = -1)
 	area=calcArea(habitat); area=sum(area$area,na.rm=TRUE)
@@ -55,10 +58,10 @@ calcHabitat <- function(topofile="bctopo", isob=c(150,435),
 
 	if (plot) {
 		fout=paste("Habitat-",ifelse(labtit=="","",paste(gsub(" ","-",labtit),"-",sep="")),isob[1],"m-",isob[2],"m",sep="")
-		devs = c(eps=eps,pix=pix,wmf=wmf,win=TRUE)
+		devs = c(eps=eps,png=png,wmf=wmf,win=TRUE)
 		for (i in names(devs)[devs]) {
 			if (i=="eps")      postscript(file=paste(fout,".eps",sep=""),width=pin[1],height=pin[2],fonts="mono",paper="special") 
-			else if (i=="pix") png(paste(fout,".png",sep =""), width=round(100*pin[1]), height=round(100*pin[2])) 
+			else if (i=="png") png(paste(fout,".png",sep =""), width=round(pin[1]), height=round(pin[2]), units="in", res=300) 
 			else if (i=="wmf" && .Platform$OS.type=="windows")
 				do.call("win.metafile",list(filename=paste(fout,".wmf",sep=""),width=pin[1],height=pin[2]))
 			else          resetGraph()
@@ -70,7 +73,7 @@ calcHabitat <- function(topofile="bctopo", isob=c(150,435),
 				clrs   = rep(col.areas,nareas)[1:nareas]
 				sapply(1:nareas,function(x){addPolys(areas[[x]],border=clrs[[x]],lwd=2)})
 			}
-			#if (eps|pix|wmf) addPolys(habitat,col=col.hab,colHoles="white")
+			#if (eps|png|wmf) addPolys(habitat,col=col.hab,colHoles="white")
 			#else addPolys(habitat,col=col.hab)
 			addLines(habitat,col=icol)
 			data(nepacLL,envir=penv()); addPolys(nepacLL,col=col.land)
@@ -78,10 +81,9 @@ calcHabitat <- function(topofile="bctopo", isob=c(150,435),
 			if (isolab) legend("bottomleft",inset=0.06,fill=col.hab,title=labtit,title.adj=0.5,
 				legend=paste(isob[1],"\226",isob[2],"m  (",format(round(area),big.mark=","),"km\262)",sep=""),bty="n",cex=1.5)
 			box(lwd=2)
-			if (i %in% c("eps","pix","wmf")) dev.off()
+			if (i %in% c("eps","png","wmf")) dev.off()
 		}
 	}
-	gcdump=gc(verbose=FALSE)
 	invisible(habitat) }
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~calcHabitat
 
@@ -678,11 +680,11 @@ findHoles = function(polyset, minVerts=25)
 }
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~findHoles
 
-#plotGMA--------------------------------2013-02-26
+#plotGMA--------------------------------2017-01-20
 # Plot the Groundfish Management Areas
 #-----------------------------------------------RH
 plotGMA = function(gma=gma.popymr, xlim=c(-134,-123), ylim=c(48.05,54.95), 
-     dimfig=c(9,9), pix=FALSE, extra.labels=NULL) {
+   dimfig=c(9,9), eps=FALSE, png=FALSE, extra.labels=NULL, strSpp) {
 
 	oldpar=par(no.readonly=-TRUE); on.exit(par(oldpar))
 	if (!is.null(extra.labels) && mode(extra.labels)=="character" && extra.labels[1]=="default") {
@@ -692,26 +694,56 @@ plotGMA = function(gma=gma.popymr, xlim=c(-134,-123), ylim=c(48.05,54.95),
 			Y   = c(53.74724,51.48773,51.05771,50.15860),
 			label = c("Haida\nGwaii","QCS","GIG","Vancouver\nIsland") ),
 			projection="LL" )
+		if (!missing(strSpp) && strSpp%in%c("228"))
+			extra.labels = extra.labels[!is.element(extra.labels$label,c("QCS","GIG")),]
 	}
 	fnam = as.character(substitute(gma))
-	data(nepacLLhigh,major,envir=penv())
-	edata = pdata = attributes(gma.popymr)$PolyData
+	data(nepacLLhigh,major,minor,envir=penv())
+	edata = pdata = attributes(gma)$PolyData
 	names(edata)[1]="EID"
+#browser();return()
 	edata=as.EventData(edata,projection="LL")
 
-	if (pix) png(filename=paste(fnam,"amend","png",sep="."),width=dimfig[1],height=dimfig[2],units="in",res=200)
+	if (png) png(filename=paste(fnam,"png",sep="."),width=dimfig[1],height=dimfig[2],units="in",res=300)
+	else if (eps) postscript(file=paste0(fnam,".eps"),width=dimfig[1],height=dimfig[2],paper="special",horizontal=FALSE)
 	else resetGraph()
-	plotMap(gma, xlim=xlim, ylim=ylim, polyProps=pdata,border="grey",
-		plt=c(0.07,0.99,0.07,0.99), mgp=c(3,.5,0), las=1, cex.axis=1.2, cex.lab=1.5)
-	addPolys(major,col="transparent",border="navyblue",lwd=2)
-	addPolys(nepacLLhigh,col="white",border="grey")
+
+	plotMap(gma, type="n", xlim=xlim, ylim=ylim, polyProps=pdata, border="grey",
+		plt=c(0.08,0.99,0.07,0.99), mgp=c(3.0,.5,0), las=1, cex.axis=1.25, cex.lab=1.75)
+
+	if (!missing(strSpp) && strSpp%in%c("228")) {
+		earlgrey = "grey30"
+		maj228 = list()
+		maj228[["m5CDE"]] = joinPolys(major[is.element(major$PID,7:9),],operation="UNION")
+		maj228[["m5AB"]]  = joinPolys(rbind(major[is.element(major$PID,5:6),], minor[is.element(minor$PID,11:12),]), operation="UNION")
+		maj228[["m3CD"]]  = joinPolys(rbind(major[is.element(major$PID,3:4),], minor[is.element(minor$PID,20:21),]), operation="UNION")
+		maj228[["m4B"]]   = joinPolys(minor[is.element(minor$PID,c(13:19,28,29)),], operation="UNION")
+		majnew = data.frame()
+		for (i in 1:length(maj228)) {
+			ii = names(maj228)[i]
+			idat = maj228[[i]]
+			idat$PID = i
+			if (!any(grepl("SID",names(idat))))
+				idat = data.frame(PID=i,SID=1,idat[,-1])
+			majnew = rbind(majnew,idat)
+		}
+		major = as.PolySet(majnew, projection="LL")
+		addPolys(major,col=lucent(c("green","orange","blue","red"),0.55),border=earlgrey)
+		addPolys(gma, ,col="transparent", border=earlgrey, lwd=2)
+#browser();return()
+	} else {
+		earlgrey = "grey"
+		addPolys(gma, polyProps=pdata, border=earlgrey)
+		addPolys(major,col="transparent",border="navyblue",lwd=2)
+	}
+	addPolys(nepacLLhigh,col="white",border=earlgrey)
 	.addAxis(par()$usr[1:2],ylim=par()$usr[3:4],tckLab=FALSE,tck=.015,tckMinor=.015/2)
 	addLabels(edata,cex=2.5,font=2)
 	if (!is.null(extra.labels))
-		addLabels(extra.labels,cex=1.8,col="blue")
+		addLabels(extra.labels,cex=1.5,col="blue")
 	text(-125.2416,52.70739,"BC",cex=5,col="grey",font=2)
 	box(lwd=2)
-	if (pix) dev.off()
+	if (eps|png) dev.off()
 	gc(verbose=FALSE)
 	invisible(list(pdata=pdata,extra.labels=extra.labels))
 }
@@ -1024,8 +1056,10 @@ preferDepth = function(strSpp="410", fqtName="pht_fdep.sql", dbName="PacHarvest"
 		ttget(PBStool); PBStool$effort <- effort; ttput(PBStool)
 		frame(); addLabel(.5,.5,"Effort loaded",col="darkgreen",cex=1.2) }
 
-#.preferDepth.getDepth------------------2015-11-12
-.preferDepth.getDepth <- function() { 
+#.preferDepth.getDepth------------------2017-01-16
+.preferDepth.getDepth <- function()
+{
+	opar <- par(lwd=2); on.exit(par(opar))
 	getWinVal(scope="L",winName="window"); act <- getWinAct()[1]
 	if (!is.null(act) && act=="getdata") getdata <- TRUE else getdata <- FALSE
 	if (path==""){ path <- getwd(); setWinVal(list(path=path),winName="window") }
@@ -1097,14 +1131,14 @@ preferDepth = function(strSpp="410", fqtName="pht_fdep.sql", dbName="PacHarvest"
 	if (nyr>=nar) { ifac <- year; jfac <- area; yba <- TRUE}
 	else { ifac <- area; jfac <- year; yba <- FALSE}
 
-	eps=pix=wmf=FALSE
+	eps=png=wmf=FALSE
 	if (!is.null(act)){
 		if (act=="eps") eps=TRUE
-		else if (act=="pix") pix=TRUE
+		else if (act=="png") png=TRUE
 		else if (act=="wmf") wmf=TRUE
 	}
 	if (eps)      postscript(file=paste(plotname,"eps",sep="."),width=10,height=6*nrow^0.25,horizontal=FALSE,paper="special")
-	else if (pix) png(filename=paste(plotname,"png",sep="."),width=10,height=6*nrow^0.25,units="in",res=100)
+	else if (png) png(filename=paste(plotname,"png",sep="."),width=10,height=6*nrow^0.25,units="in",res=300)
 	else if (wmf && .Platform$OS.type=="windows")
 		do.call("win.metafile",list(filename=paste(plotname,"wmf",sep="."),width=10,height=6*nrow^0.25))
 	else resetGraph()
@@ -1115,10 +1149,16 @@ preferDepth = function(strSpp="410", fqtName="pht_fdep.sql", dbName="PacHarvest"
 		expandGraph(mfrow=c(nrow,ncol),mar=c(0,0,0,0),oma=c(5,5,1,1),cex=0.7,yaxs="i",mgp=c(2,.5,0),las=1);
 	xlim <- c(0,round(max(c(dat$depth,eff$depth),na.rm=TRUE),-1)) + c(-xwid,xwid); xdiff <- diff(xlim);
 	ylim <- c(0,.19)
-	brks=seq(xlim[1],xlim[2],xwid)
-	stuff=c("xlim","ylim","brks","area")
+	brks = seq(xlim[1],xlim[2],xwid)
+	BRKS = seq(XLIM[1],XLIM[2],xwid)
+	stuff=c("xlim","ylim","brks","BRKS","area")
 	packList(stuff,"PBStool",tenv=.PBStoolEnv)
-	
+
+	brks = BRKS
+	dat  = dat[dat$depth>=brks[1] & dat$depth<=rev(brks)[1] & !is.na(dat$depth),]
+	if (isE)
+		eff  = eff[eff$depth>=brks[1] & eff$depth<=rev(brks)[1] & !is.na(eff$depth),]
+
 	for (i in ifac) {
 		if (all(ifac!=0)) {
 			if (isE) ieff = eff[is.element(eff[,ifelse(yba,"year","area")],i),]
@@ -1134,7 +1174,8 @@ preferDepth = function(strSpp="410", fqtName="pht_fdep.sql", dbName="PacHarvest"
 			ntows <- nrow(jdat)
 			stuff=c("ifac","jfac","ntows") # (,"jdat","jeff") ### too big slow things down
 			packList(stuff,"PBStool",tenv=.PBStoolEnv)
-
+#browser();return()
+			#xy <- hist(jdat$depth, breaks=brks, plot=FALSE);
 			xy <- hist(jdat$depth, breaks=brks, plot=FALSE);
 			xy$density <- xy$counts/sum(xy$counts)
 			xyout <- paste("xy",spp,i,j,sep=".")
@@ -1149,7 +1190,8 @@ preferDepth = function(strSpp="410", fqtName="pht_fdep.sql", dbName="PacHarvest"
 				attr(xye,"class")="histogram"
 				packList("xye","PBStool",tenv=.PBStoolEnv) }
 
-			plot(xy,freq=FALSE, xlab="", ylab="", main="",cex.lab=1.2,
+			par(lwd=2) ## doesn't seem to take when specified in first line of function
+			plot(xy,freq=FALSE, xlab="", ylab="", main="",cex.lab=1.2, 
 				col="white", xlim=XLIM, ylim=YLIM, axes=FALSE);
 			if (par()$mfg[1]==par()$mfg[3]) axis(1,cex.axis=1.2)
 			if (par()$mfg[2]==1) axis(2,cex.axis=1.2,tcl=.5) else axis(2,labels=FALSE,tcl=.5)
@@ -1201,7 +1243,7 @@ preferDepth = function(strSpp="410", fqtName="pht_fdep.sql", dbName="PacHarvest"
 		"by column ]"))),outer=TRUE,side=1,line=2*nrow^0.25,cex=1.2)
 	mtext(paste("Proportions",ifelse(nrow==1,"",paste(" [",ifelse(yba,"year","area"),
 		"by row ]"))),outer=TRUE,side=2,line=3.25,cex=1.25,las=0)
-	if (eps|pix|wmf) dev.off()
+	if (eps|png|wmf) dev.off()
 	invisible() }
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~preferDepth
 

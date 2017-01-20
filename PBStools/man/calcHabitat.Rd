@@ -6,9 +6,9 @@
 }
 \usage{
 calcHabitat(topofile="bctopo", isob=c(150,435),
-   digits=1, minVerts=10, col.hab="greenyellow", col.land="moccasin",
-   xlim=NULL, ylim=NULL, areas=list(), col.areas="red", isolab=TRUE, labtit="",
-   plot=TRUE, pin=c(7,8), eps=FALSE, pix=FALSE, wmf=FALSE, ioenv=.GlobalEnv)
+     digits=1, minVerts=25, col.hab="greenyellow", col.land="moccasin",
+     xlim=NULL, ylim=NULL,areas=list(), col.areas="red", isolab=TRUE, labtit="",
+     plot=TRUE, pin=c(7,8), eps=FALSE, png=FALSE, wmf=FALSE, ioenv=.GlobalEnv)
 }
 \arguments{
   \item{topofile}{topographical ASCII XYZ file downloaded from the Scripps
@@ -28,7 +28,7 @@ calcHabitat(topofile="bctopo", isob=c(150,435),
   \item{plot}{logical: if \code{TRUE}, plot the results.}
   \item{pin}{numeric vector: width and height of a figure device plot in inches.}
   \item{eps}{logical: if \code{TRUE}, send plot to a postscript (\code{.eps}) file.}
-  \item{pix}{logical: if \code{TRUE}, send plot to a raster (\code{.png}) file.}
+  \item{png}{logical: if \code{TRUE}, send plot to a raster (\code{.png}) file.}
   \item{wmf}{logical: if \code{TRUE}, send plot to a metafile (\code{.wmf}) file.}
   \item{ioenv}{input/output environment for function input data and output results.}
 }

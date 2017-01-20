@@ -4,21 +4,24 @@
   Plot the Groundfish Management Areas
 }
 \description{
-  Plot the groundfish management areas (GMA) for Pacific Ocean Perch
-  (\emph{Sebastes alutus}) and Yellowmouth Rockfish (\emph{S. reedi})
-  used by Pacific groundfish managers at RHQ in Vancouver.
+  Plot the groundfish management areas (GMA) used by Pacific 
+  groundfish managers at RHQ in Vancouver. Various regional
+  differences occur for Pacific Ocean Perch, Yellowmouth Rockfish,
+  and Walleye Pollock.
 }
 \usage{
 plotGMA(gma=gma.popymr, xlim=c(-134,-123), ylim=c(48.05,54.95), 
-     dimfig=c(9,9), pix=FALSE, extra.labels=NULL)
+   dimfig=c(9,9), eps=FALSE, png=FALSE, extra.labels=NULL, strSpp)
 }
 \arguments{
   \item{gma}{PolySet of Groundfish Management Areas (e.g. \bold{PBSdata}\code{::gma.popymr} GMAs).}
   \item{xlim}{numeric: latitude limits of the map region.}
   \item{ylim}{numeric: longitude limits of the map region.}
   \item{dimfig}{numeric: dimensions of the figure region (inches).}
-  \item{pix}{logical: if \code{TRUE}, send the plot to a \code{.png} file.}
+  \item{eps}{logical: if \code{TRUE}, send the plot to an \code{.eps} file.}
+  \item{png}{logical: if \code{TRUE}, send the plot to a \code{.png} file.}
   \item{extra.labels}{EventData object that defines coordinates and labels for additional map annotation.}
+  \item{strSpp}{character code (usually Hart) for species.}
 }
 \details{
   The code assumes that the PolySet of GMA areas contains an attribute called \code{PolyData} 

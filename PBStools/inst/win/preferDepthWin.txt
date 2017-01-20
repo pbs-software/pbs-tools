@@ -69,7 +69,7 @@ grid 1 2 sticky=W
 				grid 1 3 sticky=E
 					button text=EFF  function=.preferDepth.getEffort action=geteffort bg=skyblue sticky=E pady=5
 					button text=DATA function=.preferDepth.getDepth  action=getdata bg=skyblue sticky=E pady=5
-					button text=PLOT function=.preferDepth.getDepth  bg=green sticky=E
+					button text=PLOT function=.preferDepth.getDepth  action=getplot bg=green sticky=E
 grid 1 2
 	history func=.preferDepth.getDepth pady=5 #import=
 	grid 3 1 padx="15 0"

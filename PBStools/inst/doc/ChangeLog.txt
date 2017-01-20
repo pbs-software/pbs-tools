@@ -6,6 +6,14 @@ Authors: RH  = Rowan Haigh
          JTS = Jon T. Schnute
 ------------------------------
 
+1.35.0 (2017-01-20)
+  • Modified function `calcHabitat' slightly to better represent PNG files. (RH 170116)
+  • Revised function `preferDepth' to focus on histogram area given user's depth limits ratehr than the whole water column. (RH 170116)
+  • Revised SQl code `pht_effort.sql' to access GFFOS on SQL Server rather than Oracle's GFSH, which no longer exists. (RH 170116)
+  • Modified function `plotGMA' to represent Walleye Pollock stock regions. (RH 170110)
+  • Modified function `calcLW' to subset on gear and to output better png files. (RH 161221)
+  • Revised function `estOgive' to create higher resolution png files. (RH 161220)
+
 1.34.2 (2016-12-14)
   • Revised function `weightBio' to better deal with Level 1 and 2 weighting of props-at-age; also fixed a few bugs. (RH 161214)
   • Revised function `estOgive' to create a year field form date (thanks NO). (RH 161208)

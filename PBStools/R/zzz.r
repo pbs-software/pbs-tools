@@ -49,7 +49,7 @@ if(getRversion() >= "2.15.1") utils::globalVariables(names=c(
 	"idxD","idxL","idxM","inone","IRRmin","is.pred","isobath","iters",
 	"k",
 	"las","lastSerial","lin","lmres","ltype","lwd",
-	"m","major","mar","mata","maxit","mdbName","MDL","melt.data.frame","method","mfrow","mgp","mmor","modelCheck","modelCompile","modelData","modelGenInits","modelUpdate","modT","mpd","mu",
+	"m","major","mar","mata","maxit","mdbName","MDL","melt.data.frame","method","mfrow","mgp","minor","mmor","modelCheck","modelCompile","modelData","modelGenInits","modelUpdate","modT","mpd","mu",
 	"nage","Nat","Nboot","nc","nC","nd","nepacLL","nepacLLhigh","nper","nRP","nspec","nT","nyr",
 	"obs","oma","orfhistory","out",
 	"pa.obs","pa.raw","parVec","path","pathN","PBSdat","PBStool","PBSmin","Pfig","phi","pi.obs","pix","pjsa","PLIM","pmfc","pmon","pnam","poi","pop.age","pop.pmr.qcss","popa","powr","prefix","pset","psize","Pstart","pwd","pyr",

@@ -22,14 +22,14 @@
 #===============================================================================
 
 
-#calcLW---------------------------------2016-10-20
+#calcLW---------------------------------2016-12-21
 # Calculate length-weight relationship for a fish.
 # Formerly called calcLenWt.
 #-----------------------------------------------RH
 calcLW <- function(dat=pop.age, strSpp="396",
    areas=list(major=3:9), ttype=list(Research=c(2,3)), 
-   sex=list(Females=2,Males=1), stype=NULL, rm.studs=NULL,
-   plotit=FALSE, ptype="eps", outname) 
+   sex=list(Females=2,Males=1), stype=NULL, gear=NULL, 
+   rm.studs=NULL, plotit=FALSE, ptype="eps", outnam) 
 {
 	## Start Subfunctions---------------------------
 	## Device set-ups should match those in `calcVB'
@@ -55,8 +55,8 @@ calcLW <- function(dat=pop.age, strSpp="396",
 	## Setup the PNG device for import to word, half page with 2 plots side by side
 	createPNG <- function(plotName,rc=c(2,2), width=3.5, height=3) { ## width & height for each panel
 		plotName <- paste(plotName,"png",sep=".")
-		png(plotName, units="px", res=200, width=width*rc[2]*200, height=(height*rc[1]+0.75)*200, pointsize=12)
-		par(mfrow=rc, mar=c(2.6,2.5,1,0.5), oma=c(0,0,0,0), mgp=c(1.5,0.5,0), cex=1.2) }
+		png(plotName, units="in", res=200, width=width*rc[2], height=(height*rc[1]+0.75), pointsize=12)
+		par(mfrow=rc, mar=c(2.6,2.5,1,0.5), oma=c(0,0,0,0), mgp=c(1.5,0.5,0), cex=1) }
 
 	## Setup the TIFF device for import to word, half page with 2 plots side by side
 	createTIF <- function(plotName,rc=c(2,2), width=3.5, height=3) { ## width & height for each panel
@@ -74,16 +74,17 @@ calcLW <- function(dat=pop.age, strSpp="396",
 
 	assign("PBStool",list(module="M02_Biology",call=match.call(),args=args(calcLW)),envir=.PBStoolEnv)
 	inObj = as.character(substitute(dat))
-#browser();return()
 
 	dat0 = dat  # save for later
-	dat <- dat[dat$len>=1 & !is.na(dat$len) & dat$wt>0 & !is.na(dat$wt) & !is.na(dat$sex),]
+	#dat <- dat[dat$len>=1 & !is.na(dat$len) & dat$wt>0 & !is.na(dat$wt) & !is.na(dat$sex),]
+	dat <- dat[dat$len>0 & !is.na(dat$len) & dat$wt>0 & !is.na(dat$wt) & !is.na(dat$sex),]
 	if (!is.null(ttype)) dat <- dat[is.element(dat$ttype,.su(unlist(ttype))),]
 	else {
 		ttype =  paste(.su(dat$ttype),collapse="|")
 		dat$ttype = ttype
 	}
 	if (!is.null(stype)) dat <- dat[is.element(dat$stype,stype),]
+	if (!is.null(gear)) dat <- dat[is.element(dat$gear,gear),]
 	if (is.null(areas)) { areas <- list(coast="BC"); dat$coast <- rep("BC",nrow(dat)) }
 	anams = sapply(areas,function(x){paste(paste(x,collapse="|",sep=""),sep="")})
 	anams = paste(names(anams),anams,sep="_")
@@ -102,6 +103,7 @@ calcLW <- function(dat=pop.age, strSpp="396",
 	for (a1 in 1:length(areas)) {
 		an = names(areas)[a1]; ar = areas[[a1]]
 		adat <- dat[is.element(dat[,an],ar),]
+#browser();return()
 		if (nrow(adat)==0) next
 		ylim[2] <- max(adat$wt,na.rm=TRUE)
 		akeyname  = paste0(ar,collapse="|")
@@ -117,19 +119,19 @@ calcLW <- function(dat=pop.age, strSpp="396",
 			if (is.null(ttt)) ttt = tmat
 			xout[,tmat,amat,"year"] = range(tdat$year,na.rm=TRUE)
 			xout[,tmat,amat,"date"] = range(substring(tdat$date,1,10),na.rm=TRUE)
-			if (missing(outname)) {
+			if (missing(outnam)) {
 				plotName <- gsub("_","(",gsub("\\|","+",amat))
 				plotName <- paste("LenWt-",strSpp,"-",plotName,")-tt(",gsub("\\|","",tmat),")",sep="")
 				plotName <- paste0(plotName,"-data(",inObj,")")
 				plotNames = c(plotNames,plotName)
-			} else plotName = outname
+			} else plotName = outnam
 #browser();return()
 			if (length(sex)>3)
 				rc = rev(.findSquare(length(sex)))
 			else
 				rc = c(1,length(sex))
 			if (plotit) eval(parse(text=paste0("create",toupper(ptype),"(\"",plotName,"\",rc=",deparse(rc),")")))
-			else par(mfrow=rc,cex=2.0,mar=c(3.5,3,1.5,.1),oma=c(0,0,0,0),mgp=c(2,.5,0),cex=1)
+			else par(mfrow=rc,cex=2.0,mar=c(3.5,3,1.5,.1),oma=c(0,0,0,0),mgp=c(2,0.5,0),cex=1)
 			#else par(mfrow=c(2,2),cex=2.0,mar=c(3.5,3,1.5,.1),oma=c(0,0,0,0),mgp=c(2,.5,0),cex=1)
 			for (i in 1:length(sex)) {
 				ii   = sex[[i]]; iii = names(sex)[i]
@@ -145,6 +147,8 @@ calcLW <- function(dat=pop.age, strSpp="396",
 						if (length(rm.studs)==1) rm.studs = rep(rm.studs,2) * c(-1,1)
 						rm.studs = sort(rm.studs)
 						keep = res.stud >= rm.studs[1] & res.stud <= rm.studs[2]
+						removed = length(res.stud) - sum(keep)
+#browser();return()
 						idat0 = idat; fit0 = fit1; n0 = n1
 						idat = idat[keep,]
 						xlim <- range(idat$len,na.rm=TRUE)
@@ -168,7 +172,7 @@ calcLW <- function(dat=pop.age, strSpp="396",
 #if (iii=="Other") {browser();return()}
 
 				if (iii!="Unknown") {
-					plot(jitter(idat$len,0), jitter(idat$wt,0), pch=ifelse(grepl("mw$",inObj),18,20), cex=ifelse(plotit,0.5,0.8), mgp=c(1.75,.5,0),
+					plot(jitter(idat$len,0), jitter(idat$wt,0), pch=ifelse(grepl("mw$",inObj),18,20), cex=ifelse(plotit,0.5,0.8), #mgp=c(1.75,.5,0),
 						#col=.colBlind[switch(ttt,Research="bluegreen",Commercial="redpurple","orange")], 
 						col=switch(ttt,Research="dodgerblue",Commercial="orangered","orange"), 
 						xlab="     Length (cm)", ylab="   Weight (kg)", main=iii, xlim=xlim, ylim=ylim, bty="l")
@@ -188,8 +192,10 @@ calcLW <- function(dat=pop.age, strSpp="396",
 					addLabel(xleft,ytop-0.15,bquote(bolditalic(n)==.(format(n1,big.mark=","))),adj=0,cex=0.8)
 					if (n1>1){
 						addLabel(xleft,ytop-0.20,bquote(bold(log(alpha))==.(aa)),adj=0,cex=0.8)
-						addLabel(xleft,ytop-0.25,bquote(bolditalic(beta)==.(bb)),adj=0,cex=0.8)
+						addLabel(xleft,ytop-0.26,bquote(bolditalic(beta)==.(bb)),adj=0,cex=0.8)
 					}
+					if (isThere("removed"))
+						addLabel(xleft,ytop-0.30,bquote(italic(removed)==.(removed)),adj=0,cex=0.8)
 					box(bty="l") } }
 			if (plotit) dev.off()
 	} }
@@ -204,10 +210,10 @@ calcLW <- function(dat=pop.age, strSpp="396",
 	# Output table for Pre-COSEWIC
 	pout = out
 	zero=is.na(pout[,"n",,]); pout[,"n",,][zero]=0 ## replace NA with 0 if no tows occurred
-	if (missing(outname))
+	if (missing(outnam))
 		fnam <- paste("LenWt-",strSpp,"-data(",inObj,").csv",sep="")
 	else
-		fnam = paste0(outname,".csv")
+		fnam = paste0(outnam,".csv")
 	attr(out,"tableName") = fnam
 	jkey = paste(names(ttype),sapply(ttype,function(x){paste(x,collapse="+")}),sep=": ")
 	dimnames(pout)$ttype = jkey
@@ -231,7 +237,7 @@ calcLW <- function(dat=pop.age, strSpp="396",
 	}
 	PBStool$pout=pout; ttput(PBStool)
 	invisible(out) }
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-calcLW
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~calcLW
 
 
 #calcSG---------------------------------2013-01-25
@@ -1096,7 +1102,7 @@ compCsum <- function(dat=pop.age, pro=TRUE, strSpp="", xfld="age", plus=60,
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~compCsum
 
 
-#estOgive-------------------------------2016-12-08
+#estOgive-------------------------------2016-12-20
 # Creates ogives of some metric (e.g., % maturity at age).
 # Arguments:
 #   dat     - specimen morphometrics data from GFBio
@@ -1274,7 +1280,8 @@ estOgive <- function(dat=pop.age, strSpp="", method=c("dblnorm"),
 	if (eps) postscript(paste0(onam,".eps"),width=figdim[1],height=figdim[2],paper="special")
 	else if (wmf && .Platform$OS.type=="windows")
 		do.call("win.metafile",list(filename=paste0(onam,".wmf"), width=figdim[1], height=figdim[2]))
-	else if (png) png(filename=paste0(onam,".png"),width=figdim[1]*100,height=figdim[2]*100,res=100)
+	#else if (png) png(filename=paste0(onam,".png"),width=figdim[1]*100,height=figdim[2]*100,res=100)
+	else if (png) png(filename=paste0(onam,".png"),width=figdim[1],height=figdim[2],units="in",res=300)
 	else resetGraph()
 	expandGraph(mfrow=c(1,1),mai=c(.6,.7,0.05,0.05),omi=c(0,0,0,0),las=1,lwd=1)
 	plot(0,0,type="n",xlab="",ylab="",xaxt="n",yaxt="n",xlim=xlim,ylim=c(0,1))
