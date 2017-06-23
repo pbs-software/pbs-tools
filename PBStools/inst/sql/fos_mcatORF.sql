@@ -1,5 +1,5 @@
 -- Query catch gathered from multiple DBs and housed in GF_MERGED_CATCH
--- Query species catch from GFFOS on DFBCV9TWVASP001
+-- Query species catch from GFFOS on SVBCPBSGFIIS
 -- Last modified: 2016-04-12 (RH)
 SET NOCOUNT ON 
 
@@ -140,6 +140,8 @@ SELECT --top 100
   ISNULL(A.MINOR_STAT_AREA_CODE,'0') AS \"minor\",
   ISNULL(A.LOCALITY_CODE,'0') AS \"locality\",
   --CC.LOCAL_NAME, -- for debugging locality names
+  ISNULL(MC.LONGITUDE,'0') AS \"X\",
+  ISNULL(MC.LATITUDE,'0') AS \"Y\",
   ISNULL(MC.BEST_DEPTH,0) AS \"fdep\",
   ISNULL(DATEDIFF(n,MC.FE_START_DATE,MC.FE_END_DATE),0) AS \"eff\"
 INTO #EVENT_CORE
@@ -186,6 +188,8 @@ GROUP BY
   ISNULL(A.MINOR_STAT_AREA_CODE,'0'),
   ISNULL(A.LOCALITY_CODE,'0'),
   --CC.LOCAL_NAME, -- for debugging locality names
+  ISNULL(MC.LONGITUDE,'0'),
+  ISNULL(MC.LATITUDE,'0'),
   ISNULL(MC.BEST_DEPTH,0),
   ISNULL(DATEDIFF(n,MC.FE_START_DATE,MC.FE_END_DATE),0)
 
@@ -204,6 +208,7 @@ SELECT
   EC.minor,
   EC.locality,
   --CC.LOCAL_NAME, -- for debugging locality names
+  EC.X, EC.Y,
   EC.fdep,
   EC.eff,
   CC.landed,

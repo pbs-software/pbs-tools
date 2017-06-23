@@ -9,16 +9,17 @@
 }
 \usage{
 formatCatch(dat, N=3, X=0, zero="0", na="---",
-   K=",", exInt=TRUE)
+   K=",", exInt=TRUE, use.round=FALSE)
 }
 \arguments{
   \item{dat}{data frame/matrix/vector of raw (catch) numbers}
   \item{N}{number of significant digits}
-  \item{X}{numeric vector of columns to exclude (set to \code{NULL} or \code{0} if selecting all columns)}
+  \item{X}{numeric vector of columns to exclude (set to \code{NULL} or \code{0} if selecting all columns).}
   \item{zero}{character replacement for zero-values}
   \item{na}{character replacement for \code{NA} values}
   \item{K}{big mark separator (see \code{format})}
-  \item{exInt}{logical: exclude integers from manipulation to signicant digits}
+  \item{exInt}{logical: if \code{TRUE}, exclude integers from manipulation to signicant digits.}
+  \item{use.round}{logical: if \code{TRUE}, round the values to \code{N} decimal places rather than provide \code{N} significant figures.}
 }
 \details{
   The algorithm relies on string manipulation to achieve a result that

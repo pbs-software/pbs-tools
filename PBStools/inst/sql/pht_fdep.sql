@@ -46,6 +46,7 @@ WHERE
   COALESCE(E.Fishing_Depth, D.FDEPTH, 0) > 0 AND
   COALESCE(E.OBFL_MAJOR_STAT_AREA_CDE, OC.MAJOR_STAT_AREA, 0) in (@major) AND
   MC.SPECIES_CODE IN (@sppcode) AND
+  E.OBFL_LOG_TYPE_CDE IN ('OBSERVRLOG') AND   -- flag for consideration (observerlogs only)
   (MC.LANDED + MC.DISCARDED) > 1
 
 SELECT --TOP 100
@@ -109,7 +110,8 @@ FROM
         OC.SPECIES_CODE = FW.SPECIES_CODE
     WHERE 
       OC.SPECIES_CODE  IN (@sppcode) AND
-      OC.DATA_SOURCE_CODE IN (105,106) AND   -- flag for consideration
+      OC.DATA_SOURCE_CODE IN (106) AND   -- flag for consideration (observerlogs only)
+      --OC.DATA_SOURCE_CODE IN (105,106) AND   -- flag for consideration
       --OC.FISHERY_SECTOR IN ('GROUNDFISH TRAWL') AND
       COALESCE(OC.MAJOR_STAT_AREA_CODE,'00') IN (@major) AND
       COALESCE(OC.BEST_DEPTH_FM,OC.START_DEPTH_FM,0) > 0 ) SETS ON
@@ -124,5 +126,5 @@ FROM #PHTDEP
   UNION ALL SELECT * FROM #FOSDEP
 
 --getData("pht_fdep.sql","PacHarvest",strSpp="396",major=5:7)
-
+--qu("pht_fdep.sql",dbName="PacHarvest",strSpp="228")
 

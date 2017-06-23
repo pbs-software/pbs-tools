@@ -35,6 +35,7 @@ FROM
 WHERE 
   COALESCE(E.Fishing_Depth, D.FDEPTH, 0) > 0 AND
   ISNULL(E.OBFL_MAJOR_STAT_AREA_CDE, 0) in (@major) AND
+  E.OBFL_LOG_TYPE_CDE IN ('OBSERVRLOG') AND   -- flag for consideration (observerlogs only)
   ISNULL(E.Duration, 0) BETWEEN 1 AND 7200 -- > 0 & <= 5 days
 
 -- SELECT TOP 100 * INTO #FOSEFF
@@ -82,7 +83,8 @@ INTO #FOSEFF
 FROM 
   GFFOS.dbo.GF_D_OFFICIAL_FE_CATCH C
 WHERE 
-  C.DATA_SOURCE_CODE IN (105,106) AND   -- flag for consideration
+  --C.DATA_SOURCE_CODE IN (105,106) AND   -- flag for consideration
+  C.DATA_SOURCE_CODE IN (106) AND   -- flag for consideration (observerlogs only)
   C.FISHERY_SECTOR IN ('GROUNDFISH TRAWL') AND
   COALESCE(C.MAJOR_STAT_AREA_CODE,'00') IN (@major) AND
   COALESCE(C.BEST_DEPTH_FM,C.START_DEPTH_FM,0) > 0 AND 
@@ -115,6 +117,6 @@ FROM #PHTEFF
   UNION ALL SELECT * FROM #FOSEFF
 
 --getData("pht_effort.sql","PacHarvest",strSpp="396",major=5:7)
---qu("pht_effort.sql",dbName="PacHarvest",strSpp="396")
+--qu("pht_effort.sql",dbName="PacHarvest",strSpp="228")
 
 

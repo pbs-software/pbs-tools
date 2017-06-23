@@ -1,4 +1,5 @@
 -- Norm Olsen's query (greatly modified) to get top N percentage catch
+-- Last modified: 2015-10-28 (RH)
 SET NOCOUNT ON
 
 @INSERT('meanSppWt.sql')  -- getData now inserts the specified SQL file assuming it's on the path specified in getData
@@ -14,8 +15,8 @@ FROM
 WHERE 
   C.SPECIES_CODE IN (@sppcode) AND
   E.OBFL_LOG_TYPE_CDE IN ('OBSERVRLOG') AND   -- flag for consideration
-  COALESCE(E.OBFL_GEAR_SUBTYPE_CDE,1) IN (@dummy) AND
-  E.OBFL_MAJOR_STAT_AREA_CDE IN (@major) AND
+  COALESCE(E.OBFL_GEAR_SUBTYPE_CDE,1) IN (@gear) AND
+  (E.OBFL_MAJOR_STAT_AREA_CDE IN (@major) OR E.OBFL_MINOR_STAT_AREA_CDE IN (@dummy)) AND
   COALESCE(
     NULLIF(E.Fishing_Depth,0), NULLIF(E.OBFL_START_BOTTOM_DTH,0),
     NULLIF(E.OBFL_END_BOTTOM_DTH,0), NULLIF(E.OBFL_MID_BOTTOM_DTH,0),
@@ -53,7 +54,7 @@ FROM
     OC.SPECIES_CODE  IN (@sppcode) AND
     OC.DATA_SOURCE_CODE IN (106) AND   -- flag for consideration
     OC.FISHERY_SECTOR IN ('GROUNDFISH TRAWL') AND
-    COALESCE(OC.MAJOR_STAT_AREA_CODE,'00') IN (@major) AND
+    (COALESCE(OC.MAJOR_STAT_AREA_CODE,'00') IN (@major) OR COALESCE(OC.MINOR_STAT_AREA_CODE,'00') IN (@dummy)) AND
     COALESCE(OC.BEST_DEPTH_FM,OC.START_DEPTH_FM,0)*1.8288 BETWEEN @mindep AND @maxdep AND
     (CASE WHEN
       (OC.GEAR_SUBTYPE IN ('BOTTOM TRAWL') OR   -- bottom
@@ -64,7 +65,7 @@ FROM
       (OC.GEAR_SUBTYPE IN ('MIDWATER TRAWL') OR   -- midwater
       (OC.GEAR_SUBTYPE IN ('UNSPECIFIED') AND 
       OC.TRIP_CATEGORY IN ('OPT A - HAKE QUOTA (GULF)','OPT A - HAKE QUOTA (SHORESIDE)','OPT A - HAKE QUOTA (JV)')))
-    THEN 3 ELSE 0 END) IN (@dummy) ) SETS ON
+    THEN 3 ELSE 0 END) IN (@gear) ) SETS ON
     C.TRIP_ID = SETS.TRIP_ID AND
     C.FISHING_EVENT_ID = SETS.FISHING_EVENT_ID
   INNER JOIN @MEAN_WEIGHT FW ON -- FISH WEIGHTS FW
@@ -101,4 +102,5 @@ ORDER BY SUM(AC.LANDED + AC.DISCARDED) / @total DESC
 
 -- getData("pht_concurrent.sql","PacHarvest",strSpp="424",mindep=49,maxdep=101,dummy=1)  -- dummy essential to make query work
 -- getData("pht_concurrent.sql","PacHarvest",strSpp="396",major=5:7,mindep=70,maxdep=441,dummy=1) -- QCS (567)
+-- getData("pht_concurrent.sql","PacHarvest",strSpp="228",major=5:6,dummy=12,mindep=70,maxdep=441,gear=c(1,3)) -- QCS (major 5+6 and minor 12)
 

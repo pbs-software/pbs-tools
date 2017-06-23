@@ -1087,7 +1087,7 @@ preferDepth = function(strSpp="410", fqtName="pht_fdep.sql", dbName="PacHarvest"
 			setWinVal(list(strSpp=spp),winName="window") } }
 	assign("dat",PBSdat)
 	if (nrow(dat)==0) showError(paste("Species =",spp),type="nodata")
-	packList("dat","PBStool",tenv=.PBStoolEnv) ## RH: save the raw data for manual sunsetting
+	packList("dat","PBStool",tenv=.PBStoolEnv) ## RH: save the raw data for manual subsetting
 	eff = ttcall(PBStool)$effort
 	isE = ifelse(is.null(eff),FALSE,TRUE)
 	if (!isE) setWinVal(list(showE=FALSE),winName="window")

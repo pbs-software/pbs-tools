@@ -13,7 +13,8 @@
 \usage{
 buildCatch(dbdat, strSpp="396", orfSpp="TRF", major=c(1,3:9), fidout=c(1:5,10),
    refyrs=1997:2005, refarea=NULL, refgear=NULL, useYR1=NULL, useBG=FALSE,
-   useSM=FALSE, useGFM=TRUE, useLS=TRUE, useCA=TRUE, useUS=TRUE, useFF=TRUE,
+   useSM=FALSE, useGFM=TRUE, useLS=TRUE, useAI=FALSE,
+   useCA=TRUE, useUS=TRUE, useFF=TRUE,
    strat.gamma=FALSE, strat.delta=FALSE, depbin=100, sensitivity=NULL,
    reconstruct=TRUE, diagnostics=FALSE, ascii.tables=TRUE, saveinfo=TRUE,
    sql=FALSE, only.sql=FALSE, sql.force=FALSE, spath=.getSpath(), dpath=getwd(),
@@ -59,6 +60,8 @@ buildCatch(dbdat, strSpp="396", orfSpp="TRF", major=c(1,3:9), fidout=c(1:5,10),
   \item{useSM}{logical: if \code{TRUE}, use catch data from seamounts.}
   \item{useGFM}{logical: if \code{TRUE}, use the latest official \code{GF_MERGED_CATCH} table (compiled by Norm and Kate).}
   \item{useLS}{logical: if \code{TRUE}, use ORF catch from Langara Spit in \code{gamma} calculation.}
+  \item{useAI}{logical: if \code{TRUE}, assign catch from Anthony Island (PMFC 5E south of 52.33333) to PMFC 5C, primarily for POP and YMR.
+    Only works for data from GFFOS merged catch in `gfmdat'.}
   \item{useCA}{logical: if \code{TRUE}, use ORF catch from the Canadian fleet.}
   \item{useUS}{logical: if \code{TRUE}, use ORF catch from the American fleet.}
   \item{useFF}{logical: if \code{TRUE}, use ORF catch from the foreign (not CA/US) fleet.}

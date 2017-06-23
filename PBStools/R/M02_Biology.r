@@ -1102,7 +1102,7 @@ compCsum <- function(dat=pop.age, pro=TRUE, strSpp="", xfld="age", plus=60,
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~compCsum
 
 
-#estOgive-------------------------------2016-12-20
+#estOgive-------------------------------2017-06-20
 # Creates ogives of some metric (e.g., % maturity at age).
 # Arguments:
 #   dat     - specimen morphometrics data from GFBio
@@ -1136,14 +1136,15 @@ compCsum <- function(dat=pop.age, pro=TRUE, strSpp="", xfld="age", plus=60,
 #   dots    - parameters to pass to subfunction `doLab'
 #-----------------------------------------------RH
 estOgive <- function(dat=pop.age, strSpp="", method=c("dblnorm"),
-   sex=list(Females=2,Males=1), mos=list(1:12,1:12), mat=3:7, ameth=3, amod=NULL, azero=NULL,
-   ttype=list(Commercial=c(1,4),Research=c(2:3)), stype=c(1,2,6,7), scat = 1, 
-   SSID=NULL, surveys=NULL,
+   sex=list(Females=2,Males=1), mos=list(1:12,1:12), mat=3:7, 
+   ameth=list(BB=3), amod=NULL, azero=NULL,
+   ttype=list(Commercial=c(1,4),Research=c(2:3)), stype=c(1,2,6,7), scat = list(Unsorted=1), 
+   SSID=NULL, surveys=NULL, subset="SSID",
    ofld="age", obin=1, xlim=c(0,45), figdim=c(8,5),
    plines=TRUE, ppoints=TRUE, rpoints=FALSE, rtext=FALSE,
    fg=c("red","orange2","blue","green4"), Arcs=NULL, radius=0.2,
-   parList = list(val=c(15,0.9,exp(100)),min=c(5,0.1,exp(10)),
-   max=c(60,1000,exp(150)),active=c(TRUE,TRUE,FALSE)),
+   parList=list(val=c(15,0.9,exp(100)), min=c(5,0.1,exp(10)),
+   max=c(60,1000,exp(150)), active=c(TRUE,TRUE,FALSE)),
    outnam, eps=FALSE, png=FALSE, wmf=FALSE, ioenv=.GlobalEnv, ...)
 {
 #--Subfunctions-------------------------
@@ -1213,24 +1214,31 @@ estOgive <- function(dat=pop.age, strSpp="", method=c("dblnorm"),
 		dat=dat[is.element(dat[,fldSpp],strSpp),] }
 
 	#if (ofld=="len") dat$len=dat$len
+#browser()
 	if (ofld=="age") {
 		#dat=dat[is.element(dat$ameth,ameth),] # break and burn only 
-		zam = is.element(dat$ameth,ameth)
-		if (any(ameth==3)) zam = zam | (is.element(dat$ameth,0) & dat$year>=1980)
+		#zam = is.element(dat$ameth,ameth)
+		Ameth = .su(unlist(ameth))
+		zam = is.element(dat$ameth,Ameth)
+		if (all(Ameth==3)) zam = zam | (is.element(dat$ameth,0) & dat$year>=1980)
 		dat = dat[zam,]
+		.flush.cat("after bite ameth : ",nrow(dat)," records left\n")
 	}
 	dat$month <- as.numeric(substring(dat$date,6,7))
-#browser();return()
 
 	for (i in c("stype","scat")) {
 		mess = paste0("dat = biteData(dat,",i,")")
 		eval(parse(text=mess))
-		print(paste0("after bite ",i," : ",nrow(dat)," records left"))
+		.flush.cat("after bite ",i," : ",nrow(dat)," records left\n",sep="")
 	}
+#browser();return()
 	dat$ogive <- dat[,ofld]
 	dat <- dat[is.element(dat$sex,sort(unique(unlist(sex)))),]
-	dat <- dat[is.element(dat$mat,1:rev(mat)[1]),]  ## Maturity Codes depend on Maturity convention (e.g., 12 for PAH/WAP)
+	.flush.cat("after bite sex  : ",nrow(dat)," records left\n")
+	dat <- dat[is.element(dat$mat,1:rev(mat)[1]),]  ## Maturity Codes depend on Maturity convention (e.g., 25 for PAH/WAP)
+	.flush.cat("after bite mat  : ",nrow(dat)," records left\n")
 	dat <- dat[dat$ogive>=xlim[1] & dat$ogive<=xlim[2] & !is.na(dat$ogive),]
+	.flush.cat("after bite ogive: ",nrow(dat)," records left\n")
 	dat$obin <- ceiling(dat$ogive/obin)*obin # - (obin/2) # Mean age of each bin
 	if (is.null(names(sex)))
 		names(sex)=sapply(sex,function(x){paste("sex_",paste(x,collapse="+"),sep="")})
@@ -1238,9 +1246,15 @@ estOgive <- function(dat=pop.age, strSpp="", method=c("dblnorm"),
 	if (any(duplicated(names(sex)))) showError("Choose unique combinations of sex")
 
 	nsex=length(sex)
-	nsub    = length(ttype)+length(SSID) # subsets for each sex
-	subtype = c(rep("ttype",length(ttype)),rep("SSID",length(SSID)))
-	subsets = c(ttype,SSID)
+	asub    = get(subset)
+	nsub    = length(ttype)+length(asub) # subsets for each sex
+	if (nsub==0) {
+		ttype = list('avail.ttype'=.su(dat$ttype))
+		nsub = 1
+	}
+	subtype = c(rep("ttype",length(ttype)),rep(subset,length(asub)))
+	subsets = c(ttype,asub)
+#browser();return()
 
 	if (is.null(mos)) mos = list(.su(dat$month))
 	mos=rep(mos,nsex)[1:nsex]
@@ -1280,16 +1294,17 @@ estOgive <- function(dat=pop.age, strSpp="", method=c("dblnorm"),
 	if (eps) postscript(paste0(onam,".eps"),width=figdim[1],height=figdim[2],paper="special")
 	else if (wmf && .Platform$OS.type=="windows")
 		do.call("win.metafile",list(filename=paste0(onam,".wmf"), width=figdim[1], height=figdim[2]))
-	#else if (png) png(filename=paste0(onam,".png"),width=figdim[1]*100,height=figdim[2]*100,res=100)
-	else if (png) png(filename=paste0(onam,".png"),width=figdim[1],height=figdim[2],units="in",res=300)
+	else if (png) png(filename=paste0(onam,".png"),width=figdim[1],height=figdim[2],units="in",res=400)
 	else resetGraph()
 	expandGraph(mfrow=c(1,1),mai=c(.6,.7,0.05,0.05),omi=c(0,0,0,0),las=1,lwd=1)
-	plot(0,0,type="n",xlab="",ylab="",xaxt="n",yaxt="n",xlim=xlim,ylim=c(0,1))
+	MDX = xlim[2]/3
+
+	plot(0,0, type="n", xlab="", ylab="", xaxt="n", yaxt="n", xlim=xlim, ylim=c(0,1))
 	abline(h=.5,col="gainsboro",lty=1,lwd=2)
-	abline(h=seq(0,1,.1),v=seq(0,xlim[2],ifelse(xlim[2]<30,1,2)),col="gainsboro",lty=2,lwd=1)
+	abline(h=seq(0,1,.1),v=seq(0,xlim[2],ifelse(xlim[2]<30,1,ifelse(xlim[2]<60,2,5))),col="gainsboro",lty=2,lwd=1)
 	if(ofld=="age") axis(1,at=seq(floor(xlim[1]),ceiling(xlim[2]),1),tcl=-.2,labels=FALSE)
-	axis(1,at=seq(floor(xlim[1]),ceiling(xlim[2]),5),tcl=-.4,labels=FALSE)
-	axis(1,at=seq(floor(xlim[1]),ceiling(xlim[2]),10),tcl=-.5,mgp=c(0,.5,0),cex=.9)
+	axis(1,at=seq(floor(xlim[1]),ceiling(xlim[2]),ifelse(xlim[2]<=10,1,5)),tcl=-.4,labels=FALSE)
+	axis(1,at=seq(floor(xlim[1]),ceiling(xlim[2]),ifelse(xlim[2]<=10,2,10)),tcl=-.5,mgp=c(0,.5,0),cex=.9)
 	axis(2,at=seq(0,1,.05),tcl=-.25,labels=FALSE)
 	axis(2,at=seq(0,1,.1),tcl=-.5,mgp=c(0,.7,0),cex=.9,adj=1)
 	mtext(ifelse(ofld=="age","Age","Length"),side=1,cex=1.2,line=1.75)
@@ -1303,6 +1318,7 @@ estOgive <- function(dat=pop.age, strSpp="", method=c("dblnorm"),
 		#above=as.logical(s%%2); #print(c(s,above))
 		sexlab=paste(substring(sexcode[as.character(sex[[s]])],1,1),collapse="+")
 
+#browser();return()
 		sdat <- dat[is.element(dat$sex,sex[[s]]),]
 		for (i in 1:nsub) {
 			ii  = subtype[i]
@@ -1312,12 +1328,14 @@ estOgive <- function(dat=pop.age, strSpp="", method=c("dblnorm"),
 			idat = sdat[is.element(sdat[,ii],iii),]
 			if (nrow(idat)==0 || !any(idat$mat %in% mat) ) next
 			#if (ii=="ttype")
-				idat <- idat[is.element(idat$month,mos[[s]]),]
+			idat <- idat[is.element(idat$month,mos[[s]]),]
+			if (nrow(idat)==0) next
 			if (strSpp=="405" && ss=="Males")
 				idat = idat[idat$age!=3 & !is.na(idat$age),] # special condition (may not always be necessary)
 			mbin <- split(idat$mat,idat$obin)
 			nbin <- sapply(mbin,length) # number of maturity codes in each age bin
 			CALCS[[ss]][[sss]][["mbin"]] = mbin
+#browser();return()
 			CALCS[[ss]][[sss]][["nfish"]] = sum(nbin)
 			nleg = nleg +1
 			legtxt[nleg] = paste0(ss,": ",sss," (n=",sum(nbin),")")
@@ -1329,7 +1347,6 @@ estOgive <- function(dat=pop.age, strSpp="", method=c("dblnorm"),
 			zbad1 = pemp>=0.99 & as.numeric(names(pemp)) <= parList$val[1]
 			zbad2 = pemp>=0.50 & as.numeric(names(pemp)) <= parList$min[1]
 			pemp[zbad1|zbad2] = 0 
-#browser();return()
 			ogive = split(idat$ogive,idat$obin) # age/lengths in the bin
 			n     = sapply(ogive,length)        # number of ages/lengths in bin
 			mn    = sapply(ogive,mean)          # mean age/length by bin
@@ -1351,24 +1368,25 @@ estOgive <- function(dat=pop.age, strSpp="", method=c("dblnorm"),
 			a=coeffs[1]; b=coeffs[2]
 			#pbin = exp(a+b*xpos)/(1+exp(a+b*xpos)); names(pbin)=x
 			pbin = exp(a+b*xtab)/(1+exp(a+b*xtab)); names(pbin)=xtab
+			nmu  = which(abs(pbin-1)==min(abs(pbin-1))) ## https://stat.ethz.ch/pipermail/r-help/2008-July/167216.html
+			mubn = xtab[nmu]
 			out[names(pbin),"pbin",ss,sss]=pbin
-			ybin=seq(.01,.99,.01)
-			xbin=(log(ybin/(1-ybin))-a)/b
-			ld50=-a/b
+			ybin = seq(.0001,.9999,.0001)
+			xbin = (log(ybin/(1-ybin))-a)/b
+			zbin = xbin<=xlim[2]
+			xbin = xbin[zbin]; ybin = ybin[zbin]
+			ld50 = -a/b
 			CALCS[[ss]][[sss]][["p50"]][["binomial"]] = ld50
+#browser();return()
 
 			# double normal fit
 			parList = parList[c("val","min","max","active")] # must have these components
 			if (!(length(parList)==4 && all(sapply(parList,length)==3)))
 				showError("Input list `parList' must have 4 vectors\n\nnamed `val', `min', `max' and `active',\n\neach with 3 elements for `mu', `nuL', and `nuR'",as.is=TRUE)
 			parVec = data.frame(parList,row.names=c("mu","nuL","nuR"), stringsAsFactors=FALSE)
-			dlist = calcMin(pvec=parVec,func=fitDN,method="nlm",repN=10)
+#print(parVec)
+			dlist = calcMin(pvec=parVec,func=fitDN,method="nlm",repN=10,steptol=1e-10,reltol=1e-16)
 			Pend  = dlist$Pend
-			revleg = rev(legtxt)
-			lastleg = revleg[1]
-			lastleg = gsub(")$",paste0(", \\\265=",round(Pend[1],1),")"),lastleg)
-			revleg[1] = lastleg
-			legtxt = rev(revleg)
 #browser();return()
 			p50 = page(0.5,Pend[[1]],Pend[[2]])
 			CALCS[[ss]][[sss]][["p50"]][["dblnorm"]] = p50
@@ -1389,28 +1407,48 @@ estOgive <- function(dat=pop.age, strSpp="", method=c("dblnorm"),
 				out[names(ydbl),"pmod",ss,sss] = c(yraw,ydbl[zmod])
 			} 
 			else out[names(ydbl),"pmod",ss,sss] = ydbl
-#browser();return()
 			xout[,sss,ss,"year"] = range(idat$year,na.rm=TRUE)
 			xout[,sss,ss,"date"] = range(substring(idat$date,1,10),na.rm=TRUE)
 
+			if (rpoints) # raw (observed) proportion mature at age
+				points(xpos,pemp,pch=bigPch[sin],col=ifelse(ppoints,smClrs[sin],fg[sin]),bg=smClrs[sin],cex=ifelse(sum(c(rpoints,rtext))==1,1.2,1.0))
+
 			nmeth = 0
 			if (any(method=="logit")) {
+				revleg = rev(legtxt)
+				lastleg = revleg[1]
+				lastleg = gsub(")$",paste0(", \\\265.bn=",mubn,")"),lastleg)
+				revleg[1] = lastleg
+				legtxt = rev(revleg)
 				nmeth = nmeth + 1
 				lines(xbin,ybin,col=fg[sin],lwd=ifelse(all(method=="logit"),2,1),lty=ifelse(all(method=="logit"),1,3))
 				doLab(xbin,ybin,ld50,n=nmeth,...) 
 			}
 			if (any(method=="dblnorm")) {
+				revleg = rev(legtxt)
+				lastleg = revleg[1]
+				lastleg = gsub(")$",paste0(", \\\265.dN=",round(Pend[1],1),")"),lastleg)
+				revleg[1] = lastleg
+				legtxt = rev(revleg)
 				nmeth = nmeth + 1
 				Xdbl=seq(xlim[1],xlim[2],len=1000)
 				Ydbl=calcDN(Pend,a=Xdbl)
-				if (plines)
+				if (plines) {
 					lines(Xdbl,Ydbl,col=fg[sin],lwd=ifelse(all(method=="dblnorm"),2,2),lty=sin) #ifelse(all(method=="dblnorm"),1,1))
+				} else {
+					CALCS[[ss]][[sss]][["nrec"]] = nrow(idat)
+					CALCS[[ss]][[sss]][["pend"]] = pend
+					CALCS[[ss]][[sss]][["XYlineDN"]] = cbind(Xdbl,Ydbl)
+					CALCS[[ss]][[sss]][["XYrptsDN"]] = cbind(xpos,pemp)
+				}
 				Xpts=seq(1,xlim[2],1)
 				Ypts=calcDN(Pend,a=Xpts)
-				if (ppoints)
+#browser();return()
+				if (ppoints) {
 					points(Xpts,Ypts,pch=bigPch[sin],col=fg[sin],bg=bg[sin],cex=1.1)
-				if (rpoints) # raw (observed) proportion mature at age
-					points(xpos,pemp,pch=bigPch[sin],col=ifelse(ppoints,smClrs[sin],fg[sin]),bg=smClrs[sin],cex=ifelse(sum(c(rpoints,rtext))==1,1.2,1.0))
+				} else {
+					CALCS[[ss]][[sss]][["XYpptsDN"]] = cbind(Xpts,Ypts)
+				}
 				if (!is.null(amod)) { # redundant (in case we want finer (X,Y) points for curve than integer ages in results array `out')
 					zmod = Xpts>=amod
 					points(Xpts[zmod],Ypts[zmod],pch=4,lwd=2,col="black",cex=1.5)
@@ -1428,7 +1466,9 @@ estOgive <- function(dat=pop.age, strSpp="", method=c("dblnorm"),
 				if (rtext)
 					text(xpos,pemp,nbin,col=fg[sin],font=ifelse(eps,1,2),cex=1,adj=if (rpoints) c(s%%2,1) else c(0.5,0.5))
 #if (i==5) {browser();return()}
-				doLab(Xdbl,Ydbl,p50,n=nmeth,...)
+				if (plines)
+					doLab(Xdbl,Ydbl,p50,n=nmeth,...)
+				MDX = max(MDX, approx(Ydbl,Xdbl,xout=.5,rule=2,ties="ordered")$y)  ## used to place the legend
 			}
 			if (any(method=="empir")) {
 				nmeth = nmeth + 1
@@ -1440,6 +1480,8 @@ estOgive <- function(dat=pop.age, strSpp="", method=c("dblnorm"),
 			}
 		}
 	}
+#browser();return()
+	if (nleg==0) CALCS = NULL
 	#addLegend(.7,.3,legend=paste("sex",sapply(strsplit(names(sex),""),paste,collapse="+")),lwd=ifelse(any(method==c("logit","dblnorm")),2,1),
 	if (length(legtxt)==0) {
 		if (nsex>1) legtxt = paste0(rep(names(sex),each=nsub),": ")
@@ -1448,8 +1490,8 @@ estOgive <- function(dat=pop.age, strSpp="", method=c("dblnorm"),
 	}
 	#if (length(SSID)==1)
 	#	legtxt=sub(names(SSID),paste0(names(SSID),"\n     ",paste(surveys,collapse="\n     "),"\n"),legtxt)
-#browser();return()
-	addLegend(ifelse(png,1.1,1.25)*mdx/xlim[2], ifelse(is.null(surveys),0.30,0.45), legend=legtxt, lty=1:nsexsub, lwd=ifelse(any(method==c("logit","dblnorm")),2,1), adj=c(0,ifelse(is.null(surveys),0.5,0.95)), pch=ifelse(any(method=="empir"),20,NA), col=fg[1:nsexsub], cex=ifelse(eps|png,0.9,1), bty="n", seg.len=2.5)
+	if (plines)
+		addLegend(ifelse(png,0,0.05)+MDX/xlim[2], ifelse(is.null(surveys),0.30,0.45), legend=legtxt, lty=1:nsexsub, lwd=ifelse(any(method==c("logit","dblnorm")),2,1), adj=c(0,ifelse(is.null(surveys),0.5,0.95)), pch=ifelse(any(method=="empir"),20,NA), col=fg[1:nsexsub], cex=ifelse(eps|png,0.8,1), bty="n", seg.len=2.5)
 	box()
 	if(eps|png|wmf) dev.off()
 

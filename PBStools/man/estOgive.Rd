@@ -9,15 +9,15 @@
 }
 \usage{
 estOgive(dat=pop.age, strSpp="", method=c("dblnorm"),
-   sex=list(Females=2,Males=1), mos=list(1:12,1:12),
-   mat=3:7, ameth=3, amod=NULL, azero=NULL,
-   ttype=list(Commercial=c(1,4),Research=c(2:3)), stype=c(1,2,6,7), scat=1, 
-   SSID=NULL, surveys=NULL,
+   sex=list(Females=2,Males=1), mos=list(1:12,1:12), mat=3:7, 
+   ameth=list(BB=3), amod=NULL, azero=NULL,
+   ttype=list(Commercial=c(1,4),Research=c(2:3)), stype=c(1,2,6,7), 
+   scat = list(Unsorted=1), SSID=NULL, surveys=NULL, subset="SSID",
    ofld="age", obin=1, xlim=c(0,45), figdim=c(8,5),
    plines=TRUE, ppoints=TRUE, rpoints=FALSE, rtext=FALSE,
    fg=c("red","orange2","blue","green4"), Arcs=NULL, radius=0.2,
-   parList = list(val=c(15,0.9,exp(100)),min=c(5,0.1,exp(10)),
-   max=c(60,1000,exp(150)),active=c(TRUE,TRUE,FALSE)),
+   parList=list(val=c(15,0.9,exp(100)), min=c(5,0.1,exp(10)),
+   max=c(60,1000,exp(150)), active=c(TRUE,TRUE,FALSE)),
    outnam, eps=FALSE, png=FALSE, wmf=FALSE, ioenv=.GlobalEnv, ...)
 }
 \arguments{
@@ -46,20 +46,23 @@ estOgive(dat=pop.age, strSpp="", method=c("dblnorm"),
     0=unknown, 1=total catch, 2=random, 4=selected,
     5=stratified, 6=random from randomly assigned set, 7=random from set after randomly assigned set,
     8=random from set requested by vessel master, 9=selected juveniles, and 10=selected adults.}
-  \item{SSID}{Survey Series ID (55+ at last count), where \cr
+  \item{scat}{list of species category codes (\code{GFBio}'s \code{"SPECIES_CATEGORY"} table),\cr
+    e.g. \code{list(Unsorted=1, Keepers=3)}.}
+  \item{SSID}{Survey Series ID (63 as of Jun 23, 2017), where \cr
     1 = Queen Charlotte Sound Synoptic Survey, \cr
     2 = Hecate Strait Multispecies Assemblage Survey, \cr
     3 = Hecate Strait Synoptic Survey, \cr
     4 = West Coast Vancouver Island Synoptic Survey, \cr
     16 = West Coast Haida Gwaii Synoptic Survey, \cr
     e.g. \code{SSID=list(`QCS Synoptic`=1, `WCVI Synoptic`=4)}}
-  \item{scat}{Species category code in table \code{"SPECIES_CATEGORY"}; code for unsorted fish: 1= \code{"UNSORTED"}.}
   \item{surveys}{text to add to legend if multiple surveys combined into one category.}
+  \item{subset}{field to use if subsetting each sex (e.g, by \code{SSID}).}
   \item{ofld}{ogive field (usually \code{age} or \code{len}).}
   \item{obin}{bin size (in x-units) to group \code{age} or \code{len}.}
   \item{xlim}{range of the x-metric (x-axis).}
   \item{figdim}{dimensions (width and height in inches) of output figure.}
-  \item{plines}{logical: if \code{TRUE}, add the predicted curve.}
+  \item{plines}{logical: if \code{TRUE}, add the predicted curve; 
+    if \code{FALSE} and \code{method="dblnorm"} then save the points from the predicted curve in a list object \code{CALCS}.}
   \item{ppoints}{logical: if \code{TRUE}, add predicted points along predicted curve at integer ages.}
   \item{rpoints}{logical: if \code{TRUE}, add observed points (proportions mature at age).}
   \item{rtext}{logical: if \code{TRUE}, label observed points with number of observations.}
@@ -91,9 +94,11 @@ estOgive(dat=pop.age, strSpp="", method=c("dblnorm"),
   provides the following:
   \item{pmat }{Function calculating proportions mature.}
   \item{DATA}{List object of data by sex as data frames.}
-  \item{CALCS}{List object of data by sex and subset (trip type, SSID) giving 
-    \code{mbin} (maturities binned by age or length) and \code{p50}
-    (age-at-50\% maturity) for three methods -- empirical, binomial, and double normal.}
+  \item{CALCS}{List object of data by sex and subset (trip type, SSID) giving: 
+    \code{mbin} (maturities binned by age or length), \code{p50}
+    (age-at-50\% maturity) for three methods -- empirical, binomial, and double normal, and 
+    plotting information for the double normal when \code{plines=FALSE} (# records, 
+    parameter fits, predicted curve coordinates, and proportions-mature at each age).}
   \item{out}{Results table showing proportions mature at each binned age or length (also invisibly returned).}
   \item{pend}{List object of parameter estimates from the fit to the double normal method --
     rendered as a named vector of  \code{mu}, \code{nuL}, \code{nuR}, and \code{p50} --

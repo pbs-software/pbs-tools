@@ -79,7 +79,7 @@ collectFigs = function(path=".", ext="eps", is.fnum=FALSE,
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~collectFigs
 
 
-#formatCatch----------------------------2015-11-13
+#formatCatch----------------------------2017-05-10
 # Format a numeric table so that each cell 
 # displays N significnat figures in character format.
 # Arguments:
@@ -92,7 +92,7 @@ collectFigs = function(path=".", ext="eps", is.fnum=FALSE,
 #  exInt = exclude integers from manipulation to signicant digits
 #-----------------------------------------------RH
 formatCatch = function(dat, N=3, X=0, zero="0", na="---",
-   K=",", exInt=TRUE)
+   K=",", exInt=TRUE, use.round=FALSE)
 {
 	makeCmat =function(x,colname="Y") {
 		matrix(x,ncol=1,dimnames=list(names(x),colname)) }
@@ -120,6 +120,16 @@ formatCatch = function(dat, N=3, X=0, zero="0", na="---",
 	
 	# Detect, remember, and remove negative signs
 	nadat  = is.na(dat[,-(X),drop=FALSE])
+	if(use.round) {
+		zdat = dat[,-(X),drop=FALSE]==0 & !is.na(dat[,-(X),drop=FALSE])
+		cdat = dat
+		cdat[,-(X)][!nadat] = show0(round(cdat[,-(X)][!nadat],3),3,add2int=!exInt)
+		cdat[zdat]  = zero
+		cdat[nadat] = na
+#browser();return()
+		return(cdat)
+	}
+	
 	negdat = dat[,-(X),drop=FALSE] < 0 & !nadat
 	dat[,-(X)][negdat] = -dat[,-(X)][negdat]
 	if (class(dat)[1]=="cast_df") attr(dat,"class") = "data.frame"
@@ -139,13 +149,11 @@ formatCatch = function(dat, N=3, X=0, zero="0", na="---",
 			X1 = format(as.numeric(paste(x,collapse=".")),digits=N,big.mark=K,trim=TRUE,scientific=FALSE)
 			if (x1=="0" && X1=="0") return(zero) ## RH (151113) catch instances when 0 has been changed to "0.00000" by as.character
 			n2 = N - nchar(x[1])
-#browser();return()
 			if (length(x)==1) {
-				if (x[1]=="0") ival = zero
-				else if(exInt) ival = x[1]
+				if (x[1]=="0")  ival = zero
+				else if(exInt)  ival = format(as.numeric(x[1]), big.mark=K)
 				else if (n2>=1) ival = format(as.numeric(gsub(",","",x1)),nsmall=n2,big.mark=K,trim=TRUE,scientific=FALSE)
 				else ival = x1
-#browser();return()
 			}
 			else {
 				if (nchar(x[1])>=N) ival = X1
@@ -171,6 +179,7 @@ formatCatch = function(dat, N=3, X=0, zero="0", na="---",
 					else ival = paste(x1,x2,sep=".")
 				}
 			}
+#browser();return()
 			return(ival)
 		},N=N,K=K,zero=zero,na=na)
 		cdat[[i]] = inum
@@ -256,14 +265,16 @@ splitTab = function(tab, np=3, row.names=TRUE, row.label="row", row.numeric=FALS
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~splitTab
 
 
-#texArray-------------------------------2016-10-24
+#texArray-------------------------------2017-06-23
 # Flatten and format an array for latex output.
 #-----------------------------------------------RH
 texArray =function(x, table.caption="My table", table.label="tab:mytable",
-   strSpp=NULL, sigdig=3, zero="---", collab=NULL, dash.delim=NULL, 
+   strSpp=NULL, sigdig=3, zero="---", exInt=TRUE, use.round=FALSE, 
+   collab=NULL, dash.delim=NULL, tablewidth=6.5, 
    rm.empty=TRUE, start.page=1, ignore.col=NULL,
    select.rows=NULL, use.row.names=FALSE, name.row.names="row",
-   add.header.column=FALSE, new.header=NULL, outnam="mytable", ...)
+   add.header.column=FALSE, new.header=NULL, outnam="mytable", 
+   alignHRC=c("l","l","r"), ...)
 {
 	if (!is.array(x) && !is.matrix(x) && !is.data.frame(x)) stop("input an array or a matrix")
 	N = dim(x)
@@ -300,7 +311,6 @@ texArray =function(x, table.caption="My table", table.label="tab:mytable",
 		Zsort = sort(Z)
 		LL = length(Zsort) # temporary
 		Dsort = sapply(Zsort,function(x){1:x},simplify=FALSE)
-#browser();return()
 		if (LL==1) {
 			foo = matrix(Dsort[[1]],ncol=1)
 			colnames(foo)="3"
@@ -404,7 +414,8 @@ texArray =function(x, table.caption="My table", table.label="tab:mytable",
 		"\\begin{document}",
 		"\\renewcommand{\\familydefault}{ua1}",
 		"\\renewcommand{\\rmdefault}{ua1}",
-		"\\usefont{\\encodingdefault}{\\familydefault}{\\seriesdefault}{\\shapedefault}\\small"
+		"\\usefont{\\encodingdefault}{\\familydefault}{\\seriesdefault}{\\shapedefault}\\small",
+		"\\setlength{\\tabcolsep}{0pt}"
 	)
 	writeLines(texmess,texout)
 #browser();return()
@@ -420,8 +431,8 @@ texArray =function(x, table.caption="My table", table.label="tab:mytable",
 		else X = grep(FALSE,goonum)
 		if (!is.null(ignore.col))
 			X = union(X[X!=0],ignore.col)
+		goo = formatCatch(goo,N=sigdig,zero=zero,X=X,use.round=use.round,exInt=exInt)
 #browser();return()
-		goo = formatCatch(goo,N=sigdig,zero=zero,X=X)
 	}
 	colnames(goo)=collab ## sapply can screw up colnames if they are not unique
 
@@ -444,10 +455,10 @@ texArray =function(x, table.caption="My table", table.label="tab:mytable",
 		if (use.row.names) names(goo)[2] = name.row.names
 	}
 	ncol = dim(goo)[[2]] - as.numeric(use.row.names) - as.numeric(add.header.column)
-#browser();return()
 	if (rm.empty) {
-		keep = apply(goo[(ncol(goo)-ncol+1):ncol(goo)],1,function(x){any(!x%in%zero & !x%in%"---")})
-		goo = goo[keep,]
+#browser();return()
+		keep = apply(goo[(ncol(goo)-ncol+1):ncol(goo),,drop=FALSE],1,function(x){any(!x%in%zero & !x%in%"---")})
+		goo = goo[keep,,drop=FALSE]
 		if (exists("description")) {
 			new.head.pos = !duplicated(rep(1:Ngroups,each=Nsexes)[keep])
 			goo[new.head.pos,1] = c1
@@ -461,10 +472,10 @@ texArray =function(x, table.caption="My table", table.label="tab:mytable",
 	else
 		rows.line=NULL
 	rows.line = setdiff(rows.line,nrow(goo)) # don't draw a dashed line along the last row
-	tabalign = paste("c",ifelse(add.header.column,"l",""),ifelse(use.row.names,"c",""),paste(rep("r",ncol),collapse=""),sep="")
-	fldsize  = newsize = c(0,sapply(goo,function(x){max(nchar(x),na.rm=TRUE)})) # due to extra column nonsense
+	tabalign = paste("c",ifelse(add.header.column,alignHRC[1],""),ifelse(use.row.names,alignHRC[2],""),paste(rep(alignHRC[3],ncol),collapse=""),sep="")
+	fldsize  = newsize = c(0,apply(goo,2,function(x){max(nchar(x),na.rm=TRUE)})) # due to extra column nonsense
+	hdrsize  = sapply(strsplit(colnames(goo),split="[[:space:][:punct:]]"),function(x){xx = nchar(x); if (length(xx)==0) 0 else(max(xx))})
 	fldfix   = fldsize>80
-#browser();return()
 	if (any(fldfix)) {
 		newsize[fldfix] = 80
 		fldprop  = round(0.9*newsize/sum(newsize),2)
@@ -475,14 +486,12 @@ texArray =function(x, table.caption="My table", table.label="tab:mytable",
 	}
 	xtab = xtable::xtable(goo,align=tabalign)
 	longtable.header = makeLTH(xtab,table.caption,table.label,...)
-#browser(); return()
 	add.to.row = if (length(rows.line)==0) list(pos = list(-1, nrow(xtab)), command = c( longtable.header, "%"))
 		else list(pos = list(-1, rows.line, nrow(xtab)), command = c( longtable.header, "\\hdashline[0.5pt/2pt]", "%"))
 	#if (!is.null(add.to.row)) {
 	#	ADD.TO.ROW[["pos"]] = c(add.to.row[["pos"]], ADD.TO.ROW[["pos"]])
 	#	ADD.TO.ROW[["command"]] = c(add.to.row[["command"]], ADD.TO.ROW[["command"]]) }
-#browser();return()
-#colnames(goo)=rep("",dim(goo)[2])
+
 	print(xtab, 
 		file = texout, append=TRUE,
 		floating = FALSE, # longtable never floats
@@ -500,6 +509,34 @@ texArray =function(x, table.caption="My table", table.label="tab:mytable",
 	cat("\\end{document}\n",file=texout,append=TRUE)
 	texfile = readLines(texout)
 	ltdelim=grep("\\{longtable}",texfile)
+
+	## New (2017-05-10) by RH
+	## \newcolumntype{L}[1]{>{\raggedright\let\newline\\\arraybackslash\hspace{0pt}}p{#1}}
+	## \newcolumntype{C}[1]{>{\centering\let\newline\\\arraybackslash\hspace{0pt}}p{#1}}
+	## \newcolumntype{R}[1]{>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{#1}}
+	## \begin{longtable}{L{1.5in}L{2.2in}C{0.55in}C{1.1in}C{0.7in}C{0.7in}L{1.5in}}
+	LCR = function(align, width, units="in") {
+		if (!any(align==c("L","C","R"))) stop("Choose alignment 'L', 'C', or 'R'")
+		mess = paste0(">{\\\\",
+			ifelse(align=="L","raggedright",ifelse(align=="C","centering","raggedleft")),
+			"\\\\let\\\\newline\\\\\\\\\\\\arraybackslash\\\\hspace{0pt}}p{",
+			width, units, "}")
+		return(mess)
+	}
+	fldalign = toupper(strsplit(tabalign,"")[[1]][-1])
+
+	## RH (2017-05-18) Adjust column widths to fit data and allow for minimum width before allocating to table width
+	colsize  = pmax(fldsize[-1],hdrsize)        ## compare nchar in data column and column header
+	fldprop  = colsize/sum(colsize)             ## calculate colsize as a proportion
+	minprop  = pmax(fldprop,1/ncol(goo))        ## make sure some fields are not too small by considering # columns as a proportion
+	adjprop  = minprop/sum(minprop)             ## standardise the adjusted column proportions
+	fldwidth = round(adjprop * tablewidth,2)    ## allocate column dimensions as proportion of table width
+
+	bigmess  = paste0(sapply(1:length(fldwidth), function(N, a, w) { LCR(align=fldalign[N], width=fldwidth[N]) } ),collapse="")
+#browser();return()
+
+	texfile[ltdelim[1]] = gsub(substring(tabalign,2,nchar(tabalign)),bigmess,texfile[ltdelim[1]])
+	writeLines(texfile,sub("\\.tex","+.tex",texout))
 	tabfile=texfile[ltdelim[1]:ltdelim[2]]
 	invisible(list(goo=goo,texfile=texfile,tabfile=tabfile))
 }

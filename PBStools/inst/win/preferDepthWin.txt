@@ -74,7 +74,6 @@ grid 1 2
 	history func=.preferDepth.getDepth pady=5 #import=
 	grid 3 1 padx="15 0"
 		button text=EPS function=.preferDepth.getDepth action=eps bg=yellow sticky=E
-		button text=PNG function=.preferDepth.getDepth action=pix bg=greenyellow sticky=E
+		button text=PNG function=.preferDepth.getDepth action=png bg=greenyellow sticky=E
 		button text=WMF function=.preferDepth.getDepth action=wmf bg=lawngreen sticky=E
-		#vector length=2 mode=logical names="pix wmf" labels="png wmf" values="F F" vertical=T
 

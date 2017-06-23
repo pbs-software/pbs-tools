@@ -8,7 +8,7 @@
 #  zapSeamounts.Remove seamount records using combinations of major, minor, and locality codes.
 #===============================================================================
 
-#buildCatch-----------------------------2016-11-10
+#buildCatch-----------------------------2017-02-20
 # Catch reconstruction algorithm for BC rockfish.
 # Use ratios of RRF (reconstructed rockfish) to ORF 
 # (rockfish other than POP) landings for multiple fisheries.
@@ -29,6 +29,7 @@ buildCatch=function(
    useSM=FALSE,          # Use catch data from seamounts
    useGFM=TRUE,          # Use the latest official GF_MERGED_CATCH table (compiled by Norm and Kate)
    useLS=TRUE,           # Use ORF catch from Langara Spit in gamma calculation
+   useAI=FALSE,          # Use Anthony Island catch as 5C catch (chiefly for POP and maybe YMR)
    useCA=TRUE,           # Use ORF catch from the CA fleet
    useUS=TRUE,           # Use ORF catch from the US fleet
    useFF=TRUE,           # Use ORF catch from the foreign (UR, JP, PO, etc) fleet
@@ -340,6 +341,9 @@ buildCatch=function(
 			else {
 				.flush.cat("   SQL Server -- GFFOS (table GF_MERGED_CATCH) [takes a few minutes];\n")
 				getData("fos_mcatORF.sql","GFFOS",strSpp=strSpp,path=spath,tenv=penv())
+				PBSdat$Y[round(PBSdat$Y,5)==0] = NA
+				PBSdat$X[round(PBSdat$X,5)==0] = NA
+				PBSdat = calcStockArea(strSpp,PBSdat)
 				assign("gfmdat",PBSdat); rm(PBSdat) ## just to be safe
 				save("gfmdat",file="gfmdat.rda")
 			}
@@ -485,6 +489,7 @@ buildCatch=function(
 			eval(parse(text=paste0("idat = zapSeamounts(",i,")")))
 			nSMrec[i] = attributes(idat)$nSMrec
 			tSMcat[i] = attributes(idat)$tSMcat
+#browser();return()
 			assign(i,idat)
 		}
 		packList(c("nSMrec","tSMcat"),"PBStool",tenv=.PBStoolEnv)
@@ -520,6 +525,21 @@ buildCatch=function(
 			assign(i,idat)
 		}
 		packList(c("nSMrec","tSMcat"),"PBStool",tenv=.PBStoolEnv)
+	}
+	## ---------------------------------------------
+	## Include Anthony Island catch in PMFC 5C catch
+	## ---------------------------------------------
+	if (useAI && any(strSpp==c("396","440"))){
+		.flush.cat("Changing Anthony Is. catch (PMFC 5E south of 52.3333) to PMFC 5C catch...\n")
+		if ("gfmdat"%in%fnam) {
+			i = "gfmdat"
+			eval(parse(text=paste0("idat = ",i)))
+			ai1 = is.element(idat$major,9) & is.element(idat$stock,"5ABC")
+			ai2 = is.element(idat$major,9) & is.element(idat$minor,34) & is.element(idat$locality,c(1,5))
+#browser();return()
+			idat$major[ai1 | ai2] = 7 ## 5C
+			assign(i,idat)
+		}
 	}
 	if (!sql | !useSM){
 		if (file.exists("gfbcat.rda"))

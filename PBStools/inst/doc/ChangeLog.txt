@@ -6,6 +6,19 @@ Authors: RH  = Rowan Haigh
          JTS = Jon T. Schnute
 ------------------------------
 
+1.35.2 (2017-06-23)
+  • Forgot to change the version number (nuisance semantic versioning is manual)... 
+  • Modified function `estOgive' to save plotting information if argument `plines=FALSE' -- useful for gathering output from multiple time periods. (RH 170620)
+  • Modified function `plotConcur' to use GFFOS' `GF_MERGED_CATCH' table instead of PacHarvest + GFFOS' `GF_D_OFFICIAL_FE_CATCH'. (RH 170613)
+
+1.35.1 (2017-02-20)
+  • Modified function `buildCatch' to convert Anthony Island catch to 5C catch by changing major 9 to major 7 for this small region. (RH 170220)
+  • Modified SQL query `fos_mcatORF.sql' to get longitude (X) and latitude (Y) values. (RH 170220)
+  • Modified SQL queries `pht_fdep.sql' and 'pht_effort.sql' to use observer logs only;
+	this matches the use of observer logs by `pht_concurrent.sql', which is run based on results from `pht_dfep.sql'. (RH 170125)
+  • Modified SQL query `pht_concurrent.sql' to use gear through the gear argument in `getData' and PFMC minor area through the dummy argument,
+	which is still not handled elegantly if the user does not specify a value, i.e., dummy=NULL. (RH 170124)
+
 1.35.0 (2017-01-20)
   • Modified function `calcHabitat' slightly to better represent PNG files. (RH 170116)
   • Revised function `preferDepth' to focus on histogram area given user's depth limits ratehr than the whole water column. (RH 170116)

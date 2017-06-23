@@ -8,10 +8,12 @@
 }
 \usage{
 texArray(x, table.caption="My table", table.label="tab:mytable",
-   strSpp=NULL, sigdig=3, zero="---", collab=NULL, dash.delim=NULL, 
+   strSpp=NULL, sigdig=3, zero="---", exInt=TRUE, use.round=FALSE,
+   collab=NULL, dash.delim=NULL, tablewidth=6.5, 
    rm.empty=TRUE, start.page=1, ignore.col=NULL,
    select.rows=NULL, use.row.names=FALSE, name.row.names="row",
-   add.header.column=FALSE, new.header=NULL, outnam="mytable", ...)
+   add.header.column=FALSE, new.header=NULL, outnam="mytable", 
+   alignHRC=c("l","l","r"), ...)
 }
 \arguments{
   \item{x}{numeric array, matrix, or data frame.}
@@ -20,8 +22,11 @@ texArray(x, table.caption="My table", table.label="tab:mytable",
   \item{strSpp}{string species code -- page number on which fish is described in Hart (1973).}
   \item{sigdig}{number of significant digits to format table contents.}
   \item{zero}{character replacement for zero-values.}
+  \item{exInt}{logical: if \code{TRUE}, exclude integers from manipulation to signicant digits.}
+  \item{use.round}{logical: if \code{TRUE}, round the values to \code{N} decimal places rather than provide \code{N} significant figures.}
   \item{collab}{column headers for table; if \code{NULL}, use column names from input data.}
   \item{dash.delim}{character pattern in data \code{rownames} that identify where to place a dashed line.}
+  \item{tablewidth}{width of table in inches (the column widths will be fit automatically).}
   \item{rm.empty}{logical: if \code{TRUE}, remove rows without any positive numeric data.}
   \item{start.page}{page number to start the LaTeX document at.}
   \item{ignore.col}{numeric vector indicating which columns (by position) to \emph{not} run \code{formatCatch} on (e.g., columns of class \code{character}).}
@@ -33,6 +38,7 @@ texArray(x, table.caption="My table", table.label="tab:mytable",
   \item{new.header}{character vector of replacement labels if the user knows the table header columns and wants to replace them with specific labels.}
   \item{outnam}{character prefix for an output LaTeX file (\code{strSpp} will be appended to the prefix,
     and the file extension \code{.tex} will be appended to the file name composition).}
+  \item{alignHRC}{align columns: Header, Row Names, and Columns (of data) using "l" (left), "r" (right), or "c" (centre).}
   \item{...}{arguments to pass to function \code{makeLTH}, specifically:\cr
     \code{struts} -- if \code{TRUE}, add vertical space before and after table header; and\cr
     \code{add.continue} -- if \code{TRUE}, add `continued' messages on tables spanning pages.}
