@@ -1,0 +1,158 @@
+Code Tables -- GFBioSQL
+=======================
+
+ttype (TRIP_SUB_TYPE_CODE)
+--------------------------
+ 1   NON - OBSERVED DOMESTIC
+ 2   RESEARCH
+ 3   CHARTER
+ 4   OBSERVED DOMESTIC
+ 5   OBSERVED J-V
+ 6   NON-OBSERVED J-V
+ 7   POLISH COMM NATIONAL
+ 8   RUSSIAN COMMERCIAL NATIONAL
+ 9   RUSSIAN COMMERCIAL SUPPLEMENTAL
+10   POLISH COMMERCIAL SUPPLEMENTAL
+11   RECREATIONAL
+12   JAPANESE OBSERVED NATIONAL
+13   JAPANESE COMMERCIAL
+14   UNKNOWN FOREIGN
+
+stype (SAMPLE_TYPE_CODE)
+------------------------
+ 0   UNKNOWN
+ 1   TOTAL CATCH
+ 2   RANDOM
+ 4   SELECTED
+ 5   STRATIFIED
+ 6   RANDOM FROM RANDOMLY ASSIGNED SET
+ 7   RANDOM FROM SET AFTER RANDOMLY ASSIGNED SET
+ 8   RANDOM FROM SET REQUESTED BY VESSEL MASTER
+ 9   SELECTED JUVENILES
+10   SELECTED ADULTS
+
+gear (GEAR_CODE)
+----------------
+ 0   UNKNOWN
+ 1   BOTTOM TRAWL
+ 2   TRAP
+ 3   GILLNET
+ 4   HANDLINE
+ 5   LONGLINE
+ 6   MIDWATER TRAWL
+ 7   TROLL
+ 8   UNKNOWN TRAWL
+ 9   SEINE
+10   JIG
+11   SHRIMP TRAWL
+12   RECREATIONAL ROD & REEL
+13   PRAWN TRAP
+14   TUCKER TRAWL
+15   MULTI-NET LARGE PLANKTON SAMPLER: HYDROBIOS/MINI
+16   TWIN BEAM TRAWL
+17   HAND SEINE 1/2"
+18   PURSE SEINE 3/16"
+19   BONGO NET
+20   PROFILING CTD
+21   CAMERA
+22   DROP ACCOUSTIC INFORMATION SYSTEM (DAISY)
+
+ameth (AGEING_METHOD_CODE)
+--------------------------
+ 0   Unknown
+ 1   Otolith Surface Only
+ 2   Otolith Thin Sectioned
+ 3   Otolith Broken and Burnt
+ 4   Otolith Burnt and Thin Sectioned
+ 5   Otolith (Unknown)
+ 6   Dorsal Fin XS (cross-section)
+ 7   PECTORAL FIN
+ 8   PELVIC FIN
+ 9   UNKNOWN FIN
+10   SCALE
+11   DORSAL SPINE
+12   VERTEBRAE
+13   LENGTH
+14   PRE-OPERCULAR
+15   ANAL FIN
+16   Surface And Broken/Burnt
+17   Otolith Broken and Baked (Break and Bake) 
+
+scat (SPECIES_CATEGORY_CODE)
+----------------------------
+ 0   UNKNOWN
+ 1   UNSORTED
+ 2   SORTED (UNK. CRITERION)
+ 3   KEEPERS
+ 4   DISCARDED
+ 5   REMAINS
+ 6   LONGLINE - FISH HEAD ONLY
+ 7   LONGLINE - WHOLE FISH AND FISH HEAD ONLY
+ 8   LONGLINE/JIG - FISH LOST AT RAIL/LOST AT SURFACE 
+
+SSID (SURVEY_SERIES_ID)
+-----------------------
+ 0   Individual survey without a series
+ 1   Queen Charlotte Sound Synoptic Survey
+ 2   Hecate Strait Multispecies Assemblage Survey
+ 3   Hecate Strait Synoptic Survey
+ 4   West Coast Vancouver Island Synoptic Survey
+ 5   Hecate Strait Pacific Cod Monitoring Survey
+ 6   Queen Charlotte Sound Shrimp Survey
+ 7   West Coast Vancouver Island Shrimp Survey
+ 8   1997 West Coast QCI Rockfish Survey (single survey series)
+ 9   1996 West Coast VI Rockfish Survey (single survey series)
+10   1995 QC Sound Rockfish Survey
+11   West Coast Vancouver Island Thornyhead Survey
+12   Combined WCVI/Hecate/QC Sound Synoptic
+13   Inshore Rockfish Longline Survey
+14   IPHC Longline Survey
+15   Lingcod YOY Trawl Survey
+16   West Coast Haida Gwaii Synoptic Survey
+17   IPHC Longline Survey: Vancouver Station (3CD)
+18   IPHC Longline Survey: Goose and James Stations (5AB)
+19   IPHC Longline Survey: Charlotte Station (5CD)
+20   WCVI Synoptic Cdn Vancouver Region
+21   Goose Island Gully Retrospective Study
+22   PHMA Rockfish Longline Survey - Outside North
+23   WCVI Thornyhead (no area strata)
+24   WCVI Thornyhead (2 depth/no area strata)
+25   WCVI Thornyhead (2 depth/2 area strata)
+26   G.B. Reed Historic Goose Island Gully Surveys
+27   WCVI Synoptic in Triennial Region
+28   QCS Historic GB Reed + Modern Viking Storm Time Series
+29   QCS Synoptic Surveys Restratified for 2008 POP Analysis (Paul Starr et al.)
+30   WCHG Synoptic Without Deepest Stratum (800 - 1300m)
+31   WCVI Synoptic with modified south/north boundaries for Jennifer Bolt
+32   Restratification of Goose Island Gully for the 2009 POP Assessment.
+33   Restratification of 1995 Ocean Selector and Frosti GIG surveys using southern QCS synoptic strata.
+34   Strait of Georgia ERI (Hake/Pollock) Survey
+35   Sablefish Research and Assessment Survey
+36   PHMA Rockfish Longline Survey - Outside South
+37   WCHG 1997, 2006+ 180 to 500m
+38   WCVI 1996, 2004+ 125 to 500m
+39   IRF Longline Survey (North)
+40   IRF Longline Survey (South)
+41   Sablefish Inlet Standardized
+42   Sablefish Offshore Standardized
+43   Sablefish Stratified Random
+44   QCS Synoptic Surveys footprint reduced to match industry proposal (30/11/2011)
+45   Strait of Georgia Synoptic Survey
+46   Neocaligus Shrimp Trawl Surveys
+47   Hake Stock Delineation Survey
+67   WCVI and QCS Shrimp Survey
+68   Joint Can/US Hake Acoustic Survey
+69   QCS Synoptic For Big Skate Assessment
+70   WCVI Synoptic For Big Skate Assessment
+71   Hecate Strait Synoptic For Big Skate Assessment
+72   QCS Synoptic For Longnose Skate Assessment
+73   WCVI Synoptic For Longnose Skate Assessment
+74   Hecate Strait Synoptic For Longnose Skate Assessment
+75   WCHG Synoptic For Longnose Skate Assessment
+76   Strait of Georgia Dogfish Longline Survey
+77   Commercial Seamount Trips (used for Rapla functionality)
+78   Neocaligus EDAS Kit (used for Rapla functionality)
+79   NMFS Triennial Survey (Vancouver Region)
+80   Eulachon Trawl Survey (est. 2017)
+81   Integrated Pelagics Ecosystem Survey
+

@@ -13,7 +13,7 @@ texArray(x, table.caption="My table", table.label="tab:mytable",
    rm.empty=TRUE, start.page=1, ignore.col=NULL,
    select.rows=NULL, use.row.names=FALSE, name.row.names="row",
    add.header.column=FALSE, new.header=NULL, outnam="mytable", 
-   alignHRC=c("l","l","r"), ...)
+   alignHRC=c("l","l","r"), italics.file=NULL, ...)
 }
 \arguments{
   \item{x}{numeric array, matrix, or data frame.}
@@ -39,6 +39,7 @@ texArray(x, table.caption="My table", table.label="tab:mytable",
   \item{outnam}{character prefix for an output LaTeX file (\code{strSpp} will be appended to the prefix,
     and the file extension \code{.tex} will be appended to the file name composition).}
   \item{alignHRC}{align columns: Header, Row Names, and Columns (of data) using "l" (left), "r" (right), or "c" (centre).}
+  \item{italics.file}{file of string names specifying words in table columns to italicise (e.g., genus and species names).}
   \item{...}{arguments to pass to function \code{makeLTH}, specifically:\cr
     \code{struts} -- if \code{TRUE}, add vertical space before and after table header; and\cr
     \code{add.continue} -- if \code{TRUE}, add `continued' messages on tables spanning pages.}
@@ -55,6 +56,9 @@ texArray(x, table.caption="My table", table.label="tab:mytable",
   \code{goo} -- the flattened and re-formatted data file, and \cr
   \code{texfile} -- a vector of latex lines that make the output LaTeX file. \cr
   \code{tabfile} -- a vector of latex lines that describes the table only (i.e., a subset of \code{texfile}).
+}
+\note{
+  A file called \code{genus.species.txt} is offered in PBSplankton's \code{doc} directory.
 }
 \references{
   Hart, J.L. (1973) Pacific fishes of Canada. \emph{Fisheries Research Board of Canada} \bold{180}: ix + 740 p.

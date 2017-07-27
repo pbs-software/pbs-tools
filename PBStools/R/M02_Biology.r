@@ -1913,7 +1913,7 @@ mapMaturity <- function (dat=pop.age, strSpp="", type="map", mats=1:7,
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~mapMaturity
 
 
-#plotProp-------------------------------2013-07-04
+#plotProp-------------------------------2017-07-18
 # Plot proportion-at-age (or length) from GFBio specimen data.
 #-----------------------------------------------RH
 plotProp <- function(fnam="pop.age",hnam=NULL, ioenv=.GlobalEnv,...)
@@ -1928,38 +1928,61 @@ plotProp <- function(fnam="pop.age",hnam=NULL, ioenv=.GlobalEnv,...)
 	rtmp <- tempdir(); rtmp <- gsub("\\\\","/",rtmp)
 	wnam <- paste(path,"plotPropWin.txt",sep="/")
 	wtmp <- paste(rtmp,"plotPropWin.txt",sep="/")
-	temp <- readLines(wnam)
-	temp <- gsub("@wdf",wtmp,temp)
-	temp <- gsub("@fnam",fnam,temp)
+	tfile <- readLines(wnam)
+	tfile <- gsub("@wdf",wtmp,tfile)
+	tfile <- gsub("@fnam",fnam,tfile)
 #browser();return()
 	if (!is.null(hnam) && is.character(hnam))
-		temp <- gsub("#import=",paste("import=\"",hnam,"\"",sep=""),temp)
-	writeLines(temp,con=wtmp)
+		tfile <- gsub("#import=",paste("import=\"",hnam,"\"",sep=""),tfile)
+	writeLines(tfile,con=wtmp)
+	setPBSoptions("Mareas",NULL)
+	setPBSoptions("Uareas",NULL)
+	setPBSoptions("Mtypes",NULL)
+	setPBSoptions("Utypes",NULL)
 	createWin(wtmp)
 	invisible()
 }
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotProp
 
-#.plotProp.calcP------------------------2010-10-20
+#.plotProp.calcP------------------------2017-07-19
 # Perform calculations to get proportions.
 #-----------------------------------------------RH
-.plotProp.calcP <- function() {
+.plotProp.calcP <- function(reload=FALSE) {
 	getWinVal(winName="window",scope="L")
 	ioenv = ttcall(PBStool)$ioenv
-	expr=paste("getFile(",fnam,",senv=ioenv,use.pkg=TRUE,try.all.frames=TRUE,tenv=penv()); dat=",fnam,sep="")
+	expr  = paste("getFile(",fnam,",senv=ioenv,use.pkg=TRUE,try.all.frames=TRUE,reload=reload,tenv=penv()); dat=",fnam,sep="")
 	eval(parse(text=expr))
-	fspp=attributes(dat)$spp
+	
+	ttget(PBStool)
+	PBStool$DATA = dat # save the original
+	ttput(PBStool)
+
+	fspp  = attributes(dat)$spp
 	if (!is.null(fspp) && fspp!=spp) { spp=fspp; setWinVal(list(spp=fspp)) }
-	xy <- as.character(XYopt[,"fld"])
+	xy   <- as.character(XYopt[,"fld"])
 	XLIM <- unlist(XYopt[1,c("lim1","lim2")])
 	YLIM <- unlist(XYopt[2,c("lim1","lim2")]);
 	xint <- unlist(XYopt[1,"int"]); yint <- unlist(XYopt[2,"int"])
+
+	## Collect info on areas available
+	#zarea = is.element(colnames(dat),c("major","minor","locality","PMFC","PFMA","PFMS","GMA","srfa","srfs","popa","stock"))
+	zarea = is.element(colnames(dat),c("major","PMFC","GMA","srfa","srfs","popa","stock"))
+	marea = sapply(dat[,zarea], .su, simplify=FALSE)
+	names(marea) = paste0("M",names(marea))
+	setPBSoptions("Mareas", marea)
+
+	## Collect info on data types available
+	#ztype = is.element(colnames(dat),c("ttype","stype","gear","SSID","SVID","ameth","scat"))
+	ztype = is.element(colnames(dat),c("ttype","stype","gear","SSID","ameth","scat"))
+	mtype = sapply(dat[,ztype], .su, simplify=FALSE)
+	names(mtype) = paste0("M",names(mtype))
+	setPBSoptions("Mtypes", mtype)
 
 	#  Check available fields
 	flds <- names(dat); fldstr <- paste("(",paste(flds,collapse=","),")",collapse="")
 	if (!all(is.element(xy,flds)==TRUE)) {
 		if (xy[1]=="year" && any(is.element(flds,"date")==TRUE)) {
-			dat$year <- as.numeric(as.character(years(dat$date)))
+			dat$year <- as.numeric(as.character(substring(dat$date,1,4)))
 			flds <- c(flds,"year") }
 		if (!all(is.element(xy,flds)==TRUE)) 
 			showError(str=paste(paste(xy[!is.element(xy,flds)],collapse=","),"in",fldstr,sep="\n"),type="nofields")
@@ -1977,29 +2000,65 @@ plotProp <- function(fnam="pop.age",hnam=NULL, ioenv=.GlobalEnv,...)
 	Msex <- c(1,2,3,0)
 	if (all(Usex==FALSE)) sex <- NULL 
 	else sex <- sort(unique(unlist(lister(Msex)[Usex])))
-	Mgear <- c(0,1,5)
-	if (all(Ugear==FALSE)) gear <- NULL 
-	else gear <- sort(unique(unlist(lister(Mgear)[Ugear])))
-	Mttype <- 1:4
-	if (all(Uttype==FALSE)) ttype <- NULL 
-	else ttype <- sort(unique(unlist(lister(Mttype)[Uttype])))
-	Mstype <- c(0,1,2,4)
-	if (all(Ustype==FALSE)) stype <- NULL 
-	else stype <- sort(unique(unlist(lister(Mstype)[Ustype])))
-	Mmajor <- 3:9
-	if (all(Umajor==FALSE)) major <- NULL 
-	else major <- sort(unique(unlist(lister(Mmajor)[Umajor])))
-	Msrfa <- c("3C","3D","5AB","5CD","5EN","5ES")
-	if (all(Usrfa==FALSE)) srfa <- NULL 
-	else srfa <- sort(unique(unlist(lister(Msrfa)[Usrfa])))
-	Msrfs <- c("GS","MI","MR")
-	if (all(Usrfs==FALSE)) srfs <- NULL 
-	else srfs <- sort(unique(unlist(lister(Msrfs)[Usrfs])))
+
+#browser();return()
+	## Process the areas
+	if (is.null(getPBSoptions("Uareas")))
+		.plotProp.chooseAreas(gui=FALSE)
+	Mareas = getPBSoptions("Mareas"); unpackList(Mareas)
+	Uareas = getPBSoptions("Uareas"); unpackList(Uareas)  ## logicals corresponding to Mareas
+
+	for (a in substring(names(Mareas),2)) {
+		aM = paste0("M",a)
+		aU = paste0("U",a)
+		mess = 
+			paste0("if (all(", aU, "==FALSE)) ", a, "=NULL else ",
+			a, "=", aM, "[", aU, "]")
+		eval(parse(text=mess))
+	}
+
+	## Process the data types
+	if (is.null(getPBSoptions("Utypes")))
+		.plotProp.chooseTypes(gui=FALSE)
+	Mtypes = getPBSoptions("Mtypes"); unpackList(Mtypes)
+	Utypes = getPBSoptions("Utypes"); unpackList(Utypes)  ## logicals corresponding to Mtypes
+
+	for (a in substring(names(Mtypes),2)) {
+		aM = paste0("M",a)
+		aU = paste0("U",a)
+		mess = 
+			paste0("if (all(", aU, "==FALSE)) ", a, "=NULL else ",
+			a, "=", aM, "[", aU, "]")
+		eval(parse(text=mess))
+	}
+
+#browser();return()
+
+#	Mgear <- c(0,1,5)
+#	if (all(Ugear==FALSE)) gear <- NULL 
+#	else gear <- sort(unique(unlist(lister(Mgear)[Ugear])))
+#	Mttype <- 1:4
+#	if (all(Uttype==FALSE)) ttype <- NULL 
+#	else ttype <- sort(unique(unlist(lister(Mttype)[Uttype])))
+#	Mstype <- c(0,1,2,4)
+#	if (all(Ustype==FALSE)) stype <- NULL 
+#	else stype <- sort(unique(unlist(lister(Mstype)[Ustype])))
+#	Mmajor <- 3:9
+#	if (all(Umajor==FALSE)) major <- NULL 
+#	else major <- sort(unique(unlist(lister(Mmajor)[Umajor])))
+#	Msrfa <- c("3C","3D","5AB","5CD","5EN","5ES")
+#	if (all(Usrfa==FALSE)) srfa <- NULL 
+#	else srfa <- sort(unique(unlist(lister(Msrfa)[Usrfa])))
+#	Msrfs <- c("GS","MI","MR")
+#	if (all(Usrfs==FALSE)) srfs <- NULL 
+#	else srfs <- sort(unique(unlist(lister(Msrfs)[Usrfs])))
 
 	#  Qualify the data
-	qflds=c("spp","sex","ttype","stype","gear","major","srfa","srfs")
+	#qflds=c("spp","sex","ttype","stype","gear","major","srfa","srfs")
+	qflds=c("spp","sex",substring(names(Mtypes),2),substring(names(Mareas),2))
 	for (i in qflds) {
 		expr=paste("dat=biteData(dat,",i,")",sep=""); eval(parse(text=expr)) 
+		#.flush.cat("after bite ", i, " = ", nrow(dat), "\n") ## activate for debugging
 		if (nrow(dat)==0) showError(paste("No data for '",i,"' chosen",sep="")) }
 	if (bbonly) {
 		dat <- dat[is.element(dat$ameth,3),]
@@ -2090,7 +2149,7 @@ plotProp <- function(fnam="pop.age",hnam=NULL, ioenv=.GlobalEnv,...)
 }
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~.plotProp.calcP
 
-#.plotProp.plotP------------------------2016-10-19
+#.plotProp.plotP------------------------2011-07-19
 # Guts of the plotting routine.
 #-----------------------------------------------RH
 .plotProp.plotP <- function(wmf=FALSE,png=FALSE) { ## Start blowing bubbles
@@ -2126,7 +2185,7 @@ plotProp <- function(fnam="pop.age",hnam=NULL, ioenv=.GlobalEnv,...)
 	if (wmf && .Platform$OS.type=="windows")
 		do.call("win.metafile",list(filename=paste(plotname,".wmf",sep=""),width=8,height=8))
 	else if (png)
-		png(paste0(plotname,".png"), units="px", res=200, width=8*200, height=8*200, pointsize=12)
+		png(paste0(plotname,".png"), units="in", res=600, width=8, height=8)
 	else resetGraph()
 	expandGraph(mfrow=c(1,1),mai=c(.6,.7,0.1,0.1),las=1)
 
@@ -2165,7 +2224,8 @@ plotProp <- function(fnam="pop.age",hnam=NULL, ioenv=.GlobalEnv,...)
 
    axis(1,at=xval,labels=FALSE,tck=-.005)
    axis(1,at=xval[zxt],mgp=c(0,.5,0),tck=-.02,adj=.5,cex=1)
-   axis(2,at=1:ylim[2],tck=0.005,labels=FALSE)
+   #axis(2,at=1:ylim[2],tck=0.005,labels=FALSE)
+   axis(2,at=seq(ylim[1],ylim[2],diff(ypretty)[1]/5),tck=0.005,labels=FALSE)
    axis(2,at=ypretty,mgp=c(0,0.5,0),tck=0.02,adj=1,cex=1)
 
 	mainlab <- paste(ttcall(spn)[spp],xy[2],ifelse(!is.null(strat),paste("\n...stratified ",
@@ -2205,24 +2265,18 @@ plotProp <- function(fnam="pop.age",hnam=NULL, ioenv=.GlobalEnv,...)
 }
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~.plotProp.plotP
 
-#.plotProp.resetP-----------------------2010-10-20
+#.plotProp.resetP-----------------------2017-07-19
 .plotProp.resetP <- function() {
 	resList <-
-	structure(list(fnam = "pop.age", strat = "", wted = FALSE, spp = "POP", 
-    Usex = c(TRUE, FALSE, FALSE, FALSE, FALSE), agg = FALSE, 
-    bbonly = TRUE, Ugear = c(FALSE, FALSE, FALSE, FALSE), Uttype = c(FALSE, 
-    FALSE, FALSE, FALSE, FALSE), Ustype = c(FALSE, FALSE, FALSE, 
-    FALSE, FALSE), Umajor = c(FALSE, FALSE, FALSE, FALSE, FALSE, 
-    FALSE, FALSE, FALSE), Usrfa = c(FALSE, FALSE, FALSE, FALSE, 
-    FALSE, FALSE, FALSE), Usrfs = c(FALSE, FALSE, FALSE, FALSE
-    ), psize = 0.03, powr = 0.5, lwd = 2, bcol = c("blue", "grey", 
-    "coral"), showH = TRUE, hide0 = TRUE, ltype = 1, XYopt = structure(list(
-        fld = c("year", "age"), lim1 = c(NA, 0), lim2 = c(NA_real_, 
-        NA_real_), int = c(1, 1)), .Names = c("fld", "lim1", 
-    "lim2", "int"), row.names = c("X", "Y"), class = "data.frame")), .Names = c("fnam", 
-"strat", "wted", "spp", "Usex", "agg", "bbonly", "Ugear", "Uttype", 
-"Ustype", "Umajor", "Usrfa", "Usrfs", "psize", "powr", "lwd", 
-"bcol", "showH", "hide0", "ltype", "XYopt"))
+	structure(list(psize = 0.03, powr = 0.5, lwd = 2, bcol = c("blue", 
+"grey", "coral"), showH = TRUE, hide0 = TRUE, showM = FALSE, 
+    ltype = 1, spp = "POP", Usex = c(TRUE, FALSE, FALSE, FALSE, 
+    FALSE), agg = FALSE, bbonly = FALSE, strat = "year", wted = FALSE, 
+    fnam = "pop.age", XYopt = structure(list(fld = c("year", "age"
+    ), lim1 = c(NA, 0), lim2 = c(NA_real_, NA_real_), int = c(1, 1)), .Names = c("fld", 
+    "lim1", "lim2", "int"), row.names = c("X", "Y"), class = "data.frame")), .Names = c("psize", 
+"powr", "lwd", "bcol", "showH", "hide0", "showM", "ltype", "spp", 
+"Usex", "agg", "bbonly", "strat", "wted", "fnam", "XYopt"))
 	setWinVal(resList,winName="window")
 	invisible()
 }
@@ -2239,6 +2293,77 @@ plotProp <- function(fnam="pop.age",hnam=NULL, ioenv=.GlobalEnv,...)
 	invisible()
 }
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~.plotProp.resetT
+
+#.plotProp.chooseAreas------------------2017-07-18
+.plotProp.chooseAreas <- function(gui=TRUE)
+{
+	dat = ttcall(PBStool)$DATA
+	mareas = getPBSoptions("Mareas")
+	if (!gui) {
+		uareas = sapply(mareas,function(x){rep(FALSE,length(x))},simplify=FALSE)
+		names(uareas) = sub("^M","U",names(mareas))
+		setPBSoptions("Uareas",uareas)
+	} else {
+		winStr = c(
+			"window name=\"pPareas\" title=\"Area Codes\"",
+			"label text=\"Choose areas from list below\" font=bold"
+		)
+		for (a in names(mareas)) {
+			aa = mareas[[a]]
+			a0 = substring(a,2)
+			na = length(aa)
+			winStr = c( winStr,
+			"grid 1 2 sticky=W",
+			paste0("label text=\"",a0,"\" font=bold"),
+			paste0("vector mode=logical length=", na, " names=",sub("^M","U",a)," sticky=NW values=\"", paste0(rep(F,na),collapse=" "), "\" labels=\"", paste0(aa,collapse=" "), "\" vertical=F stick=W")
+			)
+		}
+		winStr = c( winStr,
+			"grid 1 2 sticky=E",
+			"button text=\"Codes\" bg=moccasin font=bold function=doAction sticky=SE action=\"openFile(paste0(system.file(package=`PBStools`),`/win/GFBacodes.txt`))\"",
+			"button text=\" OK \" bg=aquamarine font=bold function=doAction sticky=SE action=\"setPBSoptions(`Uareas`,getWinVal(winName=`pPareas`)); closeWin(`pPareas`)\""
+		)
+		createWin(winStr,astext=TRUE)
+		setWinVal(getPBSoptions("Uareas"),winName="pPareas")
+	}
+}
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~.plotProp.chooseTypes
+
+#.plotProp.chooseTypes------------------2017-07-18
+.plotProp.chooseTypes <- function(gui=TRUE)
+{
+	dat = ttcall(PBStool)$DATA
+	mtypes = getPBSoptions("Mtypes")
+	if (!gui) {
+		utypes = sapply(mtypes,function(x){rep(FALSE,length(x))},simplify=FALSE)
+		names(utypes) = sub("^M","U",names(mtypes))
+		setPBSoptions("Utypes",utypes)
+	} else {
+		winStr = c(
+			"window name=\"pPtypes\" title=\"Type Codes\"",
+			"label text=\"Choose types from list below\" font=bold"
+		)
+		for (a in names(mtypes)) {
+			aa = mtypes[[a]]
+			a0 = substring(a,2)
+			na = length(aa)
+			winStr = c( winStr,
+			"grid 1 2 sticky=W",
+			paste0("label text=\"",a0,"\" font=bold"),
+			paste0("vector mode=logical length=", na, " names=",sub("^M","U",a)," sticky=NW values=\"", paste0(rep(F,na),collapse=" "), "\" labels=\"", paste0(aa,collapse=" "), "\" vertical=F stick=W")
+			)
+		}
+		winStr = c( winStr,
+			"grid 1 2 sticky=E",
+			"button text=\"Codes\" bg=moccasin font=bold function=doAction sticky=SE action=\"openFile(paste0(system.file(package=`PBStools`),`/win/GFBtcodes.txt`))\"",
+			"button text=\" OK \" bg=lawngreen font=bold function=doAction sticky=SE action=\"setPBSoptions(`Utypes`,getWinVal(winName=`pPtypes`)); closeWin(`pPtypes`)\""
+		)
+		createWin(winStr,astext=TRUE)
+		setWinVal(getPBSoptions("Utypes"),winName="pPtypes")
+	}
+}
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~.plotProp.chooseTypes
+
 #===================================plotProp Suite
 
 
@@ -2624,7 +2749,7 @@ reportCatchAge <- function(prefix="pop", path=getwd(), hnam=NULL, ...) {
 #-----------------------------------reportCatchAge
 
 
-#requestAges----------------------------2016-05-02
+#requestAges----------------------------2017-07-27
 # Determine which otoliths to sample for ageing requests.
 # Note: only have to use run.sql=TRUE once for each species 
 # using any year before querying a group of years.
@@ -2641,30 +2766,30 @@ requestAges=function(strSpp, nage=500, year=2016,
 	assign("PBStool",list(module="M02_Biology",call=match.call(),args=args(requestAges)),envir=.PBStoolEnv)
 
 #Subfunctions --------------------------
-	adjustN = function(a,b,nmin=5){           # a=available , b=desired, nmin=minimum acceptable
+	adjustN = function(a,b,nmin=10){           # a=available , b=desired, nmin=minimum acceptable
 #print(a); print(b)
 		if (round(sum(b),5) > round(sum(a),5)) {
 			showMessage(paste("There are only",sum(round(a,0)),"otoliths available.\n",
 				"All were selected."),as.is=TRUE)
 			return(a) }
-		target = sum(b)           # Total number desired
-		za.use = a >= nmin        # Only use available samples with at least the acceptable minimum # ages
-		a[!za.use] = 0            # Automatically set low availablity to 0
-		zb.gta = b > a            # Determine which desired #ages exceed the available
-		zover  = za.use & zb.gta  # Index the over-desired
+		target = sum(b)                ## Total number desired
+		za.use = a >= nmin             ## Only use avail. samples with at least the acceptable min # ages
+		a[!za.use] = 0                 ## Automatically set low availablity to 0
+		zb.gta = b > a                 ## Determine which desired #ages exceed the available
+		zover  = za.use & zb.gta       ## Index the over-desired
 		if (any(zover)) { 
-			aN = rep(0,length(a))         # adjusted N
+			aN = rep(0,length(a))       ## adjusted N
 			aN[zover] = a[zover]
 			bnew = b[!zover]
-			bnew = pmin(bnew,a[!zover])   # make sure bnew doesn't exceed avaialble
-			pb = bnew/sum(bnew)           # proportion of non-restricted desired
-			sN = target - sum(a[zover])   # surplus desired
-			bnew = pb*(sN)                # rescale by surplus desired
-			bnew[bnew<nmin] = 0           # get rid of desired with less than minimum
-			bnew = sN*bnew/sum(bnew)      # rescale the desired again to achieve the surplus desired
-			aN[!zover] = bnew             # add the rescaled surplus to the desired vector
+			bnew = pmin(bnew,a[!zover]) ## make sure bnew doesn't exceed avaialble
+			pb = bnew/sum(bnew)         ## proportion of non-restricted desired
+			sN = target - sum(a[zover]) ## surplus desired
+			bnew = pb*(sN)              ## rescale by surplus desired
+			bnew[bnew<nmin] = 0         ## get rid of desired with less than minimum
+			bnew = sN*bnew/sum(bnew)    ## rescale the desired again to achieve the surplus desired
+			aN[!zover] = bnew           ## add the rescaled surplus to the desired vector
 #browser()
-			adjustN(a,aN)                 # re-iterate
+			adjustN(a,aN)               ## re-iterate
 		}
 		else return(b) }
 
@@ -2713,7 +2838,6 @@ requestAges=function(strSpp, nage=500, year=2016,
 		expr=paste(c(expr,"; write.csv(Scat,file=\"Scat",strSpp,".csv\")"),collapse="")     # Survey catch (ascii)
 		eval(parse(text=expr))
 	}
-#browser();return()
 	if (!only.sql && !run.sql) { 
 		expr=paste(c("load(\"Sdat",strSpp,".rda\"); load(\"Ccat",strSpp,".rda\"); ",
 			"load(\"Scat",strSpp,".rda\")"),collapse="")
@@ -2724,9 +2848,49 @@ requestAges=function(strSpp, nage=500, year=2016,
 
 	if (!is.null(gear))
 		Sdat = Sdat[is.element(Sdat$gear,gear),]
-
 	if (nrow(Sdat)==0 || nrow(Ccat)==0) showError("Not enough data")
-	samp=Sdat
+
+	samp = Sdat
+
+	## Check for duplicated sample IDs and reduce the catch accordingly
+	## NOTE: No need as proportions are adjusted for duplicated samples later in code (see pcat.sid ~L.270)
+	redSIDcat = list(...)$redSIDcat ## reduce duplicated SID catch
+	if (is.null(redSIDcat)) redSIDcat=FALSE
+	redSIDrec = list(...)$redSIDrec ## reduce duplicated SIDs (collapse records)
+	if (is.null(redSIDrec)) redSIDrec=FALSE
+	if (redSIDcat || redSIDrec) {
+		samp  = samp[order(samp$SID, samp$firstSerial),]
+		sdupe = duplicated(samp$SID)
+		if (any(sdupe)) {
+			ndupe = (1:length(sdupe))[sdupe]
+			if (all(diff(ndupe)>1)) { ## i.e. no triplicated (or greater) SIDs
+				idupe = sort(c(ndupe-1,ndupe))
+				cdupe = samp$catchKg[ndupe]; names(cdupe) = samp$SID[ndupe]
+				if (redSIDcat) {
+					samp$catchKg[idupe] = samp$catchKg[idupe]/2
+					attr(samp,"catchKg.dupe.original") = cdupe
+				}
+				if (redSIDrec) {
+					oldsamp = samp
+					samp = samp[-ndupe,]
+					adupe = ndupe - (1:length(ndupe)) ## corresponds to oldsamp[ndupe-1,]
+					#names(adupe) = ndupe
+					addCols = c("Noto","Foto","Moto","Nbba","Fbba","Mbba","Nage","Fage","Mage")
+					mrgCols = c("firstSerial","lastSerial","storageID")
+					for (i in 1:length(ndupe)){
+						#ii = as.character(i)
+						samp[adupe[i],addCols] = apply(oldsamp[(ndupe[i]-1):ndupe[i], addCols], 2, sum, na.rm=T)
+						samp[adupe[i],mrgCols] = apply(oldsamp[(ndupe[i]-1):ndupe[i], mrgCols], 2, function(x){paste0(gsub("[[:space:]]", "",x), collapse="|")})
+					}
+#browser();return()
+				}
+			} else {
+				mess= "Some SIDs are more than just duplicated.\nCreate code to deal with it (line 112)."
+				showError(mess, as.is=TRUE)
+			}
+		}
+	}
+
 	if (all(sex==1)){
 		samp$NOTO=samp$Moto; samp$NBBA=samp$Mbba; samp$NAGE=samp$Mage}  # males
 	else if (all(sex==2)){
@@ -2808,90 +2972,94 @@ requestAges=function(strSpp, nage=500, year=2016,
 #browser();return()
 		# 'gfb_age_request.sql" now gathers Grouping Code (GC)
 		#group=catch$GC; names(group)=cid
-		#samp$GC=group[sid]; samp=samp[!is.na(samp$GC),] #get rid of unidentified groups (strata)
-		Clev  = paste(catch$year,pad0(catch$GC,3),sep="-") # all groups in survey catch
-		Slev  = paste(samp$year,pad0(samp$GC,3),sep="-") # groups in sample data
-		clev=names(Clev)=Clev; slev=names(Slev)=Slev
+		#samp$GC=group[sid]; samp=samp[!is.na(samp$GC),] ## get rid of unidentified groups (strata)
+		Clev = paste(catch$year,pad0(catch$GC,3),sep="-")## all groups in survey catch
+		Slev = paste(samp$year,pad0(samp$GC,3),sep="-")  ## groups in sample data
+		clev = names(Clev)=Clev                          ## levels (quarters/strata) in catch file
+		slev = names(Slev)=Slev                          ## levels (quarters/strata) in samples file
 	}
 	samp$lev = slev
-	ulev = sort(unique(samp$lev))                       # unique periods in sample data
-	C=sapply(split(catch$catKg,clev),sum)/ifelse(type=="C",1000.,1.) # total catch at each level
-	S=is.element(names(C),ulev)
+	ulev = sort(unique(samp$lev))                       ## unique periods in sample data
+	catfac = ifelse(type=="C",1000.,1.)                 ## factor to convert catch (C=tonnes, S=kg)
+	C    = sapply(split(catch$catKg,clev),sum)/catfac   ## total catch (Tcat) at each level (quarter/stratum)
+	S    = is.element(names(C),ulev)
+#browser();return()
 
 	### Quarterly catch (t)
 	CC   = moveCat(C,S)
 	if (round(sum(C),5)!=round(sum(CC),5)) showError("Catch shuffling amongst periods not successful")
-	ccat = catch$catKg; names(ccat) = catch$tid         # trip catch of species
-	zper = is.element(clev,ulev)                        # index of unique periods
-	cper = Clev[zper]                                   # periods in comm.catch in common with those from samples
-	ccat = ccat[zper]                                   # comm.catch relevant to sample periods
+	ccat = catch$catKg; names(ccat) = catch$tid         ## trip catch of target species
+	zper = is.element(clev,ulev)                        ## index of unique periods
+	cper = Clev[zper]                                   ## comm.catch periods that appear in samples
+	ccat = ccat[zper]                                   ## comm.catch relevant to sample periods
 	qcat = split(ccat,names(cper))
 	#qC   = CC[ulev]
 	qC   = CC[intersect(names(CC),ulev)]
-	pC   = qC / sum(qC)                                 # proportion of total catch in each period
-	nC   = pC * nage                                    # number of otoliths to age per period, given a fixed budget
-	samp[["Tcat"]] = qC[samp$lev]                       # populate the data frame with period/strata catches
-	samp[["Pcat"]] = pC[samp$lev]                       # populate the data frame with period/strata catches
-	samp[["Ncat"]] = nC[samp$lev]                       # populate the data frame with period/strata catches
+	pC   = qC / sum(qC)                                 ## proportion of total catch in each period
+	nC   = pC * nage                                    ## number of otoliths to age per period, given a fixed budget
+	samp[["Tcat"]] = qC[samp$lev]/catfac                ## populate the df with period/strata catches
+	samp[["Pcat"]] = pC[samp$lev]                       ## populate the df with period/strata catches
+	samp[["Ncat"]] = nC[samp$lev]                       ## populate the df with period/strata catches
 #browser();return()
 
-	### Trip catch (t)
-	samp$ncat=samp$pcat=samp$pcat.sid=samp$pcat.tid=samp$tcat=rep(0,nrow(samp))     # prepare blank columns in data frame
-	for (i in names(qC)) {                              # loop through periods (quarters)
+	### ---Trip catch (t)---
+	samp$ncat=samp$pcat=samp$pcat.sid=samp$pcat.tid=samp$tcat=rep(0,nrow(samp)) ## prepare blank columns in data frame (df)
+	for (i in names(qC)) {                              ## loop through periods (quarters)
 		iqcat = qcat[[i]]
-		zc = is.element(names(iqcat),samp$tid)           # index the trips from the comm.catch in each period
+		zc = is.element(names(iqcat),samp$tid)           ## index the trips from the comm.catch in each period
 		#if (!any(zc)) next
 		zl   = is.element(samp$lev,i)
 		tid.sid  = split(samp$SID[zl],samp$tid[zl])
 		scat.sid = samp$catchKg[zl]; names(scat.sid) = samp$SID[zl]
-		scat.sid = split(scat.sid,samp$tid[zl])          # sample catch by trip
-		pcat.sid = lapply(scat.sid,function(x){x/sum(x)})# prop. sample catch by trip
-		if (!any(zc)) {                                  # If commercial catch is not matched, assume that trip
-			tcat.tid = sapply(scat.sid,sum)               # at least caught the sampled catch.
+		scat.sid = split(scat.sid,samp$tid[zl])          ## sample catch by trip
+		pcat.sid = lapply(scat.sid,function(x){x/sum(x)})## prop. sample catch by trip
+		if (!any(zc)) {                                  ## If commercial catch is not matched, assume that trip
+			tcat.tid = sapply(scat.sid,sum)               ## at least caught the sampled catch.
 		} else {
-			tcat.tid = iqcat[zc]                              # can contain multiple catches per trip due to areas or multiple samples
+			tcat.tid = iqcat[zc]                          ## can contain multiple catches per trip due to areas or multiple samples
 			zt = samp$tid[zl] %in% names(tcat.tid)
 			if (!all(zt)) { #???
 				xcat = samp$catchKg[zl][!zt]; names(xcat) = samp$tid[zl][!zt]
 				tcat.tid = c(tcat.tid,xcat)
 			}
-			#tcat = sapply(split(tcat,names(tcat)),sum)/ifelse(type=="C",1000.,1.)  # rollup area catches
+			#tcat = sapply(split(tcat,names(tcat)),sum)/catfac  # rollup area catches
 			tcat.tid = split(tcat.tid,names(tcat.tid))
-			tcat.tid = sapply(tcat.tid,function(x){as.vector(x[1])})/ifelse(type=="C",1000.,1.)  # rollup area catches with same TID
+			tcat.tid = sapply(tcat.tid,function(x){as.vector(x[1])})/catfac ## rollup area catches with same TID
 		}
-		pcat.tid = tcat.tid/sum(tcat.tid)                    # proportion of period catch taken by each trip
-		#ncat = pcat*nC[i]                                # allocate fish to age based on proportion of trip catch in period
+		pcat.tid = tcat.tid/sum(tcat.tid)                ## proportion of period catch taken by each trip
+		#ncat = pcat*nC[i]                               ## allocate fish to age based on proportion of trip catch in period
 		
-		zs   = is.element(samp$tid,names(tcat.tid))      # index the trips from the sample data in each period
-		zss  = as.character(.su(samp$tid[zs]))           # tid can have more than one sample
+		zs   = is.element(samp$tid,names(tcat.tid))      ## index the trips from the sample data in each period
+		zss  = as.character(.su(samp$tid[zs]))           ## tid can have more than one sample
 		for (j in zss) {
-			zj = is.element(samp$tid,j)
+			zj = is.element(samp$tid,j)                   ## indexes SID including duplicated SIDs
 			for (k in tid.sid[[j]]){
-				kk = as.character(k)                       # sample ID
+				kk = as.character(k)                       ## sample ID
+#if (k==487362) {browser();return()}
 				zjk = zj & is.element(samp$SID,k)
 				nsamp = length(pcat.sid)
-				samp[["tcat"]][zjk] = tcat.tid[j]          # populate the data frame with trip catches
-				samp[["pcat.tid"]][zjk] = pcat.tid[j]      # populate the data frame with trip catch proportions
-				samp[["pcat.sid"]][zjk] = pcat.sid[[j]][kk]# populate the data frame with trip catch proportions
-				samp[["pcat"]][zjk] = pcat.tid[j]*pcat.sid[[j]][kk] # populate the data frame with trip catch proportions
-				samp[["ncat"]][zjk] = pcat.tid[j]*pcat.sid[[j]][kk]*nC[i] # populate the data frame with number of specimens to age
+				samp[["tcat"]][zjk] = tcat.tid[j]          ## populate the df with trip catches (incl.dupes)
+				samp[["pcat.tid"]][zjk] =                  ## prop. trip catches within a stratum
+				samp[["pcat.sid"]][zjk] = pcat.sid[[j]][kk]## prop. duplicated samples in each trip
+				samp[["pcat"]][zjk] = pcat.tid[j]*pcat.sid[[j]][kk] ## adjusted prop. trip catches in strata
+				samp[["ncat"]][zjk] = pcat.tid[j]*pcat.sid[[j]][kk]*nC[i] ## no. specimens to age
 			}
 		}
 #browser();return()
 #if (i=="2012-02") {browser();return()}
 	}
 	packList(c("Sdat","catch","C"),"PBStool",tenv=.PBStoolEnv)
-	samp$ncat  = nage*samp$ncat/sum(samp$ncat)          # Force the calculated otoliths back to user's desired number (nage)
-	samp$nwant = round(pmax(1,samp$ncat))               # No. otoliths wanted by the selection algorithm (inflated when many values are <1)
-	samp$ndone = samp$NBBA                              # No. otoliths broken & burnt
-	samp$nfree = round(samp$NOTO-samp$NAGE)             # No. of free/available otoliths not yet processed
-	samp$ncalc = pmin(pmax(0,samp$nwant-samp$ndone),samp$nfree)  # No. of otoliths calculated to satisfy Nwant given constraint of Nfree
+	samp$ncat  = nage*samp$ncat/sum(samp$ncat)          ## Force the calculated otoliths back to user's desired number (nage)
+	samp$nwant = round(pmax(1,samp$ncat))               ## No. otoliths wanted by the selection algorithm (inflated when many values are <1)
+	samp$ndone = samp$NBBA                              ## No. otoliths broken & burnt
+	samp$nfree = round(samp$NOTO-samp$NAGE)             ## No. of free/available otoliths not yet processed
+	samp$ncalc = pmin(pmax(0,samp$nwant-samp$ndone),samp$nfree) ## No. of otoliths calculated to satisfy Nwant given constraint of Nfree
 	nardwuar = samp$ncalc > 0 & !is.na(samp$ncalc)
 	samp$nallo = rep(0,nrow(samp))
 	
-	samp$nallo = adjustN(a=samp$nfree,b=samp$ncat)      # No. of otoliths allocated to satisfy user's initial request, given constraint of Nfree
+	samp$nallo = adjustN(a=samp$nfree,b=samp$ncat)      ## No. of otoliths allocated to satisfy user's initial request, given constraint of Nfree
 #browser();return()
-	#samp$nallo[nardwuar] = adjustN(a=samp$nfree[nardwuar],b=samp$ncat[nardwuar])    # No. of otoliths allocated to satisfy user's initial request, given constraint of Nfree
+	#samp$nallo[nardwuar] = adjustN(a=samp$nfree[nardwuar],b=samp$ncat[nardwuar]) ## No. of otoliths allocated to satisfy user's initial request, given constraint of Nfree
 
 	# Adjust for many small n-values (<1) using median rather than 0.5 as the determinant of 0 vs.1
 	zsmall = samp$nallo[nardwuar] < 1. & round(samp$nallo[nardwuar],5) > 0
@@ -2907,7 +3075,7 @@ requestAges=function(strSpp, nage=500, year=2016,
 
 	write.csv(t(t(rev(sort(sapply(split(samp$nallo,samp$SID),sum))))),file="nalloSID.csv")
 
-	### End sample calculations ###
+	### ---End sample calculations--- ###
 #browser();return()
 
 	yearmess = if (length(year)>3) paste(min(year),"-",max(year),sep="") else paste(year,collapse="+")
@@ -2971,11 +3139,11 @@ requestAges=function(strSpp, nage=500, year=2016,
 	SNdat = PBSdat
 	Opool=split(paste(PBSdat$storageID,PBSdat$SN,sep="."),PBSdat$SID)
 #browser();return()
-	Npool = Opool[.su(as.character(sampuse$SID))]       # Pool relevant to the n field
-	Nsamp = sapply(split(sampuse[,nfld],sampuse$SID),sum) # Number of otoliths to sample from the pool (sapply-split: because samples might be split across trays)
+	Npool = Opool[.su(as.character(sampuse$SID))]       ## Pool relevant to the n field
+	Nsamp = sapply(split(sampuse[,nfld],sampuse$SID),sum) ## Number of otoliths to sample from the pool (sapply-split: because samples might be split across trays)
 	Nsamp = Nsamp[order(names(Nsamp))]
 	#names(sid)=tid
-	Osamp = sapply(usid,function(x,O,N){                # Otoliths sampled randomly from pool
+	Osamp = sapply(usid,function(x,O,N){                ## Otoliths sampled randomly from pool
 		xx=as.character(x); oo=O[[xx]]; nn=N[xx]; olen=length(oo)
 		if (nn==0) return(NA)
 		else if (olen==1) return(oo)
@@ -2985,6 +3153,8 @@ requestAges=function(strSpp, nage=500, year=2016,
 #browser();return()
 	packList(c("expr","SNdat","Opool","Nsamp","Osamp"),"PBStool",tenv=.PBStoolEnv)
 
+	if (redSIDrec) invisible(return(samp))
+	
 	fnam = paste("oto",strSpp,describe,".csv",sep="")
 	#fnam = "test.csv"
 	data(species,pmfc,envir=penv())
@@ -2999,7 +3169,7 @@ requestAges=function(strSpp, nage=500, year=2016,
 #browser();return()
 		for (j in 1:length(firstSerial)) {
 			sers = firstSerial[j]:lastSerial[j]
-			ser1 = c(ser1, sers[seq(1,length(sers),100)]) } # first serials including n samples > 100 (tray)
+			ser1 = c(ser1, sers[seq(1,length(sers),100)]) } ## first serials including n samples > 100 (tray)
 		ntray=length(ser1)
 		tray=array("",dim=c(5,20,ntray),dimnames=list(LETTERS[1:5],1:20,ser1))
 		for (j in ser1) {
@@ -3053,16 +3223,17 @@ requestAges=function(strSpp, nage=500, year=2016,
 				}
 			}
 			if ( is.null(Otos) || all(is.na(Otos))) next
-			x = sampuse[is.element(sampuse$storageID,i),] # use because some samples span trays
+			x = sampuse[is.element(sampuse$storageID,i),] ## use because some samples span trays
 			unpackList(x)
-			ocells = min(firstSerial):max(lastSerial)     # available otoliths
-			pcells = match(Otos,ocells)                   # cell positions to take samples
-			pcells = pcells[pcells>0 & !is.na(pcells)]    # remove NAs caused by a samples spanning trays
-			otos   = unique(ocells[pcells])               # otoliths specific to this tray (forceably remove duplicates even though they should not be here)
+#browser();return()
+			ocells = min(firstSerial):max(lastSerial)     ## available otoliths
+			pcells = match(Otos,ocells)                   ## cell positions to take samples
+			pcells = pcells[pcells>0 & !is.na(pcells)]    ## remove NAs caused by a samples spanning trays
+			otos   = unique(ocells[pcells])               ## otoliths specific to this tray (forceably remove duplicates even though they should not be here)
 			TRAY   = array("",dim=c(5,20),dimnames=list(LETTERS[1:5],1:20))
 			serT   = matrix(seq(ocells[1],ocells[1]+99,1),nrow=5,ncol=20,byrow=TRUE)
-			#if (i=="16X:1") {browser();return()}         # there are apparently 103 Shortraker otoliths in this trip (16X:1)
-			otos   = otos[otos%in%serT]                   # tray only has room for 100; be sure extras are excluded
+			#if (i=="16X:1") {browser();return()}         ## there are apparently 103 Shortraker otoliths in this trip (16X:1)
+			otos   = otos[otos%in%serT]                   ## tray only has room for 100; be sure extras are excluded
 #browser();return()
 			if (any(is.na(pmatch(otos,serT)))) {print("NAs generated, probably duplicated oto numbers");browser();return()}
 			TRAY[pmatch(otos,serT)] = otos

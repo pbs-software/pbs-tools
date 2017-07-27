@@ -1,6 +1,6 @@
 -- Query GFBioSQL for otoliths taken but not aged (2014-06-06)
 -- Show only those that can be identified by FOS TRIP_ID
--- Last modified: 2016-04-27
+-- Last modified: 2017-07-26
 
 SET NOCOUNT ON  -- prevents timeout errors
 
@@ -197,55 +197,59 @@ GROUP BY
   IsNull(US.TRAYS,'UNK')
 
 -- Get FOS Trip from Hail-Vessel-Date combo
-SELECT * INTO #FOS_HVD
-  FROM OPENQUERY(GFSH,
-  'SELECT 
-    HT.HAIL_NUMBER AS fos_hail, 
-    T.VESSEL_REGISTRATION_NUMBER AS fos_cfv, 
-    TO_CHAR(NVL(T.TRIP_START_DATE,T.TRIP_END_DATE),''YYYY-MM-DD'') AS fos_date,
-    T.TRIP_ID AS fos_tid
+--SELECT * INTO #FOS_HVD
+--  FROM OPENQUERY(GFSH,
+SELECT 
+  HT.HAIL_NUMBER AS fos_hail, 
+  T.VESSEL_REGISTRATION_NUMBER AS fos_cfv,
+  --TO_CHAR(NVL(T.TRIP_START_DATE,T.TRIP_END_DATE),''YYYY-MM-DD'') AS fos_date,
+  CONVERT(SMALLDATETIME,CONVERT(char(10),ISNULL(T.TRIP_START_DATE,T.TRIP_END_DATE),20)) AS fos_date,
+  T.TRIP_ID AS fos_tid
+INTO #FOS_HVD
+FROM 
+  GFFOS.dbo.GF_TRIP T RIGHT OUTER JOIN 
+  (SELECT 
+    H.HAIL_NUMBER, 
+    MIN(H.TRIP_ID) AS TRIP_ID
   FROM 
-    GFFOS.GF_TRIP T RIGHT OUTER JOIN 
-    (SELECT 
-      H.HAIL_NUMBER, 
-      MIN(H.TRIP_ID) AS TRIP_ID
-    FROM 
-      GFFOS.GF_HAIL_NUMBER H
-    GROUP BY
-      H.HAIL_NUMBER ) HT ON
-    T.TRIP_ID = HT.TRIP_ID
-  ')
+    GFFOS.dbo.GF_HAIL_NUMBER H
+  GROUP BY
+    H.HAIL_NUMBER ) HT ON
+  T.TRIP_ID = HT.TRIP_ID
+--  ')
 
 -- Get FOS Trip from Hail-Vessel-YrMo combo
-SELECT * INTO #FOS_HVYM
-  FROM OPENQUERY(GFSH,
-  'SELECT 
-    HT.HAIL_NUMBER AS fos_hail, 
-    T.VESSEL_REGISTRATION_NUMBER AS fos_cfv, 
-    TO_CHAR(NVL(T.TRIP_START_DATE,T.TRIP_END_DATE),''YYYY-MM'') AS fos_yrmo,
-    T.TRIP_ID AS fos_tid
+--SELECT * INTO #FOS_HVYM
+--  FROM OPENQUERY(GFSH,
+SELECT 
+  HT.HAIL_NUMBER AS fos_hail, 
+  T.VESSEL_REGISTRATION_NUMBER AS fos_cfv, 
+  --TO_CHAR(NVL(T.TRIP_START_DATE,T.TRIP_END_DATE),''YYYY-MM'') AS fos_yrmo,
+  CONVERT(char(7),ISNULL(T.TRIP_START_DATE,T.TRIP_END_DATE),20) AS fos_yrmo,
+  T.TRIP_ID AS fos_tid
+INTO #FOS_HVYM
+FROM 
+  GFFOS.dbo.GF_TRIP T RIGHT OUTER JOIN 
+  (SELECT 
+    H.HAIL_NUMBER, 
+    MIN(H.TRIP_ID) AS TRIP_ID
   FROM 
-    GFFOS.GF_TRIP T RIGHT OUTER JOIN 
-    (SELECT 
-      H.HAIL_NUMBER, 
-      MIN(H.TRIP_ID) AS TRIP_ID
-    FROM 
-      GFFOS.GF_HAIL_NUMBER H
-    GROUP BY
-      H.HAIL_NUMBER ) HT ON
-    T.TRIP_ID = HT.TRIP_ID
-  ')
+    GFFOS.dbo.GF_HAIL_NUMBER H
+  GROUP BY
+    H.HAIL_NUMBER ) HT ON
+  T.TRIP_ID = HT.TRIP_ID
+--  ')
 
 SELECT 
   GFB.TID_gfb,
   COALESCE(GFB.TID_fos,FOS1.fos_tid,FOS2.fos_tid,0)  AS TID_fos,
   --GFB.hail, GFB.cfv, GFB.gfb_date
   GFB.FEID, GFB.hail, GFB.[set], GFB.GC, GFB.vessel, GFB.cfv,
-  CONVERT(smalldatetime,GFB.gfb_date) AS tdate,
+  CONVERT(SMALLDATETIME,GFB.gfb_date) AS tdate,
   GFB.ttype, GFB.major, GFB.minor, GFB.gear, GFB.spp, GFB.catchKg,
   GFB.SID, GFB.Noto, GFB.Foto, GFB.Moto, GFB.Nbba, GFB.Fbba, GFB.Mbba, GFB.Nage, GFB.Fage, GFB.Mage,
   CASE WHEN GFB.N_ameth IN (0) THEN 0 ELSE GFB.T_ameth / GFB.N_ameth END AS ameth, -- mean ageing method (flags samnples with mixtures of ageing method)
-  GFB.stype, CONVERT(smalldatetime,GFB.sdate) AS sdate,
+  GFB.stype, CONVERT(SMALLDATETIME,GFB.sdate) AS sdate,
   GFB.prefix, GFB.firstSerial, GFB.lastSerial, GFB.storageID
   --INTO #Dump
   FROM
@@ -259,10 +263,11 @@ SELECT
       GFB.cfv   = FOS2.fos_cfv  AND
       GFB.gfb_yrmo = FOS2.fos_yrmo
   ORDER BY
-  CONVERT(smalldatetime,GFB.gfb_date)
+  CONVERT(SMALLDATETIME,GFB.gfb_date)
 
 --select * from #GFB_Otoliths
 
 -- getData("gfb_age_request.sql",dbName="GFBioSQL",strSpp="401")
--- qu("gfb_age_request.sql",dbName="GFBioSQL",strSpp="396",gear=1)
+-- qu("gfb_age_request.sql",dbName="GFBioSQL",strSpp="396",gear=c(1,8))
+-- qu("gfb_age_request.sql",dbName="GFBioSQL",strSpp="439",gear=c(1,6,8))
 

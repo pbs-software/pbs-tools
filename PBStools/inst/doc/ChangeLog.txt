@@ -6,6 +6,16 @@ Authors: RH  = Rowan Haigh
          JTS = Jon T. Schnute
 ------------------------------
 
+1.36.1 (2017-07-27)
+  • Updated function `requestAges' to collapse trips with duplicated samples. (RH 170727)
+  • Revised SQL scripts `gf_age_request.sql', `gfb_pht_catch.sql', and `gfb_fos_catch.sql' to use GFFOS on SQL Server. (RH 170726)
+  • Updated function `texArray' to italicise keywords (e.g., genus and species names) in a file if supplied to the function through new argument `italics.file'. (RH 170920)
+
+1.36.0 (2017-07-19)
+  • Updated function `plotProp' with extensive revisions to the functionality of the GUI. (RH 170719)
+	GUI now invokes other GUIs to qualify data based on areas and code types available in the dataset.
+	Two new subfunctions: `.plotProp.chooseAreas' and `.plotProp.chooseTypes'
+
 1.35.2 (2017-06-23)
   • Forgot to change the version number (nuisance semantic versioning is manual)... 
   • Modified function `estOgive' to save plotting information if argument `plines=FALSE' -- useful for gathering output from multiple time periods. (RH 170620)

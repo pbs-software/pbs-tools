@@ -265,7 +265,7 @@ splitTab = function(tab, np=3, row.names=TRUE, row.label="row", row.numeric=FALS
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~splitTab
 
 
-#texArray-------------------------------2017-06-23
+#texArray-------------------------------2017-07-20
 # Flatten and format an array for latex output.
 #-----------------------------------------------RH
 texArray =function(x, table.caption="My table", table.label="tab:mytable",
@@ -274,7 +274,7 @@ texArray =function(x, table.caption="My table", table.label="tab:mytable",
    rm.empty=TRUE, start.page=1, ignore.col=NULL,
    select.rows=NULL, use.row.names=FALSE, name.row.names="row",
    add.header.column=FALSE, new.header=NULL, outnam="mytable", 
-   alignHRC=c("l","l","r"), ...)
+   alignHRC=c("l","l","r"), italics.file=NULL, ...)
 {
 	if (!is.array(x) && !is.matrix(x) && !is.data.frame(x)) stop("input an array or a matrix")
 	N = dim(x)
@@ -374,7 +374,6 @@ texArray =function(x, table.caption="My table", table.label="tab:mytable",
 			c1 = gsub("stat:Ntid","Number of trips",gsub("stat:Scat","Sample catch (t)",gsub("stat:Fcat","Fisheries catch (t)",c1)))
 			}
 		}
-#browser();return()
 		for (k in 1:nrow(foo)) {
 			koo = foo[k,]
 			xoo = paste("x[,,",paste(koo,collapse=","),"]",sep="")
@@ -456,9 +455,11 @@ texArray =function(x, table.caption="My table", table.label="tab:mytable",
 	}
 	ncol = dim(goo)[[2]] - as.numeric(use.row.names) - as.numeric(add.header.column)
 	if (rm.empty) {
-#browser();return()
-		keep = apply(goo[(ncol(goo)-ncol+1):ncol(goo),,drop=FALSE],1,function(x){any(!x%in%zero & !x%in%"---")})
-		goo = goo[keep,,drop=FALSE]
+		keep = apply(goo[,(ncol(goo)-ncol+1):ncol(goo),drop=FALSE],1,function(x){any(!x%in%zero & !x%in%"---")})
+		goo = goo[keep,,drop=FALSE]  ## remove 'empty' rows
+		keep = apply(goo,2,function(x){any(!x%in%zero & !x%in%"---" & !is.na(x))})
+		goo = goo[,keep,drop=FALSE]  ## remove 'empty' columns
+		ncol = ncol(goo)
 		if (exists("description")) {
 			new.head.pos = !duplicated(rep(1:Ngroups,each=Nsexes)[keep])
 			goo[new.head.pos,1] = c1
@@ -473,17 +474,38 @@ texArray =function(x, table.caption="My table", table.label="tab:mytable",
 		rows.line=NULL
 	rows.line = setdiff(rows.line,nrow(goo)) # don't draw a dashed line along the last row
 	tabalign = paste("c",ifelse(add.header.column,alignHRC[1],""),ifelse(use.row.names,alignHRC[2],""),paste(rep(alignHRC[3],ncol),collapse=""),sep="")
-	fldsize  = newsize = c(0,apply(goo,2,function(x){max(nchar(x),na.rm=TRUE)})) # due to extra column nonsense
+	fldsize  = newsize = c(0,apply(goo,2,function(x){if (all(is.na(x))) 1 else max(nchar(x),na.rm=TRUE)})) # due to extra column nonsense
 	hdrsize  = sapply(strsplit(colnames(goo),split="[[:space:][:punct:]]"),function(x){xx = nchar(x); if (length(xx)==0) 0 else(max(xx))})
-	fldfix   = fldsize>80
-	if (any(fldfix)) {
-		newsize[fldfix] = 80
-		fldprop  = round(0.9*newsize/sum(newsize),2)
-		fldalign = strsplit(tabalign,"")[[1]]
-		fldalign[fldfix] = paste(">{\\raggedright\\arraybackslash}p{",fldprop[fldfix],"\\textwidth}",sep="")
-		tabalign = fldalign #paste(fldalign,collapse="")
-		#tabalign = paste(">{\\raggedright\\arraybackslash}",tabalign,sep="")
+	## No longer any need to do a field fix because all fields are adjusted below
+#	fldfix   = fldsize>80
+#	if (any(fldfix)) {
+#		newsize[fldfix] = 80
+#		fldprop  = round(0.9*newsize/sum(newsize),2)
+#		fldalign = strsplit(tabalign,"")[[1]]
+#		fldalign[fldfix] = paste(">{\\raggedright\\arraybackslash}p{",fldprop[fldfix],"\\textwidth}",sep="")
+#		tabalign = fldalign #paste(fldalign,collapse="")
+#		#tabalign = paste(">{\\raggedright\\arraybackslash}",tabalign,sep="")
+#	}
+
+	## Italicise words from italics.file, if supplied
+	if (!is.null(italics.file) && file.exists(italics.file)){
+		itals = unlist(read.table(italics.file,header=FALSE))
+		icols = apply(goo,2,function(x){length(findPat(itals,x))>1})
+		if (any(icols)) {
+			ii = (1:ncol)[icols]
+			for (j in ii) {
+				jtals = itals[sapply(sapply(itals,findPat,goo[,j]),length)>0]
+				jtmp = goo[,j]
+				for (k in jtals){
+					jtmp = gsub(k,paste0("\\\\textit{",k,"}"),jtmp)
+				}
+				goo[,j] = jtmp
+#browser();return()
+			}
+		}
 	}
+#browser();return()
+
 	xtab = xtable::xtable(goo,align=tabalign)
 	longtable.header = makeLTH(xtab,table.caption,table.label,...)
 	add.to.row = if (length(rows.line)==0) list(pos = list(-1, nrow(xtab)), command = c( longtable.header, "%"))
@@ -524,6 +546,7 @@ texArray =function(x, table.caption="My table", table.label="tab:mytable",
 		return(mess)
 	}
 	fldalign = toupper(strsplit(tabalign,"")[[1]][-1])
+#browser();return()
 
 	## RH (2017-05-18) Adjust column widths to fit data and allow for minimum width before allocating to table width
 	colsize  = pmax(fldsize[-1],hdrsize)        ## compare nchar in data column and column header
