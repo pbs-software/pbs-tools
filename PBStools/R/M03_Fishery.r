@@ -213,10 +213,15 @@ dumpRat = function(strSpp="396", rats=c("alpha","beta","gamma","delta","lambda")
 }
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~dumpRat
 
-#getCatch-------------------------------2015-03-05
+
+#getCatch-------------------------------2017-07-31
 # Extract catch records for a species from various
 # databases and combine them into one commercial 
 # catch data frame and one survey catch data frame.
+# Queries: gfb_catch_records.sql
+#          gfc_catch_records.sql
+#          pht_catch_records.sql
+#          fos_catch_records.sql
 #-----------------------------------------------RH
 getCatch = function(strSpp="396", dbs=c("gfb","gfc","pht","fos"),
    sql=FALSE, sqlpath=.getSpath(), proBio=FALSE, ioenv=.GlobalEnv)
@@ -224,24 +229,28 @@ getCatch = function(strSpp="396", dbs=c("gfb","gfc","pht","fos"),
 {
 	sysyr=as.numeric(substring(Sys.time(),1,4)) # maximum possible year
 	if (sql) {
-	for (i in dbs) {
-		qnam = paste(i,"_catch_records.sql",sep="")
-		if (i=="gfb")      qstr = "dbName=\"GFBioSQL\",as.is=c(rep(FALSE,14),TRUE,rep(FALSE,3))"
+		DBS = c("gfb","gfc","pht","fos")
+		if (!all(dbs%in%c("gfb","gfc","pht","fos")))
+			showError(paste0("Not all 'dbs' are support by the code.\n\nChoose from ",deparse(DBS)),as.is=TRUE)
+		for (i in dbs) {
+			qnam = paste(i,"_catch_records.sql",sep="")
+			if (i=="gfb")  qstr = "dbName=\"GFBioSQL\",as.is=c(rep(FALSE,16),TRUE,rep(FALSE,3))"  ## as.is for 'spp' field
 			else if (i=="gfc") qstr = "dbName=\"GFCatch\""
 			else if (i=="pht") qstr = "dbName=\"PacHarvest\""
 			else if (i=="fos") qstr = "dbName=\"GFFOS\""
 				#paste("dbName=\"GFFOS\",server=\"GFSH\",type=\"ORA\",trusted=FALSE,uid=\"",uid,"\",pwd=\"",pwd,"\"",sep="")
-			else showError(paste("Database '",i,"' not currently supported.",sep=""))
-		expr = paste("getData(\"",qnam,"\",strSpp=\"",strSpp,"\",",qstr,",path=\"",sqlpath,"\",tenv=penv()); ",sep="")
-		expr = c(expr,paste("assign(\"cat",strSpp,i,".wB\",PBSdat,envir=.PBStoolEnv); ",sep=""))
-		expr = c(expr,paste("save(\"cat",strSpp,i,".wB\",file=\"cat",strSpp,i,".wB.rda\",envir=.PBStoolEnv); ",sep=""))
-		eval(parse(text=paste(expr,collapse="")))
-	}	}
-	else {
+			else showMessage(paste("Database '",i,"' not currently supported.",sep=""))
+			expr = paste("getData(\"",qnam,"\",strSpp=\"",strSpp,"\",",qstr,",path=\"",sqlpath,"\",tenv=penv()); ",sep="")
+			expr = c(expr,paste("assign(\"cat",strSpp,i,".wB\",PBSdat,envir=.PBStoolEnv); ",sep=""))
+			expr = c(expr,paste("save(\"cat",strSpp,i,".wB\",file=\"cat",strSpp,i,".wB.rda\",envir=.PBStoolEnv); ",sep=""))
+			eval(parse(text=paste(expr,collapse="")))
+		}
+	} else {
 		for (i in dbs) {
 			expr=paste(c("getFile(\"cat",strSpp,i,".wB\",senv=ioenv,tenv=.PBStoolEnv)"),collapse="")
 			eval(parse(text=expr))
-	}	}
+		}
+	}
 	if (any(dbs=="gfb")) {
 		Snam = paste("Scat",strSpp,".wB",sep="")  # Survey catch
 		expr = paste(Snam,"=ttcall(cat",strSpp,"gfb.wB); ",sep="")

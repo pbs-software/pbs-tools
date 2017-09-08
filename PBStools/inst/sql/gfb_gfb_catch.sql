@@ -1,5 +1,7 @@
 -- Research survey catch for 'requestAges()'. (2010-07-27)
--- Duplicated as 'gfb_catch_records.sql' for 'getCatch()' and 'weightBio'.
+-- This query is now deprecated and no longer duplicated as 'gfb_catch_records.sql'
+-- Functions 'requestAges', 'getCatch' and 'weightBio' now use 'gfb_catch_records'.
+-- Last modified: RH 2015-05-22
 
 SET NOCOUNT ON  -- prevents timeout errors
 
@@ -91,5 +93,6 @@ WHERE
   T.TRIP_SUB_TYPE_CODE IN (2,3)
 
 --getData("gfb_gfb_catch.sql","GFBioSQL",strSpp="396",noLogicals=F)
+-- qu("gfb_gfb_catch.sql",dbName="GFBioSQL",strSpp="439",gear=c(1,6,8))
 
 

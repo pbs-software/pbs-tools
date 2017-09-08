@@ -58,9 +58,10 @@
   GFDBtemp="PAC03450/GFDB",
   oldSVBCPBSGFIIS="199.60.95.134")
 
-.rgbBlind = list(black=c(0,0,0),orange=c(230,159,0),skyblue=c(86,180,233),bluegreen=c(0,158,115),
+.rgbBlind   = list(black=c(0,0,0),orange=c(230,159,0),skyblue=c(86,180,233),bluegreen=c(0,158,115),
 	yellow=c(240,228,66),blue=c(0,114,178),vermillion=c(213,94,0),redpurple=c(204,121,167))
-.colBlind = sapply(.rgbBlind,function(x){rgb(x[1],x[2],x[3],maxColorValue=255)})
+.colBlind   = sapply(.rgbBlind,function(x){rgb(x[1],x[2],x[3],maxColorValue=255)})
+.colGnuplot = c("#e41a1c","#377eb8","#4daf4a","#984ea3","#ff7f00","#ffff33","#a65628","#f781bf")
 
 #addStrip-------------------------------2015-12-01
 # Add a vertical colour strip as a legend.

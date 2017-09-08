@@ -265,7 +265,7 @@ splitTab = function(tab, np=3, row.names=TRUE, row.label="row", row.numeric=FALS
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~splitTab
 
 
-#texArray-------------------------------2017-07-20
+#texArray-------------------------------2017-08-01
 # Flatten and format an array for latex output.
 #-----------------------------------------------RH
 texArray =function(x, table.caption="My table", table.label="tab:mytable",
@@ -459,7 +459,6 @@ texArray =function(x, table.caption="My table", table.label="tab:mytable",
 		goo = goo[keep,,drop=FALSE]  ## remove 'empty' rows
 		keep = apply(goo,2,function(x){any(!x%in%zero & !x%in%"---" & !is.na(x))})
 		goo = goo[,keep,drop=FALSE]  ## remove 'empty' columns
-		ncol = ncol(goo)
 		if (exists("description")) {
 			new.head.pos = !duplicated(rep(1:Ngroups,each=Nsexes)[keep])
 			goo[new.head.pos,1] = c1
@@ -473,9 +472,13 @@ texArray =function(x, table.caption="My table", table.label="tab:mytable",
 	else
 		rows.line=NULL
 	rows.line = setdiff(rows.line,nrow(goo)) # don't draw a dashed line along the last row
-	tabalign = paste("c",ifelse(add.header.column,alignHRC[1],""),ifelse(use.row.names,alignHRC[2],""),paste(rep(alignHRC[3],ncol),collapse=""),sep="")
+
+	ncol     = dim(goo)[[2]] - as.numeric(add.header.column) - as.numeric(use.row.names)
+	## Length of align is one greater than ncol(x) if x is a data.frame
+	tabalign = paste0("c",ifelse(add.header.column, alignHRC[1], ""), ifelse(use.row.names, alignHRC[2], ""), paste(rep(alignHRC[3], ncol), collapse=""))
 	fldsize  = newsize = c(0,apply(goo,2,function(x){if (all(is.na(x))) 1 else max(nchar(x),na.rm=TRUE)})) # due to extra column nonsense
 	hdrsize  = sapply(strsplit(colnames(goo),split="[[:space:][:punct:]]"),function(x){xx = nchar(x); if (length(xx)==0) 0 else(max(xx))})
+
 	## No longer any need to do a field fix because all fields are adjusted below
 #	fldfix   = fldsize>80
 #	if (any(fldfix)) {
@@ -504,8 +507,8 @@ texArray =function(x, table.caption="My table", table.label="tab:mytable",
 			}
 		}
 	}
-#browser();return()
 
+#browser();return()
 	xtab = xtable::xtable(goo,align=tabalign)
 	longtable.header = makeLTH(xtab,table.caption,table.label,...)
 	add.to.row = if (length(rows.line)==0) list(pos = list(-1, nrow(xtab)), command = c( longtable.header, "%"))

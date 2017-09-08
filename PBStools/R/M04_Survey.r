@@ -488,11 +488,11 @@ showAlpha <- function(lims=c("emp","bca")) {
 #----------------------------------------showAlpha
 
 
-#showIndices----------------------------2016-11-17
+#showIndices----------------------------2017-08-29
 # Show survey indices from Norm's bootstrap tables
 #-----------------------------------------------RH
 showIndices =  function(strSpp="396",serID=1, survID=NULL, bootID, 
-   tenv=.PBStoolEnv, quiet=FALSE, addN=FALSE, outnam)
+   tenv=.PBStoolEnv, quiet=FALSE, addN=FALSE, outnam, png=FALSE, pngres=300)
 {
 	assign("PBStool",list(module="M04_Survey",call=match.call(),args=args(showIndices)),envir=tenv)
 	data(spn,envir=penv())
@@ -593,6 +593,7 @@ showIndices =  function(strSpp="396",serID=1, survID=NULL, bootID,
 
 	# Plot the results
 	#resetGraph()
+	if (png) png(paste0(outnam,".png"),width=7, height=7, units="in", res=pngres)
 	expandGraph(mar=c(4,5,1,1),las=1)
 	plot(xy,xlim=xlim,ylim=ylim,type="n",xlab="",ylab="")
 	if (diff(xlim)<25) axis(1,at=seq(min(x),max(x),1),labels=FALSE,tcl=-.2)
@@ -613,6 +614,7 @@ showIndices =  function(strSpp="396",serID=1, survID=NULL, bootID,
 	mtext("Relative Biomass (t)",side=2,line=3.5,cex=1.2,las=0)
 	mtext("Survey Year",side=1,line=2,cex=1.2)
 	box()
+	if (png) dev.off()
 	packList(c("surveys","sppBoot","survBoot","xy","cil","cih","clr","llab","ulab"),"PBStool",tenv=tenv)
 	names(y)=x
 	if (!quiet) print(sppBoot)

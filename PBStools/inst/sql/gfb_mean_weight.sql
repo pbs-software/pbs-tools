@@ -391,3 +391,4 @@ SELECT * FROM #mean_weight
 --qu("gfb_mean_weight.sql",dbName="GFBioSQL",strSpp="442",major=3:9)
 --qu("gfb_mean_weight.sql",dbName="GFBioSQL",strSpp="440",major=3:9)
 --qu("gfb_mean_weight.sql",dbName="GFBioSQL",strSpp="228",major=1)
+--qu("gfb_mean_weight.sql",dbName="GFBioSQL",strSpp="439",major=3:9)

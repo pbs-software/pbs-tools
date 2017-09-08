@@ -1,5 +1,6 @@
--- Research survey catch for 'getCatch()' and 'weightBio'. (2014-07-14)
--- Duplicated as 'gfb_gfb_catch.sql' for 'requestAges()'.
+-- Research survey catch for 'getCatch', 'weightBio', and 'requestAges'.
+-- This query is no longer duplicated as 'gfb_gfb_catch.sql', formerly use by 'requestAges'.
+-- Last revised: RH 2017-07-31
 
 SET NOCOUNT ON  -- prevents timeout errors
 
@@ -74,12 +75,12 @@ SELECT --TOP 20
 ---      B02.FE_END_LATTITUDE_DEGREE + (B02.FE_END_LATTITUDE_MINUTE / 60.0)
 ---    ELSE NULL END,
   'Best_Depth' = CASE
-    WHEN B02.GEAR_CODE IN (0,1,2,5) THEN
+    WHEN B02.GEAR_CODE IN (0,1,2,4,5,8,11,13,14,16) THEN  -- bottom gear
       COALESCE(B02.FE_BEGINNING_BOTTOM_DEPTH, B02.FE_END_BOTTOM_DEPTH, B02.FE_MODAL_BOTTOM_DEPTH, B02.FE_MIN_BOTTOM_DEPTH, B02.FE_MAX_BOTTOM_DEPTH,
         B02.FE_BEGINNING_GEAR_DEPTH, B02.FE_END_GEAR_DEPTH, B02.FE_MODAL_GEAR_DEPTH, B02.FE_MIN_GEAR_DEPTH, B02.FE_MAX_GEAR_DEPTH, 
         B02.FE_BEGIN_CAPTURE_DEPTH, B02.FE_END_CAPTURE_DEPTH, B02.FE_MODAL_CAPTURE_DEPTH, B02.FE_MIN_CAPTURE_DEPTH, B02.FE_MAX_CAPTURE_DEPTH,
         B02.FE_BEGIN_TARGET_DEPTH, B02.FE_END_TARGET_DEPTH, B02.FE_MODAL_TARGET_DEPTH, B02.FE_MIN_TARGET_DEPTH, B02.FE_MAX_TARGET_DEPTH)
-    WHEN B02.GEAR_CODE IN (6) THEN
+    WHEN B02.GEAR_CODE IN (3,6,7,9,10,12,17,18,22) THEN  -- midwater gear
       COALESCE(B02.FE_BEGINNING_GEAR_DEPTH, B02.FE_END_GEAR_DEPTH, B02.FE_MODAL_GEAR_DEPTH, B02.FE_MIN_GEAR_DEPTH, B02.FE_MAX_GEAR_DEPTH,
         B02.FE_BEGIN_CAPTURE_DEPTH, B02.FE_END_CAPTURE_DEPTH, B02.FE_MODAL_CAPTURE_DEPTH, B02.FE_MIN_CAPTURE_DEPTH, B02.FE_MAX_CAPTURE_DEPTH, 
         B02.FE_BEGIN_TARGET_DEPTH, B02.FE_END_TARGET_DEPTH, B02.FE_MODAL_TARGET_DEPTH, B02.FE_MIN_TARGET_DEPTH, B02.FE_MAX_TARGET_DEPTH,
@@ -127,6 +128,8 @@ SELECT --TOP 20
   IsNull(E.MAJOR_STAT_AREA_CODE,0) AS major,
   IsNull(E.MINOR_STAT_AREA_CODE,0) AS minor,
   IsNull(E.LOCALITY_CODE,0) AS locality,
+  ISNULL(BB.Best_Depth,0) As depth,
+  ISNULL(E.GEAR_CODE,0) AS gear,
   C.SPECIES_CODE AS spp, 
   C.CATCH_WEIGHT AS wt, 
   C.CATCH_COUNT AS pcs, 
@@ -181,4 +184,5 @@ ORDER BY
 
 --getData("gfb_catch_records.sql","GFBioSQL",strSpp="401",as.is=c(rep(F,14),T,rep(F,3)))
 --qu("gfb_catch_records.sql",dbName="GFBioSQL",strSpp="607",as.is=c(rep(F,14),T,rep(F,3)))
+--qu("gfb_catch_records.sql",dbName="GFBioSQL",strSpp="439",as.is=c(rep(F,16),T,rep(F,3)))
 
