@@ -265,7 +265,7 @@ splitTab = function(tab, np=3, row.names=TRUE, row.label="row", row.numeric=FALS
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~splitTab
 
 
-#texArray-------------------------------2017-08-01
+#texArray-------------------------------2017-09-20
 # Flatten and format an array for latex output.
 #-----------------------------------------------RH
 texArray =function(x, table.caption="My table", table.label="tab:mytable",
@@ -558,7 +558,8 @@ texArray =function(x, table.caption="My table", table.label="tab:mytable",
 	adjprop  = minprop/sum(minprop)             ## standardise the adjusted column proportions
 	fldwidth = round(adjprop * tablewidth,2)    ## allocate column dimensions as proportion of table width
 
-	bigmess  = paste0(sapply(1:length(fldwidth), function(N, a, w) { LCR(align=fldalign[N], width=fldwidth[N]) } ),collapse="")
+	#bigmess  = paste0(sapply(1:length(fldwidth), function(N, a, w) { LCR(align=fldalign[N], width=fldwidth[N]) } ),collapse="")
+	bigmess  = paste0(sapply(1:length(fldwidth), function(N) { LCR(align=fldalign[N], width=fldwidth[N]) } ),collapse="")
 #browser();return()
 
 	texfile[ltdelim[1]] = gsub(substring(tabalign,2,nchar(tabalign)),bigmess,texfile[ltdelim[1]])

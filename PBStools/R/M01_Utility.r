@@ -25,6 +25,7 @@
 #  listTables......List tables in specified SQL, ORA, or MDB database.
 #  prime...........Report the prime numbers given an integer vector.
 #  quantBox........Redefine boxplot to show quantiles.
+#  readClog........Read a ChangeLog file and convert it to an R list.
 #  revStr..........Reverse characters in a string.
 #  runModules......Display a master GUI to display modules.
 #  scaleVec........Scales a vector to span a target minimum and maximum.
@@ -63,6 +64,7 @@
 .colBlind   = sapply(.rgbBlind,function(x){rgb(x[1],x[2],x[3],maxColorValue=255)})
 .colGnuplot = c("#e41a1c","#377eb8","#4daf4a","#984ea3","#ff7f00","#ffff33","#a65628","#f781bf")
 
+
 #addStrip-------------------------------2015-12-01
 # Add a vertical colour strip as a legend.
 #-----------------------------------------------RH
@@ -95,6 +97,7 @@ addStrip = function (x, y, col, lab, xwidth=0.01, yheight=0.3, ...)
 }
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~addStrip
 
+
 #biteData-------------------------------2008-11-10
 # Subsets a data matrix/frame using input vector.
 #-----------------------------------------------RH
@@ -105,6 +108,7 @@ biteData = function(dat,vec) {
 	expr=paste("bdat=dat[is.element(dat[,\"",fld,"\"],",deparse(unique(unlist(vec))),"),]",sep="")
 	eval(parse(text=expr))
 	return(bdat) }
+
 
 #chewData-------------------------------2009-01-13
 # Remove records that contribute little information to factor categories.
@@ -138,6 +142,7 @@ confODBC <- function(dsn="PacHarvest",server="GFDB",db="PacHarvest",
 	system(cmd)
 	invisible() }
 
+
 #convCT---------------------------------2014-12-12
 # Convert a crossTab object to regular matrix or data frame.
 #-----------------------------------------------RH
@@ -152,6 +157,7 @@ convCT = function(CT, fn=as.matrix, colAsRowName=TRUE) {
 }
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~convCT
 
+
 #convFY---------------------------------2011-12-05
 # Convert dates into fishing years.
 #-----------------------------------------------RH
@@ -165,6 +171,7 @@ convFY = function(x,startM=4) { # local function to get fishing years
 	yr=as.numeric(substring(yrmo,1,4)); mo=as.numeric(substring(yrmo,6,7))
 	fyr=yr; sM=is.element(mo,startM:12); fyr[!sM]=fyr[!sM]-1; names(fyr)=yrmo
 	return(fyr) }
+
 
 #convYM---------------------------------2011-12-05
 # Convert date limits into a vector of year-months (YYY-MM).
@@ -182,6 +189,7 @@ convYM = function(x) {
 	i=match(yrmo,X)
 	xout=X[i[1]:i[2]]
 	return(xout) }
+
 
 #convYP---------------------------------2011-12-05
 # Convert dates into year periods.
@@ -208,6 +216,7 @@ convYP = function(x, ndays=90) {
 	else  return(rep("",length(x)))
 	return(yearperiod(cdate,ndays)) }
 
+
 #countLines-----------------------------2013-05-07
 # Count the number of lines in an ASCII file.
 #-----------------------------------------------RH
@@ -219,6 +228,7 @@ countLines = function(fnam,os=.Platform$OS.type)
 	Nrow = as.numeric(shell(cmd,intern=TRUE))
 	return(Nrow)
 }
+
 
 #createDSN------------------------------2016-12-01
 # Create entire suite of DSNs for the groundfish databases
@@ -234,6 +244,7 @@ createDSN <- function(trusted=TRUE) {
 	confODBC(dsn="PacHarvSable",server="GFDB",db="PacHarvSable", driver="SQL Server", descr=descr, trusted=trusted)
 	confODBC(dsn="GFFOS",       server="GFDB",db="GFFOS",        driver="SQL Server", descr=descr, trusted=trusted)
 }
+
 
 #crossTab-------------------------------2015-03-06
 # Use package 'reshape' to summarize z using crosstab values y.
@@ -253,6 +264,7 @@ crossTab = function(x=PBSdat, y=c("year","major"),
 	return(Z) }
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~crossTab
 
+
 #fitLogit-------------------------------2009-11-09
 # Fit binomial data using logit link function
 #-------------------------------------------ARK/RH
@@ -263,6 +275,7 @@ fitLogit = function(dat, yfld="pmat", xflds="age") {
 		", family=binomial(link=\"logit\"), data=dat)",sep="")
 	eval(parse(text=expr))
 	return(glmfit) }
+
 
 #flagIt---------------------------------2012-06-13
 # Takes a coordinate (a,b) and labels it using a 
@@ -294,6 +307,7 @@ flagIt = function(a, b, A=45, r=0.2, n=1, ...){
 	return(invisible(list(xvec=xvec,yvec=yvec,rads=rads,x0=x0,x=x,y=y)))
 }
 
+
 #gatherVals-----------------------------2016-06-14
 # Gathers data from multiple columns into key-value pairs.
 # Essentially a replacement function for tidyr::gather.
@@ -309,6 +323,7 @@ gatherVals = function(x, columns){
 	return(xout)
 }
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~gatherVals
+
 
 #getData--------------------------------2016-12-01
 # Get data from a variety of sources.
@@ -920,12 +935,14 @@ isThere = function(x, envir=parent.frame()) {
 		showError(paste("isThere()\n'x' needs to be a character string"),as.is=TRUE)
 	x %in% ls(envir=envir,all.names=TRUE) }
 
+
 #lenv-----------------------------------2010-05-25
 # Get the local/parent/global environment.
 #-----------------------------------------------RH 
 	lenv = function(){ sys.frame(sys.nframe()-1) } # local environment (probably the same as parent.frame())
 	penv = function(){ parent.frame() }            # parent environment
 	genv = function(){ .GlobalEnv }                # global environment
+
 
 #listTables-----------------------------2013-01-17
 # List tables in specified SQL, ORA, or MDB database.
@@ -967,7 +984,8 @@ listTables <- function (dbName, pattern=NULL, path=getwd(),
 #prime----------------------------------2010-03-25
 # Report the prime numbers given an integer vector
 #-----------------------------------------------RH
-prime = function(x=2:100){
+prime = function(x=2:100)
+{
 	is.prime = function(xx) {
 		if (xx<=1) return(FALSE)
 		else if (is.element(xx,2:3)) return(TRUE)
@@ -976,7 +994,9 @@ prime = function(x=2:100){
 		stop("'x' must be a vector of integers")
 	z = sapply(x,is.prime) 
 	if (any(z)) return(x[z])
-	else return(NULL) }
+	else return(NULL)
+}
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~prime
 
 
 ##quantBox------------------------------2016-03-24
@@ -999,11 +1019,76 @@ quantBox = function (x, use.cols = TRUE, ...) ## taken from boxplot.matrix
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~quantBox
 
 
+#readClog-------------------------------2017-10-25
+# Read a ChangeLog file and convert it to an R list.
+#-----------------------------------------------RH
+readClog = function(fnam)
+{
+	dat  = readLines(fnam)
+	cdat = dat[grep("^$",dat,invert=T)]   ## condense dat by removing balnk lines
+	cdat = cdat[grep("^#",cdat,invert=T)] ## get rid of comments
+	ctit = cdat[1]                        ## title of ChangeLog
+	laut = grep("^Authors", cdat)
+	lend = grep("^-----", cdat)[1]        ## end of the header section
+	auth = cdat[laut:(lend-1)]            ## authors of package
+
+	lver = grep("^\\S",cdat)              ## lines starting with non-space	
+	lver = lver[lver>lend]
+	#lmod = grep("^\\s\\s[*]",cdat)
+
+	clog = list()
+	tdat = .trimWhiteSpace(cdat)          ## remove whitespace before and after text in each line
+#browser();return()
+	tbrk = c(lver,length(tdat)+1)
+	for (i in 1:length(lver)) {
+		ii   = tdat[lver[i]]
+		clog[[ii]] = list()
+		idat = tdat[(tbrk[i]+1):(tbrk[i+1]-1)]
+		imod = grep("^[*]",idat)
+		idat[imod] = gsub("[*]\\s","",idat[imod])   ## get rid of asterisk
+		#y = grep("^[-]",idat)
+		#idat[imod[which(abs(imod-y[1])==min(abs(imod-y[1])))]]   ## to determine which modules have sub-bullets
+		ibrk = c(imod,length(idat)+1)
+		for (j in 1:length(imod)) {
+			jj   = idat[imod[j]]
+			jdat = idat[(ibrk[j]+1):(ibrk[j+1]-1)]
+			jdat = gsub("^[-]\\s","  - ",jdat)
+			clog[[ii]][[jj]] = c(clog[[ii]][[jj]],jdat)
+
+			## A future update might create a list of lists foor the actions (+) and subactions (-)
+			#if (any(grepl("^[-]",jdat))) {
+			#	jact = grep("^[+]",jdat)
+			#	jbrk = c(jact,length(jdat)+1)
+			#	for (k in 1:length(jact)) {
+			#		kk   = jdat[jact[k]]
+			#		clog[[ii]][[jj]] = c(clog[[ii]][[jj]],kk)
+			#		nn = length(clog[[ii]][[jj]])
+			#		kdat = jdat[(jbrk[k]+1):(jbrk[k+1]-1)]
+			#		clog[[ii]][[jj]][[kk]] = list(kdat)
+			#		OR
+			#		kiss = list()
+			#		kiss[[kk]] = kdat
+			#		clog[[ii]][[jj]] = c(clog[[ii]][[jj]],kiss)
+			#	}
+			#} else {
+			#clog[[ii]][[jj]] = c(clog[[ii]][[jj]],jdat)
+			#}
+		}
+#browser();return()
+	}
+	attr(clog,"title") = ctit
+	attr(clog,"authors") = auth
+	return(clog)
+}
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~readClog
+
+
 #revStr---------------------------------2008-11-26
 # Reverse characters in a string (see 'strsplit()' in base package).
 #------------------------------------------------R
 revStr <- function(x)
 	sapply(lapply(strsplit(x, NULL), rev), paste, collapse="")
+
 
 #runModules-----------------------------2012-07-10
 # runModules: Display a master GUI to display modules
@@ -1046,6 +1131,7 @@ runModules <- function () {
 }
 #---------------------------------------runModules
 
+
 #scaleVec-------------------------------2011-09-14
 # Scales a vector to span a target minimum and maximum (see 'scalePar' & 'restorePar')
 #-------------------------------------------JTS/RH
@@ -1059,6 +1145,7 @@ scaleVec = function(V, Tmin=0, Tmax=1) {
 	Tval = Tmin + (Tmax - Tmin) * sin(pi * Snor/2)^2  # recast to lie between Tmin and Tmax
 	return(Tval) }
 #-----------------------------------------scaleVec
+
 
 #showError------------------------------2014-10-07
 # Display error message on device surface
@@ -1081,6 +1168,7 @@ showError=function(str, type="", as.is=FALSE, err=TRUE, ...) {
 	showMessage(str=str, type=type, as.is=as.is, err=err, ...) 
 	invisible()}
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~showError
+
 
 #spooler--------------------------------2008-08-21
 # Spools list objects into fields of data frames.
@@ -1108,6 +1196,7 @@ spooler <- function(xlist,newfld="area",target){
 				expr=paste(expr,targ,"[z1&z2,\"",newfld,"\"]=\"",val,"\"",sep="")
 				eval(parse(text=expr),envir=parent.frame(1))
 }	}	} }
+
 
 #stdConc--------------------------------2011-07-15
 # Standardise chemical concentrations from various

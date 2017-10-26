@@ -37,6 +37,7 @@
   \code{listTables}     \tab List tables in specified SQL/ORA database.\cr
   \code{prime}          \tab Report the prime numbers given an integer vector.\cr
   \code{quantBox}       \tab Redefine boxplot to show quantiles.\cr
+  \code{readClog}       \tab Read a ChangeLog file and convert it to an R list..\cr
   \code{revStr}         \tab Reverse a string set.\cr
   \code{runModules}     \tab Run GUI modules included in PBS Fishery.\cr
   \code{scaleVec}       \tab Scale a vector to span a target minimum and maximum.\cr
@@ -112,16 +113,14 @@
   \code{prepClara}      \tab Prepare a data object for Clustering Large Applications.\cr
   \code{zapHoles}       \tab Zap (remove) holes from polygons.\cr
   \tab \cr
-  \bold{6. Temporal}    \tab \cr
-  \code{boxSeason}      \tab Display seasonal patterns using boxplots.\cr
+  \bold{6. Assessment}  \tab \cr
   \code{calcMA}         \tab Calculate a moving average using a fixed period occurring every \eqn{x} units.\cr
+  \code{compBmsy}       \tab Compare biomass posteriors relative to Bmsy or Bavg.\cr
   \code{imputeRate}     \tab \bold{GUI:} Impute the rate of return of an investment.\cr
-  \code{plotDiversity}  \tab Plot diversity of phytoplankton samples.\cr
-  \code{trackComp}      \tab Track composition of phytoplankton over time.\cr
   \tab \cr
   \bold{7. Catch Recon} \tab \cr
   \code{buildCatch}     \tab Build a catch history of BC rockfish 1918--present.\cr
-  \code{plotData}       \tab Plot diagnostic data for catch reconstructions.\cr
+  \code{plotDiag}       \tab Plot diagnostic data for catch reconstructions.\cr
   \code{plotRecon}      \tab Plot reconstructed catch using barplots stacked by PMFC area.\cr
   \code{surveyCatch}    \tab Query the survey catch data and make summary tables.\cr
   \code{zapSeamounts}   \tab Remove seamount records using combinations of major, minor, and locality codes.\cr

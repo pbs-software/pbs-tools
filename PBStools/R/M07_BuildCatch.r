@@ -2,13 +2,13 @@
 # Module 7: Catch Reconstruction
 # ------------------------------
 #  buildCatch...Build a catch history of BC rockfish 1918--present.
-#  plotData.....Plot diagnostic data for catch reconstructions.
+#  plotDiag.....Plot diagnostic data for catch reconstructions.
 #  plotRecon....Plot reconstructed catch using barplots stacked by PMFC area.
 #  surveyCatch..Query the survey catch data and make summary tables.
 #  zapSeamounts.Remove seamount records using combinations of major, minor, and locality codes.
 #===============================================================================
 
-#buildCatch-----------------------------2017-02-20
+#buildCatch-----------------------------2017-10-19
 # Catch reconstruction algorithm for BC rockfish.
 # Use ratios of RRF (reconstructed rockfish) to ORF 
 # (rockfish other than POP) landings for multiple fisheries.
@@ -23,7 +23,7 @@ buildCatch=function(
    fidout=c(1:5,10),     # Fishery IDs for which an annual series barplot stacked by PMFC area is produced
    refyrs=1997:2005,     # Reference years to use for calculating gamma (e.g., RRF/ORF).
    refarea=NULL,         # Name of file containing reference areas to use when calculating gamma
-   refgear=NULL,         # Reference gear types years to use for calculating gamma
+   refgear=NULL,         # Reference gear types years to use for calculating gamma (1=bottom trawl, 2=trap, 3=midwater trawl, 4=h&l, 5=longline, 8=h&l/longline/trap)
    useYR1=NULL,          # First year to start using reported landings (i.e. not estimated from gamma), one for each fishery
    useBG=FALSE,          # Sample from the binomial-gamma to estimate ratios RRF/ORF or RRF/TRF.
    useSM=FALSE,          # Use catch data from seamounts
@@ -38,8 +38,9 @@ buildCatch=function(
    depbin=100,           # Depth (m) bin to use for strat.gamma and strat.delta
    sensitivity=NULL,     # Sensitivity name for tweaking decisions
    reconstruct=TRUE,     # Complete the reconstruction to its end, otherwise terminate the code once the modern catch array has been compiled and saved
-   diagnostics=FALSE,    # Create automatically-numbered diagnostic images files to a subdirectory called `CRdiag'
+   run.name=NULL,        # Run name to keep track of various run configurations with gamma, delta, refarea, and refgear
    ascii.tables=TRUE,    # Create ASCII ouput tables and dump them into the subdirectory called `tables'
+   diagnostics=FALSE,    # Create automatically-numbered diagnostic images files to a subdirectory called `diags'
    saveinfo=TRUE,        # Save various data and function objects to a list object called `PBStool' in the temporary environment `.PBStoolEnv'
    sql=FALSE,            # Query the databases, otherwise load catch records from binary files saved from a previous query run (to save time)
    only.sql=FALSE,       # Only execute the queries to download catch data from remote databases
@@ -58,10 +59,27 @@ buildCatch=function(
 	fshnam  = c("trawl","h&l","trap",rep("h&l",6),"combined")  ## general category vector
 	fidfive = c("Trawl","Halibut","Sablefsh","DogLing","HLRock")
 
-#browser();return()
-	if (ascii.tables){
-		if (!file.exists("./tables")) dir.create("tables")
+	if (is.null(run.name)) {
+		run.name = paste0( orfSpp, 
+			"_rA(",paste0(major,collapse=""),")",
+			"_rY(",paste0(substring(range(refyrs),3,4),collapse=""),")",
+			"_sGD(", substring(strat.gamma,1,1), substring(strat.delta,1,1), ")"
+		)
+		if (!is.null(refarea)) ## reference fishery-specific localities
+			run.name = paste0(run.name,"_rF(",paste0(names(refarea),collapse=""),")")
 	}
+	if (!file.exists(run.name)) dir.create(run.name)
+	figDir = paste0(run.name,"/figs")
+	if (!file.exists(figDir)) dir.create(figDir)
+	tabDir = paste0(run.name,"/tables")
+	if (ascii.tables){
+		if (!file.exists(tabDir)) dir.create(tabDir)
+	}
+	diaDir = paste0(run.name,"/diags")
+	if (diagnostics){
+		if (!file.exists(diaDir)) dir.create(diaDir)
+	}
+#browser();return()
 	if (!only.sql) {
 		## -------------------------------------------------------------
 		## Global list object 'PBStool' stores results from the analysis
@@ -69,19 +87,16 @@ buildCatch=function(
 		assign("PBStool",list(module="M07_BuildCatch",call=match.call(),args=args(buildCatch),
 			spp=strSpp,pD=1,eps=eps,wmf=wmf,fidnam=fidnam,fshnam=fshnam),envir=.PBStoolEnv)
 		## ------------------------------------------
-		## pD = Counter for plotData diagnostics
+		## pD = Counter for plotDiag diagnostics
 		## Function to convert numbers to proportions
 		## ------------------------------------------
 		pcalc=function(x){if (all(x==0)) rep(0,length(x)) else x/sum(x)}
 		sysyr=as.numeric(substring(Sys.time(),1,4)) ## maximum possible year
 
 		if (diagnostics){
-			if (!file.exists("./CRdiag")) dir.create("CRdiag")
-			else {
-				diag.files = list.files("./CRdiag")
-				if (length(diag.files)>0) 
-					junk = file.remove(paste("./CRdiag/",diag.files,sep=""))
-			}
+			diag.files = list.files(diaDir)
+			if (length(diag.files)>0) 
+				junk = file.remove(paste0(diaDir,"/",diag.files,sep=""))
 		}
 		clrs.fishery=c("red","blue","orange","green","yellow"); names(clrs.fishery)=1:5
 
@@ -238,8 +253,8 @@ buildCatch=function(
 			mm = as.character(major)
 			for (spp in dimnames(htab)$catch) {
 				for (fish in dimnames(htab)$fishery) {
-					plotData(apply(htab[,mm,,,,fish,spp],c(1,3),sum),paste("htab ",spp," in ",fish,sep="")) }
-				plotData(apply(htab[,mm,,,,,spp],c(1,3),sum),paste("htab ",spp," in all fisheries",sep=""))
+					plotDiag(apply(htab[,mm,,,,fish,spp],c(1,3),sum),paste("htab ",spp," in ",fish,sep="")) }
+				plotDiag(apply(htab[,mm,,,,,spp],c(1,3),sum),paste("htab ",spp," in all fisheries",sep=""))
 			}
 		}
 
@@ -249,7 +264,7 @@ buildCatch=function(
 		## -----------------------------------------------------------------------
 		htab[as.character(1954:1995),,"PacHarv3","CA","max",c("trap","trawl"),] = 0
 		if (diagnostics)
-			plotData(apply(htab[,mm,,,,"trawl","POP"],c(1,3),sum),paste("htab sabotaged POP in trawl",sep=""))
+			plotDiag(apply(htab[,mm,,,,"trawl","POP"],c(1,3),sum),paste("htab sabotaged POP in trawl",sep=""))
 
 		## -------------------------------------------------------------------------------
 		## historical maximum catch (POP,ORF,TRF) by year, major, gear (i.e. comparative):
@@ -783,8 +798,8 @@ buildCatch=function(
 	if (diagnostics){
 		for (spp in dimnames(catmod0)$catch) {
 			for (db in dimnames(catmod0)$dbs) {
-				plotData(apply(catmod0[,mm,,spp,db],c(1,3),sum),paste("catmod0 ",spp," in ",db,sep=""),col=clrs.fishery) }
-			plotData(apply(catmod0[,mm,,spp,],c(1,3),sum),paste("catmod0 ",spp," in all databases",sep=""),col=clrs.fishery)
+				plotDiag(apply(catmod0[,mm,,spp,db],c(1,3),sum),paste("catmod0 ",spp," in ",db,sep=""),col=clrs.fishery) }
+			plotDiag(apply(catmod0[,mm,,spp,],c(1,3),sum),paste("catmod0 ",spp," in all databases",sep=""),col=clrs.fishery)
 	}	}
 
 	## ----------------------------------------------------------------------------
@@ -811,8 +826,8 @@ buildCatch=function(
 	if (diagnostics){
 		for (spp in dimnames(catmod1)$catch) {
 			for (db in dimnames(catmod1)$dbs) {
-				plotData(apply(catmod1[,mm,,spp,db],c(1,3),sum),paste("catmod1 ",spp," in ",db,sep=""),col=clrs.fishery) }
-			plotData(apply(catmod1[,mm,,spp,],c(1,3),sum),paste("catmod1 ",spp," in all databases",sep=""),col=clrs.fishery)
+				plotDiag(apply(catmod1[,mm,,spp,db],c(1,3),sum),paste("catmod1 ",spp," in ",db,sep=""),col=clrs.fishery) }
+			plotDiag(apply(catmod1[,mm,,spp,],c(1,3),sum),paste("catmod1 ",spp," in all databases",sep=""),col=clrs.fishery)
 	}	}
 
 	## -------------------------------------------------------------------
@@ -842,8 +857,8 @@ buildCatch=function(
 	if (diagnostics){
 		for (spp in dimnames(catmod2)$catch) {
 			for (db in dimnames(catmod2)$dbs) {
-				plotData(apply(catmod2[,mm,,spp,db],c(1,3),sum),paste("catmod2 ",spp," in ",db,sep=""),col=clrs.fishery) }
-			plotData(apply(catmod2[,mm,,spp,],c(1,3),sum),paste("catmod2 ",spp," in all databases",sep=""),col=clrs.fishery)
+				plotDiag(apply(catmod2[,mm,,spp,db],c(1,3),sum),paste("catmod2 ",spp," in ",db,sep=""),col=clrs.fishery) }
+			plotDiag(apply(catmod2[,mm,,spp,],c(1,3),sum),paste("catmod2 ",spp," in all databases",sep=""),col=clrs.fishery)
 	}	}
 
 	## ----------------------------------------------------------------------
@@ -929,8 +944,8 @@ buildCatch=function(
 
 	if (diagnostics){
 		for (spp in dimnames(catmod)$catch) {
-			plotData(apply(catmod[,mm,,spp],c(1,2),sum),paste("catmod ",spp," by major",sep=""),col=clrs.fishery)
-			plotData(apply(catmod[,mm,,spp],c(1,3),sum),paste("catmod ",spp," by fishery",sep=""),col=clrs.fishery)
+			plotDiag(apply(catmod[,mm,,spp],c(1,2),sum),paste("catmod ",spp," by major",sep=""),col=clrs.fishery)
+			plotDiag(apply(catmod[,mm,,spp],c(1,3),sum),paste("catmod ",spp," by fishery",sep=""),col=clrs.fishery)
 	}	}
 	
 
@@ -953,8 +968,8 @@ buildCatch=function(
 #browser();return()
 	if (diagnostics){
 		for (spp in dimnames(allhis)$catch) {
-			plotData(apply(allhis[,mm,,,spp],c(1,2),sum),paste("allhis ",spp," by major",sep=""),col=clrs.major[mm])
-			plotData(apply(allhis[,mm,,,spp],c(1,3),sum),paste("allhis ",spp," by fishery",sep=""))
+			plotDiag(apply(allhis[,mm,,,spp],c(1,2),sum),paste("allhis ",spp," by major",sep=""),col=clrs.major[mm])
+			plotDiag(apply(allhis[,mm,,,spp],c(1,3),sum),paste("allhis ",spp," by fishery",sep=""))
 	}	}
 
 	orfhis = allhis[,,,,orfSpp]
@@ -962,7 +977,7 @@ buildCatch=function(
 		orfcat = orfhis[,,,K] ## historical landed catch of the rockfish group (ORF of TRF) used to estimate RRF
 		if (ascii.tables) {
 			for (N in dimnames(orfhis)$nation)
-				write.csv(orfcat[,,N],paste0("./tables/",orfSpp,"-Landed-Historic-fishery-",N,"-",K,"-",numdate,".csv"))
+				write.csv(orfcat[,,N],paste0(tabDir,"/",orfSpp,"-Landed-Historic-fishery-",N,"-",K,"-",numdate,".csv"))
 		}
 	}
 	if (saveinfo)
@@ -985,7 +1000,7 @@ buildCatch=function(
 	.flush.cat("Start calculating ratios:\n")
 	if (isThere("refyrs") && !is.null(refyrs) ) 
 		ctab = catmod[as.character(refyrs),,,,drop=FALSE] 
-	else ctab=catmod
+	else ctab = catmod
 
 	## ---------------------------------------------------------------------------------
 	## Revise reference catch based on user-suppplied areas (e.g., B.Mose via P.J.Starr)
@@ -1037,51 +1052,91 @@ buildCatch=function(
 		#refdat$ratio = refdat$landed / refdat[[orfSpp]]
 		REFDAT[[kk]]  = refdat
 	}
+REEFER = REFDAT
 	## --------------------------------------------------
-	## Get rid of reference data not using reference gear
+	## Get rid of reference data
+	##   not in reference localities using reference gear
 	## --------------------------------------------------
-	if ( !is.null(refgear) ) {  ## refgear must be a named list (named by fid)
-		.flush.cat("Qualifying ref data by reference gear ...\n")
-		kkk = names(refgear)
-		for (kk in kkk) {
-			k = as.numeric(kk)
-			if ( !k%in%fid ) next
-			refdat = REFDAT[[kk]]
-			refdat = refdat[is.element(refdat$gear, refgear[[kk]]),]
-			if (nrow(refdat)>0) REFDAT[[kk]] = refdat
-		}
-	}
-	## -----------------------------------------------
-	## Get rid of reference data not in reference area
-	## -----------------------------------------------
-	if ( !is.null(refarea) ){
-		.flush.cat("Qualifying ref data by reference area ...\n")
-		#aflds = c("major","minor","locality")
-		kkk = names(refarea)
-		for (kk in kkk) {
-			k = as.numeric(kk)
-			if (!file.exists(refarea[[kk]])) next
-			kareas = read.csv(refarea[[kk]])
-			if (!all(aflds %in% names(kareas)))
-			showError(paste0("User-specified file `",refarea[[kk]],"' does not have the required fields\n",deparse(aflds)))
-			kareas$aindex = .createIDs(kareas,aflds)
-			refdat = REFDAT[[kk]]
-			refdat = refdat[is.element(refdat$aindex,kareas$aindex),]
-			REFDAT[[kk]]=refdat
+	if ( !is.null(refarea) || !is.null(refgear) ) {
+		if ( !is.null(refarea) && !is.null(refgear) ) {
+			## --------------------------------------------------
+			## Get rid of reference data
+			##   not in reference localities that use reference gear
+			## --------------------------------------------------
+			.flush.cat("Qualifying ref data by reference area & gear ...\n")
+			#aflds = c("major","minor","locality")
+			kkk = names(refarea)
+			for (kk in kkk) {
+				k = as.numeric(kk)
+				if (!file.exists(refarea[[kk]])) next
+				kareas = read.csv(refarea[[kk]])
+				if (!all(aflds %in% names(kareas)))
+				showError(paste0("User-specified file `",refarea[[kk]],"' does not have the required fields\n",deparse(aflds)))
+				kareas$aindex = .createIDs(kareas,aflds)
+				refdat = REFDAT[[kk]]
+#browser();return()
+				refdat = refdat[is.element(refdat$aindex,kareas$aindex),]
+				if (nrow(refdat)==0) {REFDAT[[kk]] = NA; next}
+				if (!is.null(refgear[[kk]])) {
+					refdat = refdat[is.element(refdat$gear,refgear[[kk]]),]
+					if (nrow(refdat)==0) {REFDAT[[kk]] = NA; next}
+				}
+				REFDAT[[kk]] = refdat
+			}
+		} else if( !is.null(refarea) && is.null(refgear) ){  ## only refarea is supplied (named list, named by fid)
+			## -----------------------------------------------
+			## Get rid of reference data not in reference area
+			## -----------------------------------------------
+			.flush.cat("Qualifying ref data by reference area ...\n")
+			#aflds = c("major","minor","locality")
+			kkk = names(refarea)
+			for (kk in kkk) {
+				k = as.numeric(kk)
+				if (!file.exists(refarea[[kk]])) next
+				kareas = read.csv(refarea[[kk]])
+				if (!all(aflds %in% names(kareas)))
+				showError(paste0("User-specified file `",refarea[[kk]],"' does not have the required fields\n",deparse(aflds)))
+				kareas$aindex = .createIDs(kareas,aflds)
+				refdat = REFDAT[[kk]]
+				refdat = refdat[is.element(refdat$aindex,kareas$aindex),]
+				REFDAT[[kk]]=refdat
+			}
+		} else if( is.null(refarea) && !is.null(refgear) ){  ## only refgear is supplied (named list, named by fid)
+			## -----------------------------------------------
+			## Get rid of reference data not in reference area
+			## -----------------------------------------------
+			.flush.cat("Qualifying ref data by reference gear ...\n")
+			kkk = names(refgear)
+			for (kk in kkk) {
+				k = as.numeric(kk)
+				if ( !k%in%fid ) next
+				refdat = REFDAT[[kk]]
+				refdat = refdat[is.element(refdat$gear, refgear[[kk]]),]
+				if (nrow(refdat)>0) REFDAT[[kk]] = refdat
+			}
 		}
 	}
 	## --------------------------------------------------------------------
-	## Replace elements of the reference array with modified reference data
+	## Replace elements of the reference catch array (ctab) with modified reference data
 	## --------------------------------------------------------------------
 	if ( !is.null(refarea) || !is.null(refgear) ) {
 		if (is.null(refgear)) kkk1 = "" else kkk1 = names(refgear)
 		if (is.null(refarea)) kkk2 = "" else kkk2 = names(refarea)
+		kkk = union(kkk1,kkk2)
 		ctab.orig = ctab
 		ii =as.character(refyrs)
 		for (kk in dimnames(catmod)$fid) {
-			if ( !kk %in% kkk1 & !kk %in% kkk2 ) next
+			#if ( !kk %in% kkk1 & !kk %in% kkk2 ) next
+			if ( !kk %in% kkk ) next
 			k = as.numeric(kk)
+			refdat = REFDAT[[kk]]
+			if (is.null(dim(refdat)) && is.na(refdat)) {
+				ctab[ii,,kk,"landed"] = 0 ## just set all landed to zero for now.
+				next
+			}
+#browser();return()
 			for (ll in dimnames(catmod)$catch) {
+				#CTdat = crossTab(REFDAT[[kk]],c("year","major"),ll)  ## (BUG) this line originally used `refdat' without it being extracted from REFDAT
 				CTdat = crossTab(refdat,c("year","major"),ll)
 				LLdat = convCT(CTdat)[ii,]
 				jj = dimnames(LLdat)[[2]]
@@ -1089,11 +1144,10 @@ buildCatch=function(
 				#jj0 = setdiff(major,jj)
 				jj0 = setdiff(MM,jj)
 				if (ll=="landed" && length(jj0)>0)
-					ctab[ii,as.character(jj0),kk,ll] = 0
+					ctab[ii,as.character(jj0),kk,ll] = 0  ## exclude reference catch not specified by refarea and refgear
 			}
 		}
 	}
-#browser();return()
 
 	## ------------------------------
 	## Catch reference summary tables
@@ -1114,10 +1168,10 @@ buildCatch=function(
 		if (all(x==0)) rep(0,length(x)) else x/sum(x)}) ## columns (fids) sum to 1
 	dimnames(alpha) = dimnames(catMF)[1:2]
 	if (ascii.tables)
-		write.csv(alpha,file=paste0("./tables/alpha-",strSpp,"_",orfSpp,"-",numdate,".csv"))
+		write.csv(alpha,file=paste0(tabDir,"/alpha-",strSpp,"_",orfSpp,"-",numdate,".csv"))
 	if (diagnostics){
-		plotData(alpha,"alpha (fishery in major)",col=clrs.fishery,type="bars")
-		plotData(t(alpha),"alpha (major in fishery)",col=clrs.major[mm],type="bars")
+		plotDiag(alpha,"alpha (fishery in major)",col=clrs.fishery,type="bars")
+		plotDiag(t(alpha),"alpha (major in fishery)",col=clrs.major[mm],type="bars")
 	}
 
 	## ------------------------------------------------------------
@@ -1129,10 +1183,10 @@ buildCatch=function(
 		if (all(x==0)) rep(0,length(x)) else x/sum(x)})) ## columns (fids) sum to 1
 	dimnames(beta)[[2]]=dnam; names(dimnames(beta)) = c("major","fid")
 	if (ascii.tables)
-		write.csv(beta,file=paste0("./tables/beta-",strSpp,"_",orfSpp,"-",numdate,".csv"))
+		write.csv(beta,file=paste0(tabDir,"/beta-",strSpp,"_",orfSpp,"-",numdate,".csv"))
 	if (diagnostics){
-		plotData(beta,"beta (fishery in major)",col=clrs.fishery,type="bars")
-		plotData(t(beta),"beta (major in fishery)",col=clrs.major[mm],type="bars")
+		plotDiag(beta,"beta (fishery in major)",col=clrs.fishery,type="bars")
+		plotDiag(t(beta),"beta (major in fishery)",col=clrs.major[mm],type="bars")
 	}
 
 	## -------------------------------------
@@ -1250,7 +1304,7 @@ buildCatch=function(
 	## Special trawl calculations by Paul Starr for YTR based on Brian Mose's suggestions
 	## ----------------------------------------------------------------------------------
 	if (strSpp=="418" && !is.null(list(...)$pjs) && list(...)$pjs) {
-		.flush.cat("   adjusting gamma for Yellowtail based on PJS fixed ratios.\n")
+		.flush.cat("   adjusting gamma for Yellowtail based on PJS fixed ratios (majors 3:9).\n")
 		if (orfSpp=="ORF") {
 			if (!is.null(list(...)$outside) && list(...)$outside)
 				gamma[,1]=matrix(c(0,0.3139525,0.253063,0.0467262,0.0034517,0,0.4451063,0.0049684),ncol=1)
@@ -1275,12 +1329,12 @@ buildCatch=function(
 		}
 	}
 	if (ascii.tables)
-		write.csv(gamma,file=paste0("./tables/gamma-",strSpp,"_",orfSpp,"-",numdate,".csv")) #;return(gamma)
+		write.csv(gamma,file=paste0(tabDir,"/gamma-",strSpp,"_",orfSpp,"-",numdate,".csv")) #;return(gamma)
 #browser();return()
 
 	if (diagnostics){
-		plotData(gamma,"gamma (fishery in major)",col=clrs.fishery,type="bars")
-		plotData(t(gamma),"gamma (major in fishery)",col=clrs.major[mm],type="bars")
+		plotDiag(gamma,"gamma (fishery in major)",col=clrs.fishery,type="bars")
+		plotDiag(t(gamma),"gamma (major in fishery)",col=clrs.major[mm],type="bars")
 	}
 
 	## -----------------------------------------------------------------
@@ -1435,12 +1489,12 @@ buildCatch=function(
 	save("DRATES",file=paste0("DRATES",strSpp,".rda"))       ## save annual discard rates
 	save("PNOS",file=paste0("PNOS",strSpp,".rda"))           ## save proportion weightings applied to discard rates
 	if (ascii.tables)
-		write.csv(delta[,,"dr"],file=paste0("./tables/delta-",strSpp,"_",orfSpp,"-",numdate,".csv")) ## save discard rate used in CR
+		write.csv(delta[,,"dr"],file=paste0(tabDir,"/delta-",strSpp,"_",orfSpp,"-",numdate,".csv")) ## save discard rate used in CR
 	if (diagnostics){
 		for (rate in dimnames(delta)$rate) {
 			rr = sub(":","2",rate)
-			plotData(delta[,,rate],paste("delta ",rr," (fishery in major)",sep=""),col=clrs.fishery,type="bars")
-			plotData(t(delta[,,rate]),paste("delta ",rr," (major in fishery)",sep=""),col=clrs.major[mm],type="bars")
+			plotDiag(delta[,,rate],paste("delta ",rr," (fishery in major)",sep=""),col=clrs.fishery,type="bars")
+			plotDiag(t(delta[,,rate]),paste("delta ",rr," (major in fishery)",sep=""),col=clrs.major[mm],type="bars")
 	}	}
 	if (saveinfo)
 		packList(c("ctab","alpha","beta","rtar","gamma","delta","dfac","DRATES"),"PBStool",tenv=.PBStoolEnv)
@@ -1472,11 +1526,11 @@ buildCatch=function(
 	lambda[,"h&l","prewar"]=0.9; lambda[,"trap","prewar"]=0; lambda[,"trawl","prewar"]=0.1
 	lambda[rownames(major.gear),colnames(major.gear),"postwar"] = major.gear
 	if (ascii.tables)
-		write.csv(lambda,file=paste0("./tables/lambda-",strSpp,"_",orfSpp,"-",numdate,".csv")) ## save lambda used in CR
+		write.csv(lambda,file=paste0(tabDir,"/lambda-",strSpp,"_",orfSpp,"-",numdate,".csv")) ## save lambda used in CR
 	if (diagnostics){
 		for (epo in dimnames(lambda)$epoch) {
-			plotData(lambda[,,epo],paste("lambda ",epo," (gear in major)",sep=""),col=clrs.fishery,type="bars")
-			plotData(t(lambda[,,epo]),paste("lambda ",epo," (major in gear)",sep=""),col=clrs.major[mm],type="bars")
+			plotDiag(lambda[,,epo],paste("lambda ",epo," (gear in major)",sep=""),col=clrs.fishery,type="bars")
+			plotDiag(t(lambda[,,epo]),paste("lambda ",epo," (major in gear)",sep=""),col=clrs.major[mm],type="bars")
 	}	}
 
 	ancientRRF = ancientORF = array(0,dim=c(length(ancyrs),length(mm),length(fid),length(nat)),
@@ -1505,8 +1559,8 @@ buildCatch=function(
 		}
 	}
 	if (diagnostics){
-		plotData(apply(ancientRRF,c(1,2),sum),"ancient in major",col=clrs.major[mm])
-		plotData(apply(ancientRRF,c(1,3),sum),"ancient in fishery",col=clrs.fishery)
+		plotDiag(apply(ancientRRF,c(1,2),sum),"ancient in major",col=clrs.major[mm])
+		plotDiag(apply(ancientRRF,c(1,3),sum),"ancient in fishery",col=clrs.fishery)
 	}
 	if (saveinfo)
 		packList(c("cobra","lambda","gamma.lambda","ancientRRF"),"PBStool",tenv=.PBStoolEnv)
@@ -1540,10 +1594,10 @@ buildCatch=function(
 	beta.gamma = BETA * gamma  ## Expansion of RRF:ORF from K to k
 	names(dimnames(beta.gamma)) = c("major","fid")
 	if (ascii.tables)
-		write.csv(beta.gamma,file=paste0("./tables/beta.gamma-",strSpp,"_",orfSpp,"-",numdate,".csv")) ## save beta.gamma used in CR
+		write.csv(beta.gamma,file=paste0(tabDir,"/beta.gamma-",strSpp,"_",orfSpp,"-",numdate,".csv")) ## save beta.gamma used in CR
 	if (diagnostics){
-		plotData(beta.gamma,"beta.gamma (fishery in major)",col=clrs.fishery,type="bars")
-		plotData(t(beta.gamma),"beta.gamma (major in fishery)",col=clrs.major[mm],type="bars")
+		plotDiag(beta.gamma,"beta.gamma (fishery in major)",col=clrs.fishery,type="bars")
+		plotDiag(t(beta.gamma),"beta.gamma (major in fishery)",col=clrs.major[mm],type="bars")
 	}
 
 	## ------------------------------------------------------
@@ -1563,9 +1617,9 @@ buildCatch=function(
 		repcatORF = catmod[,jj,kk,orfSpp]     ## reported landed catch of the rockfish group used to estimate gamma
 		repdisRRF = catmod[,jj,kk,"discard"]  ## all reported discarded catch of RRF
 		if (ascii.tables) {
-			write.csv(repcatRRF,paste0("./tables/",fidfive[k],"-",strSpp,"-Landed-Dbase-",numdate,".csv"))
-			write.csv(repcatORF,paste0("./tables/",fidfive[k],"-",orfSpp,"-Landed-Dbase-",numdate,".csv"))
-			write.csv(repdisRRF,paste0("./tables/",fidfive[k],"-",strSpp,"-Discard-Dbase-",numdate,".csv"))
+			write.csv(repcatRRF,paste0(tabDir,"/",fidfive[k],"-",strSpp,"-Landed-Dbase-",numdate,".csv"))
+			write.csv(repcatORF,paste0(tabDir,"/",fidfive[k],"-",orfSpp,"-Landed-Dbase-",numdate,".csv"))
+			write.csv(repdisRRF,paste0(tabDir,"/",fidfive[k],"-",strSpp,"-Discard-Dbase-",numdate,".csv"))
 		}
 		## ------------------------------------------------------------------
 		## Need to compare reconstructed RRF using ORF from orfhis and catmod
@@ -1749,8 +1803,8 @@ buildCatch=function(
 			}
 		}
 
-		recLfileRRF = paste0("./tables/",fidfive[k],"-",strSpp,"-Landed-Recon-",numdate,".csv")
-		recLfileORF = paste0("./tables/",fidfive[k],"-",orfSpp,"-Landed-Recon-",numdate,".csv")
+		recLfileRRF = paste0(tabDir,"/",fidfive[k],"-",strSpp,"-Landed-Recon-",numdate,".csv")
+		recLfileORF = paste0(tabDir,"/",fidfive[k],"-",orfSpp,"-Landed-Recon-",numdate,".csv")
 		if (ascii.tables) {
 			write.csv(sppnewRRF[,,kk],recLfileRRF)
 			write.csv(sppnewORF[,,kk],recLfileORF)
@@ -1855,7 +1909,7 @@ buildCatch=function(
 		## -------------------
 		## Discard output file
 		## -------------------
-		recDfile = paste0("./tables/",fidfive[k],"-",strSpp,"-Discard-Recon-",numdate,".csv")
+		recDfile = paste0(tabDir,"/",fidfive[k],"-",strSpp,"-Discard-Recon-",numdate,".csv")
 		disT = disD[idata,jj]
 		if (!is.null(disC))
 			disT = rbind(disC[icalc,jj],disT)
@@ -1881,7 +1935,7 @@ buildCatch=function(
 		## -----------------
 		## Catch output file
 		## -----------------
-		recCfile = paste0("./tables/",fidfive[k],"-",strSpp,"-Catch-Recon-",numdate,".csv")
+		recCfile = paste0(tabDir,"/",fidfive[k],"-",strSpp,"-Catch-Recon-",numdate,".csv")
 #browser();return()
 		if (ascii.tables) {
 			write.csv(sppnewRRF[,,kk],file=recCfile)
@@ -1901,11 +1955,11 @@ buildCatch=function(
 		}
 
 		if (diagnostics){
-			plotData(reccatRRF,paste("reccat for ",fidnam[k]," by major",sep=""),col=clrs.major[mm])
-			plotData(repcatRRF,paste("repcat for ",fidnam[k]," by major",sep=""),col=clrs.major[mm])
-			plotData(disC,paste("disC for ",fidnam[k]," by major",sep=""),col=clrs.major[mm])
-			plotData(disD,paste("disD for ",fidnam[k]," by major",sep=""),col=clrs.major[mm])
-			plotData(sppnewRRF[,,kk],paste("sppnew for ",fidnam[k]," by major",sep=""),col=clrs.major[mm])
+			plotDiag(reccatRRF,paste("reccat for ",fidnam[k]," by major",sep=""),col=clrs.major[mm])
+			plotDiag(repcatRRF,paste("repcat for ",fidnam[k]," by major",sep=""),col=clrs.major[mm])
+			plotDiag(disC,paste("disC for ",fidnam[k]," by major",sep=""),col=clrs.major[mm])
+			plotDiag(disD,paste("disD for ",fidnam[k]," by major",sep=""),col=clrs.major[mm])
+			plotDiag(sppnewRRF[,,kk],paste("sppnew for ",fidnam[k]," by major",sep=""),col=clrs.major[mm])
 		}
 	}
 	attr(sppnewRRF,"yrs.rec") = yrs.rec # years of reconstructed and reported catch
@@ -1930,8 +1984,8 @@ buildCatch=function(
 	}
 #browser(); return()
 	if (diagnostics){
-		plotData(sppnewRRF[,,"10"],paste("sppnew for ",fidnam[10]," by major",sep=""),col=clrs.major[mm])
-		collectFigs(path="./CRdiag",width=5,capskip=-20,is.fnum=TRUE)
+		plotDiag(sppnewRRF[,,"10"],paste("sppnew for ",fidnam[10]," by major",sep=""),col=clrs.major[mm])
+		collectFigs(path=diaDir,width=5,capskip=-20,is.fnum=TRUE)
 	}
 	expr=paste("cat",strSpp,"rec=sppnewRRF; save(\"cat",strSpp,"rec\",file=\"cat",strSpp,"rec.rda\")",sep="")
 	eval(parse(text=expr))
@@ -1948,7 +2002,7 @@ buildCatch=function(
 #browser();return()
 	for (k in fidout) {
 		yrs = as.numeric(dimnames(sppnewRRF)$year)
-		plotRecon(sppnewRRF,strSpp=strSpp,major=major,fidout=k,years=yrs,eps=eps,png=png,wmf=wmf) # use user-specified major
+		plotRecon(sppnewRRF,strSpp=strSpp,major=major,fidout=k,years=yrs,eps=eps,png=png,wmf=wmf,figDir=figDir) # use user-specified major
 	}
 	fidlab = c("Trawl","Halibut","Sablefish","Dogfish-Lingcod","H&L Rockfish","Sablefish + ZN",
 		"Sablefish + Halibut","Dogfish","Lingcod",paste0("Combined Fisheries",ifelse(addGFB," + Surveys","")))
@@ -1956,7 +2010,7 @@ buildCatch=function(
 	## ---------------------------------------------
 	## ADMB catch data file for the combined fishery
 	## ---------------------------------------------
-	admdat = paste0("./tables/admb-cat",strSpp,"-",numdate,ifelse(useGFM,"","-multiDB"),".dat")
+	admdat = paste0(tabDir,"/admb-cat",strSpp,"-",numdate,ifelse(useGFM,"","-multiDB"),".dat")
 	cat(paste0("# Catch History - ",species[strSpp,"latin"]," (built ",bigdate,")",ifelse(useGFM,""," multiDB")),"\n\n",sep="",file=admdat)
 	mess = c(
 		"# number of years of catch data 'NYearCat'\n", ALLYRS[nyrs]-ALLYRS[1]+1, "\n",
@@ -1982,7 +2036,7 @@ buildCatch=function(
 	## ------------------------------------------
 	## Output specified FID catch (fidout) as CSV
 	## ------------------------------------------
-	onam=paste0("./tables/Catch-History-",strSpp,"-",numdate,ifelse(useGFM,"","-multiDB"),".csv")  ## output file name
+	onam=paste0(tabDir,"/Catch-History-",strSpp,"-",numdate,ifelse(useGFM,"","-multiDB"),".csv")  ## output file name
 	cat(paste0("Catch History - ",species[strSpp,"latin"]," (built ",bigdate,")",ifelse(useGFM,""," multiDB")),"\n",sep="",file=onam)
 	xlab=dimnames(sppnewRRF)[[1]];  xpos=(1:length(xlab))-.5
 	for (i in fidout){
@@ -2006,10 +2060,10 @@ buildCatch=function(
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~buildCatch
 
 
-#plotData-------------------------------2013-01-28
+#plotDiag-------------------------------2017-10-12
 # Plot diagnostic data for catch reconstructions.
 #-----------------------------------------------RH
-plotData =function(x,description="something",
+plotDiag =function(x, description="something",
 	col=c("red","coral","gold","green2","skyblue","blue","blueviolet","purple4"),...)
 {
 	if (dev.cur()>1) { oldpar=par(no.readonly=TRUE); on.exit(par(oldpar)) }
@@ -2033,12 +2087,12 @@ plotData =function(x,description="something",
 	eps= ttcall(PBStool)$eps
 	wmf= ttcall(PBStool)$wmf
 	if (!eps & !wmf) eps=TRUE
-	plotname = paste("CRdiag/pD",pad0(pD,3),"-",gsub(" ","-",description),sep="")
+	plotname = paste0(diaDir,"/pD",pad0(pD,3),"-",gsub(" ","-",description))
 #browser();return()
 	if (eps) 
 		postscript(file=paste(plotname,".eps",sep = ""), width=6.5,height=5,paper="special")
 	else if (wmf && .Platform$OS.type=="windows")
-		do.call("win.metafile",list(filename=paste(plotname,".wmf",sep = ""), width=6.5,height=5))
+		do.call("win.metafile",list(filename=paste(plotname,".wmf",sep = ""), width=6.5, height=5))
 	expandGraph()
 	if (!is.null(dots$type) && dots$type=="bars") {
 		xpos = barplot(t(xx),beside=TRUE,col=col,ylim=ylim,xlab=xlab,ylab=ylab,space=c(0,1.5))
@@ -2061,7 +2115,7 @@ plotData =function(x,description="something",
 	ttget(PBStool); PBStool$pD <- pD + 1; ttput(PBStool)  # increment number of diagnostic plot
 #browser();return()
 	invisible() }
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotData
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotDiag
 
 
 #plotRecon------------------------------2015-12-01
@@ -2069,7 +2123,7 @@ plotData =function(x,description="something",
 #-----------------------------------------------RH
 plotRecon = function(dat=cat440rec, strSpp="440", major=c(1,3:9), fidout=10, 
    years=1918:2015, xlab=seq(1920,2050,5), yrs.rec=attributes(dat)$yrs.rec,
-   shade=FALSE, shadier=FALSE,
+   shade=FALSE, shadier=FALSE, figDir=getwd(),
    eps=FALSE, png=FALSE, wmf=FALSE, PIN=c(10,5))
 {
 	if (dev.cur()>1) { oldpar=par(no.readonly=TRUE); on.exit(par(oldpar)) }
@@ -2090,7 +2144,7 @@ plotRecon = function(dat=cat440rec, strSpp="440", major=c(1,3:9), fidout=10,
 		ii=as.character(i)
 		if (length(dim(ydat))==2) idat = t(ydat)
 		else idat = t(ydat[,mm,ii])
-		plotname=paste(strSpp,"-Catch-History",ifelse(i==10,0,i),"-",fidnam[i],"-years(",min(years),"-",max(years),")-major(",paste(major,collapse=""),")",sep="")
+		plotname=paste0(figDir,"/",strSpp,"-Catch-History",ifelse(i==10,0,i),"-",fidnam[i],"-years(",min(years),"-",max(years),")-major(",paste(major,collapse=""),")")
 		if (eps)       postscript(file=paste(plotname,".eps",sep=""),width=PIN[1],height=PIN[2],fonts="mono",paper="special")
 		else if (png)  png(filename=paste(plotname,".png",sep=""),width=round(100*PIN[1]),height=round(100*PIN[2]),pointsize=16)
 		else if (wmf && .Platform$OS.type=="windows")
@@ -2179,7 +2233,7 @@ surveyCatch = function(strSpp="396", spath=.getSpath(), gfbdat=NULL)
 		assign("gfbdat",PBSdat)
 		save("gfbdat",file="gfbdat.rda")
 		if (file.exists("./tables"))
-			write.csv(gfbdat,paste0("./tables/Survey-Records-",strSpp,"-",numdate,".csv"),row.names=FALSE)
+			write.csv(gfbdat,paste0(tabDir,"/Survey-Records-",strSpp,"-",numdate,".csv"),row.names=FALSE)
 		#rcat = gfbdat # used for summaries by SSID and SVID down below
 		rm(PBSdat) ## just to be safe
 	}
@@ -2190,7 +2244,7 @@ surveyCatch = function(strSpp="396", spath=.getSpath(), gfbdat=NULL)
 	names(gfbcat) = pmfc[names(gfbcat),"gmu"]
 	save("gfbcat",file="gfbcat.rda")
 	if (file.exists("./tables"))
-		write.csv(gfbcat,file=paste0("./tables/Catch-Survey-",strSpp,"-(Year-PMFC)-",numdate,".csv"))
+		write.csv(gfbcat,file=paste0(tabDir,"/Catch-Survey-",strSpp,"-(Year-PMFC)-",numdate,".csv"))
 
 	#getFile(gfbdat)
 	gfbdat$SVID[is.na(gfbdat$SVID)] = 999
@@ -2205,7 +2259,7 @@ surveyCatch = function(strSpp="396", spath=.getSpath(), gfbdat=NULL)
 	svidcat = spp.svid[,-1]; attr(svidcat,"class") = "data.frame"
 	dimnames(svidcat)[[1]] = paste0("SVID ",SVID,": ",svid[as.character(SVID)])
 	if (file.exists("./tables"))
-		write.csv(svidcat,file=paste0("./tables/Catch-Survey-",strSpp,"-(SVID-Year)-",numdate,".csv"))
+		write.csv(svidcat,file=paste0(tabDir,"/Catch-Survey-",strSpp,"-(SVID-Year)-",numdate,".csv"))
 
 	spp.ssid = crossTab(gfbdat,c("SSID","year"),"catKg")
 	getData("SURVEY_SERIES","GFBioSQL")
@@ -2216,7 +2270,7 @@ surveyCatch = function(strSpp="396", spath=.getSpath(), gfbdat=NULL)
 	ssidcat = spp.ssid[,-1]; attr(ssidcat,"class") = "data.frame"
 	dimnames(ssidcat)[[1]] = paste0("SSID ",SSID,": ",ssid[as.character(SSID)])
 	if (file.exists("./tables"))
-		write.csv(ssidcat,file=paste0("./tables/Catch-Survey-",strSpp,"-(SSID-Year)-",numdate,".csv"))
+		write.csv(ssidcat,file=paste0(tabDir,"/Catch-Survey-",strSpp,"-(SSID-Year)-",numdate,".csv"))
 
 	invisible(gfbcat)
 }

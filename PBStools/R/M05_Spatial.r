@@ -10,6 +10,7 @@
 #  clarify.........Analyse catch proportions in blocks, then cluster into fisheries groups.
 #  findHoles.......Find holes and place them under correct parents.
 #  plotGMA.........Plot the Groundfish Management Areas.
+#  plotLocal.......Plot DFO fishing localities with the highest catch.
 #  plotTernary.....Plot a ternary diagram for data amalgamated into 3 groups.
 #  plotTertiary....Composition plots within a polygonal space.
 #  preferDepth.....Histogram showing depth-of-capture.
@@ -748,6 +749,56 @@ plotGMA = function(gma=gma.popymr, xlim=c(-134,-123), ylim=c(48.05,54.95),
 	invisible(list(pdata=pdata,extra.labels=extra.labels))
 }
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotGMA
+
+
+#plotLocal------------------------------2017-10-19
+# Plot DFO fishing localities with the highest catch.
+#-----------------------------------------------RH
+plotLocal = function(dat, area="locality", aflds=NULL, outnam="refA439")
+{
+	dat$catKG = dat$landed + dat$discard
+	dat$fid[is.element(dat$fid,9)] = 1  ## put FOREIGN sector catch into trawl
+	fid = .su(dat$fid)
+	fidnam = c("trawl","halibut","sable","dogling","hlrock")
+#browser();return()
+
+	if (is.null(aflds)){
+		if (area=="locality")
+			aflds = c("major","minor","locality")
+		else if (area=="minor")
+			aflds = c("major","minor")
+		else
+			aflds = "major"
+	}
+	dat$ID = .createIDs(dat,aflds)
+
+	do.call("data",args=list(list=area,package="PBSdata",envir=penv()))
+	eval(parse(text=paste0("area = ", area)))
+	pdata = attributes(area)$PolyData
+	pdata$ID = .createIDs(pdata,aflds)
+	data("nepacLL",package="PBSmapping",envir=penv())
+
+	paint = colorRampPalette(c("lightblue1","green","yellow","red"))(500)
+
+	for (f in fid) {
+		fdat = dat[is.element(dat$fid,f),]
+		loccat = rev(sort(sapply(split(fdat$catKG,fdat$ID),function(x){sum(x)/1000.})))
+		procat = loccat/sum(loccat)
+		cumcat = cumsum(procat)
+		bigcat = loccat[cumcat < 0.95]
+		bigloc = names(bigcat)
+		yesloc = is.element(bigloc,pdata$ID)
+		fdata  = pdata[match(bigloc[yesloc],pdata$ID),]
+		fdata$catT = bigcat[yesloc]
+		fdata$pcat = procat[cumcat < 0.95][yesloc]
+		fdata$col  = paint[round(scaleVec(fdata$pcat,1,500))]
+		plotMap(area, polyProps=fdata, plt=c(0.05,0.99,0.05,0.99), 
+			xlim=c(-135,-123), ylim=c(48,54.5), mgp=c(2,0.5,0), cex.axis=1.2, cex.lab=1.5)
+		addPolys(nepacLL, col="grey91")
+		write.csv(fdata, paste0(outnam,".",fidnam[f],".csv"), row.names=FALSE)
+	}
+}
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotLocal
 
 
 #plotTernary----------------------------2013-02-26

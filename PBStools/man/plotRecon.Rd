@@ -9,7 +9,7 @@
 \usage{
 plotRecon(dat=cat440rec, strSpp="440", major=c(1,3:9), fidout=10, 
    years=1918:2015, xlab=seq(1920,2050,5), yrs.rec=attributes(dat)$yrs.rec,
-   shade=FALSE, shadier=FALSE,
+   shade=FALSE, shadier=FALSE, figDir=getwd(),
    eps=FALSE, png=FALSE, wmf=FALSE, PIN=c(10,5))
 }
 \arguments{
@@ -25,6 +25,7 @@ plotRecon(dat=cat440rec, strSpp="440", major=c(1,3:9), fidout=10,
     landings calculated using gamma and releases calculated using delta, reported landings and releases.}
   \item{shade}{logical: if \code{TRUE}, shade the catch periods.}
   \item{shadier}{logical: if \code{TRUE}, make the background shading darker for the catch periods.}
+  \item{figDir}{character: directory where figure output should be directed.}
   \item{eps}{logical: if \code{TRUE}, send the figure to a postscript file (\code{.eps}). }
   \item{png}{logical: if \code{TRUE}, send the figure to a raster file (\code{.png}). }
   \item{wmf}{logical: if \code{TRUE}, send the figure to a windows metafile (\code{.wmf}). }
@@ -40,10 +41,14 @@ plotRecon(dat=cat440rec, strSpp="440", major=c(1,3:9), fidout=10,
   \emph{Canadian Technical Report of Fisheries and Aquatic Sciences} \bold{2943}: viii + 124 p.
 }
 \author{
-  Rowan Haigh, Pacific Biological Station, Fisheries and Oceans Canada, Nanaimo BC.
+  Rowan Haigh, Research Biologist\cr
+  Pacific Biological Station, Fisheries and Oceans Canada, Nanaimo BC.
 }
 \seealso{
-  \code{\link{buildCatch}}, \code{\link{plotFOScatch}}, \code{\link{plotCatch}}
+  \code{\link[PBStools]{buildCatch}},
+  \code{\link[PBStools]{plotDiag}},
+  \code{\link[PBStools]{plotFOScatch}},
+  \code{\link[PBStools]{plotCatch}}
 }
 \keyword{hplot}
 

@@ -15,9 +15,11 @@ buildCatch(dbdat, strSpp="396", orfSpp="TRF", major=c(1,3:9), fidout=c(1:5,10),
    refyrs=1997:2005, refarea=NULL, refgear=NULL, useYR1=NULL, useBG=FALSE,
    useSM=FALSE, useGFM=TRUE, useLS=TRUE, useAI=FALSE,
    useCA=TRUE, useUS=TRUE, useFF=TRUE,
-   strat.gamma=FALSE, strat.delta=FALSE, depbin=100, sensitivity=NULL,
-   reconstruct=TRUE, diagnostics=FALSE, ascii.tables=TRUE, saveinfo=TRUE,
-   sql=FALSE, only.sql=FALSE, sql.force=FALSE, spath=.getSpath(), dpath=getwd(),
+   strat.gamma=FALSE, strat.delta=FALSE, depbin=100, 
+   sensitivity=NULL, reconstruct=TRUE, 
+   run.name=NULL, ascii.tables=TRUE, diagnostics=FALSE, saveinfo=TRUE,
+   sql=FALSE, only.sql=FALSE, sql.force=FALSE, 
+   spath=.getSpath(), dpath=getwd(),
    eps=FALSE, png=FALSE, wmf=FALSE, uid=Sys.info()["user"], pwd=uid, 
    ioenv=.GlobalEnv, ...)
 }
@@ -72,13 +74,15 @@ buildCatch(dbdat, strSpp="396", orfSpp="TRF", major=c(1,3:9), fidout=c(1:5,10),
   \item{reconstruct}{logical: if \code{TRUE} (default) complete the 
     reconstruction as previously, \cr  if \code{FALSE}, terminate the code once
     the modern catch array has been compiled and saved (to a binary file 
-    \code{cat123mod.rda}, where \code{123} = species code). }
+    \code{cat123mod.rda}, where \code{123} = species code).}
+  \item{run.name}{character: Run name to keep track of various run configurations
+    with \code{gamma}, \code{delta}, \code{refarea}, and \code{refgear}.}
+  \item{ascii.tables}{logical: if \code{TRUE}, create ASCII ouput tables and dump them into the subdirectory \code{./run.name/tables}.}
   \item{diagnostics}{logical: if \code{TRUE} (default) create automatically-
     numbered diagnostic images files (prefaced with \code{pD000}, where
-    \code{000} is the automatic number) to a subdirectory \code{./CRdiag}.
+    \code{000} is the automatic number) to a subdirectory \code{./run.name/diags}.
     Subsequent calls to \code{buildCatch} remove all \code{pD000} files created
     by previous builds.}
-  \item{ascii.tables}{logical: if \code{TRUE}, create ASCII ouput tables and dump them into the subdirectory \code{./tables}.}
   \item{saveinfo}{logical: if \code{TRUE}, save various data objects created within the function
     to a list object called \code{PBStool}; setting to \code{FALSE} may speed reconstruction.}
   \item{sql}{logical: if \code{TRUE} query the databases, otherwise load 
@@ -136,7 +140,7 @@ buildCatch(dbdat, strSpp="396", orfSpp="TRF", major=c(1,3:9), fidout=c(1:5,10),
   \code{saveinfo = TRUE}, various data objects internal to the function are saved to 
   a global list object called \code{PBStool}, and if \code{diagnostics = TRUE}, numerous
   plots of the various intermediary data objects are stored as image files in a 
-  subdirectory called \code{CRdiag}. Also, various data objects, including the 
+  subdirectory called \code{diags}. Also, various data objects, including the 
   eight database catch files consolidated and massaged, are saved as system 
   binary files \code{.rda}. The final reconstructed catch array is also flattened to a 
   comma-delimited text file \code{Catch-History-123.csv}, where \code{123} 
@@ -149,7 +153,8 @@ buildCatch(dbdat, strSpp="396", orfSpp="TRF", major=c(1,3:9), fidout=c(1:5,10),
   \bold{2943}: viii + 124p.
 }
 \author{
-  Rowan Haigh, Pacific Biological Station, Fisheries and Oceans Canada, Nanaimo BC
+  Rowan Haigh, Research Biologist\cr
+  Pacific Biological Station, Fisheries and Oceans Canada, Nanaimo BC
 }
 \note{
   The function only has one argument for an Oracle database user ID and one for 
@@ -226,8 +231,11 @@ buildCatch(dbdat, strSpp="396", orfSpp="TRF", major=c(1,3:9), fidout=c(1:5,10),
   }
 }
 \seealso{
-  \code{\link[PBStools]{getCatch}}, \code{\link[PBStools]{getData}}, 
-  \code{\link[PBSdata]{orfhistory}}, \code{\link[PBStools]{surveyCatch}} \cr
+  \code{\link[PBStools]{getCatch}},
+  \code{\link[PBStools]{getData}},
+  \code{\link[PBSdata]{orfhistory}},
+  \code{\link[PBStools]{plotLocal}},
+  \code{\link[PBStools]{surveyCatch}} \cr
   Available SQL queries: \code{\link[PBStools]{SQLcode}}
 }
 \keyword{manip}
