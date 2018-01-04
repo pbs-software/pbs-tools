@@ -1,6 +1,6 @@
 #===============================================================================
-# Module 8 : tex Crap
-# -------------------
+# Module 8 : LaTeX Crap
+# ---------------------
 #  collectFigs....Collect encapsulated postscript figures into one document.
 #  formatCatch....Format numeric table so that entries display N significnat figures.
 #  makeLTH........Make a longtable header for printing an xtable
@@ -79,9 +79,9 @@ collectFigs = function(path=".", ext="eps", is.fnum=FALSE,
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~collectFigs
 
 
-#formatCatch----------------------------2017-05-10
+#formatCatch----------------------------2017-11-17
 # Format a numeric table so that each cell 
-# displays N significnat figures in character format.
+# displays N significant figures in character format.
 # Arguments:
 #  dat  = dataframe/matrix of raw catch numbers
 #  N    = number of significant digits
@@ -90,6 +90,7 @@ collectFigs = function(path=".", ext="eps", is.fnum=FALSE,
 #  na   = character replacement for NAs
 #  K    = big mark separator (see 'format')
 #  exInt = exclude integers from manipulation to signicant digits
+#  use.round = if TRUE, round catches to N decimal places.
 #-----------------------------------------------RH
 formatCatch = function(dat, N=3, X=0, zero="0", na="---",
    K=",", exInt=TRUE, use.round=FALSE)
@@ -123,7 +124,7 @@ formatCatch = function(dat, N=3, X=0, zero="0", na="---",
 	if(use.round) {
 		zdat = dat[,-(X),drop=FALSE]==0 & !is.na(dat[,-(X),drop=FALSE])
 		cdat = dat
-		cdat[,-(X)][!nadat] = show0(round(cdat[,-(X)][!nadat],3),3,add2int=!exInt)
+		cdat[,-(X)][!nadat] = show0(round(cdat[,-(X)][!nadat],N),N,add2int=!exInt)
 		cdat[zdat]  = zero
 		cdat[nadat] = na
 #browser();return()

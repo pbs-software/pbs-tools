@@ -7,6 +7,42 @@ Authors: RH  = Rowan Haigh
          PJS = Paul J. Starr
 ------------------------------
 
+1.37.3 (2018-01-02)
+  * M05_Spatial.r
+    + Modified function `plotTertiary' to unlist a vector -- Rdev appears to treat subsetting DFs/marices differently than in released versions. (RH 180102)
+  * SQL code
+    + Modified `gfb_bio.sql' to indicate biological specimens with available fin and scale age structures, in addition to otoliths available. (RH 180102)
+  * Documentation
+    + Updated Rd file for revised `compBmsy' function. (RH 180102)
+    + Removed old `index.html' in `.\inst\doc' and replaced with `Links.html' (RH 171221)
+  * M06_Assessment.r
+    + Hid call to `win.metafile' in `compBmsy' using `do.call' (RH 180102)
+    + Updated `imputeRate' to calculate future value (FV) of a set of contributions/withdrawals. (RH 171210)
+      - Final value today is the future value as seen from the first time period.
+      - The fit is to the final point and the estimated trajectory is more like a NPV in reverse,
+      -   i.e., the net present value of the historical asset.
+
+1.37.2 (2017-11-30)
+  * zzz.r
+    + Updated `myboxplot.stats' to recognise a different set of quantiles if the object `quants5' exists in the user's work environment. (RH 171123)
+  * M06_Assessment.r
+    + Changed name of `meanAges' to `quantAges' to better reflect functionality. (RH 171130)
+      - Added a list object `Qage' for output that collects the ages in lists used to construct the quantiles.
+    + Added new function `meanAges' to plot quantile boxes of annual age distributions and mean age over time. (PJS/RH 171129)
+    + Updated function `compBmsy' to show reference points (medians and 90% range) on all stock status boxes. (RH 171120)
+    + This can be in place of or in addition to the vertical lines for the Model Average's median ref pts.
+  * M08_LaTeX.r
+    + Fixed bug in `formatCatch' -- in the `use.round' option, N had been inadvertently fixed to 3. (RH 171117)
+  * M05_Spatial.r
+    + Increased the functionality of `plotLocal' by adding new arguments. (RH 171101)
+      - `pcat' (numeric) cumulative proportion of catch to identify and display;
+      - `showAll' (logical) if TRUE, show all locality boundaries available;
+      - `fid' (integer) specific set of fishery ID numbers to process
+      - `fidtype' (character) default=``PBStools'', alternative=``GFFOS'' fishery types
+      - `plot' (logical) if TRUE, plot the results;
+      - `png' (logical) if TRUE, send the plot results to a PNG file;
+      - `csv' (logical) if TRUE, send the output to a CSV file.
+
 1.37.1 (2017-10-26)
   * M01_Utility.r
     + Added new function `readClog' to read a ChangeLog file and convert it to an R list. (RH 171025)

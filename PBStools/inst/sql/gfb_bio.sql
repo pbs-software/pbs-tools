@@ -1,4 +1,4 @@
--- Get specimen biological data from GFBioSQL (last revised 2016-08-03)
+-- Get specimen biological data from GFBioSQL (last revised 2018-01-02)
 -- Number in brackets = #records for YYR
 
 SET NOCOUNT ON
@@ -329,11 +329,22 @@ SELECT
   'sex'   = IsNull(AA.SPECIMEN_SEX_CODE,0),                           -- B05_Specimen
   'mat'   = IsNull(AA.MATURITY_CODE,0),                               -- B05_Specimen
   -- sometimes otoliths have been aged but they do not appear in the SPECIMEN_COLLECTED table
-  'oto'   = CASE
-              WHEN AA.SPECIMEN_AGE IS NOT NULL THEN 1
-              ELSE IsNull(TT.otoliths,0) END,                         -- B05a_Specimen_Collected
+  -- RH 180102 - cannot assume these are otoliths (also, the statement above may no longer be TRUE)
+  --'oto'   = CASE
+  --            WHEN AA.SPECIMEN_AGE IS NOT NULL THEN 1
+  --            ELSE IsNull(TT.otoliths,0) END,                         -- B05a_Specimen_Collected
+  'oto'   = IsNull(TT.otoliths,0),                                    -- B05a_Specimen_Collected
+  'fin'   = IsNull(TT.fins,0),                                        -- B05a_Specimen_Collected (may be more than one type of fin)
+  'scale' = IsNull(TT.scales,0),                                      -- B05a_Specimen_Collected (may be more than one type of scale)
+  'uage'  = CASE
+              WHEN AA.SPECIMEN_AGE IS NOT NULL AND IsNull(TT.otoliths,0)=0 AND 
+              IsNull(TT.fins,0)=0 AND IsNull(TT.scales,0)=0 THEN 1
+              ELSE 0 END,                                             -- B05a_Specimen_Collected (this condition may never exist)
+  --'narc'  = CASE 
+  --            WHEN AA.SPECIMEN_AGE IS NOT NULL OR ISNULL(TT.notavail,0) = 0 THEN NULL
+  --            ELSE TT.notavail END,                                   -- B05a_Specimen_Collected
   'narc'  = CASE 
-              WHEN AA.SPECIMEN_AGE IS NOT NULL OR ISNULL(TT.notavail,0) = 0 THEN NULL
+              WHEN ISNULL(TT.notavail,0) = 0 THEN NULL
               ELSE TT.notavail END,                                   -- B05a_Specimen_Collected
   'age'   = AA.SPECIMEN_AGE,                                          -- B05_Specimen
   'ameth' = CASE WHEN AA.SPECIMEN_AGE Is Null THEN NULL ELSE IsNull(AA.AGEING_METHOD_CODE,0) END,  -- B05_Specimen
@@ -363,8 +374,8 @@ SELECT
     WHEN AA.MAJOR_STAT_AREA_CODE IN (8) THEN '5D'
     WHEN AA.MAJOR_STAT_AREA_CODE IN (9) THEN '5E'
     ELSE '0' END AS PMFC,                                   -- B02_Fishing_Event
-  ISNULL(AA.DFO_STAT_AREA_CODE,'0') AS PFMA,                   -- B02_Fishing_Event
-  ISNULL(AA.DFO_STAT_SUBAREA_CODE,0) AS PFMS,                  -- B02_Fishing_Event
+  ISNULL(AA.DFO_STAT_AREA_CODE,'0') AS PFMA,                -- B02_Fishing_Event
+  ISNULL(AA.DFO_STAT_SUBAREA_CODE,0) AS PFMS,               -- B02_Fishing_Event
   CASE 
     WHEN AA.DFO_STAT_AREA_CODE IN ('21','23','24','121','123') OR
           (AA.DFO_STAT_AREA_CODE IN ('124') AND AA.DFO_STAT_SUBAREA_CODE IN (1,2,3)) OR
@@ -457,4 +468,5 @@ SELECT * FROM #GFBBIO
 
 -- getData("gfb_bio.sql","GFBioSQL",strSpp="442")
 -- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="442")
+-- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="439")
 

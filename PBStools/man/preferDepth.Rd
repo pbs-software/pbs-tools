@@ -90,6 +90,7 @@ preferDepth(strSpp="410", fqtName="pht_fdep.sql", dbName="PacHarvest",
   Available SQL queries: \code{\link[PBStools]{SQLcode}}
 }
 \examples{
+\dontrun{
 local(envir=.PBStoolEnv,expr={
 pbsfun=function(dfo=FALSE,strSpp="LST"){
   if (dfo) {
@@ -105,5 +106,6 @@ pbsfun=function(dfo=FALSE,strSpp="LST"){
   invisible() }
 pbsfun()
 })
+}
 }
 \keyword{hplot}

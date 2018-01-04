@@ -1,6 +1,6 @@
 Package: PBStools
-Version: 1.37.1
-Date:    2017-10-26
+Version: 1.37.3
+Date:    2018-01-02
 Title:   Tools for the Efficient Execution of Onerous Tasks
 Authors@R: c(
    person("Rowan", "Haigh", role = c("aut", "cre"), email = "rowan.haigh@dfo-mpo.gc.ca"),
@@ -10,7 +10,7 @@ Authors@R: c(
    person("Brian", "Krishka", role = "ctb", email = "brian.krishka@dfo-mpo.gc.ca"))
 Author: Rowan Haigh [aut, cre], Jon T. Schnute [ctb], Norm Olsen [ctb], Lisa Lacko [ctb], Brian Krishka [ctb]
 Maintainer: Rowan Haigh <rowan.haigh@dfo-mpo.gc.ca>
-Copyright:  2007-2017, Fisheries and Oceans Canada
+Copyright:  2007-2018, Fisheries and Oceans Canada
 Depends: R (>= 3.0.0), PBSmapping, PBSmodelling, PBSdata, RODBC
 Suggests: boot, BRugs, cluster, MASS, reshape, sp, utils, xtable
 Description: Provides tools for exploring data from fisheries and beyond. 

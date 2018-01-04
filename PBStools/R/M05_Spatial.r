@@ -751,16 +751,32 @@ plotGMA = function(gma=gma.popymr, xlim=c(-134,-123), ylim=c(48.05,54.95),
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotGMA
 
 
-#plotLocal------------------------------2017-10-19
+#plotLocal------------------------------2017-11-01
 # Plot DFO fishing localities with the highest catch.
 #-----------------------------------------------RH
-plotLocal = function(dat, area="locality", aflds=NULL, outnam="refA439")
+plotLocal = function(dat, area="locality", aflds=NULL, pcat=0.95, showAll=FALSE,
+   fid=NULL, fidtype="PBStools", plot=TRUE, png=FALSE, csv=FALSE, outnam="refA439")
 {
 	dat$catKG = dat$landed + dat$discard
-	dat$fid[is.element(dat$fid,9)] = 1  ## put FOREIGN sector catch into trawl
-	fid = .su(dat$fid)
-	fidnam = c("trawl","halibut","sable","dogling","hlrock")
-#browser();return()
+
+	if (fidtype=="PBStools") {
+		FID = 1:5
+		names(FID) = c("Trawl","Halibut","Sablefish","Dogfish-Lingcod","HL-Rockfish") ## defaults for buildCatch
+		dat$fid[is.element(dat$fid,9)] = 1                                            ## put FOREIGN sector catch into trawl
+	} else if (fidtype=="GFFOS") {
+		getData("FISHERY",dbName="GFFOS")
+		FID = PBSdat$FISHERY_CODE
+		names(FID) = PBSdat$FISHERY_NAME
+	} else {
+		stop ("fidtype specified is not recognised")
+	}
+	if (is.null(fid)) {
+		fid = .su(dat$fid)
+	} else {
+		dat = dat[is.element(dat$fid,fid),]
+		if (nrow(dat)==0) stop ("No records with specified fid")
+	}
+	fid =  FID[match(fid,FID,nomatch=0)]
 
 	if (is.null(aflds)){
 		if (area=="locality")
@@ -779,24 +795,52 @@ plotLocal = function(dat, area="locality", aflds=NULL, outnam="refA439")
 	data("nepacLL",package="PBSmapping",envir=penv())
 
 	paint = colorRampPalette(c("lightblue1","green","yellow","red"))(500)
+	FDATA = list()
 
 	for (f in fid) {
+		ff   = names(fid[match(f,fid)])
 		fdat = dat[is.element(dat$fid,f),]
+		fdat = fdat[fdat$catKG > 0 & !is.na(fdat$catKG),]
+		if (nrow(fdat)==0) {
+			showMessage(paste0("No positive catch data for fid=",f))
+			next
+		}
 		loccat = rev(sort(sapply(split(fdat$catKG,fdat$ID),function(x){sum(x)/1000.})))
 		procat = loccat/sum(loccat)
 		cumcat = cumsum(procat)
-		bigcat = loccat[cumcat < 0.95]
+		bigcat = loccat[cumcat <= pcat]
 		bigloc = names(bigcat)
 		yesloc = is.element(bigloc,pdata$ID)
 		fdata  = pdata[match(bigloc[yesloc],pdata$ID),]
 		fdata$catT = bigcat[yesloc]
-		fdata$pcat = procat[cumcat < 0.95][yesloc]
-		fdata$col  = paint[round(scaleVec(fdata$pcat,1,500))]
-		plotMap(area, polyProps=fdata, plt=c(0.05,0.99,0.05,0.99), 
-			xlim=c(-135,-123), ylim=c(48,54.5), mgp=c(2,0.5,0), cex.axis=1.2, cex.lab=1.5)
-		addPolys(nepacLL, col="grey91")
-		write.csv(fdata, paste0(outnam,".",fidnam[f],".csv"), row.names=FALSE)
+		fdata$pcat = procat[cumcat <= pcat][yesloc]
+		## Include 0 catch as a common base for all scaling, but remove it from vector
+		sVec = rev(rev(round(scaleVec(c(fdata$pcat,0),1,500)))[-1])
+		fdata$col = paint[sVec]  ## include 0 catch as a common base for all scaling
+		top3   = fdata[1:(min(nrow(fdata),3)),]
+		topcat = unlist(formatCatch(top3$catT,3))
+#browser();return()
+		legtxt = paste0(topcat," - ",top3$name)
+		if (plot) {
+			if (png) png(filename=paste0(outnam,".",ff,".png"), width=9, height=8.25, units="in", res=600)
+			plotMap(area, type="n", plt=c(0.06,0.99,0.06,0.99), 
+				xlim=c(-135,-123), ylim=c(48,54.8), mgp=c(2.2,0.5,0), cex.axis=1.2, cex.lab=1.5)
+			if (showAll)
+				addPolys(area, border="grey")
+			addPolys(area, polyProps=fdata)
+			addPolys(nepacLL, col="lightyellow1")
+			addLegend(0.975, 0.95, fill=top3$col, legend=legtxt, bty="n", title=paste0("Fishery: ",ff, " - top catch (t)"), xjust=1, title.adj=0)
+			box()
+			if (png) dev.off()
+		}
+		if (csv) {
+			#write.csv(fdata, paste0(outnam,".",fidnam[f],".csv"), row.names=FALSE)
+			write.csv(fdata, paste0(outnam,".",ff,".csv"), row.names=FALSE)
+		}
+		FDATA[[as.character(f)]] = fdata
 	}
+	attr(FDATA, "fishery") = names(fid)
+	return(FDATA)
 }
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotLocal
 
@@ -874,7 +918,7 @@ plotTernary <- function(x=c(3,2,1), connect=FALSE, show.geometry=TRUE,
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotTernary
 
 
-#plotTertiary---------------------------2013-03-13
+#plotTertiary---------------------------2018-01-02
 # Composition plots within a polygonal space.
 #-----------------------------------------------RH
 plotTertiary = function(x=c(100,5,25,10,50), pC=c(0.5,0.5), r=0.5,
@@ -949,7 +993,8 @@ plotTertiary = function(x=c(100,5,25,10,50), pC=c(0.5,0.5), r=0.5,
 		h = Dmin/N + r  # height of the polygon
 	else
 		h = 2 * Dmin/N
-	Dmax = sum(apply(XYside,1,function(x,m){sqrt((x[1]-m[1])^2+(x[2]-m[2])^2)},m=shape[1,3:4]))  # maximum sum of p if mode occurs at a vertex
+#browser();return()
+	Dmax = sum(apply(XYside,1,function(x,m){sqrt((x[1]-m[1])^2+(x[2]-m[2])^2)},m=unlist(shape[1,3:4])))  # maximum sum of p if mode occurs at a vertex
 
 	#D = sqrt((pC[1]-pC[1])^2+(pC[2]-shape$Y[1])^2)*N # N times distance from centroid to the base
 	#D = sqrt((pC[1]-pC[1])^2+(pC[2]-shape$Y[1])^2)+r # N times distance from centroid to the base
@@ -1015,7 +1060,7 @@ plotTertiary = function(x=c(100,5,25,10,50), pC=c(0.5,0.5), r=0.5,
 	packList(stuff,target="PBStool",tenv=.PBStoolEnv)
 
 	if (eps) postscript(file="tertiary.eps", width=8,height=8,paper="special")
-	else if (wmf && .Platform$OS.type=="windows")
+	else if (.Platform$OS.type=="windows" && wmf)
 		do.call("win.metafile",list(filename="tertiary.wmf",width=10,height=10,pointsize=12))
 	par( mfrow=c(1,1), mai=c(.2,.2,.2,.2), omi=c(0,0,0,0))
 	plotMap(shape,axes=FALSE,xlab="",ylab="",xlim=extendrange(xlim),ylim=extendrange(ylim),plt=NULL,lwd=lwd*2)

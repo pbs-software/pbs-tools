@@ -4,6 +4,7 @@
 #  calcMA..........Calculate a moving average using a fixed period occurring every x units.
 #  compBmsy........Compare biomass posteriors relative to Bmsy or Bavg
 #  imputeRate......Impute rate of return from an investment with irregular contributions/withdrawals.
+#  quantAges.......Plot quantile boxes of age by year and/or area, including mean age over time.
 #===============================================================================
 
 
@@ -46,12 +47,16 @@ calcMA = function(x,y,y2,period=270,every=10)
 #-------------------------------------------calcMA
 
 
-#compBmsy-------------------------------2017-08-29
+#compBmsy-------------------------------2017-11-20
 # Compare biomass posteriors relative to Bmsy or Bavg
 #-----------------------------------------------RH
 compBmsy = function(Bspp, spp="POP", Mnams=c("Est M","Fix M"),
-   ratios=c(0.4,0.8), oratios=NULL, t.yr=2017, figgy=FALSE, width=12, height=9, 
-   spplabs=TRUE, left.space=NULL, top.space=2, fout=NULL, 
+   ratios=c(0.4,0.8), oratios=NULL, zones = c("Critical","Cautious","Healthy"),
+   quants=c(0.05,0.25,0.5,0.75,0.95), t.yr=2017, figgy=FALSE, width=12, height=9, 
+   rcol=c("red","green4","blue"),                        ## line cols
+   ocol = c("#D55E00", "#009E73", "#56B4E9", "#F0E442"), ## dots cols for colour-blind peeps (vermillion, bluegreen, skyblue, yellow)
+   lcol = c("red","darkorange","green4"),
+   spplabs=TRUE, left.space=NULL, top.space=2, fout=NULL, offset=c(-0.1,0.1),
    calcRat=TRUE, refpt="MSY", param=NULL, boxlim=NULL, ...)
 {
 	oldpar = par(no.readonly=TRUE); oldpso = grDevices::ps.options()
@@ -60,16 +65,16 @@ compBmsy = function(Bspp, spp="POP", Mnams=c("Est M","Fix M"),
 		mess = paste("grDevices::ps.options(",paste(paste(names(oldpso),sapply(oldpso,deparse),sep="="),collapse=","),")",sep="")
 		eval(parse(text=mess))
 		gc(verbose=FALSE) }
-	on.exit(ciao())
+	#on.exit(ciao())
 
 	spp = unique(spp)
 	spp = spp[is.element(spp,names(Bspp))]
 	if (length(spp)==0) 
 		stop (paste("Input list 'Bspp' contains no species labelled: (\"",paste(spp,collapse="\",\""),"\")",sep=""))
-	Nmods = sapply(Bspp,length); SPP = names(Nmods); nmods=sum(Nmods[spp])
-	nrats = length(ratios)   ## reference point ratios
-	norats = length(oratios) ## other ratios (shorter lines)
-	Bmsy=list()
+	Nmods  = sapply(Bspp,length); SPP = names(Nmods); nmods=sum(Nmods[spp])
+	Nrats  = length(ratios)   ## reference point ratios
+	Norats = length(oratios) ## other ratios (shorter lines)
+	Bmsy   = list()
 	for (i in spp) {
 		iBspp = Bspp[[i]]
 		if (is.null(Mnams)) Mnams = names(iBspp)
@@ -95,6 +100,7 @@ compBmsy = function(Bspp, spp="POP", Mnams=c("Est M","Fix M"),
 
 	dots=list(...)
 	unpackList(dots)
+#browser();return()
 	if (!is.null(dots$medcol)) medcol=rev(medcol)
 	if (!is.null(dots$boxfill)) boxfill=rev(boxfill)
 
@@ -108,48 +114,73 @@ compBmsy = function(Bspp, spp="POP", Mnams=c("Est M","Fix M"),
 		if (f=="pdf"){    grDevices::ps.options(horizontal = TRUE)
 		                  pdf(file=paste(fout,".pdf",sep=""),width=width*1.25,height=height*1.25,fonts="mono") }
 		else if (f=="png") png(paste(fout,".png",sep=""), units="in", res=400, width=width, height=height)
-		else if (f=="wmf") do.call("win.metafile",list(filename=paste0(fout,".wmf"), width=width*1.25, height=height*1.25))
+		else if (.Platform$OS.type=="windows" && f=="wmf") 
+			do.call("win.metafile",list(filename=paste(fout,".wmf",sep=""), width=width*1.25, height=height*1.25))
 		if (is.null(left.space))
 			left.space = (max(nchar(names(Bmsy)))-ifelse(spplabs,nchar(spp),0))^0.9
 		par(mar=c(4,left.space,0.5,0.5),cex=ifelse(f%in%c("png","eps"),1,1.2),mgp=c(1.6,0.6,0))
 		quantBox(Bmsy, horizontal=TRUE, las=1, xlim=c(0.5,nmods+top.space), ylim=ylim, cex.axis=1.2, yaxs="i", outline=FALSE,
-			pars=list(boxwex=boxwidth,medlwd=2,whisklty=1),quants=c(0.05,0.25,0.5,0.75,0.95))
-		#if (is.null(param))
-		abline(v=ratios,col=rep(c("red","green4","blue"),nrats)[1:nrats],lty=2,lwd=2)
-		if (norats>0){
-			xrat = rbind(matrix(rep(orats,each=2),ncol=norats))
-			yrat = rbind(matrix(rep(c(0,nmods),norats),ncol=norats))
-			ocol = rep(c("blue","purple","navy"),norats)[1:norats]
-			junk = sapply(1:norats,
-				function(i,x,y,col,lty){lines(x[,i], y[,i], col=col[i], lty=lty[i], lwd=2)},
-				x=xrat, y=yrat, col=ocol, lty=rep(4,norats)
-			)
-		} else {
-			ocol = NULL
-		}
-#browser();return()
+			pars=list(boxwex=boxwidth,medlwd=2,whisklty=1),quants=quants)
 
-		#	segments(v=ratios,col=rep(c("red","green4","blue"),nrats)[1:nrats],lty=2,lwd=2)
+		if (Nrats>0)
+			abline(v=ratios,col=rep(rcol,Nrats)[1:Nrats],lty=2,lwd=2)
+
+		#	segments(v=ratios,col=rep(c("red","green4","blue"),Nrats)[1:Nrats],lty=2,lwd=2)
 		quantBox(Bmsy, horizontal=TRUE, las=1, xlim=c(0.5,nmods+1), ylim=ylim, cex.axis=1.2, yaxs="i", outline=FALSE, names=names(Bmsy), 
-			pars=list(boxwex=boxwidth, medlwd=2, whisklty=1, medcol=medcol, boxfill=boxfill, ...), add=TRUE, quants=c(0.05,0.25,0.5,0.75,0.95))
+			pars=list(boxwex=boxwidth, medlwd=2, whisklty=1, medcol=medcol, boxfill=boxfill, ...), add=TRUE, quants=quants)
 		if (length(Bmsy)==1)  ## for some reason, a label is not added when there is only 1 boxplot.
 			axis(2, at=1, labels=names(Bmsy), las=1, cex.axis=1.2)
+
+		if (Norats>0){
+			orange = attributes(oratios)$range
+			if (!is.null(orange)){
+				if (all(sapply(orange,is.vector)))
+					orange = sapply(orange, function(x){ as.matrix(x,ncol=1) }, simplify=FALSE) ## this line not not tested
+				sapply(1:ncol(oratios), function(x){
+					xy = cbind(orange$low[,x], orange$high[,x], rep(NA,nrow(oratios)))
+					yy = as.vector(t(xy))
+					xx = rep(rev(1:nrow(oratios)),each=3) + offset[x]  ## currently assumes only two HRPs
+					lines(yy, xx, col=ocol[x], lty=1, lwd=1.5)
 #browser();return()
-		#y2 = par()$usr[4] - 0.2*diff(par()$usr[3:4])
-		#text(c(0.2,0.6,1.2),rep(y2,3),c("Critical","Cautious","Healthy"),col=c("red","darkorange","green4"),font=2,cex=1.1,srt=90,adj=c(0,0.5))
-		y2 = par()$usr[4] - 0.02*diff(par()$usr[3:4])
-		y2h = par()$usr[4] - 0.04*diff(par()$usr[3:4])
-		xpos.zones = c(0,ratios[1:2]) + diff(c(0,ratios[1:2],par()$usr[2]))/2  ## only use the first two ref pts; others are for illustration
+				})
+			}
+			if (is.vector(oratios))
+				oratios =  as.matrix(oratios, ncol=1)
+			sapply(1:ncol(oratios), function(x) {
+				xx = oratios[,x]
+				points(rev(xx), (1:length(xx)) + offset[x], pch=21, col="black", bg=ocol[x], cex=ifelse(nrow(oratios)>4,1,1.2))
+			})
+			#xrat = rbind(matrix(rep(orats,each=2),ncol=Norats))
+			#yrat = rbind(matrix(rep(c(0,nmods),Norats),ncol=Norats))
+			#ocol = rep(c("blue","purple","navy"),Norats)[1:Norats]
+			#junk = sapply(1:Norats,
+			#	function(i,x,y,col,lty){lines(x[,i], y[,i], col=col[i], lty=lty[i], lwd=2)},
+			#	x=xrat, y=yrat, col=ocol, lty=rep(4,Norats)
+			#)
+		}
+
+#browser();return()
+		if (!is.null(ratios) && !is.null(zones)) {
+			#y2 = par()$usr[4] - 0.2*diff(par()$usr[3:4])
+			#text(c(0.2,0.6,1.2),rep(y2,3),c("Critical","Cautious","Healthy"),col=c("red","darkorange","green4"),font=2,cex=1.1,srt=90,adj=c(0,0.5))
+			y2 = par()$usr[4] - 0.02*diff(par()$usr[3:4])
+			y2h = par()$usr[4] - 0.04*diff(par()$usr[3:4])
+			xpos.zones = c(0,ratios[1:2]) + diff(c(0,ratios[1:2],par()$usr[2]))/2  ## only use the first two ref pts; others are for illustration
+			if (is.null(param)) {
+				text(xpos.zones[1:2], rep(y2,3)[1:2], zones[1:2], col=lcol[1:2], font=2, cex=1.1, srt=90, adj=c(1,0.5))
+				text(xpos.zones[3], rep(y2h,3)[3], zones[3], col=lcol[3], font=2, cex=1.1, srt=0, adj=c(0.5,1))
+			}
+		}
+		if (!is.null(ratios)) {
+			#text(c(ratios,oratios),par()$usr[3],labels=show0(round(c(ratios,oratios),2),2),adj=c(1.1,-.5),col=c("red","green4",ocol))
+			text(c(ratios),par()$usr[3],labels=show0(round(ratios,2),2),adj=c(1.1,-.5),col=rcol)
+		}
 		if (is.null(param)) {
-			text(xpos.zones[1:2],rep(y2,3)[1:2],c("Critical","Cautious","Healthy")[1:2],col=c("red","darkorange","green4")[1:2],font=2,cex=1.1,srt=90,adj=c(1,0.5))
-			text(xpos.zones[3],rep(y2h,3)[3],c("Critical","Cautious","Healthy")[3],col=c("red","darkorange","green4")[3],font=2,cex=1.1,srt=0,adj=c(0.5,1))
-			#text(c(0.2,0.6,1.2),rep(y2,3),c("Critical","Cautious","Healthy"),col=c("red","darkorange","green4"),font=2,cex=1.1,srt=90,adj=c(1,0.5))
 			mess = paste0("mtext(expression(italic(B)[italic(t)]/italic(B)[",refpt,"]),side=1,line=2.5,cex=1.5)")
 		} else {
 			mess = sapply(strsplit(param,"_"),function(x){if(length(x)==1) x else paste0("italic(",x[1],")[",x[2],"]")})
 			mess = paste0("mtext(expression(",mess,"),side=1,line=2.5,cex=2)")
 		}
-		text(c(ratios,oratios),par()$usr[3],labels=show0(round(c(ratios,oratios),2),2),adj=c(1.1,-.5),col=c("red","green4",ocol))
 		eval(parse(text=mess))
 		if (f!="win") dev.off()
 	}
@@ -189,45 +220,66 @@ imputeRate <- function(qtName="Ex03_Portfolio", dbName="Examples", AID=1, pathN=
 	invisible() }
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~imputeRate
 
-
-#.imputeRate.impIR----------------------2016-09-21
+#.imputeRate.impIR----------------------2017-12-10
 # Impute the rate of return from an investment.
-# Now uses net future value instead of net present value
+# Algorithm uses the NFV in the sense that the
+# final value today is the future value as seen
+# from the first time period.
+# This means that the fit is to the final point
+# and the estimated trajectory is more like a 
+# NPV in reverse, i.e., the net present value of
+# the historical asset.
 #-----------------------------------------------RH
 .imputeRate.impIR <- function() {
 	IRRfun <- function(P){
-		# See XIRR function in Excel
+		## See XIRR function in Excel
+		## NPV -- https://www.investopedia.com/terms/n/npv.asp
+		## NFV -- https://www.investopedia.com/terms/f/futurevalue.asp
 		r=as.numeric(P[1])
 		unpackList(ttcall(PBStool)["ddat"],scope="L")
 		N=nrow(ddat)
-		Ci=c(ddat$value[1],ddat$cont[2:N]) # initial value (includes 1st contributuon) + additioanl contributions
+		Ci=c(ddat$value[1],ddat$cont[2:N]) ## initial value (includes 1st contributuon) + additioanl contributions
 		#Clast=Ci[N]; Ci[N]=0
-		Vlast=ddat$value[N]          ## final value
-		#sfac=GT0(mean(abs(Ci)))     ## scale factor for contributions (not needed so set to 1)
+		Vlast=ddat$value[N]                ## final value
+		#sfac=GT0(mean(abs(Ci)))           ## scale factor for contributions
 		sfac=1
 		Ci=Ci/sfac
 		Di=c(ddat$date)
-		#ri = (1-r)^(as.numeric(Di-Di[1])/365)      ## Discount -- but if r>1 then formula blows up
-		#ri = 1/((1+r)^(as.numeric(Di-Di[1])/365))  ## Discount -- inverse of discounting (doesn't quite work)
-		ri = (1+r)^(as.numeric(rev(Di)[1]-Di)/365)  ## Growth   -- need to work backwads from end result to get true growth
-		ri[Ci<0] = 1                                ## Do not discount removals
-		#DCi=Ci/ri                                  ## NPV -- originally used net present value for IRR formula, but r is estimated high
-		FCi = Ci * ri                               ## FV  -- switched to future value (RH 160917)
-		Vcont = sum(FCi)                            ## Value of total contributions
-		Vlast = Vlast/sfac                          ## Value of the end portfolio
-		Vstd = c(Vcont,Vlast)/mean(c(Vcont,Vlast))  ## normalize the two values by the mean of the two (instead of using a scaling factor sfac)
-		fval = diff(Vstd)^2
-		IRRmin=c(r,fval,Vcont,Vlast); names(IRRmin)=c("r","fval","Vcont","Vlast")
+		
+		#ri = (1-r)^(as.numeric(Di-Di[1])/365)      ## Discounts
+		#ri = (1+r)^(as.numeric(Di-Di[1])/365)      ## Discounts   ### need to work backwads rev(Di)[1]-Di
+		ri = (1+r)^(as.numeric(rev(Di)[1]-Di)/365)  ## Growth as NPV -- need to work backwads rev(Di)[1]-Di
+		#ri = 1/((1+r)^(as.numeric(Di-Di[1])/365))  ## Discounts
+		#ri[Ci<0] = 1      ## Do not discount removals, BUT with current NLL and fval, need to discount withdrawals also.
+		#DCi=Ci/ri         ## NPV
+		ri[is.na(ri)] = 0  ## in case of ridiculous estimates
+		FCi = Ci * ri      ## NFV (so that today's value is the target)
+		
+		N = nrow(ddat)
+#browser();return()
+		LL1 = -log(sum(sqrt((FCi - ddat$value)^2)))             ## NLL for fit to individual observations
+		LL2 = log(abs(diff(c(sum(FCi),rev(ddat$value)[1]))^2))  ## Penalty for not fitting the final point
+		#LL2 = -log(sum(sqrt((sum(FCi)-rev(ddat$value)[1])^2)))
+		fval = LL1 + LL2
+if(is.na(LL1)) {browser();return()}
+		#return(fval)
+.flush.cat(as.character(c(LL1,LL2,fval)), "\n")
+		Vcont=sum(FCi)
+		Vlast=Vlast/sfac
+		#Vstd = c(Vcont,Vlast)/mean(c(Vcont,Vlast))
+		#fval = diff(Vstd)^2
+
 #browser();return()
 		#Yobs  = scalePar(matrix(c(Vlast,0,1.5*max(Vlast,Vcont),TRUE),nrow=1))
 		#Ypred = scalePar(matrix(c(Vcont,0,1.5*max(Vlast,Vcont),TRUE),nrow=1))
-#print(c(Yobs,Ypred))
 		#fval = (Yobs-Ypred)^2
 		#fval = (Vlast - Vcont)^2
 #print(round(c(r,fval,Vcont,Vlast),5))
-		#IRRmin=c(r,fval,sfac*Vcont,sfac*Vlast); names(IRRmin)=c("r","fval","Vcont","Vlast")
+		IRRmin=c(r,fval,sfac*Vcont,sfac*Vlast); names(IRRmin)=c("r","fval","Vcont","Vlast")
 #print(round(IRRmin,2))
 #browser();return()
+		#packList("IRRmin","PBStool",tenv=.PBStoolEnv)
+		#eval(parse(text="PBStool$IRRmin <<- IRRmin"))  # weird results for SANN
 		ttget(PBStool); PBStool$IRRmin <- IRRmin; ttput(PBStool)  # weird results for SANN
 		return(fval) }
 	#----------------
@@ -248,8 +300,7 @@ imputeRate <- function(qtName="Ex03_Portfolio", dbName="Examples", AID=1, pathN=
 	ddat=adat[adat$date>=dlim[1] & adat$dat<=dlim[2] & !is.na(adat$date),] # date-delimited account data
 	if (nrow(ddat)==0) showError("date limits","nodata")
 	plim=range(ddat$period,na.rm=TRUE); v0=plim[1]; v1=plim[2]
-	mdays = median(as.vector(diff(ddat$date)))
-	pyr = 365./mdays ## divide year by ave. days in month
+	pyr = 365./median(as.vector(diff(ddat$date))) ## divide year by ave. days in month
 	setWinVal(list(d0=d0,d1=d1,v0=v0,v1=v1,pyr=round(pyr,1)))
 
 	x <- ddat$period; y <- ddat$value; names(x)=names(y)=as.character(ddat$date)
@@ -260,7 +311,7 @@ imputeRate <- function(qtName="Ex03_Portfolio", dbName="Examples", AID=1, pathN=
 	cobs <- ddat$cont[z]; cobs[1]=yobs[1] # initial value already includes 1st contribution
 	names(cobs)=as.character(ddat$date[z])
 	Vstart <- yobs[1]; Vend <- yobs[zL]; Vadj=Vend-cobs[zL]
-	packList(c("adat","ddat","Vstart","Vend","Vadj","x","y","z0","z1","z","zL","xobs","yobs","cobs","mdays","pyr"),"PBStool",tenv=.PBStoolEnv)
+	packList(c("adat","ddat","Vstart","Vend","Vadj","x","y","z0","z1","z","zL","xobs","yobs","cobs"),"PBStool",tenv=.PBStoolEnv)
 #browser();return()
 
 	Obag <- calcMin(pvec=parVec,func=IRRfun,method=method,trace=trace,maxit=maxit,reltol=reltol,steptol=steptol,repN=repN)
@@ -286,18 +337,19 @@ imputeRate <- function(qtName="Ex03_Portfolio", dbName="Examples", AID=1, pathN=
 	invisible() }
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~.imputeRate.impIR
 
-#.imputeRate.trajIR---------------------2016-09-17
+#.imputeRate.trajIR---------------------2017-12-10
 # Calculate the value trajectory.
 #-----------------------------------------------RH
 .imputeRate.trajIR=function(x,cw,y0,r){ 
 	# x=periods, cw=contributions/withdrawals, y0=starting value, r=period rate
 	cw[1]=y0 # initial value already includes 1st contribution
 	#ri = (1-r)^(as.numeric(x-x[1])/365)
-	#ri = 1/((1+r)^(as.numeric(x-x[1])/365))
+	#ri = (1+r)^(as.numeric(x-x[1])/365)
 	ri = (1+r)^(as.numeric(rev(x)[1]-x)/365)
-	ri[cw<0] = 1
-	#ypred=cw/ri    ## NPV
-	ypred=cw*ri     ## FV
+	#ri = 1/((1+r)^(as.numeric(x-x[1])/365))
+	#ri[cw<0] = 1  ## with current NLL and fval, need to discount withdrawals also
+	#ypred=cw/ri   ## NPV
+	ypred=cw*ri    ## NFV
 	y=cumsum(ypred)
 #browser();return()
 	return(y) }
@@ -324,7 +376,7 @@ imputeRate <- function(qtName="Ex03_Portfolio", dbName="Examples", AID=1, pathN=
 	invisible() }
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~.imputeRate.getIR
 
-#.imputeRate.plotIR---------------------2016-09-21
+#.imputeRate.plotIR---------------------2017-12-10
 # Plot the results of the imputed rate.
 #-----------------------------------------------RH
 .imputeRate.plotIR=function() {
@@ -347,9 +399,10 @@ imputeRate <- function(qtName="Ex03_Portfolio", dbName="Examples", AID=1, pathN=
 
 	plot(x,y,cex.axis=1,mgp=c(2.5,0.5,0),xlim=xlim,ylim=ylim,xlab="", ylab="",type="n",xaxt="n",yaxt="n",bty="n")
 	zax=intersect(x,pretty(x,15))
+#browser();return()
 	zay=intersect(floor(ylim[1]):ceiling(ylim[2]),pretty(yglob,10))
 	zpos=cobs>0 & !is.na(cobs); zneg=cobs<0 & !is.na(cobs)
-	cadd=abs(min(0,min(cobs)))
+	#cadd=abs(min(0,min(cobs)))
 	base=0; rcobs=cobs+base
 	zac=pretty(cobs,4)
 
@@ -368,17 +421,17 @@ imputeRate <- function(qtName="Ex03_Portfolio", dbName="Examples", AID=1, pathN=
 		xy = dBars(xobs[zneg],rcobs[zneg],width=1,col=mclr[2],base=base,lwd=1)
 		polygon(xy,col="pink",border="grey") }
 	lines(x,y,col=oclr[1],lwd=1); points(x,y,pch=21,bg=oclr[2],cex=1);
-	lines(xobs,ccum,col=mclr[3],lwd=2); lines(xobs,ycum,col=clr,lwd=2);
+	lines(xobs,ccum,col=mclr[3],lwd=2); 
+	lines(xobs,ycum,col=clr,lwd=2);  ## this seems offset high (perhaps subtract cobs[1]?)
 
 	mtext("Date",side=1,line=3.75,cex=1.2); mtext("Value",side=2,line=1.5,cex=1.2);
 	ydif=diff(ylim); ypin=par()$pin[2]
 	yyy = ifelse(Vstart < (0.80*ydif+ylim[1]),.98,.50)
 	addLabel(.05,yyy,paste("Method =",method),cex=1.2,adj=0,col=clr);
-	#addLabel(.05,yyy-.02*(6/ypin),paste(paste(c(paste0("Rate per ",round(mdays)," days"),"Annual rate")," = ",Pfig,"%",sep=""),collapse="\n"),adj=c(0,1),cex=0.8);
-	addLabel(.05,yyy-.025*(6/ypin),paste0("Annual rate = ",Pfig[2],"%"),adj=c(0,1),cex=0.8)
-	addLabel(.05,yyy-.06*(6/ypin),paste("Timing =",paste(round(ftime[1],2),collapse=", "),"sec"),adj=0,cex=0.7,col="grey35");
-	addLegend(.04,yyy-.06*(6/ypin),legend=c("Observed","Contributions","Future Value"),bty="n",cex=.8,
-		lty=1,lwd=3,col=c(oclr[1],mclr[3],clr))
+	addLabel(.05,yyy-.02*(6/ypin),paste(paste(c("Period rate","Annual rate")," = ",Pfig,"%",sep=""),collapse="\n"),adj=c(0,1),cex=0.8);
+	addLabel(.05,yyy-.08*(6/ypin),paste("Timing =",paste(round(ftime[1],2),collapse=", "),"sec"),adj=0,cex=0.7,col="grey35");
+	addLegend(.04,yyy-.09*(6/ypin),legend=c("Observed","Contributions","NPV"),bty="n",cex=.8,
+		lty=1,lwd=3,col=c(oclr[1],mclr[3],clr));
 	clab=paste("Initial value = ",format(round(Vstart),big.mark=","),
 		"    Contributions = ",format(round(sum(ddat$cont[z][-1])),big.mark=","),
 		"    Final value = ",format(round(Vend),big.mark=","),sep="")
@@ -443,3 +496,118 @@ imputeRate <- function(qtName="Ex03_Portfolio", dbName="Examples", AID=1, pathN=
 
 #=======================================imputeRate
 
+
+#quantAges------------------------------2017-11-30
+# Plot quantile boxes of age by year and/or area,
+# including mean age over time.
+# Suggested by PJS to detect changes in age.
+#-------------------------------------------PJS/RH
+quantAges =function(bioDat, dfld="age", afld="major", tfld="year", 
+   type="time", outnam="Quant-Age", png=FALSE)  # types: time, area
+{
+	bioDat = bioDat[bioDat[,dfld]>0 & !is.na(bioDat[,dfld]),]
+	bioDat$ctype=rep("U",nrow(bioDat))
+	bioDat$ctype[is.element(bioDat$ttype,c(1,4:10,12:14))]="C"  ## Note: TRIP_SUB_TYPE=11 in GFBio is RECREATIONAL
+	bioDat$ctype[is.element(bioDat$ttype,c(2,3))]="S"
+
+	#mcol  = .colBlind[c("skyblue","blue")]
+	#fcol  = .colBlind[c("vermillion","redpurple")]
+	mcol   = c("cyan","blue","darkblue")
+	fcol   = c("pink","red","darkred")
+	boxwex = 0.3
+	Qage   = list()
+
+	if (type=="time") {
+		abioDat = split(bioDat, bioDat[,afld])
+		years   = 1990:2016; nyrs = length(years)
+		yearbox = as.list(rep(NA,nyrs)); names(yearbox) = years
+
+		if (png) png(paste0(outnam,".png"), width=8, height=8, units="in", res=400)
+		par(mfcol=c(length(abioDat),2), mar=c(0,2,0,0), oma=c(4,2,1,1), mgp=c(2,0.5,0))
+
+		for (j in 1:2){
+			jj = c("C","S")[j]
+			jjj = c("Commerical","Survey")[j]
+
+			for (a in length(abioDat):1) {
+				aa   = names(abioDat)[a]
+				adat = abioDat[[a]]
+				adat = adat[is.element(adat$ctype,jj),]
+
+				males = is.element(adat$sex,1)
+				msex = split(adat[,dfld][males],adat[,tfld][males])  ## may include ealry years
+				zsex = is.element(names(msex),years)
+				Msex = yearbox
+				Msex[names(msex[zsex])] = msex[zsex]
+				Qage[[jj]][[aa]][["M"]] = Msex
+
+				females = is.element(adat$sex,2)
+				fsex = split(adat[,dfld][females],adat[,tfld][females])
+				zsex = is.element(names(fsex),years)
+				Fsex = yearbox
+				Fsex[names(fsex[zsex])] = fsex[zsex]
+				Qage[[jj]][[aa]][["F"]] = Fsex
+
+				quantBox(yearbox, outline=F, ylim=c(0,35), xaxt="n")
+				quantBox(Msex, xaxt="n", yaxt="n", outline=F, boxcol="grey30", boxfill=mcol[1], medcol=mcol[2], whisklty=1, whiskcol="gainsboro", add=T, boxwex=boxwex, at=(1:nyrs)+(boxwex/2))
+				quantBox(Fsex, xaxt="n", yaxt="n", outline=F, boxcol="grey30", boxfill=fcol[1], medcol=fcol[2], whisklty=1, whiskcol="gainsboro", add=T, boxwex=boxwex, at=(1:nyrs)-(boxwex/2))
+
+				lines((1:nyrs)-(boxwex/2),sapply(Fsex,mean),col=fcol[2],lwd=2)
+				lines((1:nyrs)+(boxwex/2),sapply(Msex,mean),col=mcol[2],lwd=2)
+
+				axis(1, at=1:nyrs, labels=FALSE, tcl=0.25)
+				if (a==1) axis(1, at=seq(1,nyrs,5), labels=seq(years[1],rev(years)[1],5), cex.axis=1.2, tcl=0.5)
+				addLabel(0.05,0.95,paste0(jj," - Major ",aa), adj=c(0,1), cex=1)
+			}
+		}
+		mtext("Year", side=1, outer=T, line=2.5, cex=1.5)
+		mtext("RSR Age (years)", side=2, outer=T, line=0.25, cex=1.5, las=3)
+		if (png) dev.off()
+	}
+	if (type=="area") {
+		pmfc = c("3C","3D","5A","5B","5C","5D","5E"); names(pmfc) = 3:9
+		jbioDat = split(bioDat, bioDat[,"ctype"])
+		areas   = .su(bioDat[,afld]); nareas = length(areas)
+		areabox = as.list(rep(NA,nareas)); names(areabox) = areas
+
+		if (png) png(paste0(outnam,".png"), width=8, height=8, units="in", res=400)
+		par(mfcol=c(length(jbioDat),1), mar=c(0,2,0,0), oma=c(4,2,1,1), mgp=c(2,0.5,0))
+
+		for (j in 1:length(jbioDat)) {
+			jj   = names(jbioDat)[j]
+			jjj = c("Commerical","Survey")[j]
+			jdat = jbioDat[[j]]
+
+			males = is.element(jdat$sex,1)
+			msex = split(jdat[,dfld][males],jdat[,afld][males])  ## may include ealry years
+			zsex = is.element(names(msex),areas)
+			Msex = areabox
+			Msex[names(msex[zsex])] = msex[zsex]
+			Qage[[jj]][["M"]] = Msex
+
+			females = is.element(jdat$sex,2)
+			fsex = split(jdat[,dfld][females],jdat[,afld][females])
+			zsex = is.element(names(fsex),areas)
+			Fsex = areabox
+			Fsex[names(fsex[zsex])] = fsex[zsex]
+			Qage[[jj]][["F"]] = Fsex
+
+			quantBox(areabox, outline=F, ylim=c(0,35), xaxt="n")
+			quantBox(Msex, xaxt="n", yaxt="n", outline=F, boxcol="grey30", boxfill=mcol[1], medcol=mcol[2], whisklty=1, whiskcol="gainsboro", add=T, boxwex=boxwex, at=(1:nareas)+(boxwex/2))
+			quantBox(Fsex, xaxt="n", yaxt="n", outline=F, boxcol="grey30", boxfill=fcol[1], medcol=fcol[2], whisklty=1, whiskcol="gainsboro", add=T, boxwex=boxwex, at=(1:nareas)-(boxwex/2))
+
+			#lines((1:nareas)-(boxwex/2),sapply(Fsex,mean),col=fcol[2],lwd=2)
+			#lines((1:nareas)+(boxwex/2),sapply(Msex,mean),col=mcol[2],lwd=2)
+
+			axis(1, at=1:nareas, labels=FALSE, tcl=0.25)
+			if (j==2) axis(1, at=1:nareas, labels=pmfc[as.character(areas)], cex.axis=1.2, tcl=0.5)
+#browser();return()
+			addLabel(0.05,0.95,paste0(jjj), adj=c(0,1), cex=1)
+		}
+		mtext("PMFC Area", side=1, outer=T, line=2.5, cex=1.5)
+		mtext("RSR Age (years)", side=2, outer=T, line=0.25, cex=1.5, las=3)
+		if (png) dev.off()
+	}
+	return(Qage)
+}
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~quantAges

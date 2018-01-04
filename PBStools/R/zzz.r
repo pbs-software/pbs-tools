@@ -67,10 +67,14 @@ if(getRversion() >= "2.15.1") utils::globalVariables(names=c(
 
 local(envir=.PBStoolEnv,expr={
 	myboxplot.stats <- function (x, coef=NULL, do.conf=TRUE, do.out=TRUE)
+	#, quants=c(0.05,0.25,0.50,0.75,0.95))
 	{
 		nna <- !is.na(x)
 		n <- sum(nna)
-		stats <- quantile(x, c(.05,.25,.5,.75,.95), na.rm = TRUE)
+		if (!exists("quants5"))
+			quants5 = c(0.05,0.25,0.50,0.75,0.95)
+		#stats <- quantile(x, c(0.05,0.25,0.50,0.75,0.95), na.rm=TRUE)
+		stats <- quantile(x, quants5, na.rm=TRUE) ## one day figure out how to make this dynamic
 		iqr <- diff(stats[c(2, 4)])
 		out <- x < stats[1] | x > stats[5]
 		conf <- if (do.conf)
