@@ -7,24 +7,26 @@ Plot Catch by Locality
   Plot DFO fishing localities with the highest catch and colour code accordingly.
 }
 \usage{
-plotLocal(dat, area="locality", aflds=NULL, pcat=0.95, showAll=FALSE,
+plotLocal(dat, area, aflds=NULL, pcat=0.95, showAll=FALSE,
    fid=NULL, fidtype="PBStools", plot=TRUE, png=FALSE, csv=FALSE, 
-   outnam="refA439")
+   outnam="refA439", strSpp)
 }
 \arguments{
-  \item{dat}{data frame containing catch information for a species and 
+  \item{dat}{\code{data.frame} -- data object containing catch information for a species and 
     one or more fields with area code information (e.g., \code{locality}).}
-  \item{area}{area PolySet for summarising catch data in \code{dat}.}
-  \item{aflds}{field names in \code{dat} and \code{area} that can be used to 
+  \item{area}{\code{data.frame} -- a \code{PBSmapping} PolySet of areas for summarising catch data in \code{dat}.}
+  \item{aflds}{\code{character} -- field names common to \code{dat} and \code{area} that can be used to 
     create a unique index for cross-referencing the two objects.}
-  \item{pcat}{numeric: cumulative proportion of catch to identify and display}
-  \item{showAll}{logical: if \code{TRUE}, show all available locality boundaries.}
-  \item{fid}{integer: specific set of fishery ID numbers to process.}
-  \item{fidtype}{character: default = \code{"PBStools"}, alternative = \code{"GFFOS"} fishery types.}
-  \item{plot}{logical: if \code{TRUE}, plot the results.}
-  \item{png}{logical: if \code{TRUE}, send the plot results to a \code{.png} file.}
-  \item{csv}{logical: if \code{TRUE}, send the output to a \code{.csv} file.}
-  \item{outnam}{character: output prefix for \code{.png} and \code{.csv} file names.}
+  \item{pcat}{\code{numeric} -- cumulative proportion of catch to identify and display}
+  \item{showAll}{\code{logical} -- if \code{TRUE}, show all available locality boundaries.}
+  \item{fid}{\code{integer} -- specific set of fishery ID numbers to process.}
+  \item{fidtype}{\code{character} -- default = \code{"PBStools"}, alternative = \code{"GFFOS"} fishery types.}
+  \item{plot}{\code{logical} -- if \code{TRUE}, plot the results.}
+  \item{png}{\code{logical} -- if \code{TRUE}, send the plot results to a \code{.png} file.}
+  \item{csv}{\code{logical} -- if \code{TRUE}, send the output to a \code{.csv} file.}
+  \item{outnam}{\code{character} -- output prefix for \code{.png} and \code{.csv} file names.}
+  \item{strSpp}{\code{character} -- optional species Hart code; if supplied, label on plot
+    indicates species name and data date range.}
 }
 \details{
   The function is designed primarily to derive DFO fishing localities that have the
@@ -36,9 +38,9 @@ plotLocal(dat, area="locality", aflds=NULL, pcat=0.95, showAll=FALSE,
     \item \code{4 = Dogfish/Lingcod}
     \item \code{5 = H&L Rockfish}
   }
-  The plots color code the catch from the highest value in \code{red}
-  to zero catch in \code{lightblue1}, even though zero-catches are 
-  removed from the PolyData set. The top 3 catches (in tonnes) by 
+  The plots colour code the catch from the highest value displayed in \code{"red"}
+  to zero catch in \code{"lightblue1"}, even though zero-catches are 
+  removed from the PolyData set. The top 5 catches (in tonnes) by 
   locality are reported in the upper right corner of each figure.
 }
 \value{

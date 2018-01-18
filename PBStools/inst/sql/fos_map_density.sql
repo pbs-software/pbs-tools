@@ -34,6 +34,9 @@ SELECT --TOP 20
     WHEN MC.MAJOR_STAT_AREA_CODE IN ('08') THEN '5D'
     WHEN MC.MAJOR_STAT_AREA_CODE IN ('09') THEN '5E'
     ELSE '00' END) AS PMFC,
+  CONVERT(INTEGER, ISNULL(MC.MAJOR_STAT_AREA_CODE,'00')) AS major,
+  CONVERT(INTEGER, ISNULL(MC.MINOR_STAT_AREA_CODE,'00')) AS minor,
+  ISNULL(MC.LOCALITY_CODE,0) AS locality,
   --ISNULL(to_number(MC.DFO_STAT_AREA_CODE),0) AS PFMA, -- SchmOracle
   --ISNULL(CONVERT(INTEGER,MC.DFO_STAT_AREA_CODE),0) AS PFMA,
   ISNULL(MC.DFO_STAT_AREA_CODE,0) AS PFMA,
@@ -96,6 +99,9 @@ GROUP BY
     WHEN MC.MAJOR_STAT_AREA_CODE IN ('08') THEN '5D'
     WHEN MC.MAJOR_STAT_AREA_CODE IN ('09') THEN '5E'
     ELSE '00' END),
+  CONVERT(INTEGER, ISNULL(MC.MAJOR_STAT_AREA_CODE,'00')),
+  CONVERT(INTEGER, ISNULL(MC.MINOR_STAT_AREA_CODE,'00')),
+  ISNULL(MC.LOCALITY_CODE,0),
   ISNULL(MC.DFO_STAT_AREA_CODE,0),
   ISNULL(MC.DFO_STAT_SUBAREA_CODE,0)
 
@@ -107,7 +113,7 @@ SELECT --TOP 1000
   FP.Y AS Y2,
 --  -(CASE WHEN FP.X2 <= 1 THEN 0 ELSE FP.X2 END) AS X2,
 --   (CASE WHEN FP.Y2 <= 1 THEN 0 ELSE FP.Y2 END) AS Y2, 
-  FP.PMFC, FP.PFMA, FP.PFMS,
+  FP.PMFC, FP.major, FP.minor, FP.locality, FP.PFMA, FP.PFMS,
   FP.depth AS fdep,
   FP.GEAR AS gear,
   --CONVERT(SMALLDATETIME, FP.Edate, 20) AS [date],
@@ -179,5 +185,9 @@ FROM #FOSMAP FM
 -- qu("pht_map_density.sql",dbName="PacHarvest",strSpp="228")
 -- getData("pht_map_density.sql","PacHarvest",strSpp="396")
 -- getData("fos_map_density.sql","GFFOS",strSpp="394",server="GFSH",type="ORA",trusted=F)
--- qu("fos_map_density.sql",dbName="PacHarvest",strSpp="439",as.is=T)
+-- qu("fos_map_density.sql",dbName="GFFOS",strSpp="439",as.is=T)
+-- qu("fos_map_density.sql",dbName="GFFOS",strSpp="228")
 
+-- Subject matter expert
+-- qu("fos_map_density.sql",dbName="GFFOS",strSpp="453")
+-- qu("fos_map_density.sql",dbName="GFFOS",strSpp="228")

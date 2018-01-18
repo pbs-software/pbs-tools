@@ -8,7 +8,7 @@
 }
 \usage{
 preferDepth(strSpp="410", fqtName="pht_fdep.sql", dbName="PacHarvest",
-     spath=NULL, type="SQL", hnam=NULL, get.effort=TRUE)
+     spath=NULL, type="SQL", hnam=NULL, get.effort=FALSE)
 }
 \arguments{
   \item{strSpp}{string specifying the code for a species that appears in the

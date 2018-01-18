@@ -7,6 +7,31 @@ Authors: RH  = Rowan Haigh
          PJS = Paul J. Starr
 ------------------------------
 
+1.37.4 (2018-01-18)
+  * Documentation
+    + Updated `README.md' (MarkDown file) which appears on GitHub. (RH 180118)
+    + Updated documentation file `plotLocal.Rd'. (RH 180118)
+    + Added documentation file `plotEO.Rd'. (RH 180118)
+  * M05_Spatial.r
+    + Modified function `plotEO' to use temporary environments instead of .GlobalEnv. (RH 180118)
+    + Modified function `preferDepth' to be more flexible. (RH 180117)
+      - Specification of areas and years can now be grouped (e.g., major=3:4 treated as a single unit instead of two areas).
+      - Added check box (labelled `grp') in GUI for grouping areas and/or years.
+      - Plot label now shows data date range and total effort of the grey effort histogram.
+      - The effort data file in data list `PBStool' is remembered during an R session even if GUI is re-created.
+      - Getting effort on GUI start-up is no longer the default action in the function `preferDepth'.
+    + Added new function called `plotEO' to plot the Extent of Occurrence of a species. (RH 180116)
+      - Used primarily as a way to map a convex hull around species events, following the idea of COSEWIC's Extent of Occurrence.
+      - Stray or mispecified coordinates can be removed in conjuction with the PBSdata object `locality.plus'.
+    + Modified function `plotLocal' (RH 180116)
+      - Changed argument `area' to accept an object istead of the object's name.
+      - Added argument `strSpp' to add species name label (with data date range) to the plot.
+      - Changed display label from top 3 to top 5 localities by catch.
+      - Increased longitude range to include Bowie Seamount.
+  * SQL code
+    + Modified `fos_map_density.sql' to now collect fields `major', `minor', and `locality'. (RH 180116)
+      - User can now cross-reference map file with `locality.plus' in PBSdata.
+
 1.37.3 (2018-01-02)
   * M05_Spatial.r
     + Modified function `plotTertiary' to unlist a vector -- Rdev appears to treat subsetting DFs/marices differently than in released versions. (RH 180102)

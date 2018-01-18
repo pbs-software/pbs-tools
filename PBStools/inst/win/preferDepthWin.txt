@@ -1,4 +1,4 @@
-# Window for function 'preferDepth' (Last modified: RH 2012-09-19)
+# Window for function 'preferDepth' (Last modified: RH 2018-01-17)
 window name="window" title="Prefer Depth"
 
 grid 1 4 sticky=NW
@@ -36,13 +36,15 @@ grid 1 2 sticky=W
 		radio name=disA value=srfa text="SRF Area" sticky=W mode=character
 		entry name=strArea value="" label=Areas: sticky=W mode=character width=8
 	grid 5 1 sticky=NE
-		grid 2 3  sticky=E
+		grid 2 4  sticky=E
 			label text="Spp"
 			label text="Years"
 			label text="Gear"
+			label text="Grp"
 			entry name=strSpp value="@sppcode" label="" sticky=E mode=character width=5
-			entry name=strYear value="" label="" sticky=E mode=character width=15
+			entry name=strYear value="" label="" sticky=E mode=character width=10
 			entry name=strGear value="" label="" sticky=E mode=character width=5
+			check name=group text="" checked=T
 		grid 1 3 sticky=E
 			label text="X/Y Lims"
 			vector names=XLIM length=2 values="0 1200" labels=NULL sticky=W mode=numeric width=4
@@ -55,10 +57,10 @@ grid 1 2 sticky=W
 			grid 2 1 sticky=W
 				label text="Bar: colour"
 				entry name=xwid value=10 label="width" sticky="" mode=numeric width=4
-			vector names=barcol length=2 values="0 grey80" labels=NULL sticky=E mode=character width=12 vertical=T
+			vector names=barcol length=2 values="transparent grey85" labels=NULL sticky=E mode=character width=12 vertical=T
 			grid 2 1 sticky=W
 				label text=eff
-				check name=showE text="" checked=T sticky=SW
+				check name=showE text="" checked=F sticky=SW function=doAction action="if(is.null(ttcall(PBStool)$effort)) .preferDepth.getEffort()"
 		grid 1 2 sticky=E
 			vector length=3 mode=logical names="showD showC showL" labels="cumdep catch legend" \
 				values="T T T" vertical=T

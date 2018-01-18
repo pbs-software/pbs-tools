@@ -9,6 +9,7 @@
 #  calcSurficial...Calculate intersection of surficial geology and bathymetry interval.
 #  clarify.........Analyse catch proportions in blocks, then cluster into fisheries groups.
 #  findHoles.......Find holes and place them under correct parents.
+#  plotEO..........Plot Extent of Occurrence for a species using a convex hull.
 #  plotGMA.........Plot the Groundfish Management Areas.
 #  plotLocal.......Plot DFO fishing localities with the highest catch.
 #  plotTernary.....Plot a ternary diagram for data amalgamated into 3 groups.
@@ -681,6 +682,121 @@ findHoles = function(polyset, minVerts=25)
 }
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~findHoles
 
+
+## plotEO-------------------------------2018-01-18
+## Plot the Extent of Occurrence for a species 
+## using a convex hull to surround events.
+## ---------------------------------------------RH
+plotEO = function (id="lst", strSpp="453", col="red", xlim=c(-136,-122.5), ylim=c(48,54.8),
+   inarea=NULL, exarea=NULL, exland=FALSE, rmXY=FALSE,
+   png=FALSE, pngres=400, PIN =c(9,7.3))
+{
+	fenv = lenv()  ## function environment
+	if (!exists(paste0("map",strSpp), envir=.PBStoolEnv)) {
+		if (!file.exists(paste0("map",strSpp,".rda"))){
+			getData("fos_map_density.sql", dbName="GFFOS", strSpp=strSpp, path=.getSpath(), tenv=fenv)
+			mapDat = as.EventData(data.frame(EID=1:nrow(PBSdat), PBSdat, check.names=FALSE), projection="LL")
+			assign(paste0("map",strSpp), mapDat, envir=.PBStoolEnv)
+			save(list=paste0("map",strSpp), file = paste0("map",strSpp,".rda"), envir=.PBStoolEnv)
+		} else {
+			load(paste0("map",strSpp,".rda"))
+			assign("mapDat", get(paste0("map",strSpp)))
+		}
+	} else {
+		assign("mapDat", get(paste0("map",strSpp), envir=.PBStoolEnv))
+	}
+	if (is.null(ttcall("hulk")))
+		hulk = list()
+	else ttget(hulk)
+	data(nepacLL, package="PBSmapping", envir=fenv)
+	data(species, package="PBSdata", envir=fenv)
+	
+	mapdat = mapDat
+	mapdat = mapdat[mapdat[,strSpp]>0 & !is.na(mapdat[,strSpp]),]
+	mapdat  = mapdat[mapdat$X >= xlim[1] & mapdat$X <= xlim[2] & !is.na(mapdat$X) &
+	                 mapdat$Y >= ylim[1] & mapdat$Y <= ylim[2] & !is.na(mapdat$Y),]
+
+	## Remove coordinates that are located in localities that don't match the reported localities
+	if (rmXY) {
+		data(locality.plus, package="PBSdata", envir=fenv)
+		loca = locality.plus
+		mapdat$ID = .createIDs(mapdat, c("major","minor","locality"))
+		inlocs = findPolys(mapdat, loca, maxRows=1e7)
+		pdata  = attributes(loca)$PolyData
+		inlocs$PS = .createIDs(inlocs, c("PID","SID"))
+		pdata$PS  = .createIDs(pdata,  c("PID","SID"))
+		pkey = pdata$ID; names(pkey) = pdata$PS
+		inlocs$ID = pkey[as.character(inlocs$PS)]
+		ikey = inlocs$ID; names(ikey) = inlocs$EID
+		mapdat$IDloc = rep("",nrow(mapdat))
+		mapdat$IDloc = ikey[as.character(mapdat$EID)]
+		zloc = (mapdat$ID==mapdat$IDloc) & !is.na(mapdat$IDloc)
+		mapdat = mapdat[zloc,]
+	}
+	if (is.element(strSpp,"228")) {
+		sub12 = is.element(mapdat$minor, 12)
+		sub20 = is.element(mapdat$minor, 20)
+		mapdat$PMFC[sub12] = "5A"
+		mapdat$PMFC[sub20] = "3C"
+	}
+	if (!is.null(inarea))
+		mapdat = mapdat[is.element(mapdat$PMFC,inarea),]
+
+	if (!is.null(exarea))
+		mapdat = mapdat[!is.element(mapdat$PMFC,exarea),]
+
+	land   = clipPolys(nepacLL,xlim=xlim, ylim=ylim)
+	if (exland) { ## exclude points on land (takes a long time)
+		inland = findPolys(mapdat, land)
+		mapdat = mapdat[!is.element(mapdat$EID,.su(inland$EID)),]
+	}
+	attr(mapdat,"projection") = attributes(mapDat)$projection
+
+	hull = calcConvexHull(mapdat)
+	hulk[[id]][["hull"]] = hull
+	area.hull = calcArea(hull)
+	hull.less.land = joinPolys(hull, land, operation="DIFF")
+	area.hull.water = sum(calcArea(hull.less.land, rollup=2)$area)
+
+	arealab = paste0("Convex hull area = ", format(round(area.hull$area,0), big.mark=","), " km\262")
+	waterlab = paste0("    (hull on water = ", format(round(area.hull.water,0), big.mark=","), " km\262)")
+	stock   = ifelse(is.null(inarea),"BC",paste0(inarea,collapse="+"))
+	spplab  = paste0(c(
+		paste0(toUpper(species[strSpp,"name"]), " -- ", stock),
+		paste0("    (", species[strSpp,"latin"], ")"),
+		arealab,
+		waterlab
+		), collapse="\n")
+
+
+	if(png) png(paste0("Hull-",strSpp,"-",stock,".png"), units="in", res=pngres, width=PIN[1], height=PIN[2])
+	plotMap(nepacLL, xlim=xlim, ylim=ylim, plt=c(0.07,0.99,0.08,0.99), cex.axis=1.5, cex.lab=1.75, las=1)
+	addPoints(mapdat, pch=20, col=col, cex=1.2)
+	addPolys(nepacLL, col="grey95", border="slategray")
+	addPolys(hull, col=lucent(col,0.1))
+	
+	addLabel(0.8,0.8, "BC", cex=5, col="grey80")
+	addLabel(0.05, 0.15, spplab, cex=1.25, col="black", adj=0)
+	if (png) dev.off()
+
+	fidnam = c("trawl","halibut","sable","dogling","hlrock"); names(fidnam) = 1:5
+	events = rep(0,5); names(events) = fidnam
+	edata  = table(mapdat$fid); names(edata) = fidnam[names(edata)]
+	events[names(edata)] = edata
+
+	out = data.frame(area.hull, water=round(area.hull.water), t(events), strSpp=strSpp, stock=stock)
+	hulk[[id]][["out"]] = out
+	ttput(hulk)
+	for (i in 1:length(hulk)) {
+		if (i==1) hulltab = hulk[[i]][["out"]]
+		else hulltab = rbind(hulltab,hulk[[i]][["out"]])
+	}
+	write.csv(hulltab,"hulltab.csv", row.names=F)
+	return(out)
+}
+## ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotEO
+
+
 #plotGMA--------------------------------2017-01-20
 # Plot the Groundfish Management Areas
 #-----------------------------------------------RH
@@ -751,14 +867,20 @@ plotGMA = function(gma=gma.popymr, xlim=c(-134,-123), ylim=c(48.05,54.95),
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotGMA
 
 
-#plotLocal------------------------------2017-11-01
+#plotLocal------------------------------2018-01-16
 # Plot DFO fishing localities with the highest catch.
 #-----------------------------------------------RH
-plotLocal = function(dat, area="locality", aflds=NULL, pcat=0.95, showAll=FALSE,
-   fid=NULL, fidtype="PBStools", plot=TRUE, png=FALSE, csv=FALSE, outnam="refA439")
+plotLocal = function(dat, area, aflds=NULL, pcat=0.95, showAll=FALSE,
+   fid=NULL, fidtype="PBStools", plot=TRUE, png=FALSE, csv=FALSE, 
+   outnam="refA439", strSpp)
 {
+	fenv = lenv()  ## function environment
 	dat$catKG = dat$landed + dat$discard
-
+	
+	if (!missing(strSpp)) {
+		data(species, package="PBSdata", envir=fenv)
+		sppnam = toUpper(species[strSpp,"name"])
+	}
 	if (fidtype=="PBStools") {
 		FID = 1:5
 		names(FID) = c("Trawl","Halibut","Sablefish","Dogfish-Lingcod","HL-Rockfish") ## defaults for buildCatch
@@ -779,20 +901,21 @@ plotLocal = function(dat, area="locality", aflds=NULL, pcat=0.95, showAll=FALSE,
 	fid =  FID[match(fid,FID,nomatch=0)]
 
 	if (is.null(aflds)){
-		if (area=="locality")
+		area.name = as.character(substitute(area))
+		if (any(is.element(area.name, c("locality","locality.plus"))))
 			aflds = c("major","minor","locality")
-		else if (area=="minor")
+		else if (area.name=="minor")
 			aflds = c("major","minor")
 		else
 			aflds = "major"
 	}
 	dat$ID = .createIDs(dat,aflds)
 
-	do.call("data",args=list(list=area,package="PBSdata",envir=penv()))
-	eval(parse(text=paste0("area = ", area)))
+	#do.call("data",args=list(list=area,package="PBSdata",envir=penv()))
+	#eval(parse(text=paste0("area = ", area)))
 	pdata = attributes(area)$PolyData
 	pdata$ID = .createIDs(pdata,aflds)
-	data("nepacLL",package="PBSmapping",envir=penv())
+	data("nepacLL", package="PBSmapping", envir=fenv)
 
 	paint = colorRampPalette(c("lightblue1","green","yellow","red"))(500)
 	FDATA = list()
@@ -817,19 +940,24 @@ plotLocal = function(dat, area="locality", aflds=NULL, pcat=0.95, showAll=FALSE,
 		## Include 0 catch as a common base for all scaling, but remove it from vector
 		sVec = rev(rev(round(scaleVec(c(fdata$pcat,0),1,500)))[-1])
 		fdata$col = paint[sVec]  ## include 0 catch as a common base for all scaling
-		top3   = fdata[1:(min(nrow(fdata),3)),]
-		topcat = unlist(formatCatch(top3$catT,3))
-#browser();return()
-		legtxt = paste0(topcat," - ",top3$name)
+		topN   = fdata[1:(min(nrow(fdata),5)),]
+		topcat = unlist(formatCatch(topN$catT,3))
+		legtxt = paste0(topcat," - ",topN$name)
 		if (plot) {
-			if (png) png(filename=paste0(outnam,".",ff,".png"), width=9, height=8.25, units="in", res=600)
+			#if (png) png(filename=paste0(outnam,".",ff,".png"), width=9, height=8.25, units="in", res=600)
+			if (png) png(filename=paste0(outnam,".",ff,".png"), width=9, height=7.3, units="in", res=600)
 			plotMap(area, type="n", plt=c(0.06,0.99,0.06,0.99), 
-				xlim=c(-135,-123), ylim=c(48,54.8), mgp=c(2.2,0.5,0), cex.axis=1.2, cex.lab=1.5)
+				xlim=c(-136,-122.5), ylim=c(48,54.8), mgp=c(2.2,0.5,0), cex.axis=1.2, cex.lab=1.5)
 			if (showAll)
 				addPolys(area, border="grey")
 			addPolys(area, polyProps=fdata)
 			addPolys(nepacLL, col="lightyellow1")
-			addLegend(0.975, 0.95, fill=top3$col, legend=legtxt, bty="n", title=paste0("Fishery: ",ff, " - top catch (t)"), xjust=1, title.adj=0)
+			addLegend(0.975, 0.94, fill=topN$col, legend=legtxt, bty="n", title=paste0("Fishery: ",ff, " - top catch (t)"), xjust=1, title.adj=0)
+			if (!missing(strSpp)) {
+				derange = paste0(gsub("-",".",range(fdat$date,na.rm=T)),collapse=" to ")
+				addLabel(0.5, 0.96, sppnam, cex=1.2, adj=c(0,0))
+				addLabel(0.975, 0.96, paste0("(", derange, ")"), cex=0.8, adj=c(1,0))
+			}
 			box()
 			if (png) dev.off()
 		}
@@ -1109,14 +1237,15 @@ plotTertiary = function(x=c(100,5,25,10,50), pC=c(0.5,0.5), r=0.5,
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotTertiary
 
 
-#preferDepth----------------------------2010-10-19
+#preferDepth----------------------------2018-01-17
 # Histogram showing depth-of-capture
 #-----------------------------------------------RH
 preferDepth = function(strSpp="410", fqtName="pht_fdep.sql", dbName="PacHarvest",
-   spath=NULL, type="SQL", hnam=NULL, get.effort=TRUE)
+   spath=NULL, type="SQL", hnam=NULL, get.effort=FALSE)
 {
 	warn <- options()$warn; options(warn=-1)
-	assign("PBStool",list(module="M05_Spatial",call=match.call(),args=args(preferDepth),plotname="Rplot"),envir=.PBStoolEnv)
+	effort = ttcall(PBStool)$effort  ## recover effort, if it exists, to save time
+	assign("PBStool", list(module="M05_Spatial", call=match.call(), args=args(preferDepth), plotname="Rplot"), envir=.PBStoolEnv)
 
 	wpath <- .getWpath()
 	if (is.null(spath) || spath=="") spath <- .getSpath()
@@ -1135,10 +1264,13 @@ preferDepth = function(strSpp="410", fqtName="pht_fdep.sql", dbName="PacHarvest"
 		temp <- gsub("#import=",paste("import=\"",hnam,"\"",sep=""),temp)
 	writeLines(temp,con=wtmp)
 	createWin(wtmp); options(warn=warn)
-	if (get.effort) .preferDepth.getEffort()
-	else {
-		effort=NULL; setWinVal(list(showE=FALSE),winName="window") 
-		packList("effort","PBStool",tenv=.PBStoolEnv) }
+	if (get.effort && is.null(effort)) {
+		.preferDepth.getEffort()
+	} else {
+		#effort=NULL; 
+		setWinVal(list(showE=FALSE),winName="window") 
+		packList("effort","PBStool",tenv=.PBStoolEnv)
+	}
 	invisible() }
 
 #.preferDepth.getEffort-----------------2010-10-19
@@ -1152,7 +1284,7 @@ preferDepth = function(strSpp="410", fqtName="pht_fdep.sql", dbName="PacHarvest"
 		ttget(PBStool); PBStool$effort <- effort; ttput(PBStool)
 		frame(); addLabel(.5,.5,"Effort loaded",col="darkgreen",cex=1.2) }
 
-#.preferDepth.getDepth------------------2017-01-16
+#.preferDepth.getDepth------------------2018-01-17
 .preferDepth.getDepth <- function()
 {
 	opar <- par(lwd=2); on.exit(par(opar))
@@ -1161,6 +1293,7 @@ preferDepth = function(strSpp="410", fqtName="pht_fdep.sql", dbName="PacHarvest"
 	if (path==""){ path <- getwd(); setWinVal(list(path=path),winName="window") }
 	spp  <- eval(parse(text=paste("c(\"",gsub(",","\",\"",strSpp),"\")",sep="")));
 	year <- eval(parse(text=paste("c(",strYear,")",sep="")))
+	YEAR <- year
 	gear <- eval(parse(text=paste("c(",strGear,")",sep="")))
 	nAc  <- length(findPat(c(LETTERS,letters),strArea))
 
@@ -1170,8 +1303,11 @@ preferDepth = function(strSpp="410", fqtName="pht_fdep.sql", dbName="PacHarvest"
 		else if(!any(disA=="srfa") && nAc==0)
 			area <- eval(parse(text=paste("c(",strArea,")",sep="")))
 		else showError(paste("\"",strArea,"\" does not match \"",disA,"\"",sep="")) 
-	} else area <- NULL
-	if (any(spp=="") || length(spp)>1) showError("Choose 1 species")
+	} else
+		area <- NULL
+	AREA = area
+	if (any(spp=="") || length(spp)>1)
+		showError("Choose 1 species")
 	if (!exists("PBSdat",where=1) || is.null(attributes(PBSdat)$spp) || 
 		spp!=attributes(PBSdat)$spp || fqtName!=attributes(PBSdat)$fqt || getdata) {
 		expr=paste("getData(fqtName=\"",fqtName,"\",dbName=\"",dbName,"\",strSpp=\"",
@@ -1180,9 +1316,12 @@ preferDepth = function(strSpp="410", fqtName="pht_fdep.sql", dbName="PacHarvest"
 		eval(parse(text=expr))
 		if (!is.null(attributes(PBSdat)$spp) && attributes(PBSdat)$spp!=spp) {
 			spp <- attributes(PBSdat)$spp
-			setWinVal(list(strSpp=spp),winName="window") } }
+			setWinVal(list(strSpp=spp),winName="window")
+		}
+	}
 	assign("dat",PBSdat)
-	if (nrow(dat)==0) showError(paste("Species =",spp),type="nodata")
+	if (nrow(dat)==0)
+		showError(paste("Species =",spp),type="nodata")
 	packList("dat","PBStool",tenv=.PBStoolEnv) ## RH: save the raw data for manual subsetting
 	eff = ttcall(PBStool)$effort
 	isE = ifelse(is.null(eff),FALSE,TRUE)
@@ -1215,13 +1354,14 @@ preferDepth = function(strSpp="410", fqtName="pht_fdep.sql", dbName="PacHarvest"
 			dat <- dat[!is.na(dat$area),] }
 		if (nrow(dat)==0) showError(paste(disA,"=",paste(area,collapse=", ")),type="nodata")
 	}
-	if (is.null(year)) year <- 0 else year <- sort(unique(dat$year)); nyr <- length(year);
-	if (is.null(area)) area <- 0 else area <- sort(unique(dat$area)); nar <- length(area);
+	if (is.null(year) || group) year <- 0 else year <- sort(unique(dat$year)); nyr <- length(year);
+	if (is.null(area) || group) area <- 0 else area <- sort(unique(dat$area)); nar <- length(area);
 
-	plotname = paste("dep",spp,ifelse(year==0,"",paste("-(",paste(year,collapse="."),")",sep="")),
-		ifelse(area==0,"",paste("-(",paste(area,collapse=""),")",sep="")),
-		ifelse(is.null(gear),"",paste("-gear",paste(gear,collapse=""),sep="")),sep="")
-	if (type=="FILE") plotname = sub(paste("dep",spp,sep=""),fqtName,plotname)
+	plotname = paste0("dep", spp, paste0("-d(",paste0(XLIM,collapse="-"),")"),
+		ifelse(year==0 && is.null(YEAR),"",paste0("-y(",paste0(range(YEAR),collapse="-"),")")),
+		ifelse(area==0 && is.null(AREA),"",paste0("-a(",paste0(AREA,collapse="."),")")),
+		ifelse(is.null(gear),"",paste0("-g(",paste0(gear,collapse="."),")")) )
+	if (type=="FILE") plotname = sub(paste0("dep",spp),fqtName,plotname)
 	packList("plotname","PBStool",tenv=.PBStoolEnv)
 	nrow <- max(nyr,nar); ncol <- min(nyr,nar);
 	if (nyr>=nar) { ifac <- year; jfac <- area; yba <- TRUE}
@@ -1233,8 +1373,10 @@ preferDepth = function(strSpp="410", fqtName="pht_fdep.sql", dbName="PacHarvest"
 		else if (act=="png") png=TRUE
 		else if (act=="wmf") wmf=TRUE
 	}
-	if (eps)      postscript(file=paste(plotname,"eps",sep="."),width=10,height=6*nrow^0.25,horizontal=FALSE,paper="special")
-	else if (png) png(filename=paste(plotname,"png",sep="."),width=10,height=6*nrow^0.25,units="in",res=300)
+	if (eps)
+		postscript(file=paste(plotname,"eps",sep="."),width=10,height=6*nrow^0.25,horizontal=FALSE,paper="special")
+	else if (png)
+		png(filename=paste(plotname,"png",sep="."),width=10,height=6*nrow^0.25,units="in",res=400)
 	else if (wmf && .Platform$OS.type=="windows")
 		do.call("win.metafile",list(filename=paste(plotname,"wmf",sep="."),width=10,height=6*nrow^0.25))
 	else resetGraph()
@@ -1253,83 +1395,88 @@ preferDepth = function(strSpp="410", fqtName="pht_fdep.sql", dbName="PacHarvest"
 	brks = BRKS
 	dat  = dat[dat$depth>=brks[1] & dat$depth<=rev(brks)[1] & !is.na(dat$depth),]
 	if (isE)
-		eff  = eff[eff$depth>=brks[1] & eff$depth<=rev(brks)[1] & !is.na(eff$depth),]
+		eff = eff[eff$depth>=brks[1] & eff$depth<=rev(brks)[1] & !is.na(eff$depth),]
 
 	for (i in ifac) {
 		if (all(ifac!=0)) {
 			if (isE) ieff = eff[is.element(eff[,ifelse(yba,"year","area")],i),]
-			idat <- dat[is.element(dat[,ifelse(yba,"year","area")],i),] }
-		else {
-			idat <- dat; if (isE) ieff <- eff }
+			idat <- dat[is.element(dat[,ifelse(yba,"year","area")],i),]
+		} else {
+			idat <- dat
+			if (isE) ieff <- eff
+		}
 		for (j in jfac) {
 			if (all(jfac!=0)) {
 				jdat <- idat[is.element(idat[,ifelse(yba,"area","year")],j),]
-				if (isE) jeff <- ieff[is.element(ieff[,ifelse(yba,"area","year")],j),] }
-			else {
-				jdat <- idat; if (isE) jeff <- ieff }
+				if (isE) jeff <- ieff[is.element(ieff[,ifelse(yba,"area","year")],j),]
+			} else {
+				jdat <- idat
+				if (isE) jeff <- ieff
+			}
 			ntows <- nrow(jdat)
-			stuff=c("ifac","jfac","ntows") # (,"jdat","jeff") ### too big slow things down
+			stuff = c("ifac","jfac","ntows")
 			packList(stuff,"PBStool",tenv=.PBStoolEnv)
-#browser();return()
-			#xy <- hist(jdat$depth, breaks=brks, plot=FALSE);
 			xy <- hist(jdat$depth, breaks=brks, plot=FALSE);
 			xy$density <- xy$counts/sum(xy$counts)
 			xyout <- paste("xy",spp,i,j,sep=".")
-			#eval(parse(text="PBStool[[xyout]] <<- xy"))
 			ttget(PBStool); PBStool[[xyout]] <- xy; ttput(PBStool)
 
 			if (isE) {
-				jeff$dbin=cut(jeff$depth,brks)
-				effTot=sapply(split(jeff$effort,jeff$dbin),sum)
-				effDen=effTot/sum(effTot)
-				xye=list(breaks=brks,counts=effTot,density=effDen)
+				jeff$dbin = cut(jeff$depth,brks)
+				effTot = sapply(split(jeff$effort,jeff$dbin),sum)
+				effDen = effTot/sum(effTot)
+				ee     = sum(jeff$effort,na.rm=TRUE)/60  ## cumulative effort in hours
+				xye    = list(breaks=brks,counts=effTot,density=effDen)
 				attr(xye,"class")="histogram"
 				packList("xye","PBStool",tenv=.PBStoolEnv) }
 
-			par(lwd=2) ## doesn't seem to take when specified in first line of function
-			plot(xy,freq=FALSE, xlab="", ylab="", main="",cex.lab=1.2, 
-				col="white", xlim=XLIM, ylim=YLIM, axes=FALSE);
-			if (par()$mfg[1]==par()$mfg[3]) axis(1,cex.axis=1.2)
-			if (par()$mfg[2]==1) axis(2,cex.axis=1.2,tcl=.5) else axis(2,labels=FALSE,tcl=.5)
+			par(lwd=1.6) ## doesn't seem to take when specified in first line of function
+			plot(xy,freq=FALSE, xlab="", ylab="", main="",cex.lab=1.2, col="white", xlim=XLIM, ylim=YLIM, axes=FALSE)
+			if (par()$mfg[1]==par()$mfg[3])
+				axis(1,cex.axis=1.2)
+			if (par()$mfg[2]==1)
+				axis(2,cex.axis=1.2,tcl=.5) else axis(2,labels=FALSE,tcl=.5)
 
 			if (isE && showE) { #---Total fishing effort density
-				plot(xye,freq=FALSE, xlab="", ylab="", main="",cex.lab=1.2,
-					col=barcol[2], border=barcol[2],xlim=XLIM, ylim=YLIM, axes=FALSE,add=TRUE) }
+				plot(xye,freq=FALSE, xlab="", ylab="", main="",cex.lab=1.2, col=barcol[2], border=barcol[2],xlim=XLIM, ylim=YLIM, axes=FALSE,add=TRUE)
+			}
 			z  = order(jdat$depth)
 			xc = jdat$depth[z]
 			yz = ((1:length(xc))/length(xc))
 			cc = cumsum(jdat$catch[z])/1000
+			yy = paste0("(",paste0(range(jdat$year),collapse="-"),")")
 			if (showD) { #---Cumulative depth
 				mz = approx(yz,xc,.50,rule=2,ties="ordered"); yz=yz*YLIM[2]
 				points(mz$y,par()$usr[4],pch=25,col=1,bg="gainsboro",cex=1.5)
 				text(mz$y,par()$usr[4],round(mz$y),col="grey20",adj=c(-0.5,0.5),cex=0.9,srt=270)
-				}
+			}
 			if (showC) { #---Cumulative catch
 				yc = (cc/max(cc,na.rm=TRUE)) #*YLIM[2]
 				mc = approx(yc,xc,.50,rule=2,ties="ordered"); yc=yc*YLIM[2]
 				#abline(h=mc$x*YLIM[2],v=mc$y,lty=3,col=ccol)
 				points(mc$y,par()$usr[4],pch=25,col=1,bg=ccol,cex=1.5)
 				text(mc$y,par()$usr[4],round(mc$y),col=ccol,adj=c(-0.5,0),cex=0.9,srt=270)
-				}
+			}
 			if (showQ) { #---Depth quantiles
 				qnt <- round(quantile(jdat$depth,quants,na.rm=TRUE),0)
 				abline(v=qnt, lwd=2, col="cornflowerblue")
 				text(qnt[1]-xwid,par()$usr[4],qnt[1],col="blue",adj=c(1,2),cex=1.2)
-				text(qnt[2]+xwid,par()$usr[4],qnt[2],col="blue",adj=c(0,3),cex=1.2) }
-			if (showL) { #---Legend information
-				if (nrow*ncol>1)
-					addLabel(.98,.90,paste(ifelse(i==0,"",i),ifelse(j==0,"",j),
-						sep=ifelse(nrow==1 | ncol==1,""," \225 ")),col="grey30",adj=c(1,1))
-				else {
-					ylabpos = 0.88; labcex=1
-					data(spn,envir=penv())
-					addLabel(.98,ylabpos,spn[spp],adj=c(1,1),col="black",cex=labcex)
-					addLabel(.98,ylabpos-0.06,paste("N =",format(ntows,big.mark=","),"tows"),cex=labcex-0.1,col="grey30",adj=c(1,1)) 
-					addLabel(.98,ylabpos-0.10,paste("C =",format(round(max(cc,na.rm=TRUE)),
-						big.mark=","),"t"),cex=labcex-0.1,col="grey30",adj=c(1,1)) }
+				text(qnt[2]+xwid,par()$usr[4],qnt[2],col="blue",adj=c(0,3),cex=1.2) 
 			}
-			plot(xy,freq=FALSE, xlab="", ylab="", main="",cex.lab=1.2,
-				col=barcol[1], xlim=XLIM, ylim=YLIM, axes=FALSE,add=TRUE)
+			if (showL) { #---Legend information
+				if (nrow*ncol>1) {
+					addLabel(.98,.90,paste(ifelse(i==0,"",i),ifelse(j==0,"",j), sep=ifelse(nrow==1 | ncol==1,""," \225 ")),col="grey30",adj=c(1,1))
+				} else {
+					ylabpos = 0.88; labcex = 1; labinc = 0.025 #diff(par()$usr[3:4])*0.05
+					data(spn,envir=penv())
+					addLabel(.98, ylabpos, paste0(spn[spp],"\n",yy), adj=c(1,0.5), col="black", cex=labcex)
+					addLabel(.98, ylabpos-2*labinc, paste("N =",format(ntows,big.mark=","),"events"),cex=labcex-0.1,col="grey30",adj=c(1,1)) 
+					addLabel(.98, ylabpos-3*labinc, paste("C =",format(round(max(cc,na.rm=TRUE)), big.mark=","),"t"),cex=labcex-0.1,col="grey30",adj=c(1,1))
+					if (isE && showE) ##---Total effort (h) in depth range specified
+						addLabel(.98, ylabpos-4*labinc, paste("E =",format(round(ee), big.mark=","),"h"),cex=labcex-0.1,col="grey30",adj=c(1,1))
+				}
+			}
+			plot(xy,freq=FALSE, xlab="", ylab="", main="",cex.lab=1.2, col=barcol[1], xlim=XLIM, ylim=YLIM, axes=FALSE, add=TRUE)
 			if (showD) lines(xc,yz,col="grey20",lwd=clwd)
 			if (showC) lines(xc,yc,col=ccol,lwd=clwd)
 			box();
@@ -1340,7 +1487,8 @@ preferDepth = function(strSpp="410", fqtName="pht_fdep.sql", dbName="PacHarvest"
 	mtext(paste("Proportions",ifelse(nrow==1,"",paste(" [",ifelse(yba,"year","area"),
 		"by row ]"))),outer=TRUE,side=2,line=3.25,cex=1.25,las=0)
 	if (eps|png|wmf) dev.off()
-	invisible() }
+	invisible() 
+}
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~preferDepth
 
 
