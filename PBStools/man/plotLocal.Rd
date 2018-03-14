@@ -8,8 +8,8 @@ Plot Catch by Locality
 }
 \usage{
 plotLocal(dat, area, aflds=NULL, pcat=0.95, showAll=FALSE,
-   fid=NULL, fidtype="PBStools", plot=TRUE, png=FALSE, csv=FALSE, 
-   outnam="refA439", strSpp)
+   fid=NULL, fidtype="PBStools", strSpp, Ntop=5,
+   plot=TRUE, png=FALSE, csv=FALSE, outnam="refA439")
 }
 \arguments{
   \item{dat}{\code{data.frame} -- data object containing catch information for a species and 
@@ -21,12 +21,14 @@ plotLocal(dat, area, aflds=NULL, pcat=0.95, showAll=FALSE,
   \item{showAll}{\code{logical} -- if \code{TRUE}, show all available locality boundaries.}
   \item{fid}{\code{integer} -- specific set of fishery ID numbers to process.}
   \item{fidtype}{\code{character} -- default = \code{"PBStools"}, alternative = \code{"GFFOS"} fishery types.}
+  \item{strSpp}{\code{character} -- species Hart code; if supplied, label on plot
+    indicates species name and data date range; 
+    required argument if using a map \code{EventData} \code{dat} object created by \code{fos_map_density.sql}.}
+  \item{Ntop}{\code{numeric} -- top \code{N} localities to show in figure legend and to label on figure.}
   \item{plot}{\code{logical} -- if \code{TRUE}, plot the results.}
   \item{png}{\code{logical} -- if \code{TRUE}, send the plot results to a \code{.png} file.}
   \item{csv}{\code{logical} -- if \code{TRUE}, send the output to a \code{.csv} file.}
   \item{outnam}{\code{character} -- output prefix for \code{.png} and \code{.csv} file names.}
-  \item{strSpp}{\code{character} -- optional species Hart code; if supplied, label on plot
-    indicates species name and data date range.}
 }
 \details{
   The function is designed primarily to derive DFO fishing localities that have the

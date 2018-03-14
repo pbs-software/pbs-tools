@@ -760,22 +760,16 @@ plotCatch=function(dat="dbr.rem", flds=c("CAtrawl","UStrawl","TotalHL"),
 #----------------------------------------plotCatch
 
 
-#plotConcur-----------------------------2017-06-13
+#plotConcur-----------------------------2018-01-23
 # Horizontal barplot of concurrent species in tows.
 #-----------------------------------------------RH
 plotConcur = function(strSpp="410", dbName="GFFOS", spath=.getSpath(),
      mindep=150, maxdep=435, major=NULL, minor=NULL, top=NULL, trawl=1,
      saraSpp=c("027","034","394","410","424","435","437","440","442","453"),
-     reset.mf=TRUE, eps=FALSE, png=FALSE, pngres=300) {
-
-	### Setup the png device for import to word
-	createPNG <- function(plotname,rc=c(1,1)) {
-		plotname <- paste(plotname,"png",sep=".")
-		png(plotname, units="in", res=pngres, width=6.5, height=3.5)
-		par(mfrow=rc,cex=0.8,mar=c(3,10,0.5,1),oma=c(0,0,0,0),mgp=c(1.5,.5,0)) }
+     reset.mf=TRUE, eps=FALSE, png=FALSE, pngres=300, colour="topo") {
 
 	assign("PBStool",list(module="M03_Fishery",call=match.call(),args=args(plotConcur),plotname="Concur"),envir=.PBStoolEnv)
-	data(species,gear,envir=penv())
+	data("species", "gear", package="PBSdata", envir=penv())
 	zspp=species$name!=species$latin
 	species$name[zspp] = toUpper(species$name[zspp])
 
@@ -795,7 +789,6 @@ plotConcur = function(strSpp="410", dbName="GFFOS", spath=.getSpath(),
 		showError("Choices for 'dbName' are 'GFFOS', 'PacHarvest' or 'PacHarvHL'")
 	dat = PBSdat
 	sql = attributes(PBSdat)$sql
-#browser();return()
 
 	dat$spp   = as.character(dat$spp)
 	dat$code  = pad0(dat$code,3)
@@ -824,98 +817,46 @@ plotConcur = function(strSpp="410", dbName="GFFOS", spath=.getSpath(),
 	dat  = dat[order(dat$pct),] # for plotting as horizontal bars w/ largest at top
 	if (eps) {
 		postscript(file=paste(plotname,"eps",sep="."),width=10,height=6,horizontal=FALSE,paper="special")
-		par(mfrow=c(1,1),cex=0.8,mar=c(3,12,0.5,1),oma=c(0,0,0,0),mgp=c(1.5,.5,0)) }
-	else if (png) createPNG(plotname)
-	else if (reset.mf)
-		expandGraph(mfrow=c(1,1),cex=1.0,mar=c(4,10,1,1),oma=c(0,0,0,0),mgp=c(2,.5,0))
+		par(mfrow=c(1,1),cex=0.8,mar=c(3,12,0.5,1),oma=c(0,0,0,0),mgp=c(1.5,.5,0))
+	} else if (png) {
+		plotname <- paste(plotname,"png",sep=".")
+		png(plotname, units="in", res=pngres, width=6.5, height=3.5)
+		par(mfrow=c(1,1), cex=0.7, mar=c(3,10,0.5,1), oma=c(0,0,0,0), mgp=c(1.5,0.5,0))
+	} else if (reset.mf)
+		expandGraph(mfrow=c(1,1), cex=1.0, mar=c(4,10,1,1), oma=c(0,0,0,0), mgp=c(2,.5,0))
 	else
 		expandGraph(cex=1.0,mar=c(4,10,1,1),mgp=c(2,.5,0))
-	xy <- barplot(dat$pct, names.arg=dat$spp, horiz=TRUE, las=1,col.axis="grey20",
-		col=topo.colors(nrow(dat)), xlab="Percent",cex.axis=0.9)
-#browser();return()
+	if (colour=="topo")
+		barcol = topo.colors(nrow(dat))
+	if (colour=="sombre")
+		barcol = rep("gainsboro",nrow(dat))
+	xy <- barplot(dat$pct, col=barcol, names.arg=dat$spp, horiz=TRUE, las=1, col.axis="grey20", xlab="Percent", cex.axis=0.8)
 	z <- xy[match(species[saraSpp,"name"],dat$spp)]
-	if (any(!is.na(z))) 
-		axis(side=2,at=z,las=1,tick=FALSE,labels=species[saraSpp,"name"],col.axis="red")
+	zbar = is.element(dat$spp,species[saraSpp,"name"])
+	if (any(!is.na(z))) {
+		axis(side=2, at=z, las=1, tick=FALSE, labels=species[saraSpp,"name"], col.axis="red")
+		if (!is.element(colour,c("topo")) && !is.null(colour)) {
+			barcol[zbar] = "pink"
+			barplot(dat$pct, col=barcol, names.arg=NULL, horiz=TRUE, las=1,col.axis="grey20", xaxt="n", yaxt="n", add=TRUE)
+		}
+	}
 	z <- xy[match(species[strSpp,"name"],dat$spp)]
-	if (!is.na(z)) 
-		axis(side=2,at=z,las=1,tick=FALSE,labels=species[strSpp,"name"],col.axis="blue")
+	zbar = is.element(dat$spp,species[strSpp,"name"])
+	if (!is.na(z)) {
+		axis(side=2, at=z, las=1, tick=FALSE, labels=species[strSpp,"name"], col.axis="blue")
+		if (!is.element(colour,c("topo")) && !is.null(colour)) {
+			barcol[zbar] = "lightblue1"
+			barplot(dat$pct, col=barcol, names.arg=NULL, horiz=TRUE, las=1,col.axis="grey20", xaxt="n", yaxt="n", add=TRUE)
+		}
+	}
+	addLabel(0.90,0.20,bquote(Sigma~Catch(kt) == .(round(sum(dat$catKt)))), cex=1.2, adj=1)
+	addLabel(0.90,0.15,bquote(Sigma~Catch('%') == .(round(sum(dat$pct),1))), cex=1.2, adj=1)
+
 	if (eps|png) dev.off()
 	packList(c("dat","xy","z","sql"),"PBStool",tenv=.PBStoolEnv)
 	invisible(dat) }
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotConcur
 
-#plotConcur-----------------------------2015-10-28
-# Horizontal barplot of concurrent species in tows.
-#-----------------------------------------------RH
-plotConcur = function(strSpp="410", dbName="PacHarvest", 
-     mindep=150, maxdep=435, major=NULL, top=NULL, trawl=1,
-     saraSpp=c("027","034","394","410","424","435","437","440","442","453"),
-     reset.mf=TRUE, eps=FALSE, pix=FALSE) {
-
-	### Setup the png device for import to word
-	createPNG <- function(plotname,rc=c(1,1)) {
-		plotname <- paste(plotname,"png",sep=".")
-		png(plotname, units="in", res=300, width=6.5, height=3.5)
-		par(mfrow=rc,cex=0.8,mar=c(3,10,0.5,1),oma=c(0,0,0,0),mgp=c(1.5,.5,0)) }
-
-	assign("PBStool",list(module="M03_Fishery",call=match.call(),args=args(plotConcur),plotname="Concur"),envir=.PBStoolEnv)
-	data(species,gear,envir=penv())
-	zspp=species$name!=species$latin
-	species$name[zspp] = toUpper(species$name[zspp])
-	if (dbName=="PacHarvest")
-		getData("pht_concurrent.sql","PacHarvest",strSpp,path=.getSpath(),
-			mindep=mindep,maxdep=maxdep,major=major,top=top,dummy=trawl,tenv=penv())
-	else if (dbName=="PacHarvHL")
-		getData("phhl_concurrent.sql","PacHarvHL",strSpp,path=.getSpath(),
-			mindep=mindep,maxdep=maxdep,major=major,top=top,tenv=penv())
-	else
-		showError("Choices for 'dbName' are 'PacHarvest' or 'PacHarvHL'")
-	dat=PBSdat
-
-	dat$spp   = as.character(dat$spp)
-	dat$code  = pad0(dat$code,3)
-	dat$latin = species[dat$code,"latin"]
-	dat  = dat[,c("code","spp","latin","catKt","pct")]
-	dat  = dat[rev(order(dat$pct)),]
-	dat$spp = toUpper(dat$spp)
-
-	plotname <- paste("Concur",strSpp,dbName,switch(trawl,"Bottom","Shrimp","Midwater"),sep="-")
-	if (!is.null(major)) plotname = sub(strSpp,paste(strSpp,"-major(",paste(major,collapse=""),")",sep=""),plotname)
-	write.csv(dat,paste(plotname,".csv",sep=""),row.names=FALSE)
-	# Re-format the same table so that it's latex-ready
-	textab = dat
-	textab$code  = pad0(textab$code,3)
-	#textab$spp   = toUpper(textab$spp)
-	textab$latin = paste("\\emph{",textab$latin,"}",sep="")
-	textab$catKt = format(round(textab$catKt * 1000.),big.mark=",",trim=TRUE)
-	textab$pct   = show0(round(textab$pct,3),3)
-	names(textab)=c("Code","Species","Latin name","Catch (t)","Catch (\\%)")
-	write.csv(textab,paste("tex-",plotname,".csv",sep=""),row.names=FALSE)
-	# Note: to read the table back into R use 'read.csv("xyz.csv",check.names=FALSE)'
-
-	#----- Plotting -----
-	dat  = dat[order(dat$pct),] # for plotting as horizontal bars w/ largest at top
-	if (eps) {
-		postscript(file=paste(plotname,"eps",sep="."),width=10,height=6,horizontal=FALSE,paper="special")
-		par(mfrow=c(1,1),cex=0.8,mar=c(3,12,0.5,1),oma=c(0,0,0,0),mgp=c(1.5,.5,0)) }
-	else if (pix) createPNG(plotname)
-	else if (reset.mf)
-		expandGraph(mfrow=c(1,1),cex=1.0,mar=c(4,10,1,1),oma=c(0,0,0,0),mgp=c(2,.5,0))
-	else
-		expandGraph(cex=1.0,mar=c(4,10,1,1),mgp=c(2,.5,0))
-	xy <- barplot(dat$pct, names.arg=dat$spp, horiz=TRUE, las=1,col.axis="grey20",
-		col=topo.colors(nrow(dat)), xlab="Percent",cex.axis=0.9)
-#browser();return()
-	z <- xy[match(species[saraSpp,"name"],dat$spp)]
-	if (any(!is.na(z))) 
-		axis(side=2,at=z,las=1,tick=FALSE,labels=species[saraSpp,"name"],col.axis="red")
-	z <- xy[match(species[strSpp,"name"],dat$spp)]
-	if (!is.na(z)) 
-		axis(side=2,at=z,las=1,tick=FALSE,labels=species[strSpp,"name"],col.axis="blue")
-	if (eps|pix) dev.off()
-	packList(c("dat","xy","z"),"PBStool",tenv=.PBStoolEnv)
-	invisible(dat) }
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotConcur
 
 #plotFOScatch---------------------------2010-06-02
 # Plot catch as monthly barplots from 'fos_catch.sql' query to GFFOS

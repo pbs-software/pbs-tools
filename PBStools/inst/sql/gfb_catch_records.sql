@@ -37,12 +37,14 @@ FROM
 WHERE TS.RN = 1
 ORDER BY TS.TRIP_ID
 
--- Gather latest GROUPING_CODE by FISHING_EVENT_ID
+-- Gather earliest GROUPING_CODE by FISHING_EVENT_ID (changed 180129 to match gfb_bio.sql)
+-- This is likely to match the original series SSID
+-- Not ideal because some fishing events are used in numerous re-stratifications. (e.g., FEID=886052)
 SELECT *
 INTO #FishEventGroup
 FROM
   (SELECT *,
-    ROW_NUMBER() OVER (PARTITION BY LEG.FISHING_EVENT_ID ORDER BY LEG.GROUPING_CODE DESC) AS RN
+    ROW_NUMBER() OVER (PARTITION BY LEG.FISHING_EVENT_ID ORDER BY LEG.GROUPING_CODE ASC) AS RN
   FROM FISHING_EVENT_GROUPING LEG) AS FEG
 WHERE FEG.RN = 1
 ORDER BY FEG.FISHING_EVENT_ID

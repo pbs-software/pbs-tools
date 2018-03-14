@@ -145,6 +145,7 @@ confODBC <- function(dsn="PacHarvest",server="GFDB",db="PacHarvest",
 
 #convCT---------------------------------2014-12-12
 # Convert a crossTab object to regular matrix or data frame.
+# Note: No longer necessary as crossTab does not use reshape.
 #-----------------------------------------------RH
 convCT = function(CT, fn=as.matrix, colAsRowName=TRUE) {
 	fnam = as.character(substitute(fn))
@@ -246,22 +247,44 @@ createDSN <- function(trusted=TRUE) {
 }
 
 
-#crossTab-------------------------------2015-03-06
-# Use package 'reshape' to summarize z using crosstab values y.
+#crossTab-------------------------------2018-03-14
+# Summarize z using crosstab values y.
+# Hadley and package 'reshape' deprecated.
 #-----------------------------------------------RH
 crossTab = function(x=PBSdat, y=c("year","major"), 
-   z="landed", func=function(x){sum(x)/1000.}, ...) {
-	if (!requireNamespace("reshape", quietly = TRUE)) stop("`reshape` package is required")
-	x=x;  flds=names(x)
+   z="landed", func=function(x){sum(x)/1000.}, na.val=99, hadley=FALSE, ...) {
+	if (hadley && !requireNamespace("reshape", quietly = TRUE)) stop("`reshape` package is required")
+	flds=names(x)
 	if (!all(is.element(setdiff(y,"year"),flds)))
 		stop ("Not all specified 'z' in dataframe")
 	if (is.element("year",y) && !is.element("year",names(x))) {
 		if (is.element("date",flds)) x$year=convFY(x$date,1)
 		else stop("Need 'date' field to calculate 'year'") }
-	Y=reshape::melt.data.frame(x,y,z)
-	expr=paste("Z=reshape::cast(Y,", paste(paste(ifelse(length(y)==1,"~",""),y,sep=""),collapse="~"), ",func,...)",sep="")
-	eval(parse(text=expr))
-	return(Z) }
+
+	if (hadley) {
+		Y=reshape::melt.data.frame(x,y,z)
+		expr=paste("Z=reshape::cast(Y,", paste(paste(ifelse(length(y)==1,"~",""),y,sep=""),collapse="~"), ",func,...)",sep="")
+		eval(parse(text=expr))
+	} else {
+		#Yvals = gatherVals(x,c(y,z))
+		#Ylist = split(Yvals,Yvals$key)
+		#Y     = cbind(sapply(y,function(i){Ylist[[i]][,"value"]}),Ylist[[z]])
+
+		X = x[,c(y,z)]
+#browser();return()
+		X[,y][is.na(X[,y])] = na.val
+		xdim = sapply(X[,y],function(xx){length(.su(xx))})
+		xnam = sapply(X[,y],function(xx){.su(xx)})
+		Z    = array(0, dim=xdim, dimnames=xnam )
+		#X$ID = .createIDs(X,y)  ## doesn't work if one of the fields has a valid 0 (zero) code
+		X$ID = apply(X[,y,drop=FALSE],1,paste0,collapse=".")
+		Zsum = sapply(split(X[,z],X$ID),func)  ## vector summary of x by y using func
+		Zind = strsplit(names(Zsum),split="\\."); names(Zind) = names(Zsum)
+		expr = paste0("sapply(names(Zsum), function(i){ Z[", paste0("Zind[[i]][",1:length(xdim),"]",collapse=","),"] <<- Zsum[i] })")
+		eval(parse(text=expr))
+	}
+	return(Z)
+}
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~crossTab
 
 
@@ -308,12 +331,17 @@ flagIt = function(a, b, A=45, r=0.2, n=1, ...){
 }
 
 
-#gatherVals-----------------------------2016-06-14
+#gatherVals-----------------------------2018-03-14
 # Gathers data from multiple columns into key-value pairs.
 # Essentially a replacement function for tidyr::gather.
 #-----------------------------------------------RH
 gatherVals = function(x, columns){
-	if (missing(columns)) columns=1:ncol(x)  ## i.e. use all columns
+	if (missing(columns)) {
+		columns=1:ncol(x)  ## i.e. use all columns
+	} else if (all(is.character(columns))) {
+		## grab the column positions if user supplies column names
+		columns = match(intersect(columns,colnames(x)),colnames(x))
+	}
 	xout = list(key=NULL, value=NULL)
 	for (i in columns) {
 		xout[["key"]] = c(xout[["key"]], rep(colnames(x)[i],nrow(x)))

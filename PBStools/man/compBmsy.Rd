@@ -80,8 +80,9 @@ compBmsy(Bspp, spp="POP", Mnams=c("Est M","Fix M"),
   Invisibly returns the boxplot list object \code{Bmsy}.
 }
 \author{
-  Rowan Haigh, Research Biologist \cr
-  Pacific Biological Station, Fisheries and Oceans Canada, Nanaimo BC.
+  Rowan Haigh, Research Biologist\cr
+  Pacific Biological Station (PBS), Fisheries and Oceans Canada (DFO), Nanaimo BC\cr
+  Last modified: \code{RH 2018-01-02}
 }
 \seealso{
   \code{\link[PBStools]{quantBox}} \cr

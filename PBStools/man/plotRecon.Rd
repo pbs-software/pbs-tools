@@ -42,7 +42,8 @@ plotRecon(dat=cat440rec, strSpp="440", major=c(1,3:9), fidout=10,
 }
 \author{
   Rowan Haigh, Research Biologist\cr
-  Pacific Biological Station, Fisheries and Oceans Canada, Nanaimo BC.
+  Pacific Biological Station (PBS), Fisheries and Oceans Canada (DFO), Nanaimo BC\cr
+  Last modified: \code{RH 2017-10-26}
 }
 \seealso{
   \code{\link[PBStools]{buildCatch}},

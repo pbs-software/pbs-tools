@@ -867,15 +867,24 @@ plotGMA = function(gma=gma.popymr, xlim=c(-134,-123), ylim=c(48.05,54.95),
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotGMA
 
 
-#plotLocal------------------------------2018-01-16
+#plotLocal------------------------------2018-01-23
 # Plot DFO fishing localities with the highest catch.
 #-----------------------------------------------RH
 plotLocal = function(dat, area, aflds=NULL, pcat=0.95, showAll=FALSE,
-   fid=NULL, fidtype="PBStools", plot=TRUE, png=FALSE, csv=FALSE, 
-   outnam="refA439", strSpp)
+   fid=NULL, fidtype="PBStools", strSpp, Ntop=5,
+   plot=TRUE, png=FALSE, csv=FALSE, outnam="refA439")
 {
 	fenv = lenv()  ## function environment
-	dat$catKG = dat$landed + dat$discard
+	datnam = as.character(substitute(dat))
+	if (substring(datnam,1,3)=="gfm")
+		dat$catKG = dat$landed + dat$discard
+	if (substring(datnam,1,3)=="map") {
+		if (missing(strSpp))
+			showError(paste0("Specify catch field in '",datnam,"'"))
+		if (!is.element(strSpp,colnames(dat)))
+			showError(paste0("User-specified catch field '", strSpp,"' does not occur in '",datnam,"'"))
+		dat$catKG = dat[,strSpp]
+	}
 	
 	if (!missing(strSpp)) {
 		data(species, package="PBSdata", envir=fenv)
@@ -917,8 +926,9 @@ plotLocal = function(dat, area, aflds=NULL, pcat=0.95, showAll=FALSE,
 	pdata$ID = .createIDs(pdata,aflds)
 	data("nepacLL", package="PBSmapping", envir=fenv)
 
-	paint = colorRampPalette(c("lightblue1","green","yellow","red"))(500)
-	FDATA = list()
+	#paint = colorRampPalette(c("lightblue1","green","yellow","red"))(500)
+	paint = colorRampPalette(c("aliceblue","lightblue1","green",rep("yellow",2),"orange","red"))(500)
+	FDATA = YRCAT = list()
 
 	for (f in fid) {
 		ff   = names(fid[match(f,fid)])
@@ -929,6 +939,8 @@ plotLocal = function(dat, area, aflds=NULL, pcat=0.95, showAll=FALSE,
 			next
 		}
 		loccat = rev(sort(sapply(split(fdat$catKG,fdat$ID),function(x){sum(x)/1000.})))
+		yrcat  = sapply(split(fdat$catKG,as.numeric(substring(fdat$date,1,4))),function(x){sum(x)/1000.})
+		YRCAT[[as.character(f)]] = yrcat
 		procat = loccat/sum(loccat)
 		cumcat = cumsum(procat)
 		bigcat = loccat[cumcat <= pcat]
@@ -940,7 +952,7 @@ plotLocal = function(dat, area, aflds=NULL, pcat=0.95, showAll=FALSE,
 		## Include 0 catch as a common base for all scaling, but remove it from vector
 		sVec = rev(rev(round(scaleVec(c(fdata$pcat,0),1,500)))[-1])
 		fdata$col = paint[sVec]  ## include 0 catch as a common base for all scaling
-		topN   = fdata[1:(min(nrow(fdata),5)),]
+		topN   = fdata[1:(min(nrow(fdata),Ntop)),]
 		topcat = unlist(formatCatch(topN$catT,3))
 		legtxt = paste0(topcat," - ",topN$name)
 		if (plot) {
@@ -951,6 +963,7 @@ plotLocal = function(dat, area, aflds=NULL, pcat=0.95, showAll=FALSE,
 			if (showAll)
 				addPolys(area, border="grey")
 			addPolys(area, polyProps=fdata)
+			text(fdata$X[1:Ntop],fdata$Y[1:Ntop],1:Ntop,cex=0.8)
 			addPolys(nepacLL, col="lightyellow1")
 			addLegend(0.975, 0.94, fill=topN$col, legend=legtxt, bty="n", title=paste0("Fishery: ",ff, " - top catch (t)"), xjust=1, title.adj=0)
 			if (!missing(strSpp)) {
@@ -967,6 +980,7 @@ plotLocal = function(dat, area, aflds=NULL, pcat=0.95, showAll=FALSE,
 		}
 		FDATA[[as.character(f)]] = fdata
 	}
+	ttput(YRCAT)
 	attr(FDATA, "fishery") = names(fid)
 	return(FDATA)
 }
@@ -1425,7 +1439,7 @@ preferDepth = function(strSpp="410", fqtName="pht_fdep.sql", dbName="PacHarvest"
 				jeff$dbin = cut(jeff$depth,brks)
 				effTot = sapply(split(jeff$effort,jeff$dbin),sum)
 				effDen = effTot/sum(effTot)
-				ee     = sum(jeff$effort,na.rm=TRUE)/60  ## cumulative effort in hours
+				ee     = sum(jeff$effort,na.rm=TRUE)  ## cumulative effort (effort already in in hours)
 				xye    = list(breaks=brks,counts=effTot,density=effDen)
 				attr(xye,"class")="histogram"
 				packList("xye","PBStool",tenv=.PBStoolEnv) }

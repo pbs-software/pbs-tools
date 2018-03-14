@@ -28,7 +28,8 @@ quantAges(bioDat, dfld="age", afld="major", tfld="year",
 }
 \author{
   Rowan Haigh, Research Biologist\cr
-  Pacific Biological Station, Fisheries and Oceans Canada, Nanaimo BC
+  Pacific Biological Station, Fisheries and Oceans Canada, Nanaimo BC\cr
+  Last modified: \code{RH 2017-11-30}
 }
 \note{
   Suggested by PJS to detect changes in age by area and over time.

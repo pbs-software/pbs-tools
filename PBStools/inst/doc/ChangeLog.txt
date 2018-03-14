@@ -7,6 +7,46 @@ Authors: RH  = Rowan Haigh
          PJS = Paul J. Starr
 ------------------------------
 
+1.37.5 (2018-03-14)
+  * M01_Utility.r
+    + Modified function `crossTab' to remove the reliance on package `reshape' (RH 180314)
+      - Re-newed push to remove all dependencies on Hadley Wickham's cryptic R code.
+    + Modified function `gatherVals' to allow user to specify columns by name and not just number. (RH 180314)
+  * M02_Biology.r
+    + Modified function `weightBio' (RH 180305)
+      - Added new parameters called `scat' (SPECIES_CATEGORY) to choose unsorted samples or keepers.
+      - Added ability to fix the xlim range.
+  * SQL code
+    + Modified `gfb_catch_records.sql' and `gfb_bio.sql' to gather earliest GROUPING_CODE by FISHING_EVENT_ID. (RH 180129)
+      - Both SQL sripts need to match for functions like `weightBio'.
+      - Previously, the codes were gathering the latest (using DESC) GCs in the temporary table `#FishEventGroup' but now gather earliest (using ASC).
+      - This is more likely to match the original series SSID.
+      - Not ideal for surveys with no original series (e.g., GIG Rockfish).
+  * M02_Biology.r
+    + Revised `weightBio' to fix a few issues. (RH 180129)
+      - Changed default png output resolution to 400 pixels/inch.
+      - Changed colour of regimes polygon from `floralwhite' to `lucent("orange",0.2)'.
+      - Allowed user to fill bubbles with a lucent (alpha=0.2) version of bubble outline colour.
+    + Revised `estOgive' to fix a few issues. (RH 180125)
+      - Argument `ttype' now includes JV Hake (5) in the default for commercial samples.
+      - Console reporting of records left after qualification was cleaned up.
+      - Switch to adjust prop.mature when (i) pemp>=0.99 when age <= parList start age, and (ii) pemp>=0.5 when age <= parList min age was de-activated.
+  * Documentation
+    + Updated Rd file for `plotConcur' and started adding date of last modification (to the Rd file) in `Author(s)' section. (RH 180124)
+  * M03_Fishery.r
+    + Modified `plotConcur' to add a `sombre' choice of colours for the horizontal barplot. (RH 180123)
+      - This function appeared twice in `M03_Fishery' and yet the Rcheck did not notice (Hah!)
+      - Added label showing total catch weight represented by bars and the percentage of total catch weight.
+  * SQL code
+    + Modified `fos_map_density.sql' so that FID is more in line with FID in `fos_mcatORF.sql'. (RH 180123)
+  * M05_Spatial.r
+    + Modified `plotLocal' to improve functionality. (RH 180123)
+      - Can now accept a `map' file created by `fos_map_density.sql' in place of a merged catch `gfm' file (still accepted).
+      - Improved the 500-element colour ramp for even distribution of rainbow colours (before: too much green, not enough yellow).
+      - Introduced new argument called `Ntop' so user can choose top catches in N localities for the legend.
+      - Now labels Ntop localities in figure plot with 1:Ntop.
+    + Fixed small bug in function `preferDepth' that converted effort to hours twice. (RH 180119)
+
 1.37.4 (2018-01-18)
   * Documentation
     + Updated `README.md' (MarkDown file) which appears on GitHub. (RH 180118)
@@ -22,9 +62,9 @@ Authors: RH  = Rowan Haigh
       - Getting effort on GUI start-up is no longer the default action in the function `preferDepth'.
     + Added new function called `plotEO' to plot the Extent of Occurrence of a species. (RH 180116)
       - Used primarily as a way to map a convex hull around species events, following the idea of COSEWIC's Extent of Occurrence.
-      - Stray or mispecified coordinates can be removed in conjuction with the PBSdata object `locality.plus'.
+      - Stray or mis-specified coordinates can be removed in conjunction with the PBSdata object `locality.plus'.
     + Modified function `plotLocal' (RH 180116)
-      - Changed argument `area' to accept an object istead of the object's name.
+      - Changed argument `area' to accept an object instead of the object's name.
       - Added argument `strSpp' to add species name label (with data date range) to the plot.
       - Changed display label from top 3 to top 5 localities by catch.
       - Increased longitude range to include Bowie Seamount.
@@ -34,7 +74,7 @@ Authors: RH  = Rowan Haigh
 
 1.37.3 (2018-01-02)
   * M05_Spatial.r
-    + Modified function `plotTertiary' to unlist a vector -- Rdev appears to treat subsetting DFs/marices differently than in released versions. (RH 180102)
+    + Modified function `plotTertiary' to unlist a vector -- Rdev appears to treat subsetting DFs/matrices differently than in released versions. (RH 180102)
   * SQL code
     + Modified `gfb_bio.sql' to indicate biological specimens with available fin and scale age structures, in addition to otoliths available. (RH 180102)
   * Documentation
@@ -100,9 +140,9 @@ Authors: RH  = Rowan Haigh
   * M08_LaTeX.r
     + Fixed bug in `texArray' where `tabalign' was being mis-specified. (RH 170801)
   * SQL queries
-    + Updated query `gfb_catch_records.sql' (used by `getCatch' and `weightBio') to incldue depth and gear. (RH 170731)
+    + Updated query `gfb_catch_records.sql' (used by `getCatch' and `weightBio') to include depth and gear. (RH 170731)
       - Changed call in function `requestAges' to `gfb_catch_records.sql' from `gfb_gfb_catch.sql'.
-      - Dicontinued duplication of `gfb_catch_records.sql' as `gfb_gfb_catch.sql' (duplication had ceased a while ago).
+      - Discontinued duplication of `gfb_catch_records.sql' as `gfb_gfb_catch.sql' (duplication had ceased a while ago).
       - Deprecated query `gfb_gfb_catch.sql'.
 
 1.36.1 (2017-07-27)
@@ -134,14 +174,14 @@ Authors: RH  = Rowan Haigh
     + Modified SQL query `fos_mcatORF.sql' to get longitude (X) and latitude (Y) values. (RH 170220)
     + Modified SQL queries `pht_fdep.sql' and 'pht_effort.sql' to use observer logs only;
       this matches the use of observer logs by `pht_concurrent.sql', which is run based on results from `pht_dfep.sql'. (RH 170125)
-    + Modified SQL query `pht_concurrent.sql' to use gear through the gear argument in `getData' and PFMC minor area through the dummy argument,
+    + Modified SQL query `pht_concurrent.sql' to use gear through the gear argument in `getData' and PMFC minor area through the dummy argument,
       which is still not handled elegantly if the user does not specify a value, i.e., dummy=NULL. (RH 170124)
 
 1.35.0 (2017-01-20)
   * M05_Spatial.r
     + Modified function `calcHabitat' slightly to better represent PNG files. (RH 170116)
-    + Revised function `preferDepth' to focus on histogram area given user's depth limits ratehr than the whole water column. (RH 170116)
-    + Revised SQl code `pht_effort.sql' to access GFFOS on SQL Server rather than Oracle's GFSH, which no longer exists. (RH 170116)
+    + Revised function `preferDepth' to focus on histogram area given user's depth limits rather than the whole water column. (RH 170116)
+    + Revised SQL code `pht_effort.sql' to access GFFOS on SQL Server rather than Oracle's GFSH, which no longer exists. (RH 170116)
     + Modified function `plotGMA' to represent Walleye Pollock stock regions. (RH 170110)
   * M02_Biology.r
     + Modified function `calcLW' to subset on gear and to output better png files. (RH 161221)
@@ -187,12 +227,12 @@ Authors: RH  = Rowan Haigh
   * M02_Biology.r
     + Updated functions `mapMaturity' and `estOgive' -- minor tweaks to output. (RH 161017)
   * M05_Spatial.r
-    + Revamped function `calcStockArea' to modify a data file (by adding stock) rather than inputing separate vector arguments. (RH 161017)
+    + Revamped function `calcStockArea' to modify a data file (by adding stock) rather than inputting separate vector arguments. (RH 161017)
   * M08_LaTeX.r
     + Changed function `collectFigs' to better render the figures on a page. (RH 161014)
   * M02_Biology.r
     + Changed function `weightBio' to provide output closer to that used by Awatea. (RH 161013)
-    + Changed function `calcVB' to be more flexible with output and to parallel somwewhat the code in `calcLW'. (RH 160929)
+    + Changed function `calcVB' to be more flexible with output and to parallel somewhat the code in `calcLW'. (RH 160929)
     + Changed function name from `calcLenWt' to `calcLW' and updated it to deal with Walleye Pollock. (RH 160927)
   * SQL queries
     + Added SQL query `gfm_bigeffort.sql' to flag unusually large differences between start and end time of fishing events. (RH 160912)
@@ -203,7 +243,7 @@ Authors: RH  = Rowan Haigh
   * M02_Biology.r
     + Modified function `processBio' to include stock areas using `calcStockArea', which was also slightly modified. (RH 160912)
   * SQL queries
-    + Modified query `fos_mcatORF.sql' to add new field called `eff' calculated as the difference bewteen FE_START_DATE and FE_END_DATE in GF_MERGED_CATCH. (RH 160912)
+    + Modified query `fos_mcatORF.sql' to add new field called `eff' calculated as the difference between FE_START_DATE and FE_END_DATE in GF_MERGED_CATCH. (RH 160912)
     + Fixed a small bug in `gfb_bio.sql' for records that have ages but do not appear in the SPECIMEN_COLLECTED table. (RH 160803)
 
 1.32.0 (2016-07-28)
@@ -263,7 +303,7 @@ Authors: RH  = Rowan Haigh
   * M01_Utility.r
     + Fixed a small bug in `getODBC'. (RH 160412)
   * M02_Biology.r
-    + Fixed a small but disruptive bug in `calcVB' where a degugging line (`browser()') had been left active. (RH 160411)
+    + Fixed a small but disruptive bug in `calcVB' where a debugging line (`browser()') had been left active. (RH 160411)
     + Revised function group `plotProp' to skip zeroes and NAs when connecting mean ages/lengths. (RH 160411)
 
 1.30.1 (2016-03-29)
@@ -304,7 +344,7 @@ Authors: RH  = Rowan Haigh
   * SQL queries
     + Revised SQL files `pht_fdep.sql' and `pht_concurrent.sql' to INSERT `meanSppWt.sql' (new SQL file) and to use the GFFOS database on the SQL server. (RH 151028)
   * M03_Fishery.r
-    + Very slightly modifed the function `plotConcur'. (RH 151028)
+    + Very slightly modified the function `plotConcur'. (RH 151028)
   * Documentation
     + Revised `buildCatch.Rd' documentation. (RH 150810)
 
@@ -338,7 +378,7 @@ Authors: RH  = Rowan Haigh
   * SQL queries
     + Changed the call to six modern catch databases to use the single table `GF_MERGED_CATCH' from the `GFFOS' database via `fos_mcatORF.sql'. (RH 150414)
   * Documentation
-    + Changed calls from `require' to `requireNamespace' as requested by CRAN's R check. Fixed othe R check issues. (RH 150306)
+    + Changed calls from `require' to `requireNamespace' as requested by CRAN's R check. Fixed other R check issues. (RH 150306)
     + Revised functions and documentation for `weightBio' and `getCatch'. (RH 150305)
   * SQL queries
     + Added queries `gfb_iphc_skate_data.sql' and `gfb_iphc_set_data.sql' to get IPHC skate ad set data (2003-present) for AME to develop an IPHC survey index series. (RH 150304)
@@ -365,7 +405,7 @@ Authors: RH  = Rowan Haigh
     + Added query `gfb_iphc_hooks.sql' to get IPHC hook data (2003-present) for AME to develop an IPHC survey index series. (RH 141017)
     + Modified various queries for `buildCtach' to return `locality' codes. (RH 141015)
   * M01_Utility.r
-    + Modified function `getData' to handle subqueries for SQL account holders (no DFO credenntials, thanks Chris G). (RH 141007)
+    + Modified function `getData' to handle subqueries for SQL account holders (no DFO credentials, thanks Chris G). (RH 141007)
     + Modified function `showError' to keep track of when an error message is displayed on the device using `setPBSoptions("showError",TRUE)'. (RH 141007)
   * M07_BuildCatch.r
     + Added an option to calculate RRF/ORF (RRF/TRF) using the binomial-gamma. (RH 141002)
@@ -383,7 +423,7 @@ Authors: RH  = Rowan Haigh
   * M07_BuildCatch.r
     + Modified  function `buildCatch' to accept extra parameters through `...'; specifically to allow introduction of modified trawl ratios of RRF/TRF and RRF/ORF. (RH 140818)
       - These ratios form the first row of the function matrix object `gamma'.
-      - PJS calculated reference ratios of YTR/TRF and YTR/ORF that exclude midwater trawls and use only the offshore localities withinn PMFCs rather than the entire PMFCs.
+      - PJS calculated reference ratios of YTR/TRF and YTR/ORF that exclude midwater trawls and use only the offshore localities within PMFCs rather than the entire PMFCs.
       - The alteration to `gamma' should only be a temporary measure; the code should calculate these variations automatically, if chosen, but will not be implemented right away.
   * SQL queries
     + Added new field to `gfb_bio.sql' query -- `narc' = NOT_AVAILABLE_REASON_CODE in table B05a_Specimen_Collected. (RH 140815)
@@ -401,7 +441,7 @@ Authors: RH  = Rowan Haigh
   * M07_BuildCatch.r
     + Created new function `surveyCatch' to call query `gfb_rcatORF.sql' and produce a summary table of survey catch for a specified species. (RH 140703)
   * SQL queries
-    + Modified the SQL query `gfb_bio.sql' to better identify Surevy Series ID (SSID) and to ignore Fishing Event IDs (FEID) that describe individual hooks and traps. (RH 140702)
+    + Modified the SQL query `gfb_bio.sql' to better identify Survey Series ID (SSID) and to ignore Fishing Event IDs (FEID) that describe individual hooks and traps. (RH 140702)
     + Modified the SQL query `fos_vcatORF.sql' and the function `buildCatch' to use the SQL Server database GFFOS. (RH 140702)
   * M02_Biology.r
     + Modified the function `getCatch' to query the GFFOS database on the SVBCPBSGFIIS server. (RH 140624)
@@ -431,7 +471,7 @@ Authors: RH  = Rowan Haigh
   * SQL queries
     + Added new SQL query `gfb_rcatORF.sql' to grab catch records for a species caught in Research/Surveys. (RH 130820)
   * M07_BuildCatch.r
-    + Modified functions `buildCatch', `calcRatio', and `collectFigs' for Silvergrey Rockfish catch reconstruction. (RH 130719)
+    + Modified functions `buildCatch', `calcRatio', and `collectFigs' for Silvergray Rockfish catch reconstruction. (RH 130719)
   * M02_Biology.r
     + Modified function `calcLenWt' to subset any type of area (e.g., `major', `PMFC', `GMA', etc.) if available in data object. (RH 130627)
   * M01_Utility.r
@@ -440,7 +480,7 @@ Authors: RH  = Rowan Haigh
       - User can still specify alternative SQL\Oracle drivers by passing, for example, `driver="Oracle ODBC Driver"' through the function `getData`.
     + Moved object `.PBSserver' form the `sql' directory to the `R' directory in `M01_Utility.r`. (RH 130508)
   * Miscellaneous scripts
-    + Updated script `Rqpdf.bat' to utilize ghostcript's `gswin32c.exe' AND QPDF's `qpdf.exe', paralleling the process in tools::compactPDF. (RH 130508)
+    + Updated script `Rqpdf.bat' to utilize ghostscript's `gswin32c.exe' AND QPDF's `qpdf.exe', paralleling the process in tools::compactPDF. (RH 130508)
   * M01_Utility.r
     + Added two new functions to manipulate files: `countLines' and `subsetFile`. (RH 130508)
   * M02_Biology.r
@@ -573,14 +613,14 @@ Authors: RH  = Rowan Haigh
     + Removed `GLOP' button from map GUI and added `GOP' (grid over plot) and `LOP' (land over plot) buttons. (RH 120223)
     + Added two new `par.map' values called `tit.loc' and `leg.loc' to give the user some control on title and legend placement - requested by Paul Starr. (RH 120221)
     + Added new button on map GUI called `par.map' to allow the user to see and change extra par values. (RH 120221)
-    + Added small subfuction `.map.checkLims' to `M01_Map.r' to check that data limit GUI inputs are strictly increasing. (RH 120217)
+    + Added small subfunction `.map.checkLims' to `M01_Map.r' to check that data limit GUI inputs are strictly increasing. (RH 120217)
   * PBStools
     + Added new SQL query `fos_checklist_catch.sql' to provide retained and discarded catches for DFO's checklist. (RH 120216)
     + Modified functions `trackComp', `plotDiversity', and `boxSeason' to use local files/objects if available. (RH 111205)
     + R-2.14.0 appears to implement windows buffering, which can screw the interactive nature of `map'.
       - Code now sets `windows.options(buffered=FALSE)' then resets it back to the user's original setting with an `onclose=.map.exit' in the GUI. (RH 111114)
     + Used `packageStartupMessage' rather than `cat' in `.onLoad' in `zzz.r'. (RH 111114)
-    + Resaved the `.rda' data files using compress = "bzip2". (RH 111114)
+    + Re-saved the `.rda' data files using compress = "bzip2". (RH 111114)
     + Building PDF manuals (for R itself or packages, e.g. via R CMD check) by default requires the LaTeX package inconsolata. (RH 111114)
 
 1.19  2011-11-09  Authors

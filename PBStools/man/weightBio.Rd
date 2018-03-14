@@ -9,16 +9,16 @@
   \emph{survey}: sample species density (kg/km\eqn{^2}) in stratum and stratum area (km\eqn{^2}) in survey.
 }
 \usage{
-weightBio(adat, cdat, sunit="TID", sweight="catch",
-   ttype=NULL, stype=c(0,1,2,5:8), ameth=3, sex=2:1, major=NULL,
-   wSP=c(TRUE,TRUE), wN=TRUE, plus=60, Nmin=0, Amin=NULL,
+weightBio(adat, cdat, sunit="TID", sweight="catch", 
+   ttype=NULL, stype=c(0,1,2,5:8), scat=NULL, ameth=3, sex=2:1, major=NULL, 
+   wSP=c(TRUE,TRUE), wN=TRUE, plus=60, Nmin=0, Amin=NULL, 
    ctype="C", per=90, SSID=NULL, tabs=TRUE, gear=NULL,
-   plot=TRUE, ptype="bubb", size=0.05, powr=0.5, zfld="wp",
+   plot=TRUE, ptype="bubb", size=0.05, powr=0.5, zfld="wp", 
    clrs=list(c(.colBlind["blue"],"cyan"),c(.colBlind["bluegreen"],"chartreuse")),
-   cohorts=NULL, regimes=list(1900:1908,1912:1915,1923:1929,1934:1943,1957:1960,
-   1976:1988,1992:1998,2002:2006), layout="portrait",
+   cohorts=NULL, regimes=list(1900:1908,1912:1915,1923:1929,1934:1943,
+   1957:1960,1976:1988,1992:1998,2002:2006), layout="portrait", 
    rgr=TRUE, eps=FALSE, pdf=FALSE, png=FALSE, wmf=FALSE,
-   longside=10, outnam, outres=200, ioenv=.GlobalEnv, ...)
+   longside=10, outnam, outres=400, ioenv=.GlobalEnv, ...)
 }
 \arguments{
   \item{adat}{data frame of ageing information (fields returned by 
@@ -29,7 +29,7 @@ weightBio(adat, cdat, sunit="TID", sweight="catch",
     \code{TID} -- samples identified by trip ID (commercial);\cr
     \code{SID} -- samples identified by sample ID (surveys).}
   \item{sweight}{sample weighting field (e.g., \code{catch} or \code{density}).}
-  \item{ttype}{trip type where: \cr
+  \item{ttype}{trip type code where: \cr
     \code{1}  = non-observed domestic,\cr
     \code{2}  = research,\cr
     \code{3}  = charter,\cr
@@ -44,7 +44,7 @@ weightBio(adat, cdat, sunit="TID", sweight="catch",
     \code{12}  = Japanese observed national,\cr
     \code{13}  = Japanese commercial,\cr
     \code{14}  = unknown foreign.}
-  \item{stype}{sample type where: \cr
+  \item{stype}{sample type code where: \cr
     \code{0}  = unknown,\cr
     \code{1}  = total catch,\cr
     \code{2}  = random,\cr
@@ -55,6 +55,16 @@ weightBio(adat, cdat, sunit="TID", sweight="catch",
     \code{8}  = random from set requested by vessel master,\cr
     \code{9}  = selected juveniles,\cr
     \code{10} = selected adults.}
+  \item{scat}{species category code where: \cr
+    \code{0}  = unknown,\cr
+    \code{1}  = unsorted,\cr
+    \code{2}  = sorted (unk. criterion),\cr
+    \code{3}  = keepers,\cr
+    \code{4}  = discarded,\cr
+    \code{5}  = remains,\cr
+    \code{6}  = longline -- fish head only,\cr
+    \code{7}  = longline -- whole fish and fish head only,\cr
+    \code{8}  = longline/jig -- fish lost at rail/lost at surface.}
   \item{ameth}{ageing method code (\code{ameth=3} denotes break and burn).}
   \item{sex}{sex codes (1 = males, 2 = females).}
   \item{major}{major PMFC area codes (1=4A, 3=3C, 4=3D, 5=5A, 6=5B, 7=5C, 8=5D, 9=5E).}
@@ -272,8 +282,13 @@ out = weightBio(age396, Scat396, ctype="S", sunit="SID", SSID=1,
    stype=c(1,2,6,7), Nmin=0, plus=60, ameth=3, sweight="density", size=0.15)
 }}
 \author{
-  Rowan Haigh, Pacific Biological Station, Fisheries and Oceans Canada, Nanaimo BC \cr
-  Paul J. Starr, Canadian Groundfish Research and Conservation Society, Nanaimo BC
+  \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
+  Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
+  \emph{locus: Institute of Ocean Sciences (IOS), Sidney BC}\cr
+  Last modified \code{Rd: 2018-03-14}
+
+  \href{mailto:paul@starrfish.net}{Paul J. Starr}, Stock Assessment Scientist\cr
+  Canadian Groundfish Research & Conservation Society (CGRCS), Nanaimo BC
 }
 \seealso{
   \code{\link[PBStools]{getCatch}}, \code{\link[PBStools]{getData}},
