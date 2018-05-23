@@ -1,6 +1,6 @@
 Package: PBStools
-Version: 1.37.5
-Date:    2018-03-14
+Version: 1.37.6
+Date:    2018-05-23
 Title:   Tools for the Efficient Execution of Onerous Tasks
 Authors@R: c(
    person("Rowan", "Haigh", role = c("aut", "cre"), email = "rowan.haigh@dfo-mpo.gc.ca"),
@@ -8,11 +8,11 @@ Authors@R: c(
    person("Norm", "Olsen", role = "ctb", email = "norm.olsen@dfo-mpo.gc.ca"),
    person("Lisa", "Lacko", role = "ctb", email = "lisa.lacko@dfo-mpo.gc.ca"),
    person("Brian", "Krishka", role = "ctb", email = "brian.krishka@dfo-mpo.gc.ca"))
-Author: Rowan Haigh [aut, cre], Jon T. Schnute [ctb], Norm Olsen [ctb], Lisa Lacko [ctb], Brian Krishka [ctb]
-Maintainer: Rowan Haigh <rowan.haigh@dfo-mpo.gc.ca>
-Copyright:  2007-2018, Fisheries and Oceans Canada
-Depends: R (>= 3.0.0), PBSmapping, PBSmodelling, PBSdata, RODBC
-Suggests: boot, BRugs, cluster, MASS, reshape, sp, utils, xtable
+Author:      Rowan Haigh [aut, cre], Jon T. Schnute [ctb], Norm Olsen [ctb], Lisa Lacko [ctb], Brian Krishka [ctb]
+Maintainer:  Rowan Haigh <rowan.haigh@dfo-mpo.gc.ca>
+Copyright:   2007-2018, Fisheries and Oceans Canada
+Depends:     R (>= 3.0.0), PBSmapping, PBSmodelling, PBSdata, RODBC
+Suggests:    boot, BRugs, cluster, MASS, reshape, sp, utils, xtable
 Description: Provides tools for exploring data from fisheries and beyond. 
    The focus is on screening and summary tools for fisheries stock assessments,
    species at risk reports, and exploratory data analyses.

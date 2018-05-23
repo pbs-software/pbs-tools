@@ -247,12 +247,13 @@ createDSN <- function(trusted=TRUE) {
 }
 
 
-#crossTab-------------------------------2018-03-14
+#crossTab-------------------------------2018-05-15
 # Summarize z using crosstab values y.
 # Hadley and package 'reshape' deprecated.
 #-----------------------------------------------RH
 crossTab = function(x=PBSdat, y=c("year","major"), 
-   z="landed", func=function(x){sum(x)/1000.}, na.val=99, hadley=FALSE, ...) {
+   z="landed", func=function(x){sum(x)/1000.}, na.val=99, hadley=FALSE, ...)
+{
 	if (hadley && !requireNamespace("reshape", quietly = TRUE)) stop("`reshape` package is required")
 	flds=names(x)
 	if (!all(is.element(setdiff(y,"year"),flds)))
@@ -266,21 +267,24 @@ crossTab = function(x=PBSdat, y=c("year","major"),
 		expr=paste("Z=reshape::cast(Y,", paste(paste(ifelse(length(y)==1,"~",""),y,sep=""),collapse="~"), ",func,...)",sep="")
 		eval(parse(text=expr))
 	} else {
-		#Yvals = gatherVals(x,c(y,z))
-		#Ylist = split(Yvals,Yvals$key)
-		#Y     = cbind(sapply(y,function(i){Ylist[[i]][,"value"]}),Ylist[[z]])
-
 		X = x[,c(y,z)]
-#browser();return()
 		X[,y][is.na(X[,y])] = na.val
-		xdim = sapply(X[,y],function(xx){length(.su(xx))})
-		xnam = sapply(X[,y],function(xx){.su(xx)})
+		## Need drop=FALSE when y is a single factor (in the non-R sense)
+		xdim = sapply(X[,y,drop=FALSE],function(xx){length(.su(xx))})
+		xnam = sapply(X[,y,drop=FALSE],function(xx){.su(xx)},simplify=FALSE)
 		Z    = array(0, dim=xdim, dimnames=xnam )
 		#X$ID = .createIDs(X,y)  ## doesn't work if one of the fields has a valid 0 (zero) code
 		X$ID = apply(X[,y,drop=FALSE],1,paste0,collapse=".")
-		Zsum = sapply(split(X[,z],X$ID),func)  ## vector summary of x by y using func
-		Zind = strsplit(names(Zsum),split="\\."); names(Zind) = names(Zsum)
-		expr = paste0("sapply(names(Zsum), function(i){ Z[", paste0("Zind[[i]][",1:length(xdim),"]",collapse=","),"] <<- Zsum[i] })")
+		## vector summary of x by y using func (unless func returns more than one summary value)
+		Zsum = sapply(split(X[,z],X$ID),func) #,simplify=FALSE)
+		if (is.vector(Zsum)) {
+			Zind = strsplit(names(Zsum),split="\\."); names(Zind) = names(Zsum)
+			expr = paste0("sapply(names(Zsum), function(i){ Z[", paste0("Zind[[i]][",1:length(xdim),"]",collapse=","),"] <<- Zsum[i] })")
+		} else {
+			Z = array(0, dim=c(xdim,nrow(Zsum)), dimnames=c(xnam,list(pars=rownames(Zsum))))
+			Zind = strsplit(colnames(Zsum),split="\\."); names(Zind) = colnames(Zsum)
+			expr = paste0("sapply(colnames(Zsum), function(i){ Z[", paste0("Zind[[i]][",1:length(xdim),"]",collapse=","),",] <<- Zsum[,i] })")
+		}
 		eval(parse(text=expr))
 	}
 	return(Z)

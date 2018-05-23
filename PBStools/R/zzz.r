@@ -45,7 +45,7 @@ if(getRversion() >= "2.15.1") utils::globalVariables(names=c(
 	"elapTime","empinf","eN","eps","evals",
 	"figDir","fillBars","firstSerial","fminE","fminS","fnam","Fout","fqtName","Ft","ftime","func",
 	"g","gear","gfbdat","glmfit","gma.popymr","group","Gv2",
-	"hide0","HSreg","HStrc",
+	"hadley","hide0","HSreg","HStrc",
 	"idxD","idxL","idxM","inone","IRRmin","is.pred","isobath","iters",
 	"k",
 	"las","lastSerial","lin","lmres","locality.plus","ltype","lwd",
@@ -65,15 +65,17 @@ if(getRversion() >= "2.15.1") utils::globalVariables(names=c(
 	"z","Z","za","zero","zfill","Zlim","zsho","zstar","zstn"
 	), package="PBStools")
 
+##quantBox------------------------------2018-04-03
+## Redefine boxplot to show quantiles (RH 150910)
+## http://r.789695.n4.nabble.com/Box-plot-with-5th-and-95th-percentiles-instead-of-1-5-IQR-problems-implementing-an-existing-solution-td3456123.html
+##----------------------------------------------RH
 local(envir=.PBStoolEnv,expr={
 	myboxplot.stats <- function (x, coef=NULL, do.conf=TRUE, do.out=TRUE)
-	#, quants=c(0.05,0.25,0.50,0.75,0.95))
 	{
 		nna <- !is.na(x)
 		n <- sum(nna)
 		if (!exists("quants5"))
 			quants5 = c(0.05,0.25,0.50,0.75,0.95)
-		#stats <- quantile(x, c(0.05,0.25,0.50,0.75,0.95), na.rm=TRUE)
 		stats <- quantile(x, quants5, na.rm=TRUE) ## one day figure out how to make this dynamic
 		iqr <- diff(stats[c(2, 4)])
 		out <- x < stats[1] | x > stats[5]
@@ -82,7 +84,7 @@ local(envir=.PBStoolEnv,expr={
 		list(stats = stats, n = n, conf = conf, out = x[out & nna])
 	}
 	boxcode = deparse(boxplot.default)
-	boxcode = gsub("boxplot\\.stats","myboxplot.stats",boxcode)
+	boxcode = gsub("boxplot\\.stats","ttcall(myboxplot.stats)",boxcode)
 	eval(parse(text=c("qboxplot=",boxcode)))
 })
 

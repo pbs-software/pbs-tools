@@ -8,7 +8,7 @@
 #  zapSeamounts.Remove seamount records using combinations of major, minor, and locality codes.
 #===============================================================================
 
-#buildCatch-----------------------------2017-10-19
+#buildCatch-----------------------------2018-03-28
 # Catch reconstruction algorithm for BC rockfish.
 # Use ratios of RRF (reconstructed rockfish) to ORF 
 # (rockfish other than POP) landings for multiple fisheries.
@@ -21,21 +21,24 @@ buildCatch=function(
    orfSpp="TRF",         # Field name of the denominator in the ratio of RRF to other rockfish (usually ORF but can be TRF or POP if these are more appropriate)
    major=c(1,3:9),       # Major PMFC area codes to see in plots; catch is always reconstructed for majors c(1,3:9)
    fidout=c(1:5,10),     # Fishery IDs for which an annual series barplot stacked by PMFC area is produced
-   refyrs=1997:2005,     # Reference years to use for calculating gamma (e.g., RRF/ORF).
-   refarea=NULL,         # Name of file containing reference areas to use when calculating gamma
-   refgear=NULL,         # Reference gear types years to use for calculating gamma (1=bottom trawl, 2=trap, 3=midwater trawl, 4=h&l, 5=longline, 8=h&l/longline/trap)
-   useYR1=NULL,          # First year to start using reported landings (i.e. not estimated from gamma), one for each fishery
-   useBG=FALSE,          # Sample from the binomial-gamma to estimate ratios RRF/ORF or RRF/TRF.
-   useSM=FALSE,          # Use catch data from seamounts
    useGFM=TRUE,          # Use the latest official GF_MERGED_CATCH table (compiled by Norm and Kate)
-   useLS=TRUE,           # Use ORF catch from Langara Spit in gamma calculation
-   useAI=FALSE,          # Use Anthony Island catch as 5C catch (chiefly for POP and maybe YMR)
+   useYR1=NULL,          # First year to start using reported landings (i.e. not estimated from gamma), one for each fishery
    useCA=TRUE,           # Use ORF catch from the CA fleet
    useUS=TRUE,           # Use ORF catch from the US fleet
    useFF=TRUE,           # Use ORF catch from the foreign (UR, JP, PO, etc) fleet
+   useSM=FALSE,          # Use catch data from seamounts
+   useLS=TRUE,           # Use ORF catch from Langara Spit in gamma calculation
+   useAI=FALSE,          # Use Anthony Island catch as 5C catch (chiefly for POP and maybe YMR)
+   useGM=FALSE,          # Use geometric mean to average annual ratios for gamma and delta (not used if strat.gamma, strat.delta, or useBG)
+   useBG=FALSE,          # Sample from the binomial-gamma to estimate ratios RRF/ORF or RRF/TRF.
+   refyrs=1997:2005,     # Reference years to use for calculating gamma (e.g., RRF/ORF).
+   refarea=NULL,         # Name of file containing reference areas to use when calculating gamma
+   refgear=NULL,         # Reference gear types years to use for calculating gamma (1=bottom trawl, 2=trap, 3=midwater trawl, 4=h&l, 5=longline, 8=h&l/longline/trap)
    strat.gamma=FALSE,    # Stratify the RRF numerator and ORF denominator by depth zone and weight by frequency of RRF landed > 0
    strat.delta=FALSE,    # Stratify the discard numerator and denominator by depth zone and weight by frequency of RRF discards > 0
    depbin=100,           # Depth (m) bin to use for strat.gamma and strat.delta
+                         # Discard years (on set for each fishery (trawl, halibut, sable, dogling, hlrock):
+   disyrs = list(1954:1995, 1986:2005, 1986:2005, 1986:2005, 1986:2005), 
    sensitivity=NULL,     # Sensitivity name for tweaking decisions
    reconstruct=TRUE,     # Complete the reconstruction to its end, otherwise terminate the code once the modern catch array has been compiled and saved
    run.name=NULL,        # Run name to keep track of various run configurations with gamma, delta, refarea, and refgear
@@ -50,6 +53,7 @@ buildCatch=function(
    eps=FALSE, png=FALSE, wmf=FALSE, # Send the figures to `.eps' , `.png', and `.wmf' files, respectively
    uid=Sys.info()["user"], pwd=uid, # User ID and password for Oracle DB account authentication (only used for PacHarv3 currently)
    ioenv=.GlobalEnv,     # Input/output environment for function input data and output results
+   hadley=FALSE,         # Use Hadley Wickham's bloated R packages
    ...)                  # Additional ad hoc arguments to deal with PJS issues
 {
 	data(pmfc,species,envir=penv())
@@ -63,11 +67,16 @@ buildCatch=function(
 		run.name = paste0( orfSpp, 
 			"_rA(",paste0(major,collapse=""),")",
 			"_rY(",paste0(substring(range(refyrs),3,4),collapse=""),")",
-			"_sGD(", substring(strat.gamma,1,1), substring(strat.delta,1,1), ")"
+			"_y1(", paste0(substring(useYR1,3,4),collapse="'"),")"
 		)
 		if (!is.null(refarea)) ## reference fishery-specific localities
 			run.name = paste0(run.name,"_rF(",paste0(names(refarea),collapse=""),")")
+		if (!is.null(refgear)) ## reference fishery-specific gear types
+			run.name = paste0(run.name,"_rG(",paste0(names(refgear),collapse=""),")")
+		if (any(c(strat.gamma,strat.delta))) ## depth-stratified gamma and/or delta
+			run.name = paste0(run.name,"_sGD(", substring(strat.gamma,1,1), substring(strat.delta,1,1), ")")
 	}
+#browser();return()
 	if (!file.exists(run.name)) dir.create(run.name)
 	figDir = paste0(run.name,"/figs")
 	if (!file.exists(figDir)) dir.create(figDir)
@@ -731,10 +740,10 @@ buildCatch=function(
 	for (i in dbs) { 
 		if(!isThere(i,envir=lenv)) next
 		icat = get(i)
-		modyrs = c(modyrs,unique(as.numeric(substring(icat$date,1,4))))
-		majmod = c(majmod,unique(icat$major))
+		modyrs = c(modyrs,.su(as.numeric(substring(icat$date,1,4))))
+		majmod = c(majmod,.su(icat$major))
 		fid=c(fid,unique(icat$fid)) }
-	modyrs = sort(unique(modyrs)); majmod=sort(unique(majmod)); fid=sort(unique(fid))
+	modyrs = .su(modyrs); majmod=.su(majmod); fid=.su(fid)
 	modyrs = modyrs[is.element(modyrs,1945:sysyr)]
 
 	if (isThere("refyrs") && !is.null(refyrs) && length(intersect(refyrs,modyrs))==0)
@@ -784,6 +793,7 @@ buildCatch=function(
 				TAR=  sapply(split(jdat$TAR,jdat$year),sum,na.rm=TRUE)/1000.
 #print(c(names(landed),jj,kk,a))
 #if (jj=="1" && kk=="4" && a=="gfmcat") {browser();return()}
+
 				catmod0[names(landed),jj,kk,"landed",a] = landed
 				catmod0[names(POP),jj,kk,"POP",a]       = POP
 				catmod0[names(ORF),jj,kk,"ORF",a]       = ORF
@@ -793,7 +803,6 @@ buildCatch=function(
 					discard=sapply(split(jdat$discard,jdat$year),sum,na.rm=TRUE)/1000.
 					catmod0[names(discard),jj,kk,"discard",a] = discard }
 	} } } ## close loops j & k & i
-#browser(); return()
 
 	if (diagnostics){
 		for (spp in dimnames(catmod0)$catch) {
@@ -818,10 +827,12 @@ buildCatch=function(
 					catobs = apply(cattab,1,function(x){length(x[x>0])})
 					catyrs = names(catobs)[catobs>2]
 					if (length(catyrs)==0) next
-					pmaj   = apply(apply(cattab[catyrs,,drop=FALSE],1,pcalc),1,mean)
+					pmaj   = apply(apply(cattab[catyrs,,drop=FALSE],1,pcalc),1,mean)  ## do not use geometric mean here (proportion allocation) !!!
 					allo   = t(t(catmod0[,"0",kk,ll,aa]))%*%pmaj; dimnames(allo)[[2]] = mm
+#if(aa=="gfmcat" && kk=="1" && ll=="landed") {browser();return()}
 					catmod1[,mm,kk,ll,aa] = catmod1[,mm,kk,ll,aa] + allo 
 	} } } }
+#browser(); return()
 
 	if (diagnostics){
 		for (spp in dimnames(catmod1)$catch) {
@@ -848,7 +859,7 @@ buildCatch=function(
 					catyrs = names(catobs)[catobs>2]
 #if(aa=="gfmcat" && jj=="3" && ll=="POP") {browser();return()}
 					if (length(catyrs)==0) next
-					pfid   = apply(apply(cattab[catyrs,,drop=FALSE],1,pcalc),1,mean)
+					pfid = apply(apply(cattab[catyrs,,drop=FALSE],1,pcalc),1,mean)   ## do not use geometric mean here (proportion allocation) !!!
 					allo   = t(t(catmod1[,jj,"0",ll,aa]))%*%pfid; dimnames(allo)[[2]] = kk
 					catmod2[,jj,kk,ll,aa] = catmod2[,jj,kk,ll,aa] + allo 
 	} } } }
@@ -1134,13 +1145,14 @@ REEFER = REFDAT
 				ctab[ii,,kk,"landed"] = 0 ## just set all landed to zero for now.
 				next
 			}
-#browser();return()
 			for (ll in dimnames(catmod)$catch) {
-				#CTdat = crossTab(REFDAT[[kk]],c("year","major"),ll)  ## (BUG) this line originally used `refdat' without it being extracted from REFDAT
-				CTdat = crossTab(refdat,c("year","major"),ll)
-				LLdat = convCT(CTdat)[ii,]
-				jj = dimnames(LLdat)[[2]]
-				ctab[ii,jj,kk,ll] = LLdat
+				CTdat = crossTab(refdat, c("year","major"), ll, hadley=hadley)
+				if (hadley) CTdat = convCT(CTdat)
+				LLdat = CTdat[ii,]
+				#jj = dimnames(LLdat)[[2]]
+				jj = intersect(dimnames(ctab)$major, dimnames(LLdat)[[2]])
+				if (length(jj)==0) next
+				ctab[ii,jj,kk,ll] = LLdat[,jj,drop=FALSE]
 				#jj0 = setdiff(major,jj)
 				jj0 = setdiff(MM,jj)
 				if (ll=="landed" && length(jj0)>0)
@@ -1222,10 +1234,13 @@ REEFER = REFDAT
 				if (nrow(refdat)==0) next
 				refdat$ratio = refdat$landed / refdat[[ll]]
 				#refrat = crossTab(refdat,c("major","fid"),"ratio",getBGrat)
-				refpmr = crossTab(refdat,c("major","fid"),"ratio",getPMRrat)
-				refpmr = convCT(refpmr)
+				refpmr = crossTab(refdat,c("major","fid"),"ratio",getPMRrat, hadley=hadley)  ## crossTab may be a bit dodgy here
+				if (hadley) refpmr = convCT(refpmr)
+				else        refpmr = matrix(refpmr[,1,],nrow=dim(refpmr)[1],ncol=dim(refpmr)[3],dimnames=dimnames(refpmr)[c(1,3)])
+#browser();return()
 				refmat = t(t(apply(refpmr,1,getBGrat)))
-				dimnames(refmat)[[2]] = kk
+				colnames(refmat) = kk
+				#dimnames(refmat)[[2]] = kk
 				#reffid = intersect(kk,dimnames(refmat)[[2]]) # redundant
 				#if (length(reffid)==0) next
 				#refmat = refmat[,reffid,drop=FALSE]
@@ -1243,7 +1258,9 @@ REEFER = REFDAT
 				refdat = refdat[is.element(refdat$major,mm),]
 #if (k==2 && ll=="POP"){browser();return()}
 				refdat = refdat[refdat[[ll]]>0 & !is.na(refdat[[ll]]),]  ## maybe only do this for halibut:TAR
-				if (nrow(refdat)==0) {agamma=NULL; next }
+				if (nrow(refdat)==0) {
+					agamma=NULL; next
+				}
 				refdat$dzone = ceiling(refdat$fdep/depbin)*depbin
 				refdat$dzone[is.na(refdat$dzone)] = 0
 				## ---------------------------------------------------------
@@ -1252,19 +1269,22 @@ REEFER = REFDAT
 				if (!all(refdat$dzone==0) && length(refdat$dzone[refdat$dzone>0])/nrow(refdat) > 0.1) 
 					refdat = refdat[refdat$dzone>0 & !is.na(refdat$dzone),]
 				else refdat$dzone = rep(99,nrow(refdat))
-				nrefc = apply(crossTab(refdat,c("year","major","dzone"),ll,function(x){length(x[x>0])}),3,sum)
+#browser();return()
+				nrefc = apply(crossTab(refdat, c("year","major","dzone"), ll, function(x){length(x[x>0])}, hadley=hadley), 3, sum)
 .flush.cat(c(k,ll,nrefc,"\n"))
 				## -------------------------------------------------------------------
 				## only use depth zones with at least 10 non-zero discard observations
 				## -------------------------------------------------------------------
 				urefc = nrefc[nrefc>=ifelse(k==3,3,ifelse(k==4,4,10))] 
 #if (k==2 && ll=="ORF") {browser();return()}
-				if (length(urefc)==0) {agamma=NULL; next }
+				if (length(urefc)==0) {
+					agamma=NULL; next
+				}
 .flush.cat(c(k,ll,urefc,"\n"))
 				refdat = refdat[is.element(refdat$dzone,names(urefc)),]
-				dnum  = crossTab(refdat,c("year","major","dzone"),"landed",function(x){if(all(is.na(x))) 0 else sum(x,na.rm=TRUE)/1000.})
-				dden  = crossTab(refdat,c("year","major","dzone"),ll,function(x){if(all(is.na(x))) 0 else sum(x,na.rm=TRUE)/1000.})
-				dnos  = crossTab(refdat,c("year","major","dzone"),ll,length)
+				dnum  = crossTab(refdat,c("year","major","dzone"),"landed",function(x){if(all(is.na(x))) 0 else sum(x,na.rm=TRUE)/1000.}, hadley=hadley)
+				dden  = crossTab(refdat,c("year","major","dzone"),ll,function(x){if(all(is.na(x))) 0 else sum(x,na.rm=TRUE)/1000.}, hadley=hadley)
+				dnos  = crossTab(refdat,c("year","major","dzone"),ll,length, hadley=hadley)
 				snos  = apply(dnos,2,sum)        ## stratify by year and depth
 				pnos  = dnos
 				for (p in 1:dim(dnos)[3]){
@@ -1289,7 +1309,10 @@ REEFER = REFDAT
 			rtmp = cref[,,,"landed"]/cref[,,,ll]
 			## order is important here (process equalities, zero-denominator, then zero-numerator)
 			rtmp[z2]=0; rtmp[!z2&z1]=1; rtmp[!z2&!z1&z0]=0 
-			rmat = apply(rtmp,2:3,mean)
+			if (useGM)
+				rmat = apply(rtmp,2:3,calcGM,exzero=FALSE,offset=0.00001)
+			else
+				rmat = apply(rtmp,2:3,mean)
 		}
 		rtar[[ll]] = rmat
 	}
@@ -1412,7 +1435,6 @@ REEFER = REFDAT
 		if (nrow(discat)==0) next
 		ologs[[kk]] = discat
 		DISCAT = discat
-#if (k==2) {browser();return()}
 		for (d in 1:drN) { ## discard ratio combos 'drSpp'
 			discat = DISCAT
 			dd=drate[d]
@@ -1431,7 +1453,7 @@ REEFER = REFDAT
 				if (!all(discat$dzone==0) && length(discat$dzone[discat$dzone>0])/nrow(discat) > 0.1) 
 					discat = discat[discat$dzone>0 & !is.na(discat$dzone),]
 				else discat$dzone = rep(99,nrow(discat))
-				ndisc = apply(crossTab(discat,c("year","major","dzone"),fldD,function(x){length(x[x>0])}),3,sum)
+				ndisc = apply(crossTab(discat,c("year","major","dzone"),fldD,function(x){length(x[x>0])},hadley=hadley),3,sum)
 .flush.cat(c(k,dd,ndisc,"\n"))
 				## -------------------------------------------------------------------
 				## only use depth zones with at least 10 non-zero discard observations
@@ -1440,9 +1462,9 @@ REEFER = REFDAT
 				if (length(udisc)==0) {DRAT=NULL; next }
 .flush.cat(c(k,dd,udisc,"\n"))
 				discat = discat[is.element(discat$dzone,names(udisc)),]
-				dnum  = crossTab(discat,c("year","major","dzone"),fldN,function(x){if(all(is.na(x))) 0 else sum(x,na.rm=TRUE)/1000.})
-				dden  = crossTab(discat,c("year","major","dzone"),fldD,function(x){if(all(is.na(x))) 0 else sum(x,na.rm=TRUE)/1000.})
-				dnos  = crossTab(discat,c("year","major","dzone"),fldD,length)
+				dnum  = crossTab(discat,c("year","major","dzone"),fldN,function(x){if(all(is.na(x))) 0 else sum(x,na.rm=TRUE)/1000.},hadley=hadley)
+				dden  = crossTab(discat,c("year","major","dzone"),fldD,function(x){if(all(is.na(x))) 0 else sum(x,na.rm=TRUE)/1000.},hadley=hadley)
+				dnos  = crossTab(discat,c("year","major","dzone"),fldD,length,hadley=hadley)
 				snos  = apply(dnos,2,sum)    ## stratify by year and depth
 				pnos  = dnos
 				for (p in 1:dim(dnos)[3]){
@@ -1458,18 +1480,40 @@ REEFER = REFDAT
 				PNOS[[kk]][[dd]] = pnos      ## proportion weighting by year, major andf depth zone applied to discard rates (weights sum to 1 for each area)
 #if (k==2) {browser();return()}
 			} else { ## original method
-				dnum = convCT(crossTab(discat,c("year","major"),fldN,sum))
-				dden = convCT(crossTab(discat,c("year","major"),fldD,sum))
-				DRAT = dnum/dden ## annual discard rates by major
+				dnum = crossTab(discat,c("year","major"),fldN,sum,hadley=hadley)
+				dden = crossTab(discat,c("year","major"),fldD,sum,hadley=hadley)
+				if (hadley) {
+					dnum = convCT(dnum)
+					dden = convCT(dden)
+				}
+				## Initialize discard matrix with zeroes
+				## No need to check if numerator=0 and denominator>0 because ratio dnum/dden=0
+				DRAT = array(0,dim=dim(dnum),dimnames=dimnames(dnum))
+				## Non-zero values in numerator and denominator
+				zyes = dnum>0 & dden>0
+				if (any(zyes))
+					DRAT[zyes] = dnum[zyes]/dden[zyes]
+				## Non-zero values in numerator and zero values in denominator (discarded everything, landed nothing)
+				zmay = dnum>0 & dden<=0
+				if (any(zmay))
+					DRAT[zmay] = 1 ## 100% discarded
+				#DRAT = dnum/dden ## annual discard rates by major
 			}
 			DRATES[[kk]][[dd]] = DRAT
 			drat = rep(0,length(mm)); names(drat)=mm
 			if (!is.null(DRAT)){
-				if (is.vector(DRAT)) drat0 = DRAT
-				else                 drat0 = apply(DRAT,2,mean,na.rm=TRUE) ## mean rate by major
+				if (is.vector(DRAT)) {
+					drat0 = DRAT
+				} else {
+					if (useGM)
+						drat0 = apply(DRAT,2,calcGM,exzero=FALSE,offset=0.00001) ## geometric mean rate by major (with small offset to use zero rates)
+					else
+						drat0 = apply(DRAT,2,mean,na.rm=TRUE) ## mean rate by major (should perhaps use geometric mean for rates and ratios)
+				}
 				mmm = intersect(names(drat),names(drat0))
 				drat[mmm] = drat0[mmm]
 			}
+#if (k==5) {browser();return()}
 			dfac[names(drat),kk,dd]=drat 
 		}
 #if (k==3) {browser();return()}
@@ -1650,7 +1694,8 @@ REEFER = REFDAT
 		## --------------------------------------------------
 		## Reconstructed domestic RRF landings from modern ORF
 		## --------------------------------------------------
-		reccatRRF2 = t(apply(catmod[,mm,kk,orfSpp],1,function(x,gamm){x*gamm},gamm=gamma[,kk]))
+		reccatRRF2 = t(apply(catmod[,mm,kk,orfSpp],1,function(x,gamm){x*gamm},gamm=gamma[,kk]))  ## only place where gamma is applied !
+		reccatORF2 = catmod[,mm,kk,orfSpp]
 		icom = intersect(dimnames(reccatRRFall)[[1]],dimnames(reccatRRF2)[[1]])
 		if (length(icom)>0) {
 			reccatRRFraw  = reccatRRFall[,,"CA"]
@@ -1661,7 +1706,7 @@ REEFER = REFDAT
 			## --------------------------------------
 			useMod = reccatRRFcom2 > reccatRRFcom
 			## ----------------------------------------
-			## Use adjusted modern ORF for Langara Spit
+			## Use adjusted modern RRF for Langara Spit
 			## ----------------------------------------
 			if (k==1 && !useLS)
 				useMod[intersect(1983:1993,icom),"9"] = TRUE
@@ -1689,7 +1734,6 @@ REEFER = REFDAT
 				reccatORFcon[useNod]  = repcatORFcon[useNod]
 			reccatORFall[icon,,"CA"] = reccatORFcon
 		}
-#if (k==2) {browser();return()}
 
 		## -----------------------------------------------------------------------------------
 		## Add any ancient catch from (trawl,trap,h&l) (1918-1950) (keep separate form MEDYRS)
@@ -1705,7 +1749,7 @@ REEFER = REFDAT
 		}
 #browser();return()
 
-		##*** `sppnewRRF' only contains fishery catch from 1918-1950 at this stage.
+		##***** `sppnewRRF' only contains fishery catch from 1918-1950 at this stage.
 
 		## --------------------------------------------------------------------------------------------
 		## Detect modern RRF landings and mesh with reconstructed RRF landings if no `useYR1' specified
@@ -1717,7 +1761,7 @@ REEFER = REFDAT
 			## ------------------------------------------------------------------------------------
 			## Start believing reported catch when it exceeds the 10th percentile of non-zero catch
 			## ------------------------------------------------------------------------------------
-			x0 = apply(repcatRRF,2,function(y,x){x[y>quantile(y[y>0],0.10)][1]},x=xrep) ## vector of start years for each major
+			x0 = apply(repcatRRF,2,function(y,x){x[y>quantile(y[y>0],0.10)][1]}, x=xrep) ## vector of start years for each major
 			x0 = pmax(x0,max(ancyrs)+1) ## cannot go back into the ancient years
 			x0 = pmin(x0,1996)          ## have to believe all catches from 1996 on
 			x0[is.na(x0)] = 1996        ## ditto 
@@ -1727,7 +1771,7 @@ REEFER = REFDAT
 			## ----------------------------------------------------------
 			## select the reconstructed catch for reported catch not used
 			## ----------------------------------------------------------
-			irec   = dimnames(reccatRRFall)[[1]]
+			irec = dimnames(reccatRRFall)[[1]]
 			xrec = as.numeric(irec)
 			## ------------------------------------------------------------------
 			## identify reconstructed catch that had no believable reported catch
@@ -1735,7 +1779,6 @@ REEFER = REFDAT
 			#zrec = sapply(x0,function(x,xrec){xrec<x & xrec>rev(ancyrs)[1]},xrec=xrec)  ## years after 1950 and before first reported catch
 			zrec = sapply(x0,function(x,xrec){xrec<x & xrec>rev(ancyrs)[1]},xrec=xrec)  ## years after 1950 and before first reported catch
 			zall = array(TRUE,dim=c(length(irec),length(jj)))
-#browser();return()
 			for (nn in natUse){
 				zuse = if (nn %in% "CA") zrec else zall
 				sppnewRRF[irec,jj,kk][zuse] =  sppnewRRF[irec,jj,kk][zuse] + reccatRRFall[irec,jj,nn][zuse]
@@ -1747,7 +1790,9 @@ REEFER = REFDAT
 		else {
 			## -------------------------------------------------------------------------
 			## Needed because estimation from orfSpp cannot occur before 1996 at present
-			useYRstart = min(ifelse(is.na(useYR1[k]), useYR1def, useYR1[k]), 1996)
+			## useYRstart = min(ifelse(is.na(useYR1[k]), useYR1def, useYR1[k]), 1996)
+			## Below, irec2 now allows the use of useYRstart later than 1996 (rev.180228)
+			useYRstart = min(ifelse(is.na(useYR1[k]), useYR1def, useYR1[k]))
 			## -------------------------------------------------------------------------
 
 			## ------------------------------------------------------------------
@@ -1773,10 +1818,16 @@ REEFER = REFDAT
 				## ---------------------------------------------------------
 				yrs.rec[[kk]][["xrec"]] = irec  ## record reconstructed years
 				reccatRRF = reccatRRFall[,,"CA"]
-				comcatRRF = rbind(reccatRRF[irec,,drop=FALSE],repcatRRF[irep,,drop=FALSE])
 				reccatORF = reccatORFall[,,"CA"]
-				comcatORF = rbind(reccatORF[irec,,drop=FALSE],repcatORF[irep,,drop=FALSE])
-#if (k==1) {browser();return()}
+				## reconstructed catch for period specified by reported catch (if user specifies useYR1>1996)
+				irec2  = setdiff(irec,rownames(reccatRRF))
+				if (length(irec2)==0) {
+					comcatRRF = rbind(reccatRRF[irec,,drop=FALSE], repcatRRF[irep,,drop=FALSE])
+					comcatORF = rbind(reccatORF[irec,,drop=FALSE], repcatORF[irep,,drop=FALSE])
+				} else {
+					comcatRRF = rbind(reccatRRF[setdiff(irec,irec2),,drop=FALSE], reccatRRF2[irec2,,drop=FALSE], repcatRRF[irep,,drop=FALSE])
+					comcatORF = rbind(reccatORF[setdiff(irec,irec2),,drop=FALSE], reccatORF2[irec2,,drop=FALSE], repcatORF[irep,,drop=FALSE])
+				}
 			} else {
 				yrs.rec[[kk]][["xrec"]] = "none"  ## record reconstructed years
 				comcatRRF = repcatRRF[irep,,drop=FALSE]
@@ -1784,12 +1835,16 @@ REEFER = REFDAT
 			}
 			iicc = dimnames(comcatRRF)[[1]]
 			jjcc = dimnames(comcatRRF)[[2]]
+
+			## Scroll through nationalities
 			for (nn in natUse){
 				if (nn %in% "CA") {
+					## If Canadian, add the comcat matrix generated above
 					sppnewRRF[iicc,jjcc,kk] = sppnewRRF[iicc,jjcc,kk] + comcatRRF[iicc,jjcc,drop=FALSE]
 					sppnewORF[iicc,jjcc,kk] = sppnewORF[iicc,jjcc,kk] + comcatORF[iicc,jjcc,drop=FALSE]
 				} else {
-					iimed = as.character(MEDYRS[1]:1977)  ## Canada's EEZ established in 1977 (allow for some catch in 1977)
+					## Foreign fleets -- Canada's EEZ established in 1977 (allow for some catch in 1977, none afterwards)
+					iimed = as.character(MEDYRS[1]:1977)  
 					## ----------------------------------------------------------------------
 					## Kate Rutherford (2016-11-14):
 					## For many years Canadian trawlers landed their fish in Washington state
@@ -1802,6 +1857,9 @@ REEFER = REFDAT
 				}
 			}
 		}
+		##***** `sppnewRRF' now contains fishery catch from 1951-current year at this stage (previously only 1918-1950 catch)
+
+#if (k==2) {browser();return()}
 
 		recLfileRRF = paste0(tabDir,"/",fidfive[k],"-",strSpp,"-Landed-Recon-",numdate,".csv")
 		recLfileORF = paste0(tabDir,"/",fidfive[k],"-",orfSpp,"-Landed-Recon-",numdate,".csv")
@@ -1827,12 +1885,24 @@ REEFER = REFDAT
 		## icalc = years when RRF discards calculated by rates
 		## idata = years when RRF discards reported as data
 		## ------------------------------------------------------------
-		discard.regimes = switch( k, ## default regime
-			list(inone=ALLYRS[1]:1953, icalc=1954:1995, idata=1996:ALLYRS[nyrs]),  ## trawl (use `landed' for discard rate)
-			list(inone=ALLYRS[1]:1985, icalc=1986:2005, idata=2006:ALLYRS[nyrs]),  ## halibut
-			list(inone=ALLYRS[1]:1985, icalc=1986:2005, idata=2006:ALLYRS[nyrs]),  ## sablefish
-			list(inone=ALLYRS[1]:1985, icalc=1986:2005, idata=2006:ALLYRS[nyrs]),  ## schedule II
-			list(inone=ALLYRS[1]:1985, icalc=1986:2005, idata=2006:ALLYRS[nyrs]))  ## ZN rockfish (use `landed' for discard rate)
+		#discard.regimes = switch( k, ## default regime
+			#list(inone=ALLYRS[1]:1953, icalc=1954:1995, idata=1996:ALLYRS[nyrs]),  ## trawl (use `landed' for discard rate)
+			#list(inone=ALLYRS[1]:1985, icalc=1986:2005, idata=2006:ALLYRS[nyrs]),  ## halibut
+			#list(inone=ALLYRS[1]:1985, icalc=1986:2005, idata=2006:ALLYRS[nyrs]),  ## sablefish
+			#list(inone=ALLYRS[1]:1985, icalc=1986:2005, idata=2006:ALLYRS[nyrs]),  ## schedule II
+			#list(inone=ALLYRS[1]:1985, icalc=1986:2005, idata=2006:ALLYRS[nyrs])   ## ZN rockfish (use `landed' for discard rate)
+		#)
+		## Discard list now determined by argument 'disyrs' (rev.180301)
+		discard.regimes  = list(inone=NA, icalc=NA, idata=NA)
+		if (all(is.na(disyrs[[k]]))) {
+			disyr = switch(k,1996,2005,2005,2005,2005)
+			discard.regimes[["inone"]] = ALLYRS[1]:(disyr-1)
+			discard.regimes[["idata"]] = disyr:ALLYRS[nyrs]
+		} else {
+			if (ALLYRS[1] < disyrs[[k]][1])         discard.regimes[["inone"]] = ALLYRS[1]:(disyrs[[k]][1]-1)
+			if (!all(is.na(disyrs[[k]])))           discard.regimes[["icalc"]] = disyrs[[k]]
+			if (ALLYRS[nyrs] > rev(disyrs[[k]])[1]) discard.regimes[["idata"]] = (rev(disyrs[[k]])[1]+1):ALLYRS[nyrs]
+		}
 
 		## --------------------------
 		## Special conditions for YYR
@@ -1961,7 +2031,8 @@ REEFER = REFDAT
 			plotDiag(disD,paste("disD for ",fidnam[k]," by major",sep=""),col=clrs.major[mm])
 			plotDiag(sppnewRRF[,,kk],paste("sppnew for ",fidnam[k]," by major",sep=""),col=clrs.major[mm])
 		}
-	}
+	} ## end k (fid) loop
+
 	attr(sppnewRRF,"yrs.rec") = yrs.rec # years of reconstructed and reported catch
 	sppnewRRF[,,"10"] = apply(sppnewRRF[,,as.character(fid)],1:2,sum)  ## sum across fisheries
 	
@@ -2053,7 +2124,7 @@ REEFER = REFDAT
 	}
 	if (eps)
 		collectFigs(path=".",ext="eps",fout=paste("Catch-Recon-Summary-",strSpp,sep=""),width=6.75,pattern="Catch-History")
-	.flush.cat(paste0("-----Finished reconstructing catch for ",species[strSpp,"latin"],"-----\n\n"))
+	.flush.cat(paste0("-----Finished reconstructing catch for ",species[strSpp,"latin"],"-----\n-----   [ see dir: ",run.name," ]\n\n"))
 #browser();return()
 	invisible(sppnewRRF)
 }
@@ -2118,12 +2189,12 @@ plotDiag =function(x, description="something",
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotDiag
 
 
-#plotRecon------------------------------2015-12-01
+#plotRecon------------------------------2018-03-26
 # Plot reconstructed catch using barplots stacked by PMFC area.
 #-----------------------------------------------RH
 plotRecon = function(dat=cat440rec, strSpp="440", major=c(1,3:9), fidout=10, 
    years=1918:2015, xlab=seq(1920,2050,5), yrs.rec=attributes(dat)$yrs.rec,
-   shade=FALSE, shadier=FALSE, figDir=getwd(),
+   ymax=NULL, shade=FALSE, shadier=FALSE, figDir=getwd(),
    eps=FALSE, png=FALSE, wmf=FALSE, PIN=c(10,5))
 {
 	if (dev.cur()>1) { oldpar=par(no.readonly=TRUE); on.exit(par(oldpar)) }
@@ -2139,19 +2210,23 @@ plotRecon = function(dat=cat440rec, strSpp="440", major=c(1,3:9), fidout=10,
 	clrs[as.character(c(1,3:9))]=c("moccasin","blue","lightblue","yellow","orange","red","seagreen","lightgreen")
 	mclrs=clrs[mm]
 	data(pmfc,species,envir=penv())
-	XLAB=dimnames(ydat)[[1]];  xpos=(1:length(XLAB))-.5; zlab=is.element(XLAB,xlab)
+	XLAB = dimnames(ydat)[[1]];  xpos=(1:length(XLAB))-.5; zlab=is.element(XLAB,xlab)
 	for (i in fidout){
 		ii=as.character(i)
 		if (length(dim(ydat))==2) idat = t(ydat)
 		else idat = t(ydat[,mm,ii])
-		plotname=paste0(figDir,"/",strSpp,"-Catch-History",ifelse(i==10,0,i),"-",fidnam[i],"-years(",min(years),"-",max(years),")-major(",paste(major,collapse=""),")")
+		if (is.null(ymax))
+			ylim = c(0,max(apply(idat,2,sum)))
+		else
+			ylim = c(0,ymax)
+		plotname = paste0(figDir,"/",strSpp,"-Catch-History",ifelse(i==10,0,i),"-",fidnam[i],"-years(",min(years),"-",max(years),")-major(",paste(major,collapse=""),")")
 		if (eps)       postscript(file=paste(plotname,".eps",sep=""),width=PIN[1],height=PIN[2],fonts="mono",paper="special")
 		else if (png)  png(filename=paste(plotname,".png",sep=""),width=round(100*PIN[1]),height=round(100*PIN[2]),pointsize=16)
 		else if (wmf && .Platform$OS.type=="windows")
 			do.call("win.metafile",list(filename=paste(plotname,".wmf",sep=""),width=PIN[1],height=PIN[2]))
 		else  resetGraph()
 		expandGraph(mar=c(3,3.2,.5,.5),mgp=c(1.6,.5,0))
-		barplot(idat,col=0,space=0,xaxt="n",yaxt="n",xaxs="i")
+		barplot(idat,col=0,space=0,xaxt="n",yaxt="n",xaxs="i",ylim=ylim)
 		if (shade && !is.null(yrs.rec)) {
 			## shade the ancient years (Dominion Bureau of Stats)
 			xanc = as.character(1918:1950)
@@ -2237,7 +2312,7 @@ surveyCatch = function(strSpp="396", spath=.getSpath(), gfbdat=NULL)
 		#rcat = gfbdat # used for summaries by SSID and SVID down below
 		rm(PBSdat) ## just to be safe
 	}
-	gfbtab = crossTab(gfbdat,c("year","major"),"catKg") # summarise catch (t)
+	gfbtab = crossTab(gfbdat,c("year","major"),"catKg",hadley=hadley) # summarise catch (t)
 	gfbcat = as.data.frame(gfbtab[,-1])
 	row.names(gfbcat) = gfbtab[,1]
 	data(pmfc,package="PBSdata",envir=penv())
@@ -2250,7 +2325,7 @@ surveyCatch = function(strSpp="396", spath=.getSpath(), gfbdat=NULL)
 	gfbdat$SVID[is.na(gfbdat$SVID)] = 999
 	gfbdat$SSID[is.na(gfbdat$SSID)] = 999
 
-	spp.svid = crossTab(gfbdat,c("SVID","year"),"catKg")
+	spp.svid = crossTab(gfbdat,c("SVID","year"),"catKg",hadley=hadley)
 	getData("SURVEY","GFBioSQL")
 	survey = PBSdat
 	svid = survey[[2]]; names(svid) = survey[[1]]
@@ -2261,7 +2336,7 @@ surveyCatch = function(strSpp="396", spath=.getSpath(), gfbdat=NULL)
 	if (file.exists("./tables"))
 		write.csv(svidcat,file=paste0(tabDir,"/Catch-Survey-",strSpp,"-(SVID-Year)-",numdate,".csv"))
 
-	spp.ssid = crossTab(gfbdat,c("SSID","year"),"catKg")
+	spp.ssid = crossTab(gfbdat,c("SSID","year"),"catKg",hadley=hadley)
 	getData("SURVEY_SERIES","GFBioSQL")
 	series = PBSdat
 	ssid = series[[2]]; names(ssid) = series[[1]]

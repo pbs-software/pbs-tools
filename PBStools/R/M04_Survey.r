@@ -214,13 +214,15 @@ calcMoments = function(strSpp="396", survID=c(1,2,3,121,167)) {
 }
 #--------------------------------------calcMoments
 
-#calcPMR--------------------------------2008-09-30
+
+#calcPMR--------------------------------2018-03-26
 # Calculate pmr parameter values from a sample.
 #-----------------------------------------------RH
-calcPMR <- function(x, na.value=NULL) {
+calcPMR <- function(x, na.value=NULL)
+{
 	if(is.null(na.value)) x=x[!is.na(x)] # get rid of NAs
 	else x[is.na(x)]=na.value
-	z0 = x==0
+	z0 = x==0 | is.na(x) | !is.finite(x)
 	n=length(x); n0=length(x[z0]); n1=n-n0; p=n0/n
 	#if (p==1) return(list(p=p,mu=NA,rho=NA))
 	if (p==1) pmr=c(n,p,NA,NA)
@@ -229,9 +231,12 @@ calcPMR <- function(x, na.value=NULL) {
 		if (n1==1) rho=1/sqrt(n)
 		else rho=sd(x[!z0])/mean(x[!z0])
 		#return(list(p=p,mu=mu,rho=rho))
-		pmr=c(n,p,mu,rho) }
+		pmr=c(n,p,mu,rho) 
+	}
 	names(pmr)=c("n","p","mu","rho")
-	return(pmr) }
+	return(pmr)
+}
+
 
 #getBootRuns----------------------------2013-11-25
 # Get Norm's survey bootstrap results.

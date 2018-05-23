@@ -7,6 +7,24 @@ Authors: RH  = Rowan Haigh
          PJS = Paul J. Starr
 ------------------------------
 
+1.37.6 (2018-05-23)
+  * Documentation
+    + Updated Rd files for `buildCatch' and `plotRecon'. (RH 180523)
+  * M06_Assessment.r
+    + Added new function `compAF' to compare age frequencies using discrete or cumulative distribution plots. (RH 180522)
+  * M08_LaTeX.r
+    + Added new function `texThatVec' to convert a vector to a phrase `x, y, and z' for use in Sweave. (RH 180507)
+    + Changed default value of `texArray' argument `rm.empty' from TRUE to FALSE (interfered with WAP decision tables). (RH 180322)
+  * M01_Utility.r
+    + Fixed bug in crossTab that occurred when only one cross factor was specified. (RH 180515)
+    + Further modified function `crossTab' to handle a summary function that returns more than one value. (RH 180327)
+  * M07_BuildCatch.r
+    + Adapted code in `buildCatch' to use the revised function `crossTab' to deprecate the use of Hadley's `reshape' package. (RH 180328)
+      - As a transitionary precaution, new logical argument `hadley' allows the former functionality of `crossTab'.
+    + Added new argument `ymax' to function `plotRecon'. (RH 180326)
+  * M04_Survey.r
+    + Modified function `calcPMR' to handle NAs and non-finites as zeroes. (RH 180326)
+
 1.37.5 (2018-03-14)
   * M01_Utility.r
     + Modified function `crossTab' to remove the reliance on package `reshape' (RH 180314)

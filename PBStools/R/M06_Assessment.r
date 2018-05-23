@@ -1,11 +1,12 @@
-#===============================================================================
-# Module 6: Assessment
-# --------------------
-#  calcMA..........Calculate a moving average using a fixed period occurring every x units.
-#  compBmsy........Compare biomass posteriors relative to Bmsy or Bavg
-#  imputeRate......Impute rate of return from an investment with irregular contributions/withdrawals.
-#  quantAges.......Plot quantile boxes of age by year and/or area, including mean age over time.
-#===============================================================================
+## =============================================================================
+## Module 6: Assessment
+## --------------------
+##  calcMA..........Calculate a moving average using a fixed period occurring every x units.
+##  compAF..........Compare age frequencies using discrete or cumulative distribution plots.
+##  compBmsy........Compare biomass posteriors relative to Bmsy or Bavg.
+##  imputeRate......Impute rate of return from an investment with irregular contributions/withdrawals.
+##  quantAges.......Plot quantile boxes of age by year and/or area, including mean age over time.
+## =============================================================================
 
 
 #calcMA---------------------------------2011-05-05
@@ -45,6 +46,101 @@ calcMA = function(x,y,y2,period=270,every=10)
 	return(ma)
 }
 #-------------------------------------------calcMA
+
+
+## compAF-------------------------------2018-05-22
+## Compare age frequencies using discrete or
+## cumulative distribution plots.
+## ---------------------------------------------RH
+compAF=function(x, year=2003, sex=2, amax=40, pfld="wp",
+   png=FALSE, outnam, clrs=c("red","black"), ltys=1, type="cumul")
+{
+	if (length(x)==0) stop("Supply a named list for x")
+	std   = function(x){x/sum(x)}
+	ncomp = length(x)
+	nsex  = length(sex)
+	ntype = length(type)
+	years = sapply(x,function(xx){
+		noto=apply(xx[,,,"n",drop=FALSE],2,sum,na.rm=TRUE)
+		yrs = as.numeric(names(noto[noto>0]))
+		return(yrs)
+	} )
+	year  = intersect(year,.su(unlist(years)))
+	nyear = length(year)
+	col   = lucent(rep(clrs,ncomp)[1:ncomp],0.5)
+	lty   = rep(ltys,ncomp)[1:ncomp]
+
+	if (png) png(file=paste0(outnam,".png"),units="in",res=600,width=10,height=7.5)
+	if (ntype==1 && nsex==1) {
+		rc = .findSquare(nyear)
+		np = 0  ## keep track of # plots
+		par(mfrow=rc, mar=c(0,0,0,0), oma=c(4,4,0.5,0.5), mgp=c(1.6,0.5,0))
+	} else {
+		rc = c(ntype,nsex)
+		par(mfcol=rc, mar=c(0,0,0,0), oma=c(3.5,3.5,0.5,0.5), mgp=c(1.6,0.5,0))
+	}
+
+	xnam = names(x)
+	for (y in year) {
+		for (s in sex) {
+			yy = as.character(y)
+			ss = as.character(s)
+			xvec = list()
+			for (i in 1:length(x)) {
+				ii = names(x)[i]
+				xmat = x[[ii]][,,ss,pfld,drop=FALSE]
+				if (!is.element(yy,colnames(xmat))) xvec[[ii]] = NA # next
+				else xvec[[ii]] = std(x[[i]][,yy,ss,pfld])
+			}
+			nvec   = length(xvec)
+			nord   = match(names(xvec),xnam)
+			notos  = sapply(x,function(xx){
+				if(!is.element(yy,dimnames(xx)$year)) 0 
+				else sum(xx[,yy,ss,"n"])
+			})
+			legtxt = paste0(names(notos)," ",round(notos)," otos")
+			ylim = c(0,max(sapply(xvec,max),na.rm=TRUE))
+
+			if ("discr" %in% type) {
+				plot(0,0, xlim=c(1,amax), ylim=ylim, type="n", xlab="", ylab="", xaxt="n", yaxt="n")
+				sapply(nord, function(n){
+					if (!all(is.na(xvec[[n]])))
+						lines(1:length(xvec[[n]]), xvec[[n]], col=col[n], lty=lty[n], lwd=ifelse(n==1,3,2)) } )
+				addLabel(0.95,0.95,paste0(yy," - ",switch(s,"Male","Female")),adj=1)
+			}
+			if ("cumul" %in% type) {
+				plot(0,0, xlim=c(1,amax), ylim=c(0,1), type="n", xlab="", ylab="", xaxt="n", yaxt="n")
+				np = np + 1
+				if (all(notos==0))
+					addLabel(0.5,0.5,"NO DATA", col="red",cex=1.2)
+				else 
+					abline(h=seq(0.1,0.9,0.1), v=seq(5,amax-5,5), col=lucent("grey",0.5))
+				sapply(nord, function(n){
+					if (!all(is.na(xvec[[n]]))) {
+						lines(1:length(xvec[[n]]), cumsum(xvec[[n]]), col=col[n], lty=lty[n], lwd=ifelse(n==1,3,2))
+					}
+				} )
+				addLabel(0.05,0.95,paste0(yy,ifelse(np==1, switch(s," - Male"," - Female"),"")), adj=c(0,1), cex=1.2)
+				if (par()$mfg[2]==1) {
+					axis(2, at=seq(0,1,0.1), tcl=-0.25, labels=FALSE)
+					axis(2, at=seq(0.2,1,0.2), labels=TRUE, cex.axis=1.1, las=1)
+				}
+				if (np > nyear-rc[2]) {
+					axis(1, at=seq(0,amax,5), tcl=-0.25, labels=FALSE)
+					axis(1, at=seq(10,amax,10), labels=TRUE, cex.axis=1.1, las=1)
+				}
+			}
+			if (type=="cumul")
+				addLegend(0.975,0.05, bty="n", lty=lty, seg.len=1, col=col, legend=gsub("_"," ",legtxt), yjust=0, xjust=1, lwd=2, cex=0.9)
+			else
+				addLegend(0.025,0.975,bty="n", lty=lty, seg.len=1, col=col, legend=gsub("_"," ",legtxt), yjust=1, xjust=0, lwd=2, cex=0.9)
+		}
+	}
+	mtext ("Age", side=1, outer=TRUE, line=2.5, cex=1.5)
+	mtext (paste0(ifelse(type=="cumul","Cumulative ",""), "Age Frequency"), side=2, outer=TRUE, line=2.5, cex=1.25)
+	if(png) dev.off()
+}
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~compAF
 
 
 #compBmsy-------------------------------2017-11-20

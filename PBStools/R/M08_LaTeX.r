@@ -1,12 +1,13 @@
-#===============================================================================
-# Module 8 : LaTeX Crap
-# ---------------------
-#  collectFigs....Collect encapsulated postscript figures into one document.
-#  formatCatch....Format numeric table so that entries display N significnat figures.
-#  makeLTH........Make a longtable header for printing an xtable
-#  splitTab.......Split a long data table into side-by-side pieces for printing in LaTeX.
-#  texArray.......Flatten and format an array for latex output.
-#===============================================================================
+## =============================================================================
+## Module 8 : LaTeX Crap
+## ---------------------
+##  collectFigs.....Collect encapsulated postscript figures into one document;
+##  formatCatch.....Format numeric table so that entries display N significnat figures;
+##  makeLTH.........Make a longtable header for printing an xtable;
+##  splitTab........Split a long data table into side-by-side pieces for printing in LaTeX;
+##  texArray........Flatten and format an array for latex output;
+##  texThatVec......Convert a vector to a phrase 'x, y, and z'.
+##==============================================================================
 
 #collectFigs----------------------------2016-10-17
 # Collect encapsulated postscript figures into one document.
@@ -266,13 +267,13 @@ splitTab = function(tab, np=3, row.names=TRUE, row.label="row", row.numeric=FALS
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~splitTab
 
 
-#texArray-------------------------------2017-09-20
+#texArray-------------------------------2018-03-22
 # Flatten and format an array for latex output.
 #-----------------------------------------------RH
 texArray =function(x, table.caption="My table", table.label="tab:mytable",
    strSpp=NULL, sigdig=3, zero="---", exInt=TRUE, use.round=FALSE, 
    collab=NULL, dash.delim=NULL, tablewidth=6.5, 
-   rm.empty=TRUE, start.page=1, ignore.col=NULL,
+   rm.empty=FALSE, start.page=1, ignore.col=NULL,
    select.rows=NULL, use.row.names=FALSE, name.row.names="row",
    add.header.column=FALSE, new.header=NULL, outnam="mytable", 
    alignHRC=c("l","l","r"), italics.file=NULL, ...)
@@ -569,4 +570,36 @@ texArray =function(x, table.caption="My table", table.label="tab:mytable",
 	invisible(list(goo=goo,texfile=texfile,tabfile=tabfile))
 }
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~texArray
+
+
+## texThatVec-------------------------2018-05-07
+##  Convert a vector to a phrase 'x, y, and z'
+## ---------------------------------------------RH
+texThatVec = function(vec, simplify=TRUE)
+{
+	warn = options()$warn
+	on.exit(options(warn=warn))
+	options(warn=-1)
+	if (length(vec)==1) return(paste0(vec))
+	if (simplify) {
+		uvec = .su(vec)
+		if (is.character(uvec) && any(is.na(as.numeric(uvec))))
+			cvec = uvec
+		else {
+			uvec = as.numeric(uvec)
+			## User: A5C1D2H2I1M1N2O1R2T1 (140719)
+			## https://stackoverflow.com/questions/24837401/find-consecutive-values-in-vector-in-r
+			lvec = split(uvec,cumsum(c(1, diff(uvec) != 1)))
+			cvec = sapply(lvec, function(x) {
+				if (length(x)==1) return(paste0(x))
+				else return(paste0(x[1],"-",rev(x)[1]))
+			})
+		}
+	} else cvec = paste0(vec)
+	texvec = if (length(cvec)>=2)
+		paste0(paste0(cvec[1:(length(cvec)-1)], collapse=", "), ifelse(length(cvec)>2,",",""), " and ", rev(cvec)[1])
+		else cvec
+	return(texvec)
+}
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~texThatVec
 
