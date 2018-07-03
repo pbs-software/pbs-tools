@@ -9,21 +9,23 @@
   major and/or minor areas.
 }
 \usage{
-calcStockArea(strSpp, dat, stockFld="stock")
+calcStockArea(strSpp, dat, stockFld="stock", gmu=TRUE)
 
 calcWAParea(major, minor, strat, wts)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
-  \item{strSpp}{Species string code (alpha-numeric), usually taken as a page number from Hart (1973).}
-  \item{dat}{Data file with location fields (\code{major}, \code{minor}, \code{Y}, etc.).}
-  \item{stockFld}{Name of new field to add to the input data file \code{dat}.}
-  \item{major}{Vector of numeric codes for major PMFC statistical areas.}
-  \item{minor}{Vector of numeric codes for minor PMFC statistical areas
+  \item{strSpp}{\code{character} -- Species string code (alpha-numeric), usually taken as a page number from Hart (1973).}
+  \item{dat}{\code{data.frame} -- Data file with location fields (\code{major}, \code{minor}, \code{Y}, etc.).}
+  \item{stockFld}{\code{character} -- Name of new field to add to the input data file \code{dat}.}
+  \item{gmu}{\code{logical} -- if \code{TRUE}, use GMU areas set out in the IFMP for each species,
+    if \code{FALSE} use alternative stock area names if they are specified in the function's code.}
+  \item{major}{\code{numeric} -- Vector of numeric codes for major PMFC statistical areas.}
+  \item{minor}{\code{numeric} -- Vector of numeric codes for minor PMFC statistical areas
     (sometimes referred to as DFO salmon areas).}
-  \item{strat}{Vector of values (e.g., \code{year}) used to stratify the subarea delineation.
+  \item{strat}{\code{numeric} -- Vector of values (e.g., \code{year}) used to stratify the subarea delineation.
     Vector length must equal that for \code{major} and \code{minor}.}
-  \item{wts}{Vector of values  (e.g., \code{catch}) used to weight the 
+  \item{wts}{\code{numeric} -- Vector of values  (e.g., \code{catch}) used to weight the 
     occurrence of subareas in a major area to determine allocation of unknown
     subareas to known ones. Vector length must equal that for \code{major} and \code{minor}.}
 }
@@ -52,8 +54,10 @@ calcWAParea(major, minor, strat, wts)
   Hart, J.L. (1973) Pacific fishes of Canada. \emph{Fisheries Research Board of Canada} \bold{180}: ix + 740 p.
 }
 \author{
-   Rowan Haigh, Research Biologist,\cr
-   Pacific Biological Station, Fisheries and Oceans Canada, Nanaimo BC
+  \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
+  Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
+  \emph{locus: Institute of Ocean Sciences (IOS), Sidney BC}\cr
+  Last modified \code{Rd: 2018-06-28}
 }
 \note{
   There is no ideal way of parsing out the percentage of tows from the unknown subarea 

@@ -41,7 +41,7 @@ buildCatch(
    diagnostics=FALSE,
    saveinfo=TRUE,
    sql=FALSE,
-   only.sql=FALSE,
+   sql.only=FALSE,
    sql.force=FALSE,
    spath=.getSpath(),
    dpath=getwd(),
@@ -118,7 +118,7 @@ buildCatch(
     setting to \code{FALSE} may speed reconstruction.}
   \item{sql}{\code{logical} -- if \code{TRUE} query the databases, otherwise load catch records
     from binary files saved from a previous query run (saves time; also see \code{dpath}).}
-  \item{only.sql}{\code{logical} -- if \code{TRUE}, only execute the queries to download catch data from remote databases.}
+  \item{sql.only}{\code{logical} -- if \code{TRUE}, only execute the queries to download catch data from remote databases.}
   \item{sql.force}{\code{logical} -- if \code{TRUE}, force the SQL query even if the data file \code{.rda} exists.}
   \item{spath}{\code{character} -- path to SQL code files; defaults to the \code{sql} 
     directory under \cr \code{system.file(package="PBStools")}.}
@@ -129,7 +129,7 @@ buildCatch(
   \item{wmf}{\code{logical} -- if \code{TRUE}, send the figures to \code{.wmf} files.}
   \item{uid, pwd}{\code{character} -- user ID and password for Oracle DB account authentication (only used for PacHarv3 currently).}
   \item{ioenv}{\code{environment} -- input/output environment for function input data and output results.}
-  \item{hadley}{\code{logical} -- if \code{TRUE}. use Hadley Wickham's bloated R packages.}
+  \item{hadley}{\code{logical} -- if \code{TRUE}, use Hadley Wickham's bloated R packages.}
   \item{...}{additional \emph{ad hoc} arguments to deal with PJS issues.}
 }
 \details{
@@ -274,7 +274,7 @@ buildCatch(
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
   \emph{locus: Institute of Ocean Sciences (IOS), Sidney BC}\cr
-  Last modified \code{Rd: 2018-05-23}
+  Last modified \code{Rd: 2018-06-28}
 }
 \references{
   Edwards, A.M., Haigh, R. and Starr, P.J. (2014a)

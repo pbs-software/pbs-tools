@@ -174,12 +174,12 @@ calcSRFA <- function(major, minor=NULL, loc=NULL, subarea=FALSE) {
 #-----------------------------------------calcSRFA
 
 
-#calcStockArea--------------------------2016-10-17
+#calcStockArea--------------------------2018-02-13
 # Assign a stock area designation based on species
 # HART code and PMFC major and/or minor areas.
 #-----------------------------------------------RH
 #calcStockArea = function (strSpp, major, minor, ...)
-calcStockArea = function (strSpp, dat, stockFld="stock")
+calcStockArea = function (strSpp, dat, stockFld="stock", gmu=TRUE)
 {
 	if (missing(strSpp))
 		stop("Must specify a species to determine stock allocation")
@@ -235,11 +235,16 @@ calcStockArea = function (strSpp, dat, stockFld="stock")
 			newA[is.element(major,1)]   = "4B"
 		}
 		else if (is.element(strSpp,c("439","440"))){
-			newA[is.element(major,9)]   = "5E"
-			newA[is.element(major,7:8)] = "5CD"
-			newA[is.element(major,4:6)] = "3D5AB"
-			newA[is.element(major,3)]   = "3C"
-			newA[is.element(major,1)]   = "4B"
+			if (strSpp=="439" && !gmu){
+				newA[is.element(major,8:9)] = "North"
+				newA[is.element(major,3:7)] = "South"
+			} else {
+				newA[is.element(major,9)]   = "5E"
+				newA[is.element(major,7:8)] = "5CD"
+				newA[is.element(major,4:6)] = "3D5AB"
+				newA[is.element(major,3)]   = "3C"
+				newA[is.element(major,1)]   = "4B"
+			}
 		}
 		else if (is.element(strSpp,c("407","424","431","433","442"))){
 			newA[is.element(major,9)]   = "5E"
@@ -867,11 +872,11 @@ plotGMA = function(gma=gma.popymr, xlim=c(-134,-123), ylim=c(48.05,54.95),
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotGMA
 
 
-#plotLocal------------------------------2018-01-23
-# Plot DFO fishing localities with the highest catch.
-#-----------------------------------------------RH
+## plotLocal----------------------------2018-06-25
+## Plot DFO fishing localities with the highest catch.
+## ---------------------------------------------RH
 plotLocal = function(dat, area, aflds=NULL, pcat=0.95, showAll=FALSE,
-   fid=NULL, fidtype="PBStools", strSpp, Ntop=5,
+   fid=NULL, fidtype="PBStools", strSpp, Ntop=5, short=TRUE,
    plot=TRUE, png=FALSE, csv=FALSE, outnam="refA439")
 {
 	fenv = lenv()  ## function environment
@@ -892,7 +897,10 @@ plotLocal = function(dat, area, aflds=NULL, pcat=0.95, showAll=FALSE,
 	}
 	if (fidtype=="PBStools") {
 		FID = 1:5
-		names(FID) = c("Trawl","Halibut","Sablefish","Dogfish-Lingcod","HL-Rockfish") ## defaults for buildCatch
+		if (short)
+			names(FID) = c("T","H","S","DL","HL") ## short-name defaults
+		else
+			names(FID) = c("Trawl","Halibut","Sablefish","Dogfish.Lingcod","HL.Rockfish") ## long-name defaults
 		dat$fid[is.element(dat$fid,9)] = 1                                            ## put FOREIGN sector catch into trawl
 	} else if (fidtype=="GFFOS") {
 		getData("FISHERY",dbName="GFFOS")
@@ -939,6 +947,7 @@ plotLocal = function(dat, area, aflds=NULL, pcat=0.95, showAll=FALSE,
 			next
 		}
 		loccat = rev(sort(sapply(split(fdat$catKG,fdat$ID),function(x){sum(x)/1000.})))
+#browser();return()
 		yrcat  = sapply(split(fdat$catKG,as.numeric(substring(fdat$date,1,4))),function(x){sum(x)/1000.})
 		YRCAT[[as.character(f)]] = yrcat
 		procat = loccat/sum(loccat)
@@ -971,6 +980,7 @@ plotLocal = function(dat, area, aflds=NULL, pcat=0.95, showAll=FALSE,
 				addLabel(0.5, 0.96, sppnam, cex=1.2, adj=c(0,0))
 				addLabel(0.975, 0.96, paste0("(", derange, ")"), cex=0.8, adj=c(1,0))
 			}
+#browser();return()
 			box()
 			if (png) dev.off()
 		}
@@ -984,7 +994,7 @@ plotLocal = function(dat, area, aflds=NULL, pcat=0.95, showAll=FALSE,
 	attr(FDATA, "fishery") = names(fid)
 	return(FDATA)
 }
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotLocal
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotLocal
 
 
 #plotTernary----------------------------2013-02-26

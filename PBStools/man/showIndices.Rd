@@ -6,23 +6,27 @@
   estimates stored in the SQL database \code{GFBioSQL}.
 }
 \usage{
-showIndices(strSpp="396",serID=1, survID=NULL, bootID, 
-   tenv=.PBStoolEnv, quiet=FALSE, addN=FALSE, outnam,
-   png=FALSE, pngres=300)
+showIndices(strSpp= "396", serID=1, survID=NULL, bootID, 
+   tenv=.PBStoolEnv, quiet=TRUE, addN=TRUE, addT=TRUE, 
+   outnam="relAbund", png=FALSE, pngres=400, PIN=c(7,7))
 }
 \arguments{
-  \item{strSpp}{string specifying species code (\code{species$code}).}
-  \item{serID}{numeric survey series ID assigned to each survey series;
-    if specified (not NULL) then \code{survID} is ignored.}
-  \item{survID}{numeric survey ID assigned to each survey by the GFBio team.}
-  \item{bootID}{numeric boot run ID assigned to each record in the BOOT header table.}
-  \item{tenv}{temporary working environment.}
-  \item{quiet}{logical: if \code{TRUE}, plot an empty panel in and multi-panel figure; if \code{FALSE}, print species boot results to the console.}
-  \item{addN}{logical: if \code{TRUE}, report the number of specimens below each boxplot.}
-  \item{outnam}{string name of output file name prefix for a comma-delimited
+  \item{strSpp}{\code{string} -- Hart code specifying species in survey.}
+  \item{serID}{\code{numeric} -- survey series ID assigned to each survey series;
+    if specified (i.e., not \code{NULL}) then \code{survID} is ignored.}
+  \item{survID}{\code{numeric} -- survey ID assigned to each survey by the GFBio team.}
+  \item{bootID}{\code{numeric} -- boot run ID assigned to each record in the BOOT header table.}
+  \item{tenv}{\code{environment} -- temporary working environment.}
+  \item{quiet}{\code{logical} -- if \code{TRUE}, plot an empty panel in a multi-panel figure;
+    if \code{FALSE}, print species boot results to the console.}
+  \item{addN}{\code{logical} -- if \code{TRUE}, report the number of specimens below each index.}
+  \item{addT}{\code{logical} -- if \code{TRUE}, add the trend line, using an \code{lm}-fitted 
+    line (performed in \code{log2} space), and annual rate of change to plot.}
+  \item{outnam}{\code{string} -- name of output file name prefix for a comma-delimited
     file of Awatea/ADMB-style indices with field names \code{c("series", "year", "value", "CV")}.}
-  \item{png}{logical: if \code{TRUE}, send the figure output to a \code{png} file.}
-  \item{pngres}{numeric: resolution of \code{png} file in pixels/inch.}
+  \item{png}{\code{logical} -- if \code{TRUE}, send the figure output to a \code{png} file.}
+  \item{pngres}{\code{numeric} -- resolution (pixels/inch) of \code{png} file.}
+  \item{PIN}{\code{numeric} -- vector of width and height (inches) for the output \code{png} file.}
 }
 \details{
   The function relies on a short query function called \code{getBootRuns} 
@@ -51,8 +55,11 @@ showIndices(strSpp="396",serID=1, survID=NULL, bootID,
   \item{ulab}{Vector of unique boot run labels for the legend.}
 }
 \author{ 
-  Rowan Haigh, Pacific Biological Station, Fisheries and Oceans Canada, Nanaimo BC \cr
-  Bootstraps by Norm Olsen (also PBS, Nanaimo).
+  \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
+  Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
+  \emph{locus: Institute of Ocean Sciences (IOS), Sidney BC}\cr
+  Last modified \code{Rd: 2018-06-06}\cr
+  Bootstraps by \href{mailto:norm.olsen@dfo-mpo.gc.ca}{Norm Olsen} (PBS, Nanaimo).
 }
 \seealso{
   \code{\link{getBootRuns}}, \code{\link{calcMoments}}, 

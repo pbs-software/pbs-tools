@@ -30,10 +30,13 @@ subsetFile(fnam, enrow=30, header=TRUE, os=.Platform$OS.type)
 	that is a subset of the specified file.
 }
 \references{
-\url{http://linuxcommando.blogspot.ca/2008/04/use-sed-or-perl-to-extract-every-nth.html}
+\href{https://linuxcommando.blogspot.com/2008/04/use-sed-or-perl-to-extract-every-nth.html}{Linux Commando}
 }
 \author{
-  Rowan Haigh, Pacific Biological Station, Fisheries and Oceans Canada, Nanaimo BC
+  \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
+  Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
+  \emph{locus: Institute of Ocean Sciences (IOS), Sidney BC}\cr
+  Last modified \code{Rd: 2018-07-03}\cr
 }
 \seealso{
   \code{\link[PBStools]{countLines}}, \code{\link[PBStools]{collectFigs}}, 

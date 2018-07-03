@@ -9,9 +9,11 @@
 \usage{
 plotRecon(dat=cat440rec, strSpp="440", major=c(1,3:9), fidout=10, 
    years=1918:2015, xlab=seq(1920,2050,5), yrs.rec=attributes(dat)$yrs.rec,
-   ymax=NULL, shade=FALSE, shadier=FALSE, figDir=getwd(),
+   ymax=NULL, shade=FALSE, shadier=FALSE, figDir=getwd(), timestamp="",
    eps=FALSE, png=FALSE, wmf=FALSE, PIN=c(10,5))
 }
+
+
 \arguments{
   \item{dat}{\code{numeric} -- array of annual catch by PMFC area and fishery ID. }
   \item{strSpp}{\code{character} -- string specifying Hart species code (e.g., \code{"440"} = Yellowmouth Rockfish). }
@@ -27,6 +29,7 @@ plotRecon(dat=cat440rec, strSpp="440", major=c(1,3:9), fidout=10,
   \item{shade}{\code{logical} -- if \code{TRUE}, shade the catch periods.}
   \item{shadier}{\code{logical} -- if \code{TRUE}, make the background shading darker for the catch periods.}
   \item{figDir}{\code{character} -- directory where figure output should be directed.}
+  \item{timestamp}{\code{character} -- string representing the date and time of the reconstruction.}
   \item{eps}{\code{logical} -- if \code{TRUE}, send the figure to a postscript file (\code{.eps}). }
   \item{png}{\code{logical} -- if \code{TRUE}, send the figure to a raster file (\code{.png}). }
   \item{wmf}{\code{logical} -- if \code{TRUE}, send the figure to a windows metafile (\code{.wmf}). }
@@ -45,7 +48,7 @@ plotRecon(dat=cat440rec, strSpp="440", major=c(1,3:9), fidout=10,
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
   \emph{locus: Institute of Ocean Sciences (IOS), Sidney BC}\cr
-  Last modified \code{Rd: 2018-05-23}
+  Last modified \code{Rd: 2018-06-28}
 }
 \seealso{
   \code{\link[PBStools]{buildCatch}},

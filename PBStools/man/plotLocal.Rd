@@ -8,9 +8,10 @@ Plot Catch by Locality
 }
 \usage{
 plotLocal(dat, area, aflds=NULL, pcat=0.95, showAll=FALSE,
-   fid=NULL, fidtype="PBStools", strSpp, Ntop=5,
+   fid=NULL, fidtype="PBStools", strSpp, Ntop=5, short=TRUE,
    plot=TRUE, png=FALSE, csv=FALSE, outnam="refA439")
 }
+
 \arguments{
   \item{dat}{\code{data.frame} -- data object containing catch information for a species and 
     one or more fields with area code information (e.g., \code{locality}).}
@@ -25,6 +26,7 @@ plotLocal(dat, area, aflds=NULL, pcat=0.95, showAll=FALSE,
     indicates species name and data date range; 
     required argument if using a map \code{EventData} \code{dat} object created by \code{fos_map_density.sql}.}
   \item{Ntop}{\code{numeric} -- top \code{N} localities to show in figure legend and to label on figure.}
+  \item{short}{\code{logical} -- if \code{TRUE}, use short file names (e.g., \code{"T"} instead of \code{"Trawl"}).}
   \item{plot}{\code{logical} -- if \code{TRUE}, plot the results.}
   \item{png}{\code{logical} -- if \code{TRUE}, send the plot results to a \code{.png} file.}
   \item{csv}{\code{logical} -- if \code{TRUE}, send the output to a \code{.csv} file.}
@@ -61,8 +63,10 @@ plotLocal(dat, area, aflds=NULL, pcat=0.95, showAll=FALSE,
 }
 
 \author{
-  Rowan Haigh, Research Biologist\cr
-  Pacific Biological Station, Fisheries and Oceans Canada, Nanaimo BC
+  \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
+  Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
+  \emph{locus: Institute of Ocean Sciences (IOS), Sidney BC}\cr
+  Last modified \code{Rd: 2018-06-28}
 }
 \seealso{
 \code{\link[PBStools]{buildCatch}},

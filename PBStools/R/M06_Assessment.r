@@ -593,6 +593,110 @@ if(is.na(LL1)) {browser();return()}
 #=======================================imputeRate
 
 
+## -------------------------------------2018-06-26
+## Plot ageing precision data
+##   (modified from code by Sean Anderson, PBS)
+## Arguments:
+##   dat       - data frame created by call to `gfb_age_precision.sql'
+##   nsamp     - number of fish to randomly sample for plot
+##   xlim|ylim - x|y limits for plot
+##   jitter    - maximum value to to randomly sample from uniform for visualization (done separately for x & y);
+##               same jitter values are used for the ages estimated by primary and precision (secondary) readers for the same fish.
+##   seed      - seed value, if numeric value, set the random seed so that the same rows
+##               are sampled each time and the same jitter values are generated;
+##               if `NULL', different fish will be sampled each time the function is run.
+##   png       - logical: if TRUE, send figure to a PNG output file
+##   pngres    - resolution (pixels/inch) for PNG figure
+##   PIN       - output size (inches) specifying width and height for PNG figure.
+## ------------------------------------------SA/RH
+
+plotAgeErr = function(dat, nsamp, xlim=NULL, ylim=NULL, jitter=0.25, seed=42, 
+   png=FALSE, pngres=400, PIN=c(8,8))
+{
+	opar = par(no.readonly=T); on.exit(par(opar))
+	strSpp = as.character(.su(dat$spp))
+	sppNam = toUpper(tolower(.su(dat$spn)))
+
+	## remove non-specified ageing methods
+	dat = dat[!is.na(dat$ameth),]
+
+	## remove specimen IDs for which there is no precision reading
+	pSPID = dat$SPID[is.element(dat$atype,3)]
+	dat = dat[is.element(dat$SPID,pSPID),]
+
+	## remove records where specimens were read by only one employee
+	one = crossTab(dat,"SPID","EMID",function(x){length(unique(x))}) < 2
+	bad = names(one[one])
+	dat = dat[!is.element(dat$SPID,bad),]
+
+	## The data can be very ragged so process the specimens individually
+	oflds  = c("spp","SPID","year") #,"atype","ARID","EMID","ameth","age","amin","amax")
+	aflds  = c("atype","ARID","EMID","ameth","age","amin","amax")
+	RAGOUT = as.data.frame(array(0,dim=c(1,length(oflds)+2*length(aflds)),dimnames=list("0",c(oflds, paste0(rep(c("r1_","r2_"),each=length(aflds)),aflds)))))
+	ttput(RAGOUT)  ## send it to the PBStools environment
+	ragin  = split(dat,dat$SPID)
+	ragout = sapply(ragin, function(df,ofld,afld){
+		ttget(RAGOUT)
+		rout  = numeric()
+		r1    = .su(df$atype)[1]
+		r2    = .su(df$atype)[2]
+		read1 = df[is.element(df$atype,r1),]
+		read2 = df[is.element(df$atype,r2),]
+		for (i in 1:nrow(read1)) {
+			irec = read1[i,,drop=FALSE]
+			for (j in 1:nrow(read2)) {
+				jrec = read2[j,,drop=FALSE]
+				if (irec$EMID==jrec$EMID) next
+				RAGOUT = rbind(RAGOUT, as.vector(cbind(irec[,ofld],irec[,afld],jrec[,afld]), mode="numeric"), make.row.names=FALSE)
+#browser();return()
+			}
+		}
+		ttput(RAGOUT)
+		return(as.matrix(rout))
+	}, ofld=oflds, afld=aflds, simplify=F)
+	ttget(RAGOUT)
+	ragout = RAGOUT[-1,]  ## remove artificially initiated first row of zeroes (stoopid R)
+	ttput(ragout)         ## send it to the PBStools environment
+
+	dat.base = dat; dat = ragout
+	if (!is.null(seed)) set.seed(seed)
+	if (!missing(nsamp) && nsamp < nrow(dat)) {
+		dat <- dat[sample(1:nrow(dat), nsamp),]
+	}
+	## Jitter x and y separately
+	xjit <- stats::runif(nrow(dat), -jitter, jitter)
+	yjit <- stats::runif(nrow(dat), -jitter, jitter)
+	dat$r1_age  <- dat$r1_age  + xjit
+	dat$r2_age  <- dat$r2_age  + yjit
+	dat$r1_amin <- dat$r1_amin + xjit
+	dat$r1_amax <- dat$r1_amax + xjit
+	dat$r2_amin <- dat$r2_amin + yjit
+	dat$r2_amax <- dat$r2_amax + yjit
+
+	if (is.null(xlim))
+		xlim = range(dat[,c("r1_amin","r1_amax")])
+	if (is.null(ylim))
+		ylim = range(dat[,c("r2_amin","r2_amax")])
+	
+	if (png) png(paste0("AgeErr",strSpp,".png"), units="in", res=pngres, width=PIN[1], height=PIN[2])
+	par(mfrow=c(1,1), mar=c(3.5,3.5,0.5,0.75), oma=c(0,0,0,0), mgp=c(2,0.5,0))
+	plot(dat$r1_age, dat$r2_age, xlim=xlim, ylim=ylim, type="n", xlab="", ylab="", cex.axis=1.2, las=1)
+	axis(1, at=1:xlim[2], labels=F, tcl=-0.2)
+	axis(2, at=1:ylim[2], labels=F, tcl=-0.2)
+	abline(0,1,col=lucent("green4",0.5),lwd=2)
+	segments(x0=dat$r1_amin, y0=dat$r2_age, x1=dat$r1_amax, y1=dat$r2_age, col=lucent("grey50",0.5),lwd=2)
+	segments(x0=dat$r1_age, y0=dat$r2_amin, x1=dat$r1_age, y1=dat$r2_amax, col=lucent("grey50",0.5),lwd=2)
+#browser();return()
+	points(dat$r1_age, dat$r2_age, pch=21, cex=0.8, col=lucent("black",0.5), bg=lucent("cyan",0.5))
+	mtext("Age (y) by Primary Reader", side=1, line=2, cex=1.5)
+	mtext("Age (y) by Secondary Reader", side=2, line=2, cex=1.5)
+	addLabel(0.05, 0.95, sppNam, cex=1.5, col="blue", adj=c(0,1))
+	if (png) dev.off()
+	return(dat)
+}
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotAgeErr
+
+
 #quantAges------------------------------2017-11-30
 # Plot quantile boxes of age by year and/or area,
 # including mean age over time.

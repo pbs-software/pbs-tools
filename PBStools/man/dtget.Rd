@@ -5,7 +5,7 @@
 \alias{dtput}
 \alias{dlisp}
 \title{
-  Get/Print Objects From or Put Objects Into Temporary Work Environment
+  Get/Print Objects From or Put Objects Into Temporary Work Environment for PBSdata
 }
 \description{
   These functions are wrappers to the PBSmodelling accessor functions that
@@ -43,8 +43,15 @@ dlisp(...)
   transferring, which is useful when the object is a function that the
   user may wish to call, for example, \code{dtcall(myfunc)()}.
 }
+\references{
+  CRAN Repository Policy: 
+  \url{https://cran.r-project.org/web/packages/policies.html}
+}
 \author{
-  Rowan Haigh, Pacific Biological Station, Fisheries and Oceans Canada, Nanaimo BC
+  \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
+  Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
+  \emph{locus: Institute of Ocean Sciences (IOS), Sidney BC}\cr
+  Last modified \code{Rd: 2018-06-27}\cr
 }
 \seealso{
 \code{\link[PBSmodelling]{tget}} and \code{\link[PBSmodelling]{lisp}} in \pkg{PBSmodelling}

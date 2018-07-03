@@ -22,10 +22,13 @@ prime(x = 2:100)
   If no prime numbers are present, the function returns \code{NULL}.
 }
 \references{
-  \url{http://en.wikipedia.org/wiki/Prime_number}
+  \href{https://en.wikipedia.org/wiki/Prime_number}{Wikipedia}
 }
 \author{
-  Rowan Haigh, Pacific Biological Station, Nanaimo BC
+  \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
+  Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
+  \emph{locus: Institute of Ocean Sciences (IOS), Sidney BC}\cr
+  Last modified \code{Rd: 2018-07-03}\cr
 }
 \seealso{
   \code{\link{biteData}}, \code{\link{isThere}}, \code{\link{revStr}}

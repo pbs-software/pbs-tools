@@ -1,25 +1,25 @@
-#===============================================================================
-# Module 2: Biology
-# -----------------
-#  calcLW.   ......Calculate length-weight relationship for a fish.
-#  calcSG..........Calculate growth curve using Schnute growth model.
-#  calcVB..........Calculate von Bertalanffy growth curve.
-#  compCsum........Compare cumulative sum curves.
-#  estOgive........Creates ogives of some metric (e.g., % maturity at age).
-#  genPa...........Generate proportions-at-age using catch curve composition.
-#  histMetric......Create a matrix of histograms for a specified metric.
-#  histTail........Create a histogram showing tail details.
-#  mapMaturity.....Plot maturity chart of stages by month.
-#  plotProp........Plot proportion-at-age from GFBio specimen data.
-#  predictRER......Predict Rougheye Rockfish from biological data.
-#  processBio......Process results from 'gfb_bio.sql' query.
-#  reportCatchAge..Report analyses from catch-at-age report.
-#  requestAges.....Determine which otoliths to sample for ageing requests.
-#  simBSR..........Simulate Blackspotted Rockfish biological data.
-#  simRER..........Simulate Rougheye Rockfish biological data.
-#  sumBioTabs......Summarize frequency occurrence of biological samples.
-#  weightBio.......Weight age/length frequencies/proportions by catch.
-#===============================================================================
+##==============================================================================
+## Module 2: Biology
+## -----------------
+##  calcLW..........Calculate length-weight relationship for a fish.
+##  calcSG..........Calculate growth curve using Schnute growth model.
+##  calcVB..........Calculate von Bertalanffy growth curve.
+##  compCsum........Compare cumulative sum curves.
+##  estOgive........Creates ogives of some metric (e.g., % maturity at age).
+##  genPa...........Generate proportions-at-age using catch curve composition.
+##  histMetric......Create a matrix of histograms for a specified metric.
+##  histTail........Create a histogram showing tail details.
+##  mapMaturity.....Plot maturity chart of stages by month.
+##  plotProp........Plot proportion-at-age from GFBio specimen data.
+##  predictRER......Predict Rougheye Rockfish from biological data.
+##  processBio......Process results from 'gfb_bio.sql' query.
+##  reportCatchAge..Report analyses from catch-at-age report.
+##  requestAges.....Determine which otoliths to sample for ageing requests.
+##  simBSR..........Simulate Blackspotted Rockfish biological data.
+##  simRER..........Simulate Rougheye Rockfish biological data.
+##  sumBioTabs......Summarize frequency occurrence of biological samples.
+##  weightBio.......Weight age/length frequencies/proportions by catch.
+##==============================================================================
 
 
 #calcLW---------------------------------2017-08-30
@@ -525,11 +525,17 @@ calcSG <- function(dat=pop.age, strSpp="", yfld="len", tau=c(5,40),
 #-------------------------------------------calcSG
 
 
-#calcVB---------------------------------2017-08-30
-# Calculate von Bertalanffy growth curve.
-# Note: ameth=3 otoliths broken & burnt
-# areas: list of lists
-#-----------------------------------------------RH
+## calcVB-------------------------------2018-06-25
+## Calculate von Bertalanffy growth curve.
+## Note: ameth=3 otoliths broken & burnt; ameth=1 surface read only
+##   areas: list of lists
+## ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+## Steve Wischniowski: "there can be surface ages in combination with the typical 
+## Break and Burn procedure. The SCL will surface age any rock/flat fish that is 
+## 3 years and under. This is not new and has been an accepted procedure for longer
+## than I've been here. For fish under 3 the break and burn technique can over estimate age, 
+## so we find that a surface ageing 3 and under has better accuracy and precision rates.
+## ---------------------------------------------RH
 calcVB <- function(dat=pop.age, strSpp="", yfld="len", fixt0=FALSE, 
    areas=list(major=NULL, minor=NULL, locality=NULL, srfa=NULL,srfs=NULL, popa=NULL),
    ttype=list(commercial=c(1,4),research=c(2,3)), stype=c(1,2,6,7), scat=NULL,
@@ -637,6 +643,14 @@ calcVB <- function(dat=pop.age, strSpp="", yfld="len", fixt0=FALSE,
 
 	aflds=c("major","minor","locality","srfa","srfs","popa","stock")
 	yarea=character(0)
+	if (is.null(ttype)) {
+		for (a in 1:length(areas)) {
+			aa = names(areas[a])
+			aaa= areas[[a]]
+			ttype = c(ttype, .su(dat$ttype[is.element(dat[,aa],aaa)]))
+		}
+		ttype = list('ttype'=.su(ttype))
+	}
 	flds=c("ttype","stype","year") #,names(areas))
 	for (i in flds) {
 		expr=paste("dat=biteData(dat,",i,")",sep="")
@@ -645,9 +659,13 @@ calcVB <- function(dat=pop.age, strSpp="", yfld="len", fixt0=FALSE,
 	}
 	if (!is.null(ameth)) {
 		zam = is.element(dat$ameth,ameth)
-		if (fnam!="wapAKe" && any(ameth==3) && "year"%in%names(dat)) zam = zam | (is.element(dat$ameth,0) & dat$year>=1980)
+		if (fnam!="wapAKe" && any(ameth==3) && "year"%in%names(dat)) 
+			zam = zam | (is.element(dat$ameth,0) & dat$year>=1980)
+		if (any(ameth==3))
+			zam = zam | (is.element(dat$ameth,1) & dat$age<=3)  ## SCL uses surface ageing for very young fish
 		dat = dat[zam,]
 	}
+#browser();return()
 	if (nrow(dat)==0) {
 		if (figgy) return()
 		else showError("No records selected for specified qualification") }
@@ -656,14 +674,14 @@ calcVB <- function(dat=pop.age, strSpp="", yfld="len", fixt0=FALSE,
 		z2 = is.element(dat$ttype,c(1,4)) & is.element(dat$scat,scat)
 		dat = dat[z1 | z2,]
 	}
-
+#browser();return()
 	anams = sapply(areas,function(x){paste(paste(x,collapse="|",sep=""),sep="")})
 	anams = paste(names(anams),anams,sep="_")
 	tnams = sapply(ttype,function(x){paste(paste(x,collapse="|",sep=""),sep="")})
 	tnams = paste(names(tnams),tnams,sep="_")
 	nar   = length(anams)
 	ntt   = length(tnams)
-
+#browser();return()
 
 	xlim <- c(0,max(dat$age,na.rm=TRUE))
 	if (is.null(ylim))
@@ -683,7 +701,7 @@ calcVB <- function(dat=pop.age, strSpp="", yfld="len", fixt0=FALSE,
 	pVec = rbind(pVec,sig=data.frame(val=1,min=0,max=5,active=TRUE)) ## adding error component
 	if (strSpp=="228" && yfld=="len") {pVec[1,"max"] = 80; pVec["sig","max"] = 10}
 	if (strSpp=="439" && yfld=="len") {pVec[1,"max"] = 100; pVec["sig","max"] = 10; pVec["t0","min"] = -5}
-
+#browser();return()
 
 	# Labels & names --------------------
 	aName=paste("-areas(",paste(anams,collapse="~"),")",sep="")      # area label
@@ -691,7 +709,7 @@ calcVB <- function(dat=pop.age, strSpp="", yfld="len", fixt0=FALSE,
 	pName=paste("Age",ifelse(isLen,"Len","Wt"),sep="")             # property label
 	yName=ifelse(is.null(year),"",paste("-(",paste(unique(range(year)),collapse="-"),")",sep=""))  # year label
 	fName=paste("fits",gsub("[()]","",gsub("-","_",yName)),sep="")  # fits label
-
+#browser();return()
 	if (missing(plotname)){
 		plotName = paste0(pName,strSpp,aName,tName,yName,"-VB-data(",fnam,")")
 	}
@@ -700,7 +718,7 @@ calcVB <- function(dat=pop.age, strSpp="", yfld="len", fixt0=FALSE,
 	csv=paste("fits-",plotName,".csv",sep="")
 	adm=paste("fits-",plotName,".dat",sep="")
 	#------------------------------------
-
+#browser();return()
 
 	if (!figgy) { resetGraph()
 		expandGraph(mfrow=c(length(ttype),nsex),mar=c(3,3,2,.1),oma=c(0,0,0,0),mgp=c(1.5,.5,0),cex=1.0) }
@@ -731,7 +749,7 @@ calcVB <- function(dat=pop.age, strSpp="", yfld="len", fixt0=FALSE,
 		adat <- dat[is.element(dat[,an],ar),]
 		if (nrow(adat)==0) next
 		amat = paste(an,paste0(ar,collapse="|"),sep="_")
-
+#browser();return()
 		if (missing(plotname)) {
 			aaName <- paste0(pName,strSpp,"-area(",amat,")",tName,yName,"-VB-data(",fnam,")")
 			aaName = gsub("\\|","",aaName)
@@ -757,11 +775,11 @@ calcVB <- function(dat=pop.age, strSpp="", yfld="len", fixt0=FALSE,
 				ttName = gsub("\\|","",ttName)
 			} else
 				ttName=plotname
-
+#browser();return()
 			xout[,tmat,amat,"year"] = range(tdat$year,na.rm=TRUE)
 			if ("date" %in% names(tdat))
 				xout[,tmat,amat,"date"] = range(substring(tdat$date,1,10),na.rm=TRUE)
-
+#browser();return()
 			if (singles && figgy) {
 				plotNames = c(plotNames,ttName)
 				if (eps)      createEPS(ttName,rc=c(1,nsex))
@@ -804,7 +822,7 @@ calcVB <- function(dat=pop.age, strSpp="", yfld="len", fixt0=FALSE,
 						return(xVec)
 					}
 					ipVec = make.parVec(idat,pVec)
-
+#browser();return()
 					calcMin(pvec=ipVec,func=VBfun)
 					if (!is.null(rm.studs) && is.numeric(rm.studs)) {
 						if (length(rm.studs)==1) rm.studs = rep(rm.studs,2) * c(-1,1)
@@ -863,7 +881,7 @@ calcVB <- function(dat=pop.age, strSpp="", yfld="len", fixt0=FALSE,
 						ypred <- Yinf * (1-exp(-K*(xpred-t0)))
 						#print(amat);print(tmat);print(iii)
 						fits[[amat]][[tmat]][[iii]] = list(xpred=xpred,ypred=ypred)
-
+#browser();return()
 						if (any(iii==names(sex))) {
 							plot(0,0,type="n", xlab="     Age",ylab=ifelse(isLen,"   Length (cm)","   Weight (kg)"),
 								main=iii, xlim=xlim, ylim=ylim, bty="l",cex.main=ifelse(figgy,1,1.5),cex.lab=ifelse(figgy,1,1.5))
@@ -903,7 +921,7 @@ calcVB <- function(dat=pop.age, strSpp="", yfld="len", fixt0=FALSE,
 				else
 					mf = cbind(mf, sapply(fits[[amat]][[tmat]][[i]],function(x){x},simplify=TRUE)[,2])
 			}
-
+#browser();return()
 #			mf=cbind(sapply(fits[[amat]][[tmat]][["Females"]],function(x){x},simplify=TRUE),
 #				sapply(fits[[amat]][[tmat]][["Males"]],function(x){x},simplify=TRUE)[,2],
 #				sapply(fits[[amat]][[tmat]][["Both"]],function(x){x},simplify=TRUE)[,2])
@@ -918,7 +936,7 @@ calcVB <- function(dat=pop.age, strSpp="", yfld="len", fixt0=FALSE,
 			cat("\n\n",file=adm,append=TRUE) 
 		}
 		if (pages && figgy) dev.off()
-
+#browser();return()
 	}
 	if ((!singles&!pages) && figgy) dev.off()
 	attr(out,"xout") = xout
@@ -933,7 +951,7 @@ calcVB <- function(dat=pop.age, strSpp="", yfld="len", fixt0=FALSE,
 	eval(parse(text=paste(omess,collapse="")))
 	invisible(out)
 }
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~calcVB
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~calcVB
 
 
 #compCsum-------------------------------2013-01-28

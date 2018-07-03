@@ -1,19 +1,19 @@
-#===============================================================================
-# Module 4: Survey
-# ----------------
-#  bootBG..........Bootstraps binomial-gamma variates from (p, mu, rho) for each stratum.
-#  calcMoments.....Calculate survey strata population moments from raw survey data.
-#  calcPMR.........Calculate pmr parameter values from a sample.
-#  getBootRuns.....Get Norm's survey bootstrap results.
-#  getPMR..........Get pmr values from survey data in GFBioSQL.
-#  makePMRtables...Make CSV files containg pmr values for survey strata.
-#  makeSSID........Make a data object of survey series information.
-#  sampBG..........Sample from the binomial-gamma distribution.
-#  showAlpha.......Show quantile confidence levels (alpha) for bootstrapped biomass.
-#  showIndices.....Show survey indices from Norm's bootstrap tables.
-#  simBGtrend......Simulate a population projection based on prior binomial-gamma parameters.
-#  trend...........Simple trend analysis for annnual IPHC indices.
-#===============================================================================
+##==============================================================================
+## Module 4: Survey
+## ----------------
+##  bootBG..........Bootstraps binomial-gamma variates from (p, mu, rho) for each stratum.
+##  calcMoments.....Calculate survey strata population moments from raw survey data.
+##  calcPMR.........Calculate pmr parameter values from a sample.
+##  getBootRuns.....Get Norm's survey bootstrap results.
+##  getPMR..........Get pmr values from survey data in GFBioSQL.
+##  makePMRtables...Make CSV files containg pmr values for survey strata.
+##  makeSSID........Make a data object of survey series information.
+##  sampBG..........Sample from the binomial-gamma distribution.
+##  showAlpha.......Show quantile confidence levels (alpha) for bootstrapped biomass.
+##  showIndices.....Show survey indices from Norm's bootstrap tables.
+##  simBGtrend......Simulate a population projection based on prior binomial-gamma parameters.
+##  trend...........Simple trend analysis for annnual IPHC indices.
+##==============================================================================
 
 #bootBG---------------------------------2015-03-06
 # Bootstraps binomial-gamma variates from (p, mu, rho) for each stratum.
@@ -493,11 +493,12 @@ showAlpha <- function(lims=c("emp","bca")) {
 #----------------------------------------showAlpha
 
 
-#showIndices----------------------------2017-08-29
-# Show survey indices from Norm's bootstrap tables
-#-----------------------------------------------RH
-showIndices =  function(strSpp="396",serID=1, survID=NULL, bootID, 
-   tenv=.PBStoolEnv, quiet=FALSE, addN=FALSE, outnam, png=FALSE, pngres=300)
+## showIndices--------------------------2018-06-28
+## Show survey indices from Norm's bootstrap tables
+## ---------------------------------------------RH
+showIndices =  function(strSpp="396", serID=1, survID=NULL, bootID, 
+   tenv=.PBStoolEnv, quiet=TRUE, addN=TRUE, addT=TRUE, 
+   outnam="relAbund", png=FALSE, pngres=400, PIN=c(7,7))
 {
 	assign("PBStool",list(module="M04_Survey",call=match.call(),args=args(showIndices)),envir=tenv)
 	data(spn,envir=penv())
@@ -506,10 +507,14 @@ showIndices =  function(strSpp="396",serID=1, survID=NULL, bootID,
 #browser();return()
 
 	# Selected survey
-	if (!is.null(serID))
+	if (!is.null(serID)) {
 		sppBoot=surveys[is.element(surveys$serID,serID),]
-	if (!is.null(survID)) 
+		if (nrow(sppBoot)==0) {showMessage(paste0("No spp '",strSpp,"' in survey series ID ", serID)); return(NULL)}
+	}
+	if (!is.null(survID)) {
 		sppBoot=surveys[is.element(surveys$survID,survID),]
+		if (nrow(sppBoot)==0) {showMessage(paste0("No spp '",strSpp,"' in survey ID ", survID)); return(NULL)}
+	}
 	if (!missing(bootID)) {
 		if (bootID %in% c("last","first")) {
 			runBoot=substring(sppBoot$runDate,1,10); names(runBoot)=sppBoot$bootID
@@ -518,7 +523,10 @@ showIndices =  function(strSpp="396",serID=1, survID=NULL, bootID,
 			if (bootID=="first") zuse = sapply(booties,function(x){match(min(x),x)[1]})
 			bootID = sapply(names(booties),function(x,y,z){as.numeric(names(y[[x]])[z[x]])},y=booties,z=zuse)
 		}
-		sppBoot=sppBoot[is.element(sppBoot$bootID,bootID),]
+#browser();return()
+		oneI = sapply(bootID,function(x){grep(T,is.element(sppBoot$bootID,x))[1]})
+		sppBoot=sppBoot[oneI,]
+		#sppBoot=sppBoot[is.element(sppBoot$bootID,bootID),] ## returns multiple records (debug later)
 	}
 	if (!missing(outnam)){
 		fnam = paste0(outnam,".csv")
@@ -530,7 +538,7 @@ showIndices =  function(strSpp="396",serID=1, survID=NULL, bootID,
 #browser();return()
 	if (nrow(sppBoot)==0) {
 		if (quiet) {plot(0,0,type="n",axes=F,xlab="",ylab=""); return("nada") }
-		else showError(paste("No index for species '",strSpp,"'",sep=""))
+		else {showMessage(paste("No index for species '",strSpp,"'",sep="")); return(NULL)}
 	}
 	noDesc = is.na(sppBoot$runDesc)
 	if (any(noDesc)) {
@@ -539,7 +547,6 @@ showIndices =  function(strSpp="396",serID=1, survID=NULL, bootID,
 			sppBoot$runDesc[i] = PBSdat
 		}
 	}
-#browser();return()
 
 	# Function to group and flatten x by some factor, usually y
 	flatten=function(x,f,off=0) {
@@ -557,14 +564,18 @@ showIndices =  function(strSpp="396",serID=1, survID=NULL, bootID,
 
 	# x-y data and limits
 	x=sppBoot$year; y=sppBoot$biomass/1000; xoff=.025*diff(range(x))
-	xy=flatten(y,x,off=xoff)
-	xlim=extendrange(xy$x,f=0.05)
-	cil=flatten(sppBoot$bootLoCI/1000,x,off=xoff)
-	cih=flatten(sppBoot$bootHiCI/1000,x,off=xoff)
-	ylim=extendrange(c(xy$y,cil$y,cih$y),f=0.1)
-	xci=as.vector(rbind(cil$x,cih$x,NA))
-	yci=as.vector(rbind(cil$y,cih$y,NA))
+	xy   = flatten(y,x,off=xoff)
+	xlim = extendrange(xy$x,f=0.05)
+	cil  = flatten(sppBoot$bootLoCI/1000,x,off=xoff)
+	cih  = flatten(sppBoot$bootHiCI/1000,x,off=xoff)
+	ylim = extendrange(c(xy$y,cil$y,cih$y),f=0.1)
+	xci  = as.vector(rbind(cil$x,cih$x,NA))
+	yci  = as.vector(rbind(cil$y,cih$y,NA))
 	
+	ymax = max(sppBoot$bootHiCI/1000)
+	ysca = ifelse(ymax>2000,1000,1)
+	yuni = ifelse(ymax>2000,"1000t","t")
+
 	# Log-linear fit
 	if (length(unique(x))>1) {
 		isFit=TRUE
@@ -595,29 +606,34 @@ showIndices =  function(strSpp="396",serID=1, survID=NULL, bootID,
 	} else {
 		bg = bg[1:nlab]; fg = fg[1:nlab]
 	}
+#browser();return()
 
 	# Plot the results
 	#resetGraph()
-	if (png) png(paste0(outnam,".png"),width=7, height=7, units="in", res=pngres)
-	expandGraph(mar=c(4,5,1,1),las=1)
-	plot(xy,xlim=xlim,ylim=ylim,type="n",xlab="",ylab="")
-	if (diff(xlim)<25) axis(1,at=seq(min(x),max(x),1),labels=FALSE,tcl=-.2)
-	else axis(1,at=pretty(x,n=10),labels=FALSE,tcl=-.01)
-	abline(h=pretty(ylim,6)[-1],col="grey85")
+	if (png) png(paste0(outnam,".png"),width=PIN[1], height=PIN[2], units="in", res=pngres)
+	expandGraph(mar=c(2.75,3.5,0.5,1),las=1)
+	plot(xy,xlim=xlim,ylim=ylim,type="n",xlab="",ylab="",yaxt="n")
+
+	axis(2, at=pretty(c(0,par()$usr[4])), labels=pretty(c(0,par()$usr[4]))/ysca)
+	if (diff(xlim)<25)
+		axis(1,at=seq(min(x),max(x),1),labels=FALSE,tcl=-.2)
+	else
+		axis(1,at=pretty(x,n=10),labels=FALSE,tcl=-.01)
+	abline(h=pretty(ylim,6)[-1],col="gainsboro")
 	lines(xci,yci,col="cornflowerblue",lwd=2)
-	points(xy,pch=21,cex=1.5,col=fg[clr$y],bg=bg[clr$y])
+	points(xy,pch=21,cex=ifelse(png,1.2,1.5),col=fg[clr$y],bg=bg[clr$y])
 	if (addN)
-		text(x,sppBoot$bootLoCI/1000,sppBoot$numPosSets,col="red",adj=c(.5,1.5))
-	if (isFit) {
+		text(x,sppBoot$bootLoCI/1000,sppBoot$numPosSets,col="navyblue",adj=c(.5,1.5))
+	if (isFit && addT) {
 		lines(xfit,yfit,col=ifelse(neg,"red","green4"),lwd=2)
 		addLabel(ifelse(neg,.95,.05),ifelse(neg,.05,.05),paste(round(r*100,1),"%/y"),
 			adj=ifelse(neg,1,0),col=ifelse(neg,"red","green4"),cex=1) }
 	addLabel(.95,.99,spn[strSpp],cex=0.9,adj=c(1,1),col="slategrey")
-	if (isFit&&neg) right=TRUE else right=FALSE
-	addLegend(ifelse(right,0.99,.03),0.97,legend=ulab,pch=16,col=bg[1:nlab],
-		bty="n",xjust=ifelse(right,1,0),cex=.8,pt.cex=1.2)
-	mtext("Relative Biomass (t)",side=2,line=3.5,cex=1.2,las=0)
-	mtext("Survey Year",side=1,line=2,cex=1.2)
+	if (isFit && neg) right=TRUE else right=FALSE
+	addLegend(ifelse(right,0.99,.03), 0.97, legend=ulab, pch=21, col=fg[1:nlab], pt.bg=bg[1:nlab],
+		bty="n", xjust=ifelse(right,1,0), cex=0.8, pt.cex=1.2)
+	mtext(paste0("Relative Biomass (",yuni,")"),side=2,line=2.5,cex=1.2,las=0)
+	mtext("Survey Year",side=1,line=1.5,cex=1.2)
 	box()
 	if (png) dev.off()
 	packList(c("surveys","sppBoot","survBoot","xy","cil","cih","clr","llab","ulab"),"PBStool",tenv=tenv)
@@ -625,7 +641,7 @@ showIndices =  function(strSpp="396",serID=1, survID=NULL, bootID,
 	if (!quiet) print(sppBoot)
 	invisible(sppBoot)
 }
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~showIndices
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~showIndices
 
 
 #simBGtrend-----------------------------2013-01-28

@@ -7,7 +7,7 @@
   Query the \code{GFBioSQL} database for survey catches of the specified species.
 }
 \usage{
-surveyCatch(strSpp="396", spath=.getSpath(), gfbdat=NULL)
+surveyCatch(strSpp="396", spath=.getSpath(), gfbdat=NULL, hadley=FALSE)
 }
 \arguments{
   \item{strSpp}{character string specifying the Hart species code for a species in the \code{GFBioSQL} database.}
@@ -17,6 +17,7 @@ surveyCatch(strSpp="396", spath=.getSpath(), gfbdat=NULL)
     if \code{NULL} run the query \code{gfb_rcatORF.sql} and save \code{gfbdat} to 
     \code{gfbdat.rda} and \code{Survey-Records-123.csv}, where \code{123} is the 
     three-character Hart code. }
+  \item{hadley}{\code{logical} -- if \code{TRUE}, use Hadley Wickham's bloated R packages.}
 }
 \details{
   Needs the SQL code file \code{gfb_rcatORF.sql}, which is designed to return 
@@ -27,7 +28,10 @@ surveyCatch(strSpp="396", spath=.getSpath(), gfbdat=NULL)
   Invisibly returns a table of catch (t) summarised by calendar year and PMFC area.
 }
 \author{
-  Rowan Haigh, Pacific Biological Station, Fisheries and Oceans Canada, Nanaimo BC
+  \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
+  Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
+  \emph{locus: Institute of Ocean Sciences (IOS), Sidney BC}\cr
+  Last modified \code{Rd: 2018-06-28}
 }
 \seealso{
   \code{\link[PBStools]{buildCatch}}, \code{\link[PBStools]{getCatch}}

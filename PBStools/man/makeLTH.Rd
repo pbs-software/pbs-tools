@@ -35,11 +35,15 @@ makeLTH(xtab.table, table.caption, table.label,
 
 }
 \author{
-   Modified by Rowan Haigh, Pacific Biological Station, Fisheries & Oceans Canada, Nanaimo BC \cr
-   from user 10824 (chepec) on \code{tex.stackexchange} (\url{http://tex.stackexchange.com/users/10824/chepec})
+  Originally from user \href{https://tex.stackexchange.com/users/10824/chepec}{chepec} 
+  on \code{tex.stackexchange}, and modified by:\cr
+  \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
+  Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
+  \emph{locus: Institute of Ocean Sciences (IOS), Sidney BC}\cr
+  Last modified \code{Rd: 2018-07-03}\cr
 }
 \references{
-  \url{http://tex.stackexchange.com/questions/41067/caption-for-longtable-in-sweave?rq=1}
+  \href{https://tex.stackexchange.com/questions/41067/caption-for-longtable-in-sweave?rq=1}{Caption for longtable in Sweave}
 }
 \seealso{
   \pkg{PBSawatea}: \code{runSweaveMCMC} \cr

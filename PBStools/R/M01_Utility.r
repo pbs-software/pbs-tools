@@ -231,9 +231,9 @@ countLines = function(fnam,os=.Platform$OS.type)
 }
 
 
-#createDSN------------------------------2016-12-01
-# Create entire suite of DSNs for the groundfish databases
-#-----------------------------------------------RH
+## createDSN----------------------------2016-12-01
+## Create entire suite of DSNs for the groundfish databases
+## ---------------------------------------------RH
 createDSN <- function(trusted=TRUE) {
 	today = Sys.Date()
 	descr = paste0("Created for PBStools (",today,")")
@@ -245,12 +245,13 @@ createDSN <- function(trusted=TRUE) {
 	confODBC(dsn="PacHarvSable",server="GFDB",db="PacHarvSable", driver="SQL Server", descr=descr, trusted=trusted)
 	confODBC(dsn="GFFOS",       server="GFDB",db="GFFOS",        driver="SQL Server", descr=descr, trusted=trusted)
 }
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~createDSN
 
 
-#crossTab-------------------------------2018-05-15
-# Summarize z using crosstab values y.
-# Hadley and package 'reshape' deprecated.
-#-----------------------------------------------RH
+## crossTab-----------------------------2018-06-20
+## Summarize z using crosstab values y.
+## Hadley and package 'reshape' deprecated.
+## ---------------------------------------------RH
 crossTab = function(x=PBSdat, y=c("year","major"), 
    z="landed", func=function(x){sum(x)/1000.}, na.val=99, hadley=FALSE, ...)
 {
@@ -267,29 +268,36 @@ crossTab = function(x=PBSdat, y=c("year","major"),
 		expr=paste("Z=reshape::cast(Y,", paste(paste(ifelse(length(y)==1,"~",""),y,sep=""),collapse="~"), ",func,...)",sep="")
 		eval(parse(text=expr))
 	} else {
-		X = x[,c(y,z)]
+		#Yvals = gatherVals(x,c(y,z))
+		#Ylist = split(Yvals,Yvals$key)
+		#Y     = cbind(sapply(y,function(i){Ylist[[i]][,"value"]}),Ylist[[z]])
+
+		X = x[,unique(c(y,z))]
+		#X = x[,c(y,z)]  ## if y & z have the same fields, only need to specify once, otherwise the duplicate field becomes 'fld.1'
 		X[,y][is.na(X[,y])] = na.val
 		## Need drop=FALSE when y is a single factor (in the non-R sense)
 		xdim = sapply(X[,y,drop=FALSE],function(xx){length(.su(xx))})
 		xnam = sapply(X[,y,drop=FALSE],function(xx){.su(xx)},simplify=FALSE)
 		Z    = array(0, dim=xdim, dimnames=xnam )
 		#X$ID = .createIDs(X,y)  ## doesn't work if one of the fields has a valid 0 (zero) code
-		X$ID = apply(X[,y,drop=FALSE],1,paste0,collapse=".")
+		X$ID = .trimWhiteSpace(apply(X[,y,drop=FALSE],1,paste0,collapse="|")) ## sometimes paste adds whitespace depending on format of y-values.
 		## vector summary of x by y using func (unless func returns more than one summary value)
 		Zsum = sapply(split(X[,z],X$ID),func) #,simplify=FALSE)
 		if (is.vector(Zsum)) {
-			Zind = strsplit(names(Zsum),split="\\."); names(Zind) = names(Zsum)
+			Zind = strsplit(names(Zsum),split="\\|"); names(Zind) = names(Zsum)
+#browser();return()
 			expr = paste0("sapply(names(Zsum), function(i){ Z[", paste0("Zind[[i]][",1:length(xdim),"]",collapse=","),"] <<- Zsum[i] })")
 		} else {
 			Z = array(0, dim=c(xdim,nrow(Zsum)), dimnames=c(xnam,list(pars=rownames(Zsum))))
-			Zind = strsplit(colnames(Zsum),split="\\."); names(Zind) = colnames(Zsum)
+			Zind = strsplit(colnames(Zsum),split="\\|"); names(Zind) = colnames(Zsum)
 			expr = paste0("sapply(colnames(Zsum), function(i){ Z[", paste0("Zind[[i]][",1:length(xdim),"]",collapse=","),",] <<- Zsum[,i] })")
 		}
+#browser();return()
 		eval(parse(text=expr))
 	}
 	return(Z)
 }
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~crossTab
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~crossTab
 
 
 #fitLogit-------------------------------2009-11-09

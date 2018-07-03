@@ -47,11 +47,12 @@ Next
   A character vector of strings that reports the ODBC drivers installed on the user's Windows system.
 }
 \author{
-  ScriptingGuy1, adapted for use in R by Rowan Haigh, Pacific Biological Station, Nanaimo BC.
-  \tabular{ll}{
-    URL \tab \code{http://blogs.technet.com/b/heyscriptingguy/archive/2005/07/07/} \cr
-        \tab \code{how-can-i-get-a-list-of-the-odbc-drivers-that-are-installed-on-a-computer.aspx}
-  }
+  \href{https://blogs.technet.microsoft.com/heyscriptingguy/2005/07/07/how-can-i-get-a-list-of-the-odbc-drivers-that-are-installed-on-a-computer/}{ScriptingGuy1}
+  (July 7, 2005), adapted for use in \code{R} by:\cr
+  \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
+  Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
+  \emph{locus: Institute of Ocean Sciences (IOS), Sidney BC}\cr
+  Last modified \code{Rd: 2018-07-03}\cr
 }
 \seealso{
   \code{\link[PBSmodelling]{clearRcon}}

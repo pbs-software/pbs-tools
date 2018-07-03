@@ -5,7 +5,39 @@ Authors: RH  = Rowan Haigh
          LL  = Lisa Lacko
          JTS = Jon T. Schnute
          PJS = Paul J. Starr
+         EK  = Elise Keppel
+         SA  = Sean Anderson
 ------------------------------
+
+1.37.7 (2018-06-28)
+  * M04_Surveys.r
+    + Changed `showError' to `showMessage' in function `showIndices'. (RH 180628)
+      - Allows serial creation of PNG files without interruption when no data exist for SSID.
+    + Modified function `showIndices' with new arguments for greater user control. (RH 180606)
+  * M06_Assessment.r
+    + Added new function `plotAgeErr' to plot precision readers' age readings vs. those from a primary reader. (RH 180627)
+      - R code originally from SA and modified to work without Hadley's contortions.
+  * M02_Biology.r
+    + Modified function `calcVB' to allow surface ages for ages 1 to 3. (RH 180625)
+  * M07_BuildCatch.r
+    + Fixed problems in calculating `gamma' if user chooses to use supplied subareas (RH 180625).
+      - If no areas in the reference subarea appear in REFDAT, the latter is not altered.
+      - When calculating gamma, landed catch for years with no reference area data are assigned `NA';
+      -  landed catch for major areas with no reference data are assigned 0 (zero).
+    + Arbitrary decision to ensure that there is at least 10% activity from trawl in post-war (WWII) major areas with calculated 0% activity (mainly to fix 5E). (RH 180621)
+      - Adjusted `major.gear' (postwar `lambda') so that if prop. trawl=0 in any major area (e.g. 5E), it is set to 0.1 and other gear props. are adjusted by scaling to 0.9.
+      - The value of 10% simply reflects the value used for pre-war (before 1939) lambda.
+    + Fixed function `surveyCatch' to deal with purmutations when not using `hadley' in `crossTab'. (RH 180620)
+  * M05_Spatial.r
+    + Modified function `plotLocal' with new logical argument `short' to allow short file names for output of fishery-specific catch by locality. (RH 180625)
+  * SQL code
+    + Added new SQL script `gfb_age_precision.sql' to get ageing error data from SCL readers. (RH 180621)
+      - Code is that by SA + EK and modified to work with PBStools.
+    + Changed `gfb_rcatORF.sql' to use Tables instead of Views (e.g., B0_Trips) because some users cannot access Views. (EK 180613)
+  * M01_Utility.r
+    + Changed ID string delimiter from `.' to `|' to avoid errors on deconstruction back to original factor names. (RH 180620)
+    + Fixed bug in crossTab that occurs when pasting values to make an in index results in whitespace. (RH 180607)
+      - This is potentially still a problem when more than two fields comprise an index (will fix if it occurs).
 
 1.37.6 (2018-05-23)
   * Documentation
