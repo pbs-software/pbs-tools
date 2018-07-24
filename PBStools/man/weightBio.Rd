@@ -14,22 +14,23 @@ weightBio(adat, cdat, sunit="TID", sweight="catch",
    wSP=c(TRUE,TRUE), wN=TRUE, plus=60, Nmin=0, Amin=NULL, 
    ctype="C", per=90, SSID=NULL, tabs=TRUE, gear=NULL,
    plot=TRUE, ptype="bubb", size=0.05, powr=0.5, zfld="wp", 
-   clrs=list(c(.colBlind["blue"],"cyan"),c(.colBlind["bluegreen"],"chartreuse")),
+   clrs=list( c(.colBlind["blue"],"cyan"),
+              c(.colBlind["bluegreen"],"chartreuse")),
    cohorts=NULL, regimes=list(1900:1908,1912:1915,1923:1929,1934:1943,
-   1957:1960,1976:1988,1992:1998,2002:2006), layout="portrait", 
-   rgr=TRUE, eps=FALSE, pdf=FALSE, png=FALSE, wmf=FALSE,
-   longside=10, outnam, outres=400, ioenv=.GlobalEnv, ...)
+   1957:1960,1976:1988,1992:1998,2002:2006, 2014:2017),
+   layout="portrait", rgr=TRUE, eps=FALSE, pdf=FALSE, png=FALSE, wmf=FALSE,
+   longside=10, outnam, outres=400, ioenv=.GlobalEnv, lang=c("e","f"), ...)
 }
 \arguments{
-  \item{adat}{data frame of ageing information (fields returned by 
+  \item{adat}{\code{data.frame} -- ageing information (fields returned by 
     \code{gfb_bio.sql} are described in the Details section). }
-  \item{cdat}{data object of catch information (fields returned by 
+  \item{cdat}{\code{data.frame} -- catch information (fields returned by 
     \code{getCatch} are described in the Details section). }
-  \item{sunit}{sample unit:\cr
+  \item{sunit}{\code{character} -- sample unit (field name):\cr
     \code{TID} -- samples identified by trip ID (commercial);\cr
     \code{SID} -- samples identified by sample ID (surveys).}
-  \item{sweight}{sample weighting field (e.g., \code{catch} or \code{density}).}
-  \item{ttype}{trip type code where: \cr
+  \item{sweight}{\code{character} -- sample weighting field (e.g., \code{catch} or \code{density}).}
+  \item{ttype}{\code{numeric} -- trip type code where: \cr
     \code{1}  = non-observed domestic,\cr
     \code{2}  = research,\cr
     \code{3}  = charter,\cr
@@ -44,7 +45,7 @@ weightBio(adat, cdat, sunit="TID", sweight="catch",
     \code{12}  = Japanese observed national,\cr
     \code{13}  = Japanese commercial,\cr
     \code{14}  = unknown foreign.}
-  \item{stype}{sample type code where: \cr
+  \item{stype}{\code{numeric} -- sample type code where: \cr
     \code{0}  = unknown,\cr
     \code{1}  = total catch,\cr
     \code{2}  = random,\cr
@@ -55,7 +56,7 @@ weightBio(adat, cdat, sunit="TID", sweight="catch",
     \code{8}  = random from set requested by vessel master,\cr
     \code{9}  = selected juveniles,\cr
     \code{10} = selected adults.}
-  \item{scat}{species category code where: \cr
+  \item{scat}{\code{numeric} -- species category code where: \cr
     \code{0}  = unknown,\cr
     \code{1}  = unsorted,\cr
     \code{2}  = sorted (unk. criterion),\cr
@@ -65,43 +66,45 @@ weightBio(adat, cdat, sunit="TID", sweight="catch",
     \code{6}  = longline -- fish head only,\cr
     \code{7}  = longline -- whole fish and fish head only,\cr
     \code{8}  = longline/jig -- fish lost at rail/lost at surface.}
-  \item{ameth}{ageing method code (\code{ameth=3} denotes break and burn).}
-  \item{sex}{sex codes (1 = males, 2 = females).}
-  \item{major}{major PMFC area codes (1=4A, 3=3C, 4=3D, 5=5A, 6=5B, 7=5C, 8=5D, 9=5E).}
-  \item{wSP}{logical vector of length two for weighting by (i) sample catch and (ii)
+  \item{ameth}{\code{numeric} -- ageing method code (\code{ameth=3} denotes break and burn).}
+  \item{sex}{\code{numeric} -- sex codes (1 = males, 2 = females).}
+  \item{major}{\code{numeric} -- major PMFC area codes (1=4A, 3=3C, 4=3D, 5=5A, 6=5B, 7=5C, 8=5D, 9=5E).}
+  \item{wSP}{\code{logical} -- vector of length two for weighting by (i) sample catch and (ii)
     period (e.g., quarterly) commercial catch.}
-  \item{wN}{logical scalar: if \code{TRUE}, weight the age frequencies else 
+  \item{wN}{\code{logical} -- if \code{TRUE}, weight the age frequencies else 
     weight the age proportions. }
-  \item{plus}{age of the plus group (accumulate ages >= \code{plus}).}
-  \item{Nmin}{minimum number of specimens by year and sex in order to display bubbles.}
-  \item{Amin}{minimum age to display on the y-axis if \code{plot=TRUE}; 
+  \item{plus}{\code{numeric} -- age of the plus group (accumulate ages >= \code{plus}).}
+  \item{Nmin}{\code{numeric} -- minimum number of specimens by year and sex in order to display bubbles.}
+  \item{Amin}{\code{numeric} -- minimum age to display on the y-axis if \code{plot=TRUE}; 
     the default \code{NULL} means the function automatically finds the youngest age observed.}
-  \item{ctype}{catch type where \code{"C"} = commercial and \code{"S"} = survey.}
-  \item{per}{period length (days) within a year (e.g., 90 for quarterly periods).}
-  \item{SSID}{survey series ID (can be a restratification series).}
-  \item{tabs}{logical: if \code{TRUE}, create formatted tables for use in other applications.}
-  \item{gear}{numeric gear code(s) used in GFBioSQL (e.g., 1=bottom trawl, 5=longline).}
-  \item{plot}{logical: if \code{TRUE}, plot the results as bubble plots.}
-  \item{ptype}{plot type where \code{"bubb"} = bubbles and \code{"bars"} = horizontal bars.}
-  \item{size}{specify size (inches) of largest bubble in all panels.}
-  \item{powr}{power to scale bubbles, where \code{powr=0.5} makes bubble area roughly proportional to the z-value.}
-  \item{zfld}{field name containing values for output (e.g., \code{"wp"} for weighted proportions).}
-  \item{clrs}{specify bubble colours indexed by sex code (\code{0} = black).}
-  \item{cohorts}{diagonal lines to plot indicating year-class cohorts (list of x- and y-values).}
-  \item{regimes}{diagonal periods to plot indicating regime periods (e.g., positive PDO periods).}
-  \item{layout}{string describing figure layout; one of: \cr
+  \item{ctype}{\code{character} -- catch type where \code{"C"} = commercial and \code{"S"} = survey.}
+  \item{per}{\code{numeric} -- period length (days) within a year (e.g., 90 for quarterly periods).}
+  \item{SSID}{\code{numeric} -- survey series ID (can be a restratification series).}
+  \item{tabs}{\code{logical} -- if \code{TRUE}, create formatted tables for use in other applications.}
+  \item{gear}{\code{numeric} -- gear code(s) used in GFBioSQL (e.g., 1=bottom trawl, 5=longline).}
+  \item{plot}{\code{logical} -- if \code{TRUE}, plot the results as bubble plots.}
+  \item{ptype}{\code{character} -- plot type where \code{"bubb"} = bubbles and \code{"bars"} = horizontal bars.}
+  \item{size}{\code{numeric} -- specify size (inches) of largest bubble in all panels.}
+  \item{powr}{\code{numeric} -- power to scale bubbles, where \code{powr=0.5} makes bubble area roughly proportional to the z-value.}
+  \item{zfld}{\code{character} -- field name containing values for output (e.g., \code{"wp"} for weighted proportions).}
+  \item{clrs}{\code{character} -- specify bubble colours indexed by sex code (\code{0} = black).}
+  \item{cohorts}{\code{numeric} -- diagonal lines to plot indicating year-class cohorts (list of x- and y-values).}
+  \item{regimes}{\code{numeric} -- diagonal periods to plot indicating regime periods (e.g., positive PDO periods).}
+  \item{layout}{\code{character} -- string describing figure layout; one of: \cr
     \code{"portrait"} for vertically stacked plots,\cr
     \code{"landscape"} for plot placed horizontally side-by-side,\cr
     \code{"juxtapose"} for plots overlaid on each other (not implemented at present).}
-  \item{rgr}{logical: if \code{TRUE}, send figure to the R graphics device.}
-  \item{eps}{logical: if \code{TRUE}, send figure to an encapsulated postscript \code{.eps} file.}
-  \item{pdf}{logical: if \code{TRUE}, send figure to a postscript \code{.pdf} file.}
-  \item{png}{logical: if \code{TRUE}, send figure to a portable network graphics \code{.png} file.}
-  \item{wmf}{logical: if \code{TRUE}, send figure to a Windows metafile \code{.wmf} file.}
-  \item{longside}{dimension (inches) of the longest side of the figure.}
-  \item{outnam}{explicit output name to override an internally generated one.}
-  \item{outres}{output resolution (dots per inch) for raster-based graphics.}
-  \item{ioenv}{input/output environment for function input data and output results.}
+  \item{rgr}{\code{logical} -- if \code{TRUE}, send figure to the R graphics device.}
+  \item{eps}{\code{logical} -- if \code{TRUE}, send figure to an encapsulated postscript \code{.eps} file.}
+  \item{pdf}{\code{logical} -- if \code{TRUE}, send figure to a postscript \code{.pdf} file.}
+  \item{png}{\code{logical} -- if \code{TRUE}, send figure to a portable network graphics \code{.png} file.}
+  \item{wmf}{\code{logical} -- if \code{TRUE}, send figure to a Windows metafile \code{.wmf} file.}
+  \item{longside}{\code{numeric} -- dimension (inches) of the longest side of the figure.}
+  \item{outnam}{\code{character} -- explicit output name to override an internally generated one.}
+  \item{outres}{\code{numeric} -- output resolution (dots per inch) for raster-based graphics.}
+  \item{ioenv}{\code{environment} -- input/output environment for function input data and output results.}
+  \item{lang}{\code{character} -- a vector of letters that denote the language for output:
+    currently only \code{"e"} (english) and "f" (french).}
   \item{...}{additional arguments to pass to the function \code{plotBubbles}.}
 }
 \details{
@@ -285,7 +288,7 @@ out = weightBio(age396, Scat396, ctype="S", sunit="SID", SSID=1,
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
   \emph{locus: Institute of Ocean Sciences (IOS), Sidney BC}\cr
-  Last modified \code{Rd: 2018-03-14}
+  Last modified \code{Rd: 2018-07-23}
 
   \href{mailto:paul@starrfish.net}{Paul J. Starr}, Stock Assessment Scientist\cr
   Canadian Groundfish Research & Conservation Society (CGRCS), Nanaimo BC

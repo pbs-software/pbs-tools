@@ -1,53 +1,55 @@
-#===============================================================================
-# Module 1: Utility
-# -----------------
-#  addStrip........Add a vertical colour strip as a legend.
-#  biteData........Subsets a data matrix/frame using input vector.
-#  chewData........Remove records that contribute little information to factor categories.
-#  confODBC........Set up an ODBC User Data Source Name (DSN).
-#  convCT..........Convert a crossTab object to regular matrix or data frame.
-#  convFY..........Convert dates into fishing years.
-#  convYM..........Convert date limits into a vector of year-months (YYY-MM).
-#  convYP..........Convert dates into year periods.
-#  countLines......Count the number of lines in an ASCII file.
-#  createDSN.......Create entire suite of DSNs for the groundfish databases.
-#  crossTab........Use package 'reshape' to summarize z using crosstab values y.
-#  fitLogit........Fit binomial data using logit link function.
-#  flagIt..........Labels a coordinate using a diagonal line radiating from it.
-#  gatherVals......Gathers data from multiple columns into key-value pairs (replaces tidyr::gather).
-#  getData.........Get data from a variety of sources (mostly ODBC)
-#  getFile.........Get a dataset (binary libraries, binary local, dumped data, comma-delimited text.
-#  getName.........Get the names of the input object.
-#  getODBC.........Get a string vector of ODBC drivers on user's Windows system.
-#  installPkgs     Install specified packages if they are missing or if newer versions are available.
-#  isThere.........Check to see if object physically exists in the specified environment.
-#  lenv............Get the local/parent/global environment.
-#  listTables......List tables in specified SQL, ORA, or MDB database.
-#  prime...........Report the prime numbers given an integer vector.
-#  quantBox........Redefine boxplot to show quantiles.
-#  readClog........Read a ChangeLog file and convert it to an R list.
-#  revStr..........Reverse characters in a string.
-#  runModules......Display a master GUI to display modules.
-#  scaleVec........Scales a vector to span a target minimum and maximum.
-#  showError.......Display error message on device surface.
-#  spooler.........Spools list objects into fields of data frames.
-#  stdConc.........Standardise a chemical concentration.
-#  subsetFile......Subset an ASCII file every n rows (enrow).
-#  toUpper.........Capitalise first letter of each word in phrase
-#  ttget...........Provide wrappers for PBSmodelling functions tget/tcall/tprint/tput/lisp
-#  wrapText........Wrap, mark and indent a long text string.
-#  zapDupes........Delete duplicated records based on specified index.
-#
-#-----Supplementary hidden functions-----
-#  .chooseFQT......Choose a file/query/table from the user-specified path.
-#  .flush.cat......Flush the cat down the console.
-#  .grabPath.......Return the specified directory in the package tree.
-#  .getApath.......Return the path for admb/examples/sql/win directories in PBStools.
-#  .setApath.......Set the path for admb/examples/sql/win directories in PBStools.
-#  .plotDev........Save plot on current devise using values from a GUI, if available.
-#  .setCWD.........Return the current working directory and if win=TRUE, set the path variable in the active window.
-#  .su.............Shortcut for sort(unique(x))
-#===============================================================================
+##==============================================================================
+## Module 1: Utility
+## -----------------
+##  addStrip........Add a vertical colour strip as a legend.
+##  biteData........Subsets a data matrix/frame using input vector.
+##  chewData........Remove records that contribute little information to factor categories.
+##  confODBC........Set up an ODBC User Data Source Name (DSN).
+##  convCT..........Convert a crossTab object to regular matrix or data frame.
+##  convFY..........Convert dates into fishing years.
+##  convYM..........Convert date limits into a vector of year-months (YYY-MM).
+##  convYP..........Convert dates into year periods.
+##  countLines......Count the number of lines in an ASCII file.
+##  createDSN.......Create entire suite of DSNs for the groundfish databases.
+##  createFdir......Create a subdirectory called `french' for storing figures with French text and labels.
+##  crossTab........Use package 'reshape' to summarize z using crosstab values y.
+##  fitLogit........Fit binomial data using logit link function.
+##  flagIt..........Labels a coordinate using a diagonal line radiating from it.
+##  gatherVals......Gathers data from multiple columns into key-value pairs (replaces tidyr::gather).
+##  getData.........Get data from a variety of sources (mostly ODBC)
+##  getFile.........Get a dataset (binary libraries, binary local, dumped data, comma-delimited text.
+##  getName.........Get the names of the input object.
+##  getODBC.........Get a string vector of ODBC drivers on user's Windows system.
+##  installPkgs.....Install specified packages if they are missing or if newer versions are available.
+##  isThere.........Check to see if object physically exists in the specified environment.
+##  lenv............Get the local/parent/global environment.
+##  linguaFranca....Translate English phrases to French in figures
+##  listTables......List tables in specified SQL, ORA, or MDB database.
+##  prime...........Report the prime numbers given an integer vector.
+##  quantBox........Redefine boxplot to show quantiles.
+##  readClog........Read a ChangeLog file and convert it to an R list.
+##  revStr..........Reverse characters in a string.
+##  runModules......Display a master GUI to display modules.
+##  scaleVec........Scales a vector to span a target minimum and maximum.
+##  showError.......Display error message on device surface.
+##  spooler.........Spools list objects into fields of data frames.
+##  stdConc.........Standardise a chemical concentration.
+##  subsetFile......Subset an ASCII file every n rows (enrow).
+##  toUpper.........Capitalise first letter of each word in phrase
+##  ttget...........Provide wrappers for PBSmodelling functions tget/tcall/tprint/tput/lisp
+##  wrapText........Wrap, mark and indent a long text string.
+##  zapDupes........Delete duplicated records based on specified index.
+##
+##-----Supplementary hidden functions-----
+##  .chooseFQT......Choose a file/query/table from the user-specified path.
+##  .flush.cat......Flush the cat down the console.
+##  .grabPath.......Return the specified directory in the package tree.
+##  .getApath.......Return the path for admb/examples/sql/win directories in PBStools.
+##  .setApath.......Set the path for admb/examples/sql/win directories in PBStools.
+##  .plotDev........Save plot on current devise using values from a GUI, if available.
+##  .setCWD.........Return the current working directory and if win=TRUE, set the path variable in the active window.
+##  .su.............Shortcut for sort(unique(x))
+##===============================================================================
 
 ## RH: 2016-11-28 -- DFO phased out Windows 2003 servers; new server supports SQL Server 2008 and 2016
 ## RH: 2015-11-30 -- Virtualization of SVBCPBSGFIIS
@@ -246,6 +248,23 @@ createDSN <- function(trusted=TRUE) {
 	confODBC(dsn="GFFOS",       server="GFDB",db="GFFOS",        driver="SQL Server", descr=descr, trusted=trusted)
 }
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~createDSN
+
+
+## createFdir---------------------------2018-07-23
+## Create a subdirectory called `french' for
+## storing figures with French text and labels.
+## ---------------------------------------------RH
+createFdir = function(lang, dir=".")
+{
+	## Create a subdirectory called `french' for French-language figures
+	if (is.element("f",lang)) {
+		mpd.dir.f = paste0(dir,"/french")
+		if (!file.exists(mpd.dir.f))
+		dir.create(mpd.dir.f)
+	}
+	invisible()
+}
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~createFdir
 
 
 ## crossTab-----------------------------2018-06-20
@@ -982,6 +1001,242 @@ isThere = function(x, envir=parent.frame()) {
 	lenv = function(){ sys.frame(sys.nframe()-1) } # local environment (probably the same as parent.frame())
 	penv = function(){ parent.frame() }            # parent environment
 	genv = function(){ .GlobalEnv }                # global environment
+
+
+## linguaFranca-------------------------2018-07-24
+## Translate English phrases to French (other languages possible)
+## for use in plotting figures with French labels.
+## Note that 'gsub' has a limit to its nesting depth.
+## ---------------------------------------------RH
+linguaFranca = function(x, lang="e", little=4, strip=FALSE)
+{
+	if (lang=="e" || is.null(x) || is.na(x) || x=="") return(x)
+	## Need to sort so that longer strings are processed before shorter ones,
+	## otherwise, partial matching occurs and the translation is not correct.
+	if (lang=="f") {
+		xout    = rep("",length(x)); names(xout) = x
+		nchars  = sapply(x,function(x0) { nchar(gsub("^([[:punct:]]+) |s$| ([[:digit:]]+)","",x0)) } )  ## remove 's' and digits to catch small-word plurals
+#browser();return()
+		zlil    = nchars<=little; lilword = x[zlil]; xLpos=(1:length(x))[zlil]
+		zbig    = nchars>little;  bigword = x[zbig]; xBpos=(1:length(x))[zbig]
+		if (any(zlil)) {
+			xlil = sapply(lilword, function(x0){
+				gsub("[Aa]nd", "et",
+				gsub("[B][C]", "CB",
+				gsub("[Ll]ag", eval(parse(text=deparse("d\u{00E9}calage"))),
+				gsub("[Aa]ge", eval(parse(text=deparse("\u{00E2}ge"))),
+				gsub("[Jj]an", "jan",
+				gsub("[Ff]eb", eval(parse(text=deparse("f\u{00E9}v"))),
+				gsub("[Mm]ar", "mar",
+				gsub("[Aa]pr", "avr",
+				gsub("[Mm]ay", "mai",
+				gsub("[Jj]un", "juin",
+				gsub("[Jj]ul", "juil",
+				gsub("[Aa]ug", eval(parse(text=deparse("ao\u{00FB}"))),
+				gsub("[Ss]ep", "sep",
+				gsub("[Oo]ct", "oct",
+				gsub("[Nn]ov", "nov",
+				gsub("[Dd]ec", eval(parse(text=deparse("d\u{00E9}c"))),
+				gsub("[Ss]ex", "sexe",
+				gsub("[Yy]ear", eval(parse(text=deparse("ann\u{00E9}e"))),
+				gsub("[Mm]ale", eval(parse(text=deparse("m\u{00E2}le"))),
+				gsub("[Gg]ear", eval(parse(text=deparse("\u{00E9}quipement"))),
+				gsub("[Mm]ean", "moyenne",
+				gsub("[Bb]oth", "tous les deux",
+				gsub("[Cc]om(m?)", "com",
+				gsub("[Rr]es(e?)", "rec",
+				gsub("[Ss]ur(v?)", "rel",
+				x0)))))))))))))))))))))))))
+			})
+			xout[xLpos] = xlil
+		}
+		## species words
+		if (any(zbig)) {
+			xspp = sapply(bigword, function(xs){
+				gsub("[R][S][R]", "SRR",
+				gsub("[Pp]acific [Oo]cean [Pp]erch", eval(parse(text=deparse("s\u{00E9}baste \u{00E0} longue m\u{00E2}choire"))),
+				gsub("[Rr]edbanded [Rr]ockfish", eval(parse(text=deparse("s\u{00E9}baste \u{00E0} bandes rouges"))),
+				gsub("[Rr]edstripe [Rr]ockfish", eval(parse(text=deparse("s\u{00E9}baste \u{00E0} raie rouge"))),
+				gsub("[Ss]hortspine [Tt]hornyhead", eval(parse(text=deparse("s\u{00E9}bastolobe \u{00E0} courtes \u{00E9}pines"))),
+				gsub("[Ww]alleye [Pp]ollock", "goberge",
+				gsub("[Yy]elloweye [Rr]ockfish", eval(parse(text=deparse("s\u{00E9}bastes aux yeux jaunes"))),
+				gsub("[Yy]ellowmouth [Rr]ockfish", eval(parse(text=deparse("s\u{00E9}baste \u{00E0} bouche jaune"))),
+				xs))))))))
+			})
+			## geographic words
+			xgeo = sapply(xspp, function(xg){
+				gsub("[B][C]", "CB",
+				gsub("[Q][C][S]", "DRC",
+				gsub("[W][C][H][G]", "COHG",
+				gsub("[W][C][V][I]", "COIV",
+				gsub("[Aa]rea\\(km", "superficie(km",
+				gsub("[P][M][F][C] [Aa]rea", "zone CPMP",
+				gsub("[Mm]oresby [Gg]ully", "goulet de Moresby",
+				gsub("[Mm]itchell's [Gg]ully", "goulet de Mitchell",
+				gsub("[Bb]ritish [Cc]olumbia", "Colombie-Britannique",
+				gsub("[Vv]ancouver [Ii]sland", eval(parse(text=deparse("\u{00CE}le de Vancouver"))),
+				gsub("[Gg]oose [Ii]sland [Gg]ully", eval(parse(text=deparse("goulet de l'\u{00EE}le Goose"))),
+				gsub("[Ee]ncountered [Aa]rea", "zone de rencontre",
+				xg))))))))))))
+			})
+			## large unwieldy phrases
+			xpoo = sapply(xgeo, function(x9){
+				gsub("[Uu]nsorted [A][F]", eval(parse(text=deparse("F\u{00C2} non tri\u{00E9}es"))),
+				gsub("[Yy]ear of [Bb]irth", eval(parse(text=deparse("ann\u{00E9}e de naissance"))),
+				gsub("CPUE [Nn]ot [Uu]sed", eval(parse(text=deparse("CPUE non utilis\u{00E9}e"))),
+				gsub("[Aa]ll [Gg]ear [Tt]ypes", eval(parse(text=deparse("tous les types d'\u{00E9}quipement"))),
+				gsub("[Pp]arameter [Ee]stimate", eval(parse(text=deparse("estimation du param\u{00E8}tre"))),
+				gsub("[Rr]elative to [Uu]nfished", eval(parse(text=deparse("par rapport \u{00E0} non exploit\u{00E9}"))),
+				gsub("[Cc][Vv] [Pp]rocess [Ee]rror", "erreur de processus de CV",
+				gsub("[Nn]o [G][I][G]/[Tt]riennial", "pas GIG/triennal",
+				gsub("[Ss]tandardi[sz]ed [Rr]esiduals", eval(parse(text=deparse("r\u{00E9}sidus normalis\u{00E9}s"))),
+				gsub("[Ff]emale [Ss]pawning [Bb]iomass", "biomasse reproductrice femelles",
+				gsub("[Ll]og [Rr]ecruitment [Dd]eviations", eval(parse(text=deparse("Log \u{00E9}carts de recrutement"))),
+				gsub("[Aa]uto-[Cc]orrelation [Ff]unction of", eval(parse(text=deparse("Fonction d'auto-corr\u{00E9}lation de"))),
+				gsub("[Ll]og [Ii]nitial [Aa]ge [Dd]eviations", eval(parse(text=deparse("Log des \u{00E9}carts d'\u{00E2}ge initiaux"))),
+				gsub("[Aa]ll [Cc]ommercial [Gg]roundfish [Ff]isheries", eval(parse(text=deparse("Toutes les p\u{00EA}ches commerciales de poisson de fond"))),
+				gsub("[Bb]iomass [Rr]elative to [Uu]nfished [Ee]quilibrium", eval(parse(text=deparse("Biomasse par rapport \u{00E0} l'\u{00E9}quilibre non exploit\u{00E9}"))),
+				x9)))))))))))))))
+			})
+#browser();return()
+			## Bigger double words
+			xtwo = sapply(xpoo, function(x2){
+				gsub("[Bb]ottom [Tt]rawl", "chalut de fond",
+				gsub("[Mm]idwater [Tt]rawl", eval(parse(text=deparse("chalut p\u{00E9}lagique"))),
+				gsub("[Rr]elative [Vv]alue", "valeur relative",
+				gsub("[Cc]atch [Ss]trategy", eval(parse(text=deparse("strat\u{00E9}gie de capture"))),
+				gsub("[Pp]rimary [Rr]eader", "technicien principal",
+				gsub("[Pp]arameter [Vv]alue", eval(parse(text=deparse("valeur du param\u{00E8}tre"))),
+				gsub("[Ss]econdary [Rr]eader", "technicien secondaire",
+				gsub("[Cc]ommercial [Tt]rawl", "chalut commercial",
+				gsub("[Ss]pawning [Bb]iomass", "biomasse reproductrice",
+				gsub("[Ee]xploitation [Rr]ate", "taux d'exploitation",
+				gsub("[Vv]ulnerable [Bb]iomass", eval(parse(text=deparse("biomasse vuln\u{00E9}rable"))),
+				gsub("[Rr]elative [Ff]requency", eval(parse(text=deparse("fr\u{00E9}quence relative"))),
+				gsub("[Nn][Oo] [Dd][Aa][Tt][Aa]", eval(parse(text=deparse("pas de donn\u{00E9}es"))),
+				gsub("[Cc]umulative [Ff]requency", eval(parse(text=deparse("fr\u{00E9}quence cumulative"))),
+				gsub("[Tt]heoretical [Qq]uantiles", eval(parse(text=deparse("quantiles th\u{00E9}oriques"))),
+				x2)))))))))))))))
+			})
+			## Smaller double words
+			xtwo = sapply(xtwo, function(x2){
+				gsub("[Nn]o CPUE", "pas de CPUE",
+				gsub("[Ii]n [Yy]ear", eval(parse(text=deparse("dans l'ann\u{00E9}e"))),
+				gsub("CPUE [Ii]ndex", "indice de CPUE",
+				gsub("[A]lt [Cc]atch", "capture alt.",
+				gsub("[Mm]ean [Aa]ge", eval(parse(text=deparse("\u{00E2}ge moyen (ann\u{00E9}es)"))),
+				gsub("[Bb]ase [Cc]ase", "cas de base",
+				gsub("[Bb]ut [Ff]ixed", "mais fixe",
+				gsub("[Aa]ge [Cc]lass", eval(parse(text=deparse("classe d'\u{00E2}ge"))),
+				gsub("[Aa]ge \\(year", eval(parse(text=deparse("\u{00E2}ge (ann\u{00E9}e"))),
+				gsub("[Mm]ean [Ww]eight", "poids moyen",
+				gsub("[Mm]ean\\([Cc][Pp][Uu][Ee])", "moyenne(cpue)",
+				gsub("([Tt]op|[Hh]ighest) [Cc]atch", eval(parse(text=deparse("capture la plus \u{00E9}lev\u{00E9}e"))),
+				x2))))))))))))
+			})
+			## single words over 10 characters
+			xone = sapply(xtwo, function(x1){
+				gsub("[Rr]ecruitment", "recrutement",
+				gsub("[Ss]electivity", eval(parse(text=deparse("s\u{00E9}lectivit\u{00E9}"))),
+				x1))
+			})
+			## single words with 7-10 characters
+			xone = sapply(xone, function(x1){
+				gsub("[Hh]ealthy", "saine",
+				gsub("[Dd]ensity", eval(parse(text=deparse("densit\u{00E9}"))),
+				gsub("[Rr]emoved", eval(parse(text=deparse("retir\u{00E9}"))),
+				gsub("[Ll]argest", "le plus grand",
+				gsub("[Cc]ritical", "critique",
+				gsub("[Cc]autious", "prudence",
+				gsub("[Oo]bserved", eval(parse(text=deparse("observ\u{00E9}"))),
+				gsub("[Ss]ynoptic", "synoptique",
+				gsub("[Mm]aturity", eval(parse(text=deparse("maturit\u{00E9}"))),
+				gsub("[Ss]pawning", "frayant",
+				gsub("[Ss]mallest", "le plus petit",
+				gsub("[Pp]redicted", eval(parse(text=deparse("pr\u{00E9}dit"))),
+				gsub("[Tt]riennial", "triennal",
+				gsub("[Ff]requency", eval(parse(text=deparse("fr\u{00E9}quence"))),
+				gsub("[Hh]istorical", "historique",
+				gsub("[Pp]roportion", "proportion",
+				gsub("[Cc]ommercial", "commercial",
+				gsub("[Vv]ulnerable", eval(parse(text=deparse("vuln\u{00E9}rable"))),
+				x1))))))))))))))))))
+			})
+			## single words up to 6 characters
+			xone = sapply(xone, function(x1){
+				gsub(" \\(y)", " (an.)",
+				gsub("^[Aa]ge ", eval(parse(text=deparse("\u{00E2}ge "))),
+				gsub("^[Yy]ear ", eval(parse(text=deparse("ann\u{00E9}e "))),
+				gsub("[Mm]ale", eval(parse(text=deparse("m\u{00E2}le"))),
+				gsub("[Cc]atch", "capture",
+				gsub("[Ii]ndex", "indice",
+				gsub("[Mm]onth", "mois",
+				gsub("[Ss]cale", eval(parse(text=deparse("\u{00E9}chelle"))),
+				gsub("[Ff]emale", "femelle",
+				gsub("[Ss]ample", eval(parse(text=deparse("\u{00E9}chantillon"))),
+				gsub("[Ss]urvey", eval(parse(text=deparse("relev\u{00E9}"))),
+				gsub("[Ff]itted", eval(parse(text=deparse("ajust\u{00E9}"))),
+				gsub("[Ll]ength", "longueur",
+				gsub("[Ss]eason", "saison",
+				gsub("[Ww]eight", "poids",
+				gsub("[Bb]ubble", "bulle",
+				gsub("[Ee]vents", eval(parse(text=deparse("\u{00E9}v\u{00E9}nements"))),
+				gsub(" [Mm]ajor ", " zone ",
+				x1))))))))))))))))))
+			})
+			## single words describing fisheries
+			xfis = sapply(xone, function(xf){
+				gsub("[Ss]able", "morue",
+				gsub("[Tt]rawl", "chalut",
+				gsub("[Hh]alibut", eval(parse(text=deparse("fl\u{00E9}tan"))),
+				gsub("[Dd]ogfish", "aiguillat",
+				gsub("[Ll]ingcod", "lingotte",
+				gsub("[Ss]ablefish", eval(parse(text=deparse("morue charbonni\u{00E8}re"))),
+				gsub("[Dd]og/[Ll]in", "aig/lin",
+				gsub("[Ff]ish(ery|ing)", eval(parse(text=deparse("p\u{00EA}che"))),
+				gsub("[Hh](\\_)?[Ll]rock", eval(parse(text=deparse("HLs\u{00E9}b"))),
+				gsub("[Hh]ook [\\&|Aa](nd)? [Ll]ine", eval(parse(text=deparse("hame\u{00E7}on et lignes"))),
+				gsub("[Hh][Ll](\\_|\\.| )[Rr]ockfish", eval(parse(text=deparse("HL.s\u{00E9}baste"))),
+				gsub("[Hh](\\&|\\.)[Ll](\\_|\\.| )[Rr]ockfish", eval(parse(text=deparse("H&L s\u{00E9}baste"))),
+				xf))))))))))))
+			})
+#browser();return()
+			## single words describing fish
+			xfis = sapply(xfis, function(xf){
+				gsub("[Ss]pent", eval(parse(text=deparse("us\u{00E9}"))),
+				gsub("[Mm]ature", "mature",
+				gsub("[Ee]mbryos", "embryons",
+				gsub("[Rr]esting", "repos",
+				gsub("[Ii]mmature", "immature",
+				gsub("[Mm]aturing", eval(parse(text=deparse("\u{00E0} maturit\u{00E9}"))),
+				gsub("[Ff]ertili[sz]ed", eval(parse(text=deparse("fertilis\u{00E9}"))),
+				xf)))))))
+			})
+			## ridiculous acronyms
+			xacr = sapply(xfis, function(xa){
+				gsub("[B][T]", "CF",
+				gsub("[M][W]", "CP",
+				gsub("[G][M][A]", "ZGPF",        ## les zones de gestion des poissons de fond 
+				gsub("[G][M][U]", "GGPF",        ## le groupe de gestion du poisson de fond
+				gsub("[M][S][Y]", "RMS",         ## rendement maximal soutenu
+				gsub("[M][C][M][C]", "MCCM",     ## Monte Carlo \`{a} cha\^{i}ne de Markov
+				xa))))))
+			})
+			xbig = 
+				gsub(" or "," ou ",
+				gsub(" [\\&|Aa](nd)? "," et ",
+				gsub(" by ", " par ",
+				gsub(" to ", eval(parse(text=deparse(" \u{00E0} "))),
+			xacr))))
+			xout[xBpos] = xbig
+		}
+		#} 
+	}
+	rubbish = gc(verbose=FALSE)
+	if (strip) xout = as.vector(xout)
+	return(xout)
+}
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~linguaFranca
 
 
 #listTables-----------------------------2013-01-17

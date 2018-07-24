@@ -5,6 +5,8 @@
 ##  compAF..........Compare age frequencies using discrete or cumulative distribution plots.
 ##  compBmsy........Compare biomass posteriors relative to Bmsy or Bavg.
 ##  imputeRate......Impute rate of return from an investment with irregular contributions/withdrawals.
+##  plotAgeErr......Plot ageing precision data from primary and secondary readers.
+##  plotMW..........Plot annual mean weights by stock and by PMFC area.
 ##  quantAges.......Plot quantile boxes of age by year and/or area, including mean age over time.
 ## =============================================================================
 
@@ -48,12 +50,13 @@ calcMA = function(x,y,y2,period=270,every=10)
 #-------------------------------------------calcMA
 
 
-## compAF-------------------------------2018-05-22
+## compAF-------------------------------2018-07-17
 ## Compare age frequencies using discrete or
 ## cumulative distribution plots.
 ## ---------------------------------------------RH
 compAF=function(x, year=2003, sex=2, amax=40, pfld="wp",
-   png=FALSE, outnam, clrs=c("red","black"), ltys=1, type="cumul")
+   png=FALSE, outnam, clrs=c("red","black"), ltys=1, 
+   type="cumul", lang=c("e","f"))
 {
 	if (length(x)==0) stop("Supply a named list for x")
 	std   = function(x){x/sum(x)}
@@ -70,90 +73,99 @@ compAF=function(x, year=2003, sex=2, amax=40, pfld="wp",
 	col   = lucent(rep(clrs,ncomp)[1:ncomp],0.5)
 	lty   = rep(ltys,ncomp)[1:ncomp]
 
-	if (png) png(file=paste0(outnam,".png"),units="in",res=600,width=10,height=7.5)
-	if (ntype==1 && nsex==1) {
-		rc = .findSquare(nyear)
-		np = 0  ## keep track of # plots
-		par(mfrow=rc, mar=c(0,0,0,0), oma=c(4,4,0.5,0.5), mgp=c(1.6,0.5,0))
-	} else {
-		rc = c(ntype,nsex)
-		par(mfcol=rc, mar=c(0,0,0,0), oma=c(3.5,3.5,0.5,0.5), mgp=c(1.6,0.5,0))
-	}
-
-	xnam = names(x)
-	for (y in year) {
-		for (s in sex) {
-			yy = as.character(y)
-			ss = as.character(s)
-			xvec = list()
-			for (i in 1:length(x)) {
-				ii = names(x)[i]
-				xmat = x[[ii]][,,ss,pfld,drop=FALSE]
-				if (!is.element(yy,colnames(xmat))) xvec[[ii]] = NA # next
-				else xvec[[ii]] = std(x[[i]][,yy,ss,pfld])
-			}
-			nvec   = length(xvec)
-			nord   = match(names(xvec),xnam)
-			notos  = sapply(x,function(xx){
-				if(!is.element(yy,dimnames(xx)$year)) 0 
-				else sum(xx[,yy,ss,"n"])
-			})
-			legtxt = paste0(names(notos)," ",round(notos)," otos")
-			ylim = c(0,max(sapply(xvec,max),na.rm=TRUE))
-
-			if ("discr" %in% type) {
-				plot(0,0, xlim=c(1,amax), ylim=ylim, type="n", xlab="", ylab="", xaxt="n", yaxt="n")
-				sapply(nord, function(n){
-					if (!all(is.na(xvec[[n]])))
-						lines(1:length(xvec[[n]]), xvec[[n]], col=col[n], lty=lty[n], lwd=ifelse(n==1,3,2)) } )
-				addLabel(0.95,0.95,paste0(yy," - ",switch(s,"Male","Female")),adj=1)
-			}
-			if ("cumul" %in% type) {
-				plot(0,0, xlim=c(1,amax), ylim=c(0,1), type="n", xlab="", ylab="", xaxt="n", yaxt="n")
-				np = np + 1
-				if (all(notos==0))
-					addLabel(0.5,0.5,"NO DATA", col="red",cex=1.2)
-				else 
-					abline(h=seq(0.1,0.9,0.1), v=seq(5,amax-5,5), col=lucent("grey",0.5))
-				sapply(nord, function(n){
-					if (!all(is.na(xvec[[n]]))) {
-						lines(1:length(xvec[[n]]), cumsum(xvec[[n]]), col=col[n], lty=lty[n], lwd=ifelse(n==1,3,2))
-					}
-				} )
-				addLabel(0.05,0.95,paste0(yy,ifelse(np==1, switch(s," - Male"," - Female"),"")), adj=c(0,1), cex=1.2)
-				if (par()$mfg[2]==1) {
-					axis(2, at=seq(0,1,0.1), tcl=-0.25, labels=FALSE)
-					axis(2, at=seq(0.2,1,0.2), labels=TRUE, cex.axis=1.1, las=1)
-				}
-				if (np > nyear-rc[2]) {
-					axis(1, at=seq(0,amax,5), tcl=-0.25, labels=FALSE)
-					axis(1, at=seq(10,amax,10), labels=TRUE, cex.axis=1.1, las=1)
-				}
-			}
-			if (type=="cumul")
-				addLegend(0.975,0.05, bty="n", lty=lty, seg.len=1, col=col, legend=gsub("_"," ",legtxt), yjust=0, xjust=1, lwd=2, cex=0.9)
-			else
-				addLegend(0.025,0.975,bty="n", lty=lty, seg.len=1, col=col, legend=gsub("_"," ",legtxt), yjust=1, xjust=0, lwd=2, cex=0.9)
+	fout = fout.e = outnam
+	for (l in lang) {
+		if (l=="f") fout = paste0("./french/",fout.e)  ## could repeat for other languages
+		if (png) png(file=paste0(fout,".png"), units="in", res=600, width=10, height=7.5)
+		if (ntype==1 && nsex==1) {
+			rc = .findSquare(nyear)
+			np = 0  ## keep track of # plots
+			par(mfrow=rc, mar=c(0,0,0,0), oma=c(4,4,0.5,0.5), mgp=c(1.6,0.5,0))
+		} else {
+			rc = c(ntype,nsex)
+			par(mfcol=rc, mar=c(0,0,0,0), oma=c(3.5,3.5,0.5,0.5), mgp=c(1.6,0.5,0))
 		}
-	}
-	mtext ("Age", side=1, outer=TRUE, line=2.5, cex=1.5)
-	mtext (paste0(ifelse(type=="cumul","Cumulative ",""), "Age Frequency"), side=2, outer=TRUE, line=2.5, cex=1.25)
-	if(png) dev.off()
+	
+		xnam = names(x)
+		for (y in year) {
+			for (s in sex) {
+				yy = as.character(y)
+				ss = as.character(s)
+				xvec = list()
+				for (i in 1:length(x)) {
+					ii = names(x)[i]
+					xmat = x[[ii]][,,ss,pfld,drop=FALSE]
+					if (!is.element(yy,colnames(xmat))) xvec[[ii]] = NA # next
+					else xvec[[ii]] = std(x[[i]][,yy,ss,pfld])
+				}
+				nvec   = length(xvec)
+				nord   = match(names(xvec),xnam)
+				notos  = sapply(x,function(xx){
+					if(!is.element(yy,dimnames(xx)$year)) 0 
+					else sum(xx[,yy,ss,"n"])
+				})
+				legtxt = paste0(names(notos)," ",round(notos)," otos")
+				ylim = c(0,max(sapply(xvec,max),na.rm=TRUE))
+	
+				if ("discr" %in% type) {
+					plot(0,0, xlim=c(1,amax), ylim=ylim, type="n", xlab="", ylab="", xaxt="n", yaxt="n")
+					sapply(nord, function(n){
+						if (!all(is.na(xvec[[n]])))
+							lines(1:length(xvec[[n]]), xvec[[n]], col=col[n], lty=lty[n], lwd=ifelse(n==1,3,2)) } )
+					addLabel(0.95, 0.95, paste0(yy, " - ", linguaFranca(switch(s,"Male","Female"),l)), adj=1)
+				}
+				if ("cumul" %in% type) {
+					plot(0,0, xlim=c(1,amax), ylim=c(0,1), type="n", xlab="", ylab="", xaxt="n", yaxt="n")
+					np = np + 1
+					if (all(notos==0))
+						addLabel(0.5, 0.5, linguaFranca("NO DATA",l), col="red", cex=1.2)
+					else 
+						abline(h=seq(0.1,0.9,0.1), v=seq(5,amax-5,5), col=lucent("grey",0.5))
+	#if (y==2014) {browser();return()}
+					sapply(nord, function(n){
+						if (!all(is.na(xvec[[n]]))) {
+							lines(1:length(xvec[[n]]), cumsum(xvec[[n]]), col=col[n], lty=lty[n], lwd=ifelse(n==1,3,2))
+						}
+					} )
+					addLabel(0.05, 0.95, paste0(yy, ifelse(np==1, linguaFranca(switch(s," - Male"," - Female"),l), "")), adj=c(0,1), cex=1.2)
+					if (par()$mfg[2]==1) {
+						axis(2, at=seq(0,1,0.1), tcl=-0.25, labels=FALSE)
+						axis(2, at=seq(0.2,1,0.2), labels=TRUE, cex.axis=1.1, las=1)
+					}
+					if (np > nyear-rc[2]) {
+						axis(1, at=seq(0,amax,5), tcl=-0.25, labels=FALSE)
+						axis(1, at=seq(10,amax,10), labels=TRUE, cex.axis=1.1, las=1)
+					}
+				}
+				if (type=="cumul")
+					addLegend(0.975,0.05, bty="n", lty=lty, seg.len=1, col=col, legend=linguaFranca(gsub("_"," ",legtxt),l), yjust=0, xjust=1, lwd=2, cex=0.9)
+				else
+					addLegend(0.025,0.975,bty="n", lty=lty, seg.len=1, col=col, legend=linguaFranca(gsub("_"," ",legtxt),l), yjust=1, xjust=0, lwd=2, cex=0.9)
+			} ## end s (sex) loop
+		} ## end y (year) loop
+		mtext (linguaFranca("Age",l), side=1, outer=TRUE, line=2.5, cex=1.5)
+		mtext (linguaFranca(paste0(ifelse(type=="cumul","Cumulative ",""), "Frequency"),l), side=2, outer=TRUE, line=2.5, cex=1.25)
+	#browser();return()
+		if(png) dev.off()
+	} ## end l (lang) loop
 }
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~compAF
 
 
-#compBmsy-------------------------------2017-11-20
-# Compare biomass posteriors relative to Bmsy or Bavg
-#-----------------------------------------------RH
+## compBmsy-----------------------------2018-07-16
+## Compare biomass posteriors relative to Bmsy or Bavg
+## ---------------------------------------------RH
 compBmsy = function(Bspp, spp="POP", Mnams=c("Est M","Fix M"),
-   ratios=c(0.4,0.8), oratios=NULL, zones = c("Critical","Cautious","Healthy"),
-   quants=c(0.05,0.25,0.5,0.75,0.95), t.yr=2017, figgy=FALSE, width=12, height=9, 
-   rcol=c("red","green4","blue"),                        ## line cols
-   ocol = c("#D55E00", "#009E73", "#56B4E9", "#F0E442"), ## dots cols for colour-blind peeps (vermillion, bluegreen, skyblue, yellow)
+   ratios=c(0.4,0.8), oratios=NULL, t.yr=2018,
+   quants=c(0.05,0.25,0.5,0.75,0.95),
+   zones = c("Critical","Cautious","Healthy"),
+   figgy=list(win=T), pngres=400, width=12, height=9, 
+   rcol=c("red","green4","blue"),    ## line cols
+   ocol = c("#D55E00", "#009E73", "#56B4E9", "#F0E442"), ## dot cols for colour-blind humans (vermillion, bluegreen, skyblue, yellow)
    lcol = c("red","darkorange","green4"),
-   spplabs=TRUE, left.space=NULL, top.space=2, fout=NULL, offset=c(-0.1,0.1),
-   calcRat=TRUE, refpt="MSY", param=NULL, boxlim=NULL, ...)
+   spplabs=TRUE, left.space=NULL, top.space=2, fout=NULL, 
+   offset=c(-0.1,0.1), calcRat=TRUE, refpt="MSY", param=NULL, 
+   boxlim=NULL, lang=c("e","f"), ...)
 {
 	oldpar = par(no.readonly=TRUE); oldpso = grDevices::ps.options()
 	ciao = function() {
@@ -200,89 +212,98 @@ compBmsy = function(Bspp, spp="POP", Mnams=c("Est M","Fix M"),
 	if (!is.null(dots$medcol)) medcol=rev(medcol)
 	if (!is.null(dots$boxfill)) boxfill=rev(boxfill)
 
-	if (figgy) figout = c("eps","pdf","png","wmf") else figout="win"
+	#if (figgy) figout = c("eps","pdf","png","wmf") else figout="win"   ## don't need all these formats any more...
+	figout = sapply(figgy,function(x){x})
+	figout = names(figout)[figout]
+#browser();return()
+
 	if (is.null(fout))
-		fout = paste("CompBmsy-",paste(spp,collapse="+"),"-(",paste(gsub(" ","",Mnams),collapse=","),")",sep="")
+		fout = fout.e = paste("CompBmsy-",paste(spp,collapse="+"),"-(",paste(gsub(" ","",Mnams),collapse=","),")",sep="")
+	else
+		fout.e = fout
 
-	for (f in figout) {
-		if (f=="eps"){    grDevices::ps.options(horizontal = FALSE)
-		                  postscript(file=paste(fout,".eps",sep=""),width=width*1.25,height=height,fonts="mono",paper="special") }
-		if (f=="pdf"){    grDevices::ps.options(horizontal = TRUE)
-		                  pdf(file=paste(fout,".pdf",sep=""),width=width*1.25,height=height*1.25,fonts="mono") }
-		else if (f=="png") png(paste(fout,".png",sep=""), units="in", res=400, width=width, height=height)
-		else if (.Platform$OS.type=="windows" && f=="wmf") 
-			do.call("win.metafile",list(filename=paste(fout,".wmf",sep=""), width=width*1.25, height=height*1.25))
-		if (is.null(left.space))
-			left.space = (max(nchar(names(Bmsy)))-ifelse(spplabs,nchar(spp),0))^0.9
-		par(mar=c(4,left.space,0.5,0.5),cex=ifelse(f%in%c("png","eps"),1,1.2),mgp=c(1.6,0.6,0))
-		quantBox(Bmsy, horizontal=TRUE, las=1, xlim=c(0.5,nmods+top.space), ylim=ylim, cex.axis=1.2, yaxs="i", outline=FALSE,
-			pars=list(boxwex=boxwidth,medlwd=2,whisklty=1),quants=quants)
-
-		if (Nrats>0)
-			abline(v=ratios,col=rep(rcol,Nrats)[1:Nrats],lty=2,lwd=2)
-
-		#	segments(v=ratios,col=rep(c("red","green4","blue"),Nrats)[1:Nrats],lty=2,lwd=2)
-		quantBox(Bmsy, horizontal=TRUE, las=1, xlim=c(0.5,nmods+1), ylim=ylim, cex.axis=1.2, yaxs="i", outline=FALSE, names=names(Bmsy), 
-			pars=list(boxwex=boxwidth, medlwd=2, whisklty=1, medcol=medcol, boxfill=boxfill, ...), add=TRUE, quants=quants)
-		if (length(Bmsy)==1)  ## for some reason, a label is not added when there is only 1 boxplot.
-			axis(2, at=1, labels=names(Bmsy), las=1, cex.axis=1.2)
-
-		if (Norats>0){
-			orange = attributes(oratios)$range
-			if (!is.null(orange)){
-				if (all(sapply(orange,is.vector)))
-					orange = sapply(orange, function(x){ as.matrix(x,ncol=1) }, simplify=FALSE) ## this line not not tested
-				sapply(1:ncol(oratios), function(x){
-					xy = cbind(orange$low[,x], orange$high[,x], rep(NA,nrow(oratios)))
-					yy = as.vector(t(xy))
-					xx = rep(rev(1:nrow(oratios)),each=3) + offset[x]  ## currently assumes only two HRPs
-					lines(yy, xx, col=ocol[x], lty=1, lwd=1.5)
-#browser();return()
+	for (l in lang) {
+		if (l=="f") fout = paste0("./french/",fout.e)  ## could repeat for other languages
+		for (f in figout) {
+			if (f=="eps"){    grDevices::ps.options(horizontal = FALSE)
+			                  postscript(file=paste(fout,".eps",sep=""),width=width*1.25,height=height,fonts="mono",paper="special") }
+			if (f=="pdf"){    grDevices::ps.options(horizontal = TRUE)
+			                  pdf(file=paste(fout,".pdf",sep=""),width=width*1.25,height=height*1.25,fonts="mono") }
+			else if (f=="png") png(paste(fout,".png",sep=""), units="in", res=pngres, width=width, height=height)
+			else if (.Platform$OS.type=="windows" && f=="wmf") 
+				do.call("win.metafile",list(filename=paste(fout,".wmf",sep=""), width=width*1.25, height=height*1.25))
+			if (is.null(left.space))
+				left.space = (max(nchar(names(Bmsy)))-ifelse(spplabs,nchar(spp),0))^0.9
+			par(mar=c(4,left.space,0.5,0.5),cex=ifelse(f%in%c("png","eps"),1,1.2),mgp=c(1.6,0.6,0))
+			quantBox(Bmsy, horizontal=TRUE, las=1, xlim=c(0.5,nmods+top.space), ylim=ylim, cex.axis=1.2, yaxs="i", outline=FALSE,
+				pars=list(boxwex=boxwidth,medlwd=2,whisklty=1),quants=quants)
+	
+			if (Nrats>0)
+				abline(v=ratios,col=rep(rcol,Nrats)[1:Nrats],lty=2,lwd=2)
+	
+			#	segments(v=ratios,col=rep(c("red","green4","blue"),Nrats)[1:Nrats],lty=2,lwd=2)
+			quantBox(Bmsy, horizontal=TRUE, las=1, xlim=c(0.5,nmods+1), ylim=ylim, cex.axis=1.2, yaxs="i", outline=FALSE, names=linguaFranca(names(Bmsy),l), 
+				pars=list(boxwex=boxwidth, medlwd=2, whisklty=1, medcol=medcol, boxfill=boxfill, ...), add=TRUE, quants=quants)
+			if (length(Bmsy)==1)  ## for some reason, a label is not added when there is only 1 boxplot.
+				axis(2, at=1, labels=linguaFranca(names(Bmsy),l), las=1, cex.axis=1.2)
+	
+			if (Norats>0){
+				orange = attributes(oratios)$range
+				if (!is.null(orange)){
+					if (all(sapply(orange,is.vector)))
+						orange = sapply(orange, function(x){ as.matrix(x,ncol=1) }, simplify=FALSE) ## this line not not tested
+					sapply(1:ncol(oratios), function(x){
+						xy = cbind(orange$low[,x], orange$high[,x], rep(NA,nrow(oratios)))
+						yy = as.vector(t(xy))
+						xx = rep(rev(1:nrow(oratios)),each=3) + offset[x]  ## currently assumes only two HRPs
+						lines(yy, xx, col=ocol[x], lty=1, lwd=1.5)
+	#browser();return()
+					})
+				}
+				if (is.vector(oratios))
+					oratios =  as.matrix(oratios, ncol=1)
+				sapply(1:ncol(oratios), function(x) {
+					xx = oratios[,x]
+					points(rev(xx), (1:length(xx)) + offset[x], pch=21, col="black", bg=ocol[x], cex=ifelse(nrow(oratios)>4,1,1.2))
 				})
+				#xrat = rbind(matrix(rep(orats,each=2),ncol=Norats))
+				#yrat = rbind(matrix(rep(c(0,nmods),Norats),ncol=Norats))
+				#ocol = rep(c("blue","purple","navy"),Norats)[1:Norats]
+				#junk = sapply(1:Norats,
+				#	function(i,x,y,col,lty){lines(x[,i], y[,i], col=col[i], lty=lty[i], lwd=2)},
+				#	x=xrat, y=yrat, col=ocol, lty=rep(4,Norats)
+				#)
 			}
-			if (is.vector(oratios))
-				oratios =  as.matrix(oratios, ncol=1)
-			sapply(1:ncol(oratios), function(x) {
-				xx = oratios[,x]
-				points(rev(xx), (1:length(xx)) + offset[x], pch=21, col="black", bg=ocol[x], cex=ifelse(nrow(oratios)>4,1,1.2))
-			})
-			#xrat = rbind(matrix(rep(orats,each=2),ncol=Norats))
-			#yrat = rbind(matrix(rep(c(0,nmods),Norats),ncol=Norats))
-			#ocol = rep(c("blue","purple","navy"),Norats)[1:Norats]
-			#junk = sapply(1:Norats,
-			#	function(i,x,y,col,lty){lines(x[,i], y[,i], col=col[i], lty=lty[i], lwd=2)},
-			#	x=xrat, y=yrat, col=ocol, lty=rep(4,Norats)
-			#)
-		}
 
 #browser();return()
-		if (!is.null(ratios) && !is.null(zones)) {
-			#y2 = par()$usr[4] - 0.2*diff(par()$usr[3:4])
-			#text(c(0.2,0.6,1.2),rep(y2,3),c("Critical","Cautious","Healthy"),col=c("red","darkorange","green4"),font=2,cex=1.1,srt=90,adj=c(0,0.5))
-			y2 = par()$usr[4] - 0.02*diff(par()$usr[3:4])
-			y2h = par()$usr[4] - 0.04*diff(par()$usr[3:4])
-			xpos.zones = c(0,ratios[1:2]) + diff(c(0,ratios[1:2],par()$usr[2]))/2  ## only use the first two ref pts; others are for illustration
-			if (is.null(param)) {
-				text(xpos.zones[1:2], rep(y2,3)[1:2], zones[1:2], col=lcol[1:2], font=2, cex=1.1, srt=90, adj=c(1,0.5))
-				text(xpos.zones[3], rep(y2h,3)[3], zones[3], col=lcol[3], font=2, cex=1.1, srt=0, adj=c(0.5,1))
+			if (!is.null(ratios) && !is.null(zones)) {
+				#y2 = par()$usr[4] - 0.2*diff(par()$usr[3:4])
+				#text(c(0.2,0.6,1.2),rep(y2,3),c("Critical","Cautious","Healthy"),col=c("red","darkorange","green4"),font=2,cex=1.1,srt=90,adj=c(0,0.5))
+				y2 = par()$usr[4] - 0.02*diff(par()$usr[3:4])
+				y2h = par()$usr[4] - 0.04*diff(par()$usr[3:4])
+				xpos.zones = c(0,ratios[1:2]) + diff(c(0,ratios[1:2],par()$usr[2]))/2  ## only use the first two ref pts; others are for illustration
+				if (is.null(param)) {
+					text(xpos.zones[1:2], rep(y2,3)[1:2], labels=linguaFranca(zones[1:2],l), col=lcol[1:2], font=2, cex=1.1, srt=90, adj=c(1,0.5))
+					text(xpos.zones[3],   rep(y2h,3)[3],  labels=linguaFranca(zones[3],l),   col=lcol[3],   font=2, cex=1.1, srt=0,  adj=c(0.5,1))
+				}
 			}
-		}
-		if (!is.null(ratios)) {
-			#text(c(ratios,oratios),par()$usr[3],labels=show0(round(c(ratios,oratios),2),2),adj=c(1.1,-.5),col=c("red","green4",ocol))
-			text(c(ratios),par()$usr[3],labels=show0(round(ratios,2),2),adj=c(1.1,-.5),col=rcol)
-		}
-		if (is.null(param)) {
-			mess = paste0("mtext(expression(italic(B)[italic(t)]/italic(B)[",refpt,"]),side=1,line=2.5,cex=1.5)")
-		} else {
-			mess = sapply(strsplit(param,"_"),function(x){if(length(x)==1) x else paste0("italic(",x[1],")[",x[2],"]")})
-			mess = paste0("mtext(expression(",mess,"),side=1,line=2.5,cex=2)")
-		}
-		eval(parse(text=mess))
-		if (f!="win") dev.off()
-	}
+			if (!is.null(ratios)) {
+				#text(c(ratios,oratios),par()$usr[3],labels=show0(round(c(ratios,oratios),2),2),adj=c(1.1,-.5),col=c("red","green4",ocol))
+				text(c(ratios),par()$usr[3],labels=show0(round(ratios,2),2),adj=c(1.1,-.5),col=rcol)
+			}
+			if (is.null(param)) {
+				mess = paste0("mtext(expression(italic(B)[italic(t)]/italic(B)[",refpt,"]),side=1,line=2.5,cex=1.5)")
+			} else {
+				mess = sapply(strsplit(param,"_"),function(x){if(length(x)==1) x else paste0("italic(",x[1],")[",x[2],"]")})
+				mess = paste0("mtext(expression(",mess,"),side=1,line=2.5,cex=2)")
+			}
+			eval(parse(text=mess))
+			if (f!="win") dev.off()
+		} ## end f (figout) loop
+	} ## end l (lang) loop
 	invisible(Bmsy)
 }
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~compBmsy
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~compBmsy
 
 
 #imputeRate-----------------------------2010-10-20
@@ -593,7 +614,7 @@ if(is.na(LL1)) {browser();return()}
 #=======================================imputeRate
 
 
-## -------------------------------------2018-06-26
+## plotAgeErr---------------------------2018-07-24
 ## Plot ageing precision data
 ##   (modified from code by Sean Anderson, PBS)
 ## Arguments:
@@ -611,11 +632,14 @@ if(is.na(LL1)) {browser();return()}
 ## ------------------------------------------SA/RH
 
 plotAgeErr = function(dat, nsamp, xlim=NULL, ylim=NULL, jitter=0.25, seed=42, 
-   png=FALSE, pngres=400, PIN=c(8,8))
+   png=FALSE, pngres=400, PIN=c(8,8), lang=c("e","f"))
 {
 	opar = par(no.readonly=T); on.exit(par(opar))
 	strSpp = as.character(.su(dat$spp))
 	sppNam = toUpper(tolower(.su(dat$spn)))
+
+	## Create a subdirectory called `french' for French-language figures
+	createFdir(lang)
 
 	## remove non-specified ageing methods
 	dat = dat[!is.na(dat$ameth),]
@@ -678,34 +702,89 @@ plotAgeErr = function(dat, nsamp, xlim=NULL, ylim=NULL, jitter=0.25, seed=42,
 	if (is.null(ylim))
 		ylim = range(dat[,c("r2_amin","r2_amax")])
 	
-	if (png) png(paste0("AgeErr",strSpp,".png"), units="in", res=pngres, width=PIN[1], height=PIN[2])
-	par(mfrow=c(1,1), mar=c(3.5,3.5,0.5,0.75), oma=c(0,0,0,0), mgp=c(2,0.5,0))
-	plot(dat$r1_age, dat$r2_age, xlim=xlim, ylim=ylim, type="n", xlab="", ylab="", cex.axis=1.2, las=1)
-	axis(1, at=1:xlim[2], labels=F, tcl=-0.2)
-	axis(2, at=1:ylim[2], labels=F, tcl=-0.2)
-	abline(0,1,col=lucent("green4",0.5),lwd=2)
-	segments(x0=dat$r1_amin, y0=dat$r2_age, x1=dat$r1_amax, y1=dat$r2_age, col=lucent("grey50",0.5),lwd=2)
-	segments(x0=dat$r1_age, y0=dat$r2_amin, x1=dat$r1_age, y1=dat$r2_amax, col=lucent("grey50",0.5),lwd=2)
+	fout = fout.e = paste0("AgeErr",strSpp)
+	for (l in lang) {
+		if (l=="f") fout = paste0("./french/",fout.e)  ## could repeat for other languages
+		if (png) png(paste0(fout,".png"), units="in", res=pngres, width=PIN[1], height=PIN[2])
+		par(mfrow=c(1,1), mar=c(3.5,3.5,0.5,0.75), oma=c(0,0,0,0), mgp=c(2,0.5,0))
+		plot(dat$r1_age, dat$r2_age, xlim=xlim, ylim=ylim, type="n", xlab="", ylab="", cex.axis=1.2, las=1)
+		axis(1, at=1:xlim[2], labels=F, tcl=-0.2)
+		axis(2, at=1:ylim[2], labels=F, tcl=-0.2)
+		abline(0,1,col=lucent("green4",0.5),lwd=2)
+		## This seems to take a long time:
+		segments(x0=dat$r1_amin, y0=dat$r2_age, x1=dat$r1_amax, y1=dat$r2_age, col=lucent("grey50",0.5),lwd=2)
+		segments(x0=dat$r1_age, y0=dat$r2_amin, x1=dat$r1_age, y1=dat$r2_amax, col=lucent("grey50",0.5),lwd=2)
 #browser();return()
-	points(dat$r1_age, dat$r2_age, pch=21, cex=0.8, col=lucent("black",0.5), bg=lucent("cyan",0.5))
-	mtext("Age (y) by Primary Reader", side=1, line=2, cex=1.5)
-	mtext("Age (y) by Secondary Reader", side=2, line=2, cex=1.5)
-	addLabel(0.05, 0.95, sppNam, cex=1.5, col="blue", adj=c(0,1))
-	if (png) dev.off()
+		points(dat$r1_age, dat$r2_age, pch=21, cex=0.8, col=lucent("black",0.5), bg=lucent("cyan",0.5))
+		mtext(linguaFranca("Age (y) by Primary Reader",l), side=1, line=2, cex=1.5)
+		mtext(linguaFranca("Age (y) by Secondary Reader",l), side=2, line=2, cex=1.5)
+		addLabel(0.05, 0.95, linguaFranca(sppNam,l), cex=1.5, col="blue", adj=c(0,1))
+		if (png) dev.off()
+	} ## end l (lang) loop
+	junk = gc(verbose=FALSE)
 	return(dat)
 }
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotAgeErr
 
 
-#quantAges------------------------------2017-11-30
-# Plot quantile boxes of age by year and/or area,
-# including mean age over time.
-# Suggested by PJS to detect changes in age.
-#-------------------------------------------PJS/RH
+## plotMW-------------------------------2018-07-19
+## Plot mean weight of stocks and individual areas
+## that occur in the bigger stock areas.
+## ---------------------------------------------RH
+plotMW = function(dat, xlim, ylim, outnam="RSR-Mean-Weight-Compare",
+   png=FALSE, lang=c("e","f"))
+{
+	## Create a subdirectory called `french' for French-language figures
+	createFdir(lang)
+
+	if (missing(xlim)) xlim=range(dat[,1])
+	if (missing(ylim)) ylim=range(dat[,-1], na.rm=T)
+	x = xlim[1]:xlim[2]
+	stocks = names(dat[,-1])
+	#scol   = c("green","green4","gold","orange","red","cyan","blue","red","blue")
+	scol   = c("orange","salmon","coral","hotpink","plum","cyan","blue","red","blue")
+	spch   = c(1:6,8,25,24)
+	slty   = c(rep(5,7),rep(1,2))
+	slwd   = c(rep(1,7),rep(3,2))
+	scex   = c(rep(1.2,7),rep(1.5,2))
+	sord   = paste0("s",c("3C","3D","5A","5B","5C","5D","5E","5ABC3CD","5DE"))
+	names(scol) = names(spch) = names(slty) = names(slwd) = names(scex) = sord
+
+	fout = fout.e = outnam
+	for (l in lang) {
+		if (l=="f") fout = paste0("./french/",fout.e)  ## could repeat for other languages
+		if (png) png(paste0(fout,".png"), units="in", res=400, width=8, height=6)
+		par(mfrow=c(1,1), mar=c(3.5,3.8,0.5,0.5), oma=c(0,0,0,0), mgp=c(2.25,0.5,0))
+		plot(0, xlim=xlim, ylim=ylim, type="n", xlab=linguaFranca("Year",l), ylab=linguaFranca("Mean Weight (kg)",l), cex.axis=1.2, cex.lab=1.5)
+		z = is.element(dat$year,x)
+		for (i in sord) {
+			if (!is.element(i,stocks)) next
+			lines(x,dat[z,i], col=scol[i], lty=slty[i], lwd=slwd[i])
+			points(x,dat[z,i], pch=spch[i], col=scol[i], bg="ghostwhite", cex=scex[i], lwd=slwd[i])
+		}
+		ii = stocks
+		addLegend(0.05,0.97, pch=spch[ii], col=scol[ii], lty=slty[ii], lwd=slwd[ii], pt.cex=scex[ii], pt.bg="ghostwhite", seg.len=3, legend=substring(ii,2), bty="n")
+		if (png) dev.off()
+	} ## end l (lang) loop
+}
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotMW
+
+
+## quantAges----------------------------2018-07-17
+## Plot quantile boxes of age by year and/or area,
+## including mean age over time.
+## Suggested by PJS to detect changes in age.
+## -----------------------------------------PJS/RH
 quantAges =function(bioDat, dfld="age", afld="major", tfld="year", 
-   type="time", outnam="Quant-Age", png=FALSE)  # types: time, area
+   type="time", major=3:9, ylim=c(0,35), strSpp="RSR",
+   outnam="Quant-Age", png=FALSE, lang=c("e","f"))  # types: time, area
 {
 	bioDat = bioDat[bioDat[,dfld]>0 & !is.na(bioDat[,dfld]),]
+	if (afld=="major")
+		bioDat = bioDat[is.element(bioDat[,afld], major),]
+	if (dfld=="wt") dlab = paste0(strSpp, " Weight (kg)")
+	else if (dfld=="len") dlab = paste0(strSpp, " Length (cm)")
+	else dlab = paste0(strSpp, " Age (years)")
 	bioDat$ctype=rep("U",nrow(bioDat))
 	bioDat$ctype[is.element(bioDat$ttype,c(1,4:10,12:14))]="C"  ## Note: TRIP_SUB_TYPE=11 in GFBio is RECREATIONAL
 	bioDat$ctype[is.element(bioDat$ttype,c(2,3))]="S"
@@ -722,92 +801,107 @@ quantAges =function(bioDat, dfld="age", afld="major", tfld="year",
 		years   = 1990:2016; nyrs = length(years)
 		yearbox = as.list(rep(NA,nyrs)); names(yearbox) = years
 
-		if (png) png(paste0(outnam,".png"), width=8, height=8, units="in", res=400)
-		par(mfcol=c(length(abioDat),2), mar=c(0,2,0,0), oma=c(4,2,1,1), mgp=c(2,0.5,0))
+		fout = fout.e = outnam
+		for (l in lang) {
+			if (l=="f") fout = paste0("./french/",fout.e)  ## could repeat for other languages
+			if (png) png(paste0(fout,".png"), width=8, height=8, units="in", res=400)
+			par(mfcol=c(length(abioDat),2), mar=c(0,2,0,0), oma=c(4,2,1,1), mgp=c(2,0.5,0))
 
-		for (j in 1:2){
-			jj = c("C","S")[j]
-			jjj = c("Commerical","Survey")[j]
+			for (j in 1:2){
+				jj = c("C","S")[j]
+				jjj = c("Commercial","Survey")[j]
 
-			for (a in length(abioDat):1) {
-				aa   = names(abioDat)[a]
-				adat = abioDat[[a]]
-				adat = adat[is.element(adat$ctype,jj),]
+				for (a in length(abioDat):1) {
+					aa   = names(abioDat)[a]
+					adat = abioDat[[a]]
+					adat = adat[is.element(adat$ctype,jj),]
 
-				males = is.element(adat$sex,1)
-				msex = split(adat[,dfld][males],adat[,tfld][males])  ## may include ealry years
-				zsex = is.element(names(msex),years)
-				Msex = yearbox
-				Msex[names(msex[zsex])] = msex[zsex]
-				Qage[[jj]][[aa]][["M"]] = Msex
+					males = is.element(adat$sex,1)
+					msex = split(adat[,dfld][males],adat[,tfld][males])  ## may include ealry years
+					zsex = is.element(names(msex),years)
+					Msex = yearbox
+					Msex[names(msex[zsex])] = msex[zsex]
+					Qage[[jj]][[aa]][["M"]] = Msex
 
-				females = is.element(adat$sex,2)
-				fsex = split(adat[,dfld][females],adat[,tfld][females])
-				zsex = is.element(names(fsex),years)
-				Fsex = yearbox
-				Fsex[names(fsex[zsex])] = fsex[zsex]
-				Qage[[jj]][[aa]][["F"]] = Fsex
+					females = is.element(adat$sex,2)
+					fsex = split(adat[,dfld][females],adat[,tfld][females])
+					zsex = is.element(names(fsex),years)
+					Fsex = yearbox
+					Fsex[names(fsex[zsex])] = fsex[zsex]
+					Qage[[jj]][[aa]][["F"]] = Fsex
 
-				quantBox(yearbox, outline=F, ylim=c(0,35), xaxt="n")
-				quantBox(Msex, xaxt="n", yaxt="n", outline=F, boxcol="grey30", boxfill=mcol[1], medcol=mcol[2], whisklty=1, whiskcol="gainsboro", add=T, boxwex=boxwex, at=(1:nyrs)+(boxwex/2))
-				quantBox(Fsex, xaxt="n", yaxt="n", outline=F, boxcol="grey30", boxfill=fcol[1], medcol=fcol[2], whisklty=1, whiskcol="gainsboro", add=T, boxwex=boxwex, at=(1:nyrs)-(boxwex/2))
+					quantBox(yearbox, outline=F, ylim=c(0,35), xaxt="n")
+					quantBox(Msex, xaxt="n", yaxt="n", outline=F, boxcol="grey30", boxfill=mcol[1], medcol=mcol[2], whisklty=1, whiskcol="gainsboro", add=T, boxwex=boxwex, at=(1:nyrs)+(boxwex/2))
+					quantBox(Fsex, xaxt="n", yaxt="n", outline=F, boxcol="grey30", boxfill=fcol[1], medcol=fcol[2], whisklty=1, whiskcol="gainsboro", add=T, boxwex=boxwex, at=(1:nyrs)-(boxwex/2))
 
-				lines((1:nyrs)-(boxwex/2),sapply(Fsex,mean),col=fcol[2],lwd=2)
-				lines((1:nyrs)+(boxwex/2),sapply(Msex,mean),col=mcol[2],lwd=2)
+					lines((1:nyrs)-(boxwex/2),sapply(Fsex,mean),col=fcol[2],lwd=2)
+					lines((1:nyrs)+(boxwex/2),sapply(Msex,mean),col=mcol[2],lwd=2)
 
-				axis(1, at=1:nyrs, labels=FALSE, tcl=0.25)
-				if (a==1) axis(1, at=seq(1,nyrs,5), labels=seq(years[1],rev(years)[1],5), cex.axis=1.2, tcl=0.5)
-				addLabel(0.05,0.95,paste0(jj," - Major ",aa), adj=c(0,1), cex=1)
+					axis(1, at=1:nyrs, labels=FALSE, tcl=0.25)
+					if (a==1) axis(1, at=seq(1,nyrs,5), labels=seq(years[1],rev(years)[1],5), cex.axis=1.2, tcl=0.5)
+					jfranc = ifelse(l=="f" && jj=="S","R",jj)
+					addLabel(0.05, 0.95, linguaFranca(paste0(jfranc," - Major ",aa),l), adj=c(0,1), cex=1)
+				}
 			}
-		}
-		mtext("Year", side=1, outer=T, line=2.5, cex=1.5)
-		mtext("RSR Age (years)", side=2, outer=T, line=0.25, cex=1.5, las=3)
-		if (png) dev.off()
-	}
+			mtext(linguaFranca("Year",l), side=1, outer=TRUE, line=2.5, cex=1.5)
+			mtext(linguaFranca("RSR Age (years)",l), side=2, outer=TRUE, line=0.25, cex=1.5, las=3)
+			if (png) dev.off()
+		} ## end l (lang) loop
+	} ## end if time
+
 	if (type=="area") {
 		pmfc = c("3C","3D","5A","5B","5C","5D","5E"); names(pmfc) = 3:9
 		jbioDat = split(bioDat, bioDat[,"ctype"])
 		areas   = .su(bioDat[,afld]); nareas = length(areas)
 		areabox = as.list(rep(NA,nareas)); names(areabox) = areas
 
-		if (png) png(paste0(outnam,".png"), width=8, height=8, units="in", res=400)
-		par(mfcol=c(length(jbioDat),1), mar=c(0,2,0,0), oma=c(4,2,1,1), mgp=c(2,0.5,0))
+		fout = fout.e = outnam
+		for (l in lang) {
+			if (l=="f") fout = paste0("./french/",fout.e)  ## could repeat for other languages
+			if (png) png(paste0(fout,".png"), width=8, height=8, units="in", res=400)
+			par(mfcol=c(length(jbioDat),1), mar=c(0,2,0,0), oma=c(4,2,1,1), mgp=c(2,0.5,0))
 
-		for (j in 1:length(jbioDat)) {
-			jj   = names(jbioDat)[j]
-			jjj = c("Commerical","Survey")[j]
-			jdat = jbioDat[[j]]
+			for (j in 1:length(jbioDat)) {
+				jj   = names(jbioDat)[j]
+				jjj = c("Commercial","Survey")[j]
+				jdat = jbioDat[[j]]
 
-			males = is.element(jdat$sex,1)
-			msex = split(jdat[,dfld][males],jdat[,afld][males])  ## may include ealry years
-			zsex = is.element(names(msex),areas)
-			Msex = areabox
-			Msex[names(msex[zsex])] = msex[zsex]
-			Qage[[jj]][["M"]] = Msex
+				males = is.element(jdat$sex,1)
+				msex = split(jdat[,dfld][males],jdat[,afld][males])  ## may include ealry years
+				zsex = is.element(names(msex),areas)
+				Msex = areabox
+				Msex[names(msex[zsex])] = msex[zsex]
+				Qage[[jj]][["M"]] = Msex
 
-			females = is.element(jdat$sex,2)
-			fsex = split(jdat[,dfld][females],jdat[,afld][females])
-			zsex = is.element(names(fsex),areas)
-			Fsex = areabox
-			Fsex[names(fsex[zsex])] = fsex[zsex]
-			Qage[[jj]][["F"]] = Fsex
-
-			quantBox(areabox, outline=F, ylim=c(0,35), xaxt="n")
-			quantBox(Msex, xaxt="n", yaxt="n", outline=F, boxcol="grey30", boxfill=mcol[1], medcol=mcol[2], whisklty=1, whiskcol="gainsboro", add=T, boxwex=boxwex, at=(1:nareas)+(boxwex/2))
-			quantBox(Fsex, xaxt="n", yaxt="n", outline=F, boxcol="grey30", boxfill=fcol[1], medcol=fcol[2], whisklty=1, whiskcol="gainsboro", add=T, boxwex=boxwex, at=(1:nareas)-(boxwex/2))
-
-			#lines((1:nareas)-(boxwex/2),sapply(Fsex,mean),col=fcol[2],lwd=2)
-			#lines((1:nareas)+(boxwex/2),sapply(Msex,mean),col=mcol[2],lwd=2)
-
-			axis(1, at=1:nareas, labels=FALSE, tcl=0.25)
-			if (j==2) axis(1, at=1:nareas, labels=pmfc[as.character(areas)], cex.axis=1.2, tcl=0.5)
+				females = is.element(jdat$sex,2)
+				fsex = split(jdat[,dfld][females],jdat[,afld][females])
+				zsex = is.element(names(fsex),areas)
+				Fsex = areabox
+				Fsex[names(fsex[zsex])] = fsex[zsex]
+				Qage[[jj]][["F"]] = Fsex
+				if (is.null(ylim))
+					Ylim = c(min(sapply(Qage[[jj]],function(x){sapply(x,function(xx){quantile(xx,0.05,na.rm=T)})}),na.rm=T),
+						max(sapply(Qage[[jj]],function(x){sapply(x,function(xx){quantile(xx,0.95,na.rm=T)})}),na.rm=T))
+				else Ylim = ylim
 #browser();return()
-			addLabel(0.05,0.95,paste0(jjj), adj=c(0,1), cex=1)
-		}
-		mtext("PMFC Area", side=1, outer=T, line=2.5, cex=1.5)
-		mtext("RSR Age (years)", side=2, outer=T, line=0.25, cex=1.5, las=3)
-		if (png) dev.off()
-	}
+
+				quantBox(areabox, outline=F, ylim=Ylim, xaxt="n")
+				quantBox(Msex, xaxt="n", yaxt="n", outline=F, boxcol="grey30", boxfill=mcol[1], medcol=mcol[2], whisklty=1, whiskcol="gainsboro", add=T, boxwex=boxwex, at=(1:nareas)+(boxwex/2))
+				quantBox(Fsex, xaxt="n", yaxt="n", outline=F, boxcol="grey30", boxfill=fcol[1], medcol=fcol[2], whisklty=1, whiskcol="gainsboro", add=T, boxwex=boxwex, at=(1:nareas)-(boxwex/2))
+
+				#lines((1:nareas)-(boxwex/2),sapply(Fsex,mean),col=fcol[2],lwd=2)
+				#lines((1:nareas)+(boxwex/2),sapply(Msex,mean),col=mcol[2],lwd=2)
+
+				axis(1, at=1:nareas, labels=FALSE, tcl=0.25)
+				if (j==2) axis(1, at=1:nareas, labels=pmfc[as.character(areas)], cex.axis=1.2, tcl=0.5)
+#browser();return()
+				addLabel(0.05, 0.95, linguaFranca(paste0(jjj),l), adj=c(0,1), cex=1)
+			}
+			mtext(linguaFranca("PMFC Area",l), side=1, outer=TRUE, line=2.5, cex=1.5)
+			mtext(linguaFranca(dlab,l), side=2, outer=TRUE, line=0.25, cex=1.5, las=3)
+			if (png) dev.off()
+		} ## end l (lang) loop
+	} ## end if area
 	return(Qage)
 }
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~quantAges
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~quantAges

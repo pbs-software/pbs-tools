@@ -1,23 +1,23 @@
-#===============================================================================
-# Module 5: Spatial
-# -----------------
-#  calcHabitat.....Calculate potential habitat using bathymetry.
-#  calcOccur.......Calculate percent occurrence of events in PolySet.
-#  calcSRFA........Determine SRF areas using major, minor, and locality areas.
-#  calcStockArea   Assign a stock area designation based on species HART code and PMFC major and/or minor areas.
-#  calcWAParea     Assign a stock area designation for Walleye Pollock using PMFC major and minor areas, a stratifying vector, and a weighting vector.
-#  calcSurficial...Calculate intersection of surficial geology and bathymetry interval.
-#  clarify.........Analyse catch proportions in blocks, then cluster into fisheries groups.
-#  findHoles.......Find holes and place them under correct parents.
-#  plotEO..........Plot Extent of Occurrence for a species using a convex hull.
-#  plotGMA.........Plot the Groundfish Management Areas.
-#  plotLocal.......Plot DFO fishing localities with the highest catch.
-#  plotTernary.....Plot a ternary diagram for data amalgamated into 3 groups.
-#  plotTertiary....Composition plots within a polygonal space.
-#  preferDepth.....Histogram showing depth-of-capture.
-#  prepClara.......Prepare a data object for use by `clarify`.
-#  zapHoles........Attempts to remove holes overwritten by solids.
-#===============================================================================
+## =============================================================================
+## Module 5: Spatial
+## -----------------
+##  calcHabitat.....Calculate potential habitat using bathymetry.
+##  calcOccur.......Calculate percent occurrence of events in PolySet.
+##  calcSRFA........Determine SRF areas using major, minor, and locality areas.
+##  calcStockArea...Assign a stock area designation based on species HART code and PMFC major and/or minor areas.
+##  calcWAParea.....Assign a stock area designation for Walleye Pollock using PMFC major and minor areas, a stratifying vector, and a weighting vector.
+##  calcSurficial...Calculate intersection of surficial geology and bathymetry interval.
+##  clarify.........Analyse catch proportions in blocks, then cluster into fisheries groups.
+##  findHoles.......Find holes and place them under correct parents.
+##  plotEO..........Plot Extent of Occurrence for a species using a convex hull.
+##  plotGMA.........Plot the Groundfish Management Areas.
+##  plotLocal.......Plot DFO fishing localities with the highest catch.
+##  plotTernary.....Plot a ternary diagram for data amalgamated into 3 groups.
+##  plotTertiary....Composition plots within a polygonal space.
+##  preferDepth.....Histogram showing depth-of-capture.
+##  prepClara.......Prepare a data object for use by `clarify`.
+##  zapHoles........Attempts to remove holes overwritten by solids.
+## ==============================================================================
 
 
 #calcHabitat----------------------------2017-01-16
@@ -872,13 +872,16 @@ plotGMA = function(gma=gma.popymr, xlim=c(-134,-123), ylim=c(48.05,54.95),
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotGMA
 
 
-## plotLocal----------------------------2018-06-25
+## plotLocal----------------------------2018-07-24
 ## Plot DFO fishing localities with the highest catch.
 ## ---------------------------------------------RH
 plotLocal = function(dat, area, aflds=NULL, pcat=0.95, showAll=FALSE,
    fid=NULL, fidtype="PBStools", strSpp, Ntop=5, short=TRUE,
-   plot=TRUE, png=FALSE, csv=FALSE, outnam="refA439")
+   plot=TRUE, png=FALSE, csv=FALSE, outnam="refA439", lang=c("e","f"))
 {
+	## Create a subdirectory called `french' for French-language figures
+	createFdir(lang)
+
 	fenv = lenv()  ## function environment
 	datnam = as.character(substitute(dat))
 	if (substring(datnam,1,3)=="gfm")
@@ -901,7 +904,7 @@ plotLocal = function(dat, area, aflds=NULL, pcat=0.95, showAll=FALSE,
 			names(FID) = c("T","H","S","DL","HL") ## short-name defaults
 		else
 			names(FID) = c("Trawl","Halibut","Sablefish","Dogfish.Lingcod","HL.Rockfish") ## long-name defaults
-		dat$fid[is.element(dat$fid,9)] = 1                                            ## put FOREIGN sector catch into trawl
+		dat$fid[is.element(dat$fid,9)] = 1       ## put FOREIGN sector catch into trawl
 	} else if (fidtype=="GFFOS") {
 		getData("FISHERY",dbName="GFFOS")
 		FID = PBSdat$FISHERY_CODE
@@ -965,25 +968,28 @@ plotLocal = function(dat, area, aflds=NULL, pcat=0.95, showAll=FALSE,
 		topcat = unlist(formatCatch(topN$catT,3))
 		legtxt = paste0(topcat," - ",topN$name)
 		if (plot) {
-			#if (png) png(filename=paste0(outnam,".",ff,".png"), width=9, height=8.25, units="in", res=600)
-			if (png) png(filename=paste0(outnam,".",ff,".png"), width=9, height=7.3, units="in", res=600)
-			plotMap(area, type="n", plt=c(0.06,0.99,0.06,0.99), 
-				xlim=c(-136,-122.5), ylim=c(48,54.8), mgp=c(2.2,0.5,0), cex.axis=1.2, cex.lab=1.5)
-			if (showAll)
-				addPolys(area, border="grey")
-			addPolys(area, polyProps=fdata)
-			text(fdata$X[1:Ntop],fdata$Y[1:Ntop],1:Ntop,cex=0.8)
-			addPolys(nepacLL, col="lightyellow1")
-			addLegend(0.975, 0.94, fill=topN$col, legend=legtxt, bty="n", title=paste0("Fishery: ",ff, " - top catch (t)"), xjust=1, title.adj=0)
-			if (!missing(strSpp)) {
-				derange = paste0(gsub("-",".",range(fdat$date,na.rm=T)),collapse=" to ")
-				addLabel(0.5, 0.96, sppnam, cex=1.2, adj=c(0,0))
-				addLabel(0.975, 0.96, paste0("(", derange, ")"), cex=0.8, adj=c(1,0))
-			}
+			fout = fout.e = paste0(outnam,".",ff)
+			for (l in lang) {
+				if (l=="f") fout = paste0("./french/",fout.e)  ## could repeat for other languages
+				if (png) png(filename=paste0(fout,".png"), width=9, height=7.3, units="in", res=600)
+				plotMap(area, type="n", plt=c(0.06,0.99,0.06,0.99), 
+					xlim=c(-136,-122.5), ylim=c(48,54.8), mgp=c(2.2,0.5,0), cex.axis=1.2, cex.lab=1.5)
+				if (showAll)
+					addPolys(area, border="grey")
+				addPolys(area, polyProps=fdata)
+				text(fdata$X[1:Ntop],fdata$Y[1:Ntop],1:Ntop,cex=0.8)
+				addPolys(nepacLL, col="lightyellow1")
+				addLegend(0.975, 0.94, fill=topN$col, legend=legtxt, bty="n", title=linguaFranca(paste0("Fishery: ",ff, " - top catch (t)"),l), xjust=1, title.adj=0)
+				if (!missing(strSpp)) {
+					derange = paste0(gsub("-",".",range(fdat$date,na.rm=T)),collapse=" to ")
+					addLabel(0.5, 0.96, linguaFranca(sppnam,l), cex=1.2, adj=c(0,0))
+					addLabel(0.975, 0.96, linguaFranca(paste0("(", derange, ")"),l), cex=0.8, adj=c(1,0))
+				}
 #browser();return()
-			box()
-			if (png) dev.off()
-		}
+				box()
+				if (png) dev.off()
+			} ## end l (lang) loop
+		}    ## end if plot
 		if (csv) {
 			#write.csv(fdata, paste0(outnam,".",fidnam[f],".csv"), row.names=FALSE)
 			write.csv(fdata, paste0(outnam,".",ff,".csv"), row.names=FALSE)

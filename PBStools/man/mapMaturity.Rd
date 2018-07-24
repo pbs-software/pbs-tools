@@ -6,48 +6,51 @@
 }
 \usage{
 mapMaturity(dat=pop.age, strSpp="", type="map", mats=1:7,
-   sex=list(Females=2), ttype=1:4, stype=c(1,2,6,7), major=c(3:9),
+   sex=list(Females=2), ttype=1:5, stype=c(1,2,6,7), major=c(3:9),
    stock, brks=c(0,.05,.1,.25,.5,1), byrow=FALSE, hpage=6,
    clrs=list(colorRampPalette(c("honeydew","lightgreen","black"))(5),
    colorRampPalette(c("aliceblue","skyblue2","black"))(5)),
-   outnam, eps=FALSE, png=FALSE, wmf=FALSE, ioenv=.GlobalEnv)
+   outnam, eps=FALSE, png=FALSE, wmf=FALSE, ioenv=.GlobalEnv,
+   lang=c("e","f"))
 }
 \arguments{
-  \item{dat}{biological data set with fields \code{mat} specifying maturity code.}
-  \item{strSpp}{string code for species. If dataset has attribute \code{spp},
+  \item{dat}{\code{data.frame} -- biological data set with fields \code{mat} specifying maturity code.}
+  \item{strSpp}{\code{character} -- string code for species. If dataset has attribute \code{spp},
     this will be used before \code{strSpp}.}
-  \item{type}{character string specifying type of plot to produce: \cr
+  \item{type}{\code{character} -- string specifying type of plot to produce: \cr
     \code{"map"} -- for original colour-coded tiles, and \cr
     \code{"bubb"} -- for bubbles proportional to relative frequency (PJS); \cr
     both essentially represent a frequency matrix of maturity code (rows) by month (columns). }
-  \item{mats}{maturity codes to map (defaults to 1:7).}
-  \item{sex}{list of sex codes categorised by name, where codes: \cr
+  \item{mats}{\code{numeric} -- maturity codes to map (defaults to 1:7).}
+  \item{sex}{\code{numeric} -- list of sex codes categorised by name, where codes: \cr
     0=not looked at, 1=male, 2=female, 3=looked at but unknown \cr
     e.g. \code{list(`Females`=2, `Males`=1)}.}
-  \item{ttype}{trip type code, where \cr
+  \item{ttype}{\code{numeric} -- trip type code, where \cr
     1=non-observed commercial, 2=research, 3=survey, 4=observed domestic \cr
     e.g. \code{list(Commercial=c(1,4), Research=c(2:3))}}
-  \item{stype}{sample type code, where \cr
+  \item{stype}{\code{numeric} -- sample type code, where \cr
     0=unknown, 1=total catch, 2=random, 4=selected,
     5=stratified, 6=random from randomly assigned set, 7=random from set after randomly assigned set,
     8=random from set requested by vessel master, 9=selected juveniles, and 10=selected adults.}
-  \item{major}{major PMFC area codes, where \cr
+  \item{major}{\code{numeric} -- major PMFC area codes, where \cr
     3=3C, 4=3D, 5=5A, 6=5B, 7=5C, 8=5D, and 9=5E.}
-  \item{stock}{stock label, usually a combination of PMFC \code{major} and \code{minor} areas specific to a species.
+  \item{stock}{\code{character} -- stock label, usually a combination of PMFC \code{major} and \code{minor} areas specific to a species.
     If this argument is specified, it precludes any specification of \code{major}
     and assumes that a field called \code{"stock"} appears in the data file.}
-  \item{brks}{relative breaks from 0 to 1 to partition the maturity data (only used for \code{type="map"}).}
-  \item{byrow}{logical: if \code{TRUE}, the observed monthly frequencies are transformed to proportions by maturity code; 
+  \item{brks}{\code{numeric} -- relative breaks from 0 to 1 to partition the maturity data (only used for \code{type="map"}).}
+  \item{byrow}{\code{logical} -- if \code{TRUE}, the observed monthly frequencies are transformed to proportions by maturity code; 
     if \code{FALSE}, the observed maturity frequencies are transformed to proportions by month.}
-  \item{hpage}{height of page in inches if figure is sent to an image file.}
-  \item{clrs}{list of colour vectors that match the \code{sex} list (above). 
+  \item{hpage}{\code{numeric} -- height of page in inches if figure is sent to an image file.}
+  \item{clrs}{\code{character} -- list of colour vectors that match the \code{sex} list (above). 
     If \code{type="map"}, the colour vectors should match the relative intervals defined by \code{brks}.
     \emph{This argument needs some work to accommodate the newly added "bubb" type.}}
-  \item{outnam}{explicit output name to override an internally generated one.}
-  \item{eps}{logical: if \code{TRUE}, send plot to a postscript \code{.eps} file.}
-  \item{png}{logical: if \code{TRUE}, send plot to a raster \code{.png} file.}
-  \item{wmf}{logical: if \code{TRUE}, send plot to a vector \code{.wmf} file.}
-  \item{ioenv}{input/output environment for function input data and output results.}
+  \item{outnam}{\code{character} -- explicit output name to override an internally generated one.}
+  \item{eps}{\code{logical} -- if \code{TRUE}, send plot to a postscript \code{.eps} file.}
+  \item{png}{\code{logical} -- if \code{TRUE}, send plot to a raster \code{.png} file.}
+  \item{wmf}{\code{logical} -- if \code{TRUE}, send plot to a vector \code{.wmf} file.}
+  \item{ioenv}{\code{environment} -- input/output environment for function input data and output results.}
+  \item{lang}{\code{character} -- a vector of letters that denote the language for output:
+    currently only \code{"e"} (english) and "f" (french).}
 }
 \details{
   If \code{byrow=TRUE} (original default configuration), for each maturity code the function plots
@@ -90,7 +93,10 @@ pbsfun()
 })
 }
 \author{
-  Rowan Haigh, Pacific Biological Station, Fisheries and Oceans Canada, Nanaimo BC
+  \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
+  Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
+  \emph{locus: Institute of Ocean Sciences (IOS), Sidney BC}\cr
+  Last modified \code{Rd: 2018-07-23}
 }
 \seealso{
   \code{\link{pop.age}}, \code{\link{estOgive}}, \code{\link{getData}}

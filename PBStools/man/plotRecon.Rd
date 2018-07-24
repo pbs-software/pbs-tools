@@ -8,12 +8,10 @@
 }
 \usage{
 plotRecon(dat=cat440rec, strSpp="440", major=c(1,3:9), fidout=10, 
-   years=1918:2015, xlab=seq(1920,2050,5), yrs.rec=attributes(dat)$yrs.rec,
+   years=1918:2018, xlab=seq(1920,2050,5), yrs.rec=attributes(dat)$yrs.rec,
    ymax=NULL, shade=FALSE, shadier=FALSE, figDir=getwd(), timestamp="",
-   eps=FALSE, png=FALSE, wmf=FALSE, PIN=c(10,5))
+   eps=FALSE, png=FALSE, wmf=FALSE, PIN=c(10,5), lang=c("e","f"))
 }
-
-
 \arguments{
   \item{dat}{\code{numeric} -- array of annual catch by PMFC area and fishery ID. }
   \item{strSpp}{\code{character} -- string specifying Hart species code (e.g., \code{"440"} = Yellowmouth Rockfish). }
@@ -35,6 +33,8 @@ plotRecon(dat=cat440rec, strSpp="440", major=c(1,3:9), fidout=10,
   \item{wmf}{\code{logical} -- if \code{TRUE}, send the figure to a windows metafile (\code{.wmf}). }
   \item{PIN}{\code{numeric} -- vector indicating figure size (width, height) specified in inches; 
     only applies if the figure is sent to an output file.}
+  \item{lang}{\code{character} -- vector of letters specifying language in figures
+    (\code{"e"}= english, \code{"f"}= french.}
 }
 \details{
   See the catch reconstruction algorithm (\code{\link[PBStools]{buildCatch}}) for more details.
@@ -48,7 +48,7 @@ plotRecon(dat=cat440rec, strSpp="440", major=c(1,3:9), fidout=10,
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
   \emph{locus: Institute of Ocean Sciences (IOS), Sidney BC}\cr
-  Last modified \code{Rd: 2018-06-28}
+  Last modified \code{Rd: 2018-07-24}
 }
 \seealso{
   \code{\link[PBStools]{buildCatch}},

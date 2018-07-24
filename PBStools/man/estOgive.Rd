@@ -18,7 +18,8 @@ estOgive(dat=pop.age, strSpp="", method=c("dblnorm"),
    fg=c("red","orange2","blue","green4"), Arcs=NULL, radius=0.2,
    parList=list(val=c(15,0.9,exp(100)), min=c(5,0.1,exp(10)),
    max=c(60,1000,exp(150)), active=c(TRUE,TRUE,FALSE)),
-   outnam, eps=FALSE, png=FALSE, wmf=FALSE, ioenv=.GlobalEnv, ...)
+   outnam, eps=FALSE, png=FALSE, wmf=FALSE, ioenv=.GlobalEnv,
+   lang=c("e","f"), ...)
 }
 \arguments{
   \item{dat}{\code{data.frame} -- biological data set with fields \code{mat} and \code{age}.}
@@ -75,6 +76,8 @@ estOgive(dat=pop.age, strSpp="", method=c("dblnorm"),
   \item{png}{\code{logical} -- if \code{TRUE}, send plot to a portable network graphics \code{.png} file.}
   \item{wmf}{\code{logical} -- if \code{TRUE}, send plot to a vector \code{.wmf} file.}
   \item{ioenv}{\code{environment} -- input/output environment for function input data and output results.}
+  \item{lang}{\code{character} -- a vector of letters that denote the language for output:
+    currently only \code{"e"} (english) and "f" (french).}
   \item{...}{additional arguments for use in \code{text} within \code{flagIt} called by \code{doLab}.}
 }
 \details{
@@ -123,9 +126,10 @@ pbsfun()
 })
 }
 \author{
-  \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Research Biologist\cr
-  Pacific Biological Station (PBS), Fisheries and Oceans Canada (DFO), Nanaimo BC\cr
-  Last modified \code{Rd: 2018-01-29}
+  \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
+  Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
+  \emph{locus: Institute of Ocean Sciences (IOS), Sidney BC}\cr
+  Last modified \code{Rd: 2018-07-23}
 }
 \seealso{
   \code{\link[PBSdata]{pop.age}}, \code{\link[PBStools]{fitLogit}}, 

@@ -10,7 +10,8 @@
 }
 \usage{
 compAF(x, year=2003, sex=2, amax=40, pfld="wp", png=FALSE,
-   outnam, clrs=c("red","black"), ltys=1, type="cumul")
+   outnam, clrs=c("red","black"), ltys=1, type="cumul",
+   lang=c("e","f"))
 }
 \arguments{
   \item{x}{\code{list} -- list of arrays by group category containing
@@ -26,6 +27,8 @@ compAF(x, year=2003, sex=2, amax=40, pfld="wp", png=FALSE,
   \item{ltys}{\code{numeric} -- vector of line types by category.}
   \item{type}{\code{character} -- type of line plot: \code{"cumul"} 
     for cumulative or \code{"discr"} for discrete frequency distributuon.}
+  \item{lang}{\code{character} -- a vector of letters that denote the language for output:
+    currently only \code{"e"} (english) and "f" (french).}
 }
 \details{
   Plot annual age frequencies by group category to compare the
@@ -42,7 +45,7 @@ compAF(x, year=2003, sex=2, amax=40, pfld="wp", png=FALSE,
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
   \emph{locus: Institute of Ocean Sciences (IOS), Sidney BC}\cr
-  Last modified \code{Rd: 2018-05-22}
+  Last modified \code{Rd: 2018-07-23}
 }
 \seealso{
   \code{\link[PBStools]{estOgive}},

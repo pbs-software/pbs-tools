@@ -9,7 +9,7 @@
 }
 \usage{
 plotAgeErr(dat, nsamp, xlim=NULL, ylim=NULL, jitter=0.25, seed=42,
-   png=FALSE, pngres=400, PIN=c(8,8))
+   png=FALSE, pngres=400, PIN=c(8,8), lang=c("e","f"))
 }
 \arguments{
   \item{dat}{\code{data.frame} -- data frame created by call to \code{gfb_age_precision.sql}.}
@@ -26,6 +26,8 @@ plotAgeErr(dat, nsamp, xlim=NULL, ylim=NULL, jitter=0.25, seed=42,
   \item{pngres}{\code{numeric} -- resolution (pixels/inch) for the \code{.png} figure.}
   \item{PIN}{\code{numeric} -- two-element vector specifying output size (inches) 
     as width and height for the \code{.png} figure.}
+  \item{lang}{\code{character} -- a vector of letters that denote the language for output:
+    currently only \code{"e"} (english) and "f" (french).}
 }
 \details{
   Plot is used to demonstrate the ageing error (or precision) for a species.
@@ -45,7 +47,7 @@ plotAgeErr(dat, nsamp, xlim=NULL, ylim=NULL, jitter=0.25, seed=42,
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
   \emph{locus: Institute of Ocean Sciences (IOS), Sidney BC}\cr
-  Last modified \code{Rd: 2018-06-28}\cr
+  Last modified \code{Rd: 2018-07-23}
 }
 \seealso{
   \code{\link[PBStools]{calcVB}},

@@ -1,16 +1,43 @@
 PBStools Changes
 ==============================
 Authors: RH  = Rowan Haigh
+         JTS = Jon T. Schnute
          NO  = Norm Olsen
          LL  = Lisa Lacko
-         JTS = Jon T. Schnute
          PJS = Paul J. Starr
-         EK  = Elise Keppel
          SA  = Sean Anderson
+         EK  = Elise Keppel
+         BK  = Brian Krishka
 ------------------------------
 
+1.38.0 (2018-07-24)
+  * M01_Utility
+    + Added new function `createFdir' to create a subdirectory called `french' in directory where english figures are created. (RH 180723)
+      - Function was first created in (180716) but a new argument was added to specify the english figure directory.
+    + Added new function `linguaFranca' to handle short translations from English to French for figures. (RH 180712)
+      - Motivation: CSAS now translates entire ResDocs and figures are best rendered from source (created by scientist).
+      - This translation function started life in PBSawatea for the numerous figures that are created with each run, 
+      -   specifically in the Model Results appendix; however, other stock assessment appendices need the function also.
+      - The idea is to simultaneoulsy create english and french figures whenever possible (last update: 180724).
+  * M05_Spatial.r
+    + Modified function `plotLocal' to produce english and french plots. (RH 180724)
+  * M07_BuildCatch.r
+    + Modified functions 'buildCatch' and `plotRecon' (RH 180625).
+      - `plotRecon now creates french plots along with the english ones when sent to figure files.
+      - Reconstructed binary objects are now stored under a `data' directory for each unique run.
+      - Previously, these objects were all stored in the working directory; however, some are unique to the run (e.g. `cat439rec').
+  * M02_Biology.r
+    + Modified functions `mapMaturity', `estOgive', and `weightBio' to produce english and french plots. (RH 180719)
+    + Fixed small bug that occurred once `crossTab' was changed to exclude Hadley. (RH 180719)
+    + Modified functions `calcLW' and `calcVB' to produce english and french plots. (RH 180717)
+  * M06_Assessment.r
+    + Added new function `plotMW' to plot annual mean weights by stock and by PMFC area. (RH 180719)
+    + Modified functions `compAF', `compBmsy', `plotAgeErr', and `quantAges' to produce english and french plots. (RH 180717)
+  * M04_Survey
+    + Added new function `compLen' to compare annual length distributions among survey series. (RH 180717)
+
 1.37.7 (2018-06-28)
-  * M04_Surveys.r
+  * M04_Survey.r
     + Changed `showError' to `showMessage' in function `showIndices'. (RH 180628)
       - Allows serial creation of PNG files without interruption when no data exist for SSID.
     + Modified function `showIndices' with new arguments for greater user control. (RH 180606)

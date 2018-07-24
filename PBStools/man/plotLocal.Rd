@@ -1,7 +1,7 @@
 \name{plotLocal}
 \alias{plotLocal}
 \title{
-Plot Catch by Locality
+  Plot Catch by Locality
 }
 \description{
   Plot DFO fishing localities with the highest catch and colour code accordingly.
@@ -9,9 +9,8 @@ Plot Catch by Locality
 \usage{
 plotLocal(dat, area, aflds=NULL, pcat=0.95, showAll=FALSE,
    fid=NULL, fidtype="PBStools", strSpp, Ntop=5, short=TRUE,
-   plot=TRUE, png=FALSE, csv=FALSE, outnam="refA439")
+   plot=TRUE, png=FALSE, csv=FALSE, outnam="refA439", lang=c("e","f"))
 }
-
 \arguments{
   \item{dat}{\code{data.frame} -- data object containing catch information for a species and 
     one or more fields with area code information (e.g., \code{locality}).}
@@ -31,6 +30,8 @@ plotLocal(dat, area, aflds=NULL, pcat=0.95, showAll=FALSE,
   \item{png}{\code{logical} -- if \code{TRUE}, send the plot results to a \code{.png} file.}
   \item{csv}{\code{logical} -- if \code{TRUE}, send the output to a \code{.csv} file.}
   \item{outnam}{\code{character} -- output prefix for \code{.png} and \code{.csv} file names.}
+  \item{lang}{\code{character} -- a vector of letters that denote the language for output:
+    currently only \code{"e"} (english) and "f" (french).}
 }
 \details{
   The function is designed primarily to derive DFO fishing localities that have the
@@ -66,7 +67,7 @@ plotLocal(dat, area, aflds=NULL, pcat=0.95, showAll=FALSE,
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
   \emph{locus: Institute of Ocean Sciences (IOS), Sidney BC}\cr
-  Last modified \code{Rd: 2018-06-28}
+  Last modified \code{Rd: 2018-07-24}
 }
 \seealso{
 \code{\link[PBStools]{buildCatch}},

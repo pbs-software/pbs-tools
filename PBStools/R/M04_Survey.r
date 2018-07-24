@@ -4,6 +4,7 @@
 ##  bootBG..........Bootstraps binomial-gamma variates from (p, mu, rho) for each stratum.
 ##  calcMoments.....Calculate survey strata population moments from raw survey data.
 ##  calcPMR.........Calculate pmr parameter values from a sample.
+##  compLen.........Compare annual length distributions among surveys series.
 ##  getBootRuns.....Get Norm's survey bootstrap results.
 ##  getPMR..........Get pmr values from survey data in GFBioSQL.
 ##  makePMRtables...Make CSV files containg pmr values for survey strata.
@@ -215,9 +216,9 @@ calcMoments = function(strSpp="396", survID=c(1,2,3,121,167)) {
 #--------------------------------------calcMoments
 
 
-#calcPMR--------------------------------2018-03-26
-# Calculate pmr parameter values from a sample.
-#-----------------------------------------------RH
+## calcPMR------------------------------2018-03-26
+## Calculate pmr parameter values from a sample.
+## ---------------------------------------------RH
 calcPMR <- function(x, na.value=NULL)
 {
 	if(is.null(na.value)) x=x[!is.na(x)] # get rid of NAs
@@ -236,6 +237,167 @@ calcPMR <- function(x, na.value=NULL)
 	names(pmr)=c("n","p","mu","rho")
 	return(pmr)
 }
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~calcPMR
+
+
+## compLen------------------------------2018-07-17
+## Compare lengths (and ages) among survey series.
+## -----------------------------------------PJS/RH
+compLen = function(dat, fld="len", ssid=c(16,1,4), sex=c(2,1),
+   strat=FALSE, boot=FALSE, R=10, lbin=1, bxpsep=0.2, bxpcol="black", 
+   ylim=NULL, png=FALSE, PIN=c(8,8), lang=c("e","f"))
+{
+	dat  = dat[is.element(dat$SSID,ssid) & dat[,fld]>0 & !is.na(dat[,fld]),]
+	xlim = range(dat$year)
+	if (is.null(ylim)) {
+		qtmp = sapply(split(dat[,fld],paste(dat$SSID,dat$year,sep="-")),quantile,c(0.05,0.95))
+		ylim = c(min(qtmp[1,]),max(qtmp[2,]))
+	}
+	Qbox = as.list(rep(NA,diff(xlim)+1)); names(Qbox)=xlim[1]:xlim[2]
+	
+	#Lbin = ceiling(range(dat$len)/lbin)*lbin
+	Lbin = .su(ceiling(.su(dat$len)/lbin)*lbin)
+
+	ssnames = c("QCS Synoptic", "WCVI Synoptic", "WCHG Synoptic"); names(ssnames)=c(1,4,16)
+
+	fout = fout.e = paste0("RSR-Survey-",ifelse(fld=="len","Lengths","Ages"),ifelse(strat,"-(strat)","-(raw)"))
+	for (l in lang) {
+		if (l=="f") fout = paste0("./french/",fout.e)  ## could repeat for other languages
+		if (png) png(paste0(fout,".png"),units="in",res=600,width=PIN[1],height=PIN[2])
+		par (mfrow=c(2,1), mar=c(1.5,3.5,0.5,0.5), oma=c(1.5,0,0,0), mgp=c(1.5,0.5,0), las=1)
+		for (s in sex) {
+			sdat = dat[is.element(dat$sex,s),]
+			Idat = split(sdat,sdat$SSID)
+			Idat = Idat[as.character(ssid)]  ## order them as per user input
+			if (strat && !boot) {
+				resetGraph();expandGraph()
+				#plotBubbles(Yprop,dnam=T,hide0=T,prettyAxis=T,siz=0.1,ylim=ylim,cpro=T)
+				#points(as.numeric(names(Ymean)),Ymean, pch=21,col="red",bg="pink",cex=1.5)
+	#			plot(0,0,type="n",xlim=xlim,ylim=ylim,xlab="",ylab="", mgp=c(1.5,0.5,0))
+			} else {
+				quantBox(sapply(Qbox,function(x){NA},simplify=F), type="n", ylim=ylim, xlab="", ylab="")
+	#browser(); return()
+			}
+			sapply(1:length(Idat), function(i) {  ## loop through index 
+				ii  = names(Idat)[i]
+				iii = as.numeric(ii)
+				idat = Idat[[i]]
+				ival  = split(idat[,fld],idat$year)
+				if (strat){
+					yrs  = .su(idat$year)
+	
+					Ymat = array(0,dim=c(length(Lbin),length(yrs)), dimnames=list(len=Lbin,yr=yrs))
+					idat$lbin = ceiling(idat[,fld]/lbin)*lbin
+					for (y in yrs) {
+	.flush.cat(y,"\n")
+						yy = as.character(y)
+						ydat = idat[is.element(idat$year,y),]
+						jdat = split(ydat,ydat$GC)  ## split by Grouping Code (stratum)
+	
+						dGC  = sapply(jdat,function(x){sapply(split(x$density,x$SID),mean)},simplify=F)  ## density by SID in each GC
+						pGC  = sapply(dGC,function(x){x/sum(x)},simplify=F)                              ## proportion density by SID in each GC
+						vGC  = unlist(pGC)
+						ydat$pGC =rep(0,nrow(ydat))
+						ydat$pGC = vGC[paste(ydat$GC,ydat$SID,sep=".")]
+	
+						aGC  = sapply(jdat,function(x){.su(x$area)})     ## area by SID in each GC
+						paGC = aGC/sum(aGC)
+						ydat$paGC =rep(0,nrow(ydat))
+						ydat$paGC = paGC[as.character(ydat$GC)]
+	
+						ydat$pbin = apply(ydat[,c("pGC","paGC")],1,prod)
+						ydat$pbin = ydat$pbin/sum(ydat$pbin)
+						ydat$plbin = apply(ydat[,c("pbin","lbin")],1,prod)
+						Lest = sum(ydat$plbin)  ## need to bootstrap this procedure
+						
+						Lboot = function(Ydat,R) {
+							Lsamp = numeric()
+							for (r in 1:R) {
+								jdat = split(Ydat,Ydat$GC)  ## split by Grouping Code (stratum)
+								jdat = sapply(jdat,function(x){x[sample(1:nrow(x),nrow(x),replace=T),]},simplify=F)
+								ydat = do.call(rbind, jdat)
+	
+								dGC  = sapply(jdat,function(x){sapply(split(x$density,x$SID),mean)},simplify=F)  ## density by SID in each GC
+								pGC  = sapply(dGC,function(x){x/sum(x)},simplify=F)                              ## proportion density by SID in each GC
+								vGC  = unlist(pGC)
+								ydat$pGC =rep(0,nrow(ydat))
+								ydat$pGC = vGC[paste(ydat$GC,ydat$SID,sep=".")]
+	
+								aGC  = sapply(jdat,function(x){.su(x$area)})     ## area by SID in each GC
+								paGC = aGC/sum(aGC)
+								ydat$paGC = rep(0,nrow(ydat))
+								ydat$paGC = paGC[as.character(ydat$GC)]
+	
+								ydat$pbin = apply(ydat[,c("pGC","paGC")],1,prod)
+								ydat$pbin = ydat$pbin/sum(ydat$pbin)
+								ydat$plbin = apply(ydat[,c("pbin","lbin")],1,prod)
+								Lsamp[r] = sum(ydat$plbin)  ## need to bootstrap this procedure
+	#browser();return()
+							}
+							return(Lsamp)
+						}
+		
+						Gmat = array(0,dim=c(length(Lbin),length(pGC)), dimnames=list(len=Lbin,GC=names(pGC)))
+						for (k in 1:length(pGC)) {
+	#print(k)
+							kk   = names(pGC)[k]
+	#if(y==2007) {browser();return()}
+							pk   = pGC[[kk]]
+							kdat = jdat[[kk]]
+							kmat = crossTab(kdat,c("lbin","SID"),"lbin",length)
+							pkmat = kmat%*%pk
+							Gmat[rownames(pkmat),kk] = pkmat
+						}
+						aGC = sapply(jdat,function(x){.su(x$area)})     ## area by SID in each GC
+						paGC = aGC/sum(aGC)
+						pymat = Gmat%*%paGC
+						Ymat[rownames(pymat),yy] = pymat
+						if (boot)
+							ival[[yy]] = Lboot(ydat[,c("GC","SID","density","area","lbin")], R=R)
+						else
+							ival = NULL
+					}
+					Yprop = apply(Ymat,2,function(x){x/sum(x)})
+					YSE   = apply(Yprop,2,function(x){sqrt(x*(1-x)/length(x))})
+					Yvals = apply(Ymat,2,function(x,a){(x/sum(x))*a},a=Lbin)
+					Ymean = apply(Yvals,2,function(x){sum(x)})
+				} else {
+					ival  = split(idat[,fld],idat$year)
+					Ymean = sapply(ival,mean)
+				}
+				if (!is.null(ival)) {
+					attr(ival,"Ymean") = Ymean
+					qbox = Qbox
+					qbox[names(ival)] = ival
+					#pars = list(boxwex=bxpsep, whisklty=1, boxcol="gainsboro", boxfill=lucent(bxpcol[i],0.5), medcol=bxpcol[i], medlwd=2)
+					pars = list(boxwex=bxpsep, whisklty=1, boxcol="gainsboro", boxfill=lucent(bxpcol[i],0.5), medcol="black", medlwd=3)
+					xpos = (1:length(qbox))+seq(-bxpsep,bxpsep,len=3)[i]
+					qxy = quantBox(qbox,outline=F,pars=pars,add=T,xaxt="n",at=xpos)
+					imean = match(names(Ymean),names(Qbox))
+					#points(xpos[imean],Ymean,pch=21,col=bxpcol[i],bg="white",cex=0.8)
+	#browser();return()
+				} else {
+				}
+	#if(i==3) {browser();return()}
+			})
+			if (fld %in% c("len")) {
+				mtext(linguaFranca("Length (cm)",l), side=2, line=2.25, cex=1.5, las=0)
+				addLabel(0.05, 0.10, linguaFranca(paste0("RSR ",switch(s,"Males","Females")),l), cex=1.2, adj=c(0,0))
+				if (par()$mfg[1]==2)
+					addLegend(0.025, 0.975, bty="n", fill=lucent(bxpcol,0.5), border="gainsboro", legend=linguaFranca(ssnames[as.character(ssid)],l), xjust=0, yjust=1)
+			}
+			if (fld %in% c("age")) {
+				mtext(linguaFranca("Age (y)",l), side=2, line=2.25, cex=1.5, las=0)
+				addLabel(0.95, 0.95, linguaFranca(paste0("RSR ",switch(s,"Males","Females")),l), cex=1.2, adj=c(1,1))
+				if (par()$mfg[1]==1)
+					addLegend(0.025, 0.975, bty="n", fill=lucent(bxpcol,0.5), border="gainsboro", legend=linguaFranca(ssnames[as.character(ssid)],l), xjust=0, yjust=1)
+			}
+		}
+		mtext(linguaFranca("Year",l), side=1, outer=TRUE, line=0.5, cex=1.5)
+		if (png) dev.off()
+	} ## end l (lang) loop
+}
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~compLen
 
 
 #getBootRuns----------------------------2013-11-25

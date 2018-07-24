@@ -6,16 +6,22 @@
 }
 \usage{
 quantAges(bioDat, dfld="age", afld="major", tfld="year",
-   type="time", outnam="Quant-Age", png=FALSE)
+   type="time", major=3:9, ylim=c(0,35), strSpp="RSR",
+   outnam="Quant-Age", png=FALSE, lang=c("e","f"))
 }
 \arguments{
-  \item{bioDat}{\code{data.frame} -- Biological data from query \code{gfb_bio.sql}.}
-  \item{dfld}{\code{character} -- Name of data field in \code{bioDat} (usually \code{"age"}).}
-  \item{afld}{\code{character} -- Name of area field in \code{bioDat} (usually \code{"major"}).}
-  \item{tfld}{\code{character} -- Name of time field in \code{bioDat} (usually \code{"year"}).}
-  \item{type}{\code{character} -- Type of plot, either \code{"area"} or \code{"time"}.}
-  \item{outnam}{\code{character} -- Output name for figure plot.}
+  \item{bioDat}{\code{data.frame} -- biological data from query \code{gfb_bio.sql}.}
+  \item{dfld}{\code{character} -- name of data field in \code{bioDat} (usually \code{"age"}).}
+  \item{afld}{\code{character} -- name of area field in \code{bioDat} (usually \code{"major"}).}
+  \item{tfld}{\code{character} -- name of time field in \code{bioDat} (usually \code{"year"}).}
+  \item{type}{\code{character} -- type of plot, either \code{"area"} or \code{"time"}.}
+  \item{major}{\code{numeric} -- codes for major PMFC areas.}
+  \item{ylim}{\code{numeric} -- limits of the y-axis.}
+  \item{strSpp}{\code{character} -- three-letter code for the fish species of interest.}
+  \item{outnam}{\code{character} -- output name for figure plot.}
   \item{png}{\code{logical} -- if \code{TRUE}, send figure to a portable network graphics (\code{.png}) file.}
+  \item{lang}{\code{character} -- a vector of letters that denote the language for output:
+    currently only \code{"e"} (english) and "f" (french).}
 }
 \details{
   The quantile plots display age-distribution boxes by sex (side-by-side), and separate commercial and survey samples.\cr
@@ -27,9 +33,10 @@ quantAges(bioDat, dfld="age", afld="major", tfld="year",
   List object of ages placed into lists that are used to construct the quantile plots.
 }
 \author{
-  Rowan Haigh, Research Biologist\cr
-  Pacific Biological Station, Fisheries and Oceans Canada, Nanaimo BC\cr
-  Last modified: \code{RH 2017-11-30}
+  \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
+  Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
+  \emph{locus: Institute of Ocean Sciences (IOS), Sidney BC}\cr
+  Last modified \code{Rd: 2018-07-23}
 }
 \note{
   Suggested by PJS to detect changes in age by area and over time.
