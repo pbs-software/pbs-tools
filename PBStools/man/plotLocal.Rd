@@ -31,7 +31,7 @@ plotLocal(dat, area, aflds=NULL, pcat=0.95, showAll=FALSE,
   \item{csv}{\code{logical} -- if \code{TRUE}, send the output to a \code{.csv} file.}
   \item{outnam}{\code{character} -- output prefix for \code{.png} and \code{.csv} file names.}
   \item{lang}{\code{character} -- a vector of letters that denote the language for output:
-    currently only \code{"e"} (english) and "f" (french).}
+    currently only \code{"e"} (english) and \code{"f"} (french).}
 }
 \details{
   The function is designed primarily to derive DFO fishing localities that have the

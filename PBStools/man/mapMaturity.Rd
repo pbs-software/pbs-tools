@@ -50,7 +50,7 @@ mapMaturity(dat=pop.age, strSpp="", type="map", mats=1:7,
   \item{wmf}{\code{logical} -- if \code{TRUE}, send plot to a vector \code{.wmf} file.}
   \item{ioenv}{\code{environment} -- input/output environment for function input data and output results.}
   \item{lang}{\code{character} -- a vector of letters that denote the language for output:
-    currently only \code{"e"} (english) and "f" (french).}
+    currently only \code{"e"} (english) and \code{"f"} (french).}
 }
 \details{
   If \code{byrow=TRUE} (original default configuration), for each maturity code the function plots

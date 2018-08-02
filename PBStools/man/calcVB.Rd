@@ -50,7 +50,7 @@ calcVB(dat=pop.age, strSpp="", yfld="len", fixt0=FALSE,
   \item{tables}{\code{logical} -- if \code{TRUE} and \code{lang="e"}, download output into \code{.csv} tables.}
   \item{ioenv}{\code{environment} -- input/output environment for function input data and output results.}
   \item{lang}{\code{character} -- a vector of letters that denote the language for output:
-    currently only \code{"e"} (english) and "f" (french).}
+    currently only \code{"e"} (english) and \code{"f"} (french).}
 }
 \details{
   The function plots von Bertalanffy fits to length-age or weight-age data where each column 

@@ -152,7 +152,7 @@ compAF=function(x, year=2003, sex=2, amax=40, pfld="wp",
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~compAF
 
 
-## compBmsy-----------------------------2018-07-16
+## compBmsy-----------------------------2018-08-02
 ## Compare biomass posteriors relative to Bmsy or Bavg
 ## ---------------------------------------------RH
 compBmsy = function(Bspp, spp="POP", Mnams=c("Est M","Fix M"),
@@ -236,14 +236,14 @@ compBmsy = function(Bspp, spp="POP", Mnams=c("Est M","Fix M"),
 				left.space = (max(nchar(names(Bmsy)))-ifelse(spplabs,nchar(spp),0))^0.9
 			par(mar=c(4,left.space,0.5,0.5),cex=ifelse(f%in%c("png","eps"),1,1.2),mgp=c(1.6,0.6,0))
 			quantBox(Bmsy, horizontal=TRUE, las=1, xlim=c(0.5,nmods+top.space), ylim=ylim, cex.axis=1.2, yaxs="i", outline=FALSE,
-				pars=list(boxwex=boxwidth,medlwd=2,whisklty=1),quants=quants)
+				pars=list(boxwex=boxwidth,medlwd=2,whisklty=1),quants=quants,names=FALSE)
 	
 			if (Nrats>0)
 				abline(v=ratios,col=rep(rcol,Nrats)[1:Nrats],lty=2,lwd=2)
 	
 			#	segments(v=ratios,col=rep(c("red","green4","blue"),Nrats)[1:Nrats],lty=2,lwd=2)
-			quantBox(Bmsy, horizontal=TRUE, las=1, xlim=c(0.5,nmods+1), ylim=ylim, cex.axis=1.2, yaxs="i", outline=FALSE, names=linguaFranca(names(Bmsy),l), 
-				pars=list(boxwex=boxwidth, medlwd=2, whisklty=1, medcol=medcol, boxfill=boxfill, ...), add=TRUE, quants=quants)
+			quantBox(Bmsy, horizontal=TRUE, las=1, xlim=c(0.5,nmods+1), ylim=ylim, cex.axis=1.2, yaxs="i", outline=FALSE, names=linguaFranca(names(Bmsy),l), pars=list(boxwex=boxwidth, medlwd=2, whisklty=1, medcol=medcol, boxfill=boxfill, ...), add=TRUE, quants=quants)
+#browser();return()
 			if (length(Bmsy)==1)  ## for some reason, a label is not added when there is only 1 boxplot.
 				axis(2, at=1, labels=linguaFranca(names(Bmsy),l), las=1, cex.axis=1.2)
 	
@@ -292,7 +292,7 @@ compBmsy = function(Bspp, spp="POP", Mnams=c("Est M","Fix M"),
 				text(c(ratios),par()$usr[3],labels=show0(round(ratios,2),2),adj=c(1.1,-.5),col=rcol)
 			}
 			if (is.null(param)) {
-				mess = paste0("mtext(expression(italic(B)[italic(t)]/italic(B)[",refpt,"]),side=1,line=2.5,cex=1.5)")
+				mess = paste0("mtext(expression(italic(B)[italic(t)]/italic(B)[",linguaFranca(refpt,l),"]),side=1,line=2.5,cex=1.5)")
 			} else {
 				mess = sapply(strsplit(param,"_"),function(x){if(length(x)==1) x else paste0("italic(",x[1],")[",x[2],"]")})
 				mess = paste0("mtext(expression(",mess,"),side=1,line=2.5,cex=2)")

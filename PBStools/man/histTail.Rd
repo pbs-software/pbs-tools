@@ -7,19 +7,24 @@
 }
 \usage{
 histTail(dat=pop.age, xfld="age", tailmin=NULL, 
-    bcol="gold", tcol="moccasin", hpage=3.5, 
-    wmf=FALSE, pix=FALSE, ioenv=.GlobalEnv, ...)
+   bcol="gold", tcol="moccasin",
+   wmf=FALSE, png=FALSE, pngres=400, PIN=c(6.5,3.5), 
+   ioenv=.GlobalEnv, lang=c("e","f"), ...)
 }
 \arguments{
-  \item{dat}{data file of biology metrics (e.g., \code{pop.age}).}
-  \item{xfld}{string specifying the field containing the metric of interest.}
-  \item{tailmin}{numeric value of \code{xfld} to start the tail plot.}
-  \item{bcol}{fill colour for the main histogram bars.}
-  \item{tcol}{fill colour for the tail histogram bars.}
-  \item{hpage}{height of page in inches if figure is sent to an image file.}
-  \item{wmf}{logical: if \code{TRUE}, send plot to a \code{.wmf} file.}
-  \item{pix}{logical: if \code{TRUE}, send plot to a \code{.png} file.}
-  \item{ioenv}{input/output environment for function input data and output results.}
+  \item{dat}{\code{data.frame} -- data file of biology metrics (e.g., \code{pop.age}).}
+  \item{xfld}{\code{character} -- string specifying the field containing the metric of interest.}
+  \item{tailmin}{\code{numeric} -- value of \code{xfld} to start the tail plot.}
+  \item{bcol}{\code{character|numeric} -- fill colour for the main histogram bars.}
+  \item{tcol}{\code{character|numeric} -- fill colour for the tail histogram bars.}
+  \item{wmf}{\code{logical} -- if \code{TRUE}, send plot to a \code{.wmf} file.}
+  \item{png}{\code{logical} -- if \code{TRUE}, send plot to a \code{.png} file.}
+  \item{pngres}{\code{numeric} -- resolution (pixels/inch) for the \code{.png} figure.}
+  \item{PIN}{\code{numeric} -- two-element vector specifying output size (inches) 
+    as width and height for the \code{.png} figure.}
+  \item{ioenv}{\code{environment} -- input/output environment for function input data and output results.}
+  \item{lang}{\code{character} -- a vector of letters that denote the language for output:
+    currently only \code{"e"} (english) and \code{"f"} (french).}
   \item{...}{additional arguments to pass to \code{truehist} and \code{hist}.}
 }
 \details{
@@ -46,13 +51,19 @@ histTail(dat=pop.age, xfld="age", tailmin=NULL,
 local(envir=.PBStoolEnv,expr={
 pbsfun=function(){
   data(pop.age,envir=.PBStoolEnv)
-  histTail(xfld="age",tailmin=60,prob=FALSE)
+  histTail(xfld="age", tailmin=60, lang="e")
   invisible() }
 pbsfun()
 })
 }
+\author{
+  \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
+  Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
+  \emph{locus: Institute of Ocean Sciences (IOS), Sidney BC}\cr
+  Last modified \code{Rd: 2018-08-02}
+}
 \seealso{
-  \code{\link{histMetric}} \cr
+  \code{\link[PBStools]{histMetric}} \cr
   \pkg{PBSmodelling}: \code{\link[PBSmodelling]{evalCall}} \cr
   \pkg{MASS}: \code{\link[MASS]{truehist}} \cr
   \pkg{graphics}: \code{\link[graphics]{hist}}

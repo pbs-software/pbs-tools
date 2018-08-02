@@ -104,7 +104,7 @@ weightBio(adat, cdat, sunit="TID", sweight="catch",
   \item{outres}{\code{numeric} -- output resolution (dots per inch) for raster-based graphics.}
   \item{ioenv}{\code{environment} -- input/output environment for function input data and output results.}
   \item{lang}{\code{character} -- a vector of letters that denote the language for output:
-    currently only \code{"e"} (english) and "f" (french).}
+    currently only \code{"e"} (english) and \code{"f"} (french).}
   \item{...}{additional arguments to pass to the function \code{plotBubbles}.}
 }
 \details{

@@ -1794,12 +1794,17 @@ histMetric <- function(dat=pop.age, xfld="age", xint=1, minN=50,
 	invisible() }
 #---------------------------------------histMetric
 
-#histTail-------------------------------2015-03-06
-# Create a histogram showing tail details
-#-----------------------------------------------RH
+
+## histTail-----------------------------2018-08-01
+## Create a histogram showing tail details
+## ---------------------------------------------RH
 histTail <-function(dat=pop.age, xfld="age", tailmin=NULL, 
-      bcol="gold", tcol="moccasin", hpage=3.5, 
-      wmf=FALSE, pix=FALSE, ioenv=.GlobalEnv, ...) {
+   bcol="gold", tcol="moccasin",
+   wmf=FALSE, png=FALSE, pngres=400, PIN=c(6.5,3.5), 
+   ioenv=.GlobalEnv, lang=c("e","f"), ...)
+{
+	## Create a subdirectory called `french' for French-language figures
+	createFdir(lang)
 
 	assign("PBStool",list(module="M02_Biology",call=match.call(),args=args(histTail),ioenv=ioenv),envir=.PBStoolEnv)
 	dat=as.character(substitute(dat))
@@ -1807,38 +1812,47 @@ histTail <-function(dat=pop.age, xfld="age", tailmin=NULL,
 	eval(parse(text=expr))
 	if (!requireNamespace("MASS", quietly=TRUE)) showError("`MASS` package is required for `truehist`")
 
-	prob=zoomprob=list(...)[["prob"]]
-	if(is.null(prob)) { prob=TRUE; zoomprob=FALSE }
-	x = dat[,xfld]; x = x[!is.na(x)]; nx=length(x)
+	prob = zoomprob=list(...)[["prob"]]
+	if(is.null(prob)) { prob=FALSE; zoomprob=FALSE }
+	x    = dat[,xfld]
+	x    = x[!is.na(x)]
+	nx   = length(x)
 	xlab = paste(toupper(substring(xfld,1,1)),substring(xfld,2),sep="",collapse=" ")
-	spp = attributes(dat)$spp
-	fnam=paste(spp,"-Hist-",xlab,sep="")
-	if (wmf && .Platform$OS.type=="windows")
-		do.call("win.metafile",list(filename=paste(fnam,".wmf",sep=""),width=6.5,height=hpage))
-	else if (pix) png(paste(fnam,".png",sep=""),units="in",res=300,width=6.5,height=hpage)
-	else resetGraph()
-	expandGraph(mfrow=c(1,1),mar=c(3,5,.5,.5),oma=c(0,0,0,0),las=1,xaxs="i",yaxs="i")
-	
-	truehist = MASS::truehist
-	do.call(truehist,args=list(data=x,col=bcol,cex.lab=1.2,xlab=xlab))
-	#evalCall(truehist,argu=list(data=x,col=bcol,cex.lab=1.2,xlab=xlab),...,checkpar=TRUE)
-	ylab=paste(ifelse(prob,paste(ifelse((wmf|pix)&&hpage<4.5,"Rel. Freq.","Relative Frequency"),
-		" Density"),"Frequency")," ( N = ",format(nx,scientific=FALSE,big.mark=",")," )",sep="")
-	mtext(ylab,side=2,line=3.5,cex=1.2,las=0)
-	if (!is.null(tailmin)){
-		z = x>=tailmin & !is.na(x); nz=sum(z)
-		brks=((tailmin-1):max(x[z]))+.5
-		par(new=TRUE,plt=c(.65,.95,.5,.8))
-		evalCall(hist,argu=list(x=x[z],breaks=brks,probability=zoomprob,col=tcol,
-			main="Tail details",col.main="grey70",mgp=c(1.75,.5,0),xlab=xlab,
-			las=ifelse(zoomprob,0,1)),...,checkdef=TRUE,checkpar=TRUE)
-		addLabel(.95,.7,paste("Max age = ",max(x[z]),"\nn = ",nz,sep=""),col="grey60",cex=.8,adj=1)
-	}
-	if (wmf|pix) dev.off()
+	spp  = attributes(dat)$spp
+	fnam = paste0(spp,"-Hist-",xlab)
+#browser();return()
+
+	fout = fout.e = fnam
+	for (l in lang) {
+		if (l=="f") fout = paste0("./french/",fout.e)  ## could repeat for other languages
+		if (wmf && .Platform$OS.type=="windows")
+			do.call("win.metafile",list(filename=paste0(fout,".wmf"), width=PIN[1], height=PIN[2]))
+		else if (png) png(paste0(fout,".png"), units="in", res=pngres, width=PIN[1], height=PIN[2])
+		else resetGraph()
+		expandGraph(mfrow=c(1,1),mar=c(3,5,.5,.5),oma=c(0,0,0,0),las=1,xaxs="i",yaxs="i")
+		
+		truehist = MASS::truehist
+		do.call(truehist, args=list(data=x, prob=prob, col=bcol, cex.lab=1.2, xlab=linguaFranca(xlab,l)))
+		#evalCall(truehist,argu=list(data=x,col=bcol,cex.lab=1.2,xlab=xlab),...,checkpar=TRUE)
+		ylab = paste(ifelse(prob,ifelse((wmf|png)&&PIN[2]<3.5,"Rel. Freq.","Relative Frequency"),"Frequency")," ( N = ",format(nx,scientific=FALSE,big.mark=",")," )",sep="")
+		mtext(linguaFranca(ylab,l),side=2,line=3.5,cex=1.2,las=0)
+		if (!is.null(tailmin)){
+			z = x>=tailmin & !is.na(x); nz=sum(z)
+			brks = ((tailmin-1):max(x[z]))+0.5
+			par(new=TRUE, plt=c(0.65,0.95,0.5,0.8))
+			evalCall(hist, argu=list(x=x[z], breaks=brks, probability=zoomprob, col=tcol,
+				main=linguaFranca("Tail details",l), col.main="grey70", mgp=c(1.75,0.5,0),
+				xlab=linguaFranca(xlab,l), ylab=linguaFranca(ifelse(prob,"Relative Frequency","Frequency"),l),
+				las=ifelse(zoomprob,0,1), cex.main=0.9), ..., checkdef=TRUE, checkpar=TRUE)
+			addLabel(0.95,0.7, linguaFranca(paste0("Max age = ",max(x[z]),"\nn = ",nz),l), col="grey60", cex=.8, adj=1)
+		}
+		if (wmf|png) dev.off()
+	} ## end l (lang) loop
 	stuff=c("x","nx","nz","brks","xlab","ylab")
 	packList(stuff,"PBStool",tenv=.PBStoolEnv)
-	invisible() }
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~histTail
+	invisible()
+}
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~histTail
 
 
 ## mapMaturity--------------------------2018-07-19

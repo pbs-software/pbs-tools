@@ -12,7 +12,7 @@ createFdir(lang, dir=".")
 }
 \arguments{
   \item{lang}{\code{character} -- a vector of letters that denote the language for output:
-    currently only \code{"e"} (english) and "f" (french).}
+    currently only \code{"e"} (english) and \code{"f"} (french).}
   \item{dir}{\code{character} -- directory in which a subdirectory 
     called \code{french} is created (if not already present).}
 }

@@ -27,7 +27,7 @@ plotAgeErr(dat, nsamp, xlim=NULL, ylim=NULL, jitter=0.25, seed=42,
   \item{PIN}{\code{numeric} -- two-element vector specifying output size (inches) 
     as width and height for the \code{.png} figure.}
   \item{lang}{\code{character} -- a vector of letters that denote the language for output:
-    currently only \code{"e"} (english) and "f" (french).}
+    currently only \code{"e"} (english) and \code{"f"} (french).}
 }
 \details{
   Plot is used to demonstrate the ageing error (or precision) for a species.

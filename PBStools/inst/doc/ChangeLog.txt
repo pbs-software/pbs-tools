@@ -10,8 +10,19 @@ Authors: RH  = Rowan Haigh
          BK  = Brian Krishka
 ------------------------------
 
-1.38.0 (2018-07-24)
-  * M01_Utility
+1.38.1 (2018-08-02) [Rcheck=F, Rbuild=F]
+  * M06_Assessment.r
+    + Fixed a small bug in `compBmsy' - set names=FALSE in first call to `quantBox'. (RH 180802)
+  * Documentation
+    + Updated `histTail.Rd' to reflect revised function arguments (RH 180802)
+    + Fixed minor inconsistencies in a handful of Rd files. (RH 180802)
+  * M01_Utility.r
+    + Updates `linguaFranca' to add more words for frenchification. (RH 180801)
+  * M02_Biology.r
+    + Modified function `histTail' with new arguments and to produce english and french plots. (RH 180801)
+
+1.38.0 (2018-07-24) [Rcheck=T, Rbuild=T]
+  * M01_Utility.r
     + Added new function `createFdir' to create a subdirectory called `french' in directory where english figures are created. (RH 180723)
       - Function was first created in (180716) but a new argument was added to specify the english figure directory.
     + Added new function `linguaFranca' to handle short translations from English to French for figures. (RH 180712)
@@ -33,7 +44,7 @@ Authors: RH  = Rowan Haigh
   * M06_Assessment.r
     + Added new function `plotMW' to plot annual mean weights by stock and by PMFC area. (RH 180719)
     + Modified functions `compAF', `compBmsy', `plotAgeErr', and `quantAges' to produce english and french plots. (RH 180717)
-  * M04_Survey
+  * M04_Survey.r
     + Added new function `compLen' to compare annual length distributions among survey series. (RH 180717)
 
 1.37.7 (2018-06-28)

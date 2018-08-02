@@ -28,7 +28,7 @@ compAF(x, year=2003, sex=2, amax=40, pfld="wp", png=FALSE,
   \item{type}{\code{character} -- type of line plot: \code{"cumul"} 
     for cumulative or \code{"discr"} for discrete frequency distributuon.}
   \item{lang}{\code{character} -- a vector of letters that denote the language for output:
-    currently only \code{"e"} (english) and "f" (french).}
+    currently only \code{"e"} (english) and \code{"f"} (french).}
 }
 \details{
   Plot annual age frequencies by group category to compare the

@@ -21,7 +21,7 @@ quantAges(bioDat, dfld="age", afld="major", tfld="year",
   \item{outnam}{\code{character} -- output name for figure plot.}
   \item{png}{\code{logical} -- if \code{TRUE}, send figure to a portable network graphics (\code{.png}) file.}
   \item{lang}{\code{character} -- a vector of letters that denote the language for output:
-    currently only \code{"e"} (english) and "f" (french).}
+    currently only \code{"e"} (english) and \code{"f"} (french).}
 }
 \details{
   The quantile plots display age-distribution boxes by sex (side-by-side), and separate commercial and survey samples.\cr

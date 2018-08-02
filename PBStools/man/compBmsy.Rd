@@ -48,7 +48,7 @@ compBmsy(Bspp, spp="POP", Mnams=c("Est M","Fix M"),
   \item{param}{\code{character}: parameter name (e.g., \code{"M_2"}) if comparing parameter estimates instead of stock status ratios.}
   \item{boxlim}{\code{numeric}: horizontal boxplot limits to override \code{ylim} (which looks like \code{xlim}), useful for parameter comparisons.}
   \item{lang}{\code{character} -- a vector of letters that denote the language for output:
-    currently only \code{"e"} (english) and "f" (french).}
+    currently only \code{"e"} (english) and \code{"f"} (french).}
   \item{\dots}{additional values for \code{\link[PBStools]{quantBox}}'s argument \code{pars}.}
 }
 \details{

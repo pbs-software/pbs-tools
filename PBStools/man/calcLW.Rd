@@ -37,7 +37,7 @@ calcLW(dat=pop.age, strSpp="396",
     \code{"wmf"} for a windows metafile \code{.wmf} file.}
   \item{outnam}{\code{character} -- explicit output file name to override an internally generated one for figures and tables.}
   \item{lang}{\code{character} -- a vector of letters that denote the language for output:
-    currently only \code{"e"} (english) and "f" (french).}
+    currently only \code{"e"} (english) and \code{"f"} (french).}
 }
 \details{
   The functions spits results out to a comma-delimited text file (\code{.csv}). If the user 

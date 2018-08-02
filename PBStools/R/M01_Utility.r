@@ -1003,13 +1003,14 @@ isThere = function(x, envir=parent.frame()) {
 	genv = function(){ .GlobalEnv }                # global environment
 
 
-## linguaFranca-------------------------2018-07-24
+## linguaFranca-------------------------2018-08-02
 ## Translate English phrases to French (other languages possible)
 ## for use in plotting figures with French labels.
 ## Note that 'gsub' has a limit to its nesting depth.
 ## ---------------------------------------------RH
 linguaFranca = function(x, lang="e", little=4, strip=FALSE)
 {
+	if (length(x)==1 && is.expression(x)) return(x)
 	if (lang=="e" || is.null(x) || is.na(x) || x=="") return(x)
 	## Need to sort so that longer strings are processed before shorter ones,
 	## otherwise, partial matching occurs and the translation is not correct.
@@ -1023,6 +1024,10 @@ linguaFranca = function(x, lang="e", little=4, strip=FALSE)
 			xlil = sapply(lilword, function(x0){
 				gsub("[Aa]nd", "et",
 				gsub("[B][C]", "CB",
+				gsub("[H][S]", "DH",
+				gsub("[Q][C][S]", "BRC",
+				gsub("[W][C][H][G]", "COHG",
+				gsub("[W][C][V][I]", "COIV",
 				gsub("[Ll]ag", eval(parse(text=deparse("d\u{00E9}calage"))),
 				gsub("[Aa]ge", eval(parse(text=deparse("\u{00E2}ge"))),
 				gsub("[Jj]an", "jan",
@@ -1046,7 +1051,18 @@ linguaFranca = function(x, lang="e", little=4, strip=FALSE)
 				gsub("[Cc]om(m?)", "com",
 				gsub("[Rr]es(e?)", "rec",
 				gsub("[Ss]ur(v?)", "rel",
-				x0)))))))))))))))))))))))))
+				x0)))))))))))))))))))))))))))))
+			})
+			## ridiculous acronyms
+			xlil = sapply(xlil, function(xa){
+#browser();return()
+				gsub("[B][T]", "CF",
+				gsub("[M][W]", "CP",
+				gsub("[G][M][A]", "ZGPF",        ## les zones de gestion des poissons de fond 
+				gsub("[G][M][U]", "GGPF",        ## le groupe de gestion du poisson de fond
+				gsub("[M][S][Y]", "RMS",         ## rendement maximal soutenu
+				gsub("[M][C][M][C]", "MCCM",     ## Monte Carlo \`{a} cha\^{i}ne de Markov
+				xa))))))
 			})
 			xout[xLpos] = xlil
 		}
@@ -1066,18 +1082,22 @@ linguaFranca = function(x, lang="e", little=4, strip=FALSE)
 			## geographic words
 			xgeo = sapply(xspp, function(xg){
 				gsub("[B][C]", "CB",
-				gsub("[Q][C][S]", "DRC",
+				gsub("[H][S]", "DH",
+				gsub("[Q][C][S]", "BRC",
 				gsub("[W][C][H][G]", "COHG",
 				gsub("[W][C][V][I]", "COIV",
 				gsub("[Aa]rea\\(km", "superficie(km",
-				gsub("[P][M][F][C] [Aa]rea", "zone CPMP",
+				gsub("[Hh]ecate [Ss]trait", eval(parse(text=deparse("d\u{00E9}troit d'Hecate"))),
 				gsub("[Mm]oresby [Gg]ully", "goulet de Moresby",
-				gsub("[Mm]itchell's [Gg]ully", "goulet de Mitchell",
+				gsub("[P][M][F][C] [Aa]rea", "zone CPMP",
 				gsub("[Bb]ritish [Cc]olumbia", "Colombie-Britannique",
 				gsub("[Vv]ancouver [Ii]sland", eval(parse(text=deparse("\u{00CE}le de Vancouver"))),
-				gsub("[Gg]oose [Ii]sland [Gg]ully", eval(parse(text=deparse("goulet de l'\u{00EE}le Goose"))),
+				gsub("[Mm]itchell's [Gg]ully", "goulet de Mitchell",
 				gsub("[Ee]ncountered [Aa]rea", "zone de rencontre",
-				xg))))))))))))
+				gsub("[Gg]oose [Ii]sland [Gg]ully", eval(parse(text=deparse("goulet de l'\u{00EE}le Goose"))),
+				gsub("[Qq]ueen [Cc]harlotte [Ss]ound", "bassin de la Reine Charlotte",
+				gsub("[Qq]ueen [Cc]harlotte [Ss]trait", eval(parse(text=deparse("d\u{00E9}troit de la Reine Charlotte"))),
+				xg))))))))))))))))
 			})
 			## large unwieldy phrases
 			xpoo = sapply(xgeo, function(x9){
@@ -1109,6 +1129,7 @@ linguaFranca = function(x, lang="e", little=4, strip=FALSE)
 				gsub("[Pp]arameter [Vv]alue", eval(parse(text=deparse("valeur du param\u{00E8}tre"))),
 				gsub("[Ss]econdary [Rr]eader", "technicien secondaire",
 				gsub("[Cc]ommercial [Tt]rawl", "chalut commercial",
+				gsub("[Rr]elative [Bb]iomass", "biomasse relative",
 				gsub("[Ss]pawning [Bb]iomass", "biomasse reproductrice",
 				gsub("[Ee]xploitation [Rr]ate", "taux d'exploitation",
 				gsub("[Vv]ulnerable [Bb]iomass", eval(parse(text=deparse("biomasse vuln\u{00E9}rable"))),
@@ -1116,23 +1137,26 @@ linguaFranca = function(x, lang="e", little=4, strip=FALSE)
 				gsub("[Nn][Oo] [Dd][Aa][Tt][Aa]", eval(parse(text=deparse("pas de donn\u{00E9}es"))),
 				gsub("[Cc]umulative [Ff]requency", eval(parse(text=deparse("fr\u{00E9}quence cumulative"))),
 				gsub("[Tt]heoretical [Qq]uantiles", eval(parse(text=deparse("quantiles th\u{00E9}oriques"))),
-				x2)))))))))))))))
+				x2))))))))))))))))
 			})
 			## Smaller double words
+#browser();return()
 			xtwo = sapply(xtwo, function(x2){
 				gsub("[Nn]o CPUE", "pas de CPUE",
 				gsub("[Ii]n [Yy]ear", eval(parse(text=deparse("dans l'ann\u{00E9}e"))),
 				gsub("CPUE [Ii]ndex", "indice de CPUE",
+				gsub("[Mm]ax [Aa]ge", eval(parse(text=deparse("\u{00E2}ge max"))),
 				gsub("[A]lt [Cc]atch", "capture alt.",
-				gsub("[Mm]ean [Aa]ge", eval(parse(text=deparse("\u{00E2}ge moyen (ann\u{00E9}es)"))),
+				gsub("[Aa]ge \\(year", eval(parse(text=deparse("\u{00E2}ge (ann\u{00E9}e"))),
 				gsub("[Bb]ase [Cc]ase", "cas de base",
 				gsub("[Bb]ut [Ff]ixed", "mais fixe",
 				gsub("[Aa]ge [Cc]lass", eval(parse(text=deparse("classe d'\u{00E2}ge"))),
-				gsub("[Aa]ge \\(year", eval(parse(text=deparse("\u{00E2}ge (ann\u{00E9}e"))),
 				gsub("[Mm]ean [Ww]eight", "poids moyen",
+				gsub("[Tt]ail [Dd]etails", eval(parse(text=deparse("d\u{00E9}tails de la queue"))),
+				gsub("[Mm]ean [Aa]ge \\(years)", eval(parse(text=deparse("\u{00E2}ge moyen (ann\u{00E9}es)"))),
 				gsub("[Mm]ean\\([Cc][Pp][Uu][Ee])", "moyenne(cpue)",
 				gsub("([Tt]op|[Hh]ighest) [Cc]atch", eval(parse(text=deparse("capture la plus \u{00E9}lev\u{00E9}e"))),
-				x2))))))))))))
+				x2))))))))))))))
 			})
 			## single words over 10 characters
 			xone = sapply(xtwo, function(x1){
@@ -1172,17 +1196,18 @@ linguaFranca = function(x, lang="e", little=4, strip=FALSE)
 				gsub("[Ii]ndex", "indice",
 				gsub("[Mm]onth", "mois",
 				gsub("[Ss]cale", eval(parse(text=deparse("\u{00E9}chelle"))),
-				gsub("[Ff]emale", "femelle",
-				gsub("[Ss]ample", eval(parse(text=deparse("\u{00E9}chantillon"))),
-				gsub("[Ss]urvey", eval(parse(text=deparse("relev\u{00E9}"))),
-				gsub("[Ff]itted", eval(parse(text=deparse("ajust\u{00E9}"))),
-				gsub("[Ll]ength", "longueur",
-				gsub("[Ss]eason", "saison",
-				gsub("[Ww]eight", "poids",
 				gsub("[Bb]ubble", "bulle",
 				gsub("[Ee]vents", eval(parse(text=deparse("\u{00E9}v\u{00E9}nements"))),
+				gsub("[Ff]emale", "femelle",
+				gsub("[Ff]itted", eval(parse(text=deparse("ajust\u{00E9}"))),
+				gsub("[Ll]ength", "longueur",
+				gsub("[Ss]ample", eval(parse(text=deparse("\u{00E9}chantillon"))),
+				gsub("[Ss]eason", "saison",
+				gsub("[Ss]eries", eval(parse(text=deparse("s\u{00E9}ries"))),
+				gsub("[Ss]urvey", eval(parse(text=deparse("relev\u{00E9}"))),
+				gsub("[Ww]eight", "poids",
 				gsub(" [Mm]ajor ", " zone ",
-				x1))))))))))))))))))
+				x1)))))))))))))))))))
 			})
 			## single words describing fisheries
 			xfis = sapply(xone, function(xf){
@@ -1227,7 +1252,8 @@ linguaFranca = function(x, lang="e", little=4, strip=FALSE)
 				gsub(" [\\&|Aa](nd)? "," et ",
 				gsub(" by ", " par ",
 				gsub(" to ", eval(parse(text=deparse(" \u{00E0} "))),
-			xacr))))
+				gsub(" but ", " mais ",
+			xacr)))))
 			xout[xBpos] = xbig
 		}
 		#} 
