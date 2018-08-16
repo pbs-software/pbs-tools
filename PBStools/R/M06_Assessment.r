@@ -727,12 +727,12 @@ plotAgeErr = function(dat, nsamp, xlim=NULL, ylim=NULL, jitter=0.25, seed=42,
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotAgeErr
 
 
-## plotMW-------------------------------2018-07-19
+## plotMW-------------------------------2018-08-09
 ## Plot mean weight of stocks and individual areas
 ## that occur in the bigger stock areas.
 ## ---------------------------------------------RH
-plotMW = function(dat, xlim, ylim, outnam="RSR-Mean-Weight-Compare",
-   png=FALSE, lang=c("e","f"))
+plotMW = function(dat, xlim, ylim, outnam="Mean-Weight-Compare",
+   outcast, png=FALSE, lang=c("e","f"))
 {
 	## Create a subdirectory called `french' for French-language figures
 	createFdir(lang)
@@ -742,13 +742,18 @@ plotMW = function(dat, xlim, ylim, outnam="RSR-Mean-Weight-Compare",
 	x = xlim[1]:xlim[2]
 	stocks = names(dat[,-1])
 	#scol   = c("green","green4","gold","orange","red","cyan","blue","red","blue")
-	scol   = c("orange","salmon","coral","hotpink","plum","cyan","blue","red","blue")
-	spch   = c(1:6,8,25,24)
-	slty   = c(rep(5,7),rep(1,2))
-	slwd   = c(rep(1,7),rep(3,2))
-	scex   = c(rep(1.2,7),rep(1.5,2))
-	sord   = paste0("s",c("3C","3D","5A","5B","5C","5D","5E","5ABC3CD","5DE"))
+	if (missing(outcast)){
+		scol   = c("orange","salmon","coral","hotpink","plum","cyan","blue","red","blue")
+		spch   = c(1:6,8,25,24)
+		slty   = c(rep(5,7),rep(1,2))
+		slwd   = c(rep(1,7),rep(3,2))
+		scex   = c(rep(1.2,7),rep(1.5,2))
+		sord   = paste0("s",c("3C","3D","5A","5B","5C","5D","5E","5ABC3CD","5DE"))
+	} else {
+		unpackList(outcast)
+	}
 	names(scol) = names(spch) = names(slty) = names(slwd) = names(scex) = sord
+#browser();return()
 
 	fout = fout.e = outnam
 	for (l in lang) {
@@ -762,8 +767,9 @@ plotMW = function(dat, xlim, ylim, outnam="RSR-Mean-Weight-Compare",
 			lines(x,dat[z,i], col=scol[i], lty=slty[i], lwd=slwd[i])
 			points(x,dat[z,i], pch=spch[i], col=scol[i], bg="ghostwhite", cex=scex[i], lwd=slwd[i])
 		}
-		ii = stocks
-		addLegend(0.05,0.97, pch=spch[ii], col=scol[ii], lty=slty[ii], lwd=slwd[ii], pt.cex=scex[ii], pt.bg="ghostwhite", seg.len=3, legend=substring(ii,2), bty="n")
+		ii = gsub("^[s]","",stocks)
+#browser();return
+		addLegend(0.05,0.97, pch=spch[ii], col=scol[ii], lty=slty[ii], lwd=slwd[ii], pt.cex=scex[ii], pt.bg="ghostwhite", seg.len=5, legend=ii, bty="n")
 		if (png) dev.off()
 	} ## end l (lang) loop
 }

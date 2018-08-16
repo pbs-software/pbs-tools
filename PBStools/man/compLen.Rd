@@ -1,26 +1,34 @@
 \name{compLen}
 \alias{compLen}
 \title{
-  Compare Lengths Among Surveys
+  Compare Lengths Among Groups
 }
 \description{
-  Compare annual quantiles of fish length (or age) among synoptic surveys.
+  Compare annual quantiles of fish length (or age) among groups (e.g., synoptic surveys, commercial gear types).
   Used to detect consistent size differencs along the BC coast to suggest stock delineation.
 }
 \usage{
-compLen(dat, fld="len", ssid=c(16,1,4), sex=c(2,1), strat=FALSE, 
-   boot=FALSE, R=10, lbin=1, bxpsep=0.2, bxpcol="black", ylim=NULL, 
-   png=FALSE, PIN=c(8, 8), lang=c("e","f"))
+compLen(dat, strSpp, fld="len", lbin=1, sex=c(2,1), 
+   afld="SSID", ssid=list(16,1,4), yrs, ttype, stype, scat, exlax,
+   strat=FALSE, boot=FALSE, R=10, bxpsep=0.2, bxpcol="black",
+   ylim=NULL, png=FALSE, PIN=c(8, 8), lang=c("e","f"))
 }
 \arguments{
   \item{dat}{\code{data.frame} -- usually a biological object created by \code{gfb_bio.sql}.}
-  \item{fld}{\code{character} -- field name containing metric (e.g., \code{len}) for comparison.}
-  \item{ssid}{\code{numeric} -- survey series ID number.}
+  \item{strSpp}{\code{character} -- alpha-numeric species code (usually Hart code).}
+  \item{fld}{\code{character} -- field name containing metric (e.g., \code{"len"}) for comparison.}
+  \item{lbin}{\code{numeric} -- size of each length bin (cm).}
   \item{sex}{\code{numeric} -- sex code in \code{GFBioSQL}, where 1=males and 2=females.}
+  \item{afld}{\code{character} -- field name containing groups for annual side-by-side comparisons (e.g., \code{"SSID"}).}
+  \item{ssid}{\code{numeric} -- list of survey series IDs (e.g., 1=QCS synoptic, 4=WCVI synoptic, 16=WCHG synoptic)}
+  \item{yrs}{\code{numeric} -- vector of years to qualify data.}
+  \item{ttype}{\code{numeric} -- vector of trip type codes to qualify data.}
+  \item{stype}{\code{numeric} -- vector of sample type codes to qualify data.}
+  \item{scat}{\code{numeric} -- vector of species category codes (e.g. 1=unsorted) to qualify data.}
+  \item{exlax}{\code{character} -- extra text to use in figure file name.}
   \item{strat}{\code{logical} -- if \code{TRUE}, stratify the metric by the survey strata.}
   \item{boot}{\code{logical} -- if \code{TRUE}, bootstrap the stratified data.}
   \item{R}{\code{numeric} -- number of bootstrap replicates.}
-  \item{lbin}{\code{numeric} -- size of each length bin (cm).}
   \item{bxpsep}{\code{numeric} -- space between mulitiple survey series boxes in any given year.}
   \item{bxpcol}{\code{character} -- outline colour of boxes.}
   \item{ylim}{\code{numeric} -- limits of the y-axis.}
@@ -34,11 +42,13 @@ compLen(dat, fld="len", ssid=c(16,1,4), sex=c(2,1), strat=FALSE,
 \author{
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
-  \emph{locus: Institute of Ocean Sciences (IOS), Sidney BC}\cr
-  Last modified \code{Rd: 2018-07-17}
+  \emph{opus locus}: Institute of Ocean Sciences (IOS), Sidney BC\cr
+  Last modified \code{Rd: 2018-08-14}
 }
 \note{
   Developed to demonstrate and support stock separation for Redstripe Rockfish.
+  Functionality expanded during data exploration of Widow Rockfish to compare lengths
+  between commercial bottom and midwater trawl gear.
 }
 \seealso{
 \code{\link[PBStools]{calcStockArea}},

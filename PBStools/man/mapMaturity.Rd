@@ -7,12 +7,13 @@
 \usage{
 mapMaturity(dat=pop.age, strSpp="", type="map", mats=1:7,
    sex=list(Females=2), ttype=1:5, stype=c(1,2,6,7), major=c(3:9),
-   stock, brks=c(0,.05,.1,.25,.5,1), byrow=FALSE, hpage=6,
+   stock, catch, brks=c(0,.05,.1,.25,.5,1), byrow=FALSE, hpage=6,
    clrs=list(colorRampPalette(c("honeydew","lightgreen","black"))(5),
    colorRampPalette(c("aliceblue","skyblue2","black"))(5)),
-   outnam, eps=FALSE, png=FALSE, wmf=FALSE, ioenv=.GlobalEnv,
-   lang=c("e","f"))
+   outnam, eps=FALSE, png=FALSE, wmf=FALSE, pngres=400,
+   ioenv=.GlobalEnv, lang=c("e","f"))
 }
+
 \arguments{
   \item{dat}{\code{data.frame} -- biological data set with fields \code{mat} specifying maturity code.}
   \item{strSpp}{\code{character} -- string code for species. If dataset has attribute \code{spp},
@@ -37,6 +38,8 @@ mapMaturity(dat=pop.age, strSpp="", type="map", mats=1:7,
   \item{stock}{\code{character} -- stock label, usually a combination of PMFC \code{major} and \code{minor} areas specific to a species.
     If this argument is specified, it precludes any specification of \code{major}
     and assumes that a field called \code{"stock"} appears in the data file.}
+  \item{catch}{\code{data.frame} -- catch dataset that matches the biology data (\code{dat}) and 
+    contains a minimum of two fields named: \code{c("month", "catKg")}.}
   \item{brks}{\code{numeric} -- relative breaks from 0 to 1 to partition the maturity data (only used for \code{type="map"}).}
   \item{byrow}{\code{logical} -- if \code{TRUE}, the observed monthly frequencies are transformed to proportions by maturity code; 
     if \code{FALSE}, the observed maturity frequencies are transformed to proportions by month.}
@@ -48,23 +51,30 @@ mapMaturity(dat=pop.age, strSpp="", type="map", mats=1:7,
   \item{eps}{\code{logical} -- if \code{TRUE}, send plot to a postscript \code{.eps} file.}
   \item{png}{\code{logical} -- if \code{TRUE}, send plot to a raster \code{.png} file.}
   \item{wmf}{\code{logical} -- if \code{TRUE}, send plot to a vector \code{.wmf} file.}
+  \item{pngres}{\code{numeric} -- resolution (pixels/inch) of \code{".png"} file.}
   \item{ioenv}{\code{environment} -- input/output environment for function input data and output results.}
   \item{lang}{\code{character} -- a vector of letters that denote the language for output:
     currently only \code{"e"} (english) and \code{"f"} (french).}
 }
 \details{
-  If \code{byrow=TRUE} (original default configuration), for each maturity code the function plots
-  a row of monthly boxes (colour-coded) or bubbles by the relative frequency of the code
-  in that month compared to the year.
+  If \code{byrow=TRUE}, the function plots a row of bubbles (variable size)
+  or monthly boxes (colour-coded) using the relative frequency of the maturity
+  code in each month compared to the year.
   
-  Alternatively, if \code{byrow=FALSE} (current default), the function plots a column of 
-  monthly boxes (colour-coded) or bubbles by the relative frequency of the code in each month.
+  Alternatively, if \code{byrow=FALSE} (current default), the function
+  plots a column of bubbles (variable size) or monthly boxes (colour-coded)
+  using the relative frequency of the maturity code by month, regardless of other months.
+  
+  If a data frame \code{catch} is supplied, the function uses it to weight the
+  maturity observations by the relative monthly catch (over the year).
+  In this case, neither the rows nor the columns are converted to proportions.
 }
 \value{
   A list object \code{CALCS} is invisibly returned and contains the frequency matrix 
   (maturity by month) for each sex configuration specified.
   
-  A global list object \code{PBStool} stored in the environment \code{.PBStoolEnv} also  provides the following:
+  A global list object \code{PBStool} stored in the environment \code{.PBStoolEnv}
+  also  provides the following:
   \item{dat}{Qualified data used for the analysis.}
   \item{xlim}{Limits of the x-axis.}
   \item{ylim}{Limits of the y-axis.}
@@ -79,15 +89,32 @@ mapMaturity(dat=pop.age, strSpp="", type="map", mats=1:7,
   \item{iclr}{Colour code assigned to each month.}
 }
 \note{
-  A suitable input dataset can be obtained by running the SQL query \code{gfb_bio.sql}.
+  A suitable biological dataset for input can be obtained by running
+  the SQL query \code{gfb_bio.sql}.
 
-  \code{getData("gfb_bio.sql","GFBioSQL",strSpp="396",path=.getSpath())}
+\preformatted{
+getData("gfb_bio.sql","GFBioSQL",strSpp="396",path=.getSpath())
+bio396 = processBio(PBSdat, strSpp="396")
+}
+
+  A suitable catch dataset (e.g., POP trawl) for input can be obtained by running
+  the SQL query \code{fos_mcatORF.sql}.
+
+\preformatted{
+getData("gfb_mcatORF.sql","GFBioSQL",strSpp="396",path=.getSpath())
+cat396 = PBSdat[is.element(PBSdat$fid, 1),]           ## trawl fishery
+cat396 = cat396[is.element(cat396$gear, c(1,3)),]     ## bottom & midwater
+cat396 = cat396[cat396$landed>0 | cat396$discard>0,]  ## positive catch
+cat396$year  = as.numeric(substring(cat396$date,1,4))
+cat396$month = as.numeric(substring(cat396$date,6,7))
+cat396$catKg = cat396$landed + cat396$discard
+}
 }
 \examples{
 local(envir=.PBStoolEnv,expr={
 pbsfun=function(){
   data(pop.age,package="PBSdata",envir=.PBStoolEnv)
-  mapMaturity(brks=c(0,.01,.05,.25,.5,1),sex=list(Males=1,Females=2))
+  mapMaturity(pop.age, sex=list(Males=1,Females=2))
   invisible() }
 pbsfun()
 })
@@ -95,8 +122,8 @@ pbsfun()
 \author{
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
-  \emph{locus: Institute of Ocean Sciences (IOS), Sidney BC}\cr
-  Last modified \code{Rd: 2018-07-23}
+  \emph{opus locus}: Institute of Ocean Sciences (IOS), Sidney BC\cr
+  Last modified \code{Rd: 2018-08-16}
 }
 \seealso{
   \code{\link{pop.age}}, \code{\link{estOgive}}, \code{\link{getData}}

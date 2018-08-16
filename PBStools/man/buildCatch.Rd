@@ -273,7 +273,7 @@ buildCatch(
 \author{
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
-  \emph{locus: Institute of Ocean Sciences (IOS), Sidney BC}\cr
+  \emph{opus locus}: Institute of Ocean Sciences (IOS), Sidney BC\cr
   Last modified \code{Rd: 2018-06-28}
 }
 \references{

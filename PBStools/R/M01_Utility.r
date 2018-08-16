@@ -267,7 +267,7 @@ createFdir = function(lang, dir=".")
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~createFdir
 
 
-## crossTab-----------------------------2018-06-20
+## crossTab-----------------------------2018-08-07
 ## Summarize z using crosstab values y.
 ## Hadley and package 'reshape' deprecated.
 ## ---------------------------------------------RH
@@ -299,12 +299,13 @@ crossTab = function(x=PBSdat, y=c("year","major"),
 		xnam = sapply(X[,y,drop=FALSE],function(xx){.su(xx)},simplify=FALSE)
 		Z    = array(0, dim=xdim, dimnames=xnam )
 		#X$ID = .createIDs(X,y)  ## doesn't work if one of the fields has a valid 0 (zero) code
-		X$ID = .trimWhiteSpace(apply(X[,y,drop=FALSE],1,paste0,collapse="|")) ## sometimes paste adds whitespace depending on format of y-values.
+		#X$ID = .trimWhiteSpace(apply(X[,y,drop=FALSE],1,paste0,collapse="|")) ## sometimes paste adds whitespace depending on format of y-values.
+		X$ID = apply(X[,y,drop=FALSE],1,function(x){paste0(.trimWhiteSpace(x),collapse="|")}) ## sometimes paste adds whitespace depending on format of y-values.
 		## vector summary of x by y using func (unless func returns more than one summary value)
 		Zsum = sapply(split(X[,z],X$ID),func) #,simplify=FALSE)
+#browser();return()
 		if (is.vector(Zsum)) {
 			Zind = strsplit(names(Zsum),split="\\|"); names(Zind) = names(Zsum)
-#browser();return()
 			expr = paste0("sapply(names(Zsum), function(i){ Z[", paste0("Zind[[i]][",1:length(xdim),"]",collapse=","),"] <<- Zsum[i] })")
 		} else {
 			Z = array(0, dim=c(xdim,nrow(Zsum)), dimnames=c(xnam,list(pars=rownames(Zsum))))
@@ -1003,7 +1004,7 @@ isThere = function(x, envir=parent.frame()) {
 	genv = function(){ .GlobalEnv }                # global environment
 
 
-## linguaFranca-------------------------2018-08-02
+## linguaFranca-------------------------2018-08-16
 ## Translate English phrases to French (other languages possible)
 ## for use in plotting figures with French labels.
 ## Note that 'gsub' has a limit to its nesting depth.
@@ -1013,7 +1014,7 @@ linguaFranca = function(x, lang="e", little=4, strip=FALSE)
 	if (length(x)==1 && is.expression(x)) return(x)
 	if (lang=="e" || is.null(x) || is.na(x) || x=="") return(x)
 	## Need to sort so that longer strings are processed before shorter ones,
-	## otherwise, partial matching occurs and the translation is not correct.
+	##   otherwise, partial matching occurs and the translation is not correct.
 	if (lang=="f") {
 		xout    = rep("",length(x)); names(xout) = x
 		nchars  = sapply(x,function(x0) { nchar(gsub("^([[:punct:]]+) |s$| ([[:digit:]]+)","",x0)) } )  ## remove 's' and digits to catch small-word plurals
@@ -1021,6 +1022,7 @@ linguaFranca = function(x, lang="e", little=4, strip=FALSE)
 		zlil    = nchars<=little; lilword = x[zlil]; xLpos=(1:length(x))[zlil]
 		zbig    = nchars>little;  bigword = x[zbig]; xBpos=(1:length(x))[zbig]
 		if (any(zlil)) {
+			## les petits mots de bouche
 			xlil = sapply(lilword, function(x0){
 				gsub("[Aa]nd", "et",
 				gsub("[B][C]", "CB",
@@ -1066,18 +1068,19 @@ linguaFranca = function(x, lang="e", little=4, strip=FALSE)
 			})
 			xout[xLpos] = xlil
 		}
-		## species words
+		## species names
 		if (any(zbig)) {
 			xspp = sapply(bigword, function(xs){
 				gsub("[R][S][R]", "SRR",
-				gsub("[Pp]acific [Oo]cean [Pp]erch", eval(parse(text=deparse("s\u{00E9}baste \u{00E0} longue m\u{00E2}choire"))),
+				gsub("[Ww]idow [Rr]ockfish", "veuve",
+				gsub("[Ww]alleye [Pp]ollock", "goberge",
 				gsub("[Rr]edbanded [Rr]ockfish", eval(parse(text=deparse("s\u{00E9}baste \u{00E0} bandes rouges"))),
 				gsub("[Rr]edstripe [Rr]ockfish", eval(parse(text=deparse("s\u{00E9}baste \u{00E0} raie rouge"))),
-				gsub("[Ss]hortspine [Tt]hornyhead", eval(parse(text=deparse("s\u{00E9}bastolobe \u{00E0} courtes \u{00E9}pines"))),
-				gsub("[Ww]alleye [Pp]ollock", "goberge",
 				gsub("[Yy]elloweye [Rr]ockfish", eval(parse(text=deparse("s\u{00E9}bastes aux yeux jaunes"))),
 				gsub("[Yy]ellowmouth [Rr]ockfish", eval(parse(text=deparse("s\u{00E9}baste \u{00E0} bouche jaune"))),
-				xs))))))))
+				gsub("[Ss]hortspine [Tt]hornyhead", eval(parse(text=deparse("s\u{00E9}bastolobe \u{00E0} courtes \u{00E9}pines"))),
+				gsub("[Pp]acific [Oo]cean [Pp]erch", eval(parse(text=deparse("s\u{00E9}baste \u{00E0} longue m\u{00E2}choire"))),
+				xs)))))))))
 			})
 			## geographic words
 			xgeo = sapply(xspp, function(xg){
@@ -1119,7 +1122,7 @@ linguaFranca = function(x, lang="e", little=4, strip=FALSE)
 				x9)))))))))))))))
 			})
 #browser();return()
-			## Bigger double words
+			## bigger double words
 			xtwo = sapply(xpoo, function(x2){
 				gsub("[Bb]ottom [Tt]rawl", "chalut de fond",
 				gsub("[Mm]idwater [Tt]rawl", eval(parse(text=deparse("chalut p\u{00E9}lagique"))),
@@ -1139,7 +1142,7 @@ linguaFranca = function(x, lang="e", little=4, strip=FALSE)
 				gsub("[Tt]heoretical [Qq]uantiles", eval(parse(text=deparse("quantiles th\u{00E9}oriques"))),
 				x2))))))))))))))))
 			})
-			## Smaller double words
+			## smaller double words
 #browser();return()
 			xtwo = sapply(xtwo, function(x2){
 				gsub("[Nn]o CPUE", "pas de CPUE",
@@ -1201,13 +1204,14 @@ linguaFranca = function(x, lang="e", little=4, strip=FALSE)
 				gsub("[Ff]emale", "femelle",
 				gsub("[Ff]itted", eval(parse(text=deparse("ajust\u{00E9}"))),
 				gsub("[Ll]ength", "longueur",
+				gsub("[Ss]almon", "saumon",
 				gsub("[Ss]ample", eval(parse(text=deparse("\u{00E9}chantillon"))),
 				gsub("[Ss]eason", "saison",
 				gsub("[Ss]eries", eval(parse(text=deparse("s\u{00E9}ries"))),
 				gsub("[Ss]urvey", eval(parse(text=deparse("relev\u{00E9}"))),
 				gsub("[Ww]eight", "poids",
 				gsub(" [Mm]ajor ", " zone ",
-				x1)))))))))))))))))))
+				x1))))))))))))))))))))
 			})
 			## single words describing fisheries
 			xfis = sapply(xone, function(xf){

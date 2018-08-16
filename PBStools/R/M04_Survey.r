@@ -240,52 +240,89 @@ calcPMR <- function(x, na.value=NULL)
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~calcPMR
 
 
-## compLen------------------------------2018-07-17
-## Compare lengths (and ages) among survey series.
+## compLen------------------------------2018-08-08
+## Compare lengths (and ages) among groups.
 ## -----------------------------------------PJS/RH
-compLen = function(dat, fld="len", ssid=c(16,1,4), sex=c(2,1),
-   strat=FALSE, boot=FALSE, R=10, lbin=1, bxpsep=0.2, bxpcol="black", 
+compLen = function(dat, strSpp, fld="len", lbin=1, sex=c(2,1),
+   afld="SSID", ssid=list(16,1,4), yrs, ttype, stype, scat, exlax,
+   strat=FALSE, boot=FALSE, R=10, bxpsep=0.2, bxpcol="black", 
    ylim=NULL, png=FALSE, PIN=c(8,8), lang=c("e","f"))
 {
-	dat  = dat[is.element(dat$SSID,ssid) & dat[,fld]>0 & !is.na(dat[,fld]),]
-	xlim = range(dat$year)
+	datnam = as.character(substitute(dat))
+	ssid.o = ssid
+	ssid.u = unique(unlist(ssid))
+	dat  = dat[is.element(dat[,afld],ssid.u) & dat[,fld]>0 & !is.na(dat[,fld]),]
+	if (!missing(yrs))
+		dat = dat[is.element(dat$year, yrs),]
+	if (!missing(ttype))
+		dat = dat[is.element(dat$ttype, ttype),]
+	if (!missing(stype))
+		dat = dat[is.element(dat$stype, stype),]
+	if (!missing(scat))
+		dat = dat[is.element(dat$scat, scat),]
+
+	ssid = sapply(ssid, function(x){xout = intersect(x, .su(dat[,afld])); if(length(xout)==0) NA else xout}, simplify=FALSE)
+	ssid = ssid[!is.na(ssid)]
+	names(ssid) = sapply(ssid,paste0,collapse="+")
+	dat$group = rep(NA,nrow(dat))
+	for (i in names(ssid))
+		dat$group[is.element(dat[,afld],ssid[[i]])] = i
+#browser();return()
+
+	xlim = if (missing(yrs)) range(dat$year) else range(yrs)
 	if (is.null(ylim)) {
-		qtmp = sapply(split(dat[,fld],paste(dat$SSID,dat$year,sep="-")),quantile,c(0.05,0.95))
+		qtmp = sapply(split(dat[,fld],paste(dat$group,dat$year,sep="-")),quantile,c(0.05,0.95))
 		ylim = c(min(qtmp[1,]),max(qtmp[2,]))
 	}
 	Qbox = as.list(rep(NA,diff(xlim)+1)); names(Qbox)=xlim[1]:xlim[2]
 	
-	#Lbin = ceiling(range(dat$len)/lbin)*lbin
-	Lbin = .su(ceiling(.su(dat$len)/lbin)*lbin)
+	#Lbin = ceiling(range(dat[,fld])/lbin)*lbin
+	Lbin = .su(ceiling(.su(dat[,fld])/lbin)*lbin)
 
-	ssnames = c("QCS Synoptic", "WCVI Synoptic", "WCHG Synoptic"); names(ssnames)=c(1,4,16)
+	if (afld=="SSID") {
+		ssnames = c("QCS Synoptic", "WCVI Synoptic", "WCHG Synoptic")
+		names(ssnames)=c(1,4,16)
+	} else if (afld=="major") {
+		ssnames = c("BCS", "BCC", "BCN")
+		names(ssnames)[1] = names(ssid)[grep("3|4",names(ssid))]
+		names(ssnames)[2] = names(ssid)[grep("5|6|7|8",names(ssid))]
+		names(ssnames)[3] = names(ssid)[grep("9",names(ssid))]
+	} else if (afld=="gear") {
+		ssnames = c("BT", "MW")
+		names(ssnames)[1] = names(ssid)[grep("1|8",names(ssid))]
+		names(ssnames)[2] = names(ssid)[grep("6",names(ssid))]
+	}
+	loca    = lenv()
+	data(species, package="PBSdata", envir=loca)
+	spp3    = species[strSpp, "code3"]
 
-	fout = fout.e = paste0("RSR-Survey-",ifelse(fld=="len","Lengths","Ages"),ifelse(strat,"-(strat)","-(raw)"))
+	out  = if (afld=="SSID") "-Surv-" else paste0("-",datnam,"-")
+	poo  = if (missing(exlax)) "" else paste0("(",exlax,")-")
+	fout = fout.e = paste0(spp3, out , poo, ifelse(fld=="len","Lengths","Ages"), ifelse(strat,"-(strat)","-(raw)"))
 	for (l in lang) {
 		if (l=="f") fout = paste0("./french/",fout.e)  ## could repeat for other languages
-		if (png) png(paste0(fout,".png"),units="in",res=600,width=PIN[1],height=PIN[2])
+		if (png) png(paste0(fout,".png"), units="in", res=600, width=PIN[1], height=PIN[2])
 		par (mfrow=c(2,1), mar=c(1.5,3.5,0.5,0.5), oma=c(1.5,0,0,0), mgp=c(1.5,0.5,0), las=1)
 		for (s in sex) {
 			sdat = dat[is.element(dat$sex,s),]
-			Idat = split(sdat,sdat$SSID)
-			Idat = Idat[as.character(ssid)]  ## order them as per user input
+			Idat = split(sdat,sdat$group)
+#if (s==1) {browser();return()}
+
+			Idat = Idat[intersect(names(ssid),names(Idat))]  ## order them as per user input
 			if (strat && !boot) {
 				resetGraph();expandGraph()
 				#plotBubbles(Yprop,dnam=T,hide0=T,prettyAxis=T,siz=0.1,ylim=ylim,cpro=T)
 				#points(as.numeric(names(Ymean)),Ymean, pch=21,col="red",bg="pink",cex=1.5)
-	#			plot(0,0,type="n",xlim=xlim,ylim=ylim,xlab="",ylab="", mgp=c(1.5,0.5,0))
+				#plot(0,0,type="n",xlim=xlim,ylim=ylim,xlab="",ylab="", mgp=c(1.5,0.5,0))
 			} else {
 				quantBox(sapply(Qbox,function(x){NA},simplify=F), type="n", ylim=ylim, xlab="", ylab="")
-	#browser(); return()
 			}
 			sapply(1:length(Idat), function(i) {  ## loop through index 
 				ii  = names(Idat)[i]
-				iii = as.numeric(ii)
 				idat = Idat[[i]]
 				ival  = split(idat[,fld],idat$year)
 				if (strat){
 					yrs  = .su(idat$year)
-	
 					Ymat = array(0,dim=c(length(Lbin),length(yrs)), dimnames=list(len=Lbin,yr=yrs))
 					idat$lbin = ceiling(idat[,fld]/lbin)*lbin
 					for (y in yrs) {
@@ -336,10 +373,8 @@ compLen = function(dat, fld="len", ssid=c(16,1,4), sex=c(2,1),
 							}
 							return(Lsamp)
 						}
-		
 						Gmat = array(0,dim=c(length(Lbin),length(pGC)), dimnames=list(len=Lbin,GC=names(pGC)))
 						for (k in 1:length(pGC)) {
-	#print(k)
 							kk   = names(pGC)[k]
 	#if(y==2007) {browser();return()}
 							pk   = pGC[[kk]]
@@ -363,36 +398,48 @@ compLen = function(dat, fld="len", ssid=c(16,1,4), sex=c(2,1),
 					Ymean = apply(Yvals,2,function(x){sum(x)})
 				} else {
 					ival  = split(idat[,fld],idat$year)
-					Ymean = sapply(ival,mean)
+					Ymean = sapply(ival,mean,na.rm=T)
+#browser();return()
 				}
 				if (!is.null(ival)) {
 					attr(ival,"Ymean") = Ymean
 					qbox = Qbox
 					qbox[names(ival)] = ival
 					#pars = list(boxwex=bxpsep, whisklty=1, boxcol="gainsboro", boxfill=lucent(bxpcol[i],0.5), medcol=bxpcol[i], medlwd=2)
-					pars = list(boxwex=bxpsep, whisklty=1, boxcol="gainsboro", boxfill=lucent(bxpcol[i],0.5), medcol="black", medlwd=3)
-					xpos = (1:length(qbox))+seq(-bxpsep,bxpsep,len=3)[i]
-					qxy = quantBox(qbox,outline=F,pars=pars,add=T,xaxt="n",at=xpos)
+					wbxp = (bxpsep*2)^(2)  ## reverse calcs in function bxp (sort of)
+					#xoff = seq(-bxpsep,bxpsep, length.out=length(ssid))[i]
+					#xoff = seq(-wbxp/2, wbxp/2, length.out=length(ssid))
+					midout = ((wbxp*length(ssid)/2)-wbxp/2) * c(-1,1)
+					xoff   = seq(midout[1],midout[2],length.out=length(ssid))
+					pars = list(boxwex=wbxp, whisklty=1, boxcol="gainsboro", boxfill=lucent(bxpcol[i],0.5), medcol="black", medlwd=3)
+					xpos = (1:length(qbox)) + xoff[i]
+					qxy = quantBox(qbox, outline=FALSE, pars=pars, add=TRUE, xaxt="n", at=xpos)
+#if (i==2) {browser();return()} 
 					imean = match(names(Ymean),names(Qbox))
 					#points(xpos[imean],Ymean,pch=21,col=bxpcol[i],bg="white",cex=0.8)
-	#browser();return()
 				} else {
 				}
-	#if(i==3) {browser();return()}
-			})
-			if (fld %in% c("len")) {
-				mtext(linguaFranca("Length (cm)",l), side=2, line=2.25, cex=1.5, las=0)
-				addLabel(0.05, 0.10, linguaFranca(paste0("RSR ",switch(s,"Males","Females")),l), cex=1.2, adj=c(0,0))
-				if (par()$mfg[1]==2)
-					addLegend(0.025, 0.975, bty="n", fill=lucent(bxpcol,0.5), border="gainsboro", legend=linguaFranca(ssnames[as.character(ssid)],l), xjust=0, yjust=1)
+#if(i==2) {browser();return()}
+			}) ## end i (index) loop
+#			if (fld %in% c("len") && afld %in% c("SSID")) {
+#				mtext(linguaFranca("Length (cm)",l), side=2, line=2.25, cex=1.5, las=0)
+#				addLabel(0.05, 0.10, linguaFranca(paste0(spp3, " ",switch(s,"Males","Females")),l), cex=1.2, adj=c(0,0))
+#				if (par()$mfg[1]==2)
+#					addLegend(0.025, 0.975, bty="n", fill=lucent(bxpcol,0.5), border="gainsboro", legend=linguaFranca(ssnames[names(ssid)],l), xjust=0, yjust=1)
+#			}
+#			if (fld %in% c("age") || afld %in% c("major","gear")) {
+#				mtext(linguaFranca("Age (y)",l), side=2, line=2.25, cex=1.5, las=0)
+#				addLabel(0.95, 0.95, linguaFranca(paste0(spp3, " ",switch(s,"Males","Females")),l), cex=1.2, adj=c(1,1))
+#				if (par()$mfg[1]==1)
+#			}
+			mtext(linguaFranca(ifelse(fld %in% c("len"), "Length (cm)", "Age (y)"),l), side=2, line=2.25, cex=1.5, las=0)
+			addLabel(0.025, 0.05, linguaFranca(paste0(spp3, " ",switch(s,"Males","Females")),l), cex=1.2, adj=c(0,0))
+			if (par()$mfg[1]==1) {
+				addLegend(0.025, 0.40, bty="n", fill=lucent(bxpcol,0.5), border="gainsboro", legend=linguaFranca(ssnames[names(ssid)],l), xjust=0, yjust=1)
+				if (afld %in% c("gear","major"))
+					addLabel(0.975, 0.95, txt=linguaFranca( sub("bioDat","",datnam),l), cex=1.2, adj=c(1,1))
 			}
-			if (fld %in% c("age")) {
-				mtext(linguaFranca("Age (y)",l), side=2, line=2.25, cex=1.5, las=0)
-				addLabel(0.95, 0.95, linguaFranca(paste0("RSR ",switch(s,"Males","Females")),l), cex=1.2, adj=c(1,1))
-				if (par()$mfg[1]==1)
-					addLegend(0.025, 0.975, bty="n", fill=lucent(bxpcol,0.5), border="gainsboro", legend=linguaFranca(ssnames[as.character(ssid)],l), xjust=0, yjust=1)
-			}
-		}
+		} ## end s (sex) loop
 		mtext(linguaFranca("Year",l), side=1, outer=TRUE, line=0.5, cex=1.5)
 		if (png) dev.off()
 	} ## end l (lang) loop

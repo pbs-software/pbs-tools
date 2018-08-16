@@ -57,7 +57,7 @@ showIndices(strSpp= "396", serID=1, survID=NULL, bootID,
 \author{ 
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
-  \emph{locus: Institute of Ocean Sciences (IOS), Sidney BC}\cr
+  \emph{opus locus}: Institute of Ocean Sciences (IOS), Sidney BC\cr
   Last modified \code{Rd: 2018-06-06}\cr
   Bootstraps by \href{mailto:norm.olsen@dfo-mpo.gc.ca}{Norm Olsen} (PBS, Nanaimo).
 }

@@ -10,6 +10,24 @@ Authors: RH  = Rowan Haigh
          BK  = Brian Krishka
 ------------------------------
 
+1.38.2 (2018-08-16) [Rcheck=T, Rbuild=T]
+  * M02_Biology.r
+    + Modified function `mapMaturity' to accept a catch data frame to weight the maturity map. (RH 180816)
+      - Idea suggested by PJS for the 2019 Widow Rockfish (WWR) assessment.
+      - WWR: slope = winter spawning fishery; shelf = summer non-spawning fishery.
+    + Modified function `calcVB' to deal with sparse data. (RH 180808)
+    + Added new function `compVB' to compare fitted vonB curves. (RH 180808)
+  * M05_Spatial.r
+    + Modified function with new argumet `years' to restrict time period fopr data summery. (RH 180814)
+  * M06_Assessment.r
+    + Added new argument in function `plotMW' to control various plotting parameters. (RH 180809)
+  * M04_Survey.r
+    + Updated function `compLen.r' to handle severely compromised (missing) data. (RH 180808)
+      - Added new arguments `strSpp', `yrs', `ttype', `stype', 'scat', `exlax' to make code more generic.
+  * M01_Utility.r
+    + Fixed another bug in `crossTab' where paste0 was still intoducing whitespace before factors. (RH 180807)
+      - Some days I think Hadley is going to win...
+
 1.38.1 (2018-08-02) [Rcheck=F, Rbuild=F]
   * M06_Assessment.r
     + Fixed a small bug in `compBmsy' - set names=FALSE in first call to `quantBox'. (RH 180802)

@@ -872,11 +872,11 @@ plotGMA = function(gma=gma.popymr, xlim=c(-134,-123), ylim=c(48.05,54.95),
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotGMA
 
 
-## plotLocal----------------------------2018-07-24
+## plotLocal----------------------------2018-08-14
 ## Plot DFO fishing localities with the highest catch.
 ## ---------------------------------------------RH
 plotLocal = function(dat, area, aflds=NULL, pcat=0.95, showAll=FALSE,
-   fid=NULL, fidtype="PBStools", strSpp, Ntop=5, short=TRUE,
+   fid=NULL, fidtype="PBStools", strSpp, Ntop=5, years, short=TRUE,
    plot=TRUE, png=FALSE, csv=FALSE, outnam="refA439", lang=c("e","f"))
 {
 	## Create a subdirectory called `french' for French-language figures
@@ -893,7 +893,9 @@ plotLocal = function(dat, area, aflds=NULL, pcat=0.95, showAll=FALSE,
 			showError(paste0("User-specified catch field '", strSpp,"' does not occur in '",datnam,"'"))
 		dat$catKG = dat[,strSpp]
 	}
-	
+	if (!missing(years))
+		dat = dat[is.element(as.numeric(substring(dat$date,1,4)),years),]
+
 	if (!missing(strSpp)) {
 		data(species, package="PBSdata", envir=fenv)
 		sppnam = toUpper(species[strSpp,"name"])

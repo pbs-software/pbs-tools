@@ -8,9 +8,10 @@
   by individual areas that occur in the bigger stock areas.
 }
 \usage{
-plotMW(dat, xlim, ylim, outnam="RSR-Mean-Weight-Compare",
-   png=FALSE, lang=c("e","f"))
+plotMW(dat, xlim, ylim, outnam="Mean-Weight-Compare",
+   outcast, png=FALSE, lang=c("e","f"))
 }
+
 %- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{dat}{\code{data.frame} -- mean weight data table where first
@@ -21,6 +22,8 @@ plotMW(dat, xlim, ylim, outnam="RSR-Mean-Weight-Compare",
   \item{ylim}{\code{numeric} -- limits of the y-axis (weight);
     determined automatically if not specified.}
   \item{outnam}{\code{character} -- name of the output \code{.png} file.}
+  \item{outcast}{\code{list} -- various controls for the plot: \cr
+    \code{"scol", "spch", "slty", "slwd", "scex", "sord"}.}
   \item{png}{\code{logical} -- if \code{TRUE}, send the figure to a \code{.png} file.}
   \item{lang}{\code{character} -- vector of letters specifying language in figures
     (\code{"e"}= english, \code{"f"}= french.}
@@ -36,7 +39,7 @@ plotMW(dat, xlim, ylim, outnam="RSR-Mean-Weight-Compare",
 \author{
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
-  \emph{locus: Institute of Ocean Sciences (IOS), Sidney BC}\cr
+  \emph{opus locus}: Institute of Ocean Sciences (IOS), Sidney BC\cr
   Last modified \code{Rd: 2018-07-19}
 }
 \note{

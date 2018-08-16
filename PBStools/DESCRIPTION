@@ -1,6 +1,6 @@
 Package: PBStools
-Version: 1.38.1
-Date:    2018-08-02
+Version: 1.38.2
+Date:    2018-08-16
 Title:   Tools for the Efficient Execution of Onerous Tasks
 Authors@R: c(
    person("Rowan", "Haigh", role = c("aut", "cre"), email = "rowan.haigh@dfo-mpo.gc.ca"),
@@ -19,9 +19,11 @@ Maintainer:  Rowan Haigh <rowan.haigh@dfo-mpo.gc.ca>
 Copyright:   2007-2018, Fisheries and Oceans Canada
 Depends:     R (>= 3.5.0), PBSmapping, PBSmodelling, PBSdata, RODBC
 Suggests:    boot, BRugs, cluster, MASS, reshape, sp, utils, xtable
-Description: Provides tools for exploring data from fisheries and beyond. 
-   The focus is on screening and summary tools for fisheries stock assessments,
-   species at risk reports, and exploratory data analyses.
+Description: A refreshing assortment of tools for exploring data from
+   fisheries and other realms. While the focus is on providing efficient
+   yet vivacious summary tools for fisheries stock assessments and 
+   species at risk reports, occasional flights of fancy will elevate
+   mundane information to Uranus.
 License: GPL (>= 2)
 URL: https://github.com/pbs-software/pbs-tools,
      https://github.com/pbs-software/pbs-data,
