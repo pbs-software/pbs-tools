@@ -1,21 +1,46 @@
--- Get specimen biological data from GFBioSQL (last revised 2018-01-02)
+-- Get specimen biological data from GFBioSQL (last revised 2018-09-26)
+-- Note: Not all users can access the Schnute overlay for table names.
 -- Number in brackets = #records for YYR
 
 SET NOCOUNT ON
 
 ---------------------------SPECIMEN QUERIES---------------------------
--- Collect values from B01 to B05 (62990)
+-- Get 'specimen existence' codes for genetic resolution of RER/BSR specimens
+SELECT --TOP 40
+  SE.SAMPLE_ID,
+  SE.SPECIMEN_ID,
+  'GENETIC_CODE' = MAX(CASE
+    WHEN SE.EXISTENCE_ATTRIBUTE_CODE IN (18) THEN '425'
+    WHEN SE.EXISTENCE_ATTRIBUTE_CODE IN (19) THEN '394'
+    ELSE '' END)
+INTO #TempGen
+FROM SPECIMEN_EXISTENCE SE
+GROUP BY
+  SE.SAMPLE_ID, SE.SPECIMEN_ID
+
+SELECT
+  TG.SAMPLE_ID,
+  TG.SPECIMEN_ID,
+  TG.GENETIC_CODE
+INTO #GenSpp
+FROM #TempGen TG
+WHERE TG.GENETIC_CODE NOT IN ('')
+
+-- Collect values from B01 to B05, possibly modified by genetic species (GS) update
 SELECT --TOP 1000
+  B01.VESSEL_ID,
   B01.TRIP_ID,
   B02.FISHING_EVENT_ID,
   B03.CATCH_ID,
   B04.SAMPLE_ID,
   B05.SPECIMEN_ID,
   B02.GROUPING_CODE,
+  B02.REASON_CODE,
   B02.BLOCK_DESIGNATION,
   B01.HAIL_IN_NO,
   B02.FE_MAJOR_LEVEL_ID,
-  B02.FE_SUB_LEVEL_ID,
+  B02.FE_SUB_LEVEL_ID,       -- 180914: Only populated for gear types 2 (trap) and 4 (handline)
+  B02.FE_MINOR_LEVEL_ID,     -- 180914: Only populated for spp 455 in gear 2 (sablefish in trap)
   B01.TRIP_SUB_TYPE_CODE,
   B04.SAMPLE_TYPE_CODE,
   B01.TRIP_START_DATE,
@@ -65,7 +90,7 @@ SELECT --TOP 1000
         B02.FE_BEGINNING_BOTTOM_DEPTH, B02.FE_END_BOTTOM_DEPTH, B02.FE_MODAL_BOTTOM_DEPTH, B02.FE_MIN_BOTTOM_DEPTH, B02.FE_MAX_BOTTOM_DEPTH)
     ELSE 0 END,
   B02.FE_BOTTOM_WATER_TEMPERATURE,
-  B03.SPECIES_CODE,
+  COALESCE(GS.GENETIC_CODE,B03.SPECIES_CODE) AS SPECIES_CODE,
   B03.SPECIES_CATEGORY_CODE,
   B03.CATCH_VERIFICATION_CODE,
   B03.CATCH_WEIGHT,
@@ -78,7 +103,10 @@ FROM
   B03_CATCH B03 INNER JOIN
   B03L4_Link_Catch_Sample L2 INNER JOIN
   B04_SAMPLE B04 INNER JOIN
-  B05_SPECIMEN B05 ON
+  B05_SPECIMEN B05 LEFT OUTER JOIN
+  #GenSpp GS ON
+    GS.SAMPLE_ID = B05.SAMPLE_ID AND
+    GS.SPECIMEN_ID = B05.SPECIMEN_ID ON
     B05.SAMPLE_ID = B04.SAMPLE_ID ON
     B04.SAMPLE_ID = L2.SAMPLE_ID ON
     L2.CATCH_ID = B03.CATCH_ID ON
@@ -86,9 +114,9 @@ FROM
     L1.FISHING_EVENT_ID = B02.FISHING_EVENT_ID ON
     B02.TRIP_ID = B01.TRIP_ID
 WHERE 
-  B03.SPECIES_CODE IN (@sppcode) AND
-  B02.MAJOR_STAT_AREA_CODE IN (@major) AND
-  B02.FE_SUB_LEVEL_ID IS NULL  -- FISHING_EVENT_ID REPEATED MANY TIMES FOR HOOKS AND TRAPS IF NOT NULL (STUPID IDEA)
+  COALESCE(GS.GENETIC_CODE,B03.SPECIES_CODE) IN (@sppcode) AND
+  B02.MAJOR_STAT_AREA_CODE IN (@major) --AND
+  --B02.FE_SUB_LEVEL_ID IS NULL  -- FISHING_EVENT_ID REPEATED MANY TIMES FOR HOOKS AND TRAPS IF NOT NULL (STUPID IDEA)
 
 -- Gather earliest GROUPING_CODE by FISHING_EVENT_ID (changed 180129 to match gfb_catch_records.sql)
 -- This is likely to match the original series SSID
@@ -118,7 +146,7 @@ SELECT --TOP 40
   BB.CATCH_ID,
   BB.SAMPLE_ID,
   BB.SPECIMEN_ID
---  BB.SPECIES_CODE
+  --BB.SPECIES_CODE
 INTO #onlySPID
 FROM #B01B05 BB
 
@@ -209,7 +237,7 @@ SELECT --TOP 40
     (CASE WHEN SM.MORPHOMETRICS_ATTRIBUTE_CODE IN (1) THEN SM.SPECIMEN_MORPHOMETRICS_VALUE * FM.FACTOR ELSE NULL END),  -- fork length
     (CASE WHEN SM.MORPHOMETRICS_ATTRIBUTE_CODE IN (6) THEN SM.SPECIMEN_MORPHOMETRICS_VALUE * FM.FACTOR ELSE NULL END),0)), -- third dorsal length
   'Round_Weight'  = SUM(COALESCE(
-    (CASE WHEN SM.MORPHOMETRICS_ATTRIBUTE_CODE IN (10) THEN SM.SPECIMEN_MORPHOMETRICS_VALUE * FACTOR ELSE NULL END),0))  -- ***** this line was originally faulty
+    (CASE WHEN SM.MORPHOMETRICS_ATTRIBUTE_CODE IN (10) THEN SM.SPECIMEN_MORPHOMETRICS_VALUE * FM.FACTOR ELSE NULL END),0))  -- ***** this line was originally faulty
 INTO #BestMorpho
 FROM 
   B05d_Specimen_Morphometrics SM  INNER JOIN
@@ -287,6 +315,7 @@ ORDER BY TS.TRIP_ID
 
 -- ===== Tie everything together =====
 SELECT 
+  'VID'  = ISNULL(AA.VESSEL_ID,0),                          -- B01_Trip
   'TID'  = AA.TRIP_ID,                                      -- B01_TRIP
   'FEID' = AA.FISHING_EVENT_ID,                             -- B02_FISHING_EVENT
   'CID'  = AA.CATCH_ID,                                     -- B03_CATCH
@@ -312,13 +341,16 @@ SELECT
       WHEN AA.Best_Depth BETWEEN 150.001 AND 260 THEN 326
       ELSE NULL END)
     ELSE NULL END,
-  'block'= AA.BLOCK_DESIGNATION,                            -- B02_FISHING_EVENT
-  'hail' = IsNull(AA.HAIL_IN_NO,0),                         -- B01_Trip
-  'set'  = IsNull(AA.FE_MAJOR_LEVEL_ID,0),                  -- B02_Fishing_Event
-  'subset' = IsNull(AA.FE_SUB_LEVEL_ID,1),                  -- B02_Fishing_Event
+  'RC'    = ISNULL(AA.REASON_CODE,0),                       -- B02_FISHING_EVENT
+  'block' = AA.BLOCK_DESIGNATION,                           -- B02_FISHING_EVENT
+  'hail'  = IsNull(AA.HAIL_IN_NO,0),                        -- B01_Trip
+  'set'   = IsNull(AA.FE_MAJOR_LEVEL_ID,0),                 -- B02_Fishing_Event (primary set,   e.g. tow,    in FEID)
+  'sset'  = IsNull(AA.FE_SUB_LEVEL_ID,0),                   -- B02_Fishing_Event (secondary set, e.g. skates, in FEID)
+  'ssset' = ISNULL(AA.FE_MINOR_LEVEL_ID,0),                 -- B02_Fishing_Event (tertiary  set, e.g. hooks,  in FEID)
   'ttype' = IsNull(AA.TRIP_SUB_TYPE_CODE,0),                -- B01_Trip
   'stype' = IsNull(AA.SAMPLE_TYPE_CODE,0),                  -- B04_Sample
-  'date' = CASE 
+  'ftype' = CASE WHEN AA.VESSEL_ID IN (568,569,592,595) THEN 1 ELSE 0 END,  -- B01_Trip (freezer trawl vessels)
+  'date'  = CASE 
     WHEN AA.SAMPLE_DATE Is Null Or 
          AA.TRIP_END_DATE-AA.SAMPLE_DATE < 0 Or 
          AA.TRIP_START_DATE-AA.SAMPLE_DATE > 0 THEN 
@@ -328,6 +360,7 @@ SELECT
     WHEN AA.SAMPLE_DATE Is Null Or AA.TRIP_END_DATE-AA.SAMPLE_DATE<0 Or
     AA.TRIP_START_DATE-AA.SAMPLE_DATE>0 THEN AA.TRIP_END_DATE         -- B01_Trip
     ELSE AA.SAMPLE_DATE END),                                         -- B04_Sample
+  'spp'   = AA.SPECIES_CODE,                                          -- B03_CATCH
   'sex'   = IsNull(AA.SPECIMEN_SEX_CODE,0),                           -- B05_Specimen
   'mat'   = IsNull(AA.MATURITY_CODE,0),                               -- B05_Specimen
   -- sometimes otoliths have been aged but they do not appear in the SPECIMEN_COLLECTED table
@@ -430,7 +463,7 @@ SELECT
   'density' = (CASE -- this calculation is sensitive to zero-values 
     WHEN AA.CATCH_WEIGHT IS NULL OR TSP.DISTANCE IS NULL OR TSP.DISTANCE<=0 
       OR TSP.DOORSPREAD IS NULL OR TSP.DOORSPREAD<=0 THEN NULL
-    ELSE CAST(ROUND(1000.*AA.CATCH_WEIGHT / (TSP.DISTANCE*TSP.DOORSPREAD),7) AS NUMERIC(15,7)) END)
+    ELSE CAST(ROUND(AA.CATCH_WEIGHT / (TSP.DISTANCE*TSP.DOORSPREAD),7) AS NUMERIC(15,7)) END) -- (kg/(km*m)) = (kg/1000)/(km * (m/1000)) = t/km^2
 INTO #BIOSPP
 FROM 
   #B01B05 AA 
@@ -471,4 +504,16 @@ SELECT * FROM #GFBBIO
 -- getData("gfb_bio.sql","GFBioSQL",strSpp="442")
 -- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="442")
 -- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="439")
+-- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp=c("394","425"))  -- won't work: incompatible w/ @sppcode NOT IN ('396','440')
+-- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="394")
+-- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="418") -- Yellowtail Rockfish (180531)
+-- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="602") -- Arrowtooth Flounder (180619)
+-- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="417") -- Widow Rockfish (180627)
+-- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="417") -- Widow Rockfish (180803)
+-- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="410") -- Darkblotched Rockfish (180813)
+-- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="602") -- Arrowtooth Flounder (180829)
+-- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="602") -- Arrowtooth Flounder (180911)  -- with freezer trawl vessels flagged
+-- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="435") -- Bocaccio (BOR, 180912)
+-- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="394") -- Rougheye Rockfish (RER, 180914, for Vania|Sean)
+-- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="425") -- Blackspotted Rockfish (BSR, 180914, for Vania|Sean)
 

@@ -7,6 +7,7 @@
 ##  compCsum........Compare cumulative sum curves.
 ##  compVB..........Compare fitted von B curves using parameters.
 ##  estOgive........Creates ogives of some metric (e.g., % maturity at age).
+##  extractAges.....Extract records with positive age and qualify by the selected ageing method.
 ##  genPa...........Generate proportions-at-age using catch curve composition.
 ##  histMetric......Create a matrix of histograms for a specified metric.
 ##  histTail........Create a histogram showing tail details.
@@ -1688,6 +1689,73 @@ estOgive <- function(dat=pop.age, strSpp="", method=c("dblnorm"),
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~estOgive
 
 
+## extractAges -------------------------2018-10-12
+## Extract records with positive age and qualify
+## by the selected ageing method.
+## If show.age=T, a GUI reports # ages by
+## specified field pair for each sex.
+## ---------------------------------------------RH
+extractAges = function(dat, ameth=c(3,17), use.sfc.age=1:3, sex=c(2,1),
+   show.age=FALSE, show.flds=c("ameth","ttype"), show.only=FALSE)
+{
+	## Get rid of records with no ages
+	dat = dat[dat$age>0 & !is.na(dat$age),]
+
+	if (show.age) {
+		show.flds = setdiff(show.flds, "sex")
+		if (length(show.flds)!=2 || any(!is.element(show.flds, colnames(dat))))
+			stop (paste0("Choose another pair of field names from:\n", paste0(deparse(colnames(dat)),collapse="\n") ) )
+		ats = crossTab(dat, c(show.flds, "sex"), "age", length)
+		winStr = c(
+			"window name=\"sAges\" title=\"Ages Available\"",
+			"grid 1 2 byrow=T sticky=W relief=flat",
+			paste0("label text=\"Number of ages by:\\n", show.flds[1], " (row)  \\&  ", show.flds[2], " (col)\" font=12"),
+			"button text=\"Codes\" bg=moccasin font=10 sticky=E padx=\"15 0\" function=doAction action=\"openFile(paste0(system.file(package=`PBStools`),`/win/GFBtcodes.txt`))\"",
+			paste0("grid ", dim(ats)[3], " 2 byrow=T sticky=W")
+		)
+		sexlab = c("Not sexed", "Male", "Female", "Uncertain")
+		sexcol = c("red", "blue", "darkgreen", "purple")
+		names(sexlab) = names(sexcol) = 0:3
+		for (i in 1:dim(ats)[3]) {
+			ii   = dimnames(ats)[[3]][i]
+			assign (paste0("obj",i), ats[,,i])
+			winStr = c( winStr,
+			paste0("label text=\"",sexlab[ii],"\" font=bold fg=", sexcol[ii]),
+			paste0("object name=obj", i, " edit=FALSE noeditbg=aliceblue sticky=W")
+			)
+		}
+		createWin(winStr, astext=TRUE)
+	}
+	if (show.only)
+		invisible(return(ats)) ## crosstab results
+
+	## Logical vector for desired surface ages (usually very young fish)
+	if ( any(ameth==c(3,17)) && !is.null(use.sfc.age) && !all(is.na(use.sfc.age)) )
+		z.sf = is.element(dat$ameth, c(1,16)) & is.element(dat$age, use.sfc.age)
+	else z.sf = rep(FALSE, nrow(dat))
+
+	## Logical vector for unknown ageing method
+	if ( any(ameth==c(3,17)) && !is.null(ameth) && !all(is.na(ameth)) && "year"%in%colnames(dat) && "oto"%in%colnames(dat) )
+		z.ua = is.element(dat$ameth,0) & is.element(dat$oto,1) & dat$year>=1980
+	else z.ua = rep(FALSE, nrow(dat))
+
+	## Logical vector for ageing method
+	if ( !is.null(ameth) && !all(is.na(ameth)) )
+		z.am = is.element(dat$ameth, ameth)
+	else z.am = rep(TRUE, nrow(dat))
+
+	## Logical vector for sex
+	if ( !is.null(sex) && !all(is.na(sex)) )
+		z.sx = is.element(dat$sex, sex)
+	else z.sx = rep(TRUE, nrow(dat))
+
+	## Select ages based on logical vectors
+	dat = dat[(z.sf|z.ua|z.am) & z.sx,]
+	return(dat)
+}
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~extractAges
+
+
 #genPa----------------------------------2013-01-18
 # Generate proportions-at-age using the catch curve 
 # composition of Schnute and Haigh (2007, Table 2).
@@ -1922,20 +1990,27 @@ histTail <-function(dat=pop.age, xfld="age", tailmin=NULL,
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~histTail
 
 
-## mapMaturity--------------------------2018-08-16
+## mapMaturity--------------------------2018-09-07
 ## Plot maturity chart to see relative occurrence
 ## of maturity stages by month.
 ## Notes:
-##  type = "map" (tiles), "bubb" (bubbles a la PJS)
-## ---------------------------------------------RH
+##  type = "map" (tiles), "bubb" (bubbles)
+##  If is.null(mats) then plot proportions by
+##  sex in areas (not maturities in one area)
+## -----------------------------------------RH/PJS
 mapMaturity <- function (dat=pop.age, strSpp="", type="map", mats=1:7,
-   sex=list(Females=2), ttype=1:5, stype=c(1,2,6,7), major=c(3:9),
-   stock, catch, brks=c(0,.05,.1,.25,.5,1), byrow=FALSE, hpage=6,
+   sex=list(Females=2), ttype=1:5, stype=c(1,2,6,7), areas=list(major=3:9),
+   stock, catch, brks=c(0,0.05,0.1,0.25,0.5,1), byrow=FALSE, hpage=6,
    clrs=list(colorRampPalette(c("honeydew","lightgreen","black"))(5),
    colorRampPalette(c("aliceblue","skyblue2","black"))(5)),
    outnam, eps=FALSE, png=FALSE, wmf=FALSE, pngres=400,
    ioenv=.GlobalEnv, lang=c("e","f"))
 {
+	if (is.null(mats) && type!="bubb")
+		stop ("Set 'type=\"bubb\"' when 'mats=NULL' (i.e., plotting proportions by sex in areas)")
+	## Check if user wants proportions by sex (NOT maturity map)
+	is.psex = is.null(mats)# && is.list(areas)
+
 	## Create a subdirectory called `french' for French-language figures
 	createFdir(lang)
 
@@ -1956,12 +2031,24 @@ mapMaturity <- function (dat=pop.age, strSpp="", type="map", mats=1:7,
 		fldSpp=intersect(c("spp","species","sppcode"),flds)[1]
 		dat=dat[is.element(dat[,fldSpp],strSpp),] }
 
-	if (is.element(strSpp,as.character(394:453))) {
+	mnam = mats
+	if (!is.null(mats) && is.element(strSpp,as.character(394:453))) {
 		mat1 <- c("Immature","Maturing","Developing","Developed","Running","Spent","Resting") # males
 		mat2 <- c("Immature","Maturing","Mature","Fertilized","Embryos","Spent","Resting") # females
+	} else if (!is.null(mats) && is.element(strSpp, as.character(c(602)))){
+		mat1 <- c("Immature","Maturing","Developing","Ripe","Spawning","Spent","Resting") # males
+		mat2 <- c("Immature","Maturing","Developing","Gravid","Ripe","Spent","Resting") # females
+	} else if (is.psex) {
+		## Proportions female or male by area
+		mnam = sapply(areas,paste0,collapse="",simplify=FALSE)
+		mat1 = paste0(sapply(1:length(areas),function(x){paste0(names(areas)[x],":\n", paste0(areas[[x]],collapse="+"))}) )
+		mat2 = paste0(sapply(1:length(areas),function(x){paste0(names(areas)[x],":\n", paste0(areas[[x]],collapse="+"))}) )
 	} else {
 		mat1 = mat2 = c("Immature","Immature","Developing","Ripe","Spawning","Spent","Resting") # males & females
 	}
+	names(mat1) = names(mat2) = if (is.psex) as.character(mnam) else as.character(mats)
+#browser();return()
+
 	nsex <- length(sex)
 	# Attention: colour handling still potentially a mess but OK for now.
 	if (!is.list(clrs)) {
@@ -1984,27 +2071,49 @@ mapMaturity <- function (dat=pop.age, strSpp="", type="map", mats=1:7,
 	lout <- paste(show0(brks[1:(ncut-1)],2),show0(brks[2:ncut],2),sep="-")
 
 	# Qualify the data as Paul Starr might
-	z0 = is.element(dat$sex,.su(unlist(sex)))
-	z1 = is.element(dat$mat,mats)
+	z0 = if(!is.psex) is.element(dat$sex,.su(unlist(sex))) else is.element(dat$sex,1:2)
+	z1 = if(!is.psex) is.element(dat$mat,mats) else rep(TRUE,nrow(dat))
 	z2 = is.element(dat$ttype,ttype)
 	z3 = is.element(dat$stype,stype)
-	if (missing(stock) || is.null(stock))
-		z4 = is.element(dat$major,major)
-	else
-		z4 = is.element(dat$stock,stock)
+	if (missing(stock) || is.null(stock)) {
+		#z4 = is.element(dat$major, .su(unlist(areas)))
+		mess =  sapply(1:length(areas),function(x) {
+			nx = names(areas)[x]
+			xx = areas[[x]]
+			is.c = is.character(xx)
+			paste0("is.element(dat$", nx, ifelse(is.c, ",\"", ","), areas[x], ifelse(is.c, "\")", ")"))
+		})
+		eval(parse(text=paste0("z4 = ",paste0(mess,collapse=" | "))))
+	} else {
+		z4 = is.element(dat$stock, stock)
+	}
+#browser();return()
 	dat = dat[z0&z1&z2&z3&z4,]
 	dat$month <- as.numeric(substring(dat$date,6,7))
 	dat$day   <- as.numeric(substring(dat$date,9,10))
+	if (is.psex && !any(names(areas)=="region")) {
+		dat$region = rep(NA,nrow(dat))
+		for (m in areas) {
+			zm = is.element(dat$major,m)
+			dat$region[zm] = paste0(m, collapse="")
+		}
+	}
 
 	xlim <- c(1,360)
-	ylim <- -rev(range(mats)) + c(-1,1) #c(-1,.6)
+	ylim <- if(!is.null(mats)) -rev(range(mats))  else c(1, length(mat2))
+	ylim = ylim + c(-1,1)
 	xpos <- (mcut[1:12]+mcut[2:13])/2
 	yspc <- .4
 
 	CALCS = list() # to collect calculations (matrices primarily)
 
-	if (missing(outnam)) fnam = paste0("Mats-",strSpp,"-(by_",ifelse(byrow,"maturity)","month)"),"-(",dnam,")")
-	else                 fnam = outnam # user-specified output name
+	if (missing(outnam)){
+		fnam = paste0(ifelse(is.psex,"pSex-","Mats-"), strSpp)
+		if (!all((3:9) %in% .su(dat$major))) fnam = paste0(fnam, "-major(", paste0(.su(dat$major),collapse=""),")")
+		fnam = paste0(fnam, "-ttype(", paste0(.su(dat$ttype),collapse=""),")")
+		fnam = paste0(fnam,"-(by_",ifelse(byrow,"maturity)","month)"),"-(",dnam,")")
+	}
+	else fnam = outnam # user-specified output name
 	#if (!missing(catch)) fnam = paste0(fnam,"-w(catch)")
 	if (!missing(catch)) fnam = sub("maturity|month", "catch", fnam)
 
@@ -2020,7 +2129,7 @@ mapMaturity <- function (dat=pop.age, strSpp="", type="map", mats=1:7,
 			else if (devnam=="png") png(paste0(fout,".png"), units="in", res=pngres, width=8.5, height=hpage)
 			else if (devnam=="wmf") do.call("win.metafile", list(filename=paste0(fout,".wmf"), width=8.5, height=hpage))
 			else resetGraph()
-			par(mfrow=c(nsex,1),mar = if(type=="map") c(1,4,0,0) else c(4,6,0,0),oma=c(0,0,2,0))
+			par(mfrow=c(nsex,1), mar = if(type=="map") c(1,4,0,0) else c(4,ifelse(is.psex,7,6),0,0), oma=c(0,0,ifelse(is.psex,4,2),0))
 
 			for (s0 in 1:nsex) {
 				ss = sex[[s0]]
@@ -2060,21 +2169,47 @@ mapMaturity <- function (dat=pop.age, strSpp="", type="map", mats=1:7,
 					addLegend(0.2,1, legend=linguaFranca(lout,l), fill=CLRS[[s0]], cex=0.9, horiz=TRUE, bty="n")
 				}
 				if (type=="bubb") {
-#print(table(sdat$gear))
-					mcode = get(paste("mat",ss,sep=""))
-					crossbubb = crossTab(sdat,c("mat","month"),"mat",length)
+					mcode   = get(paste("mat",ss,sep=""))
+					bubbmat   = array(0,dim=c(length(mnam),12),dimnames=list(mnam,1:12)) ## make 0 matrix
+					if (is.psex) {
+						xnam  = areas
+						names(xnam) = xfac = unlist(mnam)
+						crossbubb   = as.list(rep(NA,length(xfac))); names(crossbubb) = xfac
+						for (i in 1:length(xfac)) {
+							f   = xfac[i]
+							ff  = xnam[[i]]
+							fff = names(xfac)[i]
+							fdat = dat[is.element(dat[,fff],ff),]
+							fdat$xfac = f
+							crossbubb[[f]] = crossTab(fdat, c("xfac","month"),"sex",function(x){sum(is.element(x,ss))/length(x)})
+						}
+						
+						#crossbubb = crossTab(dat,c("region","month"),"sex",function(x){sum(is.element(x,ss))/length(x)})
+					} else {
+						crossbubb = list(mats=crossTab(sdat,c("mat","month"),"mat",length))  ## artificially make into a list
+					}
 					## next line only needed if hadley=T in crossTab
 					#bubbdat   = data.frame(crossbubb[,-1],row.names=crossbubb[,1],check.names=FALSE,stringsAsFactors=FALSE)
-					bubbdat   = crossbubb
-					bubbmat   = array(0,dim=c(length(mats),12),dimnames=list(mats,1:12))
-					rows = intersect(rownames(bubbmat),rownames(bubbdat))
-					cols = intersect(colnames(bubbmat),colnames(bubbdat))
-					bubbmat[rows,cols]=as.matrix(bubbdat[rows,cols])  # need to populate like with like, i.e., matrices
-					fishsum = apply(bubbmat,2,sum) # number of specimens by month
-					sampson = crossTab(sdat,"month","SID",function(x){length(unique(x))})
+					for (i in 1:length(crossbubb)) {
+						ibubb = crossbubb[[i]]
+						rows  = intersect(rownames(bubbmat),rownames(ibubb))
+						cols = intersect(colnames(bubbmat),colnames(ibubb))
+						## need to populate like with like, i.e., matrices
+						bubbmat[rows,cols]=as.matrix(ibubb[rows,cols])
+					}
+#browser();return()
+					if (is.psex) {
+						fishnum = table(dat$month)
+						fishsum = rep(0,12); names(fishsum) = 1:12
+						fishsum[names(fishnum)] = fishnum
+						sampson = crossTab(dat,"month","SID",function(x){length(unique(x))})
+					} else {
+						fishsum = apply(bubbmat,2,sum) # number of specimens by month
+						sampson = crossTab(sdat,"month","SID",function(x){length(unique(x))})
+					}
 					sampsum = rep(0,12); names(sampsum) = 1:12
 					sampsum[names(sampson)] = sampson
-					if (!missing(catch)) {
+					if (!is.psex && !missing(catch)) {
 						crosscat = crossTab(catch, "month", "catKg")
 						monthcat  = rep(0,12); names(monthcat) = 1:12
 						monthcat[names(crosscat)] = crosscat
@@ -2090,42 +2225,60 @@ mapMaturity <- function (dat=pop.age, strSpp="", type="map", mats=1:7,
 						mbig = month.abb[as.numeric(names(cbig))]
 						lout = paste0("Bubbles: largest = ", nbig, " specimens weighted by ", mbig ," catch = ", round(cbig), " t")
 					} else {
-						freqmat = apply(bubbmat,ifelse(byrow,1,2),function(x){if (all(x==0)) x else x/sum(x)})  # proportions by column
+						if (is.psex)
+							freqmat = bubbmat
+						else
+							freqmat = apply(bubbmat,ifelse(byrow,1,2),function(x){if (all(x==0)) x else x/sum(x)})  # proportions by column
 						lout = paste0("Bubbles: largest = ",round(max(freqmat),3),", smallest = ",round(min(freqmat[freqmat>0]),3))
 					}
 					CALCS[[sexlab]][["bubbmat"]] = bubbmat
-	
+
 					matdat = crossTab(sdat,c("month","mat","ttype"),"mat",length)
 					CALCS[[sexlab]][[paste0("sex",ss,"matdat")]] = matdat
 					save("matdat", file=paste0("sex",ss,"matdat.rda"))
-	
 					xlim=c(1,12) + c(-0.25,0.25)
-					yrng=c(rev(mats)[1],mats[1]); ylim = yrng - min(mats) + 1 + c(0.25,-0.75)
+					if (is.psex) {
+						yrng=c(length(mnam),1)
+						ylim = yrng + c(0.25,-0.25)
+					} else {
+						yrng=c(rev(mats)[1],mats[1])
+						ylim = yrng - min(mats) + 1 + c(0.25,-0.75)
+					}
+#browser();return()
 					if (!missing(catch)) {
 						plotBubbles(bubbmat, xlim=xlim, ylim=ylim, xaxt="n", yaxt="n", cpro=FALSE, rpro=FALSE, hide0=TRUE, size=0.3, lwd=2, clrs=rev(CLRS[[s0]])[2])
 						addLegend(0.425, 1, legend=linguaFranca(lout,l), cex=0.9, horiz=TRUE, bty="n", xjust=0.5, yjust=0.75)
 					} else {
-						plotBubbles(bubbmat, xlim=xlim, ylim=ylim, xaxt="n", yaxt="n", cpro=ifelse(byrow,FALSE,TRUE), rpro=ifelse(byrow,TRUE,FALSE), hide0=TRUE, size=0.3, lwd=2, clrs=rev(CLRS[[s0]])[2])
-						addLegend(0.2, 1, legend=linguaFranca(lout,l), cex=0.9, horiz=TRUE, bty="n", yjust=0.75)
+						if (is.psex) {
+							plotBubbles(bubbmat, xlim=xlim, ylim=ylim, xaxt="n", yaxt="n", cpro=FALSE, rpro=FALSE, hide0=TRUE, size=0.3, lwd=2, clrs=rev(CLRS[[s0]])[2])
+						} else {
+							plotBubbles(bubbmat, xlim=xlim, ylim=ylim, xaxt="n", yaxt="n", cpro=ifelse(byrow,FALSE,TRUE), rpro=ifelse(byrow,TRUE,FALSE), hide0=TRUE, size=0.3, lwd=2, clrs=rev(CLRS[[s0]])[2])
+							addLegend(0.2, 1, legend=linguaFranca(lout,l), cex=0.9, horiz=TRUE, bty="n", yjust=0.75)
+						}
 					}
+					## Add proportion labels to each bubble
+					if (is.psex) {
+						sapply(1:length(mnam), function(x,pmat){
+							p = pmat[x,]; z=p>0
+							text((1:12)[z], x, round(p[z],2), cex=0.8, col="grey20")
+						}, pmat=bubbmat)
+					}
+					box(col="white",lwd=2) ## mask box outline
+					axis(1, at=1:12, labels=paste0(linguaFranca(month.abb,l),"\n{",sampsum,"}\n(",fishsum,")"), padj=0.5, cex.axis=ifelse(devnam=="win",0.9,0.8))
 #browser();return()
-					box(col="white",lwd=2)
-					axis(1, at=1:12, labels=paste0(linguaFranca(month.abb,l),"\n{",sampsum,"}\n(",fishsum,")"), padj=0.5, cex.axis=ifelse(devnam=="win",0.9,0.85))
-					#text(0.25, par()$usr[3]-0.04*diff(par()$usr[3:4]), labels="\ns\nn", xpd=NA)
-					#svec = c("s =  ",rep("",11)); nvec = c("n =  ",rep("",11))
-					#axis(1, at=1:12, labels=paste0(linguaFranca(month.abb,l),"\n",svec,sampsum,"\n",nvec,fishsum), padj=0.5, cex.axis=ifelse(devnam=="win",0.9,0.85))
-					axis(2, at=1:length(mats), labels=linguaFranca(mcode[mats],l), las=1, cex.axis=1.2)
-					#addLegend(0.2,1, legend=linguaFranca(lout,l), cex=0.9, horiz=TRUE, bty="n", yjust=0.75)
-					
-#browser();return()
+					axis(2, at=1:length(mnam), labels=linguaFranca(mcode,l), las=1, cex.axis=1.2)
 				}
-				mtext(linguaFranca(sexlab,l), side=3, line=-1.25, col=sexcol, cex=1.5, adj=ifelse(devnam=="win",-0.06,-0.10), font=2)
-				#box() # to help debug margins
+				mtext(linguaFranca(sexlab,l), side=3, line=ifelse(is.psex,0,-1.25), col=sexcol, cex=1.5, adj=ifelse(devnam=="win",-0.06,-0.10), font=2)
+				#box() ## to help debug margins
 			}
-			mtext(linguaFranca(paste0("Relative Frequency ",ifelse(!missing(catch),"Weighted by Catch",ifelse(byrow,"by Maturity","by Month"))),l), side=3, line=0.5, col=1, cex=1.5, adj=0.5, font=2, outer=T)
+			if (is.psex)
+				mtext(linguaFranca("Proportions by Sex",l), side=3, line=2, col=1, cex=1.5, adj=0.5, font=2, outer=T)
+			else
+				mtext(linguaFranca(paste0("Relative Frequency ",ifelse(!missing(catch),"Weighted by Catch",ifelse(byrow,"by Maturity","by Month"))),l), side=3, line=0.5, col=1, cex=1.5, adj=0.5, font=2, outer=T)
 			if (devnam!="win") dev.off()
+#browser();return()
 		} ## end d (devs) loop
-	} ## end l (lang) loop
+	}    ## end l (lang) loop
 	stuff=c("xlim","ylim","x","y","sdat","mday","mcut","idat","ibin","icnt","iclr","strSpp")
 	packList(stuff,"PBStool",tenv=.PBStoolEnv)
 	invisible(CALCS) 
@@ -2133,9 +2286,9 @@ mapMaturity <- function (dat=pop.age, strSpp="", type="map", mats=1:7,
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~mapMaturity
 
 
-#plotProp-------------------------------2017-07-18
-# Plot proportion-at-age (or length) from GFBio specimen data.
-#-----------------------------------------------RH
+## plotProp-----------------------------2017-07-18
+## Plot proportion-at-age (or length) from GFBio specimen data.
+## ---------------------------------------------RH
 plotProp <- function(fnam="pop.age",hnam=NULL, ioenv=.GlobalEnv,...)
 {
 	assign("PBStool",list(module="M02_Biology",call=match.call(),args=args(plotProp),ioenv=ioenv,plotname="Rplot"),envir=.PBStoolEnv)
@@ -2162,11 +2315,11 @@ plotProp <- function(fnam="pop.age",hnam=NULL, ioenv=.GlobalEnv,...)
 	createWin(wtmp)
 	invisible()
 }
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotProp
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotProp
 
-#.plotProp.calcP------------------------2017-07-19
-# Perform calculations to get proportions.
-#-----------------------------------------------RH
+## .plotProp.calcP----------------------2018-10-12
+## Perform calculations to get proportions.
+## ---------------------------------------------RH
 .plotProp.calcP <- function(reload=FALSE) {
 	getWinVal(winName="window",scope="L")
 	ioenv = ttcall(PBStool)$ioenv
@@ -2198,7 +2351,7 @@ plotProp <- function(fnam="pop.age",hnam=NULL, ioenv=.GlobalEnv,...)
 	names(mtype) = paste0("M",names(mtype))
 	setPBSoptions("Mtypes", mtype)
 
-	#  Check available fields
+	## Check available fields
 	flds <- names(dat); fldstr <- paste("(",paste(flds,collapse=","),")",collapse="")
 	if (!all(is.element(xy,flds)==TRUE)) {
 		if (xy[1]=="year" && any(is.element(flds,"date")==TRUE)) {
@@ -2212,7 +2365,7 @@ plotProp <- function(fnam="pop.age",hnam=NULL, ioenv=.GlobalEnv,...)
 	if (bbonly && !any(flds=="ameth"))
 		showError(paste("ameth","in",fldstr,sep="\n"),"nofields")
 
-	# Get the qualifiers
+	## Get the qualifiers
 	lister <- function(vec) {
 		out <- list(vec);
 		for (i in 1:length(vec)) out[i+1] <- vec[i]
@@ -2252,39 +2405,21 @@ plotProp <- function(fnam="pop.age",hnam=NULL, ioenv=.GlobalEnv,...)
 		eval(parse(text=mess))
 	}
 
-
-
-#	Mgear <- c(0,1,5)
-#	if (all(Ugear==FALSE)) gear <- NULL 
-#	else gear <- sort(unique(unlist(lister(Mgear)[Ugear])))
-#	Mttype <- 1:4
-#	if (all(Uttype==FALSE)) ttype <- NULL 
-#	else ttype <- sort(unique(unlist(lister(Mttype)[Uttype])))
-#	Mstype <- c(0,1,2,4)
-#	if (all(Ustype==FALSE)) stype <- NULL 
-#	else stype <- sort(unique(unlist(lister(Mstype)[Ustype])))
-#	Mmajor <- 3:9
-#	if (all(Umajor==FALSE)) major <- NULL 
-#	else major <- sort(unique(unlist(lister(Mmajor)[Umajor])))
-#	Msrfa <- c("3C","3D","5AB","5CD","5EN","5ES")
-#	if (all(Usrfa==FALSE)) srfa <- NULL 
-#	else srfa <- sort(unique(unlist(lister(Msrfa)[Usrfa])))
-#	Msrfs <- c("GS","MI","MR")
-#	if (all(Usrfs==FALSE)) srfs <- NULL 
-#	else srfs <- sort(unique(unlist(lister(Msrfs)[Usrfs])))
-
-	#  Qualify the data
+	## Qualify the data
 	#qflds=c("spp","sex","ttype","stype","gear","major","srfa","srfs")
 	qflds=c("spp","sex",substring(names(Mtypes),2),substring(names(Mareas),2))
 	for (i in qflds) {
 		expr=paste("dat=biteData(dat,",i,")",sep=""); eval(parse(text=expr)) 
 		#.flush.cat("after bite ", i, " = ", nrow(dat), "\n") ## activate for debugging
-		if (nrow(dat)==0) showError(paste("No data for '",i,"' chosen",sep="")) }
+		if (nrow(dat)==0) showError(paste("No data for '",i,"' chosen",sep=""))
+	}
 	if (bbonly) {
-		dat <- dat[is.element(dat$ameth,3),]
-		if(nrow(dat)==0) showError("spp:ttype:stype:gear:area:ameth","nodata")  }
+		#dat <- dat[is.element(dat$ameth,3),]
+		dat <- extractAges(dat, sex=sex) ## new function (2018-10-12)
+		if(nrow(dat)==0) showError("spp:ttype:stype:gear:area:ameth","nodata")
+	}
 
-	# Reconfigure the X,Y data
+	## Reconfigure the X,Y data
 	dat$X <- dat[,xy[1]]; dat$Y <- dat[,xy[2]]
 	dat   <- dat[!is.na(dat$X) & !is.na(dat$Y),]
 	if(nrow(dat)==0) showError(paste(xy,collapse=","),"nodata")
@@ -2318,13 +2453,14 @@ plotProp <- function(fnam="pop.age",hnam=NULL, ioenv=.GlobalEnv,...)
 	if (!is.null(strat) && strat!="") names(yy) <- dat[,strat]
 	else {names(yy) <- dat$x; setWinVal(list(strat=as.character(XYopt[1,1])),winName="window") }
 
-	# Construct the z-value matrix
+	## Construct the z-value matrix
 	zmat <- array(0,dim=c(length(xval),length(yval),2),dimnames=list(xval,yval,c("count","prop")))
 	names(dimnames(zmat)) <- c(xy,"prop")
 	tcount=list(); tprop=list()
 	lenv=sys.frame(sys.nframe())
 
-	freak <- function(x,w=FALSE) { # stratified weighted frequency (3/7/08)
+	## Stratified weighted frequency (3/7/08)
+	freak <- function(x,w=FALSE) {
 		ages  <- sort(unique(x))
 		strat <- sort(unique(names(x))); snum <- as.numeric(strat); n=length(strat)
 		stab  <- array(0,dim=c(length(ages),length(strat)),dimnames=list(ages,strat))
@@ -2351,15 +2487,14 @@ plotProp <- function(fnam="pop.age",hnam=NULL, ioenv=.GlobalEnv,...)
 		zmat[i,names(tprop[[i]]),"prop"]   <- tprop[[i]]  }
 	pa <- array(t(zmat[,,"prop"]),dim=c(length(yval),length(xval)),dimnames=list(yval,xval)) 
 	Na <- array(t(zmat[,,"count"]),dim=c(length(yval),length(xval)),dimnames=list(yval,xval))
-	for (i in c("sex","ttype","stype")) { # actually left in data file
+	for (i in c("sex","ttype","gear","stype")) { # actually left in data file
 		ui=sort(unique(dat[,i])); ui=setdiff(ui,c("",NA))
 		if (length(ui)==0) ui=""
 		else eval(parse(text=paste(i,"=c(",paste(ui,collapse=","),")"))) }
-	areas=c(major,srfa,srfs); if (is.null(areas)) areas="all"
+	areas=c(major,PMFC,srfa,srfs); if (is.null(areas)) areas="all"
 
 	stuff=c("dat","flds","XLIM","xlim","YLIM","ylim","xval","yval","zmat",
-			"freak","nSID","ylist","ycount","pa","Na","xy","yy","sex","ttype","stype","areas")
-	#packList(stuff,"PBStool",tenv=.PBStoolEnv) #way too slow
+			"freak","nSID","ylist","ycount","pa","Na","xy","yy","sex","ttype","gear","stype","areas")
 	ttget(PBStool)
 	for (i in stuff)
 		eval(parse(text=paste("PBStool$",i,"=",i,sep="")))
@@ -2367,11 +2502,11 @@ plotProp <- function(fnam="pop.age",hnam=NULL, ioenv=.GlobalEnv,...)
 	.plotProp.plotP()
 	invisible()
 }
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~.plotProp.calcP
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~.plotProp.calcP
 
-#.plotProp.plotP------------------------2011-07-19
-# Guts of the plotting routine.
-#-----------------------------------------------RH
+## .plotProp.plotP----------------------2018-08-07
+## Guts of the plotting routine.
+## ---------------------------------------------RH
 .plotProp.plotP <- function(wmf=FALSE,png=FALSE) { ## Start blowing bubbles
 	sordid <- function(x, lab="wot", count=TRUE) {  ## count and classify specimens
 		z <- is.element(x,c("",NA,NaN))
@@ -2401,7 +2536,7 @@ plotProp <- function(fnam="pop.age",hnam=NULL, ioenv=.GlobalEnv,...)
 	#print(plaster(strat)); print(plaster(sex)); print(plaster(ttype)); print(plaster(stype))
 
 	plotname=paste(paste(c(spp,xy[2],plaster(areas,sep="+"),plaster(strat),plaster(sex),
-		plaster(ttype),plaster(stype)),collapse="-"),sep="")
+		plaster(ttype),plaster(gear),plaster(stype)),collapse="-"),sep="")
 	if (wmf && .Platform$OS.type=="windows")
 		do.call("win.metafile",list(filename=paste(plotname,".wmf",sep=""),width=8,height=8))
 	else if (png)
@@ -2437,14 +2572,13 @@ plotProp <- function(fnam="pop.age",hnam=NULL, ioenv=.GlobalEnv,...)
 		lines(xval[zpos],ymean[zpos],col="red",lwd=3)
 		points(xval[zpos],ymean[zpos],pch=22,col="darkred",bg="chartreuse",cex=1.5)
 	}
-	tcol <- darken(bcol[1]); # text colour as darker RGB based on positive bubbles
+	tcol <- darken(bcol[1]); ## text colour as darker RGB based on positive bubbles
 
    mtext(xlab,side=1,line=1.75,cex=1.5)
    mtext(ylab,side=2,line=2.25,cex=1.5,las=0)
 
    axis(1,at=xval,labels=FALSE,tck=-.005)
    axis(1,at=xval[zxt],mgp=c(0,.5,0),tck=-.02,adj=.5,cex=1)
-   #axis(2,at=1:ylim[2],tck=0.005,labels=FALSE)
    axis(2,at=seq(ylim[1],ylim[2],diff(ypretty)[1]/5),tck=0.005,labels=FALSE)
    axis(2,at=ypretty,mgp=c(0,0.5,0),tck=0.02,adj=1,cex=1)
 
@@ -2466,16 +2600,15 @@ plotProp <- function(fnam="pop.age",hnam=NULL, ioenv=.GlobalEnv,...)
 	Spos <- as.numeric(names(Slab)); Sfac=max(nchar(Slab))
 	switch (ltype,
 		{addLabel(.03,.01,mainlab,cex=.8,adj=c(0,0),col=tcol);
-		addLabel(.97,.01,infolab,cex=.7,adj=c(1,0),col="grey30");
-		addLabel(.02,.99,"N",col=tcol,cex=1,adj=c(0,1));
-		text(Npos,usr[4]-0.01*dy,Nlab,col=tcol,srt=90,adj=c(1,.5),cex=0.8)},
+			addLabel(.97,.01,infolab,cex=.7,adj=c(1,0),col="grey30");
+			addLabel(.02,.99,"N",col=tcol,cex=1,adj=c(0,1));
+			text(Npos,usr[4]-0.01*dy,Nlab,col=tcol,srt=90,adj=c(1,.5),cex=0.8)},
 		{addLabel(.02,.02,"N",col="blue",cex=1,adj=c(0,0));
-		text(Npos,usr[3]+0.01*dyu,Nlab,col=tcol,srt=270,adj=c(1,.5),cex=0.8)},
-		{addLabel(.02,.02,"S",col=tcol,cex=1,adj=c(0,0));
-		text(Spos,usr[3]+0.02*dyu,Slab,col=tcol,srt=270,adj=c(1,.5),cex=0.8)}
+			text(Npos,usr[3]+0.01*dyu,Nlab,col=tcol,srt=270,adj=c(1,.5),cex=0.8)},
+		{addLabel(.02,.02,"s:n",srt=270,col=tcol,cex=1,adj=c(1,0.5));
+			text(Spos,usr[3]+0.02*dyu,paste(Slab,Nlab,sep=":"),col=tcol,srt=270,adj=c(1,0.5),cex=0.8)}
 	)
 	if (wmf|png) dev.off()
-	#packList(c("infolab","Nlab","Slab","Npos","Spos","plotname"),"PBStool",tenv=.PBStoolEnv)
 	stuff=c("infolab","Nlab","Slab","Npos","Spos","plotname")
 	ttget(PBStool)
 	for (i in stuff)
@@ -2483,9 +2616,9 @@ plotProp <- function(fnam="pop.age",hnam=NULL, ioenv=.GlobalEnv,...)
 	ttput(PBStool)
 	invisible()
 }
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~.plotProp.plotP
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~.plotProp.plotP
 
-#.plotProp.resetP-----------------------2017-07-19
+## .plotProp.resetP---------------------2017-07-19
 .plotProp.resetP <- function() {
 	resList <-
 	structure(list(psize = 0.03, powr = 0.5, lwd = 2, bcol = c("blue", 
@@ -2500,9 +2633,9 @@ plotProp <- function(fnam="pop.age",hnam=NULL, ioenv=.GlobalEnv,...)
 	setWinVal(resList,winName="window")
 	invisible()
 }
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~.plotProp.resetP
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~.plotProp.resetP
 
-#.plotProp.resetT-----------------------2010-10-20
+## .plotProp.resetT---------------------2010-10-20
 .plotProp.resetT <- function() {
 	resList <- list(agg = FALSE, XYopt = structure(list(
         fld = structure(c(2L, 1L), .Label = c("age", "year"), class = "factor"), 
@@ -2512,9 +2645,9 @@ plotProp <- function(fnam="pop.age",hnam=NULL, ioenv=.GlobalEnv,...)
 	setWinVal(resList,winName="window")
 	invisible()
 }
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~.plotProp.resetT
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~.plotProp.resetT
 
-#.plotProp.chooseAreas------------------2017-07-18
+## .plotProp.chooseAreas----------------2017-07-18
 .plotProp.chooseAreas <- function(gui=TRUE)
 {
 	dat = ttcall(PBStool)$DATA
@@ -2547,9 +2680,9 @@ plotProp <- function(fnam="pop.age",hnam=NULL, ioenv=.GlobalEnv,...)
 		setWinVal(getPBSoptions("Uareas"),winName="pPareas")
 	}
 }
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~.plotProp.chooseTypes
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~.plotProp.chooseTypes
 
-#.plotProp.chooseTypes------------------2017-07-18
+## .plotProp.chooseTypes----------------2017-07-18
 .plotProp.chooseTypes <- function(gui=TRUE)
 {
 	dat = ttcall(PBStool)$DATA
@@ -2582,9 +2715,9 @@ plotProp <- function(fnam="pop.age",hnam=NULL, ioenv=.GlobalEnv,...)
 		setWinVal(getPBSoptions("Utypes"),winName="pPtypes")
 	}
 }
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~.plotProp.chooseTypes
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~.plotProp.chooseTypes
 
-#===================================plotProp Suite
+##==================================plotProp Suite
 
 
 #predictRER-----------------------------2011-06-14

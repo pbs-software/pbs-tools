@@ -4,16 +4,16 @@
   Zap Seamounts from Data Object
 }
 \description{
-  Zap (remove) seamount records form a data object using the fields
+  Zap (remove) seamount records from a data object using the fields
   \code{major}, \code{minor}, and \code{locality} to identify select 
   seamounts.
 }
 \usage{
 zapSeamounts(dat)
 }
-%- maybe also 'usage' for other objects documented here.
 \arguments{
-  \item{dat}{data object containing fields \code{major}, \code{minor}, and \code{locality}.}
+  \item{dat}{\code{data.frame} -- data object containing fields 
+    \code{major}, \code{minor}, and \code{locality}.}
 }
 \details{
   The seamounts currently identified for removal are:
@@ -39,15 +39,26 @@ zapSeamounts(dat)
 }
 \value{
   The input data object with seamount records removed.
+
+  An array by year and seamount reporting number of records and total catch
+  of the target species (usually RRF -- reconstructed rockfish) is
+  created and attached to the output data object as an attribute called
+  \code{"SMrem"} (seamounts removed).
 }
 \author{
-  Rowan Haigh, Pacific Biological Station, Fisheries and Ocean Canada, Nanaimo BC
+  \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
+  Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
+  \emph{locus opus}: Institute of Ocean Sciences (IOS), Sidney BC\cr
+  Last modified \code{Rd: 2018-09-18}
 }
 \note{
   Designed for use with \code{buildCatch}.
 }
 \seealso{
-  \code{\link[PBStools]{buildCatch}}
+  \code{\link[PBStools]{buildCatch}},
+  \code{\link[PBStools]{plotDiag}},
+  \code{\link[PBStools]{plotRecon}},
+  \code{\link[PBStools]{surveyCatch}}
 }
 \keyword{manip}
 

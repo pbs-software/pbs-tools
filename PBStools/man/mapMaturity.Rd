@@ -6,8 +6,8 @@
 }
 \usage{
 mapMaturity(dat=pop.age, strSpp="", type="map", mats=1:7,
-   sex=list(Females=2), ttype=1:5, stype=c(1,2,6,7), major=c(3:9),
-   stock, catch, brks=c(0,.05,.1,.25,.5,1), byrow=FALSE, hpage=6,
+   sex=list(Females=2), ttype=1:5, stype=c(1,2,6,7), areas=list(major=3:9),
+   stock, catch, brks=c(0,0.05,0.1,0.25,0.5,1), byrow=FALSE, hpage=6,
    clrs=list(colorRampPalette(c("honeydew","lightgreen","black"))(5),
    colorRampPalette(c("aliceblue","skyblue2","black"))(5)),
    outnam, eps=FALSE, png=FALSE, wmf=FALSE, pngres=400,
@@ -15,15 +15,16 @@ mapMaturity(dat=pop.age, strSpp="", type="map", mats=1:7,
 }
 
 \arguments{
-  \item{dat}{\code{data.frame} -- biological data set with fields \code{mat} specifying maturity code.}
+  \item{dat}{\code{data.frame} -- biological data set with field \code{"mat"} specifying maturity code.}
   \item{strSpp}{\code{character} -- string code for species. If dataset has attribute \code{spp},
     this will be used before \code{strSpp}.}
   \item{type}{\code{character} -- string specifying type of plot to produce: \cr
     \code{"map"} -- for original colour-coded tiles, and \cr
     \code{"bubb"} -- for bubbles proportional to relative frequency (PJS); \cr
     both essentially represent a frequency matrix of maturity code (rows) by month (columns). }
-  \item{mats}{\code{numeric} -- maturity codes to map (defaults to 1:7).}
-  \item{sex}{\code{numeric} -- list of sex codes categorised by name, where codes: \cr
+  \item{mats}{\code{numeric} -- maturity codes to map (defaults to 1:7).
+    If \code{mats=NULL}, then function switches to representing sex proportions by month and area.}
+  \item{sex}{\code{numeric list} -- sex codes categorised by name, where codes: \cr
     0=not looked at, 1=male, 2=female, 3=looked at but unknown \cr
     e.g. \code{list(`Females`=2, `Males`=1)}.}
   \item{ttype}{\code{numeric} -- trip type code, where \cr
@@ -33,8 +34,8 @@ mapMaturity(dat=pop.age, strSpp="", type="map", mats=1:7,
     0=unknown, 1=total catch, 2=random, 4=selected,
     5=stratified, 6=random from randomly assigned set, 7=random from set after randomly assigned set,
     8=random from set requested by vessel master, 9=selected juveniles, and 10=selected adults.}
-  \item{major}{\code{numeric} -- major PMFC area codes, where \cr
-    3=3C, 4=3D, 5=5A, 6=5B, 7=5C, 8=5D, and 9=5E.}
+  \item{areas}{\code{numeric list} -- areas available in the data object, for example:\cr
+    \code{list(major=9, major=5:8, major=3:4, region="shelf", region="slope")}}
   \item{stock}{\code{character} -- stock label, usually a combination of PMFC \code{major} and \code{minor} areas specific to a species.
     If this argument is specified, it precludes any specification of \code{major}
     and assumes that a field called \code{"stock"} appears in the data file.}
@@ -65,9 +66,14 @@ mapMaturity(dat=pop.age, strSpp="", type="map", mats=1:7,
   plots a column of bubbles (variable size) or monthly boxes (colour-coded)
   using the relative frequency of the maturity code by month, regardless of other months.
   
-  If a data frame \code{catch} is supplied, the function uses it to weight the
+  If a data frame \code{"catch"} is supplied, the function uses it to weight the
   maturity observations by the relative monthly catch (over the year).
   In this case, neither the rows nor the columns are converted to proportions.
+  
+  If \code{mats=NULL}, then function switches from displaying maturities to 
+  proportions of sex (female and/or male) by area and month.
+  In this case, neither the rows nor the columns are converted to proportions
+  becasue they are already representative proportions that should not be re-scaled.
 }
 \value{
   A list object \code{CALCS} is invisibly returned and contains the frequency matrix 
@@ -114,7 +120,7 @@ cat396$catKg = cat396$landed + cat396$discard
 local(envir=.PBStoolEnv,expr={
 pbsfun=function(){
   data(pop.age,package="PBSdata",envir=.PBStoolEnv)
-  mapMaturity(pop.age, sex=list(Males=1,Females=2))
+  mapMaturity(pop.age, sex=list(Males=1,Females=2), lang="e")
   invisible() }
 pbsfun()
 })
@@ -123,9 +129,16 @@ pbsfun()
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
   \emph{opus locus}: Institute of Ocean Sciences (IOS), Sidney BC\cr
-  Last modified \code{Rd: 2018-08-16}
+  Last modified \code{Rd: 2018-09-07}
 }
 \seealso{
-  \code{\link{pop.age}}, \code{\link{estOgive}}, \code{\link{getData}}
+  \code{\link[PBStools]{crossTab}},
+  \code{\link[PBStools]{estOgive}},
+  \code{\link[PBStools]{getData}},
+  \code{\link[PBStools]{plotAgeErr}},
+  \code{\link[PBStools]{processBio}},
+  \code{\link[PBStools]{weightBio}}
+
+  \code{\link[PBSdata]{pop.age}} in \pkg{PBSdata}
 }
 \keyword{hplot}
