@@ -13,6 +13,8 @@
 ##  createDSN.......Create entire suite of DSNs for the groundfish databases.
 ##  createFdir......Create a subdirectory called `french' for storing figures with French text and labels.
 ##  crossTab........Use package 'reshape' to summarize z using crosstab values y.
+##  findPV..........Find nearest position in vector choice using a target point.
+##  findRC..........Return no. (rows, columns) for multi-panel figures given no. figures to fit on one page.
 ##  fitLogit........Fit binomial data using logit link function.
 ##  flagIt..........Labels a coordinate using a diagonal line radiating from it.
 ##  gatherVals......Gathers data from multiple columns into key-value pairs (replaces tidyr::gather).
@@ -20,10 +22,11 @@
 ##  getFile.........Get a dataset (binary libraries, binary local, dumped data, comma-delimited text.
 ##  getName.........Get the names of the input object.
 ##  getODBC.........Get a string vector of ODBC drivers on user's Windows system.
-##  installPkgs.....Install specified packages if they are missing or if newer versions are available.
+##  installPkgs.....Install specified packages if they are missing or if newer versions are available..
+##  inWord..........Find morphemes (parts of words) in word and report T/F
 ##  isThere.........Check to see if object physically exists in the specified environment.
 ##  lenv............Get the local/parent/global environment.
-##  linguaFranca....Translate English phrases to French in figures
+##  linguaFranca....Translate English phrases to French in figures.
 ##  listTables......List tables in specified SQL, ORA, or MDB database.
 ##  prime...........Report the prime numbers given an integer vector.
 ##  quantBox........Redefine boxplot to show quantiles.
@@ -36,7 +39,7 @@
 ##  stdConc.........Standardise a chemical concentration.
 ##  subsetFile......Subset an ASCII file every n rows (enrow).
 ##  toUpper.........Capitalise first letter of each word in phrase
-##  ttget...........Provide wrappers for PBSmodelling functions tget/tcall/tprint/tput/lisp
+##  ttget...........Provide wrappers for PBSmodelling functions tget/tcall/tprint/tput/lisp.
 ##  wrapText........Wrap, mark and indent a long text string.
 ##  zapDupes........Delete duplicated records based on specified index.
 ##
@@ -51,16 +54,19 @@
 ##  .su.............Shortcut for sort(unique(x))
 ##===============================================================================
 
+## NO: 2018-10-23 -- The SSC Networks team is working to change the network subnet for Nanaimo PBS site (Greg Remillard, SSC Windows Server team).
+##                   Current GF server assigned a new IP address on the network to move it to the new subnet.
 ## RH: 2016-11-28 -- DFO phased out Windows 2003 servers; new server supports SQL Server 2008 and 2016
 ## RH: 2015-11-30 -- Virtualization of SVBCPBSGFIIS
 .PBSserver = c(
-  GFDB="199.60.94.30",
-  DFBCV9TWVASP001="199.60.94.30",
+  GFDB="10.114.52.8",
+  DFBCV9TWVASP001="10.114.52.8",
   SVBCPBSGFIIS="199.60.94.98",
   PACPBSGFDB="199.60.95.200",
   GFDBtemp="PAC03450/GFDB",
-  oldSVBCPBSGFIIS="199.60.95.134")
-
+  oldSVBCPBSGFIIS="199.60.95.134",
+  oldDFBCV9TWVASP001="199.60.94.30"
+)
 .rgbBlind   = list(black=c(0,0,0),orange=c(230,159,0),skyblue=c(86,180,233),bluegreen=c(0,158,115),
 	yellow=c(240,228,66),blue=c(0,114,178),vermillion=c(213,94,0),redpurple=c(204,121,167))
 .colBlind   = sapply(.rgbBlind,function(x){rgb(x[1],x[2],x[3],maxColorValue=255)})
@@ -318,6 +324,39 @@ crossTab = function(x=PBSdat, y=c("year","major"),
 	return(Z)
 }
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~crossTab
+
+
+## findPV-------------------------------2018-11-09
+## Find nearest position in vector choice using a target point.
+## source: ## https://stat.ethz.ch/pipermail/r-help/2008-July/167216.html
+## ---------------------------------------------RH
+findPV = function(p,v){
+	## Using sapply allows multiple target points p
+	sapply(p, function(x,v){
+		 ## occasionally two vector points are equidistant to the target p
+		which(abs(v-x)==min(abs(v-x)))[1]
+	}, v=v)
+}
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~findPV
+
+
+## findRC-------------------------------2018-11-08
+## Return number of rows and columns for plotting
+## multi-panel figures given number of figures (nf)
+## to fit on one page.
+## Similar to function PBSmodelling::.findSquare
+## ---------------------------------------------RH
+findRC = function (nf, orient="portrait") 
+{
+	sqn = sqrt(nf)
+	m = ceiling(sqn)
+	n = ceiling(nf/m)
+	if (inWord("landscape", orient, prefix=TRUE))
+		return(c(n, m))
+	else
+		return(c(m, n))
+}
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~findRC
 
 
 #fitLogit-------------------------------2009-11-09
@@ -985,6 +1024,28 @@ installPkgs <- function(pkg, repos=getOption("repos"), locdir=tempdir(), also.lo
 	invisible(new.ver)
 }
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~installPkgs
+
+
+## inWord-------------------------------2018-11-13
+## Find morphemes (parts of words) in word and report T/F
+## Based on code supplied by user 'rawr' at:
+## https://stackoverflow.com/questions/33483286/r-look-for-abbreviation-in-full-string
+## ---------------------------------------------RH
+inWord = Vectorize(function(word, morpheme, prefix=FALSE, suffix=FALSE)
+{
+	## Set prefix=TRUE to match beginning of word
+	## Set suffix=TRUE to match ending of word
+	mm <- strsplit(tolower(morpheme), "")[[1]]
+	#grepl(paste0(mm, collapse = "[a-z]*?"), word)
+	## Add this if you only want to consider letters in word
+	expr = paste0(mm, collapse = sprintf("[%s]*?", tolower(word)))
+	if (is.logical(prefix) && prefix)
+		expr = paste0("^",expr)
+	if (is.logical(suffix) && suffix)
+		expr = paste0(expr,"$")
+	grepl(expr, word)
+}, vectorize.args = "morpheme")
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#inWord
 
 
 #isThere--------------------------------2009-06-18

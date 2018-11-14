@@ -6,9 +6,23 @@ Authors: RH  = Rowan Haigh
          LL  = Lisa Lacko
          PJS = Paul J. Starr
          SA  = Sean Anderson
-         EKE  = Elise Koppel
+         EK  = Elise Keppel
          BK  = Brian Krishka
 ------------------------------
+
+
+1.39.0 (2018-11-13)  [Rcheck=T, Rbuild=T]
+  * M01_Utility.r
+    + Added new function `inWord' to determine whether user-specified morphemes occur within a target word. (RH 181113)
+      - Based on code at https://stackoverflow.com/questions/33483286/r-look-for-abbreviation-in-full-string
+    + Added new function `findPV' to find nearest position in vector choice using a target point. (RH 181109)
+      - Based on code snippet at https://stat.ethz.ch/pipermail/r-help/2008-July/167216.html
+    + Added new function `findRC' to find number of rows and columns for plotting multi-panel figures (RH 181108)
+      - Similar to function PBSmodelling::.findSquare
+      - Uses given number of figures (nf) to fit on one page.
+    + Changed GF server IP address (2018-10-22)
+      - Notification from Norm Olsen: On 2018-10-23, the SSC Networks team is working to change the network subnet for Nanaimo PBS site.
+      - Current GF server assigned a new IP address (10.114.52.8) on the network to move it to a new subnet.
 
 1.38.3 (2018-10-12) [Rcheck=T, Rbuild=T]
   * M02_Biology.r
