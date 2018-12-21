@@ -10,6 +10,61 @@ Authors: RH  = Rowan Haigh
          BK  = Brian Krishka
 ------------------------------
 
+1.39.1 (2018-12-21)  [Rcheck=T, Rbuild=T]
+  * M01_Utility.r
+    + Changed default value for `crossTab' argument `na.val' from 99 to 999. (RH 181219)
+    + Added new function `countVec' to count number of definite vector elements (non NA) that exclude (or include) zero values. (RH 181205)
+    + Added new argument `lab' to function `flagIt' to precede flagged coordinate. (RH 181204)
+    + Added a few more english words (`Surv', `Major', `Minor') to function `linguaFranca' (RH 181126)
+  * M02_Biology.r
+    + Modified function `estOgive' while working on REBS complex. (RH 181204)
+      - Added new logistic method `VH' based on Vivian Haist's maturity code in NZ Rock Lobster model.
+      - Renamed methods {`empir', `logit', `dblnorm'} to {`EMP', `BL', `DN'}.
+      - Added new arguments `year' (numeric vector to qualify data), `mpoints' (logical to add model points), `rlines' (logical to add raw lines).
+      - Changed argument `parList' to be a list of lists because methods `DN' and `VH' use different parVecs in `calcMin'.
+      - Added new subfunctions `fitVH' and `calcVH' for the Vivian Haist logistic method.
+      - Added new subfuntion `amendLeg' to update legend text when called by each method specified for fitting.
+      - Internal object `CALCS' now collects parameter estimates, age-at-50% maturity (p50), and age-at-full maturity (mu) for each method.
+      - Parameter estimates, etc. now spat out into par file.
+    + Revised function `calcSG' to mirror function `calcVB'. (RH 181129)
+    + Revised function `weightBio'. (RH 181128)
+      - Added new logical argument `accum' to accumulate ages above `plus', or not.
+      - Replaced age qualification base on `ameth' with a call to function `extractAges'.
+    + Modified function `calcVB' to not plot figures if new argument `figures=FALSE'. (RH 181126)
+      - Primarily used when fitting numerous VBs to various PMFC areas for tables in App D Biology.
+      - Modified function `calcLW' to subtitle middle plot only (needs some work disabling plots when user only wants tables).
+    + Added new argument `xlim' to function `calcVB' to override automatic xlim; removed unused argument `allTT'. (RH 181126)
+    + Modified function `calcLW' to only add label to centre plot as in `calcVB'. (RH 181126)
+  * M04_Survey.r
+    + Modified function `compLen' so that argument names are more generic (RH 181206)
+  * M07_CatchRecon.r
+    + Modified function `buildCatch' to use/discard foreign catch reported by GFBioSQL in GF_MERGED_CATCH table. (RH 181127)
+      - Actions depend on whether argument `useFF' is TRUE or FALSE.
+      - Allocation to FIDs 1-5 based on gear type reported by FID 9 (foreign catch) records.
+      - Usually fid 9 catch is negligible (and ignored) but WWR had substantial amounts reported from midwater trawl in 1982, 1987-1991, 2000.
+  * R code
+    + Changed method of constructing language output file name using the switch function. (RH 181210)
+      - Previously, if l=="f" preceded l=="e" in `lang' loop, the english directory was not reset properly.
+      - Affected modules: M02_Biology.r, M04_Survey.r, M05_Spatial.r, M06_Assessment.r, M07_CatchRecon.r
+  * SQL code
+    + Modified `gfb_bio.sql' again to deal with rogue trip-survey combinations. (RH 181219)
+      - Basically undid the previous change of 181212.
+      - Identified original-index surveys differently than before and removed the SVID 79 for the 2006 WCHG.
+      - Introduced super SSID values to deal with H&L trips that execute multiple SSIDs.
+      - Ideally, this should be resolved at the fishing event level but have yet to do so.
+    + Modified `gfb_bio.sql' to deal somewhat with trips that execute multiple surveys like than for Sablefish (RH 181212)
+      - Update SURVEY_SERIES_ID from GROUPING table:
+      -  sablefish/shrimp SSIDs not always identified correctly to this point in the query.
+      - Note: If SSID has been automatically selected to be the first ORIGINAL_INDEX of multiple original indices
+      -  and GROUPING_CODE in GROUPING is NULL, e.g., because REASON_CODE=21 (exploratory FEID),
+      -  then misidentified SSID (e.g., 41) will not be updated to actual SSID (e.g., 43).
+      - There is no easy work around at this point, short of a specific SQL patch for odd cases (not implemented).
+    + Added new pivot query to find the maximum age of rockfish species by all ageing methods. (RH 181107)
+      - Stemmed from a review of SME (subject matter expert) reports on Offshore Rockfish for Spatial Analysis group.
+  * Documentation
+    + Added new sqript `md2pdf.bat' to convert markdown files to pdf via html. (RH 181217)
+      - Third party executables `pandoc.exe' (https://pandoc.org) and `wkhtmltopdf.exe' (https://wkhtmltopdf.org/) need to be installed and put on Path.
+    + Added README.pdf, based on Markdown page on GitHub, to Vignettes directory. (RH 181121)
 
 1.39.0 (2018-11-13)  [Rcheck=T, Rbuild=T]
   * M01_Utility.r

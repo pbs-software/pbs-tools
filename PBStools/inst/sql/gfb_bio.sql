@@ -1,4 +1,4 @@
--- Get specimen biological data from GFBioSQL (last revised 2018-09-26)
+-- Get specimen biological data from GFBioSQL (last revised 2018-12-19)
 -- Note: Not all users can access the Schnute overlay for table names.
 -- Number in brackets = #records for YYR
 
@@ -276,42 +276,53 @@ WHERE B02.FE_SUB_LEVEL_ID IS NULL  -- FISHING_EVENT_ID REPEATED MANY TIMES FOR H
 
 -- =====ASSOCIATE TRIPS WITH SURVEYS=====
 
--- Merge tables to get TRIP_ID, SURVEY_ID, and SURVEY_SERIES_ID (232)
+-- Identify surveys by original index only (RH 181219) - some restrats may need to be added over time
 SELECT
-  TS.TRIP_ID, 
-  TS.SURVEY_ID, 
-  IsNull(S.SURVEY_SERIES_ID,0) AS SURVEY_SERIES_ID,
-  CASE 
-    WHEN S.ORIGINAL_IND='Y' THEN 1
-    WHEN S.ORIGINAL_IND='N' THEN 2
-    ELSE 3 END AS ORIGINAL_IND
-INTO #TempTripSurv
+  S.SURVEY_SERIES_ID,
+  S.SURVEY_ID
+INTO #ORIGINAL_SURVEYS
+FROM SURVEY S
+WHERE
+  (S.ORIGINAL_IND='Y' AND S.SURVEY_ID NOT IN (79)) -- Exclude original stratification for 2006 WCHG Synoptic (use SVID 123)
+  OR
+  (S.ORIGINAL_IND='N' AND S.SURVEY_SERIES_ID IN (21) AND S.SURVEY_ID BETWEEN 91 AND 104) -- Special case for GIG Historical
+ORDER BY
+  S.SURVEY_SERIES_ID, S.SURVEY_ID
+
+-- Merge tables to get TRIP_ID, SURVEY_ID, and SURVEY_SERIES_ID (RH 181219)
+SELECT
+  TS.TRIP_ID,
+  CASE
+    WHEN OS.SURVEY_SERIES_ID IS NULL THEN 999
+    WHEN OS.SURVEY_SERIES_ID IN (6,7) THEN 670          -- Shrimp trawl surveys
+    WHEN OS.SURVEY_SERIES_ID IN (35,41,42,43) THEN 350  -- Sablefish surveys
+    WHEN OS.SURVEY_SERIES_ID BETWEEN 82 AND 87 THEN 820 -- Jig surveys
+    WHEN OS.SURVEY_ID IN (130) THEN 40                  -- HBLL South survey
+    WHEN OS.SURVEY_ID IN (131) THEN 39                  -- HBLL North survey
+    WHEN OS.SURVEY_SERIES_ID IN (10,21) THEN 21         -- GIG historical
+    ELSE OS.SURVEY_SERIES_ID END AS SURVEY_SERIES_ID,
+  MAX(OS.SURVEY_ID) AS SURVEY_ID
+INTO #TripSurvSer
 FROM 
   #onlyTID T INNER JOIN
-  (SURVEY S RIGHT OUTER JOIN
+  --TRIP T INNER JOIN
+  (#ORIGINAL_SURVEYS OS INNER JOIN
   TRIP_SURVEY TS ON
-    S.SURVEY_ID = TS.SURVEY_ID) ON
+    OS.SURVEY_ID = TS.SURVEY_ID) ON
     T.TRIP_ID = TS.TRIP_ID
+--WHERE T.TRIP_ID IN (10921,62066)
+GROUP BY
+  TS.TRIP_ID,
+  CASE
+    WHEN OS.SURVEY_SERIES_ID IS NULL THEN 999
+    WHEN OS.SURVEY_SERIES_ID IN (6,7) THEN 670          -- Shrimp trawl surveys
+    WHEN OS.SURVEY_SERIES_ID IN (35,41,42,43) THEN 350  -- Sablefish surveys
+    WHEN OS.SURVEY_SERIES_ID BETWEEN 82 AND 87 THEN 820 -- Jig surveys
+    WHEN OS.SURVEY_ID IN (130) THEN 40                  -- HBLL South survey
+    WHEN OS.SURVEY_ID IN (131) THEN 39                  -- HBLL North survey
+    WHEN OS.SURVEY_SERIES_ID IN (10,21) THEN 21         -- GIG historical
+    ELSE OS.SURVEY_SERIES_ID END
 
---SELECT * FROM #TempTripSurv
-
--- TRIP_ID can be associated with more than one SURVEY_ID, which can include the original index or not. (126)
--- Choose one SURVEY_ID per TRIP_ID, preferably the orginal index.
--- When the orginal is not avialable, choose a non-original index.
-SELECT
-  TS.TRIP_ID, 
-  TS.SURVEY_ID, 
-  TS.SURVEY_SERIES_ID,
-  TS.ORIGINAL_IND
-INTO #TripSurvSer
-FROM
-  (SELECT *,
-    ROW_NUMBER() OVER (PARTITION BY TTS.TRIP_ID ORDER BY TTS.ORIGINAL_IND, TTS.SURVEY_ID) AS RN
-  FROM #TempTripSurv TTS) AS TS
-WHERE TS.RN = 1
-ORDER BY TS.TRIP_ID
-
---SELECT * FROM #TripSurvSer
 
 -- ===== Tie everything together =====
 SELECT 
@@ -499,6 +510,20 @@ FROM
 ORDER BY
   BS.TID, BS.FEID, BS.CID, BS.SID, BS.SPID
 
+-- Update SURVEY_SERIES_ID from GROUPING table (RH 181212):
+--   sablefish/shrimp SSIDs not always identified correctly to this point in the query.
+-- Note: If SSID has been automatically selected to be the first ORIGINAL_INDEX of multiple original indices
+--   and GROUPING_CODE in GROUPING is NULL, e.g., because REASON_CODE=21 (exploratory FEID),
+--   then misidentified SSID (e.g., 41) will not be updated to actual SSID (e.g., 43).
+-- There is no easy work around at this point, short of a specific SQL patch for odd cases (not implemented).
+--UPDATE #GFBBIO
+--SET SSID = COALESCE(
+--   (SELECT G.SURVEY_SERIES_ID
+--    FROM GROUPING G
+--    WHERE G.GROUPING_CODE = #GFBBIO.GC),
+--    #GFBBIO.SSID )
+
+
 SELECT * FROM #GFBBIO
 
 -- getData("gfb_bio.sql","GFBioSQL",strSpp="442")
@@ -513,7 +538,10 @@ SELECT * FROM #GFBBIO
 -- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="410") -- Darkblotched Rockfish (180813)
 -- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="602") -- Arrowtooth Flounder (180829)
 -- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="602") -- Arrowtooth Flounder (180911)  -- with freezer trawl vessels flagged
--- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="435") -- Bocaccio (BOR, 180912)
--- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="394") -- Rougheye Rockfish (RER, 180914, for Vania|Sean)
--- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="425") -- Blackspotted Rockfish (BSR, 180914, for Vania|Sean)
+-- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="417") -- Widow Rockfish (WWR: 181012, 181107, 181120)
+-- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="417") -- Widow Rockfish (WWR: 181012, 181107, 181120, 181207)
+-- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="417") -- Widow Rockfish (WWR: 181012, 181107, 181120, 181207, 181219)
+-- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="435") -- Bocaccio (BOR: 180912, 181120, 181206, 181212, 181219)
+-- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="394") -- Rougheye Rockfish (RER: 180914, 181205, 181219 for Vania|Sean)
+-- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="425") -- Blackspotted Rockfish (BSR: 180914, 181205, 181219 for Vania|Sean)
 

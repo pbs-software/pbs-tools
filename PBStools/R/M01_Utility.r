@@ -10,6 +10,7 @@
 ##  convYM..........Convert date limits into a vector of year-months (YYY-MM).
 ##  convYP..........Convert dates into year periods.
 ##  countLines......Count the number of lines in an ASCII file.
+##  countVec........Count number of definite vector elements (non NA) that exclude (or include) zero values.
 ##  createDSN.......Create entire suite of DSNs for the groundfish databases.
 ##  createFdir......Create a subdirectory called `french' for storing figures with French text and labels.
 ##  crossTab........Use package 'reshape' to summarize z using crosstab values y.
@@ -73,9 +74,9 @@
 .colGnuplot = c("#e41a1c","#377eb8","#4daf4a","#984ea3","#ff7f00","#ffff33","#a65628","#f781bf")
 
 
-#addStrip-------------------------------2015-12-01
-# Add a vertical colour strip as a legend.
-#-----------------------------------------------RH
+## addStrip-----------------------------2015-12-01
+## Add a vertical colour strip as a legend.
+## ---------------------------------------------RH
 addStrip = function (x, y, col, lab, xwidth=0.01, yheight=0.3, ...) 
 {
 	if (dev.cur()>1) { oldpar=par(no.readonly=TRUE); on.exit(par(oldpar)) }
@@ -100,47 +101,51 @@ addStrip = function (x, y, col, lab, xwidth=0.01, yheight=0.3, ...)
 		ypol = c(ypol, c(yval[i],rep(yval[i+1],2),yval[i],NA))
 	polygon(xpol,ypol,border="gray30",col=col)
 	text(xval[2]+0.25*xw0, yval[1:ncol]+diff(yval)/2,labels=lab,cex=0.9,adj=0)
-#browser();return()
 	invisible()
 }
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~addStrip
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~addStrip
 
 
-#biteData-------------------------------2008-11-10
-# Subsets a data matrix/frame using input vector.
-#-----------------------------------------------RH
+## biteData-----------------------------2008-11-10
+## Subsets a data matrix/frame using input vector.
+## ---------------------------------------------RH
 biteData = function(dat,vec) {
 	if (nrow(dat)==0 || is.null(vec)) return(dat)
 	fld=as.character(substitute(vec))
 	if (!any(fld==dimnames(dat)[[2]])) return(dat)
 	expr=paste("bdat=dat[is.element(dat[,\"",fld,"\"],",deparse(unique(unlist(vec))),"),]",sep="")
 	eval(parse(text=expr))
-	return(bdat) }
+	return(bdat)
+}
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~biteData
 
 
-#chewData-------------------------------2009-01-13
-# Remove records that contribute little information to factor categories.
-#-----------------------------------------------RH
+## chewData-----------------------------2009-01-13
+## Remove records that contribute little information to factor categories.
+## ---------------------------------------------RH
 chewData=function(dat,fac,nmin=3,na.rm=TRUE) {
 	if (nrow(dat) == 0 || is.null(fac)) return(dat)
 	fld = as.character(substitute(fac))
 	if (!any(fld == dimnames(dat)[[2]])) return(dat)
 	ldat=split(dat[,fac],dat[,fac])
 	ndat=sapply(ldat,function(x){length(x[!is.na(x)])})
-	ndat=ndat[ndat>=nmin & !is.na(ndat)] # get rid of factors with few occurrences
+	ndat=ndat[ndat>=nmin & !is.na(ndat)] ## get rid of factors with few occurrences
 	if (na.rm) ndat=ndat[names(ndat)!=""]
 	dat=dat[is.element(dat[,fac],names(ndat)),]
-	return(dat) }
+	return(dat)
+}
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~biteData
 
 
-#confODBC-------------------------------2010-06-02
-# Set up an ODBC User Data Source Name (DSN)
-#-----------------------------------------------RH
+## confODBC-----------------------------2010-06-02
+## Set up an ODBC User Data Source Name (DSN)
+## ---------------------------------------------RH
 confODBC <- function(dsn="PacHarvest",server="GFDB",db="PacHarvest",
-                     driver="SQL Server",descr="",trusted=TRUE) {
-	#use forward slashes "/" for server otherwise the translation
-	#is too dependent on the number of times "\" is escaped
-	#getFile(".PBSserver",path=.getSpath(),tenv=penv())
+   driver="SQL Server",descr="",trusted=TRUE)
+{
+	## use forward slashes "/" for server otherwise the translation
+	## is too dependent on the number of times "\" is escaped
+	## getFile(".PBSserver",path=.getSpath(),tenv=penv())
 	if (is.element(server,names(.PBSserver))) server <- .PBSserver[server]
 	syntax <- paste("{CONFIGDSN \"",driver,"\" \"DSN=",dsn,
 		"|Description=",descr,"|SERVER=",server,"|Trusted_Connection=",
@@ -148,14 +153,17 @@ confODBC <- function(dsn="PacHarvest",server="GFDB",db="PacHarvest",
 	syntax=gsub("/","\\\\",syntax) # finally convert "/" to "\\"
 	cmd <- paste("odbcconf.exe /a",syntax)
 	system(cmd)
-	invisible() }
+	invisible()
+}
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~confODBC
 
 
-#convCT---------------------------------2014-12-12
-# Convert a crossTab object to regular matrix or data frame.
-# Note: No longer necessary as crossTab does not use reshape.
-#-----------------------------------------------RH
-convCT = function(CT, fn=as.matrix, colAsRowName=TRUE) {
+## convCT-------------------------------2014-12-12
+## Convert a crossTab object to regular matrix or data frame.
+## Note: No longer necessary as crossTab does not use reshape.
+## ---------------------------------------------RH
+convCT = function(CT, fn=as.matrix, colAsRowName=TRUE)
+{
 	fnam = as.character(substitute(fn))
 	if (!is.element(fnam,c("as.matrix","as.data.frame"))) return(CT)
 	NT = fn(CT[,-1])
@@ -164,13 +172,14 @@ convCT = function(CT, fn=as.matrix, colAsRowName=TRUE) {
 	else  dimnames(NT) = list(dimnames(CT)[[1]],dimnames(CT)[[2]][-1])
 	return(NT)
 }
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~convCT
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~convCT
 
 
-#convFY---------------------------------2011-12-05
-# Convert dates into fishing years.
-#-----------------------------------------------RH
-convFY = function(x,startM=4) { # local function to get fishing years
+## convFY-------------------------------2011-12-05
+## Convert dates into fishing years.
+## ---------------------------------------------RH
+convFY = function(x,startM=4)
+{
 	if (class(x)[1]=="character" && class(try(as.Date(x),silent=TRUE))=="Date" ) 
 		x=as.Date(x)
 	if (any(class(x)%in%c("POSIXct","POSIXt","Date")))
@@ -179,13 +188,16 @@ convFY = function(x,startM=4) { # local function to get fishing years
 	yrmo=substring(x,1,7) # year-month "yyyy-mm"
 	yr=as.numeric(substring(yrmo,1,4)); mo=as.numeric(substring(yrmo,6,7))
 	fyr=yr; sM=is.element(mo,startM:12); fyr[!sM]=fyr[!sM]-1; names(fyr)=yrmo
-	return(fyr) }
+	return(fyr)
+}
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~convFY
 
 
-#convYM---------------------------------2011-12-05
-# Convert date limits into a vector of year-months (YYY-MM).
-#-----------------------------------------------RH
-convYM = function(x) { 
+## convYM-------------------------------2011-12-05
+## Convert date limits into a vector of year-months (YYY-MM).
+## ---------------------------------------------RH
+convYM = function(x)
+{
 	if (class(x)[1]=="character" && class(try(as.Date(x),silent=TRUE))=="Date" ) 
 		x=as.Date(x)
 	if (any(class(x)%in%c("POSIXct","POSIXt","Date")))
@@ -197,13 +209,16 @@ convYM = function(x) {
 	X=paste(rep(yrs,each=12),rep(pad0(1:12,2),nyrs),sep="-")
 	i=match(yrmo,X)
 	xout=X[i[1]:i[2]]
-	return(xout) }
+	return(xout)
+}
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~convYM
 
 
-#convYP---------------------------------2011-12-05
-# Convert dates into year periods.
-#-----------------------------------------------RH
-convYP = function(x, ndays=90) {
+## convYP-------------------------------2011-12-05
+## Convert dates into year periods.
+## ---------------------------------------------RH
+convYP = function(x, ndays=90)
+{
 	yearperiod=function(dchar, ndays){ # date as character string
 		yr=substring(dchar,1,4); YR=as.numeric(yr)
 		ddate = as.numeric(as.Date(dchar))
@@ -223,7 +238,9 @@ convYP = function(x, ndays=90) {
 	if (any(class(x)%in%c("POSIXct","POSIXt","Date")))
 		cdate=format(x) # 10-character date "yyyy-mm-dd"
 	else  return(rep("",length(x)))
-	return(yearperiod(cdate,ndays)) }
+	return(yearperiod(cdate,ndays))
+}
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~convYP
 
 
 #countLines-----------------------------2013-05-07
@@ -237,12 +254,31 @@ countLines = function(fnam,os=.Platform$OS.type)
 	Nrow = as.numeric(shell(cmd,intern=TRUE))
 	return(Nrow)
 }
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~countLines
+
+
+## countVec-----------------------------2018-12-05
+## Count number of definite vector elements (non NA)
+## that exclude (or include) zero values.
+## ----------------------------------------------RH
+countVec = function(x, exzero=TRUE)
+{
+	zNA = is.na(x)
+	if (!exzero)  xx = xx[!zNA]
+	else {
+		z0 = x>0 & !zNA
+		xx = x[z0]
+	}
+	return(length(xx))
+}
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~countVec
 
 
 ## createDSN----------------------------2016-12-01
 ## Create entire suite of DSNs for the groundfish databases
 ## ---------------------------------------------RH
-createDSN <- function(trusted=TRUE) {
+createDSN <- function(trusted=TRUE)
+{
 	today = Sys.Date()
 	descr = paste0("Created for PBStools (",today,")")
 	confODBC(dsn="GFBioSQL",    server="GFDB",db="GFBioSQL",     driver="SQL Server", descr=descr, trusted=trusted)
@@ -273,12 +309,13 @@ createFdir = function(lang, dir=".")
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~createFdir
 
 
-## crossTab-----------------------------2018-08-07
+## crossTab-----------------------------2018-12-19
 ## Summarize z using crosstab values y.
 ## Hadley and package 'reshape' deprecated.
 ## ---------------------------------------------RH
 crossTab = function(x=PBSdat, y=c("year","major"), 
-   z="landed", func=function(x){sum(x)/1000.}, na.val=99, hadley=FALSE, ...)
+   z="landed", func=function(x){sum(x)/1000.}, 
+   na.val=999, hadley=FALSE, ...)
 {
 	if (hadley && !requireNamespace("reshape", quietly = TRUE)) stop("`reshape` package is required")
 	flds=names(x)
@@ -371,15 +408,17 @@ fitLogit = function(dat, yfld="pmat", xflds="age") {
 	return(glmfit) }
 
 
-#flagIt---------------------------------2012-06-13
-# Takes a coordinate (a,b) and labels it using a 
-# diagonal line of radius r and angle A.
-#  a,b : midpoint of a circle
-#  A   : angle (degrees) to radiate out
-#  r   : radius of the circle
-#  n   : number of times to decrement the radius (max=5)
-#-----------------------------------------------RH
-flagIt = function(a, b, A=45, r=0.2, n=1, ...){
+## flagIt-------------------------------2018-12-04
+## Takes a coordinate (a,b) and labels it using a 
+## diagonal line of radius r and angle A.
+##  a,b : midpoint of a circle
+##  A   : angle (degrees) to radiate out
+##  r   : radius of the circle
+##  n   : number of times to decrement the radius (max=5)
+##  lab : optional label to precede the flagged coordinate
+## ---------------------------------------------RH
+flagIt = function(a, b, A=45, r=0.2, n=1, lab, ...)
+{
 	xlim = par()$usr[1:2]
 	xdif = abs(diff(xlim))
 	ylim = par()$usr[3:4]
@@ -387,19 +426,20 @@ flagIt = function(a, b, A=45, r=0.2, n=1, ...){
 	xpin = par()$pin[1]
 	ypin = par()$pin[2]
 	rads = pi*A/180
-	xsig = sign(cos(rads))  # sign of x (not used)
-	ysig = sign(sin(rads))  # sign of y (not used)
+	xsig = sign(cos(rads))  ## sign of x (not used)
+	ysig = sign(sin(rads))  ## sign of y (not used)
 	
-	r   = r - (n-1)*r/5     # reduce when n increases
+	r   = r - (n-1)*r/5     ## reduce when n increases
 	x0  = a + r*cos(rads)
 	y   = b + r*sin(rads)
-	x   = x0 + (x0-a)*(xdif/ydif)*(ypin/xpin)  # adjust for diffences in axis scale and plot dimensions (aspect ratio)
+	x   = x0 + (x0-a)*(xdif/ydif)*(ypin/xpin)  ## adjust for diffences in axis scale and plot dimensions (aspect ratio)
 	xvec = c(a,x)
 	yvec = c(b,y)
 	lines(xvec,yvec,lty=3,col="grey20")
-	text(x,y,paste("(",signif(a,3),", ",signif(b,3),")",sep=""),...)
+	text(x,y,paste0(ifelse(missing(lab),"",lab),"(",signif(a,3),", ",signif(b,3),")"),...)
 	return(invisible(list(xvec=xvec,yvec=yvec,rads=rads,x0=x0,x=x,y=y)))
 }
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~flagIt
 
 
 #gatherVals-----------------------------2018-03-14
@@ -1065,7 +1105,7 @@ isThere = function(x, envir=parent.frame()) {
 	genv = function(){ .GlobalEnv }                # global environment
 
 
-## linguaFranca-------------------------2018-08-16
+## linguaFranca-------------------------2018-11-26
 ## Translate English phrases to French (other languages possible)
 ## for use in plotting figures with French labels.
 ## Note that 'gsub' has a limit to its nesting depth.
@@ -1275,7 +1315,11 @@ linguaFranca = function(x, lang="e", little=4, strip=FALSE)
 				x1))))))))))))))))))))
 			})
 			## single words describing fisheries
+#browser();return()
 			xfis = sapply(xone, function(xf){
+				gsub("[Ss]urv\\:", "relev:",
+				gsub("[Mm]ajor", "principal",
+				gsub("[Mm]inor", "secondaire",
 				gsub("[Ss]able", "morue",
 				gsub("[Tt]rawl", "chalut",
 				gsub("[Hh]alibut", eval(parse(text=deparse("fl\u{00E9}tan"))),
@@ -1288,7 +1332,7 @@ linguaFranca = function(x, lang="e", little=4, strip=FALSE)
 				gsub("[Hh]ook [\\&|Aa](nd)? [Ll]ine", eval(parse(text=deparse("hame\u{00E7}on et lignes"))),
 				gsub("[Hh][Ll](\\_|\\.| )[Rr]ockfish", eval(parse(text=deparse("HL.s\u{00E9}baste"))),
 				gsub("[Hh](\\&|\\.)[Ll](\\_|\\.| )[Rr]ockfish", eval(parse(text=deparse("H&L s\u{00E9}baste"))),
-				xf))))))))))))
+				xf)))))))))))))))
 			})
 #browser();return()
 			## single words describing fish

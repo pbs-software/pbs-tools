@@ -8,15 +8,16 @@
   of radius \code{r} and angle \code{A}.
 }
 \usage{
-flagIt(a, b, A = 45, r = 0.2, n = 1, ...)
+flagIt(a, b, A=45, r=0.2, n=1, lab, ...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
-  \item{a,b}{midpoint coordinate of a circle}
-  \item{A}{angle (degrees) to radiate out from coordinate}
-  \item{r}{radius of the circle}
-  \item{n}{number of times to decrement the radius (max=5)}
-  \item{\dots}{additional \code{par} parameters for the \code{text} function.}
+  \item{a,b}{\code{numeric} -- midpoint coordinate of a circle}
+  \item{A}{\code{numeric} -- angle (degrees) to radiate out from coordinate}
+  \item{r}{\code{numeric} -- radius of the circle}
+  \item{n}{\code{numeric} -- number of times to decrement the radius (max=5)}
+  \item{lab}{\code{character} -- optional label to precede the flagged coordinate}
+  \item{\dots}{\code{dots} -- additional \code{par} parameters for the \code{text} function}
 }
 \details{
   A diagonal dotted line in light grey radiates out from a central coordinate
@@ -31,7 +32,10 @@ flagIt(a, b, A = 45, r = 0.2, n = 1, ...)
   and the final x- and y-coordinates on the periphery of a circle.
 }
 \author{
-  Rowan Haigh, Pacific Biological Station, Fisheries and Oceans Canada, Nanaimo BC
+  \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
+  Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
+  \emph{locus opus}: Institute of Ocean Sciences (IOS), Sidney BC\cr
+  Last modified \code{Rd: 2018-12-10}
 }
 \seealso{
 \code{\link[PBStools]{estOgive}}, \code{\link[PBStools]{scaleVec}}

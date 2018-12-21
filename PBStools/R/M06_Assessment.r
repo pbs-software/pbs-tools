@@ -74,8 +74,8 @@ compAF=function(x, year=2003, sex=2, amax=40, pfld="wp",
 	lty   = rep(ltys,ncomp)[1:ncomp]
 
 	fout = fout.e = outnam
-	for (l in lang) {
-		if (l=="f") fout = paste0("./french/",fout.e)  ## could repeat for other languages
+	for (l in lang) {  ## could switch to other languages if available in 'linguaFranca'.
+		fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
 		if (png) png(file=paste0(fout,".png"), units="in", res=600, width=10, height=7.5)
 		if (ntype==1 && nsex==1) {
 			rc = .findSquare(nyear)
@@ -222,8 +222,8 @@ compBmsy = function(Bspp, spp="POP", Mnams=c("Est M","Fix M"),
 	else
 		fout.e = fout
 
-	for (l in lang) {
-		if (l=="f") fout = paste0("./french/",fout.e)  ## could repeat for other languages
+	for (l in lang) {  ## could switch to other languages if available in 'linguaFranca'.
+		fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
 		for (f in figout) {
 			if (f=="eps"){    grDevices::ps.options(horizontal = FALSE)
 			                  postscript(file=paste(fout,".eps",sep=""),width=width*1.25,height=height,fonts="mono",paper="special") }
@@ -703,8 +703,8 @@ plotAgeErr = function(dat, nsamp, xlim=NULL, ylim=NULL, jitter=0.25, seed=42,
 		ylim = range(dat[,c("r2_amin","r2_amax")])
 	
 	fout = fout.e = paste0("AgeErr",strSpp)
-	for (l in lang) {
-		if (l=="f") fout = paste0("./french/",fout.e)  ## could repeat for other languages
+	for (l in lang) {  ## could switch to other languages if available in 'linguaFranca'.
+		fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
 		if (png) png(paste0(fout,".png"), units="in", res=pngres, width=PIN[1], height=PIN[2])
 		par(mfrow=c(1,1), mar=c(3.5,3.5,0.5,0.75), oma=c(0,0,0,0), mgp=c(2,0.5,0))
 		plot(dat$r1_age, dat$r2_age, xlim=xlim, ylim=ylim, type="n", xlab="", ylab="", cex.axis=1.2, las=1)
@@ -756,8 +756,8 @@ plotMW = function(dat, xlim, ylim, outnam="Mean-Weight-Compare",
 #browser();return()
 
 	fout = fout.e = outnam
-	for (l in lang) {
-		if (l=="f") fout = paste0("./french/",fout.e)  ## could repeat for other languages
+	for (l in lang) {  ## could switch to other languages if available in 'linguaFranca'.
+		fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
 		if (png) png(paste0(fout,".png"), units="in", res=400, width=8, height=6)
 		par(mfrow=c(1,1), mar=c(3.5,3.8,0.5,0.5), oma=c(0,0,0,0), mgp=c(2.25,0.5,0))
 		plot(0, xlim=xlim, ylim=ylim, type="n", xlab=linguaFranca("Year",l), ylab=linguaFranca("Mean Weight (kg)",l), cex.axis=1.2, cex.lab=1.5)
@@ -808,8 +808,8 @@ quantAges =function(bioDat, dfld="age", afld="major", tfld="year",
 		yearbox = as.list(rep(NA,nyrs)); names(yearbox) = years
 
 		fout = fout.e = outnam
-		for (l in lang) {
-			if (l=="f") fout = paste0("./french/",fout.e)  ## could repeat for other languages
+		for (l in lang) {  ## could switch to other languages if available in 'linguaFranca'.
+			fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
 			if (png) png(paste0(fout,".png"), width=8, height=8, units="in", res=400)
 			par(mfcol=c(length(abioDat),2), mar=c(0,2,0,0), oma=c(4,2,1,1), mgp=c(2,0.5,0))
 
@@ -862,8 +862,8 @@ quantAges =function(bioDat, dfld="age", afld="major", tfld="year",
 		areabox = as.list(rep(NA,nareas)); names(areabox) = areas
 
 		fout = fout.e = outnam
-		for (l in lang) {
-			if (l=="f") fout = paste0("./french/",fout.e)  ## could repeat for other languages
+		for (l in lang) {  ## could switch to other languages if available in 'linguaFranca'.
+			fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
 			if (png) png(paste0(fout,".png"), width=8, height=8, units="in", res=400)
 			par(mfcol=c(length(jbioDat),1), mar=c(0,2,0,0), oma=c(4,2,1,1), mgp=c(2,0.5,0))
 

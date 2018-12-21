@@ -240,18 +240,18 @@ calcPMR <- function(x, na.value=NULL)
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~calcPMR
 
 
-## compLen------------------------------2018-08-08
-## Compare lengths (and ages) among groups.
+## compLen------------------------------2018-12-06
+## Compare lengths (or ages) among groups by sex.
 ## -----------------------------------------PJS/RH
 compLen = function(dat, strSpp, fld="len", lbin=1, sex=c(2,1),
-   afld="SSID", ssid=list(16,1,4), yrs, ttype, stype, scat, exlax,
+   gfld="SSID", gval=list(16,1,4), yrs, ttype, stype, scat, exlax,
    strat=FALSE, boot=FALSE, R=10, bxpsep=0.2, bxpcol="black", 
    ylim=NULL, png=FALSE, PIN=c(8,8), lang=c("e","f"))
 {
 	datnam = as.character(substitute(dat))
-	ssid.o = ssid
-	ssid.u = unique(unlist(ssid))
-	dat  = dat[is.element(dat[,afld],ssid.u) & dat[,fld]>0 & !is.na(dat[,fld]),]
+	gval.o = gval
+	gval.u = unique(unlist(gval))
+	dat  = dat[is.element(dat[,gfld],gval.u) & dat[,fld]>0 & !is.na(dat[,fld]),]
 	if (!missing(yrs))
 		dat = dat[is.element(dat$year, yrs),]
 	if (!missing(ttype))
@@ -261,12 +261,12 @@ compLen = function(dat, strSpp, fld="len", lbin=1, sex=c(2,1),
 	if (!missing(scat))
 		dat = dat[is.element(dat$scat, scat),]
 
-	ssid = sapply(ssid, function(x){xout = intersect(x, .su(dat[,afld])); if(length(xout)==0) NA else xout}, simplify=FALSE)
-	ssid = ssid[!is.na(ssid)]
-	names(ssid) = sapply(ssid,paste0,collapse="+")
+	gval = sapply(gval, function(x){xout = intersect(x, .su(dat[,gfld])); if(length(xout)==0) NA else xout}, simplify=FALSE)
+	gval = gval[!is.na(gval)]
+	names(gval) = sapply(gval,paste0,collapse="+")
 	dat$group = rep(NA,nrow(dat))
-	for (i in names(ssid))
-		dat$group[is.element(dat[,afld],ssid[[i]])] = i
+	for (i in names(gval))
+		dat$group[is.element(dat[,gfld],gval[[i]])] = i
 #browser();return()
 
 	xlim = if (missing(yrs)) range(dat$year) else range(yrs)
@@ -279,28 +279,37 @@ compLen = function(dat, strSpp, fld="len", lbin=1, sex=c(2,1),
 	#Lbin = ceiling(range(dat[,fld])/lbin)*lbin
 	Lbin = .su(ceiling(.su(dat[,fld])/lbin)*lbin)
 
-	if (afld=="SSID") {
+	if (gfld=="SSID") {
 		ssnames = c("QCS Synoptic", "WCVI Synoptic", "WCHG Synoptic")
 		names(ssnames)=c(1,4,16)
-	} else if (afld=="major") {
-		ssnames = c("BCS", "BCC", "BCN")
-		names(ssnames)[1] = names(ssid)[grep("3|4",names(ssid))]
-		names(ssnames)[2] = names(ssid)[grep("5|6|7|8",names(ssid))]
-		names(ssnames)[3] = names(ssid)[grep("9",names(ssid))]
-	} else if (afld=="gear") {
+	} else if (gfld=="major") {
+		if (strSpp=="417") {
+			ssnames = c("BCS", "BCC", "BCN")
+			names(ssnames)[1] = names(gval)[grep("3|4",names(gval))]
+			names(ssnames)[2] = names(gval)[grep("5|6|7|8",names(gval))]
+			names(ssnames)[3] = names(gval)[grep("9",names(gval))]
+		} else if (strSpp=="435") {
+			ssnames = c("3CD", "5ABC")
+#browser();return()
+			names(ssnames)[1] = names(gval)[grep("3|4",names(gval))]
+			names(ssnames)[2] = names(gval)[grep("5|6|7",names(gval))]
+		}
+	} else if (gfld=="gear") {
 		ssnames = c("BT", "MW")
-		names(ssnames)[1] = names(ssid)[grep("1|8",names(ssid))]
-		names(ssnames)[2] = names(ssid)[grep("6",names(ssid))]
+		names(ssnames)[1] = names(gval)[grep("1|8",names(gval))]
+		names(ssnames)[2] = names(gval)[grep("6",names(gval))]
 	}
 	loca    = lenv()
 	data(species, package="PBSdata", envir=loca)
 	spp3    = species[strSpp, "code3"]
 
-	out  = if (afld=="SSID") "-Surv-" else paste0("-",datnam,"-")
-	poo  = if (missing(exlax)) "" else paste0("(",exlax,")-")
-	fout = fout.e = paste0(spp3, out , poo, ifelse(fld=="len","Lengths","Ages"), ifelse(strat,"-(strat)","-(raw)"))
-	for (l in lang) {
-		if (l=="f") fout = paste0("./french/",fout.e)  ## could repeat for other languages
+	#out  = if (gfld=="SSID") "-Surv-" else paste0("-",datnam,"-")
+	out  = if (gfld=="SSID") "-Surv-" else paste0("-tt(",paste0(.su(dat$ttype),collapse=""),")")
+	poo  = if (missing(exlax)) "" else paste0("-(",exlax,")")
+	fout = fout.e = paste0(spp3, ifelse(fld=="len","-Len","-Age"), out , poo, "-g(", gfld, ")", ifelse(strat,"-(strat)","-(obs)"))
+
+	for (l in lang) {  ## could switch to other languages if available in 'linguaFranca'.
+		fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
 		if (png) png(paste0(fout,".png"), units="in", res=600, width=PIN[1], height=PIN[2])
 		par (mfrow=c(2,1), mar=c(1.5,3.5,0.5,0.5), oma=c(1.5,0,0,0), mgp=c(1.5,0.5,0), las=1)
 		for (s in sex) {
@@ -308,7 +317,7 @@ compLen = function(dat, strSpp, fld="len", lbin=1, sex=c(2,1),
 			Idat = split(sdat,sdat$group)
 #if (s==1) {browser();return()}
 
-			Idat = Idat[intersect(names(ssid),names(Idat))]  ## order them as per user input
+			Idat = Idat[intersect(names(gval),names(Idat))]  ## order them as per user input
 			if (strat && !boot) {
 				resetGraph();expandGraph()
 				#plotBubbles(Yprop,dnam=T,hide0=T,prettyAxis=T,siz=0.1,ylim=ylim,cpro=T)
@@ -407,10 +416,10 @@ compLen = function(dat, strSpp, fld="len", lbin=1, sex=c(2,1),
 					qbox[names(ival)] = ival
 					#pars = list(boxwex=bxpsep, whisklty=1, boxcol="gainsboro", boxfill=lucent(bxpcol[i],0.5), medcol=bxpcol[i], medlwd=2)
 					wbxp = (bxpsep*2)^(2)  ## reverse calcs in function bxp (sort of)
-					#xoff = seq(-bxpsep,bxpsep, length.out=length(ssid))[i]
-					#xoff = seq(-wbxp/2, wbxp/2, length.out=length(ssid))
-					midout = ((wbxp*length(ssid)/2)-wbxp/2) * c(-1,1)
-					xoff   = seq(midout[1],midout[2],length.out=length(ssid))
+					#xoff = seq(-bxpsep,bxpsep, length.out=length(gval))[i]
+					#xoff = seq(-wbxp/2, wbxp/2, length.out=length(gval))
+					midout = ((wbxp*length(gval)/2)-wbxp/2) * c(-1,1)
+					xoff   = seq(midout[1],midout[2],length.out=length(gval))
 					pars = list(boxwex=wbxp, whisklty=1, boxcol="gainsboro", boxfill=lucent(bxpcol[i],0.5), medcol="black", medlwd=3)
 					xpos = (1:length(qbox)) + xoff[i]
 					qxy = quantBox(qbox, outline=FALSE, pars=pars, add=TRUE, xaxt="n", at=xpos)
@@ -421,13 +430,13 @@ compLen = function(dat, strSpp, fld="len", lbin=1, sex=c(2,1),
 				}
 #if(i==2) {browser();return()}
 			}) ## end i (index) loop
-#			if (fld %in% c("len") && afld %in% c("SSID")) {
+#			if (fld %in% c("len") && gfld %in% c("SSID")) {
 #				mtext(linguaFranca("Length (cm)",l), side=2, line=2.25, cex=1.5, las=0)
 #				addLabel(0.05, 0.10, linguaFranca(paste0(spp3, " ",switch(s,"Males","Females")),l), cex=1.2, adj=c(0,0))
 #				if (par()$mfg[1]==2)
-#					addLegend(0.025, 0.975, bty="n", fill=lucent(bxpcol,0.5), border="gainsboro", legend=linguaFranca(ssnames[names(ssid)],l), xjust=0, yjust=1)
+#					addLegend(0.025, 0.975, bty="n", fill=lucent(bxpcol,0.5), border="gainsboro", legend=linguaFranca(ssnames[names(gval)],l), xjust=0, yjust=1)
 #			}
-#			if (fld %in% c("age") || afld %in% c("major","gear")) {
+#			if (fld %in% c("age") || gfld %in% c("major","gear")) {
 #				mtext(linguaFranca("Age (y)",l), side=2, line=2.25, cex=1.5, las=0)
 #				addLabel(0.95, 0.95, linguaFranca(paste0(spp3, " ",switch(s,"Males","Females")),l), cex=1.2, adj=c(1,1))
 #				if (par()$mfg[1]==1)
@@ -435,8 +444,8 @@ compLen = function(dat, strSpp, fld="len", lbin=1, sex=c(2,1),
 			mtext(linguaFranca(ifelse(fld %in% c("len"), "Length (cm)", "Age (y)"),l), side=2, line=2.25, cex=1.5, las=0)
 			addLabel(0.025, 0.05, linguaFranca(paste0(spp3, " ",switch(s,"Males","Females")),l), cex=1.2, adj=c(0,0))
 			if (par()$mfg[1]==1) {
-				addLegend(0.025, 0.40, bty="n", fill=lucent(bxpcol,0.5), border="gainsboro", legend=linguaFranca(ssnames[names(ssid)],l), xjust=0, yjust=1)
-				if (afld %in% c("gear","major"))
+				addLegend(0.025, 0.40, bty="n", fill=lucent(bxpcol,0.5), border="gainsboro", legend=linguaFranca(ssnames[names(gval)],l), xjust=0, yjust=1)
+				if (gfld %in% c("gear","major"))
 					addLabel(0.975, 0.95, txt=linguaFranca( sub("bioDat","",datnam),l), cex=1.2, adj=c(1,1))
 			}
 		} ## end s (sex) loop

@@ -2295,11 +2295,10 @@ plotRecon = function(dat=cat440rec, strSpp="440", major=c(1,3:9), fidout=10,
 			plotname = paste0(plotname,"-",timestamp)
 
 		fout = fout.e = plotname
-		for (l in lang) {
-			if (l=="f") fout = paste0(figDir,"/french/",fout.e)  ## could repeat for other languages
-			else        fout = paste0(figDir,"/",fout.e)
-			if (eps)       postscript(file=paste(fout,".eps",sep=""),width=PIN[1],height=PIN[2],fonts="mono",paper="special")
-			else if (png)  png(filename=paste(fout,".png",sep=""),width=round(100*PIN[1]),height=round(100*PIN[2]),pointsize=16)
+		for (l in lang) {  ## could switch to other languages if available in 'linguaFranca'.
+			fout = switch(l, 'e' = paste0(figDir,"/",fout.e), 'f' = paste0(figDir,"/french/",fout.e) )
+			if (eps)      postscript(file=paste(fout,".eps",sep=""),width=PIN[1],height=PIN[2],fonts="mono",paper="special")
+			else if (png) png(filename=paste(fout,".png",sep=""),width=round(100*PIN[1]),height=round(100*PIN[2]),pointsize=16)
 			else if (wmf && .Platform$OS.type=="windows")
 				do.call("win.metafile",list(filename=paste(fout,".wmf",sep=""),width=PIN[1],height=PIN[2]))
 			else  resetGraph()

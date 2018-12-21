@@ -6,33 +6,52 @@
   data using a versatile Schnute growth model.
 }
 \usage{
-calcSG(dat=pop.age, strSpp="", yfld="len", tau=c(5,40), 
-     areas=list(major=NULL, minor=NULL, locality=NULL, srfa=NULL,
-     srfs=NULL, popa=NULL), ttype=list(c(1,4),c(2,3)), stype=NULL,
-     year=NULL, ameth=3, allTT=TRUE, jit=c(0,0), 
-     pix=FALSE, wmf=FALSE, singles=FALSE, pages=FALSE, ioenv=.GlobalEnv)
+calcSG(dat=pop.age, strSpp="", yfld="len", tau=c(5,40), fixt0=FALSE,
+   areas=list(major=NULL, minor=NULL, locality=NULL, srfa=NULL,srfs=NULL, popa=NULL),
+   ttype=list(commercial=c(1,4,5),research=c(2,3)), stype=c(1,2,6,7), scat=NULL,
+   sex=list(Females=2,Males=1), rm.studs=NULL,
+   year=NULL, xlim=NULL, ylim=NULL, ameth=c(3,17), jit=c(0,0), 
+   eps=FALSE, jpg=FALSE, pdf=FALSE, png=FALSE, tif=FALSE, wmf=FALSE,
+   plotname, singles=FALSE, pages=FALSE, tables=TRUE, figures=TRUE,
+   ioenv=.GlobalEnv, lang=c("e","f"))
 }
 \arguments{
-  \item{dat}{biological data set with fields \code{yfld} and \code{age}.}
-  \item{strSpp}{string code for species. If dataset has attribute \code{spp},
+  \item{dat}{\code{data.frame} -- biological data set with fields \code{yfld} and \code{age}.}
+  \item{strSpp}{\code{character} -- string code for species. If dataset has attribute \code{spp},
     this will be used before \code{strSpp}.}
-  \item{yfld}{string name of the field in \code{dat} that contains y-values
+  \item{yfld}{\code{character} -- name of the field in \code{dat} that contains y-values
     for the fit with \code{age}.}
-  \item{tau}{numeric vector specifying two fixed parameters: the age of a young fish and that of an old fish.}
-  \item{areas}{list of listed area codes; choices can be any/all of
-    \code{major}, \code{minor}, \code{locality}, \code{srfa}, \code{srfs}, \code{popa}.}
-  \item{ttype}{list of trip type codes to use from field \code{ttype}.}
-  \item{stype}{list of sample type codes to use from field \code{stype}.}
-  \item{year}{numeric integer vector of years used to subset \code{dat}.}
-  \item{ameth}{code specifying ageing method protocol (defaults to \code{3}, specifying break & burn only).}
-  \item{allTT}{logical: if \code{TRUE}, force the display of all trip types either specified or available.}
-  \item{jit}{two-element vector specifying amount of jittering to apply in the 
+  \item{tau}{\code{numeric} -- vector specifying two fixed parameters: the age of a young fish and that of an old fish.}
+  \item{fixt0}{\code{logical} -- if \code{TRUE}, fix the parameter \code{t0} to equal 0.}
+  \item{areas}{\code{numeric} -- list of area codes named by the field in which they may appear in dataset;
+    choices can be any/all of \code{major}, \code{minor}, \code{locality}, \code{srfa}, \code{srfs}, \code{popa}.}
+  \item{ttype}{\code{numeric} -- list of trip type codes to use from field \code{ttype}.}
+  \item{stype}{\code{numeric} -- vector of sample type codes to use from field \code{stype}.}
+  \item{scat}{\code{numeric} -- numeric code(s) for species category (usually to identify sorted vs. unsorted samples).}
+  \item{sex}{\code{numeric} -- list of sex codes, where \cr
+    0=not looked at, 1=male, 2=female, 3=looked at but unknown \cr
+    e.g. \code{list(Females=2, Males=1, Unknown=c(0,3))}.}
+  \item{rm.studs}{\code{numeric} -- \emph{n}, if specified, remove Studentized residuals lying outside \emph{n} standard deviations.}
+  \item{year}{\code{numeric} -- integer vector of years used to subset \code{dat}.}
+  \item{xlim}{\code{numeric} -- vector specifying the limits of the x-axis.}
+  \item{ylim}{\code{numeric} -- vector specifying the limits of the y-axis.}
+  \item{ameth}{\code{numeric} -- code specifying ageing method protocol -- defaults to \code{3} (break & burn) plus \code{17} (break & bake).}
+  \item{jit}{\code{numeric} -- two-element vector specifying amount of jittering to apply in the 
     x- and -y-directions respectively. (See \code{jitter} in the \pkg{base} package.)}
-  \item{pix}{logical: if \code{TRUE}, send plot to a \code{.png} file.}
-  \item{wmf}{logical: if \code{TRUE}, send plot to a \code{.wmf} file.}
-  \item{singles}{logical: if \code{TRUE} and \code{pix|wmf}, send each area/trip type combination to separate files.}
-  \item{pages}{logical: if \code{TRUE} and \code{pix|wmf}, send each page of area plots to separate files.}
-  \item{ioenv}{input/output environment for function input data and output results.}
+  \item{eps}{\code{logical} -- if \code{TRUE}, send plot to a postscript \code{.eps} file.}
+  \item{jpg}{\code{logical} -- if \code{TRUE}, send plot to a raster \code{.jpg} file.}
+  \item{pdf}{\code{logical} -- if \code{TRUE}, send plot to a postscript \code{.pdf} file.}
+  \item{png}{\code{logical} -- if \code{TRUE}, send plot to a raster \code{.png} file.}
+  \item{tif}{\code{logical} -- if \code{TRUE}, send plot to a raster \code{.tif} file.}
+  \item{wmf}{\code{logical} -- if \code{TRUE}, send plot to a vector \code{.wmf} file.}
+  \item{plotname}{\code{character} -- explicit image file name to override an internally generated one.}
+  \item{singles}{\code{logical} -- if \code{TRUE} and \code{eps|jpg|pdf|png|tif|wmf}, send each area/trip type combination to separate files.}
+  \item{pages}{\code{logical} -- if \code{TRUE} and \code{eps|jpg|pdf|png|tif|wmf}, send each page of area plots to separate files.}
+  \item{tables}{\code{logical} -- if \code{TRUE} and \code{lang="e"}, download output into \code{.csv} tables.}
+  \item{figures}{\code{logical} -- if \code{TRUE}, plot the figures.}
+  \item{ioenv}{\code{environment} -- input/output environment for function input data and output results.}
+  \item{lang}{\code{character} -- a vector of letters that denote the language for output:
+    currently only \code{"e"} (english) and \code{"f"} (french).}
 }
 \details{
   The function plots versatile Schnute fits to length-age or weight-age data where each column 
@@ -70,21 +89,15 @@ calcSG(dat=pop.age, strSpp="", yfld="len", tau=c(5,40),
   \emph{Canadian Journal of Fisheries and Aquatic Sciences} \bold{38}: 1128--1140.
 }
 \author{
-  Rowan Haigh, Pacific Biological Station, Nanaimo BC
+  \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
+  Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
+  \emph{locus opus}: Institute of Ocean Sciences (IOS), Sidney BC\cr
+  Last modified \code{Rd: 2018-12-21}
 }
 \seealso{
   \code{\link{calcVB}}, \code{\link{pop.age}}, \code{\link{parVec}}, \code{\link{getData}}, 
   \code{\link{biteData}}, \code{\link{pmfc}}, \code{\link{species}} \cr
   \pkg{PBSmodelling}: \code{\link[PBSmodelling]{calcMin}} \cr
   \pkg{base}: \code{\link[base]{jitter}}
-}
-\examples{
-local(envir=.PBStoolEnv,expr={
-pbsfun=function(){
-  data(pop.age,envir=.PBStoolEnv)
-  calcSG(areas=list(srfa=list(c("5AB","5CD"))),ttype=list(2:3))
-  invisible() }
-pbsfun()
-})
 }
 \keyword{hplot}

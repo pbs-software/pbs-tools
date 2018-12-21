@@ -19,3 +19,4 @@ One final note &#8211; although influences by Wizard Wickham pervade the Rverse 
 Another old R curmudgeon,<br> Rowan Haigh
 <p align="right"><img src="DFOlogo_small.jpg" alt="DFO logo" style="height:30px;"></p> 
 
+

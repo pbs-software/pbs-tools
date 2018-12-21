@@ -9,9 +9,9 @@
 }
 \usage{
 compLen(dat, strSpp, fld="len", lbin=1, sex=c(2,1), 
-   afld="SSID", ssid=list(16,1,4), yrs, ttype, stype, scat, exlax,
+   gfld="SSID", gval=list(16,1,4), yrs, ttype, stype, scat, exlax,
    strat=FALSE, boot=FALSE, R=10, bxpsep=0.2, bxpcol="black",
-   ylim=NULL, png=FALSE, PIN=c(8, 8), lang=c("e","f"))
+   ylim=NULL, png=FALSE, PIN=c(8,8), lang=c("e","f"))
 }
 \arguments{
   \item{dat}{\code{data.frame} -- usually a biological object created by \code{gfb_bio.sql}.}
@@ -19,8 +19,8 @@ compLen(dat, strSpp, fld="len", lbin=1, sex=c(2,1),
   \item{fld}{\code{character} -- field name containing metric (e.g., \code{"len"}) for comparison.}
   \item{lbin}{\code{numeric} -- size of each length bin (cm).}
   \item{sex}{\code{numeric} -- sex code in \code{GFBioSQL}, where 1=males and 2=females.}
-  \item{afld}{\code{character} -- field name containing groups for annual side-by-side comparisons (e.g., \code{"SSID"}).}
-  \item{ssid}{\code{numeric} -- list of survey series IDs (e.g., 1=QCS synoptic, 4=WCVI synoptic, 16=WCHG synoptic)}
+  \item{gfld}{\code{character} -- field name containing groups for annual side-by-side comparisons (e.g., \code{"SSID"}).}
+  \item{gval}{\code{numeric} -- list of values in \code{gfld} to use (e.g., 1=QCS synoptic, 4=WCVI synoptic, 16=WCHG synoptic)}
   \item{yrs}{\code{numeric} -- vector of years to qualify data.}
   \item{ttype}{\code{numeric} -- vector of trip type codes to qualify data.}
   \item{stype}{\code{numeric} -- vector of sample type codes to qualify data.}
@@ -42,8 +42,8 @@ compLen(dat, strSpp, fld="len", lbin=1, sex=c(2,1),
 \author{
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
-  \emph{opus locus}: Institute of Ocean Sciences (IOS), Sidney BC\cr
-  Last modified \code{Rd: 2018-08-14}
+  \emph{locus opus}: Institute of Ocean Sciences (IOS), Sidney BC\cr
+  Last modified \code{Rd: 2018-12-21}
 }
 \note{
   Developed to demonstrate and support stock separation for Redstripe Rockfish.

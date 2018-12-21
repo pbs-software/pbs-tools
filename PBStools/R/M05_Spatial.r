@@ -971,8 +971,8 @@ plotLocal = function(dat, area, aflds=NULL, pcat=0.95, showAll=FALSE,
 		legtxt = paste0(topcat," - ",topN$name)
 		if (plot) {
 			fout = fout.e = paste0(outnam,".",ff)
-			for (l in lang) {
-				if (l=="f") fout = paste0("./french/",fout.e)  ## could repeat for other languages
+			for (l in lang) {  ## could switch to other languages if available in 'linguaFranca'.
+				fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
 				if (png) png(filename=paste0(fout,".png"), width=9, height=7.3, units="in", res=600)
 				plotMap(area, type="n", plt=c(0.06,0.99,0.06,0.99), 
 					xlim=c(-136,-122.5), ylim=c(48,54.8), mgp=c(2.2,0.5,0), cex.axis=1.2, cex.lab=1.5)

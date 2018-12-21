@@ -38,7 +38,7 @@ We may not be big, but we're small.
 # ===================
 if(getRversion() >= "2.15.1") utils::globalVariables(names=c(
 	".onClose",".PBSmod",".runModHelperQuit",
-	"A","acut","adat","Afile","age","agg","AID","amax","areas","autoA","autoD","aVal",
+	"A","acut","adat","Afile","age","agg","AID","amax","aModel","areas","autoA","autoD","aVal",
 	"B","b0","b5","barcol","bathy","bbonly","Bboot","bcol","bdat","Best","bgsamp","bgtab","bh","bio440","Bobs","boot","boot.ci","boxwidth","Bqnt","Bt","bta","Btot","bugsData",
 	"C1","C2","case","cast","cat440rec","catch","Cbar","Cbox","Ccat","ccol","cdata","Ceq","chn1","chn2","clara","clen","Clin","clwd","Cnum","cobs","Cpoi","cpuTime","cthin","ctot","Ctrd","Cval",
 	"dat","datt","dBars","dbName","ddat","diaDir","disA","DLIM",
@@ -52,7 +52,7 @@ if(getRversion() >= "2.15.1") utils::globalVariables(names=c(
 	"m","major","mar","mata","maxit","mdbName","MDL","melt.data.frame","method","mfrow","mgp","minor","mmor","modelCheck","modelCompile","modelData","modelGenInits","modelUpdate","modT","mpd","mu",
 	"nage","Nat","Nboot","nc","nC","nd","nepacLL","nepacLLhigh","nper","nRP","nspec","nT","nyr",
 	"obs","oma","orats","orfhistory","out",
-	"pa.obs","pa.raw","parVec","path","pathN","PBSdat","PBStool","PBSmin","Pfig","phi","pi.obs","pix","pjsa","PLIM","pmfc","PMFC","pmon","pnam","poi","pop.age","pop.pmr.qcss","popa","powr","prefix","pset","psize","Pstart","pwd","pyr",
+	"pa.obs","pa.raw","parVec","path","pathN","PBSdat","PBStool","PBSmin","Pfig","pfout.e","phi","pi.obs","pix","pjsa","PLIM","pmfc","PMFC","pmon","pnam","poi","pop.age","pop.pmr.qcss","popa","powr","prefix","pset","psize","Pstart","pwd","pyr",
 	"q2","qboxplot","qq","qtName","quants",
 	"rate","rates","reltol","repN","rho","RkB","Roff","RPmax","RPmin","ryrs",
 	"s1","s2","samplesGetFirstChain","samplesGetLastChain","samplesHistory","samplesSet","SB","Scat","Sdat","sdate","seepa","seepi","set","sex","SG","SGdat","showC","showD","showE","showH","showL","showM","showQ","SID","sigma","species","spn","spp","srfa","srfs","SSB","steptol","sthin","storageID","strArea","strat","strGear","strSpp","strYear","stype","surveys",

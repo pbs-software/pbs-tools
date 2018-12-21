@@ -7,13 +7,12 @@
 }
 \usage{
 calcVB(dat=pop.age, strSpp="", yfld="len", fixt0=FALSE, 
-   areas=list(major=NULL, minor=NULL, locality=NULL, 
-              srfa=NULL,srfs=NULL, popa=NULL),
-   ttype=list(commercial=c(1,4,5),research=c(2,3)), stype=c(1,2,6,7),
-   scat=NULL, sex=list(Females=2,Males=1), rm.studs=NULL,
-   year=NULL, ylim=NULL, ameth=c(3,17), allTT=TRUE, jit=c(0,0), 
+   areas=list(major=NULL, minor=NULL, locality=NULL, srfa=NULL,srfs=NULL, popa=NULL),
+   ttype=list(commercial=c(1,4,5),research=c(2,3)), stype=c(1,2,6,7), scat=NULL,
+   sex=list(Females=2,Males=1), rm.studs=NULL,
+   year=NULL, xlim=NULL, ylim=NULL, ameth=c(3,17), jit=c(0,0), 
    eps=FALSE, jpg=FALSE, pdf=FALSE, png=FALSE, tif=FALSE, wmf=FALSE,
-   plotname, singles=FALSE, pages=FALSE, tables=TRUE,
+   plotname, singles=FALSE, pages=FALSE, tables=TRUE, figures=TRUE,
    ioenv=.GlobalEnv, lang=c("e","f"))
 }
 \arguments{
@@ -33,9 +32,9 @@ calcVB(dat=pop.age, strSpp="", yfld="len", fixt0=FALSE,
     e.g. \code{list(Females=2, Males=1, Unknown=c(0,3))}.}
   \item{rm.studs}{\code{numeric} -- \emph{n}, if specified, remove Studentized residuals lying outside \emph{n} standard deviations.}
   \item{year}{\code{numeric} -- integer vector of years used to subset \code{dat}.}
+  \item{xlim}{\code{numeric} -- vector specifying the limits of the x-axis.}
   \item{ylim}{\code{numeric} -- vector specifying the limits of the y-axis.}
   \item{ameth}{\code{numeric} -- code specifying ageing method protocol -- defaults to \code{3} (break & burn) plus \code{17} (break & bake).}
-  \item{allTT}{\code{logical} -- if \code{TRUE}, force the display of all trip types either specified or available.}
   \item{jit}{\code{numeric} -- two-element vector specifying amount of jittering to apply in the 
     x- and -y-directions respectively. (See \code{jitter} in the \pkg{base} package.)}
   \item{eps}{\code{logical} -- if \code{TRUE}, send plot to a postscript \code{.eps} file.}
@@ -48,6 +47,7 @@ calcVB(dat=pop.age, strSpp="", yfld="len", fixt0=FALSE,
   \item{singles}{\code{logical} -- if \code{TRUE} and \code{eps|jpg|pdf|png|tif|wmf}, send each area/trip type combination to separate files.}
   \item{pages}{\code{logical} -- if \code{TRUE} and \code{eps|jpg|pdf|png|tif|wmf}, send each page of area plots to separate files.}
   \item{tables}{\code{logical} -- if \code{TRUE} and \code{lang="e"}, download output into \code{.csv} tables.}
+  \item{figures}{\code{logical} -- if \code{TRUE}, plot the figures.}
   \item{ioenv}{\code{environment} -- input/output environment for function input data and output results.}
   \item{lang}{\code{character} -- a vector of letters that denote the language for output:
     currently only \code{"e"} (english) and \code{"f"} (french).}
@@ -86,8 +86,8 @@ calcVB(dat=pop.age, strSpp="", yfld="len", fixt0=FALSE,
 \author{
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
-  \emph{opus locus}: Institute of Ocean Sciences (IOS), Sidney BC\cr
-  Last modified \code{Rd: 2018-07-23}
+  \emph{locus opus}: Institute of Ocean Sciences (IOS), Sidney BC\cr
+  Last modified \code{Rd: 2018-12-19}
 }
 \seealso{
   \pkg{PBStools}:
