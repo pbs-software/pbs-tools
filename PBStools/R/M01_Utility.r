@@ -309,13 +309,13 @@ createFdir = function(lang, dir=".")
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~createFdir
 
 
-## crossTab-----------------------------2018-12-19
+## crossTab-----------------------------2019-01-28
 ## Summarize z using crosstab values y.
 ## Hadley and package 'reshape' deprecated.
 ## ---------------------------------------------RH
 crossTab = function(x=PBSdat, y=c("year","major"), 
    z="landed", func=function(x){sum(x)/1000.}, 
-   na.val=999, hadley=FALSE, ...)
+   na.val=999, na.str="NA", hadley=FALSE, ...)
 {
 	if (hadley && !requireNamespace("reshape", quietly = TRUE)) stop("`reshape` package is required")
 	flds=names(x)
@@ -330,23 +330,27 @@ crossTab = function(x=PBSdat, y=c("year","major"),
 		expr=paste("Z=reshape::cast(Y,", paste(paste(ifelse(length(y)==1,"~",""),y,sep=""),collapse="~"), ",func,...)",sep="")
 		eval(parse(text=expr))
 	} else {
-		#Yvals = gatherVals(x,c(y,z))
-		#Ylist = split(Yvals,Yvals$key)
-		#Y     = cbind(sapply(y,function(i){Ylist[[i]][,"value"]}),Ylist[[z]])
-
+		## Detect character summary dimensions and replace missing values with 'na.str'to character values (RH 190128)
+		if (any(grepl("character",sapply(x[,y,drop=FALSE],class)))) {
+			i = grep("character",sapply(x[,y,drop=FALSE],class))
+			x[,y[i]] = as.data.frame(apply(x[,y[i],drop=FALSE],2,function(xx){
+				xx = .trimWhiteSpace(xx)
+				xx[is.na(xx) | xx==""] = .trimWhiteSpace(as.character(na.str))
+				return(xx)
+			} ))
+		}
 		X = x[,unique(c(y,z))]
 		#X = x[,c(y,z)]  ## if y & z have the same fields, only need to specify once, otherwise the duplicate field becomes 'fld.1'
 		X[,y][is.na(X[,y])] = na.val
+
 		## Need drop=FALSE when y is a single factor (in the non-R sense)
 		xdim = sapply(X[,y,drop=FALSE],function(xx){length(.su(xx))})
 		xnam = sapply(X[,y,drop=FALSE],function(xx){.su(xx)},simplify=FALSE)
 		Z    = array(0, dim=xdim, dimnames=xnam )
-		#X$ID = .createIDs(X,y)  ## doesn't work if one of the fields has a valid 0 (zero) code
-		#X$ID = .trimWhiteSpace(apply(X[,y,drop=FALSE],1,paste0,collapse="|")) ## sometimes paste adds whitespace depending on format of y-values.
 		X$ID = apply(X[,y,drop=FALSE],1,function(x){paste0(.trimWhiteSpace(x),collapse="|")}) ## sometimes paste adds whitespace depending on format of y-values.
+
 		## vector summary of x by y using func (unless func returns more than one summary value)
 		Zsum = sapply(split(X[,z],X$ID),func) #,simplify=FALSE)
-#browser();return()
 		if (is.vector(Zsum)) {
 			Zind = strsplit(names(Zsum),split="\\|"); names(Zind) = names(Zsum)
 			expr = paste0("sapply(names(Zsum), function(i){ Z[", paste0("Zind[[i]][",1:length(xdim),"]",collapse=","),"] <<- Zsum[i] })")
@@ -355,7 +359,6 @@ crossTab = function(x=PBSdat, y=c("year","major"),
 			Zind = strsplit(colnames(Zsum),split="\\|"); names(Zind) = colnames(Zsum)
 			expr = paste0("sapply(colnames(Zsum), function(i){ Z[", paste0("Zind[[i]][",1:length(xdim),"]",collapse=","),",] <<- Zsum[,i] })")
 		}
-#browser();return()
 		eval(parse(text=expr))
 	}
 	return(Z)

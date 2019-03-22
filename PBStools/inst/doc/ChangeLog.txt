@@ -10,6 +10,32 @@ Authors: RH  = Rowan Haigh
          BK  = Brian Krishka
 ------------------------------
 
+1.39.2 (2019-03-22)  [Rcheck=T, Rbuild=T]
+  * M01_Utility.r
+    + Fixed bug in function `crossTab' which occurred when one character summarising field contained empty string. (RH 190128)
+      - Added new argument `na.str' to use when empty string occurs in character fields that summarise data.
+  * M02_Biology.r
+    + Modified function `histTail' slightly to put function objects into `obj.histTail'. (RH 190131)
+  * M03_Fishery.r
+    + Updated function `getCatch' to reload binary rda files every time if `sql=FALSE'. (RH 181231)
+  * M05_Spatial.r
+    + Modified function `clarify' to allow for png output. (RH 190320)
+    + Modified function `calcHabitat' to reflect call options to `findHoles'. (RH 190131)
+    + Changed the algorithm in function `findHoles' to identify solids with holes. (RH 190131)
+      - Started with a bug in calculating Widow Rockfish bathymetry habitat.
+      - New logical argument `use.sp.pkg' gives two options for determining if one polygon lies inside another.
+      - (i) continue using `sp::point.in.polygon' or (ii) use `PBSmapping::.is.in' (but the latter is 3x slower).
+    + Fixed bug in function `.preferDepth.getDepth' where PBSdat was not manipulated correctly, causing PLOT button to re-query depths on SQL Server. (RH 190122)
+    + Modified function `plotEO' to use generic `prefix' argument and to call function `zapSeamounts' if new argument `rmSM' is TRUE. (RH 190122)
+    + Created new function `findEP' to find events in polygons and add ID from PolySet's PolyData to events. (RH 190121)
+    + Modified function `plotLocal' to optionally call the new function `findEP'. (190119)
+  * M06_Assessment.r
+    + Added a few arguments to function `compAF'. (RH 190321)
+  * SQL code
+    + Added new query `gfb_survey_events.sql' to extract fishing events for specific surveys (RH 190128)
+    + Modified query `gfb_age_request.sql' to use the same code from `gfb_bio.sql' when determining survey series. (RH 190108)
+    + Modified query `gfb_catch_records.sql' to use the same code from `gfb_bio.sql' when determining survey series. (RH 181231)
+
 1.39.1 (2018-12-21)  [Rcheck=T, Rbuild=T]
   * M01_Utility.r
     + Changed default value for `crossTab' argument `na.val' from 99 to 999. (RH 181219)

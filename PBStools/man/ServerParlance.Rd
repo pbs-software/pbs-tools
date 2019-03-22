@@ -39,10 +39,13 @@
   structures in the same way that SQL Server databases are.
 }
 \author{
-  Norm Olsen, Pacific Biological Station, Fisheries and Oceans Canada, Nanaimo BC
+  \href{mailto:norm.olsen@dfo-mpo.gc.ca}{Norm Olsen}, Program Head -- Surveys\cr
+  Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
+  Last modified \code{Rd: 2019-03-22}
 }
 \seealso{
-  \code{\link[PBStools]{PBStools}} for package functions and data.\cr
+In package \pkg{PBStools}:\cr
+  \code{\link[PBStools]{PBStools-package}} for package functions and data.\cr
   \code{\link[PBStools]{SQLcode}} for available SQL queries.\cr
   \code{\link[PBStools]{getData}} to execute the SQL queries.
 }

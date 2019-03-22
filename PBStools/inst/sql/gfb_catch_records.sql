@@ -6,36 +6,53 @@ SET NOCOUNT ON  -- prevents timeout errors
 
 -- =====ASSOCIATE TRIPS WITH SURVEYS=====
 
--- Merge tables to get TRIP_ID, SURVEY_ID, and SURVEY_SERIES_ID
+-- Identify surveys by original index only (see gfb_bio.sql, RH 181219) - some restrats may need to be added over time
 SELECT
-  TS.TRIP_ID, 
-  TS.SURVEY_ID, 
-  IsNull(S.SURVEY_SERIES_ID,0) AS SURVEY_SERIES_ID,
-  CASE 
-    WHEN S.ORIGINAL_IND='Y' THEN 1
-    WHEN S.ORIGINAL_IND='N' THEN 2
-    ELSE 3 END AS ORIGINAL_IND
-INTO #TempTripSurv
-FROM 
-  SURVEY S RIGHT OUTER JOIN
-  TRIP_SURVEY TS ON
-  S.SURVEY_ID = TS.SURVEY_ID 
+  S.SURVEY_SERIES_ID,
+  S.SURVEY_ID
+INTO #ORIGINAL_SURVEYS
+FROM SURVEY S
+WHERE
+  (S.ORIGINAL_IND='Y' AND S.SURVEY_ID NOT IN (79)) -- Exclude original stratification for 2006 WCHG Synoptic (use SVID 123)
+  OR
+  (S.ORIGINAL_IND='N' AND S.SURVEY_SERIES_ID IN (21) AND S.SURVEY_ID BETWEEN 91 AND 104) -- Special case for GIG Historical
+ORDER BY
+  S.SURVEY_SERIES_ID, S.SURVEY_ID
 
--- TRIP_ID can be associated with more than one SURVEY_ID, which can include the original index or not.
--- Choose one SURVEY_ID per TRIP_ID, preferably the orginal index.
--- When the orginal is not avialable, choose a non-original index.
+-- Merge tables to get TRIP_ID, SURVEY_ID, and SURVEY_SERIES_ID (see gfb_bio.sql, RH 181219)
 SELECT
-  TS.TRIP_ID, 
-  TS.SURVEY_ID, 
-  TS.SURVEY_SERIES_ID,
-  TS.ORIGINAL_IND
+  TS.TRIP_ID,
+  CASE
+    WHEN OS.SURVEY_SERIES_ID IS NULL THEN 999
+    WHEN OS.SURVEY_SERIES_ID IN (6,7) THEN 670          -- Shrimp trawl surveys
+    WHEN OS.SURVEY_SERIES_ID IN (35,41,42,43) THEN 350  -- Sablefish surveys
+    WHEN OS.SURVEY_SERIES_ID BETWEEN 82 AND 87 THEN 820 -- Jig surveys
+    WHEN OS.SURVEY_ID IN (130) THEN 40                  -- HBLL South survey
+    WHEN OS.SURVEY_ID IN (131) THEN 39                  -- HBLL North survey
+    WHEN OS.SURVEY_SERIES_ID IN (10,21) THEN 21         -- GIG historical
+    ELSE OS.SURVEY_SERIES_ID END AS SURVEY_SERIES_ID,
+  MAX(OS.SURVEY_ID) AS SURVEY_ID
 INTO #TripSurvSer
-FROM
-  (SELECT *,
-    ROW_NUMBER() OVER (PARTITION BY TTS.TRIP_ID ORDER BY TTS.ORIGINAL_IND, TTS.SURVEY_ID) AS RN
-  FROM #TempTripSurv TTS) AS TS
-WHERE TS.RN = 1
-ORDER BY TS.TRIP_ID
+FROM 
+  --#onlyTID T INNER JOIN
+  TRIP T INNER JOIN
+  (#ORIGINAL_SURVEYS OS INNER JOIN
+  TRIP_SURVEY TS ON
+    OS.SURVEY_ID = TS.SURVEY_ID) ON
+    T.TRIP_ID = TS.TRIP_ID
+--WHERE T.TRIP_ID IN (10921,62066)
+GROUP BY
+  TS.TRIP_ID,
+  CASE
+    WHEN OS.SURVEY_SERIES_ID IS NULL THEN 999
+    WHEN OS.SURVEY_SERIES_ID IN (6,7) THEN 670          -- Shrimp trawl surveys
+    WHEN OS.SURVEY_SERIES_ID IN (35,41,42,43) THEN 350  -- Sablefish surveys
+    WHEN OS.SURVEY_SERIES_ID BETWEEN 82 AND 87 THEN 820 -- Jig surveys
+    WHEN OS.SURVEY_ID IN (130) THEN 40                  -- HBLL South survey
+    WHEN OS.SURVEY_ID IN (131) THEN 39                  -- HBLL North survey
+    WHEN OS.SURVEY_SERIES_ID IN (10,21) THEN 21         -- GIG historical
+    ELSE OS.SURVEY_SERIES_ID END
+
 
 -- Gather earliest GROUPING_CODE by FISHING_EVENT_ID (changed 180129 to match gfb_bio.sql)
 -- This is likely to match the original series SSID
@@ -107,7 +124,7 @@ SELECT --TOP 20
       ELSE TSS.SURVEY_SERIES_ID END)
     ELSE TSS.SURVEY_SERIES_ID END,
   'SVID' = TSS.SURVEY_ID,
-  'OI' = TSS.ORIGINAL_IND, --CASE
+  --'OI' = TSS.ORIGINAL_IND, --CASE
     --WHEN TSS.ORIGINAL_IND IN ('Y') THEN 'TRUE'
     --ELSE 'FALSE' END,
   'GC'   = CASE                                             -- SURVEY_GROUPING
@@ -187,4 +204,5 @@ ORDER BY
 --getData("gfb_catch_records.sql","GFBioSQL",strSpp="401",as.is=c(rep(F,14),T,rep(F,3)))
 --qu("gfb_catch_records.sql",dbName="GFBioSQL",strSpp="607",as.is=c(rep(F,14),T,rep(F,3)))
 --qu("gfb_catch_records.sql",dbName="GFBioSQL",strSpp="439",as.is=c(rep(F,16),T,rep(F,3)))
+--qu("gfb_catch_records.sql",dbName="GFBioSQL",strSpp="417",as.is=c(rep(FALSE,15),TRUE,rep(FALSE,3)))
 

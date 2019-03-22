@@ -2237,7 +2237,7 @@ histMetric <- function(dat=pop.age, xfld="age", xint=1, minN=50,
 #---------------------------------------histMetric
 
 
-## histTail-----------------------------2018-12-13
+## histTail-----------------------------2019-01-31
 ## Create a histogram showing tail details
 ## ---------------------------------------------RH
 histTail <-function(dat=pop.age, xfld="age", tailmin=NULL, 
@@ -2259,14 +2259,14 @@ histTail <-function(dat=pop.age, xfld="age", tailmin=NULL,
 	x    = dat[,xfld]
 	x    = x[!is.na(x)]
 	nx   = length(x)
+	nyr  = table(dat$year)
 	xlab = paste(toupper(substring(xfld,1,1)),substring(xfld,2),sep="",collapse=" ")
 	spp  = attributes(dat)$spp
 	fnam = paste0(spp,"-Hist-",xlab)
-#browser();return()
 
 	fout = fout.e = fnam
-	for (l in lang) {  ## could switch to other languages if available in 'linguaFranca'.
-		fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
+	for (l in lang) {
+		if (l=="f") fout = paste0("./french/",fout.e)  ## could repeat for other languages
 		if (wmf && .Platform$OS.type=="windows")
 			do.call("win.metafile",list(filename=paste0(fout,".wmf"), width=PIN[1], height=PIN[2]))
 		else if (png) png(paste0(fout,".png"), units="in", res=pngres, width=PIN[1], height=PIN[2])
@@ -2290,8 +2290,8 @@ histTail <-function(dat=pop.age, xfld="age", tailmin=NULL,
 		}
 		if (wmf|png) dev.off()
 	} ## end l (lang) loop
-	stuff=c("x","nx","nz","brks","xlab","ylab")
-	packList(stuff,"PBStool",tenv=.PBStoolEnv)
+	stuff=c("x","nx","nyr","nz","brks","xlab","ylab")
+	packList(stuff,"obj.histTail",tenv=.PBStoolEnv)
 	invisible()
 }
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~histTail

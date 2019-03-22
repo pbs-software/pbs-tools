@@ -1,30 +1,29 @@
-#===============================================================================
-# Module 3: Fishery
-# -----------------
-#  calcRatio.......Calculates ratios of numerator to denominator (e.g., 'discard'/'catch').
-#  dumpMod.........Dump catch from modern sources used in catch reconstruction.
-#  dumpRat.........Dump catch ratios calculated by a catch reconstruction.
-#  getCatch........Get catch records for a species from various databases and combine.
-#  glimmer.........Performs an lm on a predefined dataset.
-#  makeCATtables...Make CSV files containing catch from commercial fisheries.
-#  plotCatch.......Plot catch history as annual barplot using specified catch fields.
-#  plotConcur......Horizontal barplot of concurrent species in tows.
-#  plotFOScatch....Plot catch as monthly barplots from 'fos_catch.sql' query to GFFOS.
-#  runCCA..........Catch-curve model based on Schnute and Haigh (2006).
-#  sumCatTabs......Summarize catch by year & PMFC from modern catch data used in catch reconstruction.
-#  trackBycat......Track annual fish group catches between depth limits.
-#===============================================================================
+## =============================================================================
+## Module 3: Fishery
+## -----------------
+##  calcRatio.......Calculates ratios of numerator to denominator (e.g., 'discard'/'catch').
+##  dumpMod.........Dump catch from modern sources used in catch reconstruction.
+##  dumpRat.........Dump catch ratios calculated by a catch reconstruction.
+##  getCatch........Get catch records for a species from various databases and combine.
+##  glimmer.........Performs an lm on a predefined dataset.
+##  makeCATtables...Make CSV files containing catch from commercial fisheries.
+##  plotCatch.......Plot catch history as annual barplot using specified catch fields.
+##  plotFOScatch....Plot catch as monthly barplots from 'fos_catch.sql' query to GFFOS.
+##  runCCA..........Catch-curve model based on Schnute and Haigh (2006).
+##  sumCatTabs......Summarize catch by year & PMFC from modern catch data used in catch reconstruction.
+##  trackBycat......Track annual fish group catches between depth limits.
+## =============================================================================
 
-#calcRatio------------------------------2013-07-19
-# Calculates ratios of the numerator field to the
-# denominator field (e.g., 'discard'/'catch').
-# nfld   - numerator field
-# dfld   - denominator field
-# nzero  - if T, keep 0-value numerators
-# dzero  - if T, keep 0-value denominators
-# major  - specific PMFC areas specified as numeric codes
-# startM - Month of year to start the year
-#-----------------------------------------------RH
+## calcRatio----------------------------2013-07-19
+##  Calculates ratios of the numerator field to the
+##  denominator field (e.g., 'discard'/'catch').
+##  nfld   - numerator field
+##  dfld   - denominator field
+##  nzero  - if T, keep 0-value numerators
+##  dzero  - if T, keep 0-value denominators
+##  major  - specific PMFC areas specified as numeric codes
+##  startM - Month of year to start the year
+## ---------------------------------------------RH
 calcRatio <- function(dat, nfld, dfld, nzero=TRUE, dzero=TRUE, sumF=mean, 
      major=NULL, startM=1, plot=FALSE, ylim=NULL, wmf=FALSE, quiet=FALSE, ioenv=.GlobalEnv) {
 
@@ -120,7 +119,8 @@ calcRatio <- function(dat, nfld, dfld, nzero=TRUE, dzero=TRUE, sumF=mean,
 	packList(c("pmfc","psum","stored"),"PBStool",tenv=.PBStoolEnv)
 	if(plot&&wmf) dev.off()
 	invisible(psum) }
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~calcRatio
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~calcRatio
+
 
 #dumpMod--------------------------------2011-06-15
 # Dump catch from modern sources used in catch reconstruction.
@@ -174,6 +174,7 @@ dumpMod = function(dat,catch=c("landed","discard"),fid=1:5,strSpp="396",dbs=TRUE
 }
 #------------------------------------------dumpMod
 
+
 #dumpRat--------------------------------2013-01-28
 # Dump catch ratios calculated by a catch reconstruction.
 #-----------------------------------------------RH
@@ -214,15 +215,15 @@ dumpRat = function(strSpp="396", rats=c("alpha","beta","gamma","delta","lambda")
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~dumpRat
 
 
-#getCatch-------------------------------2017-07-31
-# Extract catch records for a species from various
-# databases and combine them into one commercial 
-# catch data frame and one survey catch data frame.
-# Queries: gfb_catch_records.sql
-#          gfc_catch_records.sql
-#          pht_catch_records.sql
-#          fos_catch_records.sql
-#-----------------------------------------------RH
+## getCatch-----------------------------2018-12-31
+##  Extract catch records for a species from various
+##  databases and combine them into one commercial 
+##  catch data frame and one survey catch data frame.
+##  Queries: gfb_catch_records.sql
+##           gfc_catch_records.sql
+##           pht_catch_records.sql
+##           fos_catch_records.sql
+## ---------------------------------------------RH
 getCatch = function(strSpp="396", dbs=c("gfb","gfc","pht","fos"),
    sql=FALSE, sqlpath=.getSpath(), proBio=FALSE, ioenv=.GlobalEnv)
    #uid=Sys.info()["user"], pwd=uid, ioenv=.GlobalEnv) 
@@ -234,7 +235,7 @@ getCatch = function(strSpp="396", dbs=c("gfb","gfc","pht","fos"),
 			showError(paste0("Not all 'dbs' are support by the code.\n\nChoose from ",deparse(DBS)),as.is=TRUE)
 		for (i in dbs) {
 			qnam = paste(i,"_catch_records.sql",sep="")
-			if (i=="gfb")  qstr = "dbName=\"GFBioSQL\",as.is=c(rep(FALSE,16),TRUE,rep(FALSE,3))"  ## as.is for 'spp' field
+			if (i=="gfb")  qstr = "dbName=\"GFBioSQL\",as.is=c(rep(FALSE,15),TRUE,rep(FALSE,3))"  ## as.is for 'spp' field
 			else if (i=="gfc") qstr = "dbName=\"GFCatch\""
 			else if (i=="pht") qstr = "dbName=\"PacHarvest\""
 			else if (i=="fos") qstr = "dbName=\"GFFOS\""
@@ -247,7 +248,7 @@ getCatch = function(strSpp="396", dbs=c("gfb","gfc","pht","fos"),
 		}
 	} else {
 		for (i in dbs) {
-			expr=paste(c("getFile(\"cat",strSpp,i,".wB\",senv=ioenv,tenv=.PBStoolEnv)"),collapse="")
+			expr=paste(c("getFile(\"cat",strSpp,i,".wB\", reload=TRUE, senv=ioenv, tenv=.PBStoolEnv)"),collapse="")
 			eval(parse(text=expr))
 		}
 	}
@@ -312,7 +313,8 @@ getCatch = function(strSpp="396", dbs=c("gfb","gfc","pht","fos"),
 	}
 	invisible(out)
 }
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~getCatch
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~getCatch
+
 
 #glimmer--------------------------------2014-05-06
 # Performs an lm/aov on a predefined dataset
@@ -758,104 +760,6 @@ plotCatch=function(dat="dbr.rem", flds=c("CAtrawl","UStrawl","TotalHL"),
 	packList(stuff,"PBStool",tenv=.PBStoolEnv)
 	invisible() }
 #----------------------------------------plotCatch
-
-
-#plotConcur-----------------------------2018-01-23
-# Horizontal barplot of concurrent species in tows.
-#-----------------------------------------------RH
-plotConcur = function(strSpp="410", dbName="GFFOS", spath=.getSpath(),
-     mindep=150, maxdep=435, major=NULL, minor=NULL, top=NULL, trawl=1,
-     saraSpp=c("027","034","394","410","424","435","437","440","442","453"),
-     reset.mf=TRUE, eps=FALSE, png=FALSE, pngres=300, colour="topo") {
-
-	assign("PBStool",list(module="M03_Fishery",call=match.call(),args=args(plotConcur),plotname="Concur"),envir=.PBStoolEnv)
-	data("species", "gear", package="PBSdata", envir=penv())
-	zspp=species$name!=species$latin
-	species$name[zspp] = toUpper(species$name[zspp])
-
-	## If dummy is not specified it defaults to '' which is tranlsated as minor=0 and unwanted records are collected
-	if (is.null(minor)) minor = 999 ## doesn't exist -- used to fool SQL
-
-	if (dbName=="GFFOS")
-		getData("fos_concurrent.sql", "GFFOS", strSpp, path=spath,
-			mindep=mindep, maxdep=maxdep, major=major, dummy=minor, top=top, gear=trawl, tenv=penv())
-	else if (dbName=="PacHarvest")
-		getData("pht_concurrent.sql","PacHarvest",strSpp,path=spath,
-			mindep=mindep,maxdep=maxdep,major=major,dummy=minor,top=top,gear=trawl,tenv=penv())
-	else if (dbName=="PacHarvHL")
-		getData("phhl_concurrent.sql","PacHarvHL",strSpp,path=spath,
-			mindep=mindep,maxdep=maxdep,major=major,dummy=minor,top=top,tenv=penv())
-	else
-		showError("Choices for 'dbName' are 'GFFOS', 'PacHarvest' or 'PacHarvHL'")
-	dat = PBSdat
-	sql = attributes(PBSdat)$sql
-
-	dat$spp   = as.character(dat$spp)
-	dat$code  = pad0(dat$code,3)
-	dat$latin = species[dat$code,"latin"]
-	dat  = dat[,c("code","spp","latin","catKt","pct")]
-	dat  = dat[rev(order(dat$pct)),]
-	dat$spp = toUpper(dat$spp)
-
-	#plotname <- paste("Concur",strSpp,dbName,switch(trawl,"Bottom","Shrimp","Midwater"),sep="-")
-	plotname <- paste("Concur",strSpp,dbName,paste0(c("Bottom","Shrimp","Midwater")[trawl],collapse="+"),sep="-")
-	if (!is.null(minor) && !all(minor==999)) plotname = sub(strSpp,paste(strSpp,"-minor(",paste(minor,collapse=""),")",sep=""),plotname)
-	if (!is.null(major)) plotname = sub(strSpp,paste(strSpp,"-major(",paste(major,collapse=""),")",sep=""),plotname)
-	write.csv(dat,paste(plotname,".csv",sep=""),row.names=FALSE)
-	# Re-format the same table so that it's latex-ready
-	textab = dat
-	textab$code  = pad0(textab$code,3)
-	#textab$spp   = toUpper(textab$spp)
-	textab$latin = paste("\\emph{",textab$latin,"}",sep="")
-	textab$catKt = format(round(textab$catKt * 1000.),big.mark=",",trim=TRUE)
-	textab$pct   = show0(round(textab$pct,3),3)
-	names(textab)=c("Code","Species","Latin name","Catch (t)","Catch (\\%)")
-	write.csv(textab,paste("tex-",plotname,".csv",sep=""),row.names=FALSE)
-	# Note: to read the table back into R use 'read.csv("xyz.csv",check.names=FALSE)'
-
-	#----- Plotting -----
-	dat  = dat[order(dat$pct),] # for plotting as horizontal bars w/ largest at top
-	if (eps) {
-		postscript(file=paste(plotname,"eps",sep="."),width=10,height=6,horizontal=FALSE,paper="special")
-		par(mfrow=c(1,1),cex=0.8,mar=c(3,12,0.5,1),oma=c(0,0,0,0),mgp=c(1.5,.5,0))
-	} else if (png) {
-		plotname <- paste(plotname,"png",sep=".")
-		png(plotname, units="in", res=pngres, width=6.5, height=3.5)
-		par(mfrow=c(1,1), cex=0.7, mar=c(3,10,0.5,1), oma=c(0,0,0,0), mgp=c(1.5,0.5,0))
-	} else if (reset.mf)
-		expandGraph(mfrow=c(1,1), cex=1.0, mar=c(4,10,1,1), oma=c(0,0,0,0), mgp=c(2,.5,0))
-	else
-		expandGraph(cex=1.0,mar=c(4,10,1,1),mgp=c(2,.5,0))
-	if (colour=="topo")
-		barcol = topo.colors(nrow(dat))
-	if (colour=="sombre")
-		barcol = rep("gainsboro",nrow(dat))
-	xy <- barplot(dat$pct, col=barcol, names.arg=dat$spp, horiz=TRUE, las=1, col.axis="grey20", xlab="Percent", cex.axis=0.8)
-	z <- xy[match(species[saraSpp,"name"],dat$spp)]
-	zbar = is.element(dat$spp,species[saraSpp,"name"])
-	if (any(!is.na(z))) {
-		axis(side=2, at=z, las=1, tick=FALSE, labels=species[saraSpp,"name"], col.axis="red")
-		if (!is.element(colour,c("topo")) && !is.null(colour)) {
-			barcol[zbar] = "pink"
-			barplot(dat$pct, col=barcol, names.arg=NULL, horiz=TRUE, las=1,col.axis="grey20", xaxt="n", yaxt="n", add=TRUE)
-		}
-	}
-	z <- xy[match(species[strSpp,"name"],dat$spp)]
-	zbar = is.element(dat$spp,species[strSpp,"name"])
-	if (!is.na(z)) {
-		axis(side=2, at=z, las=1, tick=FALSE, labels=species[strSpp,"name"], col.axis="blue")
-		if (!is.element(colour,c("topo")) && !is.null(colour)) {
-			barcol[zbar] = "lightblue1"
-			barplot(dat$pct, col=barcol, names.arg=NULL, horiz=TRUE, las=1,col.axis="grey20", xaxt="n", yaxt="n", add=TRUE)
-		}
-	}
-	addLabel(0.90,0.20,bquote(Sigma~Catch(kt) == .(round(sum(dat$catKt)))), cex=1.2, adj=1)
-	addLabel(0.90,0.15,bquote(Sigma~Catch('%') == .(round(sum(dat$pct),1))), cex=1.2, adj=1)
-
-	if (eps|png) dev.off()
-	packList(c("dat","xy","z","sql"),"PBStool",tenv=.PBStoolEnv)
-	invisible(dat) }
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotConcur
 
 
 #plotFOScatch---------------------------2010-06-02

@@ -31,9 +31,10 @@ inWord(word, morpheme, prefix=FALSE, suffix=FALSE)
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
   \emph{locus opus}: Institute of Ocean Sciences (IOS), Sidney BC\cr
-  Last modified \code{Rd: 2018-11-13}
+  Last modified \code{Rd: 2019-03-22}
 }
 \seealso{
+In package \pkg{PBStools}:\cr
   \code{\link[PBStools]{countLines}},
   \code{\link[PBStools]{findRC}},
   \code{\link[PBStools]{flagIt}},
@@ -42,10 +43,10 @@ inWord(word, morpheme, prefix=FALSE, suffix=FALSE)
   \code{\link[PBStools]{prime}},
   \code{\link[PBStools]{readClog}},
   \code{\link[PBStools]{revStr}},
-  \code{\link[PBStools]{showError}},
+  \code{showError} (in \code{\link[PBStools]{showMessage}}),
   \code{\link[PBStools]{texArray}},
   \code{\link[PBStools]{texThatVec}},
-  \code{\link[PBStools]{toUpper}},
+  \code{\link[PBStools]{toUpper}}
 }
 % Add one or more standard keywords, see file 'KEYWORDS' in the
 % R documentation directory.

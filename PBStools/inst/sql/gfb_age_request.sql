@@ -35,20 +35,52 @@ FROM
 WHERE SPC.COLLECTED_ATTRIBUTE_CODE IN (20)
 --AND SPC.SAMPLE_ID IN (181641) --237530) --173642) --408357)
 
--- Collect TRIP_IDs for each SURVEY_ID
--- Unfortunately, SURVEY_ID not unique to TRIP_ID (e.g., Shrimp Trawl surveys) therefore cannot use
-SELECT --TOP 100
-  B01.TRIP_ID,
-  TS.SURVEY_ID,
-  ISNULL(S.SURVEY_SERIES_ID,0) AS SURVEY_SERIES_ID
+-- Identify surveys by original index only (see gfb_bio.sql, RH 181219) - some restrats may need to be added over time
+SELECT
+  S.SURVEY_SERIES_ID,
+  S.SURVEY_ID
+INTO #ORIGINAL_SURVEYS
+FROM SURVEY S
+WHERE
+  (S.ORIGINAL_IND='Y' AND S.SURVEY_ID NOT IN (79)) -- Exclude original stratification for 2006 WCHG Synoptic (use SVID 123)
+  OR
+  (S.ORIGINAL_IND='N' AND S.SURVEY_SERIES_ID IN (21) AND S.SURVEY_ID BETWEEN 91 AND 104) -- Special case for GIG Historical
+ORDER BY
+  S.SURVEY_SERIES_ID, S.SURVEY_ID
+
+-- Merge tables to get TRIP_ID, SURVEY_ID, and SURVEY_SERIES_ID (see gfb_bio.sql, RH 181219)
+SELECT
+  TS.TRIP_ID,
+  CASE
+    WHEN OS.SURVEY_SERIES_ID IS NULL THEN 999
+    WHEN OS.SURVEY_SERIES_ID IN (6,7) THEN 670          -- Shrimp trawl surveys
+    WHEN OS.SURVEY_SERIES_ID IN (35,41,42,43) THEN 350  -- Sablefish surveys
+    WHEN OS.SURVEY_SERIES_ID BETWEEN 82 AND 87 THEN 820 -- Jig surveys
+    WHEN OS.SURVEY_ID IN (130) THEN 40                  -- HBLL South survey
+    WHEN OS.SURVEY_ID IN (131) THEN 39                  -- HBLL North survey
+    WHEN OS.SURVEY_SERIES_ID IN (10,21) THEN 21         -- GIG historical
+    ELSE OS.SURVEY_SERIES_ID END AS SURVEY_SERIES_ID,
+  MAX(OS.SURVEY_ID) AS SURVEY_ID
 INTO #TRIPS_BY_SURVEY
 FROM 
-  B01_TRIP B01 INNER JOIN
-  TRIP_SURVEY TS LEFT OUTER JOIN
-  SURVEY S ON
-    TS.SURVEY_ID = S.SURVEY_ID ON 
-    B01.TRIP_ID = TS.TRIP_ID
-WHERE S.ORIGINAL_IND IN ('Y')
+  --#onlyTID T INNER JOIN
+  TRIP T INNER JOIN
+  (#ORIGINAL_SURVEYS OS INNER JOIN
+  TRIP_SURVEY TS ON
+    OS.SURVEY_ID = TS.SURVEY_ID) ON
+    T.TRIP_ID = TS.TRIP_ID
+--WHERE T.TRIP_ID IN (10921,62066)
+GROUP BY
+  TS.TRIP_ID,
+  CASE
+    WHEN OS.SURVEY_SERIES_ID IS NULL THEN 999
+    WHEN OS.SURVEY_SERIES_ID IN (6,7) THEN 670          -- Shrimp trawl surveys
+    WHEN OS.SURVEY_SERIES_ID IN (35,41,42,43) THEN 350  -- Sablefish surveys
+    WHEN OS.SURVEY_SERIES_ID BETWEEN 82 AND 87 THEN 820 -- Jig surveys
+    WHEN OS.SURVEY_ID IN (130) THEN 40                  -- HBLL South survey
+    WHEN OS.SURVEY_ID IN (131) THEN 39                  -- HBLL North survey
+    WHEN OS.SURVEY_SERIES_ID IN (10,21) THEN 21         -- GIG historical
+    ELSE OS.SURVEY_SERIES_ID END
 
 -- Collect unadulterated values from B01 to B05
 SELECT --TOP 100
@@ -270,4 +302,5 @@ SELECT
 -- getData("gfb_age_request.sql",dbName="GFBioSQL",strSpp="401")
 -- qu("gfb_age_request.sql",dbName="GFBioSQL",strSpp="396",gear=c(1,8))
 -- qu("gfb_age_request.sql",dbName="GFBioSQL",strSpp="439",gear=c(1,6,8))
+-- qu("gfb_age_request.sql",dbName="GFBioSQL",strSpp="435",gear=c(1,6,8)) -- queried: 190108
 

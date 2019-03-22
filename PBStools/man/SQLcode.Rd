@@ -20,7 +20,7 @@
     \bold{Database}     \tab \bold{code} \tab \bold{Fishery}                     \tab \bold{Dates} \cr
     \code{GFBioSQL}     \tab \code{gfb}  \tab Research, surveys, biology, JV hake catch, etc.   \tab 1946--2011 \cr
     \code{GFCatch}      \tab \code{gfc}  \tab Commercial fisheries data          \tab 1954--1975 \cr
-    \code{GFFOS}        \tab \code{fos}  \tab Commercial fisheries (all sectors) \tab 2002--2016 \cr
+    \code{GFFOS}        \tab \code{fos}  \tab Commercial fisheries (all sectors) \tab 2002--2019 \cr
     \code{PacHarv3}     \tab \code{ph3}  \tab Commercial sales slips data        \tab 1982--1994 \cr
     \code{PacHarvest}   \tab \code{pht}  \tab Commercial trawl fisheries         \tab 1996--2007 \cr
     \code{PacHarvHL}    \tab \code{phhl} \tab Commercial hook & line fisheries   \tab 1984--2006 \cr
@@ -37,6 +37,8 @@
   \tabular{ll}{
     \bold{SQL queries:} \tab \cr
     \code{gfb_ageing_summary.sql}       \tab Norm's ageing datasheet summary. \cr
+    \code{gfb_age_max.sql}              \tab Crosstab of maximum rockfish ages by ageing method.\cr
+    \code{gfb_age_precision.sql}        \tab Grabs age records with technicians' best age, min age and max age.\cr
     \code{gfb_age_request.sql}          \tab Summarize and choose otoliths taken but not aged.\cr
     \code{gfb_age_request_b21b22.sql}   \tab Same as previous but using summary tables as source.\cr
     \code{gfb_bio.sql}                  \tab Specimen biological data for a target species.\cr
@@ -60,7 +62,8 @@
     \code{gfb_iphc_skate_data.sql}      \tab IPHC longline skate data (for AME's IPHC index calculation).\cr
     \code{gfb_jcatORF.sql}              \tab Joint-venture hake fishery catch up to \& including 2006 only,\cr
                                         \tab (GFFOS captures J-V hake catch thereafter).\cr
-    \code{gfb_mean_weight.sql}          \tab Calculate mean weight of a fish species for converting discarded pieces to kg in GFFOS.\cr
+    \code{gfb_mean_weight.sql}          \tab Calculate mean weight of a fish species for converting\cr
+                                        \tab discarded pieces to kg in GFFOS.\cr
     \code{gfb_pht_catch.sql}            \tab Get commercial catch from \code{PacHarvest}; \cr
                                         \tab match trip IDs in \code{GFBioSQL} & \code{GFFOS}.\cr
     \code{gfb_pmr.sql}                  \tab Population parameters (\eqn{p}, \eqn{\mu}, \eqn{\rho}) for target species in survey strata.\cr
@@ -68,6 +71,7 @@
     \code{gfb_shrimp_trawl.sql}         \tab Get shrimp trawl catch GFBioSQL for clara analysis.\cr
     \code{gfb_survey_activity.sql}      \tab Summarise the annual survey catch for specified species.\cr
     \code{gfb_survey_catch.sql}         \tab Survey catch and density by species.\cr
+    \code{gfb_survey_events.sql}        \tab Collect various effort fields from survey tows.\cr
     \code{gfb_survey_stratum.sql}       \tab Survey stratum information.\cr
     \code{gfb_tasu.sql}                 \tab Specimen biological data for LL surveys in Tasu, Flamingo, Triangle, Brooks.\cr
     \code{gfb_YrWtAge.sql}              \tab Year, weight, age data for target species.\cr
@@ -75,7 +79,6 @@
                                         \tab which emulates PJS algorithm for GFBIO data.\cr
   }
 }
-
 \section{GFCatch}{
   \code{GFCatch} was originally a FORTRAN data compilation but is now housed on the SQL server
   \code{DFBCV9TWVASP001}. This database contains catch and effort data from three sources: logbooks
@@ -104,6 +107,7 @@
     \code{fos_catch_records.sql}        \tab Species catch by tow (zero-catch records excluded).\cr
     \code{fos_catch_records.ora}        \tab Oracle version of previous query.\cr
     \code{fos_checklist_catch.sql}      \tab Used for table of catches in DFO's 'checklist' nonsense.\cr
+    \code{fos_concurrent.sql}           \tab Top \emph{n} species caught concurrently with a target species.\cr
     \code{fos_fcatORF.sql}              \tab Species landings format for catch history reconstructions.\cr
     \code{fos_feid_catch.sql}           \tab Fishing event catch.\cr
     \code{fos_fishwt.sql}               \tab Mean weight for every species with catch and count info.\cr
@@ -197,8 +201,10 @@
   }
 }
 \author{
-  Rowan Haigh & Norm Olsen \cr
-  Pacific Biological Station, Fisheries and Oceans Canada, Nanaimo BC
+  \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
+  Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
+  \emph{locus opus}: Institute of Ocean Sciences (IOS), Sidney BC\cr
+  Last modified \code{Rd: 2019-03-22}
 }
 \references{
   Haigh, R., and Richards, L.J. (1997) 
@@ -218,7 +224,8 @@
   \emph{Canadian Stock Assessment Secretariat, Research Document} \bold{99/184}, 104 p.
 }
 \seealso{
-  \code{\link[PBStools]{PBStools}} for package functions and data.\cr
+In package \pkg{PBStools}:\cr
+  \code{\link[PBStools]{PBStools-package}} for package functions and data.\cr
   \code{\link[PBStools]{getData}} to execute the SQL queries.\cr
   \code{\link[PBStools]{ServerParlance}} for differences between SQL Server and Oracle database organisation.
 }

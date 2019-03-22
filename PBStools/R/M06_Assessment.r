@@ -50,12 +50,13 @@ calcMA = function(x,y,y2,period=270,every=10)
 #-------------------------------------------calcMA
 
 
-## compAF-------------------------------2018-07-17
+## compAF-------------------------------2019-03-21
 ## Compare age frequencies using discrete or
 ## cumulative distribution plots.
 ## ---------------------------------------------RH
 compAF=function(x, year=2003, sex=2, amax=40, pfld="wp",
-   png=FALSE, outnam, clrs=c("red","black"), ltys=1, 
+   png=FALSE, pngres=400, PIN=c(10,7.5),
+   outnam, clrs=c("red","black"), ltys=1, 
    type="cumul", lang=c("e","f"))
 {
 	if (length(x)==0) stop("Supply a named list for x")
@@ -74,9 +75,9 @@ compAF=function(x, year=2003, sex=2, amax=40, pfld="wp",
 	lty   = rep(ltys,ncomp)[1:ncomp]
 
 	fout = fout.e = outnam
-	for (l in lang) {  ## could switch to other languages if available in 'linguaFranca'.
-		fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
-		if (png) png(file=paste0(fout,".png"), units="in", res=600, width=10, height=7.5)
+	for (l in lang) {
+		if (l=="f") fout = paste0("./french/",fout.e)  ## could repeat for other languages
+		if (png) png(file=paste0(fout,".png"), units="in", res=pngres, width=PIN[1], height=PIN[2])
 		if (ntype==1 && nsex==1) {
 			rc = .findSquare(nyear)
 			np = 0  ## keep track of # plots
@@ -120,8 +121,7 @@ compAF=function(x, year=2003, sex=2, amax=40, pfld="wp",
 					if (all(notos==0))
 						addLabel(0.5, 0.5, linguaFranca("NO DATA",l), col="red", cex=1.2)
 					else 
-						abline(h=seq(0.1,0.9,0.1), v=seq(5,amax-5,5), col=lucent("grey",0.5))
-	#if (y==2014) {browser();return()}
+						abline(h=seq(0.1,0.9,0.1), v=seq(5,amax-5,5), col=lucent("grey",0.4))
 					sapply(nord, function(n){
 						if (!all(is.na(xvec[[n]]))) {
 							lines(1:length(xvec[[n]]), cumsum(xvec[[n]]), col=col[n], lty=lty[n], lwd=ifelse(n==1,3,2))
@@ -145,7 +145,6 @@ compAF=function(x, year=2003, sex=2, amax=40, pfld="wp",
 		} ## end y (year) loop
 		mtext (linguaFranca("Age",l), side=1, outer=TRUE, line=2.5, cex=1.5)
 		mtext (linguaFranca(paste0(ifelse(type=="cumul","Cumulative ",""), "Frequency"),l), side=2, outer=TRUE, line=2.5, cex=1.25)
-	#browser();return()
 		if(png) dev.off()
 	} ## end l (lang) loop
 }

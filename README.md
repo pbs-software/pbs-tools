@@ -1,6 +1,6 @@
 ## <font color="#6A5ACD">PBStools: Tools for the efficient execution of onerous tasks</font> ##
 
-<font color="red">&copy; Fisheries and Oceans Canada (2007-2018)</font>
+<font color="red">&copy; Fisheries and Oceans Canada (2007-2019)</font>
 
 **PBStools** provides an R interface for algorithms commonly used in fisheries. The scope of this package is by no means comprehensive, having grown from the need to satisfy tasks specific to British Columbia (BC) ocean fisheries. Many of the functions provide a quick way to visualize data, and in some cases perform preliminary analyses. Though oriented to users at the <a href="http://www.pac.dfo-mpo.gc.ca/science/facilities-installations/index-eng.html#pbs">Pacific Biological Station</a> (PBS), these functions may provide a broad utility to users at other locales. The User Guide is organised into sections that loosely classify the functions by theme -- (1) Utility, (2) Biology, (3) Fishery, (4) Survey, (5) Spatial, (6) Assessment, (7) Catch Reconstruction, and (8) LaTeX tools. Within each section, the functions are described alphabetically. 
 
@@ -14,9 +14,12 @@ Although **PBStools** is not available on <a href="https://cran.r-project.org/">
 
 In July 2018, the package was updated to include a new function called `linguaFranca`, which translates a limited set of BC stock assessment english words that appear in figures into french. This feature was largely driven by <a href="http://www.dfo-mpo.gc.ca/csas-sccs/process-processus/translation-traduction-eng.html">CSAS' mandate</a> to make all scientific research documents accessible to anglophone and francophone readers.
 
-One final note &#8211; although influences by Wizard Wickham pervade the Rverse these days, reliance on the convoluted machinations of the overlord will be deprecated in PBS packages wherever possible. While 'ggthis' and 'ggthat' provide code shortcuts, the underlying operations are not transparent. Furthermore, connecting ggblobs using <a href="https://www.fromthebottomoftheheap.net/2015/06/03/my-aversion-to-pipes/">pipes</a> simply makes the mess even more difficult to clean up. Resist assimilation and keep your R code pure. 
+Influences by Wizard Wickham pervade the Rverse these days; however, reliance on the convoluted machinations of the overlord will be deprecated in PBS packages wherever possible. While 'ggthis' and 'ggthat' provide code shortcuts, the underlying operations are not transparent. Furthermore, connecting 'ggblobs' using <a href="https://www.fromthebottomoftheheap.net/2015/06/03/my-aversion-to-pipes/">pipes</a> simply makes the mess even more difficult to clean up. Resist assimilation and keep your R code pure. 
 
-Another old R curmudgeon,<br> Rowan Haigh
+As with any freely available product, there is no warranty or promise that **PBStools** will perform adequately for all circumstances. Additionally, coding errors are possible, and users should contact the package maintainer if bugs are detected.
+
+Maintainer: <a href="mailto:rowan.haigh@dfo-mpo.gc.ca">Rowan Haigh</a>
+
 <p align="right"><img src="DFOlogo_small.jpg" alt="DFO logo" style="height:30px;"></p> 
 
 

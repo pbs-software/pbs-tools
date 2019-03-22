@@ -38,8 +38,8 @@ linguaFranca(x, lang="e", little=4, strip=FALSE)
   specified is english, the input vector is spat back out unadulterated.
   If the language is french (\code{lang="f"}), the vector goes through
   the pattern matching spin cycle and returns a beautiful translation
-  that would make the ghosts of Wouters (vision song), Tootoo (love 
-  triangle), and Shea (pie in face) proud.
+  that would make the ghosts of Wayne Wouters (vision song), Hunter Tootoo (love 
+  triangle), and Gail Shea (pie in face) proud.
 }
 \references{
   \href{http://www.dfo-mpo.gc.ca/csas-sccs/process-processus/translation-traduction-eng.html}{CSAS Policy on the translation of documents}
@@ -47,22 +47,23 @@ linguaFranca(x, lang="e", little=4, strip=FALSE)
 \author{
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
-  \emph{opus locus}: Institute of Ocean Sciences (IOS), Sidney BC\cr
-  Last modified \code{Rd: 2018-07-24}
+  \emph{locus opus}: Institute of Ocean Sciences (IOS), Sidney BC\cr
+  Last modified \code{Rd: 2019-03-22}
 }
 \note{
   Contact \href{mailto:ann.mariscak@dfo-mpo.gc.ca}{Ann Mariscak} (CSAP office)
   for more information on acceptable french translations.
 }
 \seealso{
-\code{\link[PBStools]{createFdir}},
-\code{\link[PBStools]{makeLTH}},
-\code{\link[PBStools]{readClog}},
-\code{\link[PBStools]{revStr}},
-\code{\link[PBStools]{showError}},
-\code{\link[PBStools]{texArray}},
-\code{\link[PBStools]{texThatVec}},
-\code{\link[PBStools]{wrapText}}
+In package \pkg{PBStools}:\cr
+  \code{\link[PBStools]{createFdir}},
+  \code{\link[PBStools]{makeLTH}},
+  \code{\link[PBStools]{readClog}},
+  \code{\link[PBStools]{revStr}},
+  \code{showError} (in \code{\link[PBStools]{showMessage}}),
+  \code{\link[PBStools]{texArray}},
+  \code{\link[PBStools]{texThatVec}},
+  \code{\link[PBStools]{wrapText}}
 }
 % Add one or more standard keywords, see file 'KEYWORDS' in the
 % R documentation directory.

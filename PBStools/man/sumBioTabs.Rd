@@ -23,12 +23,20 @@ sumBioTabs(dat, fnam="sumBioTab.csv", samps=TRUE, specs=TRUE,
   No value is returned to the R console. The output is placed into the file name specified.
 }
 \author{
-  Rowan Haigh, Pacific Biological Station, Nanaimo BC
+  \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
+  Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
+  \emph{locus opus}: Institute of Ocean Sciences (IOS), Sidney BC\cr
+  Last modified \code{Rd: 2019-03-22}
 }
 \seealso{
-  \code{\link{sumCatTabs}}, \code{\link{processBio}} \cr
-  \pkg{base}: \code{\link[base]{table}} \cr
-  \pkg{reshape}: \code{\link[reshape]{melt.data.frame}}, \code{\link[reshape]{cast}}
+In package \pkg{PBStools}:\cr
+  \code{\link[PBStools]{sumCatTabs}},
+  \code{\link[PBStools]{processBio}} \cr
+In package \pkg{base}:\cr
+  \code{\link[base]{table}} \cr
+In package \pkg{reshape}:\cr
+  \code{melt.data.frame},
+  \code{cast}
 }
 \keyword{manip}
 \keyword{file}

@@ -8,7 +8,9 @@
 ##  calcWAParea.....Assign a stock area designation for Walleye Pollock using PMFC major and minor areas, a stratifying vector, and a weighting vector.
 ##  calcSurficial...Calculate intersection of surficial geology and bathymetry interval.
 ##  clarify.........Analyse catch proportions in blocks, then cluster into fisheries groups.
+##  findEP..........Find events in polys and and add poly info to events.
 ##  findHoles.......Find holes and place them under correct parents.
+##  plotConcur......Horizontal barplot of concurrent species in tows.
 ##  plotEO..........Plot Extent of Occurrence for a species using a convex hull.
 ##  plotGMA.........Plot the Groundfish Management Areas.
 ##  plotLocal.......Plot DFO fishing localities with the highest catch.
@@ -20,13 +22,18 @@
 ## ==============================================================================
 
 
-#calcHabitat----------------------------2017-01-16
-# Calculate potential habitat using bathymetry.
-#-----------------------------------------------RH
+## calcHabitat--------------------------2019-01-31
+## Calculate potential habitat using bathymetry.
+## Can be a slow process -- set 'use.sp.pkg=TRUE' for faster execution
+##   Passing 'use.sp.pkg' to 'findHoles':
+##   TRUE --  uses sp::point.in.polygon ~ 35s
+##   FALSE -- uses PBSmapping::.is.in   ~ 95s
+## ---------------------------------------------RH
 calcHabitat <- function(topofile="bctopo", isob=c(150,435),
-     digits=1, minVerts=25, col.hab="greenyellow", col.land="moccasin",
-     xlim=NULL, ylim=NULL,areas=list(), col.areas="red", isolab=TRUE, labtit="",
-     plot=TRUE, pin=c(7,8), eps=FALSE, png=FALSE, wmf=FALSE, ioenv=.GlobalEnv)
+   digits=1, minVerts=25, use.sp.pkg=TRUE, areas=list(),
+   col.hab="greenyellow", col.land="moccasin", col.areas="red",
+   xlim=NULL, ylim=NULL, isolab=TRUE, labtit="", plot=TRUE,
+   PIN=c(7,8), eps=FALSE, png=FALSE, wmf=FALSE, ioenv=.GlobalEnv)
 {
 	on.exit(gc(verbose=FALSE))
 	assign("PBStool",list(module="M05_Spatial",call=match.call(),args=args(calcHabitat),ioenv=ioenv),envir=.PBStoolEnv)
@@ -38,17 +45,23 @@ calcHabitat <- function(topofile="bctopo", isob=c(150,435),
 	bCP <- convCP(bCL,projection="LL",zone=9)
 	bPoly <- bCP$PolySet
 	rng = apply(bPoly,2,range)
-	if (is.null(xlim)) xlim=rng[,"X"]
+
+	## box should not be bigger than the extent of polyB, otherwise 
+	## area of extent will be inflated by land not covered by polyB
+	if (is.null(xlim)) xlim = rng[,"X"]
+	else               xlim = c(max(xlim[1],rng[1,"X"]),min(xlim[2],rng[2,"X"]))
 	if (is.null(ylim)) ylim=rng[,"Y"]
+	else               ylim = c(max(ylim[1],rng[1,"Y"]),min(ylim[2],rng[2,"Y"]))
 
 	box=as.PolySet(data.frame(PID=rep(1,4),POS=1:4,X=xlim[c(1:2,2:1)],Y=ylim[c(1,1,2,2)]),projection="LL",zone=9)
 	poly0 = closePolys(fixBound(bPoly,.00001))   ## PolySet of outer-depth polygons
-#browser();return()
-	polyA = clipPolys(poly0,xlim=xlim,ylim=ylim)
-	polyB = findHoles(polyA,minVerts=minVerts)
+	polyA = clipPolys(poly0, xlim=xlim, ylim=ylim)
+	polyB = findHoles(polyA, minVerts=minVerts, use.sp.pkg=use.sp.pkg)
 	#polyC = joinPolys(polyB,operation="UNION")
+
 	habitat = joinPolys(box,polyB,operation="DIFF") ### There is still a bug in joinPolys!!!
-	habitat = findHoles(habitat)
+#browser();return()
+	habitat = findHoles(habitat, use.sp.pkg=use.sp.pkg)
 
 	warn <- options()$warn; options(warn = -1)
 	area=calcArea(habitat); area=sum(area$area,na.rm=TRUE)
@@ -62,10 +75,10 @@ calcHabitat <- function(topofile="bctopo", isob=c(150,435),
 		fout=paste("Habitat-",ifelse(labtit=="","",paste(gsub(" ","-",labtit),"-",sep="")),isob[1],"m-",isob[2],"m",sep="")
 		devs = c(eps=eps,png=png,wmf=wmf,win=TRUE)
 		for (i in names(devs)[devs]) {
-			if (i=="eps")      postscript(file=paste(fout,".eps",sep=""),width=pin[1],height=pin[2],fonts="mono",paper="special") 
-			else if (i=="png") png(paste(fout,".png",sep =""), width=round(pin[1]), height=round(pin[2]), units="in", res=300) 
+			if (i=="eps")      postscript(file=paste(fout,".eps",sep=""),width=PIN[1],height=PIN[2],fonts="mono",paper="special") 
+			else if (i=="png") png(paste(fout,".png",sep =""), width=round(PIN[1]), height=round(PIN[2]), units="in", res=300) 
 			else if (i=="wmf" && .Platform$OS.type=="windows")
-				do.call("win.metafile",list(filename=paste(fout,".wmf",sep=""),width=pin[1],height=pin[2]))
+				do.call("win.metafile",list(filename=paste(fout,".wmf",sep=""),width=PIN[1],height=PIN[2]))
 			else          resetGraph()
 			expandGraph(mar=c(3,3.5,0.5,0.5),mgp=c(3,.5,0),las=1)
 			plotMap(box,type="n",plt=NULL,cex.axis=1.2,cex.lab=1.5)
@@ -87,7 +100,7 @@ calcHabitat <- function(topofile="bctopo", isob=c(150,435),
 		}
 	}
 	invisible(habitat) }
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~calcHabitat
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~calcHabitat
 
 
 #calcOccur------------------------------2013-01-28
@@ -447,17 +460,19 @@ calcSurficial <- function(surf="qcb", hab,
 	invisible() }
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~calcSurficial
 
-#clarify--------------------------------2015-03-06
-#  Analyse catch proportions in blocks, then cluster into fisheries groups.
-#  Initially, done to address the CASSIS proposal and its impact (John Pringle).
-#  CASSIS = CAScadia SeISmic experiment
-#-----------------------------------------------RH
+
+## clarify------------------------------2019-03-20
+##  Analyse catch proportions in blocks, then cluster into fisheries groups.
+##  Initially, done to address the CASSIS proposal and its impact (John Pringle).
+##  CASSIS = CAScadia SeISmic experiment
+## ---------------------------------------------RH
 clarify <- function(dat, cell=c(0.1,0.075), nG=8,
    xlim=c(-134.2,-127), ylim=c(49.6,54.8), zlim=NULL, targ="YMR", 
    clrs=c("red","orange","yellow","green","forestgreen","deepskyblue",
    "blue","midnightblue"), land="ghostwhite", spp.names=FALSE, 
-   wmf=FALSE, eps=FALSE, hpage=10, ioenv=.GlobalEnv) {
-
+   png=FALSE, pngres=400, PIN=NULL, isobs=c(200,1000,1800), 
+   wmf=FALSE, eps=FALSE, hpage=10, ioenv=.GlobalEnv)
+{
 	tcomp <- function(x,i) {
 		iU <- sort(unique(i))
 		pvec <- rep(0,length(iU)); names(pvec) <- iU
@@ -557,66 +572,145 @@ clarify <- function(dat, cell=c(0.1,0.075), nG=8,
 		kcode=strsplit(kgrp,split="-")
 		kgrp=sapply(kcode,function(x){paste(gsub(" ",".",species[x,"name"]),collapse="+")})
 	}
-#browser()
 
-	getFile(isobath,use.pkg=TRUE,tenv=penv())
-	isob <- isobath[is.element(isobath$PID,c(200,1000,1800)),] # & is.element(isobath$SID,1),]
-
+	if (!is.null(isobs)) {
+		getFile(isobath, use.pkg=TRUE, tenv=penv())
+		isob <- isobath[is.element(isobath$PID,isobs),]
+	}
 	stuff=c("tcat","pcat","ptree","pout","pdata","clrs","glab","kgrp")
 	packList(stuff,"PBStool",tenv=.PBStoolEnv)
 
-	#--Plot-results---------------------------------------------
-	# Try to automate based on par()$pid - plot must be ready on-screen first
-	dev=TRUE; plop = list(dev=dev,eps=eps,wmf=wmf)
-	for (i in c("dev","eps","wmf")) {
+	##--Plot-results---------------------------------------------
+	## Try to automate based on par()$pid - plot must be ready on-screen first
+	win = TRUE; plop = list(win=win, png=png, eps=eps, wmf=wmf)
+	for (i in c("win","png","eps","wmf")) {
 		ii = plop[[i]]
 		if (ii) {
-	PIN = par()$pin/max(par()$pin)*hpage
-	fn = paste(fnam,ifelse(is.null(targ),"",targ),"-Clara-nG",nG,"-(",paste(round(PIN,1),collapse="x"),")",sep="")
-	if (i=="eps" && ii) postscript(paste(fn,".eps",sep=""),width=PIN[1],height=PIN[2],paper="special") 
-	else if (i=="wmf" && ii && .Platform$OS.type=="windows")
-		do.call("win.metafile",list(filename=paste(fn,".wmf",sep=""),width=PIN[1],height=PIN[2]))
-	else resetGraph()
-	getFile(nepacLL,use.pkg=TRUE,tenv=penv())
+			if (is.null(PIN))
+				PIN = par()$pin/max(par()$pin)*hpage
+			fn = paste(fnam,ifelse(is.null(targ),"",targ),"-Clara-nG",nG,"-(",paste(round(PIN,1),collapse="x"),")",sep="")
+			if (i=="png" && ii)      png(filename=paste0(fn,".png"), units="in", res=pngres, width=PIN[1], height=PIN[2]) 
+			else if (i=="eps" && ii) postscript(paste(fn,".eps",sep=""),width=PIN[1],height=PIN[2],paper="special") 
+			else if (i=="wmf" && ii) do.call("win.metafile",list(filename=paste(fn,".wmf",sep=""),width=PIN[1],height=PIN[2]))
+			else resetGraph()
+			getFile(nepacLL,use.pkg=TRUE,tenv=penv())
 
-	par(parlist)
-	plotMap(nepacLL,xlim=xlim,ylim=ylim,plt=NULL,col="white")
-	addPolys(agrid,polyProps=pdata,border=FALSE)
-	addLines(isob,col=c("steelblue4","navy","black"))
-	addPolys(nepacLL,col=land)
-	xoff=ifelse(wmf,-.05,0); yoff=ifelse(wmf,-.01,0)
-	addLegend(.02,.02,fill=kcol,legend=kgrp,bty="n",cex=ifelse(wmf,0.8,0.7),yjust=0)
-	if (!is.null(targ)) 
-		addLegend(.35,.01,legend=floor(as.numeric(names(kgrp))),bty="n",
-			cex=ifelse(wmf,0.8,0.7),adj=1,xjust=1,yjust=0,text.col="blue",title=targ)
-	.addAxis(xlim=xlim,ylim=ylim,tckLab=FALSE,tck=0.014,tckMinor=.007)
-	box()
-	if (i!="dev" && ii) dev.off()
-	}	}
+			par(parlist)
+			plotMap(nepacLL, xlim=xlim, ylim=ylim, plt=NULL, col="white", cex.axis=1, cex.lab=1.2, mgp=c(1.5,0.2,0))
+			addPolys(agrid, polyProps=pdata, border=FALSE)
+			if (!is.null(isobs)) {
+				icols = colorRampPalette(c("steelblue4","navy","black"))(length(isobs))
+				addLines(isob, col=icols)
+			}
+			addPolys(nepacLL, col=land)
+			xoff=ifelse(wmf,-0.05,0); yoff=ifelse(wmf,-0.01,0)
+			addLegend(0.02, 0.02, fill=kcol, legend=kgrp, bty="n", cex=ifelse(wmf,0.8,0.7), yjust=0)
+			if (!is.null(targ)) 
+				addLegend(0.35, 0.02, legend=floor(as.numeric(names(kgrp))), bty="n", cex=ifelse(wmf,0.8,0.7), adj=1, xjust=1, yjust=0, text.col="blue", title=targ)
+			.addAxis(xlim=xlim, ylim=ylim, tckLab=FALSE, tck=0.014, tckMinor=0.007)
+			box()
+			if (i!="win" && ii) dev.off()
+		}
+	}
 	gc(verbose=FALSE)
-	invisible() }
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~clarify
+	invisible()
+}
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~clarify
 
-#findHoles------------------------------2015-07-17
-# Find holes and place them under correct parents.
-#-----------------------------------------------RH
-findHoles = function(polyset, minVerts=25) 
+
+## findEP-------------------------------2019-01-22
+## Find events in polys and and add poly info to events
+## ---------------------------------------------RH
+findEP = function(events, polys, maxRows=1e+08)
+{
+	if (!is.EventData(events))
+		stop("Object 'events' must be an EvenData set (see PBSmapping help)")
+	if (!is.PolySet(polys))
+		stop("Object 'polys' must be a PolySet (see PBSmapping help)")
+
+	pdata = attributes(polys)$PolyData
+	if (is.null(pdata))
+		stop("Object 'polys' must have a 'PolyData' attribute containg fields:\n\t'PID' and 'SID' along with some label identifier.")
+
+	locflds   = intersect(c("major","minor","locality"), colnames(pdata))
+	locflds   = intersect(locflds, colnames(events))
+	events$ID = .createIDs(events, locflds)
+	pdata$ID  = .createIDs(pdata,  locflds)
+
+	ldata = findPolys(events, polys, maxRows=maxRows, includeBdry=1) ## use only the first (lowest PID/SID) polygon boundary
+
+	#zinsi = ldata$Bdry==0  ## event located inside a polygon
+	#zbord = ldata$Bdry==1  ## event located on a polygon boundary (often between 2 polygons)
+	#linsi = ldata[zinsi,]
+
+	ldata$ID  = .createIDs(ldata,c("PID","SID"))
+	eid = ldata$ID; names(eid) = ldata$EID
+	pid = pdata$ID; names(pid) = .createIDs(pdata,c("PID","SID"))
+	events$ID2 = pid[as.character(eid[as.character(events$EID)])]
+	naID = is.na(events$ID2)
+	events$ID2[naID] = events$ID[naID]  ## fill in the missing gaps
+	return(events)
+}
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~findEP
+
+
+## findHoles----------------------------2019-01-31
+## Find holes and place them under correct parents.
+## Can be a slow process -- set 'use.sp.pkg=TRUE' for faster execution
+## ---------------------------------------------RH
+findHoles = function(polyset, minVerts=25, nlevs=1, use.sp.pkg=TRUE) 
 {
 	on.exit(gc(verbose=FALSE))
-	findHope = function(X,Y,Z){
+	## Subfunctions----------------------
+	findHope = function(X,Y,Z,use.sp=TRUE){
 		znames = names(Z)
 		slop = array(FALSE,dim=c(length(X),length(Y)),dimnames=list(hole=znames,solid=znames))
 		for (i in X){
 			for(j in Y) {
-				slop[i,j] = all(sp::point.in.polygon(
-					point.x=Z[[i]]["X"][,1],
-					point.y=Z[[i]]["Y"][,1],
-					pol.x=Z[[j]]["X"][,1],
-					pol.y=Z[[j]]["Y"][,1]))
+				if (i==j) next
+				if (use.sp) {
+					## Use Spatial Data (sp) function 'point.in.polygon'
+					slop[i,j] = all(sp::point.in.polygon(
+						point.x=Z[[i]]["X"][,1],
+						point.y=Z[[i]]["Y"][,1],
+						pol.x=Z[[j]]["X"][,1],
+						pol.y=Z[[j]]["Y"][,1]))
+				} else {
+					## use PBSmapping function '.is.in' (but cannot use holes as standalone PolySets)
+					iZ = Z[[i]]; jZ = Z[[j]]
+					if (all(diff(iZ$POS)<0)) iZ$POS = rev(iZ$POS)
+					if (all(diff(jZ$POS)<0)) jZ$POS = rev(jZ$POS)
+					slop[i,j] = .is.in(iZ, jZ)$all.in
+				}
 			}
 		}
 		return(slop)
 	}
+	ammendPoly = function(fswiss, pid, rawP, targetP) {
+		## Go through swiss cheese polygons and put the holes in the right place
+		for (j in 1:ncol(fswiss)) {
+			jj  = colnames(fswiss)[j]
+			ii  = names(fswiss[,jj][fswiss[,jj]])
+			pid = pid + 1; sid = 1
+			jswiss = rawP[[jj]]
+			jswiss$PID = pid
+			jswiss$SID = sid
+			for (i in ii) {
+				sid = sid + 1
+				ihole = rawP[[i]]
+				ihole$PID = pid
+				ihole$SID = sid
+				ihole$POS = nrow(ihole):1 ## reverse POS means hole in PBSmapping
+				jswiss    = rbind(jswiss,ihole)
+			}
+			targetP = rbind(targetP,jswiss)
+		}
+		return(targetP)
+	}
+	##-------------------end Subfunctions
+
+	if (nlevs>2) stop("Set 'nlevs' to 1 or 2")
+
 	polyset$ID = .createIDs(polyset,c("PID","SID"))
 	poly0 = split( polyset , f = polyset$ID )
 	bad   = sapply(poly0,nrow) < minVerts
@@ -624,34 +718,56 @@ findHoles = function(polyset, minVerts=25)
 	npoly = length(polyG)
 
 	#cents = sapply(polyG,function(x){calcCentroid(x,rollup=1)[c("X","Y")]},simplify=F)
-	HinP = findHope(X=1:npoly, Y=1:npoly, Z=polyG)
+	HinP = findHope(X=1:npoly, Y=1:npoly, Z=polyG, use.sp=use.sp.pkg)
 
 	## Cols = solids, Rows = holes
 	sumC  = apply(HinP,2,sum)
 	sumR  = apply(HinP,1,sum)
 	allGs = names(polyG)
 
-	## Sum(Cols)==1 and Sum(Rows)==1 are essentially solid land masses (no holes)
-	solidGs = allGs[sumC==1 & sumR==1]
+	## Sum(Cols)==0 and Sum(Rows)==0 are solids without holes
+	solidGs = allGs[sumC==0 & sumR==0]
 
-	## Sum(Cols)>1 are polygons with holes in them -- definite solids with holes
-	swissGs = allGs[sumC>1]
-	if (length(swissGs) > 0) {
-		warnout = options()$warn; options(warn=-1)  ## temporarily disable warnings from calcArea
-		#swissAs = rev(sort(sapply(polyG[swissGs],function(x){calcArea(x,rollup=2)$area})))
-		swissAs = rev(sort(sapply(polyG[swissGs],function(x){abs(sum(calcArea(x)$area))})))
-		options(warn=warnout)
-		swissGs = names(swissAs)
-		holes   = sapply(swissGs,function(x){setdiff(allGs[HinP[,x]],x)},simplify=FALSE)
-		aholes  = character() ## keep track of holes assigned (sometimes swissGs can be holes in larger swissGs)
+	## Determine polygons with holes in them
+	swissG = sumC[sumC>0]
+	swissH = sumR[sumR>0]
+	swissP = HinP[names(swissH),names(swissG)]
+	holes  = apply(swissP,1,sum)
+
+	## Shapes likey to be holes in solids (e.g. lakes on land or islands in the ocean)
+	aholes = names(holes)[holes==1]
+	if (length(aholes) > 0) {
+		swissA  = swissP[aholes,,drop=FALSE]
+		solids  = apply(swissA,2,sum)
+		asolids = names(solids)[solids>0]
+		swissA  = swissA[,asolids,drop=FALSE]
+	} else {
+		swissA = NULL
 	}
-
+	## Shapes likely to also be solids in holes (e.g. islands in lakes on land or lakes on islands in the ocean)
+	## Preliminary tests suggest that using 'bholes' (nlevs=2) is redundant (already detected at nlevs=1)
+	bholes = names(holes)[holes==2]
+	if (length(bholes) > 0) {
+		swissB  = swissP[bholes,,drop=FALSE]
+		solids  = apply(swissB,2,sum)
+		bsolids = names(solids)[solids>0]
+		swissB  = swissB[,bsolids,drop=FALSE]
+		## If swissB solids occur in swissA, transfer them to swissA
+		if (!is.null(swissA)) {
+			inAB = intersect(asolids,bsolids)
+			if (length(inAB)>0) {
+				swissA = swissP[.su(c(aholes,bholes)),asolids,drop=FALSE]
+				swissB = swissB[,setdiff(bsolids,asolids),drop=FALSE]
+			}
+		}
+	} else {
+		swissB = NULL
+	}
 	## Start building the final polygon
 	rnames = names(polyset)
 	if (length(solidGs) > 0) {
 		## https://stat.ethz.ch/pipermail/r-help/2008-March/156337.html
 		lis   = lapply(polyG[solidGs], "names<-", value = rnames)
-#browser();return()
 		slis  = lapply(1:length(lis),function(x){xlis=lis[[x]]; xlis$PID=x; xlis$SID=1; xlis})
 		pid   = length(slis)
 		polyF = do.call("rbind", lapply(slis, data.frame, stringsAsFactors = FALSE))
@@ -659,56 +775,144 @@ findHoles = function(polyset, minVerts=25)
 		pid = 0
 		polyF = list()
 	}
-	
-	if (length(swissGs) > 0) {
-		## Go through swiss cheese polygons and put the holes in the right place
-		for (i in names(holes)) {
-			if (any(i %in% aholes)) next  # skip smaller swissGs within larger swissGs
-			pid = pid + 1; sid = 1
-			iswiss = polyG[[i]]
-			iswiss$PID = pid
-			iswiss$SID = sid
-			aholes = c(aholes,holes[[i]]) # keep track of holes assigned to a swissG
-			for (j in holes[[i]]) {
-				sid = sid + 1
-				jhole = polyG[[j]]
-				jhole$PID = pid
-				jhole$SID = sid
-				if (all(diff(jhole$POS)>0))
-					jhole$POS = rev(jhole$POS) ## reverse POS means hole in PBSmapping
-				iswiss = rbind(iswiss,jhole)
-			}
-			polyF = rbind(polyF,iswiss)
-		}
+	if (!is.null(swissA)) {
+		pid.last = max(polyF$PID)
+		polyF = ammendPoly(swissA, pid=pid.last, rawP=polyG, targetP=polyF)
+	}
+	## Polygons in swissB have basically been picked up in swissA and here appear as reverse holes
+	if (nlevs==2 && !is.null(swissB)) {
+		pid.last = max(polyF$PID)
+		## Transpose 'swissB' because at nlevs=2, solids are holes and holes are solids.
+		polyFa = ammendPoly(t(swissB), pid=pid.last, rawP=polyG, targetP=polyF)
 	}
 	polyF = as.PolySet(polyF,projection="LL")
-#browser();return
+	packList(c("HinP","solidGs","aholes","bholes","swissA","swissB"), target="obj.findHoles", tenv=.PBStoolEnv)
 	return(polyF) 
 }
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~findHoles
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~findHoles
 
 
-## plotEO-------------------------------2018-01-18
+## plotConcur---------------------------2019-02-01
+## Horizontal barplot of concurrent species in tows.
+## ---------------------------------------------RH
+plotConcur = function(strSpp="410", dbName="GFFOS", spath=.getSpath(),
+   mindep=150, maxdep=435, major=NULL, minor=NULL, top=NULL, trawl=1,
+   saraSpp=c("027","034","394","410","424","435","437","440","442","453"),
+   reset.mf=TRUE, eps=FALSE, png=FALSE, pngres=300, colour="topo")
+{
+	assign("PBStool",list(module="M03_Fishery",call=match.call(),args=args(plotConcur),plotname="Concur"),envir=.PBStoolEnv)
+	data("species", "gear", package="PBSdata", envir=penv())
+	zspp=species$name!=species$latin
+	species$name[zspp] = toUpper(species$name[zspp])
+
+	## If dummy is not specified it defaults to '' which is tranlsated as minor=0 and unwanted records are collected
+	if (is.null(minor)) minor = 999 ## doesn't exist -- used to fool SQL
+
+	if (dbName=="GFFOS")
+		getData("fos_concurrent.sql", "GFFOS", strSpp, path=spath,
+			mindep=mindep, maxdep=maxdep, major=major, dummy=minor, top=top, gear=trawl, tenv=penv())
+	else if (dbName=="PacHarvest")
+		getData("pht_concurrent.sql","PacHarvest",strSpp,path=spath,
+			mindep=mindep,maxdep=maxdep,major=major,dummy=minor,top=top,gear=trawl,tenv=penv())
+	else if (dbName=="PacHarvHL")
+		getData("phhl_concurrent.sql","PacHarvHL",strSpp,path=spath,
+			mindep=mindep,maxdep=maxdep,major=major,dummy=minor,top=top,tenv=penv())
+	else
+		showError("Choices for 'dbName' are 'GFFOS', 'PacHarvest' or 'PacHarvHL'")
+	dat = PBSdat
+	sql = attributes(PBSdat)$sql
+
+	dat$spp   = as.character(dat$spp)
+	dat$code  = pad0(dat$code,3)
+	dat$latin = species[dat$code,"latin"]
+	dat  = dat[,c("code","spp","latin","catKt","pct")]
+	dat  = dat[rev(order(dat$pct)),]
+	dat$spp = toUpper(dat$spp)
+
+	plotname <- paste("Concur",strSpp,dbName,paste0(c("Bottom","Shrimp","Midwater")[trawl],collapse="+"),sep="-")
+	plotname <- paste0(plotname, "-d(", mindep, "-", maxdep, ")")
+	if (!is.null(minor) && !all(minor==999)) plotname = sub(strSpp,paste(strSpp,"-minor(",paste(minor,collapse=""),")",sep=""),plotname)
+	if (!is.null(major)) plotname = sub(strSpp,paste(strSpp,"-major(",paste(major,collapse=""),")",sep=""),plotname)
+	write.csv(dat,paste(plotname,".csv",sep=""),row.names=FALSE)
+
+	## Re-format the same table so that it's latex-ready
+	textab = dat
+	textab$code  = pad0(textab$code,3)
+	#textab$spp   = toUpper(textab$spp)
+	textab$latin = paste("\\emph{",textab$latin,"}",sep="")
+	textab$catKt = format(round(textab$catKt * 1000.),big.mark=",",trim=TRUE)
+	textab$pct   = show0(round(textab$pct,3),3)
+	names(textab)=c("Code","Species","Latin name","Catch (t)","Catch (\\%)")
+	write.csv(textab,paste("tex-",plotname,".csv",sep=""),row.names=FALSE)
+	## Note: to read the table back into R use 'read.csv("xyz.csv",check.names=FALSE)'
+
+	##----- Plotting -----
+	dat  = dat[order(dat$pct),] # for plotting as horizontal bars w/ largest at top
+	if (eps) {
+		postscript(file=paste(plotname,"eps",sep="."),width=10,height=6,horizontal=FALSE,paper="special")
+		par(mfrow=c(1,1),cex=0.8,mar=c(3,12,0.5,1),oma=c(0,0,0,0),mgp=c(1.5,.5,0))
+	} else if (png) {
+		plotname <- paste(plotname,"png",sep=".")
+		png(plotname, units="in", res=pngres, width=6.5, height=3.5)
+		par(mfrow=c(1,1), cex=0.7, mar=c(3,10,0.5,1), oma=c(0,0,0,0), mgp=c(1.5,0.5,0))
+	} else if (reset.mf)
+		expandGraph(mfrow=c(1,1), cex=1.0, mar=c(4,10,1,1), oma=c(0,0,0,0), mgp=c(2,.5,0))
+	else
+		expandGraph(cex=1.0,mar=c(4,10,1,1),mgp=c(2,.5,0))
+	if (colour=="topo")
+		barcol = topo.colors(nrow(dat))
+	if (colour=="sombre")
+		barcol = rep("gainsboro",nrow(dat))
+	xy <- barplot(dat$pct, col=barcol, names.arg=dat$spp, horiz=TRUE, las=1, col.axis="grey20", xlab="Percent", cex.axis=0.8)
+	z <- xy[match(species[saraSpp,"name"],dat$spp)]
+	zbar = is.element(dat$spp,species[saraSpp,"name"])
+	if (any(!is.na(z))) {
+		axis(side=2, at=z, las=1, tick=FALSE, labels=species[saraSpp,"name"], col.axis="red")
+		if (!is.element(colour,c("topo")) && !is.null(colour)) {
+			barcol[zbar] = "pink"
+			barplot(dat$pct, col=barcol, names.arg=NULL, horiz=TRUE, las=1,col.axis="grey20", xaxt="n", yaxt="n", add=TRUE)
+		}
+	}
+	z <- xy[match(species[strSpp,"name"],dat$spp)]
+	zbar = is.element(dat$spp,species[strSpp,"name"])
+	if (!is.na(z)) {
+		axis(side=2, at=z, las=1, tick=FALSE, labels=species[strSpp,"name"], col.axis="blue")
+		if (!is.element(colour,c("topo")) && !is.null(colour)) {
+			barcol[zbar] = "lightblue1"
+			barplot(dat$pct, col=barcol, names.arg=NULL, horiz=TRUE, las=1,col.axis="grey20", xaxt="n", yaxt="n", add=TRUE)
+		}
+	}
+	addLabel(0.90,0.20,bquote(Sigma~Catch(kt) == .(round(sum(dat$catKt)))), cex=1.2, adj=1)
+	addLabel(0.90,0.15,bquote(Sigma~Catch('%') == .(round(sum(dat$pct),1))), cex=1.2, adj=1)
+
+	if (eps|png) dev.off()
+	packList(c("dat","xy","z","sql"),"obj.preferDepth",tenv=.PBStoolEnv)
+	invisible(dat) }
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotConcur
+
+
+## plotEO-------------------------------2019-01-22
 ## Plot the Extent of Occurrence for a species 
 ## using a convex hull to surround events.
 ## ---------------------------------------------RH
-plotEO = function (id="lst", strSpp="453", col="red", xlim=c(-136,-122.5), ylim=c(48,54.8),
-   inarea=NULL, exarea=NULL, exland=FALSE, rmXY=FALSE,
+plotEO = function (id="lst", strSpp="453", col="red", 
+   xlim=c(-136,-122.5), ylim=c(48,54.8), prefix="map", 
+   inarea=NULL, exarea=NULL, exland=FALSE, rmXY=FALSE, rmSM=TRUE,
    png=FALSE, pngres=400, PIN =c(9,7.3))
 {
 	fenv = lenv()  ## function environment
-	if (!exists(paste0("map",strSpp), envir=.PBStoolEnv)) {
-		if (!file.exists(paste0("map",strSpp,".rda"))){
+	if (!exists(paste0(prefix,strSpp), envir=.PBStoolEnv)) {
+		if (!file.exists(paste0(prefix,strSpp,".rda"))){
 			getData("fos_map_density.sql", dbName="GFFOS", strSpp=strSpp, path=.getSpath(), tenv=fenv)
 			mapDat = as.EventData(data.frame(EID=1:nrow(PBSdat), PBSdat, check.names=FALSE), projection="LL")
-			assign(paste0("map",strSpp), mapDat, envir=.PBStoolEnv)
-			save(list=paste0("map",strSpp), file = paste0("map",strSpp,".rda"), envir=.PBStoolEnv)
+			assign(paste0(prefix,strSpp), mapDat, envir=.PBStoolEnv)
+			save(list=paste0(prefix,strSpp), file = paste0(prefix,strSpp,".rda"), envir=.PBStoolEnv)
 		} else {
-			load(paste0("map",strSpp,".rda"))
-			assign("mapDat", get(paste0("map",strSpp)))
+			load(paste0(prefix,strSpp,".rda"))
+			assign("mapDat", get(paste0(prefix,strSpp)))
 		}
 	} else {
-		assign("mapDat", get(paste0("map",strSpp), envir=.PBStoolEnv))
+		assign("mapDat", get(paste0(prefix,strSpp), envir=.PBStoolEnv))
 	}
 	if (is.null(ttcall("hulk")))
 		hulk = list()
@@ -721,6 +925,9 @@ plotEO = function (id="lst", strSpp="453", col="red", xlim=c(-136,-122.5), ylim=
 	mapdat  = mapdat[mapdat$X >= xlim[1] & mapdat$X <= xlim[2] & !is.na(mapdat$X) &
 	                 mapdat$Y >= ylim[1] & mapdat$Y <= ylim[2] & !is.na(mapdat$Y),]
 
+	## Remove seamounts
+	if (rmSM)
+		mapdat = zapSeamounts(mapdat)
 	## Remove coordinates that are located in localities that don't match the reported localities
 	if (rmXY) {
 		data(locality.plus, package="PBSdata", envir=fenv)
@@ -773,10 +980,9 @@ plotEO = function (id="lst", strSpp="453", col="red", xlim=c(-136,-122.5), ylim=
 		waterlab
 		), collapse="\n")
 
-
 	if(png) png(paste0("Hull-",strSpp,"-",stock,".png"), units="in", res=pngres, width=PIN[1], height=PIN[2])
 	plotMap(nepacLL, xlim=xlim, ylim=ylim, plt=c(0.07,0.99,0.08,0.99), cex.axis=1.5, cex.lab=1.75, las=1)
-	addPoints(mapdat, pch=20, col=col, cex=1.2)
+	addPoints(mapdat, pch=20, col=col, cex=1)
 	addPolys(nepacLL, col="grey95", border="slategray")
 	addPolys(hull, col=lucent(col,0.1))
 	
@@ -799,7 +1005,7 @@ plotEO = function (id="lst", strSpp="453", col="red", xlim=c(-136,-122.5), ylim=
 	write.csv(hulltab,"hulltab.csv", row.names=F)
 	return(out)
 }
-## ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotEO
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotEO
 
 
 #plotGMA--------------------------------2017-01-20
@@ -872,29 +1078,73 @@ plotGMA = function(gma=gma.popymr, xlim=c(-134,-123), ylim=c(48.05,54.95),
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotGMA
 
 
-## plotLocal----------------------------2018-08-14
+## plotLocal----------------------------2019-01-22
 ## Plot DFO fishing localities with the highest catch.
 ## ---------------------------------------------RH
-plotLocal = function(dat, area, aflds=NULL, pcat=0.95, showAll=FALSE,
+plotLocal = function(dat, area, aflds=NULL, pcat=0.95, cpue=FALSE, powr=1,
+   useLL=FALSE, showAll=FALSE, xlim=c(-136,-122.5), ylim=c(48,54.8),
    fid=NULL, fidtype="PBStools", strSpp, Ntop=5, years, short=TRUE,
-   plot=TRUE, png=FALSE, csv=FALSE, outnam="refA439", lang=c("e","f"))
+   plot=TRUE, png=FALSE, pngres=400, PIN=c(9,7.3),
+   csv=FALSE, outnam="refA439", lang=c("e","f"))
 {
 	## Create a subdirectory called `french' for French-language figures
 	createFdir(lang)
 
 	fenv = lenv()  ## function environment
 	datnam = as.character(substitute(dat))
-	if (substring(datnam,1,3)=="gfm")
+
+	if (!missing(years))
+		dat = dat[is.element(as.numeric(substring(dat$date,1,4)),years),]
+	xbnd = xlim+diff(xlim)*0.04*c(1,-1) ## outer X boundaries for polygon labels
+	ybnd = ylim+diff(ylim)*0.04*c(1,-1) ## outer Y boundaries for polygon labels
+
+
+	pdata = attributes(area)$PolyData
+	if (is.null(pdata))
+		stop("Object 'polys' must have a 'PolyData' attribute containg fields:\n\t'PID' and 'SID' along with some label identifier.")
+	#if (!is.element("ID",colnames(pdata)))
+	#	pdata$ID = .createIDs(pdata,aflds)
+
+	## User might prefer to find events in are polygons rather than
+	## rely on combinations of major-minor-locality
+	if (useLL) {
+		dat.orig = dat
+		dat = findEP(dat, area)  ## new function (RH 190121)
+		dat$ID = dat$ID2
+	} else {
+		## mirror routine in 'findEP'
+		locflds  = intersect(c("major","minor","locality"), colnames(pdata))
+		locflds  = intersect(locflds, colnames(dat))
+		dat$ID   = .createIDs(dat, locflds)
+		pdata$ID = .createIDs(pdata,  locflds)
+	}
+
+	if (grepl("ph[[:alnum:]]|gfm", substring(datnam,1,3)))
 		dat$catKG = dat$landed + dat$discard
-	if (substring(datnam,1,3)=="map") {
+	if (substring(datnam,1,3) %in% c("map","hab","eve")) {
 		if (missing(strSpp))
 			showError(paste0("Specify catch field in '",datnam,"'"))
 		if (!is.element(strSpp,colnames(dat)))
 			showError(paste0("User-specified catch field '", strSpp,"' does not occur in '",datnam,"'"))
 		dat$catKG = dat[,strSpp]
 	}
-	if (!missing(years))
-		dat = dat[is.element(as.numeric(substring(dat$date,1,4)),years),]
+	if (!is.element("catKG",colnames(dat)))
+		showError("Field 'catKG' not assigned; check 'datnam' in code")
+
+	if (cpue){
+		if(any(is.element(c("cpue","eff"),colnames(dat)))) {
+			if (is.element("cpue",colnames(dat))) {
+				dat = dat[dat$cpue>=0 & !is.na(dat$cpue),]
+				dat$catKG = cat$cpue
+			} else {
+				dat = dat[dat$eff>0 & !is.na(dat$eff),]
+				dat$catKG = dat$catKG/(dat$eff/60)
+			}
+		} else
+			showError("No fields to use for CPUE")
+	} else
+		dat = dat[dat$catKG > 0 & !is.na(dat$catKG),]  ## catch
+	dat$catKG = dat$catKG
 
 	if (!missing(strSpp)) {
 		data(species, package="PBSdata", envir=fenv)
@@ -922,22 +1172,8 @@ plotLocal = function(dat, area, aflds=NULL, pcat=0.95, showAll=FALSE,
 	}
 	fid =  FID[match(fid,FID,nomatch=0)]
 
-	if (is.null(aflds)){
-		area.name = as.character(substitute(area))
-		if (any(is.element(area.name, c("locality","locality.plus"))))
-			aflds = c("major","minor","locality")
-		else if (area.name=="minor")
-			aflds = c("major","minor")
-		else
-			aflds = "major"
-	}
-	dat$ID = .createIDs(dat,aflds)
-
-	#do.call("data",args=list(list=area,package="PBSdata",envir=penv()))
-	#eval(parse(text=paste0("area = ", area)))
-	pdata = attributes(area)$PolyData
-	pdata$ID = .createIDs(pdata,aflds)
 	data("nepacLL", package="PBSmapping", envir=fenv)
+#browser();return()
 
 	#paint = colorRampPalette(c("lightblue1","green","yellow","red"))(500)
 	paint = colorRampPalette(c("aliceblue","lightblue1","green",rep("yellow",2),"orange","red"))(500)
@@ -946,14 +1182,17 @@ plotLocal = function(dat, area, aflds=NULL, pcat=0.95, showAll=FALSE,
 	for (f in fid) {
 		ff   = names(fid[match(f,fid)])
 		fdat = dat[is.element(dat$fid,f),]
-		fdat = fdat[fdat$catKG > 0 & !is.na(fdat$catKG),]
 		if (nrow(fdat)==0) {
 			showMessage(paste0("No positive catch data for fid=",f))
 			next
 		}
-		loccat = rev(sort(sapply(split(fdat$catKG,fdat$ID),function(x){sum(x)/1000.})))
-#browser();return()
-		yrcat  = sapply(split(fdat$catKG,as.numeric(substring(fdat$date,1,4))),function(x){sum(x)/1000.})
+		if (cpue) {
+			loccat = rev(sort(sapply(split(fdat$catKG,fdat$ID),function(x){mean(x)})))
+			yrcat  = sapply(split(fdat$catKG,as.numeric(substring(fdat$date,1,4))),function(x){mean(x)})
+		} else {
+			loccat = rev(sort(sapply(split(fdat$catKG,fdat$ID),function(x){sum(x)/1000.})))
+			yrcat  = sapply(split(fdat$catKG,as.numeric(substring(fdat$date,1,4))),function(x){sum(x)/1000.})
+		}
 		YRCAT[[as.character(f)]] = yrcat
 		procat = loccat/sum(loccat)
 		cumcat = cumsum(procat)
@@ -961,33 +1200,41 @@ plotLocal = function(dat, area, aflds=NULL, pcat=0.95, showAll=FALSE,
 		bigloc = names(bigcat)
 		yesloc = is.element(bigloc,pdata$ID)
 		fdata  = pdata[match(bigloc[yesloc],pdata$ID),]
-		fdata$catT = bigcat[yesloc]
-		fdata$pcat = procat[cumcat <= pcat][yesloc]
+#browser();return()
+		fdata$catT  = bigcat[yesloc]
+		fdata$pcat  = procat[cumcat <= pcat][yesloc]
+		fdata$catP  = fdata$catT^powr
+		procat.powr = (loccat^powr)/sum(loccat^powr)
+		cumcat.powr = cumsum(procat.powr)
+		fdata$ppcat = procat.powr[cumcat.powr <= pcat][yesloc]
+#browser();return()
 		## Include 0 catch as a common base for all scaling, but remove it from vector
-		sVec = rev(rev(round(scaleVec(c(fdata$pcat,0),1,500)))[-1])
+		sVec = rev(rev(round(scaleVec(c(fdata$ppcat,0),1,500)))[-1])
 		fdata$col = paint[sVec]  ## include 0 catch as a common base for all scaling
 		topN   = fdata[1:(min(nrow(fdata),Ntop)),]
+
 		topcat = unlist(formatCatch(topN$catT,3))
-		legtxt = paste0(topcat," - ",topN$name)
+		legtxt = paste0(topcat," - ",1:nrow(topN),". ",topN$name)
 		if (plot) {
 			fout = fout.e = paste0(outnam,".",ff)
 			for (l in lang) {  ## could switch to other languages if available in 'linguaFranca'.
 				fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
-				if (png) png(filename=paste0(fout,".png"), width=9, height=7.3, units="in", res=600)
+				if (png) png(filename=paste0(fout,".png"), width=PIN[1], height=PIN[2], units="in", res=pngres)
 				plotMap(area, type="n", plt=c(0.06,0.99,0.06,0.99), 
-					xlim=c(-136,-122.5), ylim=c(48,54.8), mgp=c(2.2,0.5,0), cex.axis=1.2, cex.lab=1.5)
+					xlim=xlim, ylim=ylim, mgp=c(2.2,0.5,0), cex.axis=1.2, cex.lab=1.5)
 				if (showAll)
-					addPolys(area, border="grey")
-				addPolys(area, polyProps=fdata)
-				text(fdata$X[1:Ntop],fdata$Y[1:Ntop],1:Ntop,cex=0.8)
-				addPolys(nepacLL, col="lightyellow1")
-				addLegend(0.975, 0.94, fill=topN$col, legend=legtxt, bty="n", title=linguaFranca(paste0("Fishery: ",ff, " - top catch (t)"),l), xjust=1, title.adj=0)
+					addPolys(area, border="grey", col="transparent")
+#browser();return()
+				addPolys(area, polyProps=fdata[fdata$catT>0,]) ## only add polys with cpue|catch > 0
+				addPolys(nepacLL, col="lightyellow1", border="grey20", lwd=0.5)
+				#text(fdata$X[1:Ntop],fdata$Y[1:Ntop],1:Ntop,cex=0.8)
+				text(pmin(pmax(fdata$X[1:Ntop],xbnd[1]),xbnd[2]), pmin(pmax(fdata$Y[1:Ntop],ybnd[1]),ybnd[2]), 1:Ntop, cex=0.8)
+				addLegend(0.975, 0.95, fill=topN$col, legend=legtxt, bty="n", title=linguaFranca(paste0("Fishery: ",ff, " - top ", ifelse(cpue, "CPUE (kg/h)", "catch (t)")),l), xjust=1, title.adj=0)
 				if (!missing(strSpp)) {
 					derange = paste0(gsub("-",".",range(fdat$date,na.rm=T)),collapse=" to ")
 					addLabel(0.5, 0.96, linguaFranca(sppnam,l), cex=1.2, adj=c(0,0))
 					addLabel(0.975, 0.96, linguaFranca(paste0("(", derange, ")"),l), cex=0.8, adj=c(1,0))
 				}
-#browser();return()
 				box()
 				if (png) dev.off()
 			} ## end l (lang) loop
@@ -1269,9 +1516,9 @@ plotTertiary = function(x=c(100,5,25,10,50), pC=c(0.5,0.5), r=0.5,
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotTertiary
 
 
-#preferDepth----------------------------2018-01-17
-# Histogram showing depth-of-capture
-#-----------------------------------------------RH
+## preferDepth--------------------------2018-01-17
+## Histogram showing depth-of-capture
+## ---------------------------------------------RH
 preferDepth = function(strSpp="410", fqtName="pht_fdep.sql", dbName="PacHarvest",
    spath=NULL, type="SQL", hnam=NULL, get.effort=FALSE)
 {
@@ -1303,26 +1550,36 @@ preferDepth = function(strSpp="410", fqtName="pht_fdep.sql", dbName="PacHarvest"
 		setWinVal(list(showE=FALSE),winName="window") 
 		packList("effort","PBStool",tenv=.PBStoolEnv)
 	}
-	invisible() }
-
-#.preferDepth.getEffort-----------------2010-10-19
+	invisible()
+}
+##.preferDepth.getEffort----------------2010-10-19
 .preferDepth.getEffort=function(strSpp="ALL") {
-		resetGraph(); par(mar=c(0,0,0,0),oma=c(0,0,0,0))
-		showMessage("Please wait while effort data is retrieved for this GUI session",col="blue",cex=1.2)
-		getData("pht_effort.sql",strSpp=strSpp,path=.getSpath(),tenv=penv())
-		effort=PBSdat; effort$effort=effort$effort/60 ### convert to hours
-		#packList("effort","PBStool",tenv=.PBStoolEnv) ### too slow
-		#eval(parse(text="PBStool$effort <<- effort"))
-		ttget(PBStool); PBStool$effort <- effort; ttput(PBStool)
-		frame(); addLabel(.5,.5,"Effort loaded",col="darkgreen",cex=1.2) }
+	resetGraph()
+	par(mar=c(0,0,0,0),oma=c(0,0,0,0))
+	showMessage("Please wait while effort data is retrieved for this GUI session",col="blue",cex=1.2)
+	getData("pht_effort.sql",strSpp=strSpp,path=.getSpath(),tenv=penv())
+	effort = PBSdat
+	effort$effort = effort$effort/60 ### convert to hours
+	ttget(PBStool)
+	PBStool$effort <- effort
+	ttput(PBStool)
+	frame(); addLabel(.5,.5,"Effort loaded",col="darkgreen",cex=1.2)
+}
 
-#.preferDepth.getDepth------------------2018-01-17
+##.preferDepth.getDepth-----------------2019-01-22
 .preferDepth.getDepth <- function()
 {
 	opar <- par(lwd=2); on.exit(par(opar))
-	getWinVal(scope="L",winName="window"); act <- getWinAct()[1]
-	if (!is.null(act) && act=="getdata") getdata <- TRUE else getdata <- FALSE
-	if (path==""){ path <- getwd(); setWinVal(list(path=path),winName="window") }
+	getWinVal(scope="L",winName="window")
+	act <- getWinAct()[1]
+	if (!is.null(act) && act=="getdata")
+		getdata <- TRUE 
+	else
+		getdata <- FALSE
+	if (path==""){
+		path <- getwd()
+		setWinVal(list(path=path),winName="window")
+	}
 	spp  <- eval(parse(text=paste("c(\"",gsub(",","\",\"",strSpp),"\")",sep="")));
 	year <- eval(parse(text=paste("c(",strYear,")",sep="")))
 	YEAR <- year
@@ -1340,7 +1597,9 @@ preferDepth = function(strSpp="410", fqtName="pht_fdep.sql", dbName="PacHarvest"
 	AREA = area
 	if (any(spp=="") || length(spp)>1)
 		showError("Choose 1 species")
-	if (!exists("PBSdat",where=1) || is.null(attributes(PBSdat)$spp) || 
+
+	ttget(PBSdat)
+	if (!exists("PBSdat",where=.PBStoolEnv) || is.null(attributes(PBSdat)$spp) || 
 		spp!=attributes(PBSdat)$spp || fqtName!=attributes(PBSdat)$fqt || getdata) {
 		expr=paste("getData(fqtName=\"",fqtName,"\",dbName=\"",dbName,"\",strSpp=\"",
 			spp,"\",type=\"",type,"\",path=\"",path,"\",trusted=",trusted,
@@ -1350,11 +1609,13 @@ preferDepth = function(strSpp="410", fqtName="pht_fdep.sql", dbName="PacHarvest"
 			spp <- attributes(PBSdat)$spp
 			setWinVal(list(strSpp=spp),winName="window")
 		}
+		ttput(PBSdat)
 	}
 	assign("dat",PBSdat)
 	if (nrow(dat)==0)
 		showError(paste("Species =",spp),type="nodata")
 	packList("dat","PBStool",tenv=.PBStoolEnv) ## RH: save the raw data for manual subsetting
+
 	eff = ttcall(PBStool)$effort
 	isE = ifelse(is.null(eff),FALSE,TRUE)
 	if (!isE) setWinVal(list(showE=FALSE),winName="window")
@@ -1362,11 +1623,13 @@ preferDepth = function(strSpp="410", fqtName="pht_fdep.sql", dbName="PacHarvest"
 	if (!is.null(gear)) {
 		if (isE) eff = eff[is.element(eff$gear,gear),]
 		dat = dat[is.element(dat$gear,gear),]
-		if (nrow(dat)==0) showError(paste("gear =",paste(gear,collapse=", ")),type="nodata") }
+		if (nrow(dat)==0) showError(paste("gear =",paste(gear,collapse=", ")),type="nodata")
+	}
 	if (!is.null(year)) {
 		if (isE) eff = eff[is.element(eff$year,year),]
 		dat <- dat[is.element(dat$year,year),]
-		if (nrow(dat)==0) showError(paste("year =",paste(year,collapse=", ")),type="nodata") }
+		if (nrow(dat)==0) showError(paste("year =",paste(year,collapse=", ")),type="nodata")
+	}
 	if (disA=="all") {
 		## RH: At least make sure that the majors match
 		majors = .su(dat$major)
@@ -1396,19 +1659,19 @@ preferDepth = function(strSpp="410", fqtName="pht_fdep.sql", dbName="PacHarvest"
 	if (type=="FILE") plotname = sub(paste0("dep",spp),fqtName,plotname)
 	packList("plotname","PBStool",tenv=.PBStoolEnv)
 	nrow <- max(nyr,nar); ncol <- min(nyr,nar);
-	if (nyr>=nar) { ifac <- year; jfac <- area; yba <- TRUE}
-	else { ifac <- area; jfac <- year; yba <- FALSE}
+	if (nyr>=nar) { ifac <- year; jfac <- area; yba <- TRUE }
+	else { ifac <- area; jfac <- year; yba <- FALSE }
 
 	eps=png=wmf=FALSE
 	if (!is.null(act)){
-		if (act=="eps") eps=TRUE
+		if (act=="eps")      eps=TRUE
 		else if (act=="png") png=TRUE
 		else if (act=="wmf") wmf=TRUE
 	}
 	if (eps)
 		postscript(file=paste(plotname,"eps",sep="."),width=10,height=6*nrow^0.25,horizontal=FALSE,paper="special")
 	else if (png)
-		png(filename=paste(plotname,"png",sep="."),width=10,height=6*nrow^0.25,units="in",res=400)
+		png(filename=paste(plotname,"png",sep="."), width=10, height=6*nrow^0.25, units="in", res=400)
 	else if (wmf && .Platform$OS.type=="windows")
 		do.call("win.metafile",list(filename=paste(plotname,"wmf",sep="."),width=10,height=6*nrow^0.25))
 	else resetGraph()
@@ -1477,25 +1740,25 @@ preferDepth = function(strSpp="410", fqtName="pht_fdep.sql", dbName="PacHarvest"
 			yz = ((1:length(xc))/length(xc))
 			cc = cumsum(jdat$catch[z])/1000
 			yy = paste0("(",paste0(range(jdat$year),collapse="-"),")")
-			if (showD) { #---Cumulative depth
+			if (showD) { ##---Cumulative depth
 				mz = approx(yz,xc,.50,rule=2,ties="ordered"); yz=yz*YLIM[2]
 				points(mz$y,par()$usr[4],pch=25,col=1,bg="gainsboro",cex=1.5)
 				text(mz$y,par()$usr[4],round(mz$y),col="grey20",adj=c(-0.5,0.5),cex=0.9,srt=270)
 			}
-			if (showC) { #---Cumulative catch
+			if (showC) { ##---Cumulative catch
 				yc = (cc/max(cc,na.rm=TRUE)) #*YLIM[2]
 				mc = approx(yc,xc,.50,rule=2,ties="ordered"); yc=yc*YLIM[2]
 				#abline(h=mc$x*YLIM[2],v=mc$y,lty=3,col=ccol)
 				points(mc$y,par()$usr[4],pch=25,col=1,bg=ccol,cex=1.5)
 				text(mc$y,par()$usr[4],round(mc$y),col=ccol,adj=c(-0.5,0),cex=0.9,srt=270)
 			}
-			if (showQ) { #---Depth quantiles
+			if (showQ) { ##---Depth quantiles
 				qnt <- round(quantile(jdat$depth,quants,na.rm=TRUE),0)
 				abline(v=qnt, lwd=2, col="cornflowerblue")
 				text(qnt[1]-xwid,par()$usr[4],qnt[1],col="blue",adj=c(1,2),cex=1.2)
 				text(qnt[2]+xwid,par()$usr[4],qnt[2],col="blue",adj=c(0,3),cex=1.2) 
 			}
-			if (showL) { #---Legend information
+			if (showL) { ##---Legend information
 				if (nrow*ncol>1) {
 					addLabel(.98,.90,paste(ifelse(i==0,"",i),ifelse(j==0,"",j), sep=ifelse(nrow==1 | ncol==1,""," \225 ")),col="grey30",adj=c(1,1))
 				} else {
@@ -1521,7 +1784,7 @@ preferDepth = function(strSpp="410", fqtName="pht_fdep.sql", dbName="PacHarvest"
 	if (eps|png|wmf) dev.off()
 	invisible() 
 }
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~preferDepth
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~preferDepth
 
 
 #prepClara----------------------------2013-01-28

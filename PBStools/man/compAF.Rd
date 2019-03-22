@@ -9,9 +9,10 @@
   using plots of discrete or cumulative frequency.
 }
 \usage{
-compAF(x, year=2003, sex=2, amax=40, pfld="wp", png=FALSE,
-   outnam, clrs=c("red","black"), ltys=1, type="cumul",
-   lang=c("e","f"))
+compAF(x, year=2003, sex=2, amax=40, pfld="wp",
+   png=FALSE, pngres=400, PIN=c(10,7.5),
+   outnam, clrs=c("red","black"), ltys=1, 
+   type="cumul", lang=c("e","f"))
 }
 \arguments{
   \item{x}{\code{list} -- list of arrays by group category containing
@@ -22,6 +23,8 @@ compAF(x, year=2003, sex=2, amax=40, pfld="wp", png=FALSE,
   \item{amax}{\code{numeric} -- maximum age to use as a plus class.}
   \item{pfld}{\code{character} -- name of field in AF arrays that contains the data you wish to compare.}
   \item{png}{\code{logical} -- if \code{TRUE}, send the figure to a \code{png} device.}
+  \item{pngres}{\code{numeric} -- resolution in pixels per inch for the png file.}
+  \item{PIN}{\code{numeric} -- vector specifying width and height for output graphics file.}
   \item{outnam}{\code{character} -- name for the output file.}
   \item{clrs}{\code{character} -- vector of colour names of the lines by category.}
   \item{ltys}{\code{numeric} -- vector of line types by category.}
@@ -44,10 +47,11 @@ compAF(x, year=2003, sex=2, amax=40, pfld="wp", png=FALSE,
 \author{
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
-  \emph{opus locus}: Institute of Ocean Sciences (IOS), Sidney BC\cr
-  Last modified \code{Rd: 2018-07-23}
+  \emph{locus opus}: Institute of Ocean Sciences (IOS), Sidney BC\cr
+  Last modified \code{Rd: 2019-03-21}
 }
 \seealso{
+In package \pkg{PBStools}:\cr
   \code{\link[PBStools]{estOgive}},
   \code{\link[PBStools]{genPa}},
   \code{\link[PBStools]{plotProp}},
