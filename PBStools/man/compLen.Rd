@@ -8,10 +8,11 @@
   Used to detect consistent size differencs along the BC coast to suggest stock delineation.
 }
 \usage{
-compLen(dat, strSpp, fld="len", lbin=1, sex=c(2,1), 
+compLen(dat, strSpp, fld="len", lbin=1, sex=c(2,1),
    gfld="SSID", gval=list(16,1,4), yrs, ttype, stype, scat, exlax,
-   strat=FALSE, boot=FALSE, R=10, bxpsep=0.2, bxpcol="black",
-   ylim=NULL, png=FALSE, PIN=c(8,8), lang=c("e","f"))
+   strat=FALSE, boot=FALSE, R=10, bxpsep=0.2, bxpcol="black", 
+   ylim=NULL, legpos=c(0.025,0.4), 
+   png=FALSE, pngres=400, PIN=c(8,8), lang=c("e","f"))
 }
 \arguments{
   \item{dat}{\code{data.frame} -- usually a biological object created by \code{gfb_bio.sql}.}
@@ -32,7 +33,9 @@ compLen(dat, strSpp, fld="len", lbin=1, sex=c(2,1),
   \item{bxpsep}{\code{numeric} -- space between mulitiple survey series boxes in any given year.}
   \item{bxpcol}{\code{character} -- outline colour of boxes.}
   \item{ylim}{\code{numeric} -- limits of the y-axis.}
+  \item{legpos}{\code{numeric} -- relative position on plot to add legend.}
   \item{png}{\code{logical} -- if \code{TRUE}, send the figure to a \code{.png} file.}
+  \item{pngres}{\code{numeric} -- resolution for output file (pixesl/inch).}
   \item{PIN}{\code{numeric} -- two-element vector specifying the width and height (both in inches) of the \code{.png} file.}
   \item{lang}{\code{character} -- vector of letters specifying language in figures (\code{"e"}= english, \code{"f"}= french.}
 }
@@ -43,7 +46,7 @@ compLen(dat, strSpp, fld="len", lbin=1, sex=c(2,1),
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
   \emph{locus opus}: Institute of Ocean Sciences (IOS), Sidney BC\cr
-  Last modified \code{Rd: 2018-12-21}
+  Last modified \code{Rd: 2019-10-02}
 }
 \note{
   Developed to demonstrate and support stock separation for Redstripe Rockfish.
@@ -51,6 +54,7 @@ compLen(dat, strSpp, fld="len", lbin=1, sex=c(2,1),
   between commercial bottom and midwater trawl gear.
 }
 \seealso{
+In package \pkg{PBStools}:\cr
 \code{\link[PBStools]{calcStockArea}},
 \code{\link[PBStools]{calcVB}},
 \code{\link[PBStools]{compAF}},
@@ -68,5 +72,6 @@ compLen(dat, strSpp, fld="len", lbin=1, sex=c(2,1),
 }
 % Add one or more standard keywords, see file 'KEYWORDS' in the
 % R documentation directory.
-\keyword{ hplot }% use one of  RShowDoc("KEYWORDS")
+\keyword{hplot}% use one of  RShowDoc("KEYWORDS")
 %\keyword{ ~kwd2 }% __ONLY ONE__ keyword per line
+\concept{M06_Assessment}

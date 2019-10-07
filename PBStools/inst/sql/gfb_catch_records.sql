@@ -20,8 +20,10 @@ ORDER BY
   S.SURVEY_SERIES_ID, S.SURVEY_ID
 
 -- Merge tables to get TRIP_ID, SURVEY_ID, and SURVEY_SERIES_ID (see gfb_bio.sql, RH 181219)
+-- Added TRIP_ACTIVITY_CODE (RH 190807)
 SELECT
   TS.TRIP_ID,
+  TAC.ACTIVITY_CODE,               -- 190624: Trip activity code might provide a clue if survey ID is missing (MS)
   CASE
     WHEN OS.SURVEY_SERIES_ID IS NULL THEN 999
     WHEN OS.SURVEY_SERIES_ID IN (6,7) THEN 670          -- Shrimp trawl surveys
@@ -34,15 +36,17 @@ SELECT
   MAX(OS.SURVEY_ID) AS SURVEY_ID
 INTO #TripSurvSer
 FROM 
-  --#onlyTID T INNER JOIN
+  TRIP_ACTIVITY TAC RIGHT OUTER JOIN
   TRIP T INNER JOIN
   (#ORIGINAL_SURVEYS OS INNER JOIN
   TRIP_SURVEY TS ON
     OS.SURVEY_ID = TS.SURVEY_ID) ON
-    T.TRIP_ID = TS.TRIP_ID
+    T.TRIP_ID = TS.TRIP_ID ON
+    T.TRIP_ID = TAC.TRIP_ID
 --WHERE T.TRIP_ID IN (10921,62066)
 GROUP BY
   TS.TRIP_ID,
+  TAC.ACTIVITY_CODE,
   CASE
     WHEN OS.SURVEY_SERIES_ID IS NULL THEN 999
     WHEN OS.SURVEY_SERIES_ID IN (6,7) THEN 670          -- Shrimp trawl surveys
@@ -124,6 +128,7 @@ SELECT --TOP 20
       ELSE TSS.SURVEY_SERIES_ID END)
     ELSE TSS.SURVEY_SERIES_ID END,
   'SVID' = TSS.SURVEY_ID,
+  'AC'   = TSS.ACTIVITY_CODE,
   --'OI' = TSS.ORIGINAL_IND, --CASE
     --WHEN TSS.ORIGINAL_IND IN ('Y') THEN 'TRUE'
     --ELSE 'FALSE' END,
@@ -205,4 +210,5 @@ ORDER BY
 --qu("gfb_catch_records.sql",dbName="GFBioSQL",strSpp="607",as.is=c(rep(F,14),T,rep(F,3)))
 --qu("gfb_catch_records.sql",dbName="GFBioSQL",strSpp="439",as.is=c(rep(F,16),T,rep(F,3)))
 --qu("gfb_catch_records.sql",dbName="GFBioSQL",strSpp="417",as.is=c(rep(FALSE,15),TRUE,rep(FALSE,3)))
+--qu("gfb_catch_records.sql",dbName="GFBioSQL",strSpp="435",as.is=c(rep(FALSE,15),TRUE,rep(FALSE,3)))
 

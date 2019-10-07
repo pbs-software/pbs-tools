@@ -27,7 +27,7 @@ buildCatch(
    useAI=FALSE,
    useGM=FALSE,
    useBG=FALSE,
-   refyrs=1997:2005,
+   refyrs = list(1997:2005, 1997:2005, 1997:2005, 1997:2005, 1997:2005),
    refarea=NULL,
    refgear=NULL,
    strat.gamma=FALSE,
@@ -129,8 +129,8 @@ buildCatch(
   \item{wmf}{\code{logical} -- if \code{TRUE}, send the figures to \code{.wmf} files.}
   \item{uid, pwd}{\code{character} -- user ID and password for Oracle DB account authentication (only used for PacHarv3 currently).}
   \item{ioenv}{\code{environment} -- input/output environment for function input data and output results.}
-  \item{hadley}{\code{logical} -- if \code{TRUE}, use Hadley Wickham's bloated R packages.}
-  \item{...}{additional \emph{ad hoc} arguments to deal with PJS issues.}
+  \item{hadley}{\code{logical} -- if \code{TRUE}, use Hadley Wickham's wizardry in \code{'crossTab'}.}
+  \item{...}{additional \emph{ad hoc} arguments to deal with industry issues.}
 }
 \details{
   For the time period 1918--1949, landings of other rockfish (\code{ORF}) and total rockfish (\code{TRF}) 
@@ -145,11 +145,11 @@ buildCatch(
   where \eqn{a} = -0.8063372, \eqn{b} = 1.006260, \eqn{O} = \code{ORF}, \eqn{T} = \code{TRF}, and \code{POP = TRF - ORF}.
   
   The ratios calculated by \code{buildCatch}:\cr
-  \eqn{\alpha}  = proportion of \code{RRF} caught in a PMFC area for each fishery,\cr
-  \eqn{\beta}   = proportion of \code{RRF} caught in a PMFC area for H&L fisheries,\cr
-  \eqn{\gamma}  = ratio of \code{RRF} to a larger group (\code{TRF|ORF|POP}) from observer logs,\cr
-  \eqn{\delta}  = ratio of discarded \code{RRF} to landings of a fishery-dependent spcecies|group from observer logs,\cr
-  \eqn{\lambda} = proportion of early \code{ORF|TRF} catch by general gear type,\cr
+  \eqn{\alpha} or \code{alpha} = proportion of \code{RRF} caught in a PMFC area for each fishery,\cr
+  \eqn{\beta}  or \code{beta} = proportion of \code{RRF} caught in a PMFC area for H&L fisheries,\cr
+  \eqn{\gamma} or \code{gamma} = ratio of \code{RRF} to a larger group (\code{TRF|ORF|POP}) from observer logs,\cr
+  \eqn{\delta} or \code{delta} = ratio of discarded \code{RRF} to landings of a fishery-dependent spcecies|group from observer logs,\cr
+  \eqn{\lambda} or \code{lambda} = proportion of early \code{ORF|TRF} catch by general gear type,\cr
   are applied to the historical data to estimate historical landings of the \code{RRF}
   species. For \code{POP} the historical trawl landings are known back to 1956 
   and so these are used instead of deriving estimates.
@@ -188,22 +188,27 @@ buildCatch(
   Data for the H&L fisheries from \code{PacHarv3} are still used as these do not appear in other databases. 
   The second departure was the inclusion of an additional data source for Japanese rockfish catch reported in Ketchen (1980).
 
-  In 2014, the Yellowtail Rockfish (YTR) assessment (Starr et al. 2014) selected offshore areas that reflected the activity of the foreign fleets' impact on this species to calculate \code{gamma} (\code{RRF/ORF}) and \code{delta} ratios (\code{RRF/TAR}). 
+  In 2014, the Yellowtail Rockfish (YTR) assessment (Starr et al. 2014) selected offshore areas that reflected the activity of the foreign fleets' impact on this species to calculate \eqn{\gamma} (\code{RRF/ORF}) and \eqn{\delta} ratios (\code{RRF/TAR}). 
   This option has not been used in other rockfish reconstructions.
 
-  In the 2015 Yelloweye Rockfish (YYR) assessment (Yamanaka et al. 2018) the concept of depth-stratified \code{gamma} and \code{delta} ratios was introduced; however, this functionality has not been used since. 
+  In the 2015 Yelloweye Rockfish (YYR) assessment (Yamanaka et al. 2018) the concept of depth-stratified \eqn{\gamma} and \eqn{\delta} ratios was introduced; however, this functionality has not been used since. 
   Also in the YYR assessment, rockfish catch from seamounts was removed, as well as an option to exclude rockfish catch from the foreign fleet and the experimental Langara Spit POP fishery.
 
-  In the 2018 Redstripe Rockfish (RSR) assessment, \code{gamma} and \code{delta} ratios from reference years can be calculated by applying the geometric mean across years instead of the previously used arithmetic mean. 
+  In the 2018 Redstripe Rockfish (RSR) assessment (Starr and Haigh, in press), gamma and delta ratios from reference years were calculated by taking the geometric mean across years instead of the previously used arithmetic mean. 
   This reduces the influence of single anomalously large annual ratios. 
-  Additionally, estimated RSR (using \code{gamma}) for landings later than 1996 can be selected by fishery, should the user have reason to replace observed landings with estimated ones. 
-  The user can also now specify years by fishery when discard ratios are to be applied. 
+  Also new in 2018 was the ability to estimate RRF (using \eqn{\gamma}) for landings later than 1996, should the user have reason to replace observed landings with estimated ones.
+  For example, Widow Rockfish (WWR) observed landings by fishery were used starting in 1996 (trawl), 2000 (halibut), 2007 (sablefish), 2007 (dogfish/lingcod), and 1986 (h&l rockfish); prior to these years, landings were estimated using \eqn{\gamma}. 
+  The user can also specify years by fishery when discard ratios (\eqn{\delta}) are to be applied; for WWR these years were 1954:1995 (trawl), 1986:2005 (halibut), 1986:2005 (sablefish), 1986:2005 (dogfish/lingcod), and 1986:2005 (h&l rockfish).
   As previously, years before the discard period assume no discarding, and years after the discard period assume that discards have been reported in the databases.
 
-  In a reconstruction for Rougheye Rockfish (RER) in 2018, the calculation of \code{gamma} and \code{delta} changed from including reference-year zero-value ratios to excluding them.
+  In 2018, a reconstruction for Rougheye Rockfish (RER) changed the calculation of \eqn{\gamma} and \eqn{\delta} from including reference-year zero-value ratios to excluding them.
   The reason for this change was that scarcity of data, especially in observer records for the non-trawl fisheries, was more likely to be the reason for zero values that the absence of the reconstructed rockfish (RRF).
   The effect of excluding zeroes will increase both ratios using the non-stratified method.
-  Depth-stratification calculations of \code{gamma} and \code{delta} have not been re-examined or altered in the current algorithm.
+  Depth-stratification calculations of \eqn{\gamma} and \eqn{\delta} have not been re-examined or altered in the current algorithm.
+
+  In 2019, the WWR sock assessment found substantial amounts of WWR in GFBioSQL reported as foreign catch (specifically 349t in years 1982, 1987-1991, and 2000), which came from midwater gear off WCVI. 
+  The reconstruction algorithm now assigns GFBio foreign catch to four of the five fisheries based on gear type -- bottom and midwater trawl gear assigned to trawl, longline gear assigned to halibut, trap and line-trap mix gear assigned to sablefish, h&l gear assigned to h&l rockfish -- assuming that the reconstruction uses foreign catch, which is optional. 
+  These foreign catches occurred well after the foreign fleet activity between 1965 and the implementation of an exclusive economic zone in 1977.
 }
 \section{Additional information -- YTR 2014}{
   Rob Kronlund and Paul Starr met on Aug 12, 2014 with Brian Mose who made several important
@@ -322,7 +327,7 @@ buildCatch(
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
   \emph{locus opus}: Institute of Ocean Sciences (IOS), Sidney BC\cr
-  Last modified \code{Rd: 2018-09-18}
+  Last modified \code{Rd: 2019-10-02}
 }
 \references{
   Edwards, A.M., Haigh, R. and Starr, P.J. (2014a)
@@ -355,8 +360,7 @@ buildCatch(
   \emph{DFO Can. Sci. Advis. Sec. Res. Doc.} \bold{2018/001}: ix + 150 pp.
 }
 \seealso{
-  \pkg{PBStools}\cr
-  Functions:
+In package \pkg{PBStools}:\cr
     \code{\link[PBStools]{calcPMR}},
     \code{\link[PBStools]{calcStockArea}},
     \code{\link[PBStools]{collectFigs}},
@@ -367,17 +371,17 @@ buildCatch(
     \code{\link[PBStools]{plotRecon}},
     \code{\link[PBStools]{sampBG}},
     \code{\link[PBStools]{surveyCatch}},
-    \code{\link[PBStools]{zapSeamounts}} \cr
-  SQL queries:
-    \code{\link[PBStools]{SQLcode}}\cr
-  Data:
-    \code{\link[PBSdata]{orfhistory}}\cr
-  \pkg{PBSmodelling}\cr
-  Functions:
+    \code{\link[PBStools]{zapSeamounts}}, 
+    \code{\link[PBStools]{SQLcode}}\cr\cr
+In package \pkg{PBSdata}:\cr
+    \code{\link[PBSdata]{orfhistory}},
+    \code{\link[PBSdata]{rrfhistory}}\cr\cr
+In package \pkg{PBSmodelling}:\cr
     \code{\link[PBSmodelling]{calcGM}},
     \code{\link[PBSmodelling]{packList}}
 }
 \keyword{manip}
 \keyword{database}
 \keyword{datagen}
+\concept{M07_CatchRecon}
 

@@ -1,4 +1,4 @@
--- Last modified by RH (2015-04-23)
+-- Last modified by RH (2019-06-13)
 -- PacHarvHL query for fisherlog catch (KG) of a target species, POP, and ORF (other rockfish)
 -- fisheryid: 2=Halibut, 3=Sablefish, 4=Schdeule II, 5=ZN, 
 --            6=Sablefish+ZN, 7=Sablefish+Halibut, 8=Dogfish, 9=Lingcod
@@ -12,9 +12,9 @@ SET NOCOUNT ON -- prevents timeout errors
 
 -- Event info on FID and licence option
 SELECT 
-  'hail_in' = FE.OBFL_HAIL_IN_NO,
-  'set_no'  = FE.OBFL_SET_NO,
-  'log'     = FE.OBFL_LOG_TYPE_CDE,
+  'hail_in' = FE.OBFL_HAIL_IN_NO,   -- key field
+  'set_no'  = FE.OBFL_SET_NO,       -- key field
+  'log'     = FE.OBFL_LOG_TYPE_CDE, -- key field
   'fid'     = FE.OBFL_FISHERY_ID,
   'lic'     = IsNull(RTRIM(LTRIM(VH.vrec_ext_lic_option_cde)),''),
   'date'    = CAST( COALESCE(FE.OBFL_START_DT,FE.Start_FE,FE.OBFL_END_DT,FE.OBFL_LOADED_DT) AS smalldatetime),
@@ -40,18 +40,19 @@ SELECT
     WHEN FE.OBFL_END_BOTTOM_DTH IS NOT NULL AND FE.OBFL_END_BOTTOM_DTH>=0 THEN FE.OBFL_END_BOTTOM_DTH
     ELSE 0. END,
   'eff'  = FE.Duration
-  INTO #Events
-  FROM
-    B5_Validation_Header VH RIGHT OUTER JOIN
-    B3_Fishing_Events FE ON
-    FE.OBFL_HAIL_IN_NO = VH.vrec_hail_in_no
-  WHERE
-    FE.OBFL_LOG_TYPE_CDE IN (@logtype)
+INTO #Events
+FROM
+  B5_Validation_Header VH RIGHT OUTER JOIN
+  B3_Fishing_Events FE ON
+  FE.OBFL_HAIL_IN_NO = VH.vrec_hail_in_no
+WHERE
+  FE.OBFL_LOG_TYPE_CDE IN (@logtype)
 
 -- Compile the catch stats for target, POP, ORF, TAR
 SELECT 
   E.hail_in, E.set_no, E.log, E.fid, E.lic, 
   E.date, E.major, E.minor, E.locality, E.region, E.fdep, E.eff,
+  -- FC.OBFL_CATCH_UTILIZATION_CDE,
   'landed' = Sum( CASE 
     WHEN FC.OBFL_SPECIES_CDE IN (@sppcode) AND FC.OBFL_CATCH_UTILIZATION_CDE NOT IN (5,6,8,9,22,23,24,27,28)
     THEN IsNull(FC.OBFL_EST_WEIGHT,0)
@@ -81,21 +82,21 @@ SELECT
     WHEN E.fid=5 AND FC.OBFL_SPECIES_CDE IN ('424','407','431','433','442') AND FC.OBFL_CATCH_UTILIZATION_CDE NOT IN (5,6,8,9,22,23,24,27,28)
       THEN IsNull(FC.OBFL_EST_WEIGHT,0)
     ELSE 0 END)
-  INTO #Catch
-  FROM 
-    #Events E RIGHT OUTER JOIN
-    -- (PacHarvest.dbo.C_Species S RIGHT OUTER JOIN
-    B4_Catches FC ON  -- B4 Catch is in kg (Lisa Lacko)
-    -- FC.OBFL_SPECIES_CDE = S.SPECIES_CDE) ON
-    E.hail_in = FC.OBFL_HAIL_IN_NO AND
-    E.set_no = FC.OBFL_SET_NO AND
-    E.log = FC.OBFL_LOG_TYPE_CDE
-  WHERE
-    FC.OBFL_LOG_TYPE_CDE IN (@logtype) AND
-    E.fid IN (@fisheryid)
-  GROUP BY 
-    E.hail_in, E.set_no, E.log, E.fid, E.lic,
-    E.date, E.major, E.minor, E.locality, E.region, E.fdep, E.eff
+INTO #Catch
+FROM 
+  #Events E RIGHT OUTER JOIN
+  -- (PacHarvest.dbo.C_Species S RIGHT OUTER JOIN
+  B4_Catches FC ON  -- B4 Catch is in kg (Lisa Lacko)
+  -- FC.OBFL_SPECIES_CDE = S.SPECIES_CDE) ON
+  E.hail_in = FC.OBFL_HAIL_IN_NO AND
+  E.set_no = FC.OBFL_SET_NO AND
+  E.log = FC.OBFL_LOG_TYPE_CDE
+WHERE
+  FC.OBFL_LOG_TYPE_CDE IN (@logtype) AND
+  E.fid IN (@fisheryid)
+GROUP BY 
+  E.hail_in, E.set_no, E.log, E.fid, E.lic,
+  E.date, E.major, E.minor, E.locality, E.region, E.fdep, E.eff --, FC.OBFL_CATCH_UTILIZATION_CDE
 
 -- Create an events table based on unique hails
 SELECT 
@@ -112,9 +113,10 @@ SELECT
   'ORF' = CAST(ROUND(C.ORF,7) AS NUMERIC(15,7)), --/2.20459,
   'TAR' = CAST(ROUND(C.TAR,7) AS NUMERIC(15,7))  --/2.20459
 FROM 
-    B2_Trips T RIGHT OUTER JOIN
-    #Catch C ON 
-   T.OBFL_HAIL_IN_NO = C.hail_in
+  B2_Trips T RIGHT OUTER JOIN
+  #Catch C ON 
+    T.OBFL_HAIL_IN_NO = C.hail_in AND
+    T.OBFL_LOG_TYPE_CDE = C.log
 WHERE 
   --COALESCE(C.fid,E.OBFL_FISHERY_ID,T.OBFL_FISHERY_ID)=@fisheryid AND
   (C.landed>0 OR C.discard>0 OR C.POP>0 OR C.ORF>0 OR C.TAR>0)
@@ -123,6 +125,6 @@ WHERE
 -- getData("phhl_fcatORF.sql","PacHarvHL",strSpp="424",fisheryid=4)
 -- getData("phhl_fcatORF.sql","PacHarvHL",strSpp="424",fisheryid=5)
 -- qu("phhl_fcatORF.sql",dbName="PacHarvHL",strSpp="418",logtype="FISHERLOG") --- fisherlog catch
--- qu("phhl_fcatORF.sql",dbName="PacHarvHL",strSpp="442",logtype="OBSERVRLOG",fisheryid=4) --- observer log catch
-
+-- qu("phhl_fcatORF.sql",dbName="PacHarvHL",strSpp="442",logtype="OBSERVRLOG",fisheryid=c(2,4,5)) --- observer log catch
+-- getData("phhl_fcatORF.sql","PacHarvHL",strSpp=strSpp,path=spath,fisheryid=c(2,4,5),logtype="OBSERVRLOG",tenv=penv())
 

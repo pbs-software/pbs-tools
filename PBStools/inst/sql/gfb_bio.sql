@@ -1,4 +1,4 @@
--- Get specimen biological data from GFBioSQL (last revised 2018-12-19)
+-- Get specimen biological data from GFBioSQL (last revised 2019-07-17)
 -- Note: Not all users can access the Schnute overlay for table names.
 -- Number in brackets = #records for YYR
 
@@ -27,9 +27,11 @@ FROM #TempGen TG
 WHERE TG.GENETIC_CODE NOT IN ('')
 
 -- Collect values from B01 to B05, possibly modified by genetic species (GS) update
-SELECT --TOP 1000
+SELECT -- TOP 1000
+  TAC.ACTIVITY_CODE,               -- 190624: Trip activity code might provide a clue if survey ID is missing (MS)
   B01.VESSEL_ID,
   B01.TRIP_ID,
+  FT.FOS_TRIP_ID,                  -- 190717: Trip ID in GFFOS to link GFBioSQL and GFFOS (NO).
   B02.FISHING_EVENT_ID,
   B03.CATCH_ID,
   B04.SAMPLE_ID,
@@ -39,8 +41,8 @@ SELECT --TOP 1000
   B02.BLOCK_DESIGNATION,
   B01.HAIL_IN_NO,
   B02.FE_MAJOR_LEVEL_ID,
-  B02.FE_SUB_LEVEL_ID,       -- 180914: Only populated for gear types 2 (trap) and 4 (handline)
-  B02.FE_MINOR_LEVEL_ID,     -- 180914: Only populated for spp 455 in gear 2 (sablefish in trap)
+  B02.FE_SUB_LEVEL_ID,             -- 180914: Only populated for gear types 2 (trap) and 4 (handline)
+  B02.FE_MINOR_LEVEL_ID,           -- 180914: Only populated for spp 455 in gear 2 (sablefish in trap)
   B01.TRIP_SUB_TYPE_CODE,
   B04.SAMPLE_TYPE_CODE,
   B01.TRIP_START_DATE,
@@ -92,11 +94,14 @@ SELECT --TOP 1000
   B02.FE_BOTTOM_WATER_TEMPERATURE,
   COALESCE(GS.GENETIC_CODE,B03.SPECIES_CODE) AS SPECIES_CODE,
   B03.SPECIES_CATEGORY_CODE,
+  B04.SAMPLE_SOURCE_CODE,          -- 190626: sample source code used in conjunction with species category code to determine unsorted and keepers ( Forrest et. al (2015)
   B03.CATCH_VERIFICATION_CODE,
   B03.CATCH_WEIGHT,
   B03.CATCH_COUNT
 INTO #B01B05
 FROM 
+  TRIP_ACTIVITY TAC RIGHT OUTER JOIN
+  FOS_TRIP FT RIGHT OUTER JOIN
   B01_TRIP B01 INNER JOIN
   B02_FISHING_EVENT B02 INNER JOIN
   B02L3_Link_Fishing_Event_Catch L1 INNER JOIN
@@ -112,7 +117,9 @@ FROM
     L2.CATCH_ID = B03.CATCH_ID ON
     B03.CATCH_ID = L1.CATCH_ID ON
     L1.FISHING_EVENT_ID = B02.FISHING_EVENT_ID ON
-    B02.TRIP_ID = B01.TRIP_ID
+    B02.TRIP_ID = B01.TRIP_ID ON
+    B01.TRIP_ID = FT.TRIP_ID ON
+    B01.TRIP_ID = TAC.TRIP_ID
 WHERE 
   COALESCE(GS.GENETIC_CODE,B03.SPECIES_CODE) IN (@sppcode) AND
   B02.MAJOR_STAT_AREA_CODE IN (@major) --AND
@@ -326,8 +333,10 @@ GROUP BY
 
 -- ===== Tie everything together =====
 SELECT 
+  'AC'   = ISNULL(AA.ACTIVITY_CODE,0),                      -- TRIP_ACTIVITY
   'VID'  = ISNULL(AA.VESSEL_ID,0),                          -- B01_Trip
   'TID'  = AA.TRIP_ID,                                      -- B01_TRIP
+  'FOSTID'  = AA.FOS_TRIP_ID,                               -- FOS_TRIP
   'FEID' = AA.FISHING_EVENT_ID,                             -- B02_FISHING_EVENT
   'CID'  = AA.CATCH_ID,                                     -- B03_CATCH
   'SID'  = AA.SAMPLE_ID,                                    -- B04_SAMPLE
@@ -397,6 +406,7 @@ SELECT
   'len'   = CASE WHEN IsNull(BM.Best_Length,0)=0 THEN NULL ELSE BM.Best_Length END,    -- B05d_Specimen_Morphometrics
   'wt'    = CASE WHEN IsNull(BM.Round_Weight,0)=0 THEN NULL ELSE BM.Round_Weight END, -- B05d_Specimen_Morphometrics
   'scat'  = IsNull(AA.SPECIES_CATEGORY_CODE,0),                          -- B03_Catch
+  'ssrc'  = AA.SAMPLE_SOURCE_CODE,                                       -- B04_Sample
   'cver'  = IsNull(AA.CATCH_VERIFICATION_CODE,0),                        -- B03_Catch
   'fdep'  = CASE WHEN AA.Best_Depth=0 THEN NULL ELSE AA.Best_Depth END,  -- B02_FISHING_EVENT
   'bwt'   = CASE WHEN AA.FE_BOTTOM_WATER_TEMPERATURE>30 THEN NULL
@@ -540,8 +550,9 @@ SELECT * FROM #GFBBIO
 -- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="602") -- Arrowtooth Flounder (180911)  -- with freezer trawl vessels flagged
 -- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="417") -- Widow Rockfish (WWR: 181012, 181107, 181120)
 -- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="417") -- Widow Rockfish (WWR: 181012, 181107, 181120, 181207)
--- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="417") -- Widow Rockfish (WWR: 181012, 181107, 181120, 181207, 181219)
 -- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="435") -- Bocaccio (BOR: 180912, 181120, 181206, 181212, 181219)
--- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="394") -- Rougheye Rockfish (RER: 180914, 181205, 181219 for Vania|Sean)
--- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="425") -- Blackspotted Rockfish (BSR: 180914, 181205, 181219 for Vania|Sean)
+-- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="417") -- Widow Rockfish (WWR: 181012, 181107, 181120, 181207, 181219, 190321)
+-- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="435") -- Bocaccio (BOR: 190107, 190620, 190709)
+-- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="425") -- Blackspotted Rockfish (BSR: 190110, 190114, 190128, 190717 for Vania|Sean)
+-- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="394") -- Rougheye Rockfish (RER: 190110, 190114, 190128, 190717 for Vania|Sean)
 

@@ -48,6 +48,7 @@ histTail(dat=pop.age, xfld="age", tailmin=NULL,
   \item{ylab}{Label used for y-axis.}
 }
 \examples{
+\dontrun{
 local(envir=.PBStoolEnv,expr={
 pbsfun=function(){
   data(pop.age,envir=.PBStoolEnv)
@@ -56,11 +57,12 @@ pbsfun=function(){
 pbsfun()
 })
 }
+}
 \author{
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
-  \emph{opus locus}: Institute of Ocean Sciences (IOS), Sidney BC\cr
-  Last modified \code{Rd: 2018-08-02}
+  \emph{locus opus}: Institute of Ocean Sciences (IOS), Sidney BC\cr
+  Last modified \code{Rd: 2019-10-02}
 }
 \seealso{
   \code{\link[PBStools]{histMetric}} \cr

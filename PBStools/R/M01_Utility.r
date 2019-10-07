@@ -3,6 +3,7 @@
 ## -----------------
 ##  addStrip........Add a vertical colour strip as a legend.
 ##  biteData........Subsets a data matrix/frame using input vector.
+##  changeLangOpts..Change the options that control the display of numbers based on language.
 ##  chewData........Remove records that contribute little information to factor categories.
 ##  confODBC........Set up an ODBC User Data Source Name (DSN).
 ##  convCT..........Convert a crossTab object to regular matrix or data frame.
@@ -120,6 +121,23 @@ biteData = function(dat,vec) {
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~biteData
 
 
+## changeLangOpts-----------------------2019-06-10
+##  Change the options that control the display of
+##  numbers based on language.
+## ---------------------------------------------RH
+changeLangOpts = function(L="e", stringsAsFactors=FALSE)
+{
+	## Assume defaults are english
+	Eopts = list(OutDec=".", big.mark=",", stringsAsFactors=stringsAsFactors)
+	Fopts = list(OutDec=",", big.mark=" ", stringsAsFactors=stringsAsFactors)
+	tput(Eopts) ## store defaults in .PBSmodEnv
+	options(switch(L, 'e'=Eopts, 'f'=Fopts))
+}
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~changeLangOpts
+eop = function(){changeLangOpts(L="e")}  ## create short command for switching to english options
+fop = function(){changeLangOpts(L="f")}  ## create short command for switching to french  options
+
+
 ## chewData-----------------------------2009-01-13
 ## Remove records that contribute little information to factor categories.
 ## ---------------------------------------------RH
@@ -135,6 +153,42 @@ chewData=function(dat,fac,nmin=3,na.rm=TRUE) {
 	return(dat)
 }
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~biteData
+
+
+## coalesce-----------------------------2019-07-25
+##  Emulate SQL's function 'COALESCE':
+##  Accept a list of vectors of identical length and
+##  return one vector with the first non-NA value.
+## Author: Eric Vallabh Minikel (May 2, 2013)
+## Source: https://www.cureffi.org/2013/05/02/r-equivalent-of-sql-coalesce/
+## --------------------------------------------EVM
+coalesce = function(...)
+{
+	## convert input arguments into a list of vectors
+	input_list = list(...)
+	# check that all input vectors are of same length
+	vectorlength = length(input_list[[1]])
+	for (j in 1:length(input_list)) {
+		if(length(input_list[[j]]) != vectorlength) {
+			stop(paste("Not all vectors are of same length. First vector length: ",vectorlength,". Vector #",j,"'s length: ",length(input_list[[j]]),sep=""))
+		}
+	}
+	## create a result vector to fill with first non-NA values
+	result = rep(NA,vectorlength)
+	## fill with first non-NA value
+	for (i in 1:length(result)) {
+		for (j in 1:length(input_list)) {
+			if(!is.na(input_list[[j]][i])) {
+				result[i] = input_list[[j]][i]
+				break
+			}
+		}
+	}
+	attr(result,"author") = "Eric Vallabh Minikel (May 2, 2013)"
+	attr(result,"source") = "https://www.cureffi.org/2013/05/02/r-equivalent-of-sql-coalesce/"
+	return(result)
+}
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~coalesce
 
 
 ## confODBC-----------------------------2010-06-02
@@ -1108,10 +1162,12 @@ isThere = function(x, envir=parent.frame()) {
 	genv = function(){ .GlobalEnv }                # global environment
 
 
-## linguaFranca-------------------------2018-11-26
+## linguaFranca-------------------------2019-09-18
 ## Translate English phrases to French (other languages possible)
 ## for use in plotting figures with French labels.
 ## Note that 'gsub' has a limit to its nesting depth.
+## little -- number of characters that defines a little word that is
+##           only translated when it appears by itself
 ## ---------------------------------------------RH
 linguaFranca = function(x, lang="e", little=4, strip=FALSE)
 {
@@ -1126,16 +1182,46 @@ linguaFranca = function(x, lang="e", little=4, strip=FALSE)
 		zlil    = nchars<=little; lilword = x[zlil]; xLpos=(1:length(x))[zlil]
 		zbig    = nchars>little;  bigword = x[zbig]; xBpos=(1:length(x))[zbig]
 		if (any(zlil)) {
-			## les petits mots de bouche
+			## les petits mots de bouche (stand-alone words)
 			xlil = sapply(lilword, function(x0){
 				gsub("[Aa]nd", "et",
-				gsub("[B][C]", "CB",
+				gsub("[Aa]vg", "moy",
+				gsub("[B][C]", "C-B",
 				gsub("[H][S]", "DH",
 				gsub("[Q][C][S]", "BRC",
 				gsub("[W][C][H][G]", "COHG",
 				gsub("[W][C][V][I]", "COIV",
 				gsub("[Ll]ag", eval(parse(text=deparse("d\u{00E9}calage"))),
 				gsub("[Aa]ge", eval(parse(text=deparse("\u{00E2}ge"))),
+				gsub("[Ss]ex", "sexe",
+				gsub("[Yy]ear", eval(parse(text=deparse("ann\u{00E9}e"))),
+				gsub("[Mm]ale", eval(parse(text=deparse("m\u{00E2}le"))),
+				gsub("[Gg]ear", eval(parse(text=deparse("\u{00E9}quipement"))),
+				gsub("[Mm]ean", "moyenne",
+				gsub("[Bb]oth", "tous les deux",
+				gsub("[Cc]om(m?)", "com",
+				gsub("[Rr]es(e?)", "rec",
+				gsub("[Ss]ur(v?)", "rel",
+				x0))))))))))))))))))
+			})
+			## ridiculous acronyms
+			xlil = sapply(xlil, function(xa){
+#browser();return()
+				gsub("[B][T]", "CF",
+				gsub("[M][W]", "CP",
+				gsub("[A][C][F]", "FAC",         ## fonction d'autocorr\'{e}lation
+				gsub("[G][M][A]", "ZGPF",        ## les zones de gestion des poissons de fond 
+				gsub("[G][M][U]", "GGPF",        ## le groupe de gestion du poisson de fond
+				gsub("[L][R][P]", "PRL",         ## point de r\'{e}f\'{e}rence limite
+				gsub("[M][P][D]", "MDP",         ## mode de distribution post\'{e}rieure
+				gsub("[M][S][Y]", "RMS",         ## rendement maximal soutenu
+				gsub("[m][s][y]", "rms",         ## rendement maximal soutenu
+				gsub("[U][S][R]", "RSS",         ## r\'{e}f\'{e}rence de stock sup\'{e}rieure
+				gsub("[M][C][M][C]", "MCCM",     ## Monte Carlo \`{a} cha\^{i}ne de Markov
+				xa)))))))))))
+			})
+			## dat abbreviations
+			xlil = sapply(xlil, function(xb){
 				gsub("[Jj]an", "jan",
 				gsub("[Ff]eb", eval(parse(text=deparse("f\u{00E9}v"))),
 				gsub("[Mm]ar", "mar",
@@ -1148,32 +1234,13 @@ linguaFranca = function(x, lang="e", little=4, strip=FALSE)
 				gsub("[Oo]ct", "oct",
 				gsub("[Nn]ov", "nov",
 				gsub("[Dd]ec", eval(parse(text=deparse("d\u{00E9}c"))),
-				gsub("[Ss]ex", "sexe",
-				gsub("[Yy]ear", eval(parse(text=deparse("ann\u{00E9}e"))),
-				gsub("[Mm]ale", eval(parse(text=deparse("m\u{00E2}le"))),
-				gsub("[Gg]ear", eval(parse(text=deparse("\u{00E9}quipement"))),
-				gsub("[Mm]ean", "moyenne",
-				gsub("[Bb]oth", "tous les deux",
-				gsub("[Cc]om(m?)", "com",
-				gsub("[Rr]es(e?)", "rec",
-				gsub("[Ss]ur(v?)", "rel",
-				x0)))))))))))))))))))))))))))))
-			})
-			## ridiculous acronyms
-			xlil = sapply(xlil, function(xa){
-#browser();return()
-				gsub("[B][T]", "CF",
-				gsub("[M][W]", "CP",
-				gsub("[G][M][A]", "ZGPF",        ## les zones de gestion des poissons de fond 
-				gsub("[G][M][U]", "GGPF",        ## le groupe de gestion du poisson de fond
-				gsub("[M][S][Y]", "RMS",         ## rendement maximal soutenu
-				gsub("[M][C][M][C]", "MCCM",     ## Monte Carlo \`{a} cha\^{i}ne de Markov
-				xa))))))
+				xb))))))))))))
 			})
 			xout[xLpos] = xlil
 		}
-		## species names
+		## words or phrases that appear in strings
 		if (any(zbig)) {
+			## species names
 			xspp = sapply(bigword, function(xs){
 				gsub("[R][S][R]", "SRR",
 				gsub("[Ww]idow [Rr]ockfish", "veuve",
@@ -1188,7 +1255,7 @@ linguaFranca = function(x, lang="e", little=4, strip=FALSE)
 			})
 			## geographic words
 			xgeo = sapply(xspp, function(xg){
-				gsub("[B][C]", "CB",
+				gsub("[B][C]", "C-B",
 				gsub("[H][S]", "DH",
 				gsub("[Q][C][S]", "BRC",
 				gsub("[W][C][H][G]", "COHG",
@@ -1211,23 +1278,42 @@ linguaFranca = function(x, lang="e", little=4, strip=FALSE)
 				gsub("[Uu]nsorted [A][F]", eval(parse(text=deparse("F\u{00C2} non tri\u{00E9}es"))),
 				gsub("[Yy]ear of [Bb]irth", eval(parse(text=deparse("ann\u{00E9}e de naissance"))),
 				gsub("CPUE [Nn]ot [Uu]sed", eval(parse(text=deparse("CPUE non utilis\u{00E9}e"))),
+				gsub("[M][P][D] [Ee]stimate", eval(parse(text=deparse("estimation de MDP"))),
 				gsub("[Aa]ll [Gg]ear [Tt]ypes", eval(parse(text=deparse("tous les types d'\u{00E9}quipement"))),
-				gsub("[Pp]arameter [Ee]stimate", eval(parse(text=deparse("estimation du param\u{00E8}tre"))),
+				gsub("[Ll]ong-[Tt]erm [Mm]ean", eval(parse(text=deparse("moyenne \u{00E0} long terme"))),
+				gsub("[Pp]arameter [Ee]stimate", eval(parse(text=deparse("estimation de param\u{00E8}tre"))),
+				gsub("[Ll]ong-[Tt]erm [Mm]edian", eval(parse(text=deparse("m\u{00E9}diane \u{00E0} long terme"))),
 				gsub("[Rr]elative to [Uu]nfished", eval(parse(text=deparse("par rapport \u{00E0} non exploit\u{00E9}"))),
 				gsub("[Cc][Vv] [Pp]rocess [Ee]rror", "erreur de processus de CV",
 				gsub("[Nn]o [G][I][G]/[Tt]riennial", "pas GIG/triennal",
-				gsub("[Ss]tandardi[sz]ed [Rr]esiduals", eval(parse(text=deparse("r\u{00E9}sidus normalis\u{00E9}s"))),
+				gsub("[Mm]ax [Ee]xploitation [Rr]ate", "taux d'exploitation max",
+				gsub("[Mm]ax [Ff]ishing [Mm]ortality", eval(parse(text=deparse("mortalit\u{00E9} max par p\u{00EA}che"))),
+				gsub("[Ff]ishing [Mm]ortality [Rr]ate", eval(parse(text=deparse("taux de mortalit\u{00E9} par p\u{00EA}che"))),
+				gsub("[Mm]ean [Ff]ishing [Mm]ortality", eval(parse(text=deparse("mortalit\u{00E9} moyenne par p\u{00EA}che"))),
+				gsub("[Nn]ormali[sz]ed [Rr]esiduals", eval(parse(text=deparse("r\u{00E9}sidus normalis\u{00E9}s"))),
+				gsub("[Ss]tandardi[sz]ed [Rr]esiduals", eval(parse(text=deparse("r\u{00E9}sidus standardis\u{00E9}s"))),
+				gsub("[Ss]tudenti[sz]ed [Rr]esiduals", eval(parse(text=deparse("r\u{00E9}sidus standardis\u{00E9}s"))),
 				gsub("[Ff]emale [Ss]pawning [Bb]iomass", "biomasse reproductrice femelles",
+				gsub("[Mm]edian [Ff]ishing [Mm]ortality", eval(parse(text=deparse("mortalit\u{00E9} m\u{00E9}diane par p\u{00EA}che"))),
 				gsub("[Ll]og [Rr]ecruitment [Dd]eviations", eval(parse(text=deparse("Log \u{00E9}carts de recrutement"))),
 				gsub("[Aa]uto-[Cc]orrelation [Ff]unction of", eval(parse(text=deparse("Fonction d'auto-corr\u{00E9}lation de"))),
+				gsub("[Ee]xploitation \\([Hh]arvest) [Rr]ate", "taux d'exploitation (r\u{00E9}colte)",
 				gsub("[Ll]og [Ii]nitial [Aa]ge [Dd]eviations", eval(parse(text=deparse("Log des \u{00E9}carts d'\u{00E2}ge initiaux"))),
 				gsub("[Aa]ll [Cc]ommercial [Gg]roundfish [Ff]isheries", eval(parse(text=deparse("Toutes les p\u{00EA}ches commerciales de poisson de fond"))),
+				gsub("[Bb]iomass [Rr]elative to [Aa]verage [Bb]iomass", eval(parse(text=deparse("Biomasse par rapport \u{00E0} la biomasse moyenne"))),
 				gsub("[Bb]iomass [Rr]elative to [Uu]nfished [Ee]quilibrium", eval(parse(text=deparse("Biomasse par rapport \u{00E0} l'\u{00E9}quilibre non exploit\u{00E9}"))),
-				x9)))))))))))))))
+				x9)))))))))))))))))))))))))))
+			})
+			## three words
+			xthree = sapply(xpoo, function(x3){
+				gsub("[Aa]ge [Ee]rr ", eval(parse(text=deparse("err d'\u{00E2}ge "))),
+				gsub("[Nn]o [Ss]urv [Aa]ge", eval(parse(text=deparse("pas d'\u{00E2}ge enq"))),
+				gsub("[Aa]nnual [Mm]ean [Ww]eight", "poids moyen annuel",
+				x3)))
 			})
 #browser();return()
 			## bigger double words
-			xtwo = sapply(xpoo, function(x2){
+			xtwo = sapply(xthree, function(x2){
 				gsub("[Bb]ottom [Tt]rawl", "chalut de fond",
 				gsub("[Mm]idwater [Tt]rawl", eval(parse(text=deparse("chalut p\u{00E9}lagique"))),
 				gsub("[Rr]elative [Vv]alue", "valeur relative",
@@ -1238,96 +1324,124 @@ linguaFranca = function(x, lang="e", little=4, strip=FALSE)
 				gsub("[Cc]ommercial [Tt]rawl", "chalut commercial",
 				gsub("[Rr]elative [Bb]iomass", "biomasse relative",
 				gsub("[Ss]pawning [Bb]iomass", "biomasse reproductrice",
+				gsub("[Ss]ensitivity [Rr]uns", eval(parse(text=deparse("\u{00E9}xecutions de sensibilit\u{00E9}"))),
 				gsub("[Ee]xploitation [Rr]ate", "taux d'exploitation",
+				gsub("[Ff]ishing [Mm]ortality", eval(parse(text=deparse("mortalit\u{00E9} par p\u{00EA}che"))),
+				gsub("[Dd]erived [Qq]uantities", eval(parse(text=deparse("quantit\u{00E9}s d\u{00E9}riv\u{00E9}es"))),
+				gsub("[Ss]pawning [Dd]epletion", eval(parse(text=deparse("\u{00E9}puisement des femelles reproductrices"))),
 				gsub("[Vv]ulnerable [Bb]iomass", eval(parse(text=deparse("biomasse vuln\u{00E9}rable"))),
 				gsub("[Rr]elative [Ff]requency", eval(parse(text=deparse("fr\u{00E9}quence relative"))),
 				gsub("[Nn][Oo] [Dd][Aa][Tt][Aa]", eval(parse(text=deparse("pas de donn\u{00E9}es"))),
 				gsub("[Cc]umulative [Ff]requency", eval(parse(text=deparse("fr\u{00E9}quence cumulative"))),
 				gsub("[Tt]heoretical [Qq]uantiles", eval(parse(text=deparse("quantiles th\u{00E9}oriques"))),
-				x2))))))))))))))))
+				gsub("[Pp]osterior [Dd]istribution", eval(parse(text=deparse("distribution post\u{00E9}rieure"))),
+				x2)))))))))))))))))))))
 			})
 			## smaller double words
 #browser();return()
 			xtwo = sapply(xtwo, function(x2){
 				gsub("[Nn]o CPUE", "pas de CPUE",
+				gsub("[Nn]o CVpro", "pas de CVpro",
 				gsub("[Ii]n [Yy]ear", eval(parse(text=deparse("dans l'ann\u{00E9}e"))),
 				gsub("CPUE [Ii]ndex", "indice de CPUE",
 				gsub("[Mm]ax [Aa]ge", eval(parse(text=deparse("\u{00E2}ge max"))),
-				gsub("[A]lt [Cc]atch", "capture alt.",
+				gsub("[A]lt [Cc]atch", "capture alt",
 				gsub("[Aa]ge \\(year", eval(parse(text=deparse("\u{00E2}ge (ann\u{00E9}e"))),
+				gsub("[Ee]nd [Yy]ear", eval(parse(text=deparse("ann\u{00E9}e de fin"))),
 				gsub("[Bb]ase [Cc]ase", "cas de base",
+				gsub("[Bb]ase [Rr]uns", eval(parse(text=deparse("\u{00E9}xecutions de cas de base"))),
+				gsub("[Cc]entral [Rr]un", eval(parse(text=deparse("\u{00E9}xecution centrale"))),
 				gsub("[Bb]ut [Ff]ixed", "mais fixe",
 				gsub("[Aa]ge [Cc]lass", eval(parse(text=deparse("classe d'\u{00E2}ge"))),
+				gsub("min [B] [Yy]ear", eval(parse(text=deparse("ann\u{00E9}e de min B"))),
+				gsub("[Ss]tart [Yy]ear", eval(parse(text=deparse("ann\u{00E9}e de d\u{00E9}but"))),
 				gsub("[Mm]ean [Ww]eight", "poids moyen",
 				gsub("[Tt]ail [Dd]etails", eval(parse(text=deparse("d\u{00E9}tails de la queue"))),
-				gsub("[Mm]ean [Aa]ge \\(years)", eval(parse(text=deparse("\u{00E2}ge moyen (ann\u{00E9}es)"))),
+				gsub("[Tt]otal [Bb]iomass", "biomasse totale",
+				gsub("[Pp]redicted [Aa]ge", eval(parse(text=deparse("\u{00E2}ge pr\u{00E9}dit"))),
+				gsub("[Ff]ishing [Ee]ffort", eval(parse(text=deparse("effort de p\u{00EA}che"))),
+				gsub("[Mm]ean [Aa]ge \\(year", eval(parse(text=deparse("\u{00E2}ge moyen (ann\u{00E9}e"))),
+				gsub("[Hh]al[fv](e)? [Cc]atch", eval(parse(text=deparse("moiti\u{00E9} capture"))),
 				gsub("[Mm]ean\\([Cc][Pp][Uu][Ee])", "moyenne(cpue)",
 				gsub("([Tt]op|[Hh]ighest) [Cc]atch", eval(parse(text=deparse("capture la plus \u{00E9}lev\u{00E9}e"))),
-				x2))))))))))))))
+				x2))))))))))))))))))))))))
 			})
 			## single words over 10 characters
 			xone = sapply(xtwo, function(x1){
+				gsub("[Dd]epletion", eval(parse(text=deparse("\u{00E9}puisement"))),
 				gsub("[Rr]ecruitment", "recrutement",
 				gsub("[Ss]electivity", eval(parse(text=deparse("s\u{00E9}lectivit\u{00E9}"))),
-				x1))
+				x1)))
 			})
 			## single words with 7-10 characters
 			xone = sapply(xone, function(x1){
+				gsub("[Bb]iomass(e)?", "biomasse",
 				gsub("[Hh]ealthy", "saine",
 				gsub("[Dd]ensity", eval(parse(text=deparse("densit\u{00E9}"))),
-				gsub("[Rr]emoved", eval(parse(text=deparse("retir\u{00E9}"))),
 				gsub("[Ll]argest", "le plus grand",
+				gsub("[Rr]emoved", eval(parse(text=deparse("retir\u{00E9}"))),
+				gsub("[Sc]enario", eval(parse(text=deparse("sc\u{00E9}nario"))),
 				gsub("[Cc]ritical", "critique",
 				gsub("[Cc]autious", "prudence",
 				gsub("[Oo]bserved", eval(parse(text=deparse("observ\u{00E9}"))),
+				gsub("[Rr]ecruits", "recrues",
 				gsub("[Ss]ynoptic", "synoptique",
 				gsub("[Mm]aturity", eval(parse(text=deparse("maturit\u{00E9}"))),
 				gsub("[Ss]pawning", "frayant",
 				gsub("[Ss]mallest", "le plus petit",
 				gsub("[Pp]redicted", eval(parse(text=deparse("pr\u{00E9}dit"))),
 				gsub("[Tt]riennial", "triennal",
-				gsub("[Ff]requency", eval(parse(text=deparse("fr\u{00E9}quence"))),
+				gsub("[Ff]requency", eval(parse(text=deparse("la fr\u{00E9}quence"))),
 				gsub("[Hh]istorical", "historique",
 				gsub("[Pp]roportion", "proportion",
 				gsub("[Cc]ommercial", "commercial",
 				gsub("[Vv]ulnerable", eval(parse(text=deparse("vuln\u{00E9}rable"))),
-				x1))))))))))))))))))
+				x1)))))))))))))))))))))
 			})
 			## single words up to 6 characters
 			xone = sapply(xone, function(x1){
 				gsub(" \\(y)", " (an.)",
 				gsub("^[Aa]ge ", eval(parse(text=deparse("\u{00E2}ge "))),
 				gsub("^[Yy]ear ", eval(parse(text=deparse("ann\u{00E9}e "))),
+				gsub("[N]orth", "Nord",
+				gsub("[S]outh", "Sud",
+				gsub("[Cc]ell", "cellule",
 				gsub("[Mm]ale", eval(parse(text=deparse("m\u{00E2}le"))),
 				gsub("[Cc]atch", "capture",
 				gsub("[Ii]ndex", "indice",
 				gsub("[Mm]onth", "mois",
+				gsub("[Mm]edian", eval(parse(text=deparse("m\u{00E9}diane"))),
 				gsub("[Ss]cale", eval(parse(text=deparse("\u{00E9}chelle"))),
 				gsub("[Bb]ubble", "bulle",
 				gsub("[Ee]vents", eval(parse(text=deparse("\u{00E9}v\u{00E9}nements"))),
 				gsub("[Ff]emale", "femelle",
 				gsub("[Ff]itted", eval(parse(text=deparse("ajust\u{00E9}"))),
 				gsub("[Ll]ength", "longueur",
-				gsub("[Ss]almon", "saumon",
+				gsub("[Mm]edian", eval(parse(text=deparse("m\u{00E9}diane"))),
 				gsub("[Ss]ample", eval(parse(text=deparse("\u{00E9}chantillon"))),
 				gsub("[Ss]eason", "saison",
 				gsub("[Ss]eries", eval(parse(text=deparse("s\u{00E9}ries"))),
 				gsub("[Ss]urvey", eval(parse(text=deparse("relev\u{00E9}"))),
+				gsub("[Vv]essel", "bateau",
 				gsub("[Ww]eight", "poids",
 				gsub(" [Mm]ajor ", " zone ",
-				x1))))))))))))))))))))
+				x1)))))))))))))))))))))))))
 			})
 			## single words describing fisheries
 #browser();return()
 			xfis = sapply(xone, function(xf){
-				gsub("[Ss]urv\\:", "relev:",
 				gsub("[Mm]ajor", "principal",
 				gsub("[Mm]inor", "secondaire",
 				gsub("[Ss]able", "morue",
 				gsub("[Tt]rawl", "chalut",
-				gsub("[Hh]alibut", eval(parse(text=deparse("fl\u{00E9}tan"))),
+				gsub("[Aa]ssess", eval(parse(text=deparse("\u{00E9}val"))),
+				gsub("[Ss]almon", "saumon",
 				gsub("[Dd]ogfish", "aiguillat",
+				gsub("[Hh]alibut", eval(parse(text=deparse("fl\u{00E9}tan"))),
+				gsub("[Ll]anding", eval(parse(text=deparse("d\u{00E9}barquement"))),
 				gsub("[Ll]ingcod", "lingotte",
+				gsub("[Ss]urv\\:", "relev:",
+				gsub("[Ss]urv\\_", "relev_",
 				gsub("[Ss]ablefish", eval(parse(text=deparse("morue charbonni\u{00E8}re"))),
 				gsub("[Dd]og/[Ll]in", "aig/lin",
 				gsub("[Ff]ish(ery|ing)", eval(parse(text=deparse("p\u{00EA}che"))),
@@ -1335,7 +1449,7 @@ linguaFranca = function(x, lang="e", little=4, strip=FALSE)
 				gsub("[Hh]ook [\\&|Aa](nd)? [Ll]ine", eval(parse(text=deparse("hame\u{00E7}on et lignes"))),
 				gsub("[Hh][Ll](\\_|\\.| )[Rr]ockfish", eval(parse(text=deparse("HL.s\u{00E9}baste"))),
 				gsub("[Hh](\\&|\\.)[Ll](\\_|\\.| )[Rr]ockfish", eval(parse(text=deparse("H&L s\u{00E9}baste"))),
-				xf)))))))))))))))
+				xf)))))))))))))))))))
 			})
 #browser();return()
 			## single words describing fish
@@ -1355,17 +1469,22 @@ linguaFranca = function(x, lang="e", little=4, strip=FALSE)
 				gsub("[M][W]", "CP",
 				gsub("[G][M][A]", "ZGPF",        ## les zones de gestion des poissons de fond 
 				gsub("[G][M][U]", "GGPF",        ## le groupe de gestion du poisson de fond
+				gsub("[M][P][D]", "MDP",         ## mode de distribution post\'{e}rieure
 				gsub("[M][S][Y]", "RMS",         ## rendement maximal soutenu
+				gsub("[m][s][y]", "rms",         ## rendement maximal soutenu (be careful of words ending in 'msy')
 				gsub("[M][C][M][C]", "MCCM",     ## Monte Carlo \`{a} cha\^{i}ne de Markov
-				xa))))))
+				xa))))))))
 			})
 			xbig = 
+				gsub("0\\.","0,",
+				gsub(" of "," de ",
 				gsub(" or "," ou ",
 				gsub(" [\\&|Aa](nd)? "," et ",
 				gsub(" by ", " par ",
 				gsub(" to ", eval(parse(text=deparse(" \u{00E0} "))),
 				gsub(" but ", " mais ",
-			xacr)))))
+				gsub("\\(/y(r?))", "(/an)",
+			xacr))))))))
 			xout[xBpos] = xbig
 		}
 		#} 

@@ -80,19 +80,19 @@ collectFigs = function(path=".", ext="eps", is.fnum=FALSE,
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~collectFigs
 
 
-#formatCatch----------------------------2017-11-17
-# Format a numeric table so that each cell 
-# displays N significant figures in character format.
-# Arguments:
-#  dat  = dataframe/matrix of raw catch numbers
-#  N    = number of significant digits
-#  X    = numeric vector of columns to exclude
-#  zero = character replacement for zero-values
-#  na   = character replacement for NAs
-#  K    = big mark separator (see 'format')
-#  exInt = exclude integers from manipulation to signicant digits
-#  use.round = if TRUE, round catches to N decimal places.
-#-----------------------------------------------RH
+## formatCatch--------------------------2019-06-24
+## Format a numeric table so that each cell 
+## displays N significant figures in character format.
+## Arguments:
+##  dat  = dataframe/matrix of raw catch numbers
+##  N    = number of significant digits
+##  X    = numeric vector of columns to exclude
+##  zero = character replacement for zero-values
+##  na   = character replacement for NAs
+##  K    = big mark separator (see 'format')
+##  exInt = exclude integers from manipulation to signicant digits
+##  use.round = if TRUE, round catches to N decimal places.
+## ---------------------------------------------RH
 formatCatch = function(dat, N=3, X=0, zero="0", na="---",
    K=",", exInt=TRUE, use.round=FALSE)
 {
@@ -126,9 +126,18 @@ formatCatch = function(dat, N=3, X=0, zero="0", na="---",
 		zdat = dat[,-(X),drop=FALSE]==0 & !is.na(dat[,-(X),drop=FALSE])
 		cdat = dat
 		cdat[,-(X)][!nadat] = show0(round(cdat[,-(X)][!nadat],N),N,add2int=!exInt)
-		cdat[zdat]  = zero
-		cdat[nadat] = na
+
+		## Re-label small values that look like 0 when rounded and big (100%) values that look like 1
+		zsmall = dat[,-(X)]>0 & cdat[,-(X)]=="0" & !is.na(dat[,-(X)])
+		zbig   = dat[,-(X)]<1 & cdat[,-(X)]=="1" & !is.na(dat[,-(X)])
+		if (any(zsmall)) cdat[,-(X)][zsmall] = paste0("<",10^(-N))
+		if (any(zbig))   cdat[,-(X)][zbig]   = paste0(">",1-10^(-N))
 #browser();return()
+		cdat[,-(X)][zdat|nadat] = zero  ## temporarily overwrite NAs as zeroes but next line adjust this.
+		cdat[,-(X)][nadat]      = na
+		## final check for NAs (usually in excluded columns X)
+		if (any(is.na(cdat)))
+			cdat[is.na(cdat)] = na
 		return(cdat)
 	}
 	
@@ -190,7 +199,7 @@ formatCatch = function(dat, N=3, X=0, zero="0", na="---",
 	cdat[,-(X)][negdat] = paste("-",cdat[,-(X)][negdat],sep="")
 	return(cdat)
 }
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~formatCatch
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~formatCatch
 
 
 #makeLTH--------------------------------2016-10-24
@@ -267,9 +276,9 @@ splitTab = function(tab, np=3, row.names=TRUE, row.label="row", row.numeric=FALS
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~splitTab
 
 
-#texArray-------------------------------2018-03-22
-# Flatten and format an array for latex output.
-#-----------------------------------------------RH
+## texArray-----------------------------2019-06-25
+## Flatten and format an array for latex output.
+## ---------------------------------------------RH
 texArray =function(x, table.caption="My table", table.label="tab:mytable",
    strSpp=NULL, sigdig=3, zero="---", exInt=TRUE, use.round=FALSE, 
    collab=NULL, dash.delim=NULL, tablewidth=6.5, 
@@ -432,8 +441,8 @@ texArray =function(x, table.caption="My table", table.label="tab:mytable",
 		else X = grep(FALSE,goonum)
 		if (!is.null(ignore.col))
 			X = union(X[X!=0],ignore.col)
-		goo = formatCatch(goo,N=sigdig,zero=zero,X=X,use.round=use.round,exInt=exInt)
 #browser();return()
+		goo = formatCatch(goo,N=sigdig,zero=zero,X=X,use.round=use.round,exInt=exInt)
 	}
 	colnames(goo)=collab ## sapply can screw up colnames if they are not unique
 
@@ -569,7 +578,7 @@ texArray =function(x, table.caption="My table", table.label="tab:mytable",
 	tabfile=texfile[ltdelim[1]:ltdelim[2]]
 	invisible(list(goo=goo,texfile=texfile,tabfile=tabfile))
 }
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~texArray
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~texArray
 
 
 ## texThatVec-------------------------2018-05-07

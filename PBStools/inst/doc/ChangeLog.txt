@@ -10,6 +10,55 @@ Authors: RH  = Rowan Haigh
          BK  = Brian Krishka
 ------------------------------
 
+1.39.3 (2019-10-02)  [Rcheck=T, Rbuild=T]
+  * M01_Utility.r
+    + Added new function `changeLangOpts' to use French output decimals and delimitors (RH 190610)
+  * M02_Biology.r
+    + Revised function `weightBio'. (RH 190808)
+      - Now use `fos_mcatSPP.sql' to get catches from GFFOS' GF_MERGED_CATCH table.
+      - Include stype=17 (UNKNOWN SAMPLE TYPE FOR NMFS TRIENNIAL SURVEY) to function argument default.
+      - Add switch for NMFS Triennial survey ages (where ameth=0)
+      - Sometimes catch weight is not reported but the age sample is still OK so set catch weight to 1.
+    + Fixed function 'zapSeamounts' that suffered an array dimension problem when subset dimension had one element. (RH 190807)
+    + Added new function `residVB' to calculate and plot Studetised residuals as quantile plots to show how well each age is fit. (RH 190716)
+    + Fixed bug in function `weightBio' where sumtab was not always written correctly to CSV file when only one stratum occurred. (RH 190325)
+      - R has an annoying habit of collapsing dimensions when any dimension=1.
+      - Look into `func=mean' in future when sweight="density" (for surveys).
+  * M04_Survey.r
+    + Modified function `compLen' to allow more flexibility in placing the legend (RH 190327)
+  * M06_Assessment.r
+    + Added new function `processMap', which parallels `processBio' in modifying `PBSdat' resulting from calls to SQL queries. (RH 191002)
+    + Moved function `compLen' from M04_Survey and function `processBio' from M02_Biology to here. (RH 191002)
+    + Added new function `createMA' to create a table of DFO management actions relevant to a species. (RH 190916)
+    + Added new function `makeAgeErr' (based on code from YMR 2011) to make an ageing error matrix for Awatea. (RH 190412)
+  * M07_CatchRecon.r
+    + Modified function `buildCatch':
+      - Changed argument `refyrs' from vector to list of vectors so that each fishery can have its own set. (RH 190917)
+      - Changed name of collection object from `PBStool' to `CR'.
+      - Code creates file `run.details.txt' to contain the argument values and is written to the base of `run.name'. (RH 190924)
+      - Added SBF and LIN trawl catch for years 1950-75 from Ketchen (1976) to be used as TAR for FIDs 3 and 4, respectively. (RH 190917)
+      - Sabotaged `ph3cat' object to remove all trawl records & non-trawl records from 2006 on (RH 190926)
+      - PH3 ORF landings appear to be additive for FIDs 2,3,4 and  redundant for FID 5 wrt to GFM landings. (RH 190926)
+      - Changed name of collection object `GRATES' to `RATES', which now collects all the converion rates like alpha, beta, gamma, delta, etc.
+      - Stopped overwriting DB TAR with supplemental TAR if DB TAR already exists (e.g., PAH) when calculating discards.
+    + Modified function `buildCatch' to components of the depth-stratified gamma and delta ratios. (RH 190605)
+      - Prompted by reconciling the 2015 YYR catch reconstruction with a current build for Dana Haggarty.
+    + Fixed a small bug in function `surveyCatch' -- added `tabDir' argument. (RH 190605)
+  * SQL code
+    + Added new query `fos_mcatSPP.sql' to summarise catch fro the `weightBio' function. (RH 190807)
+      - Code based on `fos_mcatORF.sql' and modified to yield similar output to `fos_catch_records.sql'.
+      - Function `getCatch' still uses four separate functions but this new function should supercede three of the queries for commercial catch.
+    + Updated `meanSppWt.sql' to contain defaults for all species in GFBioSQL. (RH 190807)
+      - Default values taken from GFBioSQL view `GFB_SPECIES_MEAN_WEIGHT'
+      - Bogs down other queries that use mean weights to convert pieces for many species but
+      - New field in `meanSppWt.sql' called `FISH' can reduce this time if WHERE FW.FISH IN (1)
+    
+    + Modified query `gfb_bio.sql':
+      - include field `ACTIVITY_CODE' as `AC' from Table `TRIP_ACTIVITY' in GFBioSQL. (RH 190624)
+      - include field `SAMPLE_SOURCE_CODE' as `ssrc' from Table `B04_SAMPLE' in GFBioSQL. (RH 190626)
+      - include field `FOS_TRIP_ID' as `FOSTID' from Table `FOS_TRIP' in GFBioSQL. (RH 190717)
+    + Added new query `gfb_survey_data.sql' to extract survey information for PJS; code by NO or PJS. (RH 190710)
+
 1.39.2 (2019-03-22)  [Rcheck=T, Rbuild=T]
   * M01_Utility.r
     + Fixed bug in function `crossTab' which occurred when one character summarising field contained empty string. (RH 190128)

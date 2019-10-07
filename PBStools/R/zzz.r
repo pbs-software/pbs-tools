@@ -39,15 +39,15 @@ We may not be big, but we're small.
 if(getRversion() >= "2.15.1") utils::globalVariables(names=c(
 	".onClose",".PBSmod",".runModHelperQuit",
 	"A","acut","adat","Afile","age","agg","AID","amax","aModel","areas","autoA","autoD","aVal",
-	"B","b0","b5","barcol","bathy","bbonly","Bboot","bcol","bdat","Best","bgsamp","bgtab","bh","bio440","Bobs","boot","boot.ci","boxwidth","Bqnt","Bt","bta","Btot","bugsData",
+	"B","b0","b5","barcol","bathy","bbonly","Bboot","bcol","bdat","Best","bgsamp","bgtab","bh","bio440","Bobs","boot","boot.ci","boxpars","boxwidth","Bqnt","Bt","bta","Btot","bugsData",
 	"C1","C2","case","cast","cat440rec","catch","Cbar","Cbox","Ccat","ccol","cdata","Ceq","chn1","chn2","clara","clen","Clin","clwd","Cnum","cobs","Cpoi","cpuTime","cthin","ctot","Ctrd","Cval",
-	"dat","datt","dBars","dbName","ddat","diaDir","disA","DLIM",
-	"elapTime","empinf","eN","eps","evals",
-	"figDir","fillBars","firstSerial","fminE","fminS","fnam","Fout","fqtName","Ft","ftime","func",
+	"dat","DATA","datt","dBars","dbName","ddat","diaDir","disA","DLIM",
+	"edat","elapTime","empinf","eN","eps","evals",
+	"figDir","fillBars","firstSerial","fminE","fminS","fnam","Fout","formalArgs","fqtName","Ft","ftime","func",
 	"g","gear","gfbdat","glmfit","gma.popymr","group","Gv2",
 	"hadley","hide0","HSreg","HStrc",
 	"idxD","idxL","idxM","inone","IRRmin","is.pred","isobath","iters",
-	"k",
+	"k","K",
 	"las","lastSerial","lin","lmres","locality.plus","ltype","lwd",
 	"m","major","mar","mata","maxit","mdbName","MDL","melt.data.frame","method","mfrow","mgp","minor","mmor","modelCheck","modelCompile","modelData","modelGenInits","modelUpdate","modT","mpd","mu",
 	"nage","Nat","Nboot","nc","nC","nd","nepacLL","nepacLLhigh","nper","nRP","nspec","nT","nyr",
@@ -61,7 +61,7 @@ if(getRversion() >= "2.15.1") utils::globalVariables(names=c(
 	"VBdat","Vend","vessel","Vstart",
 	"wgta","wgtat","wmf","wted",
 	"x","xfun","XLIM","xlsName","xobs","xtable","xwid","xy","XYopt",
-	"y","year","years","yfld","yfun","yinf","ylim","YLIM","Ymax","Ymin","Ymod","ypos","yr","ystar","ytck",
+	"y","year","years","yfld","yfun","yinf","Yinf","ylim","YLIM","Ymax","Ymin","Ymod","ypos","yr","ystar","ytck",
 	"z","Z","za","zero","zfill","Zlim","zsho","zstar","zstn"
 	), package="PBStools")
 

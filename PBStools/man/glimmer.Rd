@@ -1,6 +1,6 @@
 \name{glimmer}
 \alias{glimmer}
-\title{Perform a Standardised GLM Analysis}
+\title{Perform Standardised GLM Analysis}
 \description{
   Perform a standardised GLM analysis and plot the results.
 }
@@ -72,9 +72,13 @@ glimmer(file, facs=c("year","month","depth","vessel"),
   Research Document} \bold{2004/059}. 75 p.
 }
 \author{ 
-  Rowan Haigh, Pacific Biological Station, Fisheries and Oceans Canada, Nanaimo BC
+  \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
+  Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
+  \emph{locus opus}: Institute of Ocean Sciences (IOS), Sidney BC\cr
+  Last modified \code{Rd: 2019-10-02}
 }
 \examples{
+\dontrun{
 local(envir=.PBStoolEnv,expr={
 pbsfun=function(){
   data(testdatC,envir=.PBStoolEnv); x = testdatC
@@ -89,9 +93,14 @@ pbsfun=function(){
 pbsfun()
 })
 }
+}
 \seealso{
-  \code{\link[PBStools]{getData}} \cr
-  Available SQL queries: \code{\link[PBStools]{SQLcode}} \cr
-  \pkg{stats}: \code{\link[stats]{lm}}, \code{\link[stats]{aov}}
+In package \pkg{PBStools}:\cr
+  \code{\link[PBStools]{getData}},
+  \code{\link[PBStools]{SQLcode}}\cr\cr
+In package \pkg{stats}:\cr
+  \code{\link[stats]{lm}},
+  \code{\link[stats]{aov}}
 }
 \keyword{hplot}
+\concept{M03_Fishery}

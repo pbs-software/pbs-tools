@@ -7,17 +7,19 @@
   Query the \code{GFBioSQL} database for survey catches of the specified species.
 }
 \usage{
-surveyCatch(strSpp="396", spath=.getSpath(), gfbdat=NULL, hadley=FALSE)
+surveyCatch(strSpp="396", spath=.getSpath(), gfbdat=NULL,
+   hadley=FALSE, tabDir="./tables")
 }
 \arguments{
-  \item{strSpp}{character string specifying the Hart species code for a species in the \code{GFBioSQL} database.}
-  \item{spath}{character string of path to the SQL code file \code{gfb_rcatORF.sql}; \cr
+  \item{strSpp}{\code{character} -- string specifying the Hart species code for a species in the \code{GFBioSQL} database.}
+  \item{spath}{\code{character} -- string of path to the SQL code file \code{gfb_rcatORF.sql}; \cr
     defaults to the \code{sql} directory under \code{system.file(package="PBStools")} }
-  \item{gfbdat}{data frame object of survey data extracted from GFBioSQL; \cr
+  \item{gfbdat}{\code{numeric} -- data frame object of survey data extracted from GFBioSQL; \cr
     if \code{NULL} run the query \code{gfb_rcatORF.sql} and save \code{gfbdat} to 
     \code{gfbdat.rda} and \code{Survey-Records-123.csv}, where \code{123} is the 
     three-character Hart code. }
-  \item{hadley}{\code{logical} -- if \code{TRUE}, use Hadley Wickham's bloated R packages.}
+  \item{hadley}{\code{logical} -- if \code{TRUE}, use Hadley Wickham's wizardry in \code{'crossTab'}.}
+  \item{tabDir}{\code{character} -- path string where ascii tables are saved.}
 }
 \details{
   Needs the SQL code file \code{gfb_rcatORF.sql}, which is designed to return 
@@ -30,11 +32,17 @@ surveyCatch(strSpp="396", spath=.getSpath(), gfbdat=NULL, hadley=FALSE)
 \author{
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
-  \emph{opus locus}: Institute of Ocean Sciences (IOS), Sidney BC\cr
-  Last modified \code{Rd: 2018-06-28}
+  \emph{locus opus}: Institute of Ocean Sciences (IOS), Sidney BC\cr
+  Last modified \code{Rd: 2019-06-05}
 }
 \seealso{
-  \code{\link[PBStools]{buildCatch}}, \code{\link[PBStools]{getCatch}}
+In package \pkg{PBStools}:\cr
+  \code{\link[PBStools]{buildCatch}},
+  \code{\link[PBStools]{crossTab}},
+  \code{\link[PBStools]{getCatch}},
+  \code{\link[PBStools]{plotDiag}},
+  \code{\link[PBStools]{plotRecon}},
+  \code{\link[PBStools]{zapSeamounts}}
 }
 \keyword{database}
 

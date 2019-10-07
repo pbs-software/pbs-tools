@@ -15,7 +15,7 @@ estOgive(dat=pop.age, strSpp="", method=c("DN"),
    ttype=list(Commercial=c(1,4,5),Research=c(2:3)), 
    stype=c(1,2,6,7), scat = list(Unsorted=1), 
    SSID=NULL, surveys=NULL, subset="SSID",
-   ofld="age", obin=1, xlim=c(0,45), figdim=c(8,5),
+   ofld="age", obin=1, xlim=c(0,45), PIN=c(8,5),
    mpoints=TRUE, ppoints=TRUE, plines=TRUE, 
    rpoints=FALSE, rlines=FALSE, rtext=FALSE,
    fg=c("red","orange2","blue","green4"), Arcs=NULL, radius=0.2,
@@ -67,7 +67,7 @@ estOgive(dat=pop.age, strSpp="", method=c("DN"),
   \item{ofld}{\code{character} -- ogive field (usually \code{age} or \code{len}).}
   \item{obin}{\code{numeric} -- bin size (in x-units) to group \code{age} or \code{len}.}
   \item{xlim}{\code{numeric} -- range of the x-metric (x-axis).}
-  \item{figdim}{\code{numeric} -- dimensions (width and height in inches) of output figure.}
+  \item{PIN}{\code{numeric} -- dimensions (width and height in inches) of output figure.}
   \item{mpoints}{\code{logical} -- if \code{TRUE}, add points used in population model at integer ages.}
   \item{ppoints}{\code{logical} -- if \code{TRUE}, add predicted points along predicted curve at integer ages.}
   \item{plines}{\code{logical} -- if \code{TRUE}, add the predicted curve; 
@@ -156,11 +156,15 @@ local(envir=.PBStoolEnv,expr={
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
   \emph{locus opus}: Institute of Ocean Sciences (IOS), Sidney BC\cr
-  Last modified \code{Rd: 2018-12-21}
+  Last modified \code{Rd: 2019-10-02}
 }
 \seealso{
-  \code{\link[PBSdata]{pop.age}}, \code{\link[PBStools]{fitLogit}}, 
-  \code{\link[PBStools]{mapMaturity}}, \code{\link[PBStools]{flagIt}}
+In package \pkg{PBStools}:\cr
+  \code{\link[PBStools]{fitLogit}},
+  \code{\link[PBStools]{flagIt}},
+  \code{\link[PBStools]{mapMaturity}}\cr\cr
+In package \pkg{PBSdata}:\cr
+  \code{\link[PBSdata]{pop.age}}
 }
 \keyword{hplot}
-
+\concept{M02_Biology}

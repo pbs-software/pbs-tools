@@ -7,10 +7,12 @@
   Plot reconstructed catch using barplots stacked by catch in PMFC areas.
 }
 \usage{
-plotRecon(dat=cat440rec, strSpp="440", major=c(1,3:9), fidout=10, 
-   years=1918:2018, xlab=seq(1920,2050,5), yrs.rec=attributes(dat)$yrs.rec,
-   ymax=NULL, shade=FALSE, shadier=FALSE, figDir=getwd(), timestamp="",
-   eps=FALSE, png=FALSE, wmf=FALSE, PIN=c(10,5), lang=c("e","f"))
+plotRecon(dat=cat440rec, strSpp="440", major=c(1,3:9),
+   fidout=10, years=1918:2018, xlab=seq(1920,2050,5),
+   yrs.rec=attributes(dat)$yrs.rec, ymax=NULL, 
+   shade=FALSE, shadier=FALSE, figDir=getwd(), timestamp="",
+   png=FALSE, pngres=400, eps=FALSE, wmf=FALSE, PIN=c(10,5),
+   lang=c("e","f") )
 }
 \arguments{
   \item{dat}{\code{numeric} -- array of annual catch by PMFC area and fishery ID. }
@@ -28,8 +30,9 @@ plotRecon(dat=cat440rec, strSpp="440", major=c(1,3:9), fidout=10,
   \item{shadier}{\code{logical} -- if \code{TRUE}, make the background shading darker for the catch periods.}
   \item{figDir}{\code{character} -- directory where figure output should be directed.}
   \item{timestamp}{\code{character} -- string representing the date and time of the reconstruction.}
-  \item{eps}{\code{logical} -- if \code{TRUE}, send the figure to a postscript file (\code{.eps}). }
   \item{png}{\code{logical} -- if \code{TRUE}, send the figure to a raster file (\code{.png}). }
+  \item{pngres}{\code{numeric} -- resolution for output file (pixesl/inch).}
+  \item{eps}{\code{logical} -- if \code{TRUE}, send the figure to a postscript file (\code{.eps}). }
   \item{wmf}{\code{logical} -- if \code{TRUE}, send the figure to a windows metafile (\code{.wmf}). }
   \item{PIN}{\code{numeric} -- vector indicating figure size (width, height) specified in inches; 
     only applies if the figure is sent to an output file.}
@@ -47,10 +50,11 @@ plotRecon(dat=cat440rec, strSpp="440", major=c(1,3:9), fidout=10,
 \author{
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
-  \emph{opus locus}: Institute of Ocean Sciences (IOS), Sidney BC\cr
-  Last modified \code{Rd: 2018-07-24}
+  \emph{locus opus}: Institute of Ocean Sciences (IOS), Sidney BC\cr
+  Last modified \code{Rd: 2019-10-02}
 }
 \seealso{
+In package \pkg{PBStools}:\cr
   \code{\link[PBStools]{buildCatch}},
   \code{\link[PBStools]{plotDiag}},
   \code{\link[PBStools]{plotFOScatch}},
@@ -58,4 +62,4 @@ plotRecon(dat=cat440rec, strSpp="440", major=c(1,3:9), fidout=10,
   \code{\link[PBStools]{plotLocal}}
 }
 \keyword{hplot}
-
+\concept{M07_CatchRecon}

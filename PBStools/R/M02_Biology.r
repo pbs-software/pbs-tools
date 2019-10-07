@@ -14,9 +14,9 @@
 ##  mapMaturity.....Plot maturity chart of stages by month.
 ##  plotProp........Plot proportion-at-age from GFBio specimen data.
 ##  predictRER......Predict Rougheye Rockfish from biological data.
-##  processBio......Process results from 'gfb_bio.sql' query.
 ##  reportCatchAge..Report analyses from catch-at-age report.
 ##  requestAges.....Determine which otoliths to sample for ageing requests.
+##  residVB.........Calculate and plot Studentised residuals as quantile plots.
 ##  simBSR..........Simulate Blackspotted Rockfish biological data.
 ##  simRER..........Simulate Rougheye Rockfish biological data.
 ##  sumBioTabs......Summarize frequency occurrence of biological samples.
@@ -24,7 +24,7 @@
 ##==============================================================================
 
 
-## calcLW-------------------------------2018-11-26
+## calcLW-------------------------------2019-09-03
 ## Calculate length-weight relationship for a fish.
 ## Formerly called calcLenWt.
 ## A bit clumsy when you want just tables (see calcVB)
@@ -108,6 +108,7 @@ calcLW <- function(dat=pop.age, strSpp="396",
 	plotNames = as.character()
 
 	for (l in lang) {
+		changeLangOpts(L=l)
 		for (a1 in 1:length(areas)) {
 			an = names(areas)[a1]; ar = areas[[a1]]
 			adat <- dat[is.element(dat[,an],ar),]
@@ -134,8 +135,8 @@ calcLW <- function(dat=pop.age, strSpp="396",
 					plotNames = c(plotNames,plotName)
 				} else plotName = outnam
 				fout = fout.e = plotName
-				fout = switch(l, 'e' = pfout.e, 'f' = paste0("./french/",fout.e) )
-
+				if (l=="f") fout = paste0("./french/", fout.e)  ## could repeat for other languages
+	
 	#browser();return()
 				if (length(sex)>3)
 					rc = rev(.findSquare(length(sex)))
@@ -167,8 +168,8 @@ calcLW <- function(dat=pop.age, strSpp="396",
 							n1   = nrow(idat)
 							fit1 = lm(log(wt)~log(len), data=idat)
 						}
-						a <- fit1$coef[1]; aa <- format(signif(a,5),scientific=FALSE)
-						b <- fit1$coef[2]; bb <- format(signif(b,5),big.mark=",",scientific=FALSE)
+						a <- fit1$coef[1]; aa <- format(signif(a,5), scientific=FALSE)
+						b <- fit1$coef[2]; bb <- format(signif(b,5), big.mark=options()$big.mark, scientific=FALSE)
 						se <- summary(fit1)$coefficients[,"Std. Error"]
 						Wt <- (exp(a) * (0:xlim[2])^b) 
 					}
@@ -195,7 +196,7 @@ calcLW <- function(dat=pop.age, strSpp="396",
 							Wt <- (exp(a) * (0:xlim[2])^b) 
 							lines(0:xlim[2], Wt, col=.colBlind["black"], lwd=ifelse(plotit,2,3))
 						}
-						mw <- format(round(mean(idat$wt,na.rm=TRUE),2),big.mark=",")
+						mw <- format(round(mean(idat$wt,na.rm=TRUE),2), big.mark=options()$big.mark)
 						xleft   = 0.075; ytop = 0.90
 						cexlab  = ifelse(plotit,0.7,1)
 						akeycoast = c("5CDE|5AB|3CD", "5DE|5ABC|3CD")
@@ -212,7 +213,7 @@ calcLW <- function(dat=pop.age, strSpp="396",
 						#addLabel(xleft,ytop,atTitle,adj=0,cex=0.7)
 						#addLabel(xleft,ytop,paste(gsub("_"," (",amat),") - trip type (",ttt,")",sep=""),adj=0,cex=0.7)
 						addLabel(xleft,ytop-0.10,bquote(bolditalic(bar(W)) == .(mw)),adj=0,cex=0.8)
-						addLabel(xleft,ytop-0.15,bquote(bolditalic(n)==.(format(n1,big.mark=","))),adj=0,cex=0.8)
+						addLabel(xleft,ytop-0.15,bquote(bolditalic(n)==.(format(n1, big.mark=options()$big.mark))),adj=0,cex=0.8)
 						if (n1>1){
 							addLabel(xleft,ytop-0.20,bquote(bold(log(alpha))==.(aa)),adj=0,cex=0.8)
 							addLabel(xleft,ytop-0.26,bquote(bolditalic(beta)==.(bb)),adj=0,cex=0.8)
@@ -225,7 +226,7 @@ calcLW <- function(dat=pop.age, strSpp="396",
 				if (plotit) dev.off()
 			} ## end t1 (ttype) loop
 		} ## a1 (areas) loop
-	} ## end l (lang) loop
+	}; eop()
 	attr(out,"xout") = xout
 	if (plotit) attr(out,"plotNames") = plotNames
 	omess = c( 
@@ -760,7 +761,7 @@ calcSG <- function(dat=pop.age, strSpp="", yfld="len", tau=c(5,40), fixt0=FALSE,
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~calcSG
 
 
-## calcVB-------------------------------2018-12-11
+## calcVB-------------------------------2019-09-03
 ## Calculate von Bertalanffy growth curve.
 ## Note: ameth=3 otoliths broken & burnt; ameth=1 surface read only
 ##   areas: list of lists
@@ -908,6 +909,7 @@ calcVB <- function(dat=pop.age, strSpp="", yfld="len", fixt0=FALSE,
 	#	dat = dat[zam,]
 		dat = extractAges(dat, ameth)
 	}
+#browser();return()
 	if (nrow(dat)==0) {
 		if (figgy) return()
 		else showError("No records selected for specified qualification") }
@@ -946,6 +948,7 @@ calcVB <- function(dat=pop.age, strSpp="", yfld="len", fixt0=FALSE,
 	if (strSpp=="439" && yfld=="len") {pVec[1,"max"] = 100; pVec["sig","max"] = 10; pVec["t0","min"] = -5}
 	if (strSpp=="417" && yfld=="len") {pVec[1,"max"] = 100; pVec["sig","max"] = 10; pVec["t0","min"] = -5}
 	if (strSpp%in%c("394","425") && yfld=="len") {pVec[1,"max"] = 80; pVec["sig","max"] = 10; pVec["t0","min"] = -5}
+	if (strSpp%in%c("435") && yfld=="len") {pVec[1,"max"] = 100; pVec["sig","max"] = 10; pVec["t0","min"] = -5}
 
 	## Labels & names --------------------
 	aName=paste("-areas(",paste(anams,collapse="~"),")",sep="")      # area label
@@ -967,6 +970,7 @@ calcVB <- function(dat=pop.age, strSpp="", yfld="len", fixt0=FALSE,
 
 	pfout = pfout.e = plotName
 	for (l in lang) {  ## could switch to other languages if available in 'linguaFranca'.
+		changeLangOpts(L=l)
 		pfout = switch(l, 'e' = pfout.e, 'f' = paste0("./french/",pfout.e) )
 		if (!figgy && figures) { resetGraph()
 			expandGraph(mfrow=c(length(ttype),nsex),mar=c(3,3,2,.1),oma=c(0,0,0,0),mgp=c(1.5,.5,0),cex=1.0) }
@@ -1005,7 +1009,7 @@ calcVB <- function(dat=pop.age, strSpp="", yfld="len", fixt0=FALSE,
 			} else
 				aaName = plotName
 			afout = afout.e = aaName
-			afout = switch(l, 'e' = afout.e, 'f' = paste0("./french/",afout.e) )
+			if (l=="f") afout = paste0("./french/",afout.e)  ## could repeat for other languages
 
 			if (pages && figgy && figures){
 				plotNames = c(plotNames,aaName)
@@ -1028,7 +1032,7 @@ calcVB <- function(dat=pop.age, strSpp="", yfld="len", fixt0=FALSE,
 				} else
 					ttName=plotname
 				tfout = tfout.e = ttName
-				tfout = switch(l, 'e' = tfout.e, 'f' = paste0("./french/",tfout.e) )
+				if (l=="f") tfout = paste0("./french/",tfout.e)  ## could repeat for other languages
 
 #browser();return()
 				xout[,tmat,amat,"year"] = range(tdat$year,na.rm=TRUE)
@@ -1126,10 +1130,10 @@ calcVB <- function(dat=pop.age, strSpp="", yfld="len", fixt0=FALSE,
 						fmin <- PBSmin$fmin; np <- sum(pVec[,4]); ng <- nrow(idat);
 						AICc <- 2*fmin + 2*np * (ng/(ng-np-1)); packList("AICc","PBSmin",tenv=.PBSmodEnv);  #print(PBSmin)
 						P <- PBSmin$end
-						Yinf <- P[1]; par1 <- format(round(Yinf,3),big.mark=",",scientific=FALSE)
-						K    <- P[2]; par2 <- format(signif(K,4),big.mark=",",scientific=FALSE)
-						t0   <- P[3]; par3 <- format(signif(t0,4),big.mark=",",scientific=FALSE)
-						sig  <- P[4]; par4 <- format(signif(sig,4),big.mark=",",scientific=FALSE)
+						Yinf <- P[1]; par1 <- format(round(Yinf,3),big.mark=options()$big.mark,scientific=FALSE)
+						K    <- P[2]; par2 <- format(signif(K,4),big.mark=options()$big.mark,scientific=FALSE)
+						t0   <- P[3]; par3 <- format(signif(t0,4),big.mark=options()$big.mark,scientific=FALSE)
+						sig  <- P[4]; par4 <- format(signif(sig,4),big.mark=options()$big.mark,scientific=FALSE)
 						ovec <- c(n=n1,Yinf,K,t0,sig,Ymod=Ymod,Ymin=Ymin,Ymax=Ymax)
 						out[iii,,tmat,amat] <- ovec
 
@@ -1153,14 +1157,14 @@ calcVB <- function(dat=pop.age, strSpp="", yfld="len", fixt0=FALSE,
 								points(jitter(age,jit[1]),jitter(yval,jit[2]),pch=149,col=.colBlind["orange"],cex=ifelse(figgy,0.7,1.2))
 								lines(xpred,ypred,col=.colBlind["blue"], lwd=ifelse(figgy,2,3))
 								mw <- format(round(mean(idat$wt,na.rm=TRUE),1),nsmall=1)
-								posX=0.6; posY=.25; difY=.05; 
+								posX=ifelse(figgy,0.6,0.4); posY=.25; difY=.05; 
 								cexlab=ifelse(figgy,0.7,1.2)
 								addLabel(posX,posY-difY*0,bquote(bolditalic(Y)[infinity] == .(par1)),adj=0,cex=cexlab)
 								addLabel(posX,posY-difY*1,bquote(bolditalic(K)==.(par2)),adj=0,cex=cexlab)
 								addLabel(posX,posY-difY*2,bquote(bolditalic(t)[0]==.(par3)),adj=0,cex=cexlab)
-								addLabel(posX,posY-difY*3,bquote(bolditalic(n)==.(format(n1,big.mark=","))),adj=0,cex=cexlab)
+								addLabel(posX,posY-difY*3,bquote(bolditalic(n)==.(format(n1,big.mark=options()$big.mark))),adj=0,cex=cexlab)
 								if (!is.null(rm.studs) && is.numeric(rm.studs))
-									addLabel(posX,posY-difY*4,bquote(italic(.(linguaFranca("removed",l)))==.(format(n0-n1,big.mark=","))),adj=0,cex=cexlab)
+									addLabel(posX,posY-difY*4,bquote(italic(.(linguaFranca("removed",l)))==.(format(n0-n1,big.mark=options()$big.mark))),adj=0,cex=cexlab)
 								#if (iii=="Males") {
 								if (i==floor(median(1:nsex))) {
 									subtit2 = gsub("ttype14","commercial",gsub("ttype23","research/survey",subtit))
@@ -1206,12 +1210,14 @@ calcVB <- function(dat=pop.age, strSpp="", yfld="len", fixt0=FALSE,
 				}
 			}
 			if (pages && figgy && figures) dev.off()
+#browser();return()
 		}
 		if ((!singles&!pages) && figgy && figures) dev.off()
-	} ## end l (lang) loop
+	}; eop()
 	attr(out,"xout") = xout
 	if (figgy) attr(out,"plotNames") = plotNames
 	assign(fName,fits,envir=.PBStoolEnv)
+	ttput(DATA)
 	stuff=c("out","pVec","xlim","ylim","anams","tnams","aName","tName","aaName","ttName","strSpp","fits","DATA")
 	packList(stuff,"PBStool",tenv=.PBStoolEnv)
 	omess = c( 
@@ -1484,7 +1490,7 @@ compVB = function(dat, index, A=1:40, subset="sex",
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~compVB
 
 
-## estOgive-----------------------------2018-12-21
+## estOgive-----------------------------2019-09-03
 ## Creates ogives of some metric (e.g., % maturity at age).
 ## Arguments:
 ##   dat     - specimen morphometrics data from GFBio
@@ -1524,7 +1530,7 @@ estOgive <- function(dat=pop.age, strSpp="", method=c("DN"),
    ttype=list(Commercial=c(1,4,5),Research=c(2:3)), 
    stype=c(1,2,6,7), scat = list(Unsorted=1), 
    SSID=NULL, surveys=NULL, subset="SSID",
-   ofld="age", obin=1, xlim=c(0,45), figdim=c(8,5),
+   ofld="age", obin=1, xlim=c(0,45), PIN=c(8,5),
    mpoints=TRUE, ppoints=TRUE, plines=TRUE, rpoints=FALSE, rlines=FALSE, rtext=FALSE,
    fg=c("red","orange2","blue","green4"), Arcs=NULL, radius=0.2,
    parList=list(DN=list(val=c(15,0.9,exp(100)), min=c(5,0.1,exp(10)),
@@ -1577,7 +1583,7 @@ estOgive <- function(dat=pop.age, strSpp="", method=c("DN"),
 		if (is.null(Arcs)) Arcs=c(150,165,315,330,135,120,345,360)
 		if (x50>xlim[1] & x50<xlim[2]) {
 			flagIt(a=x50, b=0.5, r=radius, A=Arcs[sin], col=fg[sin], n=n, ...)
-			points(x50, 0.5, pch=bigPch[sin], bg=bg[sin], cex=1.5)
+			points(x50, 0.5, pch=bigPch[sin], bg=bg[sin], cex=1.2)
 		} else {
 			ldL = unlist(approx(x,y,xlim[1],rule=2,ties="ordered"))
 			text(ldL[1], ldL[2]+.02*dy, show0(round(mdBL,1),1,add2int=TRUE), cex=0.8, col=fg[sin])
@@ -1645,6 +1651,7 @@ estOgive <- function(dat=pop.age, strSpp="", method=c("DN"),
 	dat$month <- as.numeric(substring(dat$date,6,7))
 	if (is.null(scat) || is.na(scat))
 		scat = list('allscat'=.su(dat$scat))
+#browser();return()
 
 	for (i in c("stype","scat")) {
 		mess = paste0("dat = biteData(dat,",i,")")
@@ -1713,10 +1720,10 @@ estOgive <- function(dat=pop.age, strSpp="", method=c("DN"),
 	fout = fout.e = onam
 	for (l in lang) {  ## could switch to other languages if available in 'linguaFranca'.
 		fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
-		if (eps) postscript(paste0(fout,".eps"), width=figdim[1], height=figdim[2], paper="special")
+		if (eps) postscript(paste0(fout,".eps"), width=PIN[1], height=PIN[2], paper="special")
 		else if (wmf && .Platform$OS.type=="windows")
-			do.call("win.metafile", list(filename=paste0(fout,".wmf"), width=figdim[1], height=figdim[2]))
-		else if (png) png(filename=paste0(fout,".png"), width=figdim[1], height=figdim[2], units="in", res=400)
+			do.call("win.metafile", list(filename=paste0(fout,".wmf"), width=PIN[1], height=PIN[2]))
+		else if (png) png(filename=paste0(fout,".png"), width=PIN[1], height=PIN[2], units="in", res=400)
 		else resetGraph()
 		expandGraph(mfrow=c(1,1),mai=c(.6,.7,0.05,0.05),omi=c(0,0,0,0),las=1,lwd=1)
 		MDX = xlim[2]/3
@@ -1731,6 +1738,8 @@ estOgive <- function(dat=pop.age, strSpp="", method=c("DN"),
 		axis(2,at=seq(0,1,.1),tcl=-.5,mgp=c(0,.7,0),cex=.9,adj=1)
 		mtext(linguaFranca(ifelse(ofld=="age","Age","Length"),l), side=1, cex=1.2, line=1.75)
 		mtext(ifelse(l=="f","proportion mature","Proportion Mature"), side=2, cex=1.2, line=2.5, las=0)
+	
+#browser();return()
 	
 		legtxt = character(); nleg = 0
 		for (s in 1:nsex) {
@@ -1810,6 +1819,7 @@ estOgive <- function(dat=pop.age, strSpp="", method=c("DN"),
 				CALCS[[ss]][[sss]][["p50"]][["BL"]] = mdBL
 				CALCS[[ss]][[sss]][["mu"]][["BL"]]  = muBL
 				CALCS[[ss]][[sss]][["par"]][["BL"]] = c(a=as.vector(a),b=as.vector(b))
+#browser();return()
 
 				## Vivian Haist (VH) logistic fit
 				parVH = parList[["VH"]][c("val","min","max","active")] # must have these components
@@ -1828,6 +1838,7 @@ estOgive <- function(dat=pop.age, strSpp="", method=c("DN"),
 				CALCS[[ss]][[sss]][["mu"]][["VH"]]  = muVH
 				CALCS[[ss]][[sss]][["par"]][["VH"]] = Pend
 				#pend[[ss]][[sss]] = c(Pend, p50=mdVH, p95=p95vh)
+#browser();return()
 
 				## Double Normal fit
 				parDN = parList[["DN"]][c("val","min","max","active")] # must have these components
@@ -1863,7 +1874,10 @@ estOgive <- function(dat=pop.age, strSpp="", method=c("DN"),
 				if (rpoints) {# raw (observed) proportion mature at age
 					#points(xpos,pemp,pch=bigPch[sin],col=ifelse(ppoints,smClrs[sin],fg[sin]),bg=smClrs[sin],cex=ifelse(sum(c(rpoints,rtext))==1,1.2,1.0))
 					## for debugging:
-					text(xpos,pemp,nemp,cex=0.7,col=c("black","blue"))
+					#text(xpos,pemp,nemp,cex=0.7,col=c("black","blue"))
+					points(xpos,pemp, pch=21, cex=2, col="gainsboro", bg=lucent(fg[sin],0.05))
+					text(xpos,pemp,nemp,cex=0.7,col=fg[sin])
+#browser(); return()
 				}
 				nmeth = 0
 				if (any(method=="EMP")) {
@@ -1983,6 +1997,7 @@ estOgive <- function(dat=pop.age, strSpp="", method=c("DN"),
 					cat(paste(paste(names(calcs[["par"]][[m]]),calcs[["par"]][[m]],sep=","),sep="", collapse="\n"),"\n", sep="",file=fpar, append=TRUE)
 				cat(paste(c("p50","mu"),c(calcs[["p50"]][[m]],calcs[["mu"]][[m]]), sep=",",collapse="\n"), "\n", sep="",file=fpar, append=TRUE)
 			}
+#browser();return()
 		}
 	}
 	omess = c( 
@@ -1996,7 +2011,7 @@ estOgive <- function(dat=pop.age, strSpp="", method=c("DN"),
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~estOgive
 
 
-## extractAges -------------------------2018-10-12
+## extractAges -------------------------2019-08-07
 ## Extract records with positive age and qualify
 ## by the selected ageing method.
 ## If show.age=T, a GUI reports # ages by
@@ -2014,14 +2029,14 @@ extractAges = function(dat, ameth=c(3,17), use.sfc.age=1:3, sex=c(2,1),
 			stop (paste0("Choose another pair of field names from:\n", paste0(deparse(colnames(dat)),collapse="\n") ) )
 		ats = crossTab(dat, c(show.flds, "sex"), "age", length)
 		winStr = c(
-			"window name=\"sAges\" title=\"Ages Available\"",
+			"window name=\"sAges\" title=\"Ages Available\" bg=\"gainsboro\"",
 			"grid 1 2 byrow=T sticky=W relief=flat",
 			paste0("label text=\"Number of ages by:\\n", show.flds[1], " (row)  \\&  ", show.flds[2], " (col)\" font=12"),
 			"button text=\"Codes\" bg=moccasin font=10 sticky=E padx=\"15 0\" function=doAction action=\"openFile(paste0(system.file(package=`PBStools`),`/win/GFBtcodes.txt`))\"",
 			paste0("grid ", dim(ats)[3], " 2 byrow=T sticky=W")
 		)
 		sexlab = c("Not sexed", "Male", "Female", "Uncertain")
-		sexcol = c("red", "blue", "darkgreen", "purple")
+		sexcol = c("red", "green4", "dodgerblue", "purple")
 		names(sexlab) = names(sexcol) = 0:3
 		for (i in 1:dim(ats)[3]) {
 			ii   = dimnames(ats)[[3]][i]
@@ -2037,12 +2052,12 @@ extractAges = function(dat, ameth=c(3,17), use.sfc.age=1:3, sex=c(2,1),
 		invisible(return(ats)) ## crosstab results
 
 	## Logical vector for desired surface ages (usually very young fish)
-	if ( any(ameth==c(3,17)) && !is.null(use.sfc.age) && !all(is.na(use.sfc.age)) )
+	if ( any(ameth%in%c(3,17)) && !is.null(use.sfc.age) && !all(is.na(use.sfc.age)) )
 		z.sf = is.element(dat$ameth, c(1,16)) & is.element(dat$age, use.sfc.age)
 	else z.sf = rep(FALSE, nrow(dat))
 
 	## Logical vector for unknown ageing method
-	if ( any(ameth==c(3,17)) && !is.null(ameth) && !all(is.na(ameth)) && "year"%in%colnames(dat) && "oto"%in%colnames(dat) )
+	if ( any(ameth%in%c(3,17)) && !is.null(ameth) && !all(is.na(ameth)) && "year"%in%colnames(dat) && "oto"%in%colnames(dat) )
 		z.ua = is.element(dat$ameth,0) & is.element(dat$oto,1) & dat$year>=1980
 	else z.ua = rep(FALSE, nrow(dat))
 
@@ -2237,7 +2252,7 @@ histMetric <- function(dat=pop.age, xfld="age", xint=1, minN=50,
 #---------------------------------------histMetric
 
 
-## histTail-----------------------------2019-01-31
+## histTail-----------------------------2019-09-03
 ## Create a histogram showing tail details
 ## ---------------------------------------------RH
 histTail <-function(dat=pop.age, xfld="age", tailmin=NULL, 
@@ -2274,9 +2289,9 @@ histTail <-function(dat=pop.age, xfld="age", tailmin=NULL,
 		expandGraph(mfrow=c(1,1),mar=c(3,5,.5,.5),oma=c(0,0,0,0),las=1,xaxs="i",yaxs="i")
 		
 		truehist = MASS::truehist
-		do.call(truehist, args=list(data=x, prob=prob, col=bcol, cex.lab=1.2, xlab=linguaFranca(xlab,l)))
+		do.call(truehist, args=list(data=x, prob=prob, nbins=50, col=bcol, cex.lab=1.2, xlab=linguaFranca(xlab,l)))
 		#evalCall(truehist,argu=list(data=x,col=bcol,cex.lab=1.2,xlab=xlab),...,checkpar=TRUE)
-		ylab = paste(ifelse(prob,ifelse((wmf|png)&&PIN[2]<3.5,"Rel. Freq.","Relative Frequency"),"Frequency")," ( N = ",format(nx,scientific=FALSE,big.mark=",")," )",sep="")
+		ylab = paste(ifelse(prob,ifelse((wmf|png)&&PIN[2]<3.5,"Rel. Freq.","Relative Frequency"),"Frequency")," ( N = ",format(nx,scientific=FALSE,big.mark=options()$big.mark)," )",sep="")
 		mtext(linguaFranca(ylab,l),side=2,line=3.5,cex=1.2,las=0)
 		if (!is.null(tailmin)){
 			z = x>=tailmin & !is.na(x); nz=sum(z)
@@ -3062,55 +3077,6 @@ predictRER = function(S,L,N) {
 		   51.920*sL[3] +  0.564* N[2] - 38.604*sL[4] -
 		   22.601*sL[5] - 10.203*sL[6] - 10.445
 	return(D) }
-
-
-#processBio-----------------------------2016-09-12
-# Process results from 'gfb_bio.sql' query.
-#-----------------------------------------------RH
-processBio = function(dat=PBSdat, strSpp, addsrfa=TRUE, 
-   addsrfs=TRUE, addpopa=TRUE, addstock=TRUE, maxrows=5e4)
-{
-	f=function(x){format(x,scientific=FALSE,big.mark=",")}
-	atts=attributes(dat)[setdiff(names(attributes(dat)),c("names","row.names","class"))] # extra attributes to retain
-	N=nrow(dat); nloop=ceiling(nrow(dat)/maxrows)
-	DAT=NULL
-	for (i in 1:nloop) {
-		n0=(i-1)*maxrows+1; n1=min(i*maxrows,N)
-		cat(paste("processing rows",f(n0),"to",f(n1),"of",f(N)),"\n"); flush.console()
-		idat=dat[n0:n1,]
-		idat$EID=n0:n1
-		if (addsrfa)
-			idat$srfa=calcSRFA(idat$major,idat$minor,idat$locality)
-		if (addsrfs)
-			idat$srfs=calcSRFA(idat$major,idat$minor,idat$locality,subarea=TRUE)
-		if (addpopa){
-			if (i==1) data(popa,envir=penv())
-			datpopa=rep("",nrow(idat))
-			events=idat[!is.na(idat$X) & !is.na(idat$Y),c("EID","X","Y")]
-			if (nrow(events)>0) {
-				events=as.EventData(events)
-				locs=findPolys(events,popa,maxRows=maxrows)
-				locs=zapDupes(locs,"EID")
-				pdata=attributes(popa)$PolyData; #pdata$label=substring(pdata$label,5)
-				pvec=pdata$label[locs$PID]; names(pvec)=locs$EID
-				names(datpopa)=idat$EID
-				datpopa[names(pvec)]=pvec }
-			idat$popa=datpopa
-		}
-		if (addstock) {
-			if (missing(strSpp))
-				stop("Must specify a species to determine stock allocation")
-			idat = calcStockArea(strSpp, dat=idat, stockFld="stock")
-		}
-		aflds=c("EID","X","Y")
-		idat=idat[,c(aflds,setdiff(names(idat),aflds))]
-		DAT=rbind(DAT,idat)
-	} # end nloop
-	if (!any(is.na(DAT$X)) && !any(is.na(DAT$Y))) DAT=as.EventData(DAT)
-	attributes(DAT)=c(attributes(DAT),atts)
-	return(DAT)
-}
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~processBio
 
 
 #reportCatchAge-------------------------2010-10-20
@@ -3920,6 +3886,94 @@ requestAges=function(strSpp, nage=500, year=2016,
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~requestAges
 
 
+## residVB------------------------------2019-07-16
+## Calculate and plot Studentised residuals as 
+## quantile plots to show how well each age is fit.
+## Need to run 'calcVB' first to get DATA
+## ---------------------------------------------RH
+residVB = function(P, L1="surv", L2="Females", yval="len", 
+   area="major_3|4", ttype="surv_2|3", Amax, ylim,
+   png=F, pngres=400, PIN=c(8,8), lang=c("e","f"))
+{
+	ttget(DATA)
+	if (is.null(DATA)) stop("Run function 'calcVB' first.")
+	if (missing(Amax))
+		Amax =  max(sapply(L2, function(x,dat){range(dat[[x]]$age)},dat=DATA[[L1]]))
+	## Create a subdirectory called `french' for French-language figures
+	createFdir(lang)
+
+	do.call("assign", args=list(x="boxpars", value=list(
+		boxwex=0.8, boxfill="gainsboro", staplewex=0.5, 
+		medlwd=2, medcol=lucent("slategrey",0.75), 
+		outwex=0.5, whisklty=1, outpch=3, outcex=0.5, outcol=lucent("grey20",0.5)
+		))) #, envir=.PBStoolEnv))
+
+	fout = fout.e = paste0("VBres-",gsub("\\|","+",gsub("_","(",area)),")-",gsub("\\|","+",gsub("_","(",ttype)),")")
+	for (l in lang) {  ## could switch to other languages if available in 'linguaFranca'.
+		changeLangOpts(L=l)
+		fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
+		if (png) png(filename=paste(fout,".png"), unit="in", res=pngres, width=PIN[1], height=PIN[2])
+		if (length(L2)>1)
+			expandGraph(mfrow=c(length(L2),1), mar = c(1,1,0.5,0.5), oma=c(2,2,0,0))
+		else
+			expandGraph(mfrow=c(length(L2),1), mar = c(3,3,0.5,0.5), oma=c(0,0,0,0))
+	
+		for (i in L2) {
+			VBdat = DATA[[L1]][[i]][,c(yval,"age")]
+			iP    = P[i, c("Yinf","K","t0"), ttype, area]
+			unpackList(iP)
+			TL    = VBdat[,yval]
+			Age   = VBdat$age
+			pars  = list(Yinf=Yinf, K=K, t0=t0) ## Vector of initial values (sans sig)
+		
+			enough.points   = nrow(VBdat) >= 10
+			enough.contrast = diff(range(Yinf*(1-exp(-K*(Age-t0))))) > 2
+			if (enough.points && enough.contrast) {  ## nls cannot fit when calculation has no contrast
+				fit1 <- try(nls(TL~Yinf*(1-exp(-K*(Age-t0))),start=pars),silent=TRUE)  ## Use nls for residual checking
+				if (class(fit1)[1] != "try-error") {
+					res.norm = residuals(fit1)
+					## http://www.mathworks.com/matlabcentral/newsreader/view_thread/330668 [defunct]
+					## https://www.mathworks.com/help/stats/residuals.html
+					r   = matrix(res.norm,ncol=1)
+					h   = matrix(hat(Age),ncol=1)                          ## equiv: (X-mean(X))^2/sum((X-mean(X))^2) + 1/length(X)
+					MSE = as.vector((t(r)%*%r)/(length(Age)-length(pars))) ## sum of residuals squared / (number of observations - number parameters estimated)
+					res.stud = r/(sqrt(MSE*(1-h)))                         ## same as: res.norm/sd(res.norm)
+#browser();return()
+					#Amax = max(Age)
+					Abox = as.list(rep(NA,Amax)); names(Abox)=1:Amax
+					abox = split(res.stud,Age)
+					Abox[names(abox)] = abox
+	
+					if (missing(ylim)) srlim = range(res.stud, na.rm=TRUE)
+					else               srlim = ylim
+	
+					quantBox(Abox, type="n", xaxt="n", las=1, outline=T, pars=boxpars, ylim=srlim)
+					abline(h=0, col=lucent("blue",0.5), lty=5)
+					axis(1, at=seq(0,Amax,5))
+					if (length(L2)>1) {
+						if (i==L2[1]) {
+							mtext(linguaFranca("Predicted Age (y)",l), outer=TRUE, side=1, line=0.75, cex=1.5)
+							mtext(linguaFranca("Standardised Residuals",l), outer=TRUE, side=2, line=0.5, cex=1.5)
+						}
+					} else {
+						mtext(linguaFranca("Predicted Age (y)",l), side=1, line=1.75, cex=1.5)
+						mtext(linguaFranca("Standardised Residuals",l), side=2, line=1.5, cex=1.5)
+					}
+#browser();return()
+					addLabel(0.98,0.95, paste(linguaFranca(i,l), linguaFranca(area,l), linguaFranca(ttype,l),sep="\n"), adj=c(1,1), cex=1.0)
+	
+					#z   = order(Age)
+					#plot(Age,res.stud, type="n", xlab="", ylab="")
+					#text(Age[z], res.stud[z], labels=Age[z], cex=0.8)
+				}
+			}
+		}
+		if (png) dev.off()
+	}; eop()
+}
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~residVB
+
+
 #simBSR---------------------------------2011-06-14
 # Simulate Blackspotted Rockfish biological data.
 #-----------------------------------------------RH
@@ -3998,13 +4052,15 @@ sumBioTabs=function(dat, fnam="sumBioTab.csv", samps=TRUE, specs=TRUE,
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~sumBioTabs
 
 
-## weightBio----------------------------2018-11-28
+## weightBio----------------------------2019-08-08
 ## Weight age|length frequencies|proportions by catch|density.
 ##   adat = age123 from query 'gfb_bio.sql'    -- e.g., getData("gfb_bio.sql","GFBioSQL",strSpp="607",path=.getSpath()); bio607=processBio()
 ##   cdat = cat123.wB from function 'getCatch' -- e.g., cat607 = getCatch("607",sql=TRUE)
+##   note: Now use 'fos_mcatSPP.sql' to get catches from GFFOS' GF_MERGED_CATCH table. (RH 190807)
+## Note: Any modifications to 'gfb_bio.sql' may require similar changes in 'gfb_catch_records.sql'
 ## ---------------------------------------------RH
 weightBio = function(adat, cdat, sunit="TID", sweight="catch", 
-   ttype=NULL, stype=c(0,1,2,5:8), scat=NULL, ameth=c(3,17), sex=2:1, major=NULL, 
+   ttype=NULL, stype=c(0,1,2,5:8,17), scat=NULL, ameth=c(3,17), sex=2:1, major=NULL,
    wSP=c(TRUE,TRUE), wN=TRUE, plus=60, accum=TRUE, Nmin=0, Amin=NULL, 
    ctype="C", per=90, SSID=NULL, tabs=TRUE, gear=NULL,
    plot=TRUE, ptype="bubb", size=0.05, powr=0.5, zfld="wp", 
@@ -4021,8 +4077,8 @@ weightBio = function(adat, cdat, sunit="TID", sweight="catch",
 	createFdir(lang)
 
 	## Determine function for level-1 weighting
-	#if (sweight=="density") func=mean else func=sum
-	if (sweight=="density") func=sum else func=sum
+	if (sweight=="density") func=mean else func=sum  ## perhaps try the geometric mean 'calcGM' in future
+	#if (sweight=="density") func=sum else func=sum  ## this seems suspect but leave for now (does not affect WWR because survey strata only have 1 sample each)
 
 	expr = paste("getFile(",substitute(adat),",",substitute(cdat),",ioenv=ioenv,try.all.frames=TRUE,tenv=penv())",sep="")
 	eval(parse(text=expr))
@@ -4038,29 +4094,35 @@ weightBio = function(adat, cdat, sunit="TID", sweight="catch",
 		else if (ctype=="S") ttype = c(2,3) # research/survey
 		else                 ttype = 1:14 }
 
-	# Age data
+	## Age data
 	adat$SVID[is.na(adat$SVID)]=0; adat$GC[is.na(adat$GC)]=0; adat$area[is.na(adat$area)]=1 # to avoid grouping errors later on
 	ages = adat
 	if (any(sex==12)) { # thanks brian
-		age12 = ages[is.element(ages$sex,1:2),]
+			age12 = ages[is.element(ages$sex,1:2),]
 		age12$sex = 12
 		ages= rbind(ages,age12)
 	}
 	flds=c("ttype","gear","stype","sex","major","scat")
 	if (ctype=="S" && !is.null(SSID)) flds=c(flds,"SSID")
+	ii = character()
 	for (i in flds) {
-		expr=paste("ages=biteData(ages,",i,")",sep=""); eval(parse(text=expr)) }
-	if (nrow(ages)==0) showError(paste("No data for '",paste(flds,collapse=', '),"' chosen",sep=""))
+		ii = paste0(ii,ifelse(i==flds[1],"",":"),i)
+#if (i=="SSID") {browser();return()}
+		expr=paste("ages=biteData(ages,",i,")",sep=""); eval(parse(text=expr))
+		if (nrow(ages)==0) showError(paste0("No data for field slection ",ii))
+	}
+	#if (nrow(ages)==0) showError(paste("No data for '",paste(flds,collapse=', '),"' chosen",sep=""))
 	nsex   = length(.su(ages$sex))
-	names(ages)[grep("scat",names(ages))] = "sort" #rename `scat' field to `sort' to avoid conflict with object`scat' later in code.
+	names(ages)[grep("scat",names(ages))] = "spcat" #rename `scat' field to `spcat' to avoid conflict with object`scat' later in code.
 
 	## Specific fiddle to get only 1994 age data for SSID 21 (GIG Historic)
 	if (!is.null(SSID) && SSID==21 && !is.element(strSpp,c("417")))
 		ages = ages[is.element(ages$year, 1994),]  ## this does not work for WWR
 
-	#zam = is.element(ages$ameth,ameth)
-	#if (any(ameth==3)) zam = zam | (is.element(ages$ameth,0) & ages$year>=1980)
-	#ages.old = ages[zam,]
+	## There is no known (recorded) ameth for NMFS Tiennial survey
+	if (!is.null(SSID) && SSID==79)
+		ameth = .su(c(0,ameth))
+
 	ages = extractAges(ages, ameth)
 	if (accum)
 		ages$age[ages$age>=plus & !is.na(ages$age)] = plus
@@ -4069,7 +4131,9 @@ weightBio = function(adat, cdat, sunit="TID", sweight="catch",
 
 	if (strSpp=="621" && ctype=="C") ages = ages[ages$age>=4 & !is.na(ages$age),]
 	## If weighting by [sweight], you need a positive [sweight] :
-	if (wSP[1]) ages = ages[ages[,sweight]>0 & !is.na(ages[,sweight]),]
+	#if (wSP[1]) ages = ages[ages[,sweight]>0 & !is.na(ages[,sweight]),]
+	## Sometimes catch weight is not reported but the age sample is still OK.
+	ages[,sweight][ages[,sweight]==0 | is.na(ages[,sweight])] = 1. ## set low smaple catch
 
 	## Restratify the survey age data (because there are numerous restratification schemes not reflected in B21)
 	if (ctype=="S"){
@@ -4080,7 +4144,7 @@ weightBio = function(adat, cdat, sunit="TID", sweight="catch",
 		SVID   = cdat$SVID;  names(SVID) = feid
 #browser();return()
 		ages   = ages[is.element(ages$FEID,feid),]  ## get ages associated with the survey series
-		if (nrow(ages)==0) showError(paste("No age data matches survey series ",
+		if (nrow(ages)==0) showError(paste("No age data left after matching FEID of survey series ",
 			SSID,"\n(catch linked to age via 'FEID')",sep=""),as.is=TRUE)
 		ages$SVID  = SVID[as.character(ages$FEID)]  ## restratified survey IDs
 		ages$GC = strata[as.character(ages$FEID)]   ## restratified survey IDs
@@ -4108,7 +4172,6 @@ weightBio = function(adat, cdat, sunit="TID", sweight="catch",
 	sfeid = sapply(split(ages[,"FEID"], ages[,sunit]), function(x){as.character(sort(unique(x)))}, simplify=FALSE)
 	fcat  = sapply(split(ages[,sweight],ages$FEID),
 		function(x){if(all(is.na(x))) 0 else mean(x,na.rm=TRUE)})   ## [sweight] by each fishing event (tow)
-	#sfun = if (sweight=="density") mean else sum                  ## in theory use mean if sample weighting is a density, otherwise sum (now deined at beginning of weighBio)
 
 	## [sweight] by sample unit (i.e., catch or density)
 	## Just in case a sample covers more than one tow (fishing event)
@@ -4168,9 +4231,6 @@ weightBio = function(adat, cdat, sunit="TID", sweight="catch",
 	## Sample unit [sweight] by level -- total catch (t) or mean density (t/km2)
 	pcat = atmp = sapply(punit,function(x,cvec){
 		xval = cvec[x]/ifelse(sweight=="catch",1000.,1000.)  ## convert catch and density to tonnes
-		#if (sweight=="density") return(mean(xval,na.rm=TRUE))
-		#if (sweight=="density") return(mean(xval,na.rm=TRUE))
-		#else return(sum(xval,na.rm=TRUE)) },  cvec=scat)
 		return(func(xval,na.rm=TRUE)) },  cvec=scat)         ## func now defined at beginning of weightBio
 	vcat = sapply(punit,function(x,cvec){                   ## just for debugging (not used any where else)
 		xval = cvec[x]/ifelse(sweight=="catch",1000.,1000.)
@@ -4213,35 +4273,40 @@ weightBio = function(adat, cdat, sunit="TID", sweight="catch",
 	}
 
 	yrs  = floor(as.numeric(substring(names(pcat),1,8))-.001)
-	names(atmp)=yrs
+	uyrs = .su(yrs)
+	names(atmp) = yrs
 	acat = sapply(split(pcat,yrs),func,na.rm=TRUE) ## total sample [sweight] per year
 	pvec = pcat/acat[names(atmp)]                  ## proportion of annual sample tow [sweight] in level (quarter/stratum)
-#browser();return()
 
 	## Fishery catch data
 	## ==================
 	catdat = cdat[!is.na(cdat$date),]
-	catdat = catdat[is.element(catdat$year,yrs) & is.element(catdat$major,major),]
-	if (ctype=="S"){
-		clev = paste(catdat$year,pad0(catdat$SVID,3),pad0(catdat$GC,3),sep=".") ## catch level year.survey.group
-		names(clev) = paste(catdat$year,pad0(catdat$SVID,3),pad0(catdat$GC,3),sep="-")
-		attr(clev,"Ylim") = range(catdat$year,na.rm=TRUE)
-		attr(clev,"years") = .su(catdat$year)
-	} else
-		clev   = convYP(catdat$date,per)  ## catch level year.period
-	catdat$lev = clev
-	#catdat=catdat[is.element(catdat$per,agelev),]  ## only look at fishery catch that matches age periods
-	packList("catdat","PBStool",tenv=.PBStoolEnv)
+	catdat = catdat[is.element(catdat$year,uyrs) & is.element(catdat$major,major),]
+	if (nrow(catdat)>0) {
 #browser();return()
+		if (ctype=="S"){
+			clev = paste(catdat$year,pad0(catdat$SVID,3),pad0(catdat$GC,3),sep=".") ## catch level year.survey.group
+			names(clev) = paste(catdat$year,pad0(catdat$SVID,3),pad0(catdat$GC,3),sep="-")
+			attr(clev,"Ylim") = range(catdat$year,na.rm=TRUE)
+			attr(clev,"years") = .su(catdat$year)
+		} else
+			clev   = convYP(catdat$date,per)  ## catch level year.period
+		catdat$lev = clev
+		#catdat=catdat[is.element(catdat$per,agelev),]  ## only look at fishery catch that matches age periods
+		packList("catdat","PBStool",tenv=.PBStoolEnv)
 
-	## Fishery catch proportions
-	if (is.element("catKg",names(catdat)))      Ccat = split(catdat$catKg,catdat$lev)
-	else if (is.element("catch",names(catdat))) Ccat = split(catdat$catch,catdat$lev)
-	else showError("Fishery catch field 'catKg' or 'catch' is not available")
-	PCAT = sapply(Ccat,function(x){sum(x,na.rm=TRUE)/1000.})  ## fishery catch (t) for all levels
+		## Fishery catch proportions
+		if (is.element("catKg",names(catdat)))      Ccat = split(catdat$catKg,catdat$lev)
+		else if (is.element("catch",names(catdat))) Ccat = split(catdat$catch,catdat$lev)
+		else showError("Fishery catch field 'catKg' or 'catch' is not available")
+		PCAT = sapply(Ccat,function(x){sum(x,na.rm=TRUE)/1000.})  ## fishery catch (t) for all levels
+	} else {
+		PCAT = rep(1,length(agelev))           ## sometimes ages exist w/out catch wt so set to a small value for now
+		names(PCAT) = agelev
+	}
 
 	## Second reweighting by Quarter if commercial or by Stratum Area if survey
-	#if (wSP[2]) {
+	#if (wSP[2]) {  ## Why has this been disabled?
 		wtdMA = function(A){
 			zA = A>0; zA1 = A==1; zA2 = A>1
 			if (any(zA1) && !all(zA1)) {
@@ -4252,9 +4317,14 @@ weightBio = function(adat, cdat, sunit="TID", sweight="catch",
 			}
 			return(A)
 		}
-		if (sweight=="catch")
-			Pcat = PCAT[as.character(agelev)]      ## only levels that were sampled
-		else if  (sweight=="density") {
+		if (sweight=="catch") {
+			Pcat = rep(1,length(agelev))           ## sometimes ages exist w/out catch wt so set to a small value for now
+			names(Pcat) = agelev
+			common = intersect(agelev,names(PCAT))
+			Pcat[common] = PCAT[common]            ## add catch from common sampled levels
+			ttput(Pcat)
+.flush.cat(.flush.cat(paste(strwrap(paste0(Pcat,collapse=" "),width=100),collapse="\n")), "\n")
+		} else if  (sweight=="density") {
 			alev = paste(ages$year,pad0(ages$SVID,3),pad0(ages$GC,3),sep=".")
 			Alst = split(ages$area,alev)           ## use area (km^2) from age object
 			areaRaw = sapply(Alst[agelev],unique)  ## get unique stratum area values
@@ -4272,14 +4342,6 @@ weightBio = function(adat, cdat, sunit="TID", sweight="catch",
 		Acat = sapply(split(Pcat,Fyrs),sum,na.rm=TRUE)
 		Pvec = Pcat/Acat[names(Atmp)]          ## proportion of annual fishery tow catch|area in level (quarter|stratum)
 	#}
-## Already done below (line 277)
-#	if (!wSP[2]) {
-#		Pone = split(Pvec,substring(names(Pvec),1,4))
-#		Pone = unlist(sapply(Pone,function(x){rep(1/length(x),length(x))},simplify=FALSE))
-#		names(Pone) = names(Pvec)
-#		Pvec.wSP2 = Pvec                       ## Save weighted Pvec for debugging only
-#		Pvec = Pone
-#	}
 
 	## Annual proportions weighted by commercial catch|area in levels (quarter|stratum)
 	names(yrs)=agelev; YRS=min(yrs):max(yrs)
@@ -4293,6 +4355,7 @@ weightBio = function(adat, cdat, sunit="TID", sweight="catch",
 		jone=rep(1,length(jjj)); names(jone)=jjj; jpro=jone/length(jone)
 		if (wSP[2]) jvec=Pvec[jjj]
 		else        jvec=jpro   ## if no weighting use equal proportions
+#browser();return()
 		for (k in sex) {
 			kk=as.character(k)
 			if (dim(pagetab)[2]==1) {
@@ -4347,7 +4410,6 @@ weightBio = function(adat, cdat, sunit="TID", sweight="catch",
 		function(x){as.character(sort(unique(x)))},simplify=FALSE)      ## trips in each level
 	Ntid = sapply(ntid,length)                                         ## no. trips in each year
 	Scat = pcat                                                        ## sample unit (trip|sample) catch|density
-#browser();return()
 	Fcat = if (sweight=="density") AREA else PCAT                      ## fishery commercial catch (complete set) or stratum area
 
 	stats= c("Nsid","Ntid","Scat","Fcat","Psamp")                      ## summary table stats
@@ -4376,11 +4438,8 @@ weightBio = function(adat, cdat, sunit="TID", sweight="catch",
 			z=is.element(y,j)
 			ii=x[z]
 			idat=kdat[z]; names(idat)=ii
-#if (k=="Fcat") {browser();return()}
 			for (i in unique(ii)) {
-				#print(c(i,j,k))
 				if (!i%in%acy) next
-				#if (sweight=="density") func=mean else func=sum
 				sumtab[i,j,k] = func(idat[is.element(names(idat),i)]) ## necessary when more than one survey per year (func defined at beginning of weightBio)
 			}
 		}
@@ -4390,13 +4449,11 @@ weightBio = function(adat, cdat, sunit="TID", sweight="catch",
 		Fcat.tmp = sumtab[,,"Fcat"]
 		if (is.null(dim(Fcat.tmp)))
 			Fcat.tmp = matrix(Fcat.tmp,ncol=1,dimnames=dimnames(sumtab)[1:2])
-		#Fcat.use = apply(sumtab[,,"Fcat"],2,function(x){mean(x[x>0])})
 		Fcat.use = apply(Fcat.tmp,2,function(x){mean(x[x>0])})
 		for (i in 1:dim(sumtab)[1])
 			Fcat.tmp[i,] = Fcat.use
 		sumtab[,,"Fcat"] = Fcat.tmp
 	}
-#browser();return()
 	## Proportion of trip:fishery catch (commercial) or expanded catch (sample density times stratum area) ***** review
 	Psamp = if (sweight=="density") sumtab[,,"Scat"]*sumtab[,,"Fcat"] else sumtab[,,"Scat"]/sumtab[,,"Fcat"]
 	Psamp[is.nan(Psamp)]=0
@@ -4416,7 +4473,6 @@ weightBio = function(adat, cdat, sunit="TID", sweight="catch",
 		#save("sumtab",file=paste0(outnam,".rda"))
 	}
 	##-----------------
-#browser();return()
 
 	if (tabs){ ##-----Start Tables-----
 		sumsum = sub("output","sumtab",wpanam)
@@ -4424,11 +4480,16 @@ weightBio = function(adat, cdat, sunit="TID", sweight="catch",
 		sumrda = paste(sumsum,".rda",sep="")
 		save("sumtab",file=sumrda)
 		cat("Supplementary Table for Weighted Proportions-at-Age","\n\n",file=sumcsv)
-#browser();return()
 		for (k in stats) {
 			cat(k,"\n",file=sumcsv,append=TRUE)
 			cat("year,",paste(colnames(sumtab),collapse=","),"\n",sep="",file=sumcsv,append=TRUE)
-			apply(cbind(year=rownames(sumtab),sumtab[,,k]),1,function(x){cat(paste(x,collapse=","),"\n",sep="",file=sumcsv,append=TRUE)})
+			## very obscure but use for now:
+			## (https://stackoverflow.com/questions/33206002/subset-an-r-array-that-may-have-a-dimension-of-length-1?noredirect=1&lq=1)
+			ktab = `dim<-`(sumtab[,,k], dim(sumtab)[1:2])
+			dimnames(ktab) = dimnames(sumtab)[1:2]
+			apply(cbind(year=rownames(sumtab),ktab),1,function(x){
+			#apply(cbind(year=rownames(sumtab),sumtab[,,k]),1,function(x){  ## dimension collapses only one year or stratum
+				cat(paste(x,collapse=","),"\n",sep="",file=sumcsv,append=TRUE)})
 			cat("\n",file=sumcsv,append=TRUE)
 		}
 		## Coleraine data file: weighted proportions-at-age to CSV
@@ -4446,7 +4507,6 @@ weightBio = function(adat, cdat, sunit="TID", sweight="catch",
 			kk  = sex[k]
 			kkk = as.character(kk)
 			jj=paste( switch(kkk,'0'="u",'1'="m",'2'="f",'3'="nd",'12'="mf"), pad0(1:plus,2),sep="")
-#if(kk==12) {browser();return()}
 			wpatab[yy,jj] = t(agetab[1:plus,yy,kkk,zfld])
 		}
 		wsunit = paste0("n",tolower(sunit))        ## choose the right sample unit
@@ -4464,7 +4524,6 @@ weightBio = function(adat, cdat, sunit="TID", sweight="catch",
 		attr(agetab,"wpatab") = wpatab
 		attr(agetab,"wpatxt") = wpatxt
 		attr(agetab,"sumtab") = sumtab
-#browser();return()
 		save("agetab",file=agerda)
 		.flush.cat(rep("=",nchar(agerda)+27),"\n",agerda, " contains all prop-age data\n",rep("=",nchar(agerda)+27),"\n",sep="")
 		packList(c("acat","pvec","Acat","Pvec","pagetab","sagetab","agetab","sumtab","wpatab","wpatxt"),"PBStool",tenv=.PBStoolEnv)
@@ -4474,7 +4533,6 @@ weightBio = function(adat, cdat, sunit="TID", sweight="catch",
 		sidtab = agetab[,,,zfld,drop=FALSE]
 		sidtab=array(sidtab,dim=dim(sidtab)[1:3],dimnames=dimnames(sidtab)[1:3]) ## needed when only 1 year is available
 		sidtab=sidtab[,as.character(sidyrs),,drop=FALSE]
-#browser();return()
 		admdat = sub("output","admb",wpanam)
 		admdat = paste(admdat,".dat",sep="")
 		mess=c("# Proportions-at-age data\n\n",
@@ -4488,7 +4546,6 @@ weightBio = function(adat, cdat, sunit="TID", sweight="catch",
 			"#  Element [a][t] gives the proportion that are age a-1 in year start_year+t-1.\n",
 			"#  Therefore, the matrix has dimensions (final age - first age + 2) * (end year - start year + 1).\n")
 		cat(paste(mess,collapse=""),file=admdat,append=TRUE)
-#browser();return()
 		cat( paste(paste(sidyrs,"      ",sep=""),collapse=""),"\n",file=admdat,append=TRUE)
 		if (length(sidyrs)==1)
 			mess=paste(show0(format(round(sidtab[,1,"1"],6),scientific=FALSE),6,add2int=TRUE),collapse="  ")
@@ -4582,7 +4639,9 @@ weightBio = function(adat, cdat, sunit="TID", sweight="catch",
 					kkk = as.character(kk)
 					sexBub = max(display[,,kkk,zfld,drop=FALSE])     ## largest bubble for sex k
 					zval = display[,,kkk,zfld]
-					if (length(xuse)==1) zval=makeCmat(zval,xuse)
+					if (length(xuse)==1)
+						zval=makeCmat(zval,xuse)
+					zval = as.data.frame(zval)
 					if (!is.null(regimes)) {
 						plot(0,0, type="n", axes=FALSE, xlim=xlim, ylim=ylim, xlab="", ylab="")
 						x1 = par()$usr[1]; x2 = par()$usr[2]
@@ -4603,17 +4662,15 @@ weightBio = function(adat, cdat, sunit="TID", sweight="catch",
 							dots$bg = lucent(bcol,0.2)
 						unpackList(dots)
 						dotty =  paste0(paste0(names(dots),"=",names(dots)),collapse=", ")
-#browser();return()
 						mess = paste0("plotBubbles(z=zval, dnam=TRUE, hide0=TRUE, size=inch, xlim=xlim, ylim=ylim, clrs=bcol, las=3, ylab=\"\", tcl=.25, ", dotty, ")")
 						eval(parse(text=mess))
-	#browser();return()
+#browser();return()
 					}
 					if (ptype=="bars") {
 						zmax = zval[-plus,] ## exclude the plus class
 						if (length(xuse)==1) zmax=makeCmat(zmax,xuse)
 						imax = apply(zmax,2,function(x){x >= quantile(x,0.95) })
 						zmax[!imax] = 0
-	#if (k==1) {browser();return()}
 						makePoly = function(amat,rel=FALSE) {
 							amat[is.element(amat,0)] = NA
 							xval = as.numeric(dimnames(amat)[[2]])
@@ -4629,7 +4686,6 @@ weightBio = function(adat, cdat, sunit="TID", sweight="catch",
 							ypol = rep(ybox,length(xval))
 							return(list(xpol=xpol,ypol=ypol)) }
 						poly1 = makePoly(zval,rel=TRUE)
-	#browser();return()
 						poly2 = makePoly(zmax,rel=TRUE)
 						## TODO: bar width should be nyr * .5/par()$fin[1] for consistency
 						sclr = ifelse(kk==0,"black",clrs[[k]][1])
@@ -4643,7 +4699,6 @@ weightBio = function(adat, cdat, sunit="TID", sweight="catch",
 						axis(2,at=ypos,las=1,cex.axis=ifelse(is.null(list(...)$cex.axis),0.8,list(...)$cex.axis),tcl=0.25)
 						polygon(poly1$xpol,poly1$ypol,border="gainsboro",col=aclr)
 						polygon(poly2$xpol,poly2$ypol,border="gainsboro",col=sclr)
-	#browser();return()
 					}
 					if (!is.null(cohorts)) {
 						for (i in 1:length(cohorts$x)) {
@@ -4654,13 +4709,13 @@ weightBio = function(adat, cdat, sunit="TID", sweight="catch",
 								text(plus+1-a,plus+1,-a,cex=ifelse(png,0.7,0.8),col=.colBlind["orange"],font=2) #,adj=c(0.6,1.5))
 							else
 								text(YRS[length(YRS)]+0.5,a+YRS[length(YRS)]+0.5,-a,cex=ifelse(png,0.7,0.8),col=.colBlind["orange"],font=2) #,adj=c(0.5,1.4)) 
-					} }
-	#browser();return()
+						}
+					}
 					noto = plt.noto[,kkk]; names(noto) = dimnames(plt.noto)$year #plt.noto[,"year"]  ## because of old crappy hadley crosstab
 					noto = noto[noto>0 & !is.na(noto)]
 					nsam = plt.nsam[,kkk]; names(nsam) = dimnames(plt.nsam)$year #plt.nsam[,"year"]  ## because of old crappy hadley crosstab
 					nsam = nsam[nsam>0 & !is.na(nsam)]
-	
+
 					text(as.numeric(names(noto)), par()$usr[3]+0.02*abs(diff(par()$usr[3:4])), labels=paste0(noto,":",nsam), font=1, adj=0, srt=90,
 						cex=ifelse(is.null(list(...)$cex.noto),0.9,list(...)$cex.noto), col="grey15") #clrs[[k]][1])
 					box(lwd=ifelse(devnam=="png",max(1,floor(zoom/2)),1))
