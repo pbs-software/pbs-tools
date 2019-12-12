@@ -276,7 +276,7 @@ splitTab = function(tab, np=3, row.names=TRUE, row.label="row", row.numeric=FALS
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~splitTab
 
 
-## texArray-----------------------------2019-06-25
+## texArray-----------------------------2019-11-27
 ## Flatten and format an array for latex output.
 ## ---------------------------------------------RH
 texArray =function(x, table.caption="My table", table.label="tab:mytable",
@@ -545,6 +545,8 @@ texArray =function(x, table.caption="My table", table.label="tab:mytable",
 	cat("\\end{document}\n",file=texout,append=TRUE)
 	texfile = readLines(texout)
 	ltdelim=grep("\\{longtable}",texfile)
+	texfile[ltdelim[1]] = sub("\\{longtable}","{longtable}[c]",texfile[ltdelim[1]])
+#browser();return()
 
 	## New (2017-05-10) by RH
 	## \newcolumntype{L}[1]{>{\raggedright\let\newline\\\arraybackslash\hspace{0pt}}p{#1}}

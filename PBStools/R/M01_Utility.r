@@ -1162,7 +1162,7 @@ isThere = function(x, envir=parent.frame()) {
 	genv = function(){ .GlobalEnv }                # global environment
 
 
-## linguaFranca-------------------------2019-09-18
+## linguaFranca-------------------------2019-10-30
 ## Translate English phrases to French (other languages possible)
 ## for use in plotting figures with French labels.
 ## Note that 'gsub' has a limit to its nesting depth.
@@ -1209,6 +1209,8 @@ linguaFranca = function(x, lang="e", little=4, strip=FALSE)
 #browser();return()
 				gsub("[B][T]", "CF",
 				gsub("[M][W]", "CP",
+				gsub("[D][F]", "DL",             ## degr\'{e}s de libert\'{e}
+				gsub("[d][f]", "dl",
 				gsub("[A][C][F]", "FAC",         ## fonction d'autocorr\'{e}lation
 				gsub("[G][M][A]", "ZGPF",        ## les zones de gestion des poissons de fond 
 				gsub("[G][M][U]", "GGPF",        ## le groupe de gestion du poisson de fond
@@ -1216,9 +1218,10 @@ linguaFranca = function(x, lang="e", little=4, strip=FALSE)
 				gsub("[M][P][D]", "MDP",         ## mode de distribution post\'{e}rieure
 				gsub("[M][S][Y]", "RMS",         ## rendement maximal soutenu
 				gsub("[m][s][y]", "rms",         ## rendement maximal soutenu
+				gsub("[R][S][S]", "SRC",         ## somme r\'{e}siduelle de carr\'{e}s
 				gsub("[U][S][R]", "RSS",         ## r\'{e}f\'{e}rence de stock sup\'{e}rieure
 				gsub("[M][C][M][C]", "MCCM",     ## Monte Carlo \`{a} cha\^{i}ne de Markov
-				xa)))))))))))
+				xa))))))))))))))
 			})
 			## dat abbreviations
 			xlil = sapply(xlil, function(xb){
@@ -1294,6 +1297,7 @@ linguaFranca = function(x, lang="e", little=4, strip=FALSE)
 				gsub("[Ss]tandardi[sz]ed [Rr]esiduals", eval(parse(text=deparse("r\u{00E9}sidus standardis\u{00E9}s"))),
 				gsub("[Ss]tudenti[sz]ed [Rr]esiduals", eval(parse(text=deparse("r\u{00E9}sidus standardis\u{00E9}s"))),
 				gsub("[Ff]emale [Ss]pawning [Bb]iomass", "biomasse reproductrice femelles",
+				gsub("[Rr]esidual [Ss]um of [Ss]quares", eval(parse(text=deparse("somme r\u{00E9}siduelle de carr\u{00E9}s"))),
 				gsub("[Mm]edian [Ff]ishing [Mm]ortality", eval(parse(text=deparse("mortalit\u{00E9} m\u{00E9}diane par p\u{00EA}che"))),
 				gsub("[Ll]og [Rr]ecruitment [Dd]eviations", eval(parse(text=deparse("Log \u{00E9}carts de recrutement"))),
 				gsub("[Aa]uto-[Cc]orrelation [Ff]unction of", eval(parse(text=deparse("Fonction d'auto-corr\u{00E9}lation de"))),
@@ -1302,7 +1306,7 @@ linguaFranca = function(x, lang="e", little=4, strip=FALSE)
 				gsub("[Aa]ll [Cc]ommercial [Gg]roundfish [Ff]isheries", eval(parse(text=deparse("Toutes les p\u{00EA}ches commerciales de poisson de fond"))),
 				gsub("[Bb]iomass [Rr]elative to [Aa]verage [Bb]iomass", eval(parse(text=deparse("Biomasse par rapport \u{00E0} la biomasse moyenne"))),
 				gsub("[Bb]iomass [Rr]elative to [Uu]nfished [Ee]quilibrium", eval(parse(text=deparse("Biomasse par rapport \u{00E0} l'\u{00E9}quilibre non exploit\u{00E9}"))),
-				x9)))))))))))))))))))))))))))
+				x9))))))))))))))))))))))))))))
 			})
 			## three words
 			xthree = sapply(xpoo, function(x3){
@@ -1390,13 +1394,14 @@ linguaFranca = function(x, lang="e", little=4, strip=FALSE)
 				gsub("[Ss]pawning", "frayant",
 				gsub("[Ss]mallest", "le plus petit",
 				gsub("[Pp]redicted", eval(parse(text=deparse("pr\u{00E9}dit"))),
+				gsub("[Rr]esiduals", eval(parse(text=deparse("r\u{00E9}sidus"))),
 				gsub("[Tt]riennial", "triennal",
 				gsub("[Ff]requency", eval(parse(text=deparse("la fr\u{00E9}quence"))),
 				gsub("[Hh]istorical", "historique",
 				gsub("[Pp]roportion", "proportion",
 				gsub("[Cc]ommercial", "commercial",
 				gsub("[Vv]ulnerable", eval(parse(text=deparse("vuln\u{00E9}rable"))),
-				x1)))))))))))))))))))))
+				x1))))))))))))))))))))))
 			})
 			## single words up to 6 characters
 			xone = sapply(xone, function(x1){

@@ -1,6 +1,6 @@
 \name{preferDepth}
 \alias{preferDepth}
-\title{Display Depth Distribution for a Single Species}
+\title{Display Depth Distribution for a Species}
 \description{
   Display depth distribution for a selected species using an interactive 
   GUI. The SQL code grabs the depth table from a remote SQL Server database.
@@ -8,19 +8,21 @@
 }
 \usage{
 preferDepth(strSpp="410", fqtName="pht_fdep.sql", dbName="PacHarvest",
-     spath=NULL, type="SQL", hnam=NULL, get.effort=FALSE)
+     spath=NULL, type="SQL", hnam=NULL, get.effort=FALSE, lang=c("e","f"))
 }
 \arguments{
-  \item{strSpp}{string specifying the code for a species that appears in the
+  \item{strSpp}{\code{character} -- string specifying the code for a species that appears in the
     target database }
-  \item{fqtName}{string specifying the name of a local file (f), an SQL query 
+  \item{fqtName}{\code{character} -- string specifying the name of a local file (f), an SQL query 
     file (q), or an MDB table (t)}
-  \item{dbName}{string specifying the name of an SQL DSN for an ODBC call to 
+  \item{dbName}{\code{character} -- string specifying the name of an SQL DSN for an ODBC call to 
     the SQL Server database \code{DFBCV9TWVASP001}, or an MDB database}
-  \item{spath}{string specifying the path to the file \code{fqtName}}
-  \item{type}{string specifying the file type: \code{"SQL"}, \code{"MDB"}, or \code{"FILE"}}
-  \item{hnam}{string specifying the name of a history file}
-  \item{get.effort}{logical: if \code{TRUE} get the trawl effort data right away.}
+  \item{spath}{\code{character} -- string specifying the path to the file \code{fqtName}}
+  \item{type}{\code{character} -- string specifying the file type: \code{"SQL"}, \code{"MDB"}, or \code{"FILE"}}
+  \item{hnam}{\code{character} -- string specifying the name of a history file}
+  \item{get.effort}{\code{logical} -- if \code{TRUE}, get the trawl effort data right away.}
+  \item{lang}{\code{character} -- a vector of letters that denote the language for output:
+    currently only \code{"e"} (english) and \code{"f"} (french).}
 }
 \details{
   The function \code{preferDepth()} creates an interactive GUI that can be used
@@ -83,9 +85,10 @@ preferDepth(strSpp="410", fqtName="pht_fdep.sql", dbName="PacHarvest",
   global list object \code{PBStool}.
 }
 \author{
-  Rowan Haigh, Research Biologist\cr
-  Pacific Biological Station (PBS), Fisheries and Oceans Canada (DFO), Nanaimo BC\cr
-  Last modified: \code{RH 2018-01-18}
+  \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
+  Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
+  \emph{locus opus}: Institute of Ocean Sciences (IOS), Sidney BC\cr
+  Last modified \code{Rd: 2019-12-12}
 }
 \seealso{
   \code{\link[PBStools]{getData}}, \code{\link[PBStools]{calcHabitat}}, \code{\link[PBStools]{histMetric}} \cr

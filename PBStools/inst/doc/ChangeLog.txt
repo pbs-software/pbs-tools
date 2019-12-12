@@ -10,6 +10,17 @@ Authors: RH  = Rowan Haigh
          BK  = Brian Krishka
 ------------------------------
 
+1.39.4 (2019-12-12)  [Rcheck=T, Rbuild=T]
+  * M06_Assessment.r
+    + Modified function `makeAgeErr' extensively to deal with AE variations for the 2019 BOR assessment. (RH 19
+  * M07_CatchRecon.r
+    + Modified function `buildCatch':
+      - Calculated historical SBF and LIN landings using Ketchens's reported catch of these species by the trawl fishery.
+      - For 2019 BOR, used mean ratio in period 1996-2001 of  [SBF in FID 3]/[SBF in FID 1]=10.235 and [LIN in FID 3]/[LIN in FID 1]=0.351
+      - to estimate historical landings of SBF and LIN in FIDs 3 and 4 from SBF and LIN in FID 1.
+  * M08_LaTeX.r
+    + Modified function `texArray' to centre longtables. (RH 191127)
+
 1.39.3 (2019-10-02)  [Rcheck=T, Rbuild=T]
   * M01_Utility.r
     + Added new function `changeLangOpts' to use French output decimals and delimitors (RH 190610)

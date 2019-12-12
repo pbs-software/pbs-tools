@@ -11,7 +11,7 @@
 plotEO(id="lst", strSpp="453", col="red", 
    xlim=c(-136,-122.5), ylim=c(48,54.8), prefix="map", 
    inarea=NULL, exarea=NULL, exland=FALSE, rmXY=FALSE, rmSM=TRUE,
-   png=FALSE, pngres=400, PIN =c(9,7.3))
+   png=FALSE, pngres=400, PIN =c(9,7.3), lang=c("e","f"))
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -40,6 +40,8 @@ plotEO(id="lst", strSpp="453", col="red",
   \item{pngres}{\code{numeric} -- resolution (pixels per inch) of the \code{.png} file.}
   \item{PIN}{\code{numeric} -- two-element vector specifying the dimensions
     (width, height) in inches of the \code{.png} file.}
+  \item{lang}{\code{character} -- a vector of letters that denote the language for output:
+    currently only \code{"e"} (english) and \code{"f"} (french).}
 }
 \details{
   The function calls the SQL code \code{'fos_map_density.sql'}, which queries the
@@ -93,7 +95,7 @@ See \href{https://www.canada.ca/en/environment-climate-change/services/committee
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
   \emph{locus opus}: Institute of Ocean Sciences (IOS), Sidney BC\cr
-  Last modified \code{Rd: 2019-03-22}
+  Last modified \code{Rd: 2019-12-12}
 }
 \note{
   Function will only work for DFO employees with network access to the Groundfish databases,\cr

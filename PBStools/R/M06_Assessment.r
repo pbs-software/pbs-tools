@@ -56,7 +56,7 @@ calcMA = function(x,y,y2,period=270,every=10)
 #-------------------------------------------calcMA
 
 
-## compAF-------------------------------2019-03-21
+## compAF-------------------------------2019-10-16
 ## Compare age frequencies using discrete or
 ## cumulative distribution plots.
 ## ---------------------------------------------RH
@@ -82,6 +82,7 @@ compAF=function(x, year=2003, sex=2, amax=40, pfld="wp",
 
 	fout = fout.e = outnam
 	for (l in lang) {
+		changeLangOpts(L=l)
 		if (l=="f") fout = paste0("./french/",fout.e)  ## could repeat for other languages
 		if (png) png(file=paste0(fout,".png"), units="in", res=pngres, width=PIN[1], height=PIN[2])
 		if (ntype==1 && nsex==1) {
@@ -150,14 +151,14 @@ compAF=function(x, year=2003, sex=2, amax=40, pfld="wp",
 			} ## end s (sex) loop
 		} ## end y (year) loop
 		mtext (linguaFranca("Age",l), side=1, outer=TRUE, line=2.5, cex=1.5)
-		mtext (linguaFranca(paste0(ifelse(type=="cumul","Cumulative ",""), "Frequency"),l), side=2, outer=TRUE, line=2.5, cex=1.25)
+		mtext (linguaFranca(paste0(ifelse(type=="cumul","Cumulative ",""), "Frequency"),l), side=2, outer=TRUE, line=2.5, cex=1.25, las=0)
 		if(png) dev.off()
-	} ## end l (lang) loop
+	}; eop()
 }
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~compAF
 
 
-## compBmsy-----------------------------2019-06-20
+## compBmsy-----------------------------2019-11-22
 ## Compare biomass posteriors relative to Bmsy or Bavg
 ## ---------------------------------------------RH
 compBmsy = function(Bspp, spp="POP", Mnams=c("Est M","Fix M"),
@@ -207,7 +208,7 @@ compBmsy = function(Bspp, spp="POP", Mnams=c("Est M","Fix M"),
 	Bmsy = Bmsy[rev(names(Bmsy))]
 
 	if (is.null(boxlim))
-		ylim = c(ifelse(is.null(param),0,min(sapply(Bmsy,quantile,0.0))),max(sapply(Bmsy,quantile,0.96)))
+		ylim = c(ifelse(is.null(param),0,min(sapply(Bmsy,quantile,0.0))), max(sapply(Bmsy,quantile,0.96),1.1))
 	else
 		ylim = boxlim
 
@@ -312,7 +313,7 @@ compBmsy = function(Bspp, spp="POP", Mnams=c("Est M","Fix M"),
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~compBmsy
 
 
-## compLen------------------------------2019-09-06
+## compLen------------------------------2019-10-17
 ##  Compare lengths (or ages) among groups by sex.
 ##  For example, compare annual length distributions
 ##  among surveys series or commercial gears.
@@ -389,6 +390,7 @@ compLen = function(dat, strSpp, fld="len", lbin=1, sex=c(2,1),
 #browser();return()
 
 	for (l in lang) {  ## could switch to other languages if available in 'linguaFranca'.
+		changeLangOpts(L=l)
 		fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
 		if (png) png(paste0(fout,".png"), units="in", res=pngres, width=PIN[1], height=PIN[2])
 		par (mfrow=c(2,1), mar=c(1.5,3.5,0.5,0.5), oma=c(1.5,0,0,0), mgp=c(1.5,0.5,0), las=1)
@@ -515,7 +517,7 @@ compLen = function(dat, strSpp, fld="len", lbin=1, sex=c(2,1),
 		} ## end s (sex) loop
 		mtext(linguaFranca("Year",l), side=1, outer=TRUE, line=0.5, cex=1.5)
 		if (png) dev.off()
-	} ## end l (lang) loop
+	}; eop()
 }
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~compLen
 
@@ -962,15 +964,33 @@ if(is.na(LL1)) {browser();return()}
 #=======================================imputeRate
 
 
-## makeAgeErr---------------------------2019-04-12
+## makeAgeErr---------------------------2019-11-23
 ## Make an ageing error matrix for Awatea.
 ##  (first used for YMR in 2011)
 ## type = "simple" : symmetric matrix
+## type = "dnorm"  : normal distribution from quantiles 0.01 to 0.99
+## type = "cverr"  : use a vector of CV error-at-age
 ## type = "observe": frequency of ages observed per age class
 ## ---------------------------------------------RH
-makeAgeErr = function(type="simple", strSpp, sql=FALSE, 
-   Amax=45, ondiag=0.8, offdiag=0.1, corner=0.9, ndiff=5)
+makeAgeErr = function(type="simple", strSpp, sql=FALSE,
+   Amax=45, ondiag=0.8, offdiag=0.1, corner=0.9, Ndiff=5,
+   CV, Noff=1, less=0, more=0, png=FALSE, ptype="bubble")
 {
+	make.errtab = function(errmat, Ndiff) {
+		Amax = dim(errmat)[1]
+		errtab = array(0,dim=c(Amax,1+Ndiff*2),dimnames=list(obs=1:Amax, diff=-Ndiff:Ndiff))
+		for (i in 1:Amax) {
+			ii = as.character(i)
+#browser();return()
+			avec = age.err[[ii]]
+			names(avec)=as.numeric(names(avec))-i
+			adiff = as.numeric(names(avec))
+			avec[as.character(-Ndiff)] = sum(avec[adiff<=-Ndiff])
+			avec[as.character(Ndiff)] = sum(avec[adiff>=Ndiff])
+			Avec = avec[intersect(dimnames(errtab)[[2]],names(avec))]
+			errtab[ii,names(Avec)] = Avec
+		}
+	}
 	if (missing(strSpp))
 			showError("Supply a species Hart code for in|output files (and GFB query if relevant)")
 
@@ -986,15 +1006,122 @@ makeAgeErr = function(type="simple", strSpp, sql=FALSE,
 		packList(c("errmat","Amax", "ondiag", "offdiag", "corner"), target="obj.makeAgeErr", tenv=.PBStoolEnv)
 		return(errmat)
 
+	} else if(type %in% c("cverr","dnorm")) {
+
+		if (type=="cverr" && (missing(CV) || length(CV)!=Amax))
+			stop("You must supply a vector of CVs by age up to Amax")
+		errmat = diag(1:Amax,Amax,Amax)
+		dimnames(errmat) = list(incorrect=1:Amax, true=1:Amax)
+		if (type=="cverr") {
+			SD = (1:Amax) * CV
+			packList(c("CV", "SD"), target="obj.makeAgeErr", tenv=.PBStoolEnv)
+		}
+		errmat[Amax,Amax] = 0 ## initialize for accumulation
+
+		for (a in 1:Amax) {
+			aa = a + seq(-Noff,Noff,1)
+			if (type=="cverr") {
+				if (SD[a]==0) next
+				#p = dnorm(a + seq(-Noff,Noff,1) * SD[a], mean=a, sd=SD[a])
+				#p = dnorm(a + seq(-Noff,Noff,1) , mean=a, sd=SD[a] * 2) ## increase SD arbitrarily
+				zscores = dnorm(aa , mean=a, sd=SD[a])
+			} else {
+				zscores = dnorm(seq(qnorm(0.01), qnorm(0.99), len=length(aa)))
+			}
+			pp = zscores/sum(zscores)
+			zz = aa>0 & aa<Amax
+			errmat[a,aa[zz]] = pp[zz]
+			zzz = aa>=Amax
+			if (any(zzz)) errmat[a,Amax] = errmat[a,Amax] + sum(pp[zzz])
+#if (a==49) {browser();return()}  ## NEED TO FIX THIS
+		}
+		#for (i in 1:Noff) {
+		#	diag(errmat[1:(Amax-i), (1+i):Amax]) = SD[1:(Amax-i)]  ## e.g. diag(errmat[1:49,2:50])=out[1:49,"SD"]
+		#	diag(errmat[(1+i):Amax, 1:(Amax-i)]) = SD[(1+i):Amax]  ## e.g. diag(errmat[2:50,1:49])=out[2:50,"SD"]
+		#}
+		errmat = t(apply(errmat,1,function(x){x/sum(x)}))
+		if (type=="cverr")
+			spread = paste0("(",paste0(CV[c(5,Amax)],collapse="-"),")")
+		else
+			spread = "(0.01-0.99)" ## need to modify if this becomes dynamic
+
+		if (strSpp=="435") {
+			tight = read.csv("aerr(435).mat.type=dnorm(0.01-0.99).noff=1.csv")
+			tight4 = tight[1:4,]
+			tight4[is.na(tight4)] = 0
+			errmat[1:4,] = as.matrix(tight4[,-1]) ## remove 'age' column and convert to matrix for compatability
+		}
+		onam   = paste0("errmat.",ptype,".type=",type,spread,".noff=",Noff,".png")
+#browser(); return()
+
+		if (png) png(onam, units="in", res=400, width=8, height=8)
+		expandGraph(mfrow=c(1,1), mar=c(3,3,1,1), oma=c(0,0,0,0))
+		if (ptype=="bubble") {
+			#plotBubbles(errmat, dnam=T, prettyAxis=T, frange=0.01, size=0.1)
+			errbat = errmat
+			rownames(errbat) = -(1:Amax)
+			plotBubbles(errbat, dnam=T, xaxt="n", yaxt="n", frange=0.01, size=0.1)
+			axis(1, at=seq(5,Amax,5), cex=1.2)
+			axis(2, at=seq(-5,-Amax,-5), labels=seq(5,Amax,5), cex=1.2, las=1)
+			mtext("Real Age", side=1, line=1.75, cex=1.5)
+			mtext("Incorrect Age", side=2, line=1.75, cex=1.5)
+#browser();return()
+		}
+		if (ptype=="bars") {
+			plot(0,0,type="n", xlim=c(1,Amax), ylim=c(1,Amax), xlab="", ylab="", xaxt="n", yaxt="n")
+			tckpos = seq(1, Amax, 5); tcklab = Amax-(tckpos)+1
+			axis(1, at=seq(5,Amax,5), labels=TRUE, cex.axis=1.2)
+			axis(2, at=tckpos, labels=tcklab, cex.axis=1.2)
+			for (i in 1:Amax){
+				ii = Amax-i+1
+				y = errmat[i,]
+				y = y[y>0]
+				x = as.numeric(names(y))
+#if (i==15) {browser();return()}
+				bcol = lucent(ifelse(i%%2, "blue", "green3"),0.5)
+				fcol = lucent(ifelse(i%%2, "cyan", "green"),0.5)
+				drawBars(x, (y+ii), lwd=2, col=bcol, fill=fcol,width=1, base=ii)
+			}
+		}
+		if (png) dev.off()
+#return()
+#browser();return()
+		#errtab = make.errtab(errmat, Ndiff=Noff)
+
+		snam = paste0("aerr(",strSpp,").mat.type=",type,spread,".noff=",Noff,".dat")
+		write.table(errmat, file=snam, sep="\t", row.names=FALSE, col.names=FALSE)
+
+		fnam = gsub("dat$","csv", snam)
+		cat(paste(c("age",dimnames(errmat)[[2]]),sep="",collapse=","),"\n",file=fnam)
+		mess = paste(row.names(errmat),
+			apply(errmat,1,function(x){
+				z=x>0;xstr=x;xstr[!z]="";return(paste(xstr,sep="",collapse=","))}),sep=",")
+		cat(paste(mess,sep="",collapse="\n"),"\n",file=fnam,append=TRUE)
+
+		packList("errmat", target="obj.makeAgeErr", tenv=.PBStoolEnv)
+		return(errmat)
+
 	} else {
+
 		if (sql){
 			getData("gfb_age_precision.sql", dbName="GFBioSQL", strSpp=strSpp, path=.getSpath())
 			mess = paste0("aerr", strSpp, " = edat = PBSdat; ", "save(\"aerr", strSpp, "\", file=\"aerr", strSpp, ".rda\")")
 			eval(parse(text=mess))
 		} else {
-			mess = paste0("getFile(aerr", strSpp, "); edat = aerr", strSpp)
+			mess = paste0("getFile(aerr", strSpp, ", reload=TRUE); edat = aerr", strSpp)
 			eval(parse(text=mess))
 		}
+		if (strSpp %in% ("435")) ## get rid of obvious error in SPID 10536208
+			edat = edat[edat$amax <1000 & !is.na(edat$amax),]
+
+		## ========================================
+		## Temporary fix for young-age BOR (191030)
+		z1 = is.element(edat$spp,"435") & is.element(edat$year,2017) & is.element(edat$age,1)
+		z2 = is.element(edat$spp,"435") & is.element(edat$year,2019) & is.element(edat$age,2)
+		edat$amin[z1] = 2; edat$amax[z1] = pmax(edat$amax[z1],2)
+		edat$amin[z2] = 4; edat$amax[z2] = pmax(edat$amax[z2],4)
+		## ========================================
+
 		agelst = apply(edat[,c("amin","amax")],1,function(x){x[1]:x[2]})
 		names(agelst) = edat$age
 	
@@ -1004,36 +1131,69 @@ makeAgeErr = function(type="simple", strSpp, sql=FALSE,
 			ii = as.character(i)
 			iii = is.element(names(agelst),ii)
 			if (any(iii)) {
+#if(i==15){browser();return()}
 			ages[[ii]] = as.vector(unlist(agelst[iii])) }
 		}
-		age.err = sapply(ages,function(x){ 
+		f = function(x, n){ x / 2^(1:n)} ## halving function (https://stackoverflow.com/questions/53872440/divide-a-number-and-each-successive-answer-x-times-in-r)
+
+#par(mfcol=c(10,5),mar=c(0,0,0,0),oma=c(1,1,1,1))
+
+		expand.alen=function(x, alen, less=2, more=10)
+		{
+			amore = c(max(1,(min(x)-less)):(max(x)+more))
+			pmore = rep(1,length(amore))
+			names(pmore) = amore
+#browser();return()
+			pmore[names(alen)] = alen
+			return(pmore)
+		}
+
+		age.err = sapply(1:length(ages),function(a){ 
+			atrue = as.numeric(names(ages)[a])
+			x = ages[[a]]
 			if (length(x)==1) {
-				alen=1; names(alen) = x }
-			else{
+				alen=1; names(alen) = x
+				if (less>0 || more>0)
+					alen = expand.alen(x, alen)
+				alen = alen/sum(alen) 
+#browser();return()
+			} else {
 				alen=sapply(split(x,x),length)
+				if (less>0 || more>0)
+					alen = expand.alen(x, alen)
+#browser();return()
+#if (atrue==15){browser();return()}
 				alen=alen/sum(alen) 
 				z = as.numeric(names(alen)) >= Amax
+				## Consolidate plus groups using probs >=Amax into Amax
 				if (any(z)) {
 					aplus = sum(alen[z]); names(aplus) = Amax
-					alen = c(alen[!z],aplus) }
+					alen = c(alen[!z],aplus)
 				}
-			return(alen) } ,simplify=FALSE)
+			}
+#plot(as.numeric(names(alen)),alen,xlim=c(1,Amax),type="h",lwd=2,xaxt="n",yaxt="n",xlab="",ylab=""); abline(v=c(2,4),col="red",lty=5)
+#if (atrue==50) {browser();return()}
+			return(alen)
+		} ,simplify=FALSE)
+		names(age.err) = names(ages)
 
-		errmat = array(0,dim=c(Amax,Amax),dimnames=list(obs=1:Amax,real=1:Amax))
+		errmat = array(0,dim=c(Amax,Amax),dimnames=list(incorrect=1:Amax,true=1:Amax))
 		for (i in 1:Amax) {
 			ii = as.character(i)
 			avec = age.err[[ii]]
-			errmat[names(avec),ii] = avec
+			#errmat[names(avec),ii] = avec  ## columns added to 1 but rows should add to 1
+			errmat[ii,names(avec)] = avec
 		}
+#browser();return()
 
-		errtab = array(0,dim=c(Amax,1+ndiff*2),dimnames=list(obs=1:Amax, diff=-ndiff:ndiff))
+		errtab = array(0,dim=c(Amax,1+Ndiff*2),dimnames=list(obs=1:Amax, diff=-Ndiff:Ndiff))
 		for (i in 1:Amax) {
 			ii = as.character(i)
 			avec = age.err[[ii]]
 			names(avec)=as.numeric(names(avec))-i
 			adiff = as.numeric(names(avec))
-			avec[as.character(-ndiff)] = sum(avec[adiff<=-ndiff])
-			avec[as.character(ndiff)] = sum(avec[adiff>=ndiff])
+			avec[as.character(-Ndiff)] = sum(avec[adiff<=-Ndiff])
+			avec[as.character(Ndiff)] = sum(avec[adiff>=Ndiff])
 			Avec = avec[intersect(dimnames(errtab)[[2]],names(avec))]
 			errtab[ii,names(Avec)] = Avec
 		}
@@ -1072,7 +1232,7 @@ makeAgeErr = function(type="simple", strSpp, sql=FALSE,
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~makeAgeErr
 
 
-## plotAgeErr---------------------------2018-07-24
+## plotAgeErr---------------------------2019-10-16
 ## Plot ageing precision data
 ##   (modified from code by Sean Anderson, PBS)
 ## Arguments:
@@ -1161,13 +1321,14 @@ plotAgeErr = function(dat, nsamp, xlim=NULL, ylim=NULL, jitter=0.25, seed=42,
 		ylim = range(dat[,c("r2_amin","r2_amax")])
 	
 	fout = fout.e = paste0("AgeErr",strSpp)
-	for (l in lang) {  ## could switch to other languages if available in 'linguaFranca'.
-		fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
+	for (l in lang) {
+		changeLangOpts(L=l)
+		if (l=="f") fout = paste0("./french/",fout.e)  ## could repeat for other languages
 		if (png) png(paste0(fout,".png"), units="in", res=pngres, width=PIN[1], height=PIN[2])
 		par(mfrow=c(1,1), mar=c(3.5,3.5,0.5,0.75), oma=c(0,0,0,0), mgp=c(2,0.5,0))
 		plot(dat$r1_age, dat$r2_age, xlim=xlim, ylim=ylim, type="n", xlab="", ylab="", cex.axis=1.2, las=1)
-		axis(1, at=1:xlim[2], labels=F, tcl=-0.2)
-		axis(2, at=1:ylim[2], labels=F, tcl=-0.2)
+		axis(1, at=seq(0,xlim[2],ifelse(xlim[2]<80,1,5)), labels=F, tcl=-0.2)
+		axis(2, at=seq(0,ylim[2],ifelse(ylim[2]<80,1,5)), labels=F, tcl=-0.2)
 		abline(0,1,col=lucent("green4",0.5),lwd=2)
 		## This seems to take a long time:
 		segments(x0=dat$r1_amin, y0=dat$r2_age, x1=dat$r1_amax, y1=dat$r2_age, col=lucent("grey50",0.5),lwd=2)
@@ -1178,7 +1339,7 @@ plotAgeErr = function(dat, nsamp, xlim=NULL, ylim=NULL, jitter=0.25, seed=42,
 		mtext(linguaFranca("Age (y) by Secondary Reader",l), side=2, line=2, cex=1.5)
 		addLabel(0.05, 0.95, linguaFranca(sppNam,l), cex=1.5, col="blue", adj=c(0,1))
 		if (png) dev.off()
-	} ## end l (lang) loop
+	}; eop()
 	junk = gc(verbose=FALSE)
 	return(dat)
 }
@@ -1252,7 +1413,7 @@ plotBTMW = function(dat, strSpp="417", years=1996:2018, major=3:9,
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotBTMW
 
 
-## plotMW-------------------------------2018-08-09
+## plotMW-------------------------------2019-10-17
 ## Plot mean weight of stocks and individual areas
 ## that occur in the bigger stock areas.
 ## ---------------------------------------------RH
@@ -1265,6 +1426,7 @@ plotMW = function(dat, xlim, ylim, outnam="Mean-Weight-Compare",
 	if (missing(xlim)) xlim=range(dat[,1])
 	if (missing(ylim)) ylim=range(dat[,-1], na.rm=T)
 	x = xlim[1]:xlim[2]
+	#x = x[is.element(x,dat$year)]
 	stocks = names(dat[,-1])
 	#scol   = c("green","green4","gold","orange","red","cyan","blue","red","blue")
 	if (missing(outcast)){
@@ -1281,22 +1443,26 @@ plotMW = function(dat, xlim, ylim, outnam="Mean-Weight-Compare",
 #browser();return()
 
 	fout = fout.e = outnam
-	for (l in lang) {  ## could switch to other languages if available in 'linguaFranca'.
+	for (l in lang) {
+		changeLangOpts(L=l)
 		fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
 		if (png) png(paste0(fout,".png"), units="in", res=400, width=8, height=6)
 		par(mfrow=c(1,1), mar=c(3.5,3.8,0.5,0.5), oma=c(0,0,0,0), mgp=c(2.25,0.5,0))
 		plot(0, xlim=xlim, ylim=ylim, type="n", xlab=linguaFranca("Year",l), ylab=linguaFranca("Mean Weight (kg)",l), cex.axis=1.2, cex.lab=1.5)
-		z = is.element(dat$year,x)
+		z = is.element(x,dat$year)
 		for (i in sord) {
 			if (!is.element(i,stocks)) next
-			lines(x,dat[z,i], col=scol[i], lty=slty[i], lwd=slwd[i])
-			points(x,dat[z,i], pch=spch[i], col=scol[i], bg="ghostwhite", cex=scex[i], lwd=slwd[i])
+			y    = rep(0, length(x))
+			y[z] = dat[,i]
+			y[y==0] = NA
+#browser();return
+			lines(x, y, col=scol[i], lty=slty[i], lwd=slwd[i])
+			points(x, y, pch=spch[i], col=scol[i], bg="ghostwhite", cex=scex[i], lwd=slwd[i])
 		}
 		ii = gsub("^[s]","",stocks)
-#browser();return
 		addLegend(0.05,0.97, pch=spch[ii], col=scol[ii], lty=slty[ii], lwd=slwd[ii], pt.cex=scex[ii], pt.bg="ghostwhite", seg.len=5, legend=ii, bty="n")
 		if (png) dev.off()
-	} ## end l (lang) loop
+	}; eop()
 }
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotMW
 
@@ -1430,14 +1596,16 @@ processMap = function(dat=PBSdat, strSpp, prefix="map")
 }
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~processMap
 
-## quantAges----------------------------2018-07-17
+
+## quantAges----------------------------2019-10-19
 ## Plot quantile boxes of age by year and/or area,
 ## including mean age over time.
 ## Suggested by PJS to detect changes in age.
 ## -----------------------------------------PJS/RH
 quantAges =function(bioDat, dfld="age", afld="major", tfld="year", 
-   type="time", major=3:9, ylim=c(0,35), strSpp="RSR",
-   outnam="Quant-Age", png=FALSE, lang=c("e","f"))  # types: time, area
+   type="time", major=3:9, years=1990:2018, ylim=c(0,35), strSpp="RSR",
+   outnam="Quant-Age", png=FALSE, pngres=400, PIN=c(8,8),
+   scat, lang=c("e","f"))  # types: time, area
 {
 	bioDat = bioDat[bioDat[,dfld]>0 & !is.na(bioDat[,dfld]),]
 	if (afld=="major")
@@ -1448,23 +1616,37 @@ quantAges =function(bioDat, dfld="age", afld="major", tfld="year",
 	bioDat$ctype=rep("U",nrow(bioDat))
 	bioDat$ctype[is.element(bioDat$ttype,c(1,4:10,12:14))]="C"  ## Note: TRIP_SUB_TYPE=11 in GFBio is RECREATIONAL
 	bioDat$ctype[is.element(bioDat$ttype,c(2,3))]="S"
+	nyrs = length(years)
+	bioDat = bioDat[is.element(bioDat$year,years),]
+	if (!missing(scat))
+		bioDat = bioDat[is.element(bioDat$scat,scat),]
+
+	Nscat = crossTab(bioDat,c("major","gear","scat"),"age",function(x){countVec(x)})
+	for (k in dimnames(Nscat)$scat)
+		write.csv(Nscat[,,k],paste0("Nscat",k,".csv"))
+	Mscat = crossTab(bioDat,c("major","gear","scat"),"age",function(x){mean(x)})
+	for (k in dimnames(Mscat)$scat)
+		write.csv(Mscat[,,k],paste0("Mscat",k,".csv"))
+#browser();return()
 
 	#mcol  = .colBlind[c("skyblue","blue")]
 	#fcol  = .colBlind[c("vermillion","redpurple")]
-	mcol   = c("cyan","blue","darkblue")
-	fcol   = c("pink","red","darkred")
-	boxwex = 0.3
+	#mcol   = c("cyan","blue","darkblue")
+	#fcol   = c("pink","red","darkred")
+	mcol   = c("springgreen","darkgreen","green3")
+	fcol   = c("gold","orange4","goldenrod")
+	boxwex = ifelse(type=="area",0.25,0.35)
 	Qage   = list()
 
 	if (type=="time") {
 		abioDat = split(bioDat, bioDat[,afld])
-		years   = 1990:2016; nyrs = length(years)
 		yearbox = as.list(rep(NA,nyrs)); names(yearbox) = years
 
 		fout = fout.e = outnam
 		for (l in lang) {  ## could switch to other languages if available in 'linguaFranca'.
+			changeLangOpts(L=l)
 			fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
-			if (png) png(paste0(fout,".png"), width=8, height=8, units="in", res=400)
+			if (png) png(paste0(fout,".png"), width=PIN[1], height=PIN[2], units="in", res=pngres)
 			par(mfcol=c(length(abioDat),2), mar=c(0,2,0,0), oma=c(4,2,1,1), mgp=c(2,0.5,0))
 
 			for (j in 1:2){
@@ -1474,29 +1656,33 @@ quantAges =function(bioDat, dfld="age", afld="major", tfld="year",
 				for (a in length(abioDat):1) {
 					aa   = names(abioDat)[a]
 					adat = abioDat[[a]]
+#browser();return()
 					adat = adat[is.element(adat$ctype,jj),]
+					if (nrow(adat)==0) {
+						quantBox(yearbox, outline=F, ylim=ylim, xaxt="n")
+					}
+					else {
+						males = is.element(adat$sex,1)
+						msex = split(adat[,dfld][males],adat[,tfld][males])  ## may include ealry years
+						zsex = is.element(names(msex),years)
+						Msex = yearbox
+						Msex[names(msex[zsex])] = msex[zsex]
+						Qage[[jj]][[aa]][["M"]] = Msex
 
-					males = is.element(adat$sex,1)
-					msex = split(adat[,dfld][males],adat[,tfld][males])  ## may include ealry years
-					zsex = is.element(names(msex),years)
-					Msex = yearbox
-					Msex[names(msex[zsex])] = msex[zsex]
-					Qage[[jj]][[aa]][["M"]] = Msex
+						females = is.element(adat$sex,2)
+						fsex = split(adat[,dfld][females],adat[,tfld][females])
+						zsex = is.element(names(fsex),years)
+						Fsex = yearbox
+						Fsex[names(fsex[zsex])] = fsex[zsex]
+						Qage[[jj]][[aa]][["F"]] = Fsex
 
-					females = is.element(adat$sex,2)
-					fsex = split(adat[,dfld][females],adat[,tfld][females])
-					zsex = is.element(names(fsex),years)
-					Fsex = yearbox
-					Fsex[names(fsex[zsex])] = fsex[zsex]
-					Qage[[jj]][[aa]][["F"]] = Fsex
+						quantBox(yearbox, outline=F, ylim=ylim, xaxt="n")
+						quantBox(Msex, xaxt="n", yaxt="n", outline=F, boxcol="grey30", boxfill=mcol[1], medlwd=1, medcol=mcol[2], whisklty=1, whiskcol="gainsboro", add=T, boxwex=boxwex, at=(1:nyrs)+(boxwex/2))
+						quantBox(Fsex, xaxt="n", yaxt="n", outline=F, boxcol="grey30", boxfill=fcol[1], medlwd=1, medcol=fcol[2], whisklty=1, whiskcol="gainsboro", add=T, boxwex=boxwex, at=(1:nyrs)-(boxwex/2))
 
-					quantBox(yearbox, outline=F, ylim=c(0,35), xaxt="n")
-					quantBox(Msex, xaxt="n", yaxt="n", outline=F, boxcol="grey30", boxfill=mcol[1], medcol=mcol[2], whisklty=1, whiskcol="gainsboro", add=T, boxwex=boxwex, at=(1:nyrs)+(boxwex/2))
-					quantBox(Fsex, xaxt="n", yaxt="n", outline=F, boxcol="grey30", boxfill=fcol[1], medcol=fcol[2], whisklty=1, whiskcol="gainsboro", add=T, boxwex=boxwex, at=(1:nyrs)-(boxwex/2))
-
-					lines((1:nyrs)-(boxwex/2),sapply(Fsex,mean),col=fcol[2],lwd=2)
-					lines((1:nyrs)+(boxwex/2),sapply(Msex,mean),col=mcol[2],lwd=2)
-
+						#lines((1:nyrs)-(boxwex/2),sapply(Fsex,mean),col=fcol[2],lwd=2)
+						#lines((1:nyrs)+(boxwex/2),sapply(Msex,mean),col=mcol[2],lwd=2)
+					}
 					axis(1, at=1:nyrs, labels=FALSE, tcl=0.25)
 					if (a==1) axis(1, at=seq(1,nyrs,5), labels=seq(years[1],rev(years)[1],5), cex.axis=1.2, tcl=0.5)
 					jfranc = ifelse(l=="f" && jj=="S","R",jj)
@@ -1504,9 +1690,9 @@ quantAges =function(bioDat, dfld="age", afld="major", tfld="year",
 				}
 			}
 			mtext(linguaFranca("Year",l), side=1, outer=TRUE, line=2.5, cex=1.5)
-			mtext(linguaFranca("RSR Age (years)",l), side=2, outer=TRUE, line=0.25, cex=1.5, las=3)
+			mtext(linguaFranca(dlab,l), side=2, outer=TRUE, line=0.25, cex=1.5, las=3)
 			if (png) dev.off()
-		} ## end l (lang) loop
+		}; eop()
 	} ## end if time
 
 	if (type=="area") {
@@ -1517,8 +1703,9 @@ quantAges =function(bioDat, dfld="age", afld="major", tfld="year",
 
 		fout = fout.e = outnam
 		for (l in lang) {  ## could switch to other languages if available in 'linguaFranca'.
+			changeLangOpts(L=l)
 			fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
-			if (png) png(paste0(fout,".png"), width=8, height=8, units="in", res=400)
+			if (png) png(paste0(fout,".png"), width=PIN[1], height=PIN[2], units="in", res=pngres)
 			par(mfcol=c(length(jbioDat),1), mar=c(0,2,0,0), oma=c(4,2,1,1), mgp=c(2,0.5,0))
 
 			for (j in 1:length(jbioDat)) {
@@ -1532,6 +1719,8 @@ quantAges =function(bioDat, dfld="age", afld="major", tfld="year",
 				Msex = areabox
 				Msex[names(msex[zsex])] = msex[zsex]
 				Qage[[jj]][["M"]] = Msex
+				nMsex = sapply(Msex,countVec)
+
 
 				females = is.element(jdat$sex,2)
 				fsex = split(jdat[,dfld][females],jdat[,afld][females])
@@ -1539,28 +1728,31 @@ quantAges =function(bioDat, dfld="age", afld="major", tfld="year",
 				Fsex = areabox
 				Fsex[names(fsex[zsex])] = fsex[zsex]
 				Qage[[jj]][["F"]] = Fsex
+				nFsex = sapply(Fsex,countVec)
+
 				if (is.null(ylim))
 					Ylim = c(min(sapply(Qage[[jj]],function(x){sapply(x,function(xx){quantile(xx,0.05,na.rm=T)})}),na.rm=T),
 						max(sapply(Qage[[jj]],function(x){sapply(x,function(xx){quantile(xx,0.95,na.rm=T)})}),na.rm=T))
 				else Ylim = ylim
-#browser();return()
 
 				quantBox(areabox, outline=F, ylim=Ylim, xaxt="n")
-				quantBox(Msex, xaxt="n", yaxt="n", outline=F, boxcol="grey30", boxfill=mcol[1], medcol=mcol[2], whisklty=1, whiskcol="gainsboro", add=T, boxwex=boxwex, at=(1:nareas)+(boxwex/2))
-				quantBox(Fsex, xaxt="n", yaxt="n", outline=F, boxcol="grey30", boxfill=fcol[1], medcol=fcol[2], whisklty=1, whiskcol="gainsboro", add=T, boxwex=boxwex, at=(1:nareas)-(boxwex/2))
+				quantBox(Msex, xaxt="n", yaxt="n", outline=F, boxcol="grey30", boxfill=mcol[1], medcol=mcol[2], whisklty=1, whiskcol="gainsboro", add=T, boxwex=boxwex, at=(1:nareas)+(boxwex/2), varwidth=T)
+				text((1:nareas)+(boxwex/2), 0, nMsex, col=mcol[3], cex=0.8, font=2)
+				quantBox(Fsex, xaxt="n", yaxt="n", outline=F, boxcol="grey30", boxfill=fcol[1], medcol=fcol[2], whisklty=1, whiskcol="gainsboro", add=T, boxwex=boxwex, at=(1:nareas)-(boxwex/2), varwidth=T)
+				text((1:nareas)-(boxwex/2), 0, nFsex, col=fcol[3], cex=0.8, font=2)
 
 				#lines((1:nareas)-(boxwex/2),sapply(Fsex,mean),col=fcol[2],lwd=2)
 				#lines((1:nareas)+(boxwex/2),sapply(Msex,mean),col=mcol[2],lwd=2)
 
 				axis(1, at=1:nareas, labels=FALSE, tcl=0.25)
 				if (j==2) axis(1, at=1:nareas, labels=pmfc[as.character(areas)], cex.axis=1.2, tcl=0.5)
-#browser();return()
 				addLabel(0.05, 0.95, linguaFranca(paste0(jjj),l), adj=c(0,1), cex=1)
 			}
 			mtext(linguaFranca("PMFC Area",l), side=1, outer=TRUE, line=2.5, cex=1.5)
+#browser();return()
 			mtext(linguaFranca(dlab,l), side=2, outer=TRUE, line=0.25, cex=1.5, las=3)
 			if (png) dev.off()
-		} ## end l (lang) loop
+		}; eop()
 	} ## end if area
 	return(Qage)
 }

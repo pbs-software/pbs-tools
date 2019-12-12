@@ -9,7 +9,7 @@
 ##==============================================================================
 
 
-## buildCatch---------------------------2019-09-27
+## buildCatch---------------------------2019-10-15
 ## Catch reconstruction algorithm for BC rockfish.
 ## Use ratios of RRF (reconstructed rockfish) to ORF 
 ## (rockfish other than POP) landings for multiple fisheries.
@@ -116,8 +116,9 @@ buildCatch=function(
 		}
 	}
 
-	if (!sql.only && !file.exists(run.name)) dir.create(run.name)
-	writeLines(run.details, con=paste0(run.name,"/run.details.txt"))
+	if (!sql.only && !file.exists(run.name))
+		dir.create(run.name)
+	writeLines(run.details, con=paste0(ifelse(sql.only,".",run.name),"/run.details.txt"))
 #browser();return()
 	datDir = paste0(run.name,"/data")
 	if (!sql.only && !file.exists(datDir)) dir.create(datDir)
@@ -642,20 +643,26 @@ buildCatch=function(
 
 	## -----------------------------------------
 	## Consolidate PacHarv3 records (fid=c(1:5))
+	## Updated by RH 191007 to put:
+	##   POP+ORF into TAR for FID 1
+	##   DOG+LIN into TAR for FID 4
 	## -----------------------------------------
 	.flush.cat("   PacHarv3 records ...\n")
 	ph3cat = as.data.frame(t(apply(ph3dat,1,function(x){
-		ufos=c("POP","PAH","SBF","DOG","RFA"); ufid=1:5; names(ufid)=ufos
+		ufos = c("POP","ORF","PAH","SBF","DOG","LIN","RFA")
+		ufid = c(1,1,2,3,4,4,5); names(ufid) = ufos
 		f = x["fid"]
 		if (f==0) { 
 			z = x[ufos]==max(x[ufos],na.rm=TRUE)
 			utar = ufos[z][1]
 			fid = ufid[utar]
-			ucat = x[utar]
+			ff  = names(ufid)[grep(fid,ufid)]
+			ucat = sum(x[ff],na.rm=TRUE)
 		}
 		else {
-			fid=f
-			ucat=x[ufos[f]]
+			fid = f
+			ff  = names(ufid)[grep(fid,ufid)]
+			ucat = sum(x[ff],na.rm=TRUE)
 		}
 		out = c(x["year"],fid,date=as.Date(paste0(x["year"],"-07-01")),
 			x[c("major","minor","landed","discard","POP","ORF")],ucat)
@@ -801,7 +808,7 @@ buildCatch=function(
 		.flush.cat("   PacHarvHL validation landings ...\n")
 		phvcat = phvdat
 		phvcat$TAR = rep(0,nrow(phvcat))
-		for (i in 1:9) {
+		for (i in 1:9) { ## 2=Halibut, 3=Sablefish, 4=Schdeule II, 5=ZN, 6=Sablefish+ZN, 7=Sablefish+Halibut, 8=Dogfish, 9=Lingcod
 			ii = is.element(phvcat$fid,i)
 			if (any(ii)) {
 				phvcat$TAR[ii] = phvcat[,ufos[i]][ii]

@@ -6,8 +6,9 @@
 }
 \usage{
 quantAges(bioDat, dfld="age", afld="major", tfld="year",
-   type="time", major=3:9, ylim=c(0,35), strSpp="RSR",
-   outnam="Quant-Age", png=FALSE, lang=c("e","f"))
+   type="time", major=3:9, years=1990:2018, ylim=c(0,35), strSpp="RSR",
+   outnam="Quant-Age", png=FALSE, pngres=400, PIN=c(8,8),
+   scat, lang=c("e","f")) 
 }
 \arguments{
   \item{bioDat}{\code{data.frame} -- biological data from query \code{gfb_bio.sql}.}
@@ -16,10 +17,15 @@ quantAges(bioDat, dfld="age", afld="major", tfld="year",
   \item{tfld}{\code{character} -- name of time field in \code{bioDat} (usually \code{"year"}).}
   \item{type}{\code{character} -- type of plot, either \code{"area"} or \code{"time"}.}
   \item{major}{\code{numeric} -- codes for major PMFC areas.}
+  \item{years}{\code{numeric} -- vector of years.}
   \item{ylim}{\code{numeric} -- limits of the y-axis.}
   \item{strSpp}{\code{character} -- three-letter code for the fish species of interest.}
   \item{outnam}{\code{character} -- output name for figure plot.}
   \item{png}{\code{logical} -- if \code{TRUE}, send figure to a portable network graphics (\code{.png}) file.}
+  \item{pngres}{\code{numeric} -- resolution for output file (pixesl/inch).}
+  \item{PIN}{\code{numeric} -- vector of (width, height) in inches for output file.}
+  \item{scat}{\code{numeric list} -- list of species category codes (\code{GFBio}'s \code{"SPECIES_CATEGORY"} table),
+    e.g. \code{list(Unsorted=1, Keepers=3)}.}
   \item{lang}{\code{character} -- a vector of letters that denote the language for output:
     currently only \code{"e"} (english) and \code{"f"} (french).}
 }
@@ -35,8 +41,8 @@ quantAges(bioDat, dfld="age", afld="major", tfld="year",
 \author{
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
-  \emph{opus locus}: Institute of Ocean Sciences (IOS), Sidney BC\cr
-  Last modified \code{Rd: 2018-07-23}
+  \emph{locus opus}: Institute of Ocean Sciences (IOS), Sidney BC\cr
+  Last modified \code{Rd: 2019-12-11}
 }
 \note{
   Suggested by PJS to detect changes in age by area and over time.

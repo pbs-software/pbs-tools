@@ -24,7 +24,7 @@
 ##==============================================================================
 
 
-## calcLW-------------------------------2019-09-03
+## calcLW-------------------------------2019-10-17
 ## Calculate length-weight relationship for a fish.
 ## Formerly called calcLenWt.
 ## A bit clumsy when you want just tables (see calcVB)
@@ -135,7 +135,7 @@ calcLW <- function(dat=pop.age, strSpp="396",
 					plotNames = c(plotNames,plotName)
 				} else plotName = outnam
 				fout = fout.e = plotName
-				if (l=="f") fout = paste0("./french/", fout.e)  ## could repeat for other languages
+				fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
 	
 	#browser();return()
 				if (length(sex)>3)
@@ -1426,7 +1426,7 @@ compCsum <- function(dat=pop.age, pro=TRUE, strSpp="", xfld="age", plus=60,
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~compCsum
 
 
-## compVB-------------------------------2018-08-08
+## compVB-------------------------------2019-10-17
 ## Compare fitted von B curves using parameters.
 ## ---------------------------------------------RH
 compVB = function(dat, index, A=1:40, subset="sex", 
@@ -1463,13 +1463,14 @@ compVB = function(dat, index, A=1:40, subset="sex",
 			ylim = c(0,ymax)
 		}
 		fout = fout.e = outnam
-		for (l in lang) {  ## could switch to other languages if available in 'linguaFranca'.
+		for (l in lang) {
+			changeLangOpts(L=l)
 			fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
 			if (png) png(paste0(fout,".png"), units="in", res=pngres, width=8, height=6)
 			par(mfrow=c(1,1), mar=c(3.25,3.5,0.5,0.5), oma=c(0,0,0,0), mgp=c(2,0.5,0))
 			plot(NA, xlim=xlim, ylim=ylim, xaxs="i", yaxs="i", las=1, cex.axis=1.2, cex.lab=1.5, xlab=linguaFranca("Age (years)",l), ylab=linguaFranca("Predicted Length (cm)",l))
 			axis(1, at=A, tcl=-0.25, labels=FALSE)
-			abline(h=seq(0,80,2), v=c(0,A,A+1), col="gainsboro", lwd=0.5)
+			abline(h=seq(0,ymax,2), v=c(0,A,A+1), col="whitesmoke", lwd=0.5)
 			for (i in c("Male","Female")) {
 				lty = ifelse(i=="Female",1,3)
 				for (j in stocks) {
@@ -1479,18 +1480,18 @@ compVB = function(dat, index, A=1:40, subset="sex",
 				}
 			}
 			lcol = rep(scols,nstock)
-			addLegend(0.9,0.4,lty=rep(c(1,3),each=nstock), col=lcol, xjust=1, text.col=lcol, lwd=3, seg.len=4, bty="n",
+			addLegend(0.9,0.05,lty=rep(c(1,3),each=nstock), col=lcol, xjust=1, yjust=0, text.col=lcol, lwd=3, seg.len=4, bty="n",
 				legend=linguaFranca(paste0(rep(stocks,2)," -- ",rep(c("Females","Males"),each=nstock)),l), cex=1.25)
 			box(col="slategray")
 			if (png) dev.off()
-		} ## end l (lang) loop
+		}; eop()
 #browser();return()
 	} ## end if subset=="sex"
 }
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~compVB
 
 
-## estOgive-----------------------------2019-09-03
+## estOgive-----------------------------2019-10-09
 ## Creates ogives of some metric (e.g., % maturity at age).
 ## Arguments:
 ##   dat     - specimen morphometrics data from GFBio
@@ -1719,6 +1720,7 @@ estOgive <- function(dat=pop.age, strSpp="", method=c("DN"),
 
 	fout = fout.e = onam
 	for (l in lang) {  ## could switch to other languages if available in 'linguaFranca'.
+		changeLangOpts(L=l)
 		fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
 		if (eps) postscript(paste0(fout,".eps"), width=PIN[1], height=PIN[2], paper="special")
 		else if (wmf && .Platform$OS.type=="windows")
@@ -1913,7 +1915,8 @@ estOgive <- function(dat=pop.age, strSpp="", method=c("DN"),
 					Ydbl   = calcDN(Pend,a=Xdbl)
 
 					if (plines) {
-						lines(Xdbl,Ydbl,col=fg[sin],lwd=ifelse(all(method=="DN"),2,2),lty=sin) #ifelse(all(method=="DN"),1,1))
+						#lines(Xdbl,Ydbl,col=fg[sin],lwd=ifelse(all(method=="DN"),2,2),lty=sin) #ifelse(all(method=="DN"),1,1))
+						lines(Xdbl,Ydbl,col=fg[sin],lwd=ifelse(all(method=="DN"),2,2),lty=1)
 					} else {
 						CALCS[[ss]][[sss]][["nrec"]] = nrow(idat)
 						CALCS[[ss]][[sss]][["pend"]] = pend
@@ -1964,7 +1967,7 @@ estOgive <- function(dat=pop.age, strSpp="", method=c("DN"),
 			addLegend(ifelse(png,0,0.05)+MDX/xlim[2], ifelse(is.null(surveys),0.30,0.45), legend=linguaFranca(legtxt,l), lty=1:nsexsub, lwd=ifelse(is.element("DN",method)||nmeth==1,2,1), adj=c(0,ifelse(is.null(surveys),0.5,0.95)), pch=ifelse(is.element("EMP",method)&&!rpoints&&rlines,19,NA), col=fg[1:nsexsub], cex=ifelse(eps|png,0.8,1), bty="n", seg.len=2.5)
 		box()
 		if(eps|png|wmf) dev.off()
-	} ## end l (lang) loop
+	}; eop()
 
 	attr(out,"xout") = xout
 	attr(out,"Nrecs") = nrow(dat)
@@ -2252,7 +2255,7 @@ histMetric <- function(dat=pop.age, xfld="age", xint=1, minN=50,
 #---------------------------------------histMetric
 
 
-## histTail-----------------------------2019-09-03
+## histTail-----------------------------2019-10-15
 ## Create a histogram showing tail details
 ## ---------------------------------------------RH
 histTail <-function(dat=pop.age, xfld="age", tailmin=NULL, 
@@ -2281,6 +2284,7 @@ histTail <-function(dat=pop.age, xfld="age", tailmin=NULL,
 
 	fout = fout.e = fnam
 	for (l in lang) {
+		changeLangOpts(L=l)
 		if (l=="f") fout = paste0("./french/",fout.e)  ## could repeat for other languages
 		if (wmf && .Platform$OS.type=="windows")
 			do.call("win.metafile",list(filename=paste0(fout,".wmf"), width=PIN[1], height=PIN[2]))
@@ -2289,6 +2293,7 @@ histTail <-function(dat=pop.age, xfld="age", tailmin=NULL,
 		expandGraph(mfrow=c(1,1),mar=c(3,5,.5,.5),oma=c(0,0,0,0),las=1,xaxs="i",yaxs="i")
 		
 		truehist = MASS::truehist
+#browser();return()
 		do.call(truehist, args=list(data=x, prob=prob, nbins=50, col=bcol, cex.lab=1.2, xlab=linguaFranca(xlab,l)))
 		#evalCall(truehist,argu=list(data=x,col=bcol,cex.lab=1.2,xlab=xlab),...,checkpar=TRUE)
 		ylab = paste(ifelse(prob,ifelse((wmf|png)&&PIN[2]<3.5,"Rel. Freq.","Relative Frequency"),"Frequency")," ( N = ",format(nx,scientific=FALSE,big.mark=options()$big.mark)," )",sep="")
@@ -2304,7 +2309,7 @@ histTail <-function(dat=pop.age, xfld="age", tailmin=NULL,
 			addLabel(0.95,0.7, linguaFranca(paste0("Max age = ",max(x[z]),"\nn = ",nz),l), col="grey60", cex=.8, adj=1)
 		}
 		if (wmf|png) dev.off()
-	} ## end l (lang) loop
+	}; eop()
 	stuff=c("x","nx","nyr","nz","brks","xlab","ylab")
 	packList(stuff,"obj.histTail",tenv=.PBStoolEnv)
 	invisible()
@@ -2312,7 +2317,7 @@ histTail <-function(dat=pop.age, xfld="age", tailmin=NULL,
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~histTail
 
 
-## mapMaturity--------------------------2018-12-10
+## mapMaturity--------------------------2019-10-09
 ## Plot maturity chart to see relative occurrence
 ## of maturity stages by month.
 ## Notes:
@@ -2441,6 +2446,7 @@ mapMaturity <- function (dat=pop.age, strSpp="", type="map", mats=1:7,
 
 	fout = fout.e = fnam
 	for (l in lang) {  ## could switch to other languages if available in 'linguaFranca'.
+		changeLangOpts(L=l)
 		fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
 		#devs=c(win=ifelse(missing(outnam) || sum(eps,png,wmf)==0,TRUE,FALSE),eps=eps,png=png,wmf=wmf); unpackList(devs)
 		devs=c(win=ifelse(sum(eps,png,wmf)==0,TRUE,FALSE), eps=eps, png=png, wmf=wmf); unpackList(devs)
@@ -2598,7 +2604,7 @@ mapMaturity <- function (dat=pop.age, strSpp="", type="map", mats=1:7,
 			if (devnam!="win") dev.off()
 #browser();return()
 		} ## end d (devs) loop
-	}    ## end l (lang) loop
+	}; eop()
 	stuff=c("xlim","ylim","x","y","sdat","mday","mcut","idat","ibin","icnt","iclr","strSpp")
 	packList(stuff,"PBStool",tenv=.PBStoolEnv)
 	invisible(CALCS) 
@@ -4052,11 +4058,12 @@ sumBioTabs=function(dat, fnam="sumBioTab.csv", samps=TRUE, specs=TRUE,
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~sumBioTabs
 
 
-## weightBio----------------------------2019-08-08
+## weightBio----------------------------2019-10-16
 ## Weight age|length frequencies|proportions by catch|density.
 ##   adat = age123 from query 'gfb_bio.sql'    -- e.g., getData("gfb_bio.sql","GFBioSQL",strSpp="607",path=.getSpath()); bio607=processBio()
-##   cdat = cat123.wB from function 'getCatch' -- e.g., cat607 = getCatch("607",sql=TRUE)
-##   note: Now use 'fos_mcatSPP.sql' to get catches from GFFOS' GF_MERGED_CATCH table. (RH 190807)
+##   cdat = cat123gfm -- call 'fos_mcatSPP.sql' to get catches from GFFOS' GF_MERGED_CATCH table. (RH 190807)
+##        = cat123gfb -- call 'gfb_catch_records.slq' to get catches from GFBioSQL. (RH 191016)
+##   [DEPRECATED] cat123.wB from function 'getCatch' -- e.g., cat607 = getCatch("607",sql=TRUE)
 ## Note: Any modifications to 'gfb_bio.sql' may require similar changes in 'gfb_catch_records.sql'
 ## ---------------------------------------------RH
 weightBio = function(adat, cdat, sunit="TID", sweight="catch", 
@@ -4513,7 +4520,8 @@ weightBio = function(adat, cdat, sunit="TID", sweight="catch",
 		bsunit = setdiff(c("ntid","nsid"),wsunit)  ## identify the bad (unwanted) sample unit.
 		wpatxt = wpatab[wpatab[,wsunit]>0 & !is.na(wpatab[,wsunit]),grep(bsunit,dimnames(wpatab)[[2]],invert=T),drop=FALSE]
 		if (nrow(wpatxt)==0) showError("No records with # SIDs > 0")
-		wpatxt = cbind(series=rep(1,nrow(wpatxt)),wpatxt)
+		sernam = if (ctype=="S") paste0(SSID,collapse=".") else if (!is.null(FID)) paste0(FID,collapse="") else 1
+		wpatxt = cbind(series=rep(sernam,nrow(wpatxt)),wpatxt)
 		wpacsv = sub("output","awatea",wpanam)
 		wpacsv = paste(wpacsv,".csv",sep="")
 		agerda = sub("output","agetab",wpanam)
@@ -4649,7 +4657,7 @@ weightBio = function(adat, cdat, sunit="TID", sweight="catch",
 							x = regimes[[i]]; a1=-min(x); a2=-max(x)
 							y1lo=a1+x1; y1hi=a2+x1; y2lo=a1+x2; y2hi=a2+x2
 							xreg=c(x1,x1,x2,x2); yreg=c(y1lo,y1hi,y2hi,y2lo)
-							polygon(xreg,yreg,border=FALSE, col=lucent("orange",0.2)) #"floralwhite") #col="grey92")
+							polygon(xreg,yreg,border=FALSE, col=lucent("orange",0.2)) #"orange" #"floralwhite") #col="grey92")
 						}
 						par(new=TRUE)
 					} 

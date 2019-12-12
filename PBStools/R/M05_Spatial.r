@@ -461,7 +461,7 @@ calcSurficial <- function(surf="qcb", hab,
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~calcSurficial
 
 
-## clarify------------------------------2019-03-20
+## clarify------------------------------2019-11-05
 ##  Analyse catch proportions in blocks, then cluster into fisheries groups.
 ##  Initially, done to address the CASSIS proposal and its impact (John Pringle).
 ##  CASSIS = CAScadia SeISmic experiment
@@ -500,7 +500,10 @@ clarify <- function(dat, cell=c(0.1,0.075), nG=8,
 	dat <- dat[dat$tcat>0 & !is.na(dat$tcat),]
 	dat=dat[dat$X>=xlim[1] & dat$X<=xlim[2] & !is.na(dat$X),]
 	dat=dat[dat$Y>=ylim[1] & dat$Y<=ylim[2] & !is.na(dat$Y),]
-	if (!is.null(zlim)) dat=dat[dat$Z>=zlim[1] & dat$Z<=zlim[2] & !is.na(dat$Z),]
+	if (!is.null(zlim))
+		dat = dat[dat$Z>=zlim[1] & dat$Z<=zlim[2] & !is.na(dat$Z),]
+	if (!is.element("EID", colnames(dat)))
+		dat$EID = 1:nrow(dat)
 
 	gx <- seq(xlim[1],xlim[2],cell[1]); gy <- seq(ylim[1],ylim[2],cell[length(cell)])
 	agrid <- makeGrid(x=gx,y=gy,projection="LL",zone=9,byrow=TRUE,addSID=FALSE)
@@ -572,6 +575,7 @@ clarify <- function(dat, cell=c(0.1,0.075), nG=8,
 		kcode=strsplit(kgrp,split="-")
 		kgrp=sapply(kcode,function(x){paste(gsub(" ",".",species[x,"name"]),collapse="+")})
 	}
+#browser()
 
 	if (!is.null(isobs)) {
 		getFile(isobath, use.pkg=TRUE, tenv=penv())
@@ -891,14 +895,14 @@ plotConcur = function(strSpp="410", dbName="GFFOS", spath=.getSpath(),
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotConcur
 
 
-## plotEO-------------------------------2019-01-22
+## plotEO-------------------------------2019-10-22
 ## Plot the Extent of Occurrence for a species 
 ## using a convex hull to surround events.
 ## ---------------------------------------------RH
 plotEO = function (id="lst", strSpp="453", col="red", 
    xlim=c(-136,-122.5), ylim=c(48,54.8), prefix="map", 
    inarea=NULL, exarea=NULL, exland=FALSE, rmXY=FALSE, rmSM=TRUE,
-   png=FALSE, pngres=400, PIN =c(9,7.3))
+   png=FALSE, pngres=400, PIN =c(9,7.3), lang=c("e","f"))
 {
 	fenv = lenv()  ## function environment
 	if (!exists(paste0(prefix,strSpp), envir=.PBStoolEnv)) {
@@ -965,6 +969,7 @@ plotEO = function (id="lst", strSpp="453", col="red",
 	attr(mapdat,"projection") = attributes(mapDat)$projection
 
 	hull = calcConvexHull(mapdat)
+	# table(mapdat$year)  ## determine which years contribute to the hull
 	hulk[[id]][["hull"]] = hull
 	area.hull = calcArea(hull)
 	hull.less.land = joinPolys(hull, land, operation="DIFF")
@@ -979,16 +984,28 @@ plotEO = function (id="lst", strSpp="453", col="red",
 		arealab,
 		waterlab
 		), collapse="\n")
+	spplab.f  = paste0(c(
+		linguaFranca(paste0(toUpper(species[strSpp,"name"]), " -- ", stock),"f"),
+		paste0("    (", species[strSpp,"latin"], ")"),
+		sub(","," ",sub("Convex hull area","zone de coque convexe",arealab)),
+		sub(","," ",sub("hull on water","coque sur l'eau",waterlab))
+		), collapse="\n")
+#browser(); return()
 
-	if(png) png(paste0("Hull-",strSpp,"-",stock,".png"), units="in", res=pngres, width=PIN[1], height=PIN[2])
-	plotMap(nepacLL, xlim=xlim, ylim=ylim, plt=c(0.07,0.99,0.08,0.99), cex.axis=1.5, cex.lab=1.75, las=1)
-	addPoints(mapdat, pch=20, col=col, cex=1)
-	addPolys(nepacLL, col="grey95", border="slategray")
-	addPolys(hull, col=lucent(col,0.1))
-	
-	addLabel(0.8,0.8, "BC", cex=5, col="grey80")
-	addLabel(0.05, 0.15, spplab, cex=1.25, col="black", adj=0)
-	if (png) dev.off()
+	fout = fout.e = paste0("Hull-",strSpp,"-",stock)
+	for (l in lang) {
+		changeLangOpts(L=l)
+		fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
+		if(png) png(paste0(fout,".png"), units="in", res=pngres, width=PIN[1], height=PIN[2])
+		plotMap(nepacLL, xlim=xlim, ylim=ylim, plt=c(0.07,0.99,0.08,0.99), cex.axis=1.5, cex.lab=1.75, las=1)
+		addPoints(mapdat, pch=20, col=col, cex=1)
+		addPolys(nepacLL, col="grey95", border="slategray")
+		addPolys(hull, col=lucent(col,0.1))
+
+		addLabel(0.8,0.8, linguaFranca("BC",l), cex=5, col="grey80")
+		addLabel(0.05, 0.15, switch(l, 'e'=spplab, 'f'=spplab.f), cex=1.25, col="black", adj=0)
+		if (png) dev.off()
+	}; eop()
 
 	fidnam = c("trawl","halibut","sable","dogling","hlrock"); names(fidnam) = 1:5
 	events = rep(0,5); names(events) = fidnam
@@ -1516,11 +1533,11 @@ plotTertiary = function(x=c(100,5,25,10,50), pC=c(0.5,0.5), r=0.5,
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotTertiary
 
 
-## preferDepth--------------------------2018-01-17
+## preferDepth--------------------------2019-10-29
 ## Histogram showing depth-of-capture
 ## ---------------------------------------------RH
 preferDepth = function(strSpp="410", fqtName="pht_fdep.sql", dbName="PacHarvest",
-   spath=NULL, type="SQL", hnam=NULL, get.effort=FALSE)
+   spath=NULL, type="SQL", hnam=NULL, get.effort=FALSE, lang=c("e","f"))
 {
 	warn <- options()$warn; options(warn=-1)
 	effort = ttcall(PBStool)$effort  ## recover effort, if it exists, to save time
@@ -1550,6 +1567,7 @@ preferDepth = function(strSpp="410", fqtName="pht_fdep.sql", dbName="PacHarvest"
 		setWinVal(list(showE=FALSE),winName="window") 
 		packList("effort","PBStool",tenv=.PBStoolEnv)
 	}
+	ttput(lang)
 	invisible()
 }
 ##.preferDepth.getEffort----------------2010-10-19
@@ -1668,120 +1686,129 @@ preferDepth = function(strSpp="410", fqtName="pht_fdep.sql", dbName="PacHarvest"
 		else if (act=="png") png=TRUE
 		else if (act=="wmf") wmf=TRUE
 	}
-	if (eps)
-		postscript(file=paste(plotname,"eps",sep="."),width=10,height=6*nrow^0.25,horizontal=FALSE,paper="special")
-	else if (png)
-		png(filename=paste(plotname,"png",sep="."), width=10, height=6*nrow^0.25, units="in", res=400)
-	else if (wmf && .Platform$OS.type=="windows")
-		do.call("win.metafile",list(filename=paste(plotname,"wmf",sep="."),width=10,height=6*nrow^0.25))
-	else resetGraph()
-
-	if (nrow*ncol==1)
-		expandGraph(mfrow=c(nrow,ncol),mar=c(0,0,0,0),oma=c(4,5,1,1),cex=0.9,yaxs="i",mgp=c(2,.5,0),las=1)
-	else
-		expandGraph(mfrow=c(nrow,ncol),mar=c(0,0,0,0),oma=c(5,5,1,1),cex=0.7,yaxs="i",mgp=c(2,.5,0),las=1);
-	xlim <- c(0,round(max(c(dat$depth,eff$depth),na.rm=TRUE),-1)) + c(-xwid,xwid); xdiff <- diff(xlim);
-	ylim <- c(0,.19)
-	brks = seq(xlim[1],xlim[2],xwid)
-	BRKS = seq(XLIM[1],XLIM[2],xwid)
-	stuff=c("xlim","ylim","brks","BRKS","area")
-	packList(stuff,"PBStool",tenv=.PBStoolEnv)
-
-	brks = BRKS
-	dat  = dat[dat$depth>=brks[1] & dat$depth<=rev(brks)[1] & !is.na(dat$depth),]
-	if (isE)
-		eff = eff[eff$depth>=brks[1] & eff$depth<=rev(brks)[1] & !is.na(eff$depth),]
-
-	for (i in ifac) {
-		if (all(ifac!=0)) {
-			if (isE) ieff = eff[is.element(eff[,ifelse(yba,"year","area")],i),]
-			idat <- dat[is.element(dat[,ifelse(yba,"year","area")],i),]
-		} else {
-			idat <- dat
-			if (isE) ieff <- eff
-		}
-		for (j in jfac) {
-			if (all(jfac!=0)) {
-				jdat <- idat[is.element(idat[,ifelse(yba,"area","year")],j),]
-				if (isE) jeff <- ieff[is.element(ieff[,ifelse(yba,"area","year")],j),]
+	fout = fout.e = plotname
+	for (l in ttcall(lang)) {
+		changeLangOpts(L=l)
+		fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
+		if (eps)
+			postscript(file=paste(fout,"eps",sep="."),width=10,height=6*nrow^0.25,horizontal=FALSE,paper="special")
+		else if (png)
+			png(filename=paste(fout,"png",sep="."), width=10, height=6*nrow^0.25, units="in", res=400)
+		else if (wmf && .Platform$OS.type=="windows")
+			do.call("win.metafile",list(filename=paste(fout,"wmf",sep="."),width=10,height=6*nrow^0.25))
+		else resetGraph()
+	
+		if (nrow*ncol==1)
+			expandGraph(mfrow=c(nrow,ncol),mar=c(0,0,0,0),oma=c(4,5,1,1),cex=0.9,yaxs="i",mgp=c(2,.5,0),las=1)
+		else
+			expandGraph(mfrow=c(nrow,ncol),mar=c(0,0,0,0),oma=c(5,5,1,1),cex=0.7,yaxs="i",mgp=c(2,.5,0),las=1);
+		xlim <- c(0,round(max(c(dat$depth,eff$depth),na.rm=TRUE),-1)) + c(-xwid,xwid); xdiff <- diff(xlim);
+		ylim <- c(0,.19)
+		brks = seq(xlim[1],xlim[2],xwid)
+		BRKS = seq(XLIM[1],XLIM[2],xwid)
+		stuff=c("xlim","ylim","brks","BRKS","area")
+		packList(stuff,"PBStool",tenv=.PBStoolEnv)
+	
+		brks = BRKS
+		dat  = dat[dat$depth>=brks[1] & dat$depth<=rev(brks)[1] & !is.na(dat$depth),]
+		if (isE)
+			eff = eff[eff$depth>=brks[1] & eff$depth<=rev(brks)[1] & !is.na(eff$depth),]
+	
+		for (i in ifac) {
+			if (all(ifac!=0)) {
+				if (isE) ieff = eff[is.element(eff[,ifelse(yba,"year","area")],i),]
+				idat <- dat[is.element(dat[,ifelse(yba,"year","area")],i),]
 			} else {
-				jdat <- idat
-				if (isE) jeff <- ieff
+				idat <- dat
+				if (isE) ieff <- eff
 			}
-			ntows <- nrow(jdat)
-			stuff = c("ifac","jfac","ntows")
-			packList(stuff,"PBStool",tenv=.PBStoolEnv)
-			xy <- hist(jdat$depth, breaks=brks, plot=FALSE);
-			xy$density <- xy$counts/sum(xy$counts)
-			xyout <- paste("xy",spp,i,j,sep=".")
-			ttget(PBStool); PBStool[[xyout]] <- xy; ttput(PBStool)
-
-			if (isE) {
-				jeff$dbin = cut(jeff$depth,brks)
-				effTot = sapply(split(jeff$effort,jeff$dbin),sum)
-				effDen = effTot/sum(effTot)
-				ee     = sum(jeff$effort,na.rm=TRUE)  ## cumulative effort (effort already in in hours)
-				xye    = list(breaks=brks,counts=effTot,density=effDen)
-				attr(xye,"class")="histogram"
-				packList("xye","PBStool",tenv=.PBStoolEnv) }
-
-			par(lwd=1.6) ## doesn't seem to take when specified in first line of function
-			plot(xy,freq=FALSE, xlab="", ylab="", main="",cex.lab=1.2, col="white", xlim=XLIM, ylim=YLIM, axes=FALSE)
-			if (par()$mfg[1]==par()$mfg[3])
-				axis(1,cex.axis=1.2)
-			if (par()$mfg[2]==1)
-				axis(2,cex.axis=1.2,tcl=.5) else axis(2,labels=FALSE,tcl=.5)
-
-			if (isE && showE) { #---Total fishing effort density
-				plot(xye,freq=FALSE, xlab="", ylab="", main="",cex.lab=1.2, col=barcol[2], border=barcol[2],xlim=XLIM, ylim=YLIM, axes=FALSE,add=TRUE)
-			}
-			z  = order(jdat$depth)
-			xc = jdat$depth[z]
-			yz = ((1:length(xc))/length(xc))
-			cc = cumsum(jdat$catch[z])/1000
-			yy = paste0("(",paste0(range(jdat$year),collapse="-"),")")
-			if (showD) { ##---Cumulative depth
-				mz = approx(yz,xc,.50,rule=2,ties="ordered"); yz=yz*YLIM[2]
-				points(mz$y,par()$usr[4],pch=25,col=1,bg="gainsboro",cex=1.5)
-				text(mz$y,par()$usr[4],round(mz$y),col="grey20",adj=c(-0.5,0.5),cex=0.9,srt=270)
-			}
-			if (showC) { ##---Cumulative catch
-				yc = (cc/max(cc,na.rm=TRUE)) #*YLIM[2]
-				mc = approx(yc,xc,.50,rule=2,ties="ordered"); yc=yc*YLIM[2]
-				#abline(h=mc$x*YLIM[2],v=mc$y,lty=3,col=ccol)
-				points(mc$y,par()$usr[4],pch=25,col=1,bg=ccol,cex=1.5)
-				text(mc$y,par()$usr[4],round(mc$y),col=ccol,adj=c(-0.5,0),cex=0.9,srt=270)
-			}
-			if (showQ) { ##---Depth quantiles
-				qnt <- round(quantile(jdat$depth,quants,na.rm=TRUE),0)
-				abline(v=qnt, lwd=2, col="cornflowerblue")
-				text(qnt[1]-xwid,par()$usr[4],qnt[1],col="blue",adj=c(1,2),cex=1.2)
-				text(qnt[2]+xwid,par()$usr[4],qnt[2],col="blue",adj=c(0,3),cex=1.2) 
-			}
-			if (showL) { ##---Legend information
-				if (nrow*ncol>1) {
-					addLabel(.98,.90,paste(ifelse(i==0,"",i),ifelse(j==0,"",j), sep=ifelse(nrow==1 | ncol==1,""," \225 ")),col="grey30",adj=c(1,1))
+			for (j in jfac) {
+				if (all(jfac!=0)) {
+					jdat <- idat[is.element(idat[,ifelse(yba,"area","year")],j),]
+					if (isE) jeff <- ieff[is.element(ieff[,ifelse(yba,"area","year")],j),]
 				} else {
-					ylabpos = 0.88; labcex = 1; labinc = 0.025 #diff(par()$usr[3:4])*0.05
-					data(spn,envir=penv())
-					addLabel(.98, ylabpos, paste0(spn[spp],"\n",yy), adj=c(1,0.5), col="black", cex=labcex)
-					addLabel(.98, ylabpos-2*labinc, paste("N =",format(ntows,big.mark=","),"events"),cex=labcex-0.1,col="grey30",adj=c(1,1)) 
-					addLabel(.98, ylabpos-3*labinc, paste("C =",format(round(max(cc,na.rm=TRUE)), big.mark=","),"t"),cex=labcex-0.1,col="grey30",adj=c(1,1))
-					if (isE && showE) ##---Total effort (h) in depth range specified
-						addLabel(.98, ylabpos-4*labinc, paste("E =",format(round(ee), big.mark=","),"h"),cex=labcex-0.1,col="grey30",adj=c(1,1))
+					jdat <- idat
+					if (isE) jeff <- ieff
 				}
+				ntows <- nrow(jdat)
+				stuff = c("ifac","jfac","ntows")
+				packList(stuff,"PBStool",tenv=.PBStoolEnv)
+				xy <- hist(jdat$depth, breaks=brks, plot=FALSE);
+				xy$density <- xy$counts/sum(xy$counts)
+				xyout <- paste("xy",spp,i,j,sep=".")
+				ttget(PBStool); PBStool[[xyout]] <- xy; ttput(PBStool)
+	
+				if (isE) {
+					jeff$dbin = cut(jeff$depth,brks)
+					effTot = sapply(split(jeff$effort,jeff$dbin),sum)
+					effDen = effTot/sum(effTot)
+					##ee     = sum(jeff$effort,na.rm=TRUE)     ## cumulative effort (effort already in in hours)
+					ee     = length(jeff$effort[jeff$effort>0 & !is.na(jeff$effort)])  ## count number of tows with effort
+					xye    = list(breaks=brks,counts=effTot,density=effDen)
+					attr(xye,"class")="histogram"
+					packList("xye","PBStool",tenv=.PBStoolEnv) }
+	
+				par(lwd=1.6) ## doesn't seem to take when specified in first line of function
+				plot(xy,freq=FALSE, xlab="", ylab="", main="",cex.lab=1.2, col="white", xlim=XLIM, ylim=YLIM, axes=FALSE)
+				if (par()$mfg[1]==par()$mfg[3])
+					axis(1,cex.axis=1.2)
+				if (par()$mfg[2]==1)
+					axis(2,cex.axis=1.2,tcl=.5) else axis(2,labels=FALSE,tcl=.5)
+	
+				if (isE && showE) { #---Total fishing effort density
+					plot(xye,freq=FALSE, xlab="", ylab="", main="",cex.lab=1.2, col=barcol[2], border=barcol[2],xlim=XLIM, ylim=YLIM, axes=FALSE,add=TRUE)
+				}
+				z  = order(jdat$depth)
+				xc = jdat$depth[z]
+				yz = ((1:length(xc))/length(xc))
+				cc = cumsum(jdat$catch[z])/1000
+				yy = paste0("(",paste0(range(jdat$year),collapse="-"),")")
+				if (showD) { ##---Cumulative depth
+					mz = approx(yz,xc,.50,rule=2,ties="ordered"); yz=yz*YLIM[2]
+					points(mz$y,par()$usr[4],pch=25,col=1,bg="gainsboro",cex=1.5)
+					text(mz$y,par()$usr[4],round(mz$y),col="grey20",adj=c(-0.5,0.25),cex=0.9,srt=270)  ## adj (vert, horiz)
+				}
+				if (showC) { ##---Cumulative catch
+					yc = (cc/max(cc,na.rm=TRUE)) #*YLIM[2]
+					mc = approx(yc,xc,.50,rule=2,ties="ordered"); yc=yc*YLIM[2]
+					#abline(h=mc$x*YLIM[2],v=mc$y,lty=3,col=ccol)
+					points(mc$y,par()$usr[4],pch=25,col=1,bg=ccol,cex=1.5)
+					text(mc$y,par()$usr[4],round(mc$y),col=ccol,adj=c(-0.5,ifelse(!isThere("mz"), 0.25, ifelse(mc$y<mz$y,0.75,0.25))),cex=0.9,srt=270)  ## adj (vert, horiz)
+	#browser();return()
+				}
+				if (showQ) { ##---Depth quantiles
+					qnt <- round(quantile(jdat$depth,quants,na.rm=TRUE),0)
+					abline(v=qnt, lwd=2, col="cornflowerblue")
+					text(qnt[1]-xwid,par()$usr[4],qnt[1],col="blue",adj=c(1,2),cex=1.2)
+					text(qnt[2]+xwid,par()$usr[4],qnt[2],col="blue",adj=c(0,3),cex=1.2) 
+				}
+				if (showL) { ##---Legend information
+					if (nrow*ncol>1) {
+						addLabel(.98,.90,paste(ifelse(i==0,"",i),ifelse(j==0,"",j), sep=ifelse(nrow==1 | ncol==1,""," \225 ")),col="grey30",adj=c(1,1))
+					} else {
+						ylabpos = 0.88; labcex = 1; labinc = 0.05 #diff(par()$usr[3:4])*0.05
+						data(species,package="PBSdata",envir=penv())
+						addLabel(.98, ylabpos, paste0( species[strSpp,"name"],"\n",yy), adj=c(1,0.5), col="black", cex=labcex)
+						addLabel(.98, ylabpos-2*labinc, paste0(species[strSpp,"code3"], " = ",format(ntows,big.mark=options()$big.mark)," events"),cex=labcex-0.1,col="grey30",adj=c(1,1)) 
+						addLabel(.98, ylabpos-3*labinc, paste0(species[strSpp,"code3"], " = ",format(round(max(cc,na.rm=TRUE)), big.mark=options()$big.mark)," t"),cex=labcex-0.1,col="grey30",adj=c(1,1))
+						if (isE && showE) {##---Total effort (h) in depth range specified
+							#addLabel(.98, ylabpos-4*labinc, paste("E =",format(round(ee), big.mark=options()$big.mark),"h"),cex=labcex-0.1,col="grey30",adj=c(1,1))
+							addLabel(.98, ylabpos-4*labinc, paste0("ALL = ",format(round(ee), big.mark=options()$big.mark)," events"),cex=labcex-0.1,col="grey30",adj=c(1,1))
+						}
+					}
+				}
+				plot(xy,freq=FALSE, xlab="", ylab="", main="",cex.lab=1.2, col=barcol[1], xlim=XLIM, ylim=YLIM, axes=FALSE, add=TRUE)
+				if (showD) lines(xc,yz,col="grey20",lwd=clwd)
+				if (showC) lines(xc,yc,col=ccol,lwd=clwd)
+				box();
 			}
-			plot(xy,freq=FALSE, xlab="", ylab="", main="",cex.lab=1.2, col=barcol[1], xlim=XLIM, ylim=YLIM, axes=FALSE, add=TRUE)
-			if (showD) lines(xc,yz,col="grey20",lwd=clwd)
-			if (showC) lines(xc,yc,col=ccol,lwd=clwd)
-			box();
 		}
-	}
-	mtext(paste("Depth (m)",ifelse(ncol==1,"",paste(" [",ifelse(yba,"area","year"),
-		"by column ]"))),outer=TRUE,side=1,line=2*nrow^0.25,cex=1.2)
-	mtext(paste("Proportions",ifelse(nrow==1,"",paste(" [",ifelse(yba,"year","area"),
-		"by row ]"))),outer=TRUE,side=2,line=3.25,cex=1.25,las=0)
-	if (eps|png|wmf) dev.off()
+		mtext(paste("Depth (m)",ifelse(ncol==1,"",paste(" [",ifelse(yba,"area","year"),
+			"by column ]"))),outer=TRUE,side=1,line=2*nrow^0.25,cex=1.2)
+		mtext(paste("Proportions",ifelse(nrow==1,"",paste(" [",ifelse(yba,"year","area"),
+			"by row ]"))),outer=TRUE,side=2,line=3.25,cex=1.25,las=0)
+		if (eps|png|wmf) dev.off()
+	}; eop()
 	invisible() 
 }
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~preferDepth
