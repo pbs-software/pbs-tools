@@ -10,12 +10,36 @@ Authors: RH  = Rowan Haigh
          BK  = Brian Krishka
 ------------------------------
 
+1.40.0 (2019-12-13)  [Rcheck=F, Rbuild=F]
+  * M09_PJSsurvey.r
+    + New module of functions from PJS, which he uses in STATA to calculate biomass indices: (PJS|RH 191213)
+      - calcBiom      Calculate swept-area biomass estimate and bootstrap within strata.
+      - doSynoptic    Get the synoptic file for specified survey and go through PJS machinations.
+      - getLabels     Read in data file and get labels.
+      - getLabelends  Get depth ranges from stratum names (methinks).
+      - getMonth      Extract month from dates vector.
+      - getSpecies    Get species codes from data.
+      - getUsability  Qualify data by usability code.
+      - getVessel     Get survey vessel codes.
+      - keepAtts      Keep user's attributes after performing an expression such as subsetting a file.
+      - plotIndex     Plot survey index series after bootstrapping.
+      - prepGFsurv    Prepare GF surveys using PJS codes.
+      - prepGIGhis    Prepare GIG Historical (formerly called BG Reed) survey data.
+      - prepHSass     Prepare Hecate Strait assemblage survey data.
+      - prepHSsyn     Prepare Hecate Strait synoptic survey data.
+      - prepQCSsyn    Prepare QCS synoptic survey data.
+      - prepNMFStri   Prepare US National Marine Fisheries Service triennial survey data from WCVI.
+      - prepWCHGsyn   Prepare WCHG (formerly WCQCI) synoptic survey data
+      - prepWCVIsyn   Prepare west coast Vancouver Island synoptic survey data.
+      - restratify    Restratify survey by depth.
+      - uniqtows      Ensure unique tows occur for each survey, collapse records as needed.
+
 1.39.4 (2019-12-12)  [Rcheck=T, Rbuild=T]
   * M06_Assessment.r
     + Modified function `makeAgeErr' extensively to deal with AE variations for the 2019 BOR assessment. (RH 19
   * M07_CatchRecon.r
     + Modified function `buildCatch':
-      - Calculated historical SBF and LIN landings using Ketchens's reported catch of these species by the trawl fishery.
+      - Calculated historical SBF and LIN landings using Ketchen's reported catch of these species by the trawl fishery.
       - For 2019 BOR, used mean ratio in period 1996-2001 of  [SBF in FID 3]/[SBF in FID 1]=10.235 and [LIN in FID 3]/[LIN in FID 1]=0.351
       - to estimate historical landings of SBF and LIN in FIDs 3 and 4 from SBF and LIN in FID 1.
   * M08_LaTeX.r
