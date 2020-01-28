@@ -2,16 +2,31 @@
 SELECT * FROM
 (SELECT
   (CASE  -- in order of priority
-    WHEN TAR.GR_GEAR_CDE IN (50,51,57,59) THEN 1                      -- originally TRAWL (otter bottom, midwater, shrimp, herring)
-    WHEN TAR.GR_GEAR_CDE IN (40) AND TAR.Target IN ('614') THEN 2     -- originally LONGLINE
-    WHEN TAR.GR_GEAR_CDE IN (40) AND TAR.Target IN ('455') THEN 3     -- originally LONGLINE
-    WHEN TAR.GR_GEAR_CDE IN (86,90,91,92,97,98) THEN 3                -- originally TRAP (experimental, salmon, longline, shrimp & prawn, crab)
-    WHEN TAR.GR_GEAR_CDE IN (30,31)  THEN 4                           -- originally TROLL (salmon, freezer salmon)
-    WHEN TAR.GR_GEAR_CDE IN (36) OR (TAR.GR_GEAR_CDE IN (40) AND 
-         TAR.Target NOT IN ('614','455','044','467')) THEN 5          -- originally JIG (hand non-salmon) and LONGLINE
-    WHEN TAR.Target IN ('455') THEN 3                                 -- Sablefish
-    WHEN TAR.Target IN ('044','467') THEN 4                           -- Dogfish-Lingcod
-    WHEN TAR.Target IN ('388','437','405','440','394','403','451','453','401','442','424','407','431','433') THEN 5  -- ZN TAC species
+    -- originally TRAWL (otter bottom, midwater, shrimp, herring)
+    WHEN TAR.GR_GEAR_CDE IN (50,51,57,59) THEN 1
+    -- Partition LONGLINE
+    WHEN TAR.GR_GEAR_CDE IN (40) AND TAR.Target IN ('614') THEN 2
+    WHEN TAR.GR_GEAR_CDE IN (40) AND TAR.Target IN ('455') THEN 3
+    WHEN TAR.GR_GEAR_CDE IN (40) AND TAR.Target IN ('044','467') THEN 4
+    WHEN TAR.GR_GEAR_CDE IN (40) AND TAR.Target NOT IN ('614','455','044','467') THEN 5
+    -- Partition TROLL (salmon, freezer salmon)
+    WHEN TAR.GR_GEAR_CDE IN (30,31) AND TAR.Target IN ('614') THEN 2
+    WHEN TAR.GR_GEAR_CDE IN (30,31) AND TAR.Target IN ('455') THEN 3
+    WHEN TAR.GR_GEAR_CDE IN (30,31) AND TAR.Target IN ('044','467') THEN 4
+    WHEN TAR.GR_GEAR_CDE IN (30,31) AND TAR.Target  NOT IN ('614','455','044','467') THEN 5
+    -- Partition JIG (hand non-salmon)
+    WHEN TAR.GR_GEAR_CDE IN (36) AND TAR.Target IN ('614') THEN 2
+    WHEN TAR.GR_GEAR_CDE IN (36) AND TAR.Target IN ('455') THEN 3
+    WHEN TAR.GR_GEAR_CDE IN (36) AND TAR.Target IN ('044','467') THEN 4
+    WHEN TAR.GR_GEAR_CDE IN (36) AND TAR.Target  NOT IN ('614','455','044','467') THEN 5
+    -- originally TRAP (experimental, salmon, longline, shrimp & prawn, crab)
+    WHEN TAR.GR_GEAR_CDE IN (86,90,91,92,97,98) THEN 3
+    -- Unassigned Trawl, Halibut, Sablefish, Dogfish-Lingcod, H&L Rockfish
+    WHEN TAR.Target IN ('394','396','405','418','440','451') THEN 1
+    WHEN TAR.Target IN ('614') THEN 2
+    WHEN TAR.Target IN ('455') THEN 3
+    WHEN TAR.Target IN ('044','467') THEN 4
+    WHEN TAR.Target IN ('388','401','407','424','431','433','442') THEN 5
     ELSE 0 END) AS \"fid\",
   CS.STP_SPER_YR AS \"year\",
   AREA.PMFC AS \"major\",
@@ -25,7 +40,7 @@ SELECT * FROM
     THEN CS.CATSUM_ROUND_LBS_WT
     ELSE 0 END)/2.20459 AS \"discard\",
   Sum(CASE
-    WHEN CS.SP_SPECIES_CDE IN ('396')    AND CS.CU_CATCH_UTLZTN_CDE NOT IN (6,22,23,24,27,28)
+    WHEN CS.SP_SPECIES_CDE IN ('396') AND CS.CU_CATCH_UTLZTN_CDE NOT IN (6,22,23,24,27,28)
     THEN CS.CATSUM_ROUND_LBS_WT
     ELSE 0 END)/2.20459 AS POP,
   Sum(CASE
@@ -33,19 +48,23 @@ SELECT * FROM
     THEN CS.CATSUM_ROUND_LBS_WT
     ELSE 0 END)/2.20459 AS ORF,
   Sum(CASE
-    WHEN CS.SP_SPECIES_CDE IN ('614')    AND CS.CU_CATCH_UTLZTN_CDE NOT IN (6,22,23,24,27,28)
+    WHEN CS.SP_SPECIES_CDE IN ('614') AND CS.CU_CATCH_UTLZTN_CDE NOT IN (6,22,23,24,27,28)
     THEN CS.CATSUM_ROUND_LBS_WT
     ELSE 0 END)/2.20459 AS PAH,
   Sum(CASE
-    WHEN CS.SP_SPECIES_CDE IN ('455')    AND CS.CU_CATCH_UTLZTN_CDE NOT IN (6,22,23,24,27,28)
+    WHEN CS.SP_SPECIES_CDE IN ('454','455') AND CS.CU_CATCH_UTLZTN_CDE NOT IN (6,22,23,24,27,28)
     THEN CS.CATSUM_ROUND_LBS_WT
     ELSE 0 END)/2.20459 AS SBF,
   Sum(CASE
-    WHEN CS.SP_SPECIES_CDE IN ('042','044','467')  AND CS.CU_CATCH_UTLZTN_CDE NOT IN (6,22,23,24,27,28)
+    WHEN CS.SP_SPECIES_CDE IN ('042','044') AND CS.CU_CATCH_UTLZTN_CDE NOT IN (6,22,23,24,27,28)
     THEN CS.CATSUM_ROUND_LBS_WT
     ELSE 0 END)/2.20459 AS DOG,
   Sum(CASE
-    WHEN CS.SP_SPECIES_CDE IN ('424','407','431','433','442')  AND CS.CU_CATCH_UTLZTN_CDE NOT IN (6,22,23,24,27,28)
+    WHEN CS.SP_SPECIES_CDE IN ('465','467') AND CS.CU_CATCH_UTLZTN_CDE NOT IN (6,22,23,24,27,28)
+    THEN CS.CATSUM_ROUND_LBS_WT
+    ELSE 0 END)/2.20459 AS LIN,
+  Sum(CASE
+    WHEN CS.SP_SPECIES_CDE IN ('424','407','431','433','442') AND CS.CU_CATCH_UTLZTN_CDE NOT IN (6,22,23,24,27,28)
     THEN CS.CATSUM_ROUND_LBS_WT
     ELSE 0 END)/2.20459 AS RFA
 
@@ -134,16 +153,31 @@ WHERE
   CS.CATSUM_FISHERY_TYPE_CDE IN ('01','02','03','25') -- 1=commercial, 2=test, 3=research, 25=recreational
 GROUP BY
   (CASE 
-    WHEN TAR.GR_GEAR_CDE IN (50,51,57,59) THEN 1                      -- originally TRAWL (otter bottom, midwater, shrimp, herring)
-    WHEN TAR.GR_GEAR_CDE IN (40) AND TAR.Target IN ('614') THEN 2     -- originally LONGLINE
-    WHEN TAR.GR_GEAR_CDE IN (40) AND TAR.Target IN ('455') THEN 3     -- originally LONGLINE
-    WHEN TAR.GR_GEAR_CDE IN (86,90,91,92,97,98) THEN 3                -- originally TRAP (experimental, salmon, longline, shrimp & prawn, crab)
-    WHEN TAR.GR_GEAR_CDE IN (30,31)  THEN 4                           -- originally TROLL (salmon, freezer salmon)
-    WHEN TAR.GR_GEAR_CDE IN (36) OR (TAR.GR_GEAR_CDE IN (40) AND 
-         TAR.Target NOT IN ('614','455','044','467')) THEN 5          -- originally JIG (hand non-salmon) and LONGLINE
-    WHEN TAR.Target IN ('455') THEN 3                                 -- Sablefish
-    WHEN TAR.Target IN ('044','467') THEN 4                           -- Dogfish-Lingcod	
-    WHEN TAR.Target IN ('388','437','405','440','394','403','451','453','401','442','424','407','431','433') THEN 5  -- ZN TAC species
+    -- originally TRAWL (otter bottom, midwater, shrimp, herring)
+    WHEN TAR.GR_GEAR_CDE IN (50,51,57,59) THEN 1
+    -- Partition LONGLINE
+    WHEN TAR.GR_GEAR_CDE IN (40) AND TAR.Target IN ('614') THEN 2
+    WHEN TAR.GR_GEAR_CDE IN (40) AND TAR.Target IN ('455') THEN 3
+    WHEN TAR.GR_GEAR_CDE IN (40) AND TAR.Target IN ('044','467') THEN 4
+    WHEN TAR.GR_GEAR_CDE IN (40) AND TAR.Target NOT IN ('614','455','044','467') THEN 5
+    -- Partition TROLL (salmon, freezer salmon)
+    WHEN TAR.GR_GEAR_CDE IN (30,31) AND TAR.Target IN ('614') THEN 2
+    WHEN TAR.GR_GEAR_CDE IN (30,31) AND TAR.Target IN ('455') THEN 3
+    WHEN TAR.GR_GEAR_CDE IN (30,31) AND TAR.Target IN ('044','467') THEN 4
+    WHEN TAR.GR_GEAR_CDE IN (30,31) AND TAR.Target  NOT IN ('614','455','044','467') THEN 5
+    -- Partition JIG (hand non-salmon)
+    WHEN TAR.GR_GEAR_CDE IN (36) AND TAR.Target IN ('614') THEN 2
+    WHEN TAR.GR_GEAR_CDE IN (36) AND TAR.Target IN ('455') THEN 3
+    WHEN TAR.GR_GEAR_CDE IN (36) AND TAR.Target IN ('044','467') THEN 4
+    WHEN TAR.GR_GEAR_CDE IN (36) AND TAR.Target  NOT IN ('614','455','044','467') THEN 5
+    -- originally TRAP (experimental, salmon, longline, shrimp & prawn, crab)
+    WHEN TAR.GR_GEAR_CDE IN (86,90,91,92,97,98) THEN 3
+    -- Unassigned Trawl, Halibut, Sablefish, Dogfish-Lingcod, H&L Rockfish
+    WHEN TAR.Target IN ('394','396','405','418','440','451') THEN 1
+    WHEN TAR.Target IN ('614') THEN 2
+    WHEN TAR.Target IN ('455') THEN 3
+    WHEN TAR.Target IN ('044','467') THEN 4
+    WHEN TAR.Target IN ('388','401','407','424','431','433','442') THEN 5
     ELSE 0 END),
   CS.STP_SPER_YR,
   AREA.PMFC,
@@ -154,4 +188,6 @@ GROUP BY
 ;
 
 -- getData("ph3_fcatORF.sql",dbName="HARVEST_V2_0",strSpp="442",server="ORAPROD",type="ORA",trusted=FALSE,uid="",pwd="")
+-- getData("ph3_fcatORF.sql",dbName="HARVEST_V2_0",strSpp="394",path=.getSpath(),server="ORAPROD",type="ORA",trusted=FALSE,uid="haighr",pwd="haighr")
+-- qu("ph3_fcatORF.sql",dbName="HARVEST_V2_0",strSpp="435",server="ORAPROD",type="ORA",trusted=FALSE,uid="haighr",pwd="haighr")
 

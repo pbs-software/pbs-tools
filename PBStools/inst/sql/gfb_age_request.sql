@@ -15,7 +15,7 @@ SELECT DISTINCT
         FOR XML PATH ('')), 1, 1, '') AS BinID
 INTO #Unique_Bin
 FROM SAMPLE_COLLECTED f1
---WHERE f1.SAMPLE_ID IN (181641) --237530) --173642) --408357)
+  WHERE f1.SAMPLE_ID IN (522513) --181641) --237530) --173642) --408357)
 
 SELECT
   COALESCE(UB.SAMPLE_ID,SPC.SAMPLE_ID) AS SAMPLE_ID,
@@ -303,4 +303,6 @@ SELECT
 -- qu("gfb_age_request.sql",dbName="GFBioSQL",strSpp="396",gear=c(1,8))
 -- qu("gfb_age_request.sql",dbName="GFBioSQL",strSpp="439",gear=c(1,6,8))
 -- qu("gfb_age_request.sql",dbName="GFBioSQL",strSpp="435",gear=c(1,6,8)) -- queried: 190108
+-- qu("gfb_age_request.sql",dbName="GFBioSQL",strSpp="425",gear=c(1,6,8)) -- queried: 190108
+-- qu("gfb_age_request.sql",dbName="GFBioSQL",strSpp="394",gear=c(1,6,8)) -- queried: 190108
 

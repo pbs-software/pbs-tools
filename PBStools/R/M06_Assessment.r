@@ -522,7 +522,7 @@ compLen = function(dat, strSpp, fld="len", lbin=1, sex=c(2,1),
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~compLen
 
 
-## createMA-----------------------------2019-09-16
+## createMA-----------------------------2020-01-13
 ##  Create table of DFO management actions for
 ##  Catch Appendix A tailored to species using 'strSppp'.
 ## ---------------------------------------------RH
@@ -535,98 +535,99 @@ createMA =function(yrs=1979:2019, strSpp="POP", addletters=TRUE)
 		dfo.acts[[ii]] = list()
 	}
 	##-----1979--------------------------
-	dfo.acts[["1979"]][["PAH"]] = "Started limited vessel entry for Halibut fleet."
+	dfo.acts[["1979"]][["PAH"]] = "PAH: Started limited vessel entry for Halibut fleet."
 	##-----1980--------------------------
-	dfo.acts[["1980"]][["POP"]] = "Started experimental over-harvesting of SW Vancouver Island POP stock."
+	dfo.acts[["1980"]][["POP"]] = "POP: Started experimental over-harvesting of SW Vancouver Island POP stock."
 	##-----1981--------------------------
-	dfo.acts[["1981"]][["SBF"]] = "Started limited vessel entry for Sablefish fleet."
+	dfo.acts[["1981"]][["SBF"]] = "SBF: Started limited vessel entry for Sablefish fleet."
 	dfo.acts[["1981"]][["WAP"]] = "Pollock TAC (1981-1994): only 4B=Areas 13-18, 29"
 	##-----1983--------------------------
-	dfo.acts[["1983"]][["POP"]] = "Started experimental unlimited harvesting of Langara Spit POP stock (5EN)."
+	dfo.acts[["1983"]][["POP"]] = "POP: Started experimental unlimited harvesting of Langara Spit POP stock (5EN)."
 	##-----1984--------------------------
-	dfo.acts[["1984"]][["POP"]] = "Ended experimental over-harvesting of SW Vancouver Island POP stock."
+	dfo.acts[["1984"]][["POP"]] = "POP: Ended experimental over-harvesting of SW Vancouver Island POP stock."
 	##-----1990--------------------------
-	dfo.acts[["1990"]][["PAH|SBF"]] = "Started \\emph{Individual Vessel Quotas} (IVQ) systems for Halibut and Sablefish."
+	dfo.acts[["1990"]][["PAH|SBF"]] = "PAH|SBF: Started \\emph{Individual Vessel Quotas} (IVQ) systems for Halibut and Sablefish."
 	##-----1991--------------------------
-	dfo.acts[["1991"]][["PAH"]] = "Started \\emph{Dockside Monitoring Program} (DMP) for the Halibut fleet."
-	dfo.acts[["1991"]][["QBR|YYR"]] = "Started limited vessel entry for \\emph{Hook and Line} (H\\&L) fleet inside."
+	dfo.acts[["1991"]][["PAH"]] = "PAH: Started \\emph{Dockside Monitoring Program} (DMP) for the Halibut fleet."
+	dfo.acts[["1991"]][["QBR|YYR"]] = "H\\&L: Started limited vessel entry for \\emph{Hook and Line} (H\\&L) fleet inside."
 	##-----1992--------------------------
-	dfo.acts[["1992"]][["QBR|YYR"]] = "Started limited vessel entry for H\\&L fleet outside."
+	dfo.acts[["1992"]][["QBR|YYR"]] = "H\\&L: Started limited vessel entry for H\\&L fleet outside."
 	##-----1993--------------------------
-	dfo.acts[["1993"]][["POPa"]] = "Stopped experimental fishing of Langara Spit POP stock."
-	dfo.acts[["1993"]][["POPb"]] = "Closed POP fishery in PMFC area 5EN (Langara Spit)."
+	dfo.acts[["1993"]][["POPa"]] = "POP: Stopped experimental fishing of Langara Spit POP stock."
+	dfo.acts[["1993"]][["POPb"]] = "POP: Closed POP fishery in PMFC area 5EN (Langara Spit)."
 	##-----1994--------------------------
-	dfo.acts[["1994"]][["@@@"]] = "Started a dockside monitoring program (DMP) for the Trawl fleet."
+	dfo.acts[["1994"]][["@@@"]] = "TWL: Started a dockside monitoring program (DMP) for the Trawl fleet."
 	dfo.acts[["1994"]][["POP|YMR|RER|CAR|SGR|YTR|RSR|WWR|SKR|SST|LST"]] = "As a means of both reducing at-sea discarding and simplifying the harvesting regime, rockfish aggregation was implemented. Through consultation with GTAC, the following aggregates were identified: Agg~1=~POP, YMR, RER, CAR, SGR, YTR; Agg~2=~RSR, WWR; Agg~3=~SKR, SST, LST; Agg~4=~ORF."
 	##-----1995--------------------------
-	dfo.acts[["1995"]][["BOR|RBR|RSR|SST"]] = "Implemented catch limits (monthly) on rockfish aggregates for H\\&L."
+	dfo.acts[["1995"]][["BOR|RBR|RSR|SST"]] = "H\\&L: Implemented catch limits (monthly) on rockfish aggregates for H\\&L."
 	dfo.acts[["1995"]][["WAP"]] = "Pollock TAC areas: 5CDE=5CD; 5AB=Area 12; 4B=Areas 13-18, 29."
-	dfo.acts[["1995"]][["CAR|SGR|YTR|WWR|RER|POP|YMR|RSR|SKR|SST|LST"]] = "As a means of both reducing at-sea discarding and simplifying the harvesting regime, rockfish aggregation was implemented. Through consultation with GTAC, the following aggregates were identified: Agg~1=~CAR, SGR, YTR, WWR, RER; Agg~2=~POP, YMR, RSR; Agg~3=~SKR, SST, LST; Agg~4=~ORF."
+	dfo.acts[["1995"]][["CAR|SGR|YTR|WWR|RER|POP|YMR|RSR|SKR|SST|LST"]] = "TWL: As a means of both reducing at-sea discarding and simplifying the harvesting regime, rockfish aggregation was implemented. Through consultation with GTAC, the following aggregates were identified: Agg~1=~CAR, SGR, YTR, WWR, RER; Agg~2=~POP, YMR, RSR; Agg~3=~SKR, SST, LST; Agg~4=~ORF."
 	##-----1996--------------------------
-	dfo.acts[["1996"]][["@@@"]] = "Started 100\\% onboard observer program for offshore Trawl fleet."
-	dfo.acts[["1996"]][["BOR|RBR|RSR|SST"]] = "Started DMP for H\\&L fleet."
-	dfo.acts[["1996"]][["YTR|WWR|CAR|SGR|POP|YMR|RER|SKR|RSR|SCR|SST|LST"]] = "Rockfish aggregation will continue on a limited basis in 1996: Agg~1=~YTR, WWR; Agg~2=~CAR, SGR; Agg~3=~POP, YMR; Agg~4=~RER, SKR; Agg~5=~RSR, SCR; Agg~6=~ORF incl. SST, LST"
-	dfo.acts[["1996"]][["WAP"]] = "Pollock TAC areas: 5CDE=5CD; 5AB=Areas 11,12; 4B=Areas 13-18, 29"
+	dfo.acts[["1996"]][["@@@"]] = "TWL: Started 100\\% onboard observer program for offshore Trawl fleet."
+	dfo.acts[["1996"]][["BOR|RBR|RSR|SST"]] = "H\\&L: Started DMP for H\\&L fleet."
+	dfo.acts[["1996"]][["YTR|WWR|CAR|SGR|POP|YMR|RER|SKR|RSR|SCR|SST|LST"]] = "H\\&L: Rockfish aggregation will continue on a limited basis in 1996: Agg~1=~YTR, WWR; Agg~2=~CAR, SGR; Agg~3=~POP, YMR; Agg~4=~RER, SKR; Agg~5=~RSR, SCR; Agg~6=~ORF incl. SST, LST"
+	dfo.acts[["1996"]][["WAP"]] = "WAP: Pollock TAC areas: 5CDE=5CD; 5AB=Areas 11,12; 4B=Areas 13-18, 29"
 	##-----1997--------------------------
-	dfo.acts[["1997"]][["@@@"]] = "Started IVQ system for Trawl \\emph{Total Allowable Catch} (TAC) species (April 1, 1997)"
-	dfo.acts[["1997"]][["BOR|RBR"]] = "Implemented catch limits (15,000 lbs per trip) on combined non-TAC rockfish for the Trawl fleet."
-	dfo.acts[["1997"]][["POP|YMR"]] = "Permanent boundary adjustment -- Pacific Ocean Perch and Yellowmouth Rockfish caught within Subarea 102-3 and those portions of Subareas 142-1, 130-3 and 130-2 found southerly and easterly of a straight line commencing at 52$^\\circ$20$'$00$''$N 131$^\\circ$36$'$00$''$W thence to 52$^\\circ$20$'$00$''$N 132$^\\circ$00$'$00$''$W thence to 51$^\\circ$30$'$00$''$N 131$^\\circ$00$'$00$''$W and easterly and northerly of a straight line commencing at 51$^\\circ$30$'$00$''$N 131$^\\circ$00$'$00$''$W thence to 51$^\\circ$39$'$20$''$N 130$^\\circ$30$'$30$''$W will be deducted from the vessel's 5CD IVQ for those two species."
-	dfo.acts[["1997"]][["QBR|CPR|CHR|TIR|CAR|SGR|RER|SKR|SST|LST|POP|YMR|RSR|YTR|BKR|WWR"]] = "All H&L rockfish, with the exception of YYR, shall be managed under the following rockfish aggregates: Agg~1=~QBR, CPR; Agg~2=~CHR, TIR; Agg~3=~CAR, SGR; Agg~4=~RER, SKR, SST, LST; Agg~5=~POP, YMR, RSR; Agg~6=~YTR, BKR, WWR; Agg~7=~ORF excluding YYR."
+	dfo.acts[["1997"]][["@@@"]] = "TWL: Started IVQ system for Trawl \\emph{Total Allowable Catch} (TAC) species (April 1, 1997)"
+	dfo.acts[["1997"]][["BOR|RBR"]] = "TWL: Implemented catch limits (15,000 lbs per trip) on combined non-TAC rockfish for the Trawl fleet."
+	dfo.acts[["1997"]][["POP|YMR"]] = "POP|YMR: Permanent boundary adjustment -- Pacific Ocean Perch and Yellowmouth Rockfish caught within Subarea 102-3 and those portions of Subareas 142-1, 130-3 and 130-2 found southerly and easterly of a straight line commencing at 52$^\\circ$20$'$00$''$N 131$^\\circ$36$'$00$''$W thence to 52$^\\circ$20$'$00$''$N 132$^\\circ$00$'$00$''$W thence to 51$^\\circ$30$'$00$''$N 131$^\\circ$00$'$00$''$W and easterly and northerly of a straight line commencing at 51$^\\circ$30$'$00$''$N 131$^\\circ$00$'$00$''$W thence to 51$^\\circ$39$'$20$''$N 130$^\\circ$30$'$30$''$W will be deducted from the vessel's 5CD IVQ for those two species."
+	dfo.acts[["1997"]][["QBR|CPR|CHR|TIR|CAR|SGR|RER|SKR|SST|LST|POP|YMR|RSR|YTR|BKR|WWR"]] = "H\\&L: All H\\&L rockfish, with the exception of YYR, shall be managed under the following rockfish aggregates: Agg~1=~QBR, CPR; Agg~2=~CHR, TIR; Agg~3=~CAR, SGR; Agg~4=~RER, SKR, SST, LST; Agg~5=~POP, YMR, RSR; Agg~6=~YTR, BKR, WWR; Agg~7=~ORF excluding YYR."
 	##-----1998--------------------------
-	dfo.acts[["1998"]][["YYR"]] = "H\\&L Aggregate 4 -- Option A: a quantity of Aggregates 2 to 5 and 7 combined not to exceed 100\\% of the total of Aggregate 1 per landing; an overage of Aggregate 1 and 6 up to a maximum of 10% per fishing period which shall be deducted from the vessel's succeeding fishing period limit. Option B: a quantity of Aggregates 2 to 7 combined not to exceed 100% of the Yelloweye rockfish per landing. Option C: 20,000 pounds of Aggregate 4 per fishing period; an overage for each of the Aggregates 3 to 5 and, Aggregates 6 and 7 combined, up to a maximum of 20% per fishing period which shall be deducted from the vessel's succeeding fishing period limit."
+	dfo.acts[["1998"]][["YYR"]] = "H\\&L: Aggregate 4 -- Option A: a quantity of Aggregates 2 to 5 and 7 combined not to exceed 100\\% of the total of Aggregate 1 per landing; an overage of Aggregate 1 and 6 up to a maximum of 10\\% per fishing period which shall be deducted from the vessel's succeeding fishing period limit. Option B: a quantity of Aggregates 2 to 7 combined not to exceed 100\\% of the Yelloweye rockfish per landing. Option C: 20,000 pounds of Aggregate 4 per fishing period; an overage for each of the Aggregates 3 to 5 and, Aggregates 6 and 7 combined, up to a maximum of 20\\% per fishing period which shall be deducted from the vessel's succeeding fishing period limit."
 	##-----2000--------------------------
-	dfo.acts[["2000"]][["PAH|RBR"]] = "Implemented catch limits (20,000 lbs per trip) on rockfish aggregates for the Halibut option D fleet."
-	dfo.acts[["2000"]][["RBR|SST|PAH"]] = "Implemented formal allocation of rockfish species between Halibut and H\\&L sectors."
-	dfo.acts[["2000"]][["@@@"]] = "Formal discussions between the hook and line rockfish (ZN), halibut and trawl sectors were initiated in 2000 to establish individual rockfish species allocations between the sectors to replace the 92/8 split. Allocation arrangements were agreed to for rockfish species that are not currently under TAC. The agreed to splits for these rockfish will be implemented in the future when or if TACs are set for those species."
-	dfo.acts[["2000"]][["LST|SST"]] = "DFO cut LST TAC off WCVI to 404t and set a conditional TAC of 425t for an exploratory fishery north of 230$^\\circ$ true from Lookout Is."
+	dfo.acts[["2000"]][["PAH|RBR"]] = "PAH: Implemented catch limits (20,000 lbs per trip) on rockfish aggregates for the Halibut option D fleet."
+	dfo.acts[["2000"]][["RBR|SST|PAH"]] = "H\\&L: Implemented formal allocation of rockfish species between Halibut and H\\&L sectors."
+	dfo.acts[["2000"]][["@@@"]] = "ALL: Formal discussions between the hook and line rockfish (ZN), halibut and trawl sectors were initiated in 2000 to establish individual rockfish species allocations between the sectors to replace the 92/8 split. Allocation arrangements were agreed to for rockfish species that are not currently under TAC. Splits agreed upon for these rockfish will be implemented in the future when or if TACs are set for those species."
+	dfo.acts[["2000"]][["LST|SST"]] = "LST|SST: DFO cut LST TAC off WCVI to 404~t and set a conditional TAC of 425~t for an exploratory fishery north of 230$^\\circ$ true from Lookout Is."
 	##-----2001--------------------------
-	dfo.acts[["2001"]][["SGR"]] = "TAC reduction (3y) for SGR -- DFO has adopted conservative F=M harvest strategy in establishing the Silvergrey Rockfish TAC for all areas except 5AB. In 5AB the TAC will be stepped downward by 60 tonnes annually for each of the 2001/2002, 2003/2004 and 2003/2004 seasons to achieve this harvest strategy."
-	dfo.acts[["2001"]][["POP"]] = "TAC reduction (3y) for POP -- DFO reduced the 5CD POP TAC by 300 tonnes for research use as payment for the Hecate Strait Pacific Cod charter for each of the next three fishing seasons."
-	dfo.acts[["2001"]][["BOR"]] = "PSARC (now CSAP) concerned that the decline of abundance indices for Bocaccio from the West Coast Vancouver Island (WCVI) Shrimp survey data and, in particular, the U.S. Triennial survey data reflected a serious decline. A detailed review of all survey indices was recommended to assess trends in Bocaccio abundance."
+	dfo.acts[["2001"]][["SGR"]] = "SGR: TAC reduction (3y) for SGR -- DFO has adopted conservative F=M harvest strategy in establishing the Silvergrey Rockfish TAC for all areas except 5AB. In 5AB the TAC will be stepped downward by 60 tonnes annually for each of the 2001/2002, 2003/2004 and 2003/2004 seasons to achieve this harvest strategy."
+	dfo.acts[["2001"]][["POP"]] = "POP: TAC reduction (3y) for POP -- DFO reduced the 5CD POP TAC by 300 tonnes for research use as payment for the Hecate Strait Pacific Cod charter for each of the next three fishing seasons."
+	dfo.acts[["2001"]][["BOR"]] = "BOR: PSARC (now CSAP) concerned that the decline of abundance indices for Bocaccio from the West Coast Vancouver Island (WCVI) Shrimp survey data and, in particular, the U.S. Triennial survey data reflected a serious decline. A detailed review of all survey indices was recommended to assess trends in Bocaccio abundance."
 	##-----2002--------------------------
-	dfo.acts[["2002"]][["QBR|YYR|CPR|CHR|TIR"]] = "Established the inshore rockfish conservation strategy."
-	dfo.acts[["2002"]][["@@@"]] = "Closed areas to preserve four hexactinellid (glassy) sponge reefs."
-	dfo.acts[["2002"]][["LST|SST"]] = "Managers created 5 LST management zones coastwide (WCVI, Triangle, Tidemarks, Flamingo, Rennell); zones north of WCVI were designated ``experimental''."
-	dfo.acts[["2002"]][["BOR"]] = "Status of Bocaccio was designated as `Threatened' by the Committee on the Status of Endangered Wildlife in Canada (COSEWIC) in November 2002. The designation was based on a new status report that indicated a combination of low recruitment and high fishing mortality had resulted in severe declines and low spawning abundance of this species. As the Species at Risk Act (SARA) was not yet in place, there was no legal designation for Bocaccio. Protection under SARA would only come in the event that this species was listed, by regulation, under the Act."
+	dfo.acts[["2002"]][["QBR|YYR|CPR|CHR|TIR"]] = "H\\&L: Established the inshore rockfish conservation strategy."
+	dfo.acts[["2002"]][["@@@"]] = "TWL: Closed areas to preserve four hexactinellid (glassy) sponge reefs."
+	dfo.acts[["2002"]][["LST|SST"]] = "TWL: Managers created 5 LST management zones coastwide (WCVI, Triangle, Tidemarks, Flamingo, Rennell); zones north of WCVI were designated ``experimental''."
+	dfo.acts[["2002"]][["BOR"]] = "BOR: Status of Bocaccio was designated as `Threatened' by the Committee on the Status of Endangered Wildlife in Canada (COSEWIC) in November 2002. The designation was based on a new status report that indicated a combination of low recruitment and high fishing mortality had resulted in severe declines and low spawning abundance of this species. As the Species at Risk Act (SARA) was not yet in place, there was no legal designation for Bocaccio. Protection under SARA would only come in the event that this species was listed, by regulation, under the Act."
 	##-----2003--------------------------
-	dfo.acts[["2003"]][["BOR|CAR|LST|RER|YMR|YYR"]] = "Species at Risk Act (SARA) came into force in 2003."
+	dfo.acts[["2003"]][["BOR|CAR|LST|RER|YMR|YYR"]] = "ALL: Species at Risk Act (SARA) came into force in 2003."
 	##-----2004--------------------------
-	dfo.acts[["2004"]][["BOR"]] = "DFO reviewed management measures in the groundfish fisheries to assess the impacts on listed species under SARA. Voluntary program for the trawl fleet developed and implemented in 2004 in which groundfish trawl vessels directed the proceeds of all landed Bocaccio Rockfish for research and management purposes. Ongoing to 2019."
+	dfo.acts[["2004"]][["BOR"]] = "BOR: DFO reviewed management measures in the groundfish fisheries to assess the impacts on listed species under SARA. Voluntary program for the trawl fleet was developed and implemented in 2004 in which groundfish trawl vessels directed the proceeds of all landed Bocaccio Rockfish for research and management purposes. Ongoing to 2019."
 	##-----2005--------------------------
-	dfo.acts[["2005"]][["BORa"]] = "DFO consulted with First Nations, stakeholders, and the Canadian public on Bocaccio COSEWIC designation for 1.5 years and planned recommendations for further action to be presented to the Minister of Environment and Governor in Council (Cabinet) in spring 2005. A final listing decision by Governor in Council was expected in October 2005."
-	dfo.acts[["2005"]][["BORb"]] = "As a proactive measure, industry reduced the harvest of Bocaccio, beginning in 2004, and resulted in a reduction of the Bocaccio catch by over 50\\% percent. Subsequently, measures to avoid Bocaccio were taken in the fishing years 2005/06 through 2019/20."
-	dfo.acts[["2005"]][["BORc"]] = "The Government of Canada announced in November 2005 that Bocaccio be sent back to COSEWIC for further information or consideration."
+	dfo.acts[["2005"]][["BORa"]] = "BOR: DFO consulted with First Nations, stakeholders, and the Canadian public on Bocaccio COSEWIC designation for 1.5 years and planned recommendations for further action to be presented to the Minister of Environment and Governor in Council (Cabinet) in spring 2005. A final listing decision by Governor in Council was expected in October 2005."
+	dfo.acts[["2005"]][["BORb"]] = "BOR: As a proactive measure, industry reduced the harvest of Bocaccio, beginning in 2004, and resulted in a reduction of the Bocaccio catch by over 50\\% percent. Subsequently, measures to avoid Bocaccio were taken in the fishing years 2005/06 through 2019/20."
+	dfo.acts[["2005"]][["BORc"]] = "BOR: The Government of Canada announced in November 2005 that Bocaccio be sent back to COSEWIC for further information or consideration."
 	##-----2006--------------------------
-	dfo.acts[["2006"]][["@@@"]] = "Introduced an \\emph{Integrated Fisheries Management Plan} (IFMP) for most groundfish fisheries."
-	dfo.acts[["2006"]][["@@@a"]] = "Started 100\\% at-sea electronic monitoring for H\\&L."
-	dfo.acts[["2006"]][["POP"]] = "TAC reduction for POP -- DFO reduced the 5CD POP TAC by 700 tonnes for use in possible research programs."
-	dfo.acts[["2006"]][["BOR|RBR|RSR|SST|WWR"]] = "Implemented mandatory retention of rockfish for H\\&L."
-	dfo.acts[["2006"]][["SST"]] = "Annual non-directed species caps by fishery -- Shortspine Thornyhead (Dogfish = 0.05\\% Dogfish IVQ, Outside ZN = 1881 lbs., Halibut = 8000 lbs., Sablefish = 10,512 lbs.)"
-	dfo.acts[["2006"]][["QBR|YYR|CPR|CHR|TIR"]] = "To support rockfish research the Groundfish Hook and Line Sub Committee (GHLSC) agreed to set aside 5\\% of the ZN allocations for research purposes."
+	dfo.acts[["2006"]][["@@@"]] = "ALL: Introduced an \\emph{Integrated Fisheries Management Plan} (IFMP) for all directed groundfish fisheries."
+	dfo.acts[["2006"]][["@@@a"]] = "H\\&L: Implemented 100\\% at-sea electronic monitoring and 100\\% dockside monitoring for all groundfish H\\&L fisheries."
+	dfo.acts[["2006"]][["POP"]] = "POP: TAC reduction for POP -- DFO reduced the 5CD POP TAC by 700 tonnes for use in possible research programs."
+	dfo.acts[["2006"]][["BOR|RBR|RSR|SST|WWR"]] = "H\\&L: Implemented mandatory retention of rockfish for H\\&L."
+	dfo.acts[["2006"]][["SST"]] = "H\\&L: Annual non-directed species caps by fishery -- Shortspine Thornyhead (Dogfish = 0.05\\% Dogfish IVQ, Outside ZN = 1881 lbs., Halibut = 8000 lbs., Sablefish = 10,512 lbs.)"
+	dfo.acts[["2006"]][["QBR|YYR|CPR|CHR|TIR"]] = "H\\&L: To support rockfish research the Groundfish Hook and Line Sub Committee (GHLSC) agreed to set aside 5\\% of the ZN allocations for research purposes."
 	##-----2007--------------------------
-	dfo.acts[["2007"]][["SST|RER"]] = "Amendment to Halibut IVQ cap for SST and RER -- reallocations can only occur in blocks up to 4000 lbs or until the vessel species cap is met. Once the first 4000 lbs has been caught additional IVQ can be reallocated onto the licence up to 4000 lbs. This can continue until the vessel species cap is met."
-	dfo.acts[["2007"]][["BOR"]] = "COSEWIC reconfirmed Bocaccio's Threatened designation, and the species re-entered the SARA listing process in 2007."
+	dfo.acts[["2007"]][["SST|RER"]] = "PAH: Amendment to Halibut IVQ cap for SST and RER -- reallocations can only occur in blocks up to 4000 lbs or until the vessel species cap is met. Once the first 4000 lbs has been caught additional IVQ can be reallocated onto the licence up to 4000 lbs. This can continue until the vessel species cap is met."
+	dfo.acts[["2007"]][["BOR"]] = "BOR: COSEWIC reconfirmed Bocaccio's Threatened designation, and the species re-entered the SARA listing process in 2007."
 	##-----2011--------------------------
-	dfo.acts[["2011"]][["POP"]] = "TAC adjustment (3y) for POP -- combined 5ABCD POP TAC reduction to 3413\\,t will be achieved over a three year period through an annual reduction of 258\\,t. The expected catch level will be 68\\% of TAC."
-	dfo.acts[["2011"]][["RBR"]] = "TAC implementation for RBR -- 1,300,000 lbs has been set for Redbanded Rockfish coastwide (50\\% allocated to trawl, 37.5\\% allocated to rockfish outside and 12.5\\% allocated to halibut) and harvesters are now responsible for this mortality."
+	dfo.acts[["2011"]][["POP"]] = "POP: TAC adjustment (3y) for POP -- combined 5ABCD POP TAC reduction to 3413\\,t will be achieved over a three year period through an annual reduction of 258\\,t. The expected catch level will be 68\\% of TAC."
+	dfo.acts[["2011"]][["RBR"]] = "RBR: TAC implementation for RBR -- 1,300,000 lbs has been set for Redbanded Rockfish coastwide (50\\% allocated to trawl, 37.5\\% allocated to rockfish outside and 12.5\\% allocated to halibut) and harvesters are now responsible for this mortality."
 	##-----2012--------------------------
-	dfo.acts[["2012"]][["@@@"]] = "Footprint of where groundfish bottom trawl activities can occur was frozen (all vessels under the authority of a valid Category T commercial groundfish trawl license selecting Option A as identified in the IFMP)."
+	dfo.acts[["2012"]][["@@@"]] = "TWL: Froze the footprint of where groundfish bottom trawl activities can occur (all vessels under the authority of a valid Category T commercial groundfish trawl license selecting Option A as identified in the IFMP)."
 	##-----2013--------------------------
-	dfo.acts[["2013"]][["@@@"]] = "To support groundfish research the groundfish trawl industry agreed to the trawl TAC offsets to account for unavoidable mortality incurred during the joint DFO-Industry groundfish multi-species surveys in 2013."
-	dfo.acts[["2013"]][["POP"]] = "New Species Area Groups have been created for Pacific Ocean Perch for 3CD, 5AB, 5C and 5DE."
-	dfo.acts[["2013"]][["POPa"]] = "POP Combine 5ABCD TACs reduction to 3413 mt is to be achieved over a three year period through an annual reduction of 258 mt. 2013/14 is the third year of this three year period. The expected catch level is to be 68\\% of TAC. TAC is subject to annual review."
-	dfo.acts[["2013"]][["POPb"]] = "POP within Subarea 127-1 and that portion of Subareas 127-2 found northerly and westerly of 50$^\\circ$06$'$00$''$N will be deducted from the vessel's Pacific Ocean Perch rockfish 5A/B IVQ."
-	dfo.acts[["2013"]][["BORa"]] = "DFO formulated a plan for stepped reductions from current Bocaccio catch levels of approximately 137 tonnes (inclusive of trawl, groundfish hook and line, salmon troll, and recreational sectors) to a target level of 75 tonnes over 3 years (2013/14 to 2015/16). This plan accounted for First Nations' priority access for food, social, and ceremonial purposes. DFO worked with fishing interests to develop measures that would reduce Bocaccio catch and enable stock rebuilding over the long term."
-	dfo.acts[["2013"]][["BORb"]] = "Annual Trawl mortality cap for Bocaccio set at 150 tonnes. The IVQ carryover/underage limit was set to 15\\% of each vessels' Bocaccio holdings (in effect until 2019/20 fishery year)."
-	dfo.acts[["2013"]][["BORc"]] = "Schedule II individual transferable quota hook and line fisheries for Lingcod and Dogfish subject to trip limits specifically for Bocaccio -- 200 pounds where 15,000 pounds or less of Lingcod/Dogfish was landed; 200 pounds plus 1\\% of the amount of Lingcod/Dogfish landed in excess of 15,000 pounds, to a maximum of 600 pounds of Bocaccio. The Halibut, ZN Rockfish, and Sablefish line/trap fisheries subject to the same trip limits above for Bocaccio even though this species was included in the category `other rockfish'. Trip limits remained in effect until 2019/20."
-	dfo.acts[["2013"]][["BORd"]] = "COSEWIC had previously designated Bocaccio as Threatened in November 2002. Its status was re-examined and designated Endangered in November 2013."
+	dfo.acts[["2013"]][["@@@"]] = "TWL: To support groundfish research, the groundfish trawl industry agreed to the trawl TAC offsets to account for unavoidable mortality incurred during the joint DFO-Industry groundfish multi-species surveys in 2013."
+	dfo.acts[["2013"]][["POP"]] = "POP: New species-area groups have been created for Pacific Ocean Perch for 3CD, 5AB, 5C and 5DE."
+	dfo.acts[["2013"]][["POPa"]] = "POP: Combine 5ABCD TACs reduction to 3413~mt is to be achieved over a three year period through an annual reduction of 258 mt. 2013/14 is the third year of this three year period. The expected catch level is to be 68\\% of TAC. TAC is subject to annual review."
+	dfo.acts[["2013"]][["POPb"]] = "POP: Pacific Ocean Perch within Subarea 127-1 and that portion of Subareas 127-2 found northerly and westerly of 50$^\\circ$06$'$00$''$N will be deducted from the vessel's Pacific Ocean Perch rockfish 5A/B IVQ."
+	dfo.acts[["2013"]][["BORa"]] = "BOR: COSEWIC had previously designated Bocaccio as Threatened in November 2002. Its status was re-examined and designated Endangered in November 2013."
+	dfo.acts[["2013"]][["BORb"]] = "BOR: DFO formulated a plan for stepped reductions from current Bocaccio catch levels of approximately 137 tonnes (inclusive of trawl, groundfish hook and line, salmon troll, and recreational sectors) to a target level of 75 tonnes over 3 years (2013/14 to 2015/16). This plan accounted for First Nations' priority access for food, social, and ceremonial purposes. DFO worked with fishing interests to develop measures that would reduce Bocaccio catch and enable stock rebuilding over the long term."
+	dfo.acts[["2013"]][["BORc"]] = "BOR: Annual Trawl \\emph{Mortality Cap} (MC) for Bocaccio was initially set at 150 tonnes. The IVQ carryover/underage limit was set to 15\\% of each vessels' Bocaccio holdings (in effect until 2019/20 fishery year)."
+	dfo.acts[["2013"]][["BORd"]] = "BOR: All H\\&L groundfish fisheries subject to Bocaccio trip limits based on landings of directed species. For example, Halibut directed trips could land up to 200 pounds of Bocaccio when 15,000 pounds or less of Halibut was landed, 300 pounds of Bocaccio when 30,000 pounds of Halibut was landed and 400 pounds of Bocaccio when greater than 30,000 pounds of Halibut was landed. The Dogfish, Lingcod, ZN Rockfish, and Sablefish fisheries were subject to similar trip limits for Bocaccio. These trip limits remained in effect until 2015/16."
 	##-----2015--------------------------
-	dfo.acts[["2015"]][["@@@"]] = "Research allocations were specified starting in 2015 to account for the mortalities associated with survey catches to be covered by TACs."
-	dfo.acts[["2015"]][["BOR"]] = "Bocaccio trawl TAC (also called a `mortality cap') reduced to 110~t coastwide."
+	dfo.acts[["2015"]][["@@@"]] = "ALL: Research allocations were specified starting in 2015 to account for the mortalities associated with survey catches to be covered by TACs."
+	dfo.acts[["2015"]][["BORa"]] = "BOR: DFO Groundfish Management Unit refined the generalised primary objective for Bocaccio to specify that the aim was to also: \\emph{Achieve rebuilding throughout the species' range and grow out of the critical zone ($B > 0.4 B_{MSY}$) within three generations, with a 65\\% probability of success}. To support and monitor progress towards the objective, milestones were also established: \\emph{Achieve a positive stock trajectory trend in each 5-year interval, such that the biomass at the end of each 5-year period is greater than the biomass at the beginning of the same 5-year period. Between major assessments, progress towards this goal will be monitored by annually reviewing fishery-dependent and fishery-independent indices of stock trajectory}."
+	dfo.acts[["2015"]][["BORb"]] = "BOR: To reduce Bocaccio mortality in the groundfish H\\&L fisheries new trip limits were introduced. For example, Halibut directed trips could land 100 pounds plus 1\\% of the amount of Halibut landed in excess of 10,000 pounds to a maximum of 600 pounds of Bocaccio. The Dogfish, Lingcod, ZN Rockfish, and Sablefish directed fisheries were subject to the same trip limits. These trip limits remained in effect during the 2019/20 fishing year."
+	dfo.acts[["2015"]][["BORc"]] = "BOR: Bocaccio trawl MC reduced to 110~t coastwide."
 	##-----2016--------------------------
-	dfo.acts[["2016"]][["BOR"]] = "Bocaccio trawl TAC reduced to 80~t coastwide. Bocaccio remains a quota species in the trawl fishery, but not in the hook and line fisheries."
+	dfo.acts[["2016"]][["BORc"]] = "BOR: Bocaccio trawl MC reduced to 80~t coastwide. Bocaccio remains a quota species in the trawl fishery, but not in the hook and line fisheries."
 	##-----2019--------------------------
-	dfo.acts[["2019"]][["BOR"]] = "DFO Groundfish Management Unit refined the generalised primary objective for Bocaccio to specify that the aim was to also: \\emph{Achieve rebuilding throughout the species' range and grow out of the critical zone ($B > 0.4 B_{MSY}$) within three generations, with a 65\\% probability of success}. To support and monitor progress towards the objective, milestones were also established: \\emph{Achieve a positive stock trajectory trend in each 5-year interval, such that the biomass at the end of each 5-year period is greater than the biomass at the beginning of the same 5-year period. Between major assessments, progress towards this goal will be monitored by annually reviewing fishery-dependent and fishery-independent indices of stock trajectory}."
 
 	## Implementation
 	out = lapply(dfo.acts,function(x,spp){
@@ -1467,7 +1468,7 @@ plotMW = function(dat, xlim, ylim, outnam="Mean-Weight-Compare",
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotMW
 
 
-## processBio---------------------------2019-06-20
+## processBio---------------------------2020-01-20
 ## Process results from 'gfb_bio.sql' query.
 ##  zflds = new fields to move to end of file to save PJS 
 ##          having to reorder his database all the time
@@ -1507,7 +1508,8 @@ processBio = function(dat=PBSdat, strSpp, addsrfa=TRUE,
 			if (missing(strSpp))
 				stop("Must specify a species to determine stock allocation")
 			#idat$stock = calcStockArea(strSpp, major=idat$major, minor=idat$minor)
-			idat = calcStockArea(strSpp, dat=idat)
+			stockSpp = if (strSpp %in% c("REBS","RER","BSR","394","425")) "394" else strSpp
+			idat = calcStockArea(stockSpp, dat=idat)
 		}
 		if (addsort) {
 			idat$sort = rep("Z",nrow(idat))
@@ -1536,6 +1538,19 @@ processBio = function(dat=PBSdat, strSpp, addsrfa=TRUE,
 			## table(test) # e.g., BOR:
 			## D-1-3  K-1-2  K-3-2 K-3-NA  U-0-1  U-1-1 U-1-NA Z-0-NA  Z-3-1 
 			##   479    175   1216    983      6   5044   1100      3     12 
+		}
+		if (strSpp=="REBS") {
+			idat$spp0 = idat$spp
+			idat$gene = rep(0,nrow(idat))
+			gBSR = grepl("18",idat$exist); idat$spp[gBSR]  = "425"; idat$gene[gBSR] = 1
+			gRER = grepl("19",idat$exist); idat$spp[gRER]  = "394"; idat$gene[gRER] = 1
+			gHY1 = grepl("20",idat$exist); idat$spp[gHY1]  = "HY1"; idat$gene[gHY1] = 1
+			gHY2 = grepl("21",idat$exist); idat$spp[gHY2]  = "HY2"; idat$gene[gHY2] = 1
+			gFAIL= grepl("22",idat$exist); idat$spp[gFAIL] = "FAIL";idat$gene[gFAIL] = 1
+			idat$stock = rep("",nrow(idat))
+			idat$stock[is.element(idat$major,3:6)] = "RER"
+			idat$stock[is.element(idat$major,8:9)] = "BSR"
+			idat$stock[is.element(idat$major,7)]   = "HYB"
 		}
 		aflds=c("EID","X","Y")
 		idat=idat[,c(aflds,setdiff(names(idat),c(aflds,zflds)), zflds)]

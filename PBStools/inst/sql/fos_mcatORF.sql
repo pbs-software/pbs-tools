@@ -270,8 +270,8 @@ ORDER BY EC.TRIP_ID, EC.FISHING_EVENT_ID
 -- qu("fos_mcatORF.sql",dbName="GFFOS",strSpp="417")  -- Widow Rockfish 2018
 -- qu("fos_mcatORF.sql",dbName="GFFOS",strSpp="602")  -- Arrowtooth Flounder (180829)
 -- qu("fos_mcatORF.sql",dbName="GFFOS",strSpp=c("394","425"))  -- Rougheye+Blackspotted (180910)
--- qu("fos_mcatORF.sql",dbName="GFFOS",strSpp="425")  -- Blackspotted Rockfish (180912, 190722 only one recorded landing! -- 0.89kg in HALIBUT)
--- qu("fos_mcatORF.sql",dbName="GFFOS",strSpp="394")  -- Rougheye Rockfish (181207, 180912, 190722)
 -- qu("fos_mcatORF.sql",dbName="GFFOS",strSpp="435")  -- BOR Bocaccio (190705, 190807)
+-- qu("fos_mcatORF.sql",dbName="GFFOS",strSpp="425")  -- Blackspotted Rockfish (180912, 190722, 191008 only one recorded landing! -- 0.89kg in HALIBUT, trip 126379, event 0)
+-- qu("fos_mcatORF.sql",dbName="GFFOS",strSpp="394")  -- Rougheye Rockfish (181207, 180912, 190722, 191008, 191210)
 
 

@@ -210,5 +210,5 @@ ORDER BY
 --qu("gfb_catch_records.sql",dbName="GFBioSQL",strSpp="607",as.is=c(rep(F,14),T,rep(F,3)))
 --qu("gfb_catch_records.sql",dbName="GFBioSQL",strSpp="439",as.is=c(rep(F,16),T,rep(F,3)))
 --qu("gfb_catch_records.sql",dbName="GFBioSQL",strSpp="417",as.is=c(rep(FALSE,15),TRUE,rep(FALSE,3)))
---qu("gfb_catch_records.sql",dbName="GFBioSQL",strSpp="435",as.is=c(rep(FALSE,15),TRUE,rep(FALSE,3)))
+--qu("gfb_catch_records.sql",dbName="GFBioSQL",strSpp="435",as.is=c(rep(FALSE,15),TRUE,rep(FALSE,3))) -- BOR (191016)
 

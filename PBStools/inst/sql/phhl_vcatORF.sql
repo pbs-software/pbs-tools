@@ -104,6 +104,7 @@ WHERE V.landed>0 OR V.POP>0 OR V.ORF>0 OR V.PAH>0 OR V.SBF>0 OR V.DOG>0 OR V.LIN
 
 -- getData("phhl_vcatORF.sql","PacHarvHL",strSpp="442",fisheryid=5)
 -- qu("phhl_vcatORF.sql",dbName="PacHarvHL",strSpp="418")   ### validated (DMP) catch
+-- qu("phhl_vcatORF.sql",dbName="PacHarvHL",strSpp="435")   ### validated (DMP) catch
 
 
 

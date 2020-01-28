@@ -5,40 +5,65 @@
 SET NOCOUNT ON
 
 ---------------------------SPECIMEN QUERIES---------------------------
--- Get 'specimen existence' codes for genetic resolution of RER/BSR specimens
 SELECT --TOP 40
-  SE.SAMPLE_ID,
-  SE.SPECIMEN_ID,
-  'GENETIC_CODE' = MAX(CASE
-    WHEN SE.EXISTENCE_ATTRIBUTE_CODE IN (18) THEN '425'
-    WHEN SE.EXISTENCE_ATTRIBUTE_CODE IN (19) THEN '394'
-    ELSE '' END)
-INTO #TempGen
-FROM SPECIMEN_EXISTENCE SE
-GROUP BY
-  SE.SAMPLE_ID, SE.SPECIMEN_ID
-
-SELECT
-  TG.SAMPLE_ID,
-  TG.SPECIMEN_ID,
-  TG.GENETIC_CODE
+  SAMPLE_ID,
+  SPECIMEN_ID,
+  MAX(CASE WHEN seq IN (1) THEN CAST(EXISTENCE_ATTRIBUTE_CODE AS varchar) ELSE '' END ) +
+  MAX(CASE WHEN seq IN (2) THEN '|' + CAST(EXISTENCE_ATTRIBUTE_CODE AS varchar) ELSE '' END) +
+  MAX(CASE WHEN seq IN (3) THEN '|' + CAST(EXISTENCE_ATTRIBUTE_CODE AS varchar) ELSE '' END) +
+  MAX(CASE WHEN seq IN (4) THEN '|' + CAST(EXISTENCE_ATTRIBUTE_CODE AS varchar) ELSE '' END) +
+  MAX(CASE WHEN seq IN (5) THEN '|' + CAST(EXISTENCE_ATTRIBUTE_CODE AS varchar) ELSE '' END) +
+  MAX(CASE WHEN seq IN (6) THEN '|' + CAST(EXISTENCE_ATTRIBUTE_CODE AS varchar) ELSE '' END) +
+  MAX(CASE WHEN seq IN (7) THEN '|' + CAST(EXISTENCE_ATTRIBUTE_CODE AS varchar) ELSE '' END) +
+  MAX(CASE WHEN seq IN (8) THEN '|' + CAST(EXISTENCE_ATTRIBUTE_CODE AS varchar) ELSE '' END) AS EXISTENCE_CODE
 INTO #GenSpp
-FROM #TempGen TG
-WHERE TG.GENETIC_CODE NOT IN ('')
+FROM
+  (SELECT 
+      SE1.SAMPLE_ID, SE1.SPECIMEN_ID, SE1.EXISTENCE_ATTRIBUTE_CODE,
+    (SELECT COUNT(*) 
+      FROM SPECIMEN_EXISTENCE SE2
+      WHERE SE2.SAMPLE_ID = SE1.SAMPLE_ID AND SE2.SPECIMEN_ID = SE1.SPECIMEN_ID
+        AND SE2.EXISTENCE_ATTRIBUTE_CODE <= SE1.EXISTENCE_ATTRIBUTE_CODE )
+  FROM SPECIMEN_EXISTENCE SE1 ) D ( SAMPLE_ID, SPECIMEN_ID, EXISTENCE_ATTRIBUTE_CODE, seq )
+GROUP BY SAMPLE_ID, SPECIMEN_ID
+
+-- FOS TIDs that are associated with GFB TIDs (there can be more than 1) (RH 190812)
+-- Need to collapse FOSTID because there can be more than one (extreme: 8 FOS TIDs for GFB TID = 84531)
+-- Concatenating values when the number of items is small and known upfront 
+-- http://www.projectdmx.com/tsql/rowconcatenate.aspx
+SELECT TRIP_ID,
+  MAX(CASE WHEN seq IN (1) THEN CAST(FOS_TRIP_ID AS varchar) ELSE '' END ) +
+  MAX(CASE WHEN seq IN (2) THEN '|' + CAST(FOS_TRIP_ID AS varchar) ELSE '' END) +
+  MAX(CASE WHEN seq IN (3) THEN '|' + CAST(FOS_TRIP_ID AS varchar) ELSE '' END) +
+  MAX(CASE WHEN seq IN (4) THEN '|' + CAST(FOS_TRIP_ID AS varchar) ELSE '' END) +
+  MAX(CASE WHEN seq IN (5) THEN '|' + CAST(FOS_TRIP_ID AS varchar) ELSE '' END) +
+  MAX(CASE WHEN seq IN (6) THEN '|' + CAST(FOS_TRIP_ID AS varchar) ELSE '' END) +
+  MAX(CASE WHEN seq IN (7) THEN '|' + CAST(FOS_TRIP_ID AS varchar) ELSE '' END) +
+  MAX(CASE WHEN seq IN (8) THEN '|' + CAST(FOS_TRIP_ID AS varchar) ELSE '' END) AS FOS_TRIP_ID
+INTO #FOSTID
+FROM
+  (SELECT 
+    FT1.TRIP_ID, FT1.FOS_TRIP_ID,
+    (SELECT COUNT(*) 
+      FROM FOS_TRIP FT2
+      WHERE FT2.TRIP_ID = FT1.TRIP_ID
+        AND FT2.FOS_TRIP_ID <= FT1.FOS_TRIP_ID )
+  FROM FOS_TRIP FT1 ) D ( TRIP_ID, FOS_TRIP_ID, seq )
+GROUP BY TRIP_ID
 
 -- Collect values from B01 to B05, possibly modified by genetic species (GS) update
 SELECT -- TOP 1000
   TAC.ACTIVITY_CODE,               -- 190624: Trip activity code might provide a clue if survey ID is missing (MS)
   B01.VESSEL_ID,
   B01.TRIP_ID,
-  FT.FOS_TRIP_ID,                  -- 190717: Trip ID in GFFOS to link GFBioSQL and GFFOS (NO).
+  COALESCE(FT.FOS_TRIP_ID, '') AS FOS_TRIP_ID,  -- 190717: Trip ID in GFFOS to link GFBioSQL and GFFOS (NO).
   B02.FISHING_EVENT_ID,
   B03.CATCH_ID,
   B04.SAMPLE_ID,
   B05.SPECIMEN_ID,
   B02.GROUPING_CODE,
   B02.REASON_CODE,
-  B02.BLOCK_DESIGNATION,
+  COALESCE(B02.BLOCK_DESIGNATION, '') AS BLOCK_DESIGNATION,
   B01.HAIL_IN_NO,
   B02.FE_MAJOR_LEVEL_ID,
   B02.FE_SUB_LEVEL_ID,             -- 180914: Only populated for gear types 2 (trap) and 4 (handline)
@@ -92,7 +117,10 @@ SELECT -- TOP 1000
         B02.FE_BEGINNING_BOTTOM_DEPTH, B02.FE_END_BOTTOM_DEPTH, B02.FE_MODAL_BOTTOM_DEPTH, B02.FE_MIN_BOTTOM_DEPTH, B02.FE_MAX_BOTTOM_DEPTH)
     ELSE 0 END,
   B02.FE_BOTTOM_WATER_TEMPERATURE,
-  COALESCE(GS.GENETIC_CODE,B03.SPECIES_CODE) AS SPECIES_CODE,
+  --COALESCE(GS.GENETIC_CODE, B03.SPECIES_CODE) AS SPECIES_CODE,
+  B03.SPECIES_CODE AS SPECIES_CODE_OBS,
+  COALESCE(GS.EXISTENCE_CODE, '') AS EXIST_CODE,  -- 200107: RH added existence attribute code for REBS genetics
+  --ISNULL(GS.GENETICS,0) AS GENETICS,
   B03.SPECIES_CATEGORY_CODE,
   B04.SAMPLE_SOURCE_CODE,          -- 190626: sample source code used in conjunction with species category code to determine unsorted and keepers ( Forrest et. al (2015)
   B03.CATCH_VERIFICATION_CODE,
@@ -101,7 +129,7 @@ SELECT -- TOP 1000
 INTO #B01B05
 FROM 
   TRIP_ACTIVITY TAC RIGHT OUTER JOIN
-  FOS_TRIP FT RIGHT OUTER JOIN
+  #FOSTID FT RIGHT OUTER JOIN
   B01_TRIP B01 INNER JOIN
   B02_FISHING_EVENT B02 INNER JOIN
   B02L3_Link_Fishing_Event_Catch L1 INNER JOIN
@@ -121,9 +149,10 @@ FROM
     B01.TRIP_ID = FT.TRIP_ID ON
     B01.TRIP_ID = TAC.TRIP_ID
 WHERE 
-  COALESCE(GS.GENETIC_CODE,B03.SPECIES_CODE) IN (@sppcode) AND
-  B02.MAJOR_STAT_AREA_CODE IN (@major) --AND
-  --B02.FE_SUB_LEVEL_ID IS NULL  -- FISHING_EVENT_ID REPEATED MANY TIMES FOR HOOKS AND TRAPS IF NOT NULL (STUPID IDEA)
+  --COALESCE(GS.GENETIC_CODE, B03.SPECIES_CODE) IN (@sppcode)
+  B03.SPECIES_CODE IN (@sppcode)
+  AND B02.MAJOR_STAT_AREA_CODE IN (@major)
+  --AND B02.FE_SUB_LEVEL_ID IS NULL  -- FISHING_EVENT_ID REPEATED MANY TIMES FOR HOOKS AND TRAPS IF NOT NULL (STUPID IDEA)
 
 -- Gather earliest GROUPING_CODE by FISHING_EVENT_ID (changed 180129 to match gfb_catch_records.sql)
 -- This is likely to match the original series SSID
@@ -146,16 +175,17 @@ SET GROUPING_CODE = COALESCE( #B01B05.GROUPING_CODE,
 
 --SELECT * FROM #B01B05
 
--- Collect specimen IDs for ONLY strSpp (to speed up some later queries) (62990)
+
+-- Collect specimen IDs for ONLY strSpp (to speed up some later queries)
 SELECT --TOP 40
   BB.TRIP_ID,
   BB.FISHING_EVENT_ID,
   BB.CATCH_ID,
   BB.SAMPLE_ID,
   BB.SPECIMEN_ID
-  --BB.SPECIES_CODE
 INTO #onlySPID
-FROM #B01B05 BB
+FROM
+  #B01B05 BB
 
 --SELECT * FROM #onlySPID
 
@@ -333,22 +363,22 @@ GROUP BY
 
 -- ===== Tie everything together =====
 SELECT 
-  'AC'   = ISNULL(AA.ACTIVITY_CODE,0),                      -- TRIP_ACTIVITY
-  'VID'  = ISNULL(AA.VESSEL_ID,0),                          -- B01_Trip
-  'TID'  = AA.TRIP_ID,                                      -- B01_TRIP
-  'FOSTID'  = AA.FOS_TRIP_ID,                               -- FOS_TRIP
-  'FEID' = AA.FISHING_EVENT_ID,                             -- B02_FISHING_EVENT
-  'CID'  = AA.CATCH_ID,                                     -- B03_CATCH
-  'SID'  = AA.SAMPLE_ID,                                    -- B04_SAMPLE
-  'SPID' = AA.SPECIMEN_ID,                                  -- B05_SPECIMEN
-  'SVID' = TSS.SURVEY_ID,                                   -- TRIP_SURVEY
-  'SSID' = CASE                                             -- SURVEY
+  'AC'      = ISNULL(AA.ACTIVITY_CODE,0),                      -- TRIP_ACTIVITY
+  'VID'     = ISNULL(AA.VESSEL_ID,0),                          -- B01_Trip
+  'TID'     = AA.TRIP_ID,                                      -- B01_TRIP
+  'FOSTID'  = AA.FOS_TRIP_ID,                                  -- FOS_TRIP
+  'FEID'    = AA.FISHING_EVENT_ID,                             -- B02_FISHING_EVENT
+  'CID'     = AA.CATCH_ID,                                     -- B03_CATCH
+  'SID'     = AA.SAMPLE_ID,                                    -- B04_SAMPLE
+  'SPID'    = AA.SPECIMEN_ID,                                  -- B05_SPECIMEN
+  'SVID'    = TSS.SURVEY_ID,                                   -- TRIP_SURVEY
+  'SSID'    = CASE                                             -- SURVEY
     WHEN TSS.SURVEY_SERIES_ID IS NULL OR TSS.SURVEY_SERIES_ID IN (0) THEN (CASE
       WHEN AA.BLOCK_DESIGNATION IN ('TASU','FLAMINGO') THEN 22
       WHEN AA.BLOCK_DESIGNATION IN ('TRIANGLE','BROOKS') THEN 36
       ELSE TSS.SURVEY_SERIES_ID END)
     ELSE TSS.SURVEY_SERIES_ID END,
-  'GC'   = CASE                                             -- SURVEY_GROUPING
+  'GC'      = CASE                                             -- SURVEY_GROUPING
     WHEN AA.GROUPING_CODE IS NOT NULL THEN AA.GROUPING_CODE
     WHEN AA.BLOCK_DESIGNATION IN ('TASU','FLAMINGO') THEN (CASE
       WHEN AA.Best_Depth BETWEEN 20 AND 70 THEN 321
@@ -361,65 +391,68 @@ SELECT
       WHEN AA.Best_Depth BETWEEN 150.001 AND 260 THEN 326
       ELSE NULL END)
     ELSE NULL END,
-  'RC'    = ISNULL(AA.REASON_CODE,0),                       -- B02_FISHING_EVENT
-  'block' = AA.BLOCK_DESIGNATION,                           -- B02_FISHING_EVENT
-  'hail'  = IsNull(AA.HAIL_IN_NO,0),                        -- B01_Trip
-  'set'   = IsNull(AA.FE_MAJOR_LEVEL_ID,0),                 -- B02_Fishing_Event (primary set,   e.g. tow,    in FEID)
-  'sset'  = IsNull(AA.FE_SUB_LEVEL_ID,0),                   -- B02_Fishing_Event (secondary set, e.g. skates, in FEID)
-  'ssset' = ISNULL(AA.FE_MINOR_LEVEL_ID,0),                 -- B02_Fishing_Event (tertiary  set, e.g. hooks,  in FEID)
-  'ttype' = IsNull(AA.TRIP_SUB_TYPE_CODE,0),                -- B01_Trip
-  'stype' = IsNull(AA.SAMPLE_TYPE_CODE,0),                  -- B04_Sample
-  'ftype' = CASE WHEN AA.VESSEL_ID IN (568,569,592,595) THEN 1 ELSE 0 END,  -- B01_Trip (freezer trawl vessels)
-  'date'  = CASE 
+  'RC'      = ISNULL(AA.REASON_CODE,0),                       -- B02_FISHING_EVENT
+  'block'   = AA.BLOCK_DESIGNATION,                           -- B02_FISHING_EVENT
+  'hail'    = IsNull(AA.HAIL_IN_NO,0),                        -- B01_Trip
+  'set'     = IsNull(AA.FE_MAJOR_LEVEL_ID,0),                 -- B02_Fishing_Event (primary set,   e.g. tow,    in FEID)
+  'sset'    = IsNull(AA.FE_SUB_LEVEL_ID,0),                   -- B02_Fishing_Event (secondary set, e.g. skates, in FEID)
+  'ssset'   = ISNULL(AA.FE_MINOR_LEVEL_ID,0),                 -- B02_Fishing_Event (tertiary  set, e.g. hooks,  in FEID)
+  'ttype'   = IsNull(AA.TRIP_SUB_TYPE_CODE,0),                -- B01_Trip
+  'stype'   = IsNull(AA.SAMPLE_TYPE_CODE,0),                  -- B04_Sample
+  'ftype'   = CASE WHEN AA.VESSEL_ID IN (568,569,592,595) THEN 1 ELSE 0 END,  -- B01_Trip (freezer trawl vessels)
+  'date'    = CASE 
     WHEN AA.SAMPLE_DATE Is Null Or 
          AA.TRIP_END_DATE-AA.SAMPLE_DATE < 0 Or 
          AA.TRIP_START_DATE-AA.SAMPLE_DATE > 0 THEN 
       convert(smalldatetime,convert(varchar(10),AA.TRIP_END_DATE,20),20)        -- B01_Trip
     ELSE convert(smalldatetime,convert(varchar(10),AA.SAMPLE_DATE,20),20) END,  -- B04_Sample
-  'year' = Year(CASE 
+  'year'    = Year(CASE 
     WHEN AA.SAMPLE_DATE Is Null Or AA.TRIP_END_DATE-AA.SAMPLE_DATE<0 Or
-    AA.TRIP_START_DATE-AA.SAMPLE_DATE>0 THEN AA.TRIP_END_DATE         -- B01_Trip
-    ELSE AA.SAMPLE_DATE END),                                         -- B04_Sample
-  'spp'   = AA.SPECIES_CODE,                                          -- B03_CATCH
-  'sex'   = IsNull(AA.SPECIMEN_SEX_CODE,0),                           -- B05_Specimen
-  'mat'   = IsNull(AA.MATURITY_CODE,0),                               -- B05_Specimen
+    AA.TRIP_START_DATE-AA.SAMPLE_DATE>0 THEN AA.TRIP_END_DATE -- B01_Trip
+    ELSE AA.SAMPLE_DATE END),                                 -- B04_Sample
+  -- 'spp'  = AA.SPECIES_CODE,                                -- SPECIMEN_EXISTENCE (genetically determined) or B03_CATCH
+  'spp'     = AA.SPECIES_CODE_OBS,                            -- B03_CATCH (species before genetics, if any)
+  'exist'   = AA.EXIST_CODE,                                  -- SPECIMEN_EXISTENCE (field = EXISTENCE_ATTRIBUTE_CODE)
+  -- 'gene' = AA.GENETICS,                                    -- was genetics performed
+  'sex'     = IsNull(AA.SPECIMEN_SEX_CODE,0),                 -- B05_Specimen
+  'mat'     = IsNull(AA.MATURITY_CODE,0),                     -- B05_Specimen
   -- sometimes otoliths have been aged but they do not appear in the SPECIMEN_COLLECTED table
   -- RH 180102 - cannot assume these are otoliths (also, the statement above may no longer be TRUE)
   --'oto'   = CASE
   --            WHEN AA.SPECIMEN_AGE IS NOT NULL THEN 1
-  --            ELSE IsNull(TT.otoliths,0) END,                         -- B05a_Specimen_Collected
-  'oto'   = IsNull(TT.otoliths,0),                                    -- B05a_Specimen_Collected
-  'fin'   = IsNull(TT.fins,0),                                        -- B05a_Specimen_Collected (may be more than one type of fin)
-  'scale' = IsNull(TT.scales,0),                                      -- B05a_Specimen_Collected (may be more than one type of scale)
-  'uage'  = CASE
+  --            ELSE IsNull(TT.otoliths,0) END,               -- B05a_Specimen_Collected
+  'oto'     = IsNull(TT.otoliths,0),                          -- B05a_Specimen_Collected
+  'fin'     = IsNull(TT.fins,0),                              -- B05a_Specimen_Collected (may be more than one type of fin)
+  'scale'   = IsNull(TT.scales,0),                            -- B05a_Specimen_Collected (may be more than one type of scale)
+  'uage'    = CASE
               WHEN AA.SPECIMEN_AGE IS NOT NULL AND IsNull(TT.otoliths,0)=0 AND 
               IsNull(TT.fins,0)=0 AND IsNull(TT.scales,0)=0 THEN 1
-              ELSE 0 END,                                             -- B05a_Specimen_Collected (this condition may never exist)
+              ELSE 0 END,                                     -- B05a_Specimen_Collected (this condition may never exist)
   --'narc'  = CASE 
   --            WHEN AA.SPECIMEN_AGE IS NOT NULL OR ISNULL(TT.notavail,0) = 0 THEN NULL
-  --            ELSE TT.notavail END,                                   -- B05a_Specimen_Collected
-  'narc'  = CASE 
+  --            ELSE TT.notavail END,                         -- B05a_Specimen_Collected
+  'narc'    = CASE 
               WHEN ISNULL(TT.notavail,0) = 0 THEN NULL
-              ELSE TT.notavail END,                                   -- B05a_Specimen_Collected
-  'age'   = AA.SPECIMEN_AGE,                                          -- B05_Specimen
-  'ameth' = CASE WHEN AA.SPECIMEN_AGE Is Null THEN NULL ELSE IsNull(AA.AGEING_METHOD_CODE,0) END,  -- B05_Specimen
-  'len'   = CASE WHEN IsNull(BM.Best_Length,0)=0 THEN NULL ELSE BM.Best_Length END,    -- B05d_Specimen_Morphometrics
-  'wt'    = CASE WHEN IsNull(BM.Round_Weight,0)=0 THEN NULL ELSE BM.Round_Weight END, -- B05d_Specimen_Morphometrics
-  'scat'  = IsNull(AA.SPECIES_CATEGORY_CODE,0),                          -- B03_Catch
-  'ssrc'  = AA.SAMPLE_SOURCE_CODE,                                       -- B04_Sample
-  'cver'  = IsNull(AA.CATCH_VERIFICATION_CODE,0),                        -- B03_Catch
-  'fdep'  = CASE WHEN AA.Best_Depth=0 THEN NULL ELSE AA.Best_Depth END,  -- B02_FISHING_EVENT
-  'bwt'   = CASE WHEN AA.FE_BOTTOM_WATER_TEMPERATURE>30 THEN NULL
-    ELSE AA.FE_BOTTOM_WATER_TEMPERATURE END,                -- B02_Fishing_Event
-  'gear'  = IsNull(AA.GEAR_CODE,0),                         -- B02_Fishing_Event
-  'use'   = IsNull(TSP.USABILITY,0),                        -- B02e_Trawl_Specs
-  'dist'  = IsNull(TSP.DISTANCE,0),                         -- B02e_Trawl_Specs
-  'door'  = IsNull(TSP.DOORSPREAD,0),                       -- B02e_Trawl_Specs
-  'major' = IsNull(AA.MAJOR_STAT_AREA_CODE,0),              -- B02_Fishing_Event
-  'minor' = IsNull(AA.MINOR_STAT_AREA_CODE,0),              -- B02_Fishing_Event
-  'locality' = IsNull(AA.LOCALITY_CODE,0),                  -- B02_Fishing_Event
-  'X' = IsNull(-AA.Best_Long, Null),                        -- B02_FISHING_EVENT
-  'Y' = IsNull(AA.Best_Lat, Null),                          -- B02_FISHING_EVENT
+              ELSE TT.notavail END,                           -- B05a_Specimen_Collected
+  'age'     = AA.SPECIMEN_AGE,                                -- B05_Specimen
+  'ameth'   = CASE WHEN AA.SPECIMEN_AGE Is Null THEN NULL ELSE IsNull(AA.AGEING_METHOD_CODE,0) END,  -- B05_Specimen
+  'len'     = CASE WHEN IsNull(BM.Best_Length,0)=0 THEN NULL ELSE BM.Best_Length END,    -- B05d_Specimen_Morphometrics
+  'wt'      = CASE WHEN IsNull(BM.Round_Weight,0)=0 THEN NULL ELSE BM.Round_Weight END,  -- B05d_Specimen_Morphometrics
+  'scat'    = IsNull(AA.SPECIES_CATEGORY_CODE,0),             -- B03_Catch
+  'ssrc'    = AA.SAMPLE_SOURCE_CODE,                          -- B04_Sample
+  'cver'    = IsNull(AA.CATCH_VERIFICATION_CODE,0),           -- B03_Catch
+  'fdep'    = CASE WHEN AA.Best_Depth=0 THEN NULL ELSE AA.Best_Depth END,  -- B02_FISHING_EVENT
+  'bwt'     = CASE WHEN AA.FE_BOTTOM_WATER_TEMPERATURE>30 THEN NULL
+    ELSE AA.FE_BOTTOM_WATER_TEMPERATURE END,                  -- B02_Fishing_Event
+  'gear'    = IsNull(AA.GEAR_CODE,0),                         -- B02_Fishing_Event
+  'use'     = IsNull(TSP.USABILITY,0),                        -- B02e_Trawl_Specs
+  'dist'    = IsNull(TSP.DISTANCE,0),                         -- B02e_Trawl_Specs
+  'door'    = IsNull(TSP.DOORSPREAD,0),                       -- B02e_Trawl_Specs
+  'major'   = IsNull(AA.MAJOR_STAT_AREA_CODE,0),              -- B02_Fishing_Event
+  'minor'   = IsNull(AA.MINOR_STAT_AREA_CODE,0),              -- B02_Fishing_Event
+  'locality' = IsNull(AA.LOCALITY_CODE,0),                    -- B02_Fishing_Event
+  'X'       = IsNull(-AA.Best_Long, Null),                    -- B02_FISHING_EVENT
+  'Y'       = IsNull(AA.Best_Lat, Null),                      -- B02_FISHING_EVENT
   CASE
     WHEN AA.MAJOR_STAT_AREA_CODE IN (1) THEN '4B'
     WHEN AA.MAJOR_STAT_AREA_CODE IN (3) THEN '3C'
@@ -429,9 +462,9 @@ SELECT
     WHEN AA.MAJOR_STAT_AREA_CODE IN (7) THEN '5C'
     WHEN AA.MAJOR_STAT_AREA_CODE IN (8) THEN '5D'
     WHEN AA.MAJOR_STAT_AREA_CODE IN (9) THEN '5E'
-    ELSE '0' END AS PMFC,                                   -- B02_Fishing_Event
-  ISNULL(AA.DFO_STAT_AREA_CODE,'0') AS PFMA,                -- B02_Fishing_Event
-  ISNULL(AA.DFO_STAT_SUBAREA_CODE,0) AS PFMS,               -- B02_Fishing_Event
+    ELSE '0' END AS PMFC,                                     -- B02_Fishing_Event
+  ISNULL(AA.DFO_STAT_AREA_CODE,'0') AS PFMA,                  -- B02_Fishing_Event
+  ISNULL(AA.DFO_STAT_SUBAREA_CODE,0) AS PFMS,                 -- B02_Fishing_Event
   CASE 
     WHEN AA.DFO_STAT_AREA_CODE IN ('21','23','24','121','123') OR
           (AA.DFO_STAT_AREA_CODE IN ('124') AND AA.DFO_STAT_SUBAREA_CODE IN (1,2,3)) OR
@@ -453,16 +486,19 @@ SELECT
           (AA.DFO_STAT_AREA_CODE IN ('102') AND AA.DFO_STAT_SUBAREA_CODE IN (2)) OR
           (AA.DFO_STAT_AREA_CODE IN ('105') AND AA.DFO_STAT_SUBAREA_CODE IN (2)) OR
           (AA.DFO_STAT_AREA_CODE IN ('107') AND AA.DFO_STAT_SUBAREA_CODE IN (1)) OR
-          (@sppcode IN ('396','440') AND AA.DFO_STAT_AREA_CODE IN ('102') AND AA.DFO_STAT_SUBAREA_CODE IN (3)) OR
+          --(@sppcode IN ('396','440') AND AA.DFO_STAT_AREA_CODE IN ('102') AND AA.DFO_STAT_SUBAREA_CODE IN (3)) OR
+          (('396' IN (@sppcode) OR '440' IN (@sppcode)) AND AA.DFO_STAT_AREA_CODE IN ('102') AND AA.DFO_STAT_SUBAREA_CODE IN (3)) OR
 -- note: these four lines identify tows in the four-sided polygon SW of Cape St. James
-          (@sppcode IN ('396','440') AND AA.Best_Long IS NOT NULL AND AA.Best_Lat IS NOT NULL AND
+          --(@sppcode IN ('396','440') AND AA.Best_Long IS NOT NULL AND AA.Best_Lat IS NOT NULL AND
+          (('396' IN (@sppcode) OR '440' IN (@sppcode)) AND AA.Best_Long IS NOT NULL AND AA.Best_Lat IS NOT NULL AND
             -- top, right, bottom, left
             AA.Best_Lat   <= 52.33333 AND
             -AA.Best_Long <= ((AA.Best_Lat+29.3722978)/(-0.6208634)) AND
             AA.Best_Lat   >= (92.9445665+(-AA.Best_Long*0.3163707)) AND
             -AA.Best_Long >= ((AA.Best_Lat+57.66623)/(-0.83333)) ) THEN '5C'
     WHEN AA.DFO_STAT_AREA_CODE IN ('7','8','9','10','108','109','110') OR
-          (@sppcode NOT IN ('396','440') AND AA.DFO_STAT_AREA_CODE IN ('102') AND AA.DFO_STAT_SUBAREA_CODE IN (3)) OR
+          --(@sppcode NOT IN ('396','440') AND AA.DFO_STAT_AREA_CODE IN ('102') AND AA.DFO_STAT_SUBAREA_CODE IN (3)) OR
+          (('396' NOT IN (@sppcode) AND '440' NOT IN (@sppcode)) AND AA.DFO_STAT_AREA_CODE IN ('102') AND AA.DFO_STAT_SUBAREA_CODE IN (3)) OR
           (AA.DFO_STAT_AREA_CODE IN ('107') AND AA.DFO_STAT_SUBAREA_CODE IN (2,3)) OR
           (AA.DFO_STAT_AREA_CODE IN ('130') AND AA.DFO_STAT_SUBAREA_CODE IN (2)) OR
           (AA.DFO_STAT_AREA_CODE IN ('130') AND AA.DFO_STAT_SUBAREA_CODE IN (3) AND
@@ -479,8 +515,8 @@ SELECT
           (AA.DFO_STAT_AREA_CODE IN ('130') AND AA.DFO_STAT_SUBAREA_CODE IN (3) AND 
             COALESCE(AA.Best_Lat,0)>51.93333) THEN '5E'
     ELSE '0' END AS GMA,                                                        -- B02_Fishing_Event
-  'catch' = AA.CATCH_WEIGHT,                                                    -- B03_Catch
-  'nfish' = AA.CATCH_COUNT,                                                     -- B03_Catch
+  'catch'   = AA.CATCH_WEIGHT,                                                    -- B03_Catch
+  'nfish'   = AA.CATCH_COUNT,                                                     -- B03_Catch
   'density' = (CASE -- this calculation is sensitive to zero-values 
     WHEN AA.CATCH_WEIGHT IS NULL OR TSP.DISTANCE IS NULL OR TSP.DISTANCE<=0 
       OR TSP.DOORSPREAD IS NULL OR TSP.DOORSPREAD<=0 THEN NULL
@@ -552,7 +588,11 @@ SELECT * FROM #GFBBIO
 -- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="417") -- Widow Rockfish (WWR: 181012, 181107, 181120, 181207)
 -- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="435") -- Bocaccio (BOR: 180912, 181120, 181206, 181212, 181219)
 -- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="417") -- Widow Rockfish (WWR: 181012, 181107, 181120, 181207, 181219, 190321)
--- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="435") -- Bocaccio (BOR: 190107, 190620, 190709)
 -- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="425") -- Blackspotted Rockfish (BSR: 190110, 190114, 190128, 190717 for Vania|Sean)
 -- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="394") -- Rougheye Rockfish (RER: 190110, 190114, 190128, 190717 for Vania|Sean)
+-- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="435") -- Bocaccio (BOR: 190107, 190620, 190709, 190812, 190822, 190903, 191003)
+-- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="394") -- Rougheye Rockfish (RER: 191015, 191220, 200106 for PJS|RH)
+-- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="425") -- Blackspotted Rockfish (BSR: 191015, 191220, 200106 for PJS|RH)
+-- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp=c("394","425")) -- Rougheye/Blackspotted (REBS: 200107 for PJS|RH)
+-- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp=c("610")) -- Rex Sole (RXL: 200123 for MPF)
 

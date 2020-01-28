@@ -10,6 +10,21 @@ Authors: RH  = Rowan Haigh
          BK  = Brian Krishka
 ------------------------------
 
+1.40.1 (2020-01-28)  [Rcheck=F, Rbuild=F]
+  * M01_Utility.r
+    + Added a few more translation snippets to function `linguaFranca'. (RH 200120)
+  * M02_Biology.r
+    + Added new function `getPrey' to list stomach contents of a selected species. (RH 200128)
+      - Function had been in use for a year or two before bringing it into the fold.
+    + Updated function `requestAges' while querying REBS. (RH 200123)
+  * M06_Assessment.r
+    + Updated function `processBio' to deal with duality (RER vs BSR) and genetic determination of REBS. (RH 200120)
+  * SQL code
+    + Updated SQl query `gfb_bio.sql' to query more than one species at a time. (RH 200107)
+      - Primarily due to the change of species status from RER to BSR (or hybrids) based on genetic resolution.
+    + Added handful of queries used in the past four months but not in repo:
+      - fos_bor_clara.sql, fos_rrf_trf_catch.sql, gfb_vbgf.sql, ph3_catch_YPAGS.sql, ph3_fcatORF_alt.sql, ph3_fcatORF_alt2.sql, fos_salmon_troll.ora
+
 1.40.0 (2019-12-13)  [Rcheck=F, Rbuild=F]
   * M09_PJSsurvey.r
     + New module of functions from PJS, which he uses in STATA to calculate biomass indices: (PJS|RH 191213)

@@ -51,16 +51,22 @@ SELECT
     ZC.GR_GEAR_CDE = MC.GR_GEAR_CDE AND
     ZC.SumCat = MC.MaxCat
   WHERE
-    ZC.STP_SPER_YR IN (1995) AND
-    ZC.STP_SPER_PERIOD_CDE IN ('070') AND
-    ZC.SFA_MSFA_MIDSIZE_FA_CDE IN (9021)
+    ZC.STP_SPER_YR <= 1995
+    --ZC.STP_SPER_YR IN (1995) AND
+    --ZC.STP_SPER_PERIOD_CDE IN ('070') AND
+    --ZC.SFA_MSFA_MIDSIZE_FA_CDE IN (9021)
   GROUP BY
     ZC.STP_SPER_YR,
     ZC.STP_SPER_PERIOD_CDE,
     ZC.SFA_MSFA_MIDSIZE_FA_CDE,
     ZC.GR_GEAR_CDE,
     ZC.SumCat
-;
+  ORDER BY
+    ZC.STP_SPER_YR,
+    ZC.STP_SPER_PERIOD_CDE,
+    ZC.SFA_MSFA_MIDSIZE_FA_CDE,
+    ZC.GR_GEAR_CDE
 
--- getData("ph3_target.sql",dbName="HARVEST_V2_0",strSpp="396",server="ORAPROD",type="ORA",trusted=FALSE)
+
+-- qu("ph3_target.sql",dbName="HARVEST_V2_0",strSpp="000",server="ORAPROD",type="ORA",trusted=FALSE, uid="haighr", pwd="haighr")
 

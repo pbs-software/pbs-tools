@@ -2116,6 +2116,29 @@ genPa <- function(np=40,
 	return(pa) }
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~genPa
 
+
+## getPrey------------------------------2019-12-12
+##  Get stomach contents (if any) that match the
+##  SPECIMEN_ID in a bioDat object ('gfb_bio.sql')
+## ---------------------------------------------RH
+getPrey = function(bioDat)
+{
+	getData("B05e_Specimen_Stomach","GFBioSQL")
+	stomachs = PBSdat
+	z = is.element(stomachs$SPECIMEN_ID,bioDat$SPID)
+	spp.stomachs = stomachs[z,]
+	prey = table(spp.stomachs$SPECIES_CODE)
+	getData("C_Species","GFBioSQL")
+	spp  = PBSdat$SPECIES_DESC; names(spp) = PBSdat$SPECIES_CODE
+	spp.prey = rev(sort(prey))
+	names(spp.prey) = spp[names(spp.prey)]
+	spp.out = t(t(spp.prey))
+	print(spp.out)
+	return(spp.out)
+}
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~getPrey
+
+
 #histMetric-----------------------------2013-01-28
 # Create a matrix of histograms for a specified metric
 #-----------------------------------------------RH
@@ -3379,35 +3402,36 @@ reportCatchAge <- function(prefix="pop", path=getwd(), hnam=NULL, ...) {
 #-----------------------------------reportCatchAge
 
 
-#requestAges----------------------------2017-07-31
-# Determine which otoliths to sample for ageing requests.
-# Note: only have to use run.sql=TRUE once for each species 
-# using any year before querying a group of years.
-# Note: ageing methdology is not a sensible selection 
-# criterion because the fish selected have not been aged.
-#-----------------------------------------------RH
+## requestAges--------------------------2020-01-23
+##  Determine which otoliths to sample for ageing requests.
+##  Note: only have to use run.sql=TRUE once for each species 
+##  using any year before querying a group of years.
+##  Note: ageing methdology is not a sensible selection 
+##  criterion because the fish selected have not been aged.
+## ---------------------------------------------RH
 requestAges=function(strSpp, nage=500, year=2016, 
-     areas=list(major=3:9, minor=NULL), ttype=c(1,4), gear=1,
-     sex=1:2, nfld = "nallo", run.sql=TRUE, only.sql=FALSE, bySID=FALSE,
-     spath=.getSpath(), uid=Sys.info()["user"], pwd=uid, ...) {
-
+   areas=list(major=3:9, minor=NULL), ttype=c(1,4), gear=1,
+   sex=1:2, nfld = "nallo", run.sql=TRUE, only.sql=FALSE, bySID=FALSE,
+   spath=.getSpath(), uid=Sys.info()["user"], pwd=uid, ...)
+{
 	on.exit(gc())
 	if (!only.sql) {
 	assign("PBStool",list(module="M02_Biology",call=match.call(),args=args(requestAges)),envir=.PBStoolEnv)
 
-#Subfunctions --------------------------
-	adjustN = function(a,b,nmin=10){           # a=available , b=desired, nmin=minimum acceptable
+##Subfunctions --------------------------
+	adjustN = function(a,b,nmin=10){           ## a=available , b=desired, nmin=minimum acceptable
 #print(a); print(b)
 		if (round(sum(b),5) > round(sum(a),5)) {
 			showMessage(paste("There are only",sum(round(a,0)),"otoliths available.\n",
 				"All were selected."),as.is=TRUE)
 			return(a) }
+		ttget(iters); iters=iters+1; ttput(iters)
 		target = sum(b)                ## Total number desired
 		za.use = a >= nmin             ## Only use avail. samples with at least the acceptable min # ages
 		a[!za.use] = 0                 ## Automatically set low availablity to 0
 		zb.gta = b > a                 ## Determine which desired #ages exceed the available
 		zover  = za.use & zb.gta       ## Index the over-desired
-		if (any(zover)) { 
+		if (any(zover) && iters < 1000) { 
 			aN = rep(0,length(a))       ## adjusted N
 			aN[zover] = a[zover]
 			bnew = b[!zover]
@@ -3424,7 +3448,7 @@ requestAges=function(strSpp, nage=500, year=2016,
 		else return(b) }
 
 	moveCat=function(C,S){
-		if (all(S)) return(C) # all periods sampled, no need to move catch
+		if (all(S)) return(C) ## all periods sampled, no need to move catch
 		n=length(C); x=1:n; y=rep(0,n)
 		y[!S]=.05
 		for (i in x) {
@@ -3437,18 +3461,19 @@ requestAges=function(strSpp, nage=500, year=2016,
 		return(C) }
 
 	catnip = function(...) {cat(... ,sep="")}
-#---------------------------subfunctions
+##---------------------------subfunctions
 	}
 
 	if (run.sql || only.sql) {
 #if(FALSE){
 		expr=paste(c("getData(\"gfb_age_request.sql\"",
-			",dbName=\"GFBioSQL\",strSpp=\"",strSpp,"\",path=\"",spath,"\",tenv=penv(),gear=",gear,")"),collapse="")
-
+			",dbName=\"GFBioSQL\",strSpp=\"",strSpp,"\",path=\"",spath,"\",tenv=penv(),gear=",deparse(gear),")"),collapse="")
+#browser();return()
 		expr=paste(c(expr,"; Sdat=PBSdat"),collapse="")
 		expr=paste(c(expr,"; save(\"Sdat\",file=\"Sdat",strSpp,".rda\")"),collapse="")      # Sample data (binary)
 		expr=paste(c(expr,"; write.csv(Sdat,file=\"Sdat",strSpp,".csv\")"),collapse="")     # Sample data (ascii)
 
+#expr="a=1"
 		expr=paste(c(expr,"; getData(\"gfb_pht_catch.sql\",\"",
 			"GFBioSQL\",strSpp=\"",strSpp,"\",path=\"",spath,"\",tenv=penv())"),collapse="")
 		expr=paste(c(expr,"; phtcat=PBSdat"),collapse="")
@@ -3467,6 +3492,7 @@ requestAges=function(strSpp, nage=500, year=2016,
 		expr=paste(c(expr,"; Scat=PBSdat"),collapse="")
 		expr=paste(c(expr,"; save(\"Scat\",file=\"Scat",strSpp,".rda\")"),collapse="")      # Survey catch (binary)
 		expr=paste(c(expr,"; write.csv(Scat,file=\"Scat",strSpp,".csv\")"),collapse="")     # Survey catch (ascii)
+#browser();return()
 		eval(parse(text=expr))
 	}
 	if (!only.sql && !run.sql) { 
@@ -3494,7 +3520,7 @@ requestAges=function(strSpp, nage=500, year=2016,
 		sdupe = duplicated(samp$SID)
 		if (any(sdupe)) {
 			ndupe = (1:length(sdupe))[sdupe]
-			if (all(diff(ndupe)>1)) { ## i.e. no triplicated (or greater) SIDs
+			#if (all(diff(ndupe)>1)) { ## i.e. no triplicated (or greater) SIDs
 				idupe = sort(c(ndupe-1,ndupe))
 				cdupe = samp$catchKg[ndupe]; names(cdupe) = samp$SID[ndupe]
 				if (redSIDcat) {
@@ -3502,23 +3528,29 @@ requestAges=function(strSpp, nage=500, year=2016,
 					attr(samp,"catchKg.dupe.original") = cdupe
 				}
 				if (redSIDrec) {
+					nsamp   = junk=sapply(split(samp$SID,samp$SID),length)
 					oldsamp = samp
-					samp = samp[-ndupe,]
-					adupe = ndupe - (1:length(ndupe)) ## corresponds to oldsamp[ndupe-1,]
-					#names(adupe) = ndupe
+					newsamp = samp[!sdupe,]  ## includes all SIDs just once
+					onename = names(nsamp)[is.element(nsamp,1)]
+					onesamp = newsamp[is.element(newsamp$SID, onename),]
+					mooname = names(nsamp)[!is.element(nsamp,1)]  ## more than one record per SID
+					moosamp = newsamp[is.element(newsamp$SID, mooname),]
+
 					addCols = c("Noto","Foto","Moto","Nbba","Fbba","Mbba","Nage","Fage","Mage")
 					mrgCols = c("firstSerial","lastSerial","storageID")
-					for (i in 1:length(ndupe)){
-						#ii = as.character(i)
-						samp[adupe[i],addCols] = apply(oldsamp[(ndupe[i]-1):ndupe[i], addCols], 2, sum, na.rm=T)
-						samp[adupe[i],mrgCols] = apply(oldsamp[(ndupe[i]-1):ndupe[i], mrgCols], 2, function(x){paste0(gsub("[[:space:]]", "",x), collapse="|")})
+					for (i in mooname) {
+						ii  = is.element(moosamp$SID,i)
+						iii = is.element(oldsamp$SID,i)
+						moosamp[ii,addCols] = apply(oldsamp[iii, addCols], 2, sum, na.rm=T)
+						moosamp[ii,mrgCols] = apply(oldsamp[iii, mrgCols], 2, function(x){paste0(gsub("[[:space:]]", "",x), collapse="|")})
 					}
-
+					samp = rbind(onesamp,moosamp)
+					samp = samp[order(samp$SID),]
 				}
-			} else {
-				mess= "Some SIDs are more than just duplicated.\nCreate code to deal with it (line 112)."
-				showError(mess, as.is=TRUE)
-			}
+			#} else {
+			#	mess= "Some SIDs are more than just duplicated.\nCreate code to deal with it (line 141)."
+			#	showError(mess, as.is=TRUE)
+			#}
 		}
 	}
 
@@ -3526,7 +3558,7 @@ requestAges=function(strSpp, nage=500, year=2016,
 		samp$NOTO=samp$Moto; samp$NBBA=samp$Mbba; samp$NAGE=samp$Mage}  # males
 	else if (all(sex==2)){
 		samp$NOTO=samp$Foto; samp$NBBA=samp$Fbba; samp$NAGE=samp$Fage}  # females
-	else if (all(sex==c(1,2))) {  # males and females only
+	else if (all(sex==c(1,2))) {  ## males and females only
 		samp$NOTO = ifelse((samp$Moto+samp$Foto)==0,samp$Noto,samp$Moto+samp$Foto)
 		samp$NBBA = ifelse((samp$Mbba+samp$Fbba)==0,samp$Nbba,samp$Mbba+samp$Fbba)
 		samp$NAGE = ifelse((samp$Mage+samp$Fage)==0,samp$Nage,samp$Mage+samp$Fage)
@@ -3535,10 +3567,11 @@ requestAges=function(strSpp, nage=500, year=2016,
 		samp$NOTO=samp$Noto; samp$NBBA=samp$Nbba; samp$NAGE=samp$Nage; sex=0:3}  # all available
 	samp$year=convFY(samp$tdate,1)
 	nfree = round(samp$NOTO-samp$NAGE)
+
 	if (!is.null(list(...)$nfree)) samp <- samp[nfree>=list(...)$nfree & !is.na(nfree),]
 	if (is.null(ttype)) showError("Choose a trip type")
-	else if (sum(is.element(ttype,2:3))==0 & sum(is.element(ttype,c(1,4:14)))>0) type="C" # commercial
-	else if (sum(is.element(ttype,2:3))>0 & sum(is.element(ttype,c(1,4:14)))==0) type="S" # research/survey
+	else if (sum(is.element(ttype,2:3))==0 & sum(is.element(ttype,c(1,4:14)))>0) type="C" ## commercial
+	else if (sum(is.element(ttype,2:3))>0 & sum(is.element(ttype,c(1,4:14)))==0) type="S" ## research/survey
 	else showError("Choose ttypes out of:\n   {2,3} (research/survey) OR\n   {1,4:14} (commercial)")
 
 	if (type=="C") catch = Ccat
@@ -3561,15 +3594,19 @@ requestAges=function(strSpp, nage=500, year=2016,
 		samp$tid  = paste(samp$TID_gfb,samp$FEID,sep=".")
 		catch$tid = paste(catch$TID,catch$FEID,sep=".")
 	}
-
+#browser();return()
 	unpackList(list(...))
 	for (i in intersect(c("TID_gfb","TID_fos"),ls())) {
 		eval(parse(text=paste("samp=biteData(samp,",i,")",sep="")))
+		if (nrow(samp)==0) showError(paste0("No sample data for ", i, " = ",get(i)))
 		eval(parse(text=paste("catch=biteData(catch,",i,")",sep="")))
-		areas = list(major=.su(samp$major))              # if TID is specified, areas become defined in terms of PMFCs
+		areas = list(major=.su(samp$major))    ## if TID is specified, areas become defined in terms of PMFCs
 		year  = .su(samp$year)
 	}
-	spooler(areas,"area",samp)                          # creates a column called 'area' and populates based on argument 'areas'.
+	if (sum(samp$NOTO-samp$NAGE)==0)
+		showError ("No otoliths free in sample data")
+#browser();return()
+	spooler(areas,"area",samp)                ## creates a column called 'area' and populates based on argument 'areas'.
 	spooler(areas,"area",catch)
 	area=sort(unique(samp$area))
 
@@ -3585,22 +3622,22 @@ requestAges=function(strSpp, nage=500, year=2016,
 	samp=samp[order(samp[[ifelse(type=="C","tdate","FEID")]]),]
 	z0=is.element(samp$tid,0)
 	if (any(z0)) samp$tid[z0] = 1:sum(z0)
-
+#browser();return()
 
 	catch=catch[order(catch$date),]
 	z0=is.element(catch$tid,0)
 	if (any(z0)) catch$tid[z0] = catch$hail[z0]
 
 	if (type=="C") {
-		Clev = convYP(catch$date)                        # all periods in commercial catch
+		Clev = convYP(catch$date)    ## all periods in commercial catch
 		clev = names(Clev)
-		Slev = convYP(samp$tdate)                        # periods in sample data
+		Slev = convYP(samp$tdate)    ## periods in sample data
 		slev= names(Slev)
 	}
 	if (type=="S") {
 		cid=catch$tid
 		sid=samp$tid
-
+#browser();return()
 		# 'gfb_age_request.sql" now gathers Grouping Code (GC)
 		#group=catch$GC; names(group)=cid
 		#samp$GC=group[sid]; samp=samp[!is.na(samp$GC),] ## get rid of unidentified groups (strata)
@@ -3614,7 +3651,7 @@ requestAges=function(strSpp, nage=500, year=2016,
 	catfac = ifelse(type=="C",1000.,1.)                 ## factor to convert catch (C=tonnes, S=kg)
 	C    = sapply(split(catch$catKg,clev),sum)/catfac   ## total catch (Tcat) at each level (quarter/stratum)
 	S    = is.element(names(C),ulev)
-
+#browser();return()
 
 	### Quarterly catch (t)
 	CC   = moveCat(C,S)
@@ -3631,7 +3668,7 @@ requestAges=function(strSpp, nage=500, year=2016,
 	samp[["Tcat"]] = qC[samp$lev]/catfac                ## populate the df with period/strata catches
 	samp[["Pcat"]] = pC[samp$lev]                       ## populate the df with period/strata catches
 	samp[["Ncat"]] = nC[samp$lev]                       ## populate the df with period/strata catches
-
+#browser();return()
 
 	### ---Trip catch (t)---
 	samp$ncat=samp$pcat=samp$pcat.sid=samp$pcat.tid=samp$tcat=rep(0,nrow(samp)) ## prepare blank columns in data frame (df)
@@ -3653,7 +3690,7 @@ requestAges=function(strSpp, nage=500, year=2016,
 				xcat = samp$catchKg[zl][!zt]; names(xcat) = samp$tid[zl][!zt]
 				tcat.tid = c(tcat.tid,xcat)
 			}
-			#tcat = sapply(split(tcat,names(tcat)),sum)/catfac  # rollup area catches
+			#tcat = sapply(split(tcat,names(tcat)),sum)/catfac  ## rollup area catches
 			tcat.tid = split(tcat.tid,names(tcat.tid))
 			tcat.tid = sapply(tcat.tid,function(x){as.vector(x[1])})/catfac ## rollup area catches with same TID
 		}
@@ -3669,14 +3706,14 @@ requestAges=function(strSpp, nage=500, year=2016,
 #if (k==487362) {browser();return()}
 				zjk = zj & is.element(samp$SID,k)
 				nsamp = length(pcat.sid)
-				samp[["tcat"]][zjk] = tcat.tid[j]          ## populate the df with trip catches (incl.dupes)
-				samp[["pcat.tid"]][zjk] =                  ## prop. trip catches within a stratum
-				samp[["pcat.sid"]][zjk] = pcat.sid[[j]][kk]## prop. duplicated samples in each trip
-				samp[["pcat"]][zjk] = pcat.tid[j]*pcat.sid[[j]][kk] ## adjusted prop. trip catches in strata
+				samp[["tcat"]][zjk] = tcat.tid[j]                         ## populate the df with trip catches (incl.dupes)
+				samp[["pcat.tid"]][zjk] =                                 ## prop. trip catches within a stratum
+				samp[["pcat.sid"]][zjk] = pcat.sid[[j]][kk]               ## prop. duplicated samples in each trip
+				samp[["pcat"]][zjk] = pcat.tid[j]*pcat.sid[[j]][kk]       ## adjusted prop. trip catches in strata
 				samp[["ncat"]][zjk] = pcat.tid[j]*pcat.sid[[j]][kk]*nC[i] ## no. specimens to age
 			}
 		}
-
+#browser();return()
 #if (i=="2012-02") {browser();return()}
 	}
 	packList(c("Sdat","catch","C"),"PBStool",tenv=.PBStoolEnv)
@@ -3688,11 +3725,14 @@ requestAges=function(strSpp, nage=500, year=2016,
 	nardwuar = samp$ncalc > 0 & !is.na(samp$ncalc)
 	samp$nallo = rep(0,nrow(samp))
 	
+	if (sum(samp$nfree)==0)
+		showError ("No otoliths free in sample data")
+	iters=0; ttput(iters)
 	samp$nallo = adjustN(a=samp$nfree,b=samp$ncat)      ## No. of otoliths allocated to satisfy user's initial request, given constraint of Nfree
-
+#browser();return()
 	#samp$nallo[nardwuar] = adjustN(a=samp$nfree[nardwuar],b=samp$ncat[nardwuar]) ## No. of otoliths allocated to satisfy user's initial request, given constraint of Nfree
 
-	# Adjust for many small n-values (<1) using median rather than 0.5 as the determinant of 0 vs.1
+	## Adjust for many small n-values (<1) using median rather than 0.5 as the determinant of 0 vs.1
 	zsmall = samp$nallo[nardwuar] < 1. & round(samp$nallo[nardwuar],5) > 0
 	if (any(zsmall)) {
 		msmall = median(samp$nallo[nardwuar][zsmall])
@@ -3707,7 +3747,7 @@ requestAges=function(strSpp, nage=500, year=2016,
 	write.csv(t(t(rev(sort(sapply(split(samp$nallo,samp$SID),sum))))),file="nalloSID.csv")
 
 	### ---End sample calculations--- ###
-
+#browser();return()
 
 	yearmess = if (length(year)>3) paste(min(year),"-",max(year),sep="") else paste(year,collapse="+")
 	if (is.null(list(...)$describe))
@@ -3731,12 +3771,11 @@ requestAges=function(strSpp, nage=500, year=2016,
 	traytids = sapply(split(sampuse[["tid"]],sampuse[["storageID"]]),unique,simplify=FALSE)
 	#traysids = sapply(split(sampuse[["SID"]],sampuse[["storageID"]]),unique,simplify=FALSE)
 #PBSdat=PBSdatT2
-	# Get list of available otoliths. 
-	#expr=paste("SELECT B5.SAMPLE_ID AS SID, B5.SPECIMEN_SERIAL_NUMBER AS SN FROM B05_SPECIMEN B5 WHERE B5.SAMPLE_ID IN (",
-	#	paste(usid,collapse=","),") AND B5.AGEING_METHOD_CODE IS NULL AND B5.SPECIMEN_SEX_CODE IN (", paste(sex,collapse=","),")",sep="")
+	## Get list of available otoliths. 
+	#expr=paste("SELECT B5.SAMPLE_ID AS SID, B5.SPECIMEN_SERIAL_NUMBER AS SN FROM B05_SPECIMEN B5 WHERE B5.SAMPLE_ID IN (", paste(usid,collapse=","),") AND B5.AGEING_METHOD_CODE IS NULL AND B5.SPECIMEN_SEX_CODE IN (", paste(sex,collapse=","),")",sep="")
 	
-	# CONTAINER_ID in SAMPLE_COLLECTED = Bin, CONTAINER_ID in SPECIMEN_COLLECTED = Tray
-	# Note: SAMPLE_COLLECTED sometimes misses samples
+	## CONTAINER_ID in SAMPLE_COLLECTED = Bin, CONTAINER_ID in SPECIMEN_COLLECTED = Tray
+	## Note: SAMPLE_COLLECTED sometimes misses samples
 	expr = c("SET NOCOUNT ON",
 	"SELECT DISTINCT",
 		"SAMPLE_ID,",
@@ -3764,24 +3803,24 @@ requestAges=function(strSpp, nage=500, year=2016,
 		"AND SPC.SAMPLE_ID IN (",
 		paste(usid,collapse=","),")"
 	)
-
+#browser();return()
 
 	getData(paste(expr,collapse=" "),"GFBioSQL",strSpp=strSpp,type="SQLX",tenv=penv())
 	SNdat = PBSdat
 	Opool=split(paste(PBSdat$storageID,PBSdat$SN,sep="."),PBSdat$SID)
-
-	Npool = Opool[.su(as.character(sampuse$SID))]       ## Pool relevant to the n field
+#browser();return()
+	Npool = Opool[.su(as.character(sampuse$SID))]         ## Pool relevant to the n field
 	Nsamp = sapply(split(sampuse[,nfld],sampuse$SID),sum) ## Number of otoliths to sample from the pool (sapply-split: because samples might be split across trays)
 	Nsamp = Nsamp[order(names(Nsamp))]
 	#names(sid)=tid
-	Osamp = sapply(usid,function(x,O,N){                ## Otoliths sampled randomly from pool
+	Osamp = sapply(usid,function(x,O,N){                  ## Otoliths sampled randomly from pool
 		xx=as.character(x); oo=O[[xx]]; nn=N[xx]; olen=length(oo)
 		if (nn==0) return(NA)
 		else if (olen==1) return(oo)
 		else return(sample(x=oo,size=min(nn,olen),replace=FALSE)) }, 
 		O=Npool, N=Nsamp, simplify=FALSE)
 	names(Osamp)=usid
-
+#browser();return()
 	packList(c("expr","SNdat","Opool","Nsamp","Osamp"),"PBStool",tenv=.PBStoolEnv)
 
 	if (redSIDrec) invisible(return(samp))
@@ -3797,7 +3836,7 @@ requestAges=function(strSpp, nage=500, year=2016,
 		if ( all(is.na(otos))) next
 		x=sampuse[is.element(sampuse$tid,i),]
 		unpackList(x); ntray=0; ser1=NULL
-
+#browser();return()
 		for (j in 1:length(firstSerial)) {
 			sers = firstSerial[j]:lastSerial[j]
 			ser1 = c(ser1, sers[seq(1,length(sers),100)]) } ## first serials including n samples > 100 (tray)
@@ -3840,7 +3879,7 @@ requestAges=function(strSpp, nage=500, year=2016,
 		#utray = .su(sampuse[["storageID"]])
 		tdate.storage=sapply(split(sampuse$tdate,sampuse$storageID),function(x){ xmin=min(x);substring(xmin,1,10)})
 		trid = names(tdate.storage[order(tdate.storage)])
-
+#browser();return()
 		for (i in trid) {
 			Otos = NULL
 			itid = as.character(traytids[[i]])
@@ -3856,7 +3895,7 @@ requestAges=function(strSpp, nage=500, year=2016,
 			if ( is.null(Otos) || all(is.na(Otos))) next
 			x = sampuse[is.element(sampuse$storageID,i),] ## use because some samples span trays
 			unpackList(x)
-
+#browser();return()
 			ocells = min(firstSerial):max(lastSerial)     ## available otoliths
 			pcells = match(Otos,ocells)                   ## cell positions to take samples
 			pcells = pcells[pcells>0 & !is.na(pcells)]    ## remove NAs caused by a samples spanning trays
@@ -3865,7 +3904,7 @@ requestAges=function(strSpp, nage=500, year=2016,
 			serT   = matrix(seq(ocells[1],ocells[1]+99,1),nrow=5,ncol=20,byrow=TRUE)
 			#if (i=="16X:1") {browser();return()}         ## there are apparently 103 Shortraker otoliths in this trip (16X:1)
 			otos   = otos[otos%in%serT]                   ## tray only has room for 100; be sure extras are excluded
-
+#browser();return()
 			if (any(is.na(pmatch(otos,serT)))) {print("NAs generated, probably duplicated oto numbers");browser();return()}
 			TRAY[pmatch(otos,serT)] = otos
 #if (i=="9H:11100") {browser();return()}
@@ -3889,7 +3928,7 @@ requestAges=function(strSpp, nage=500, year=2016,
 			catnip("Last serial,",max(lastSerial),"\n\n",file=fnam,append=TRUE)
 	}	}
 	invisible(samp) }
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~requestAges
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~requestAges
 
 
 ## residVB------------------------------2019-07-16
