@@ -11,9 +11,9 @@
 \usage{
 processBio(dat=PBSdat, strSpp, addsrfa=TRUE, 
    addsrfs=TRUE, addpopa=TRUE, addstock=TRUE, addsort=TRUE,
-   maxrows=5e4, zflds=c("ssrc","AC","FOSTID"))
+   useSM=FALSE, maxrows=5e4, zflds=c("ssrc","AC","FOSTID"))
 
-processMap(dat=PBSdat, strSpp, prefix="map")
+processMap(dat=PBSdat, strSpp, prefix="map", useSM=FALSE)
 }
 \arguments{
   \item{dat}{\code{data frame} -- usually \code{PBSdat}, resulting from an 
@@ -35,6 +35,7 @@ processMap(dat=PBSdat, strSpp, prefix="map")
     \code{calcStockArea}.}
   \item{addsort}{\code{logical} -- if \code{TRUE}, add a field called \code{'sort'}
     and populate with \code{"U"} (unsorted), \code{"K"} (keepers), and \code{"D"} (discards).}
+  \item{useSM}{\code{logical} -- if \code{TRUE}, use data from seamounts else remove seamount data.}
   \item{maxrows}{\code{numeric} -- number of rows of \code{dat} to process at any 
     one time when \code{addpopa=TRUE}. Finding POP areas uses the function
     \code{findPolys}, which bogs down when the number of events gets very high.}
@@ -65,7 +66,7 @@ processMap(dat=PBSdat, strSpp, prefix="map")
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
   \emph{locus opus}: Institute of Ocean Sciences (IOS), Sidney BC\cr
-  Last modified \code{Rd: 2019-10-02}
+  Last modified \code{Rd: 2020-07-14}
 }
 \seealso{ 
 In package \pkg{PBStools}:\cr

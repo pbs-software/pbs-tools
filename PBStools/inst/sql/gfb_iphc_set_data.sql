@@ -53,4 +53,4 @@ ORDER BY
 
 --qu("gfb_iphc_set_data.sql",dbName="GFBioSQL",strSpp="442")
 --getData("gfb_iphc_set_data.sql",dbName="GFBioSQL",strSpp="442",path="C:/Users/haighr/Files/Projects/R/Develop/PBStools/Authors/SQLcode/")
-
+--qu("gfb_iphc_set_data.sql",dbName="GFBioSQL",strSpp="394")

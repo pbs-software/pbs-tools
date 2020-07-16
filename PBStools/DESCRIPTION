@@ -1,6 +1,6 @@
 Package: PBStools
-Version: 1.40.1
-Date:    2020-01-28
+Version: 1.40.2
+Date:    2020-07-16
 Title:   Tools for the Efficient Execution of Onerous Tasks
 Authors@R: c(
    person("Rowan", "Haigh", role = c("aut", "cre"), email = "rowan.haigh@dfo-mpo.gc.ca"),
@@ -18,7 +18,8 @@ Author:      Rowan Haigh [aut, cre], Jon T. Schnute [ctb], Norm Olsen [ctb],
 Maintainer:  Rowan Haigh <rowan.haigh@dfo-mpo.gc.ca>
 Copyright:   2007-2020, Fisheries and Oceans Canada
 Depends:     R (>= 3.5.0), PBSmapping, PBSmodelling, PBSdata, RODBC
-Suggests:    boot, BRugs, cluster, MASS, reshape, sp, utils, xtable
+Imports:     graphics, grDevices, methods, stats, utils
+Suggests:    boot, BRugs, cluster, MASS, reshape, sp, xtable
 Description: A refreshing assortment of tools for exploring data from
    fisheries and other realms. While the focus is on providing efficient
    yet vivacious summary tools for fisheries stock assessments and 

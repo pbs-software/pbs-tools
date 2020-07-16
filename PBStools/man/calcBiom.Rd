@@ -25,9 +25,6 @@ calcBiom(dat, reps=0, seed=42, meth=1, fix125flag,
   \item{towvar}{\code{character} --  field name of tow variables (usually \code{"set"}).}
   \item{postfilename}{\code{character} -- currently does not get used.}
 }
-\details{
-%%  ~~ If necessary, more details than the description above ~~
-}
 \value{
   A list object containing:
   \itemize{
@@ -40,9 +37,6 @@ calcBiom(dat, reps=0, seed=42, meth=1, fix125flag,
     }
   }
 }
-\references{
-%% ~put references to the literature/web site here ~
-}
 \author{
   \href{mailto:paul@starrfish.net}{Paul J. Starr}, Chief Groundfish Scientist\cr
   Canadian Groundfish Research and Conservation Society (CGRCS), Nanaimo BC
@@ -50,7 +44,7 @@ calcBiom(dat, reps=0, seed=42, meth=1, fix125flag,
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
   \emph{locus opus}: Institute of Ocean Sciences (IOS), Sidney BC\cr
-  Last modified \code{Rd: 2019-12-13}
+  Last modified \code{Rd: 2020-07-16}
 }
 \note{
   PJS maintains code in statistical software called \href{https://www.stata.com/}{STATA}.

@@ -9,11 +9,13 @@
   seamounts.
 }
 \usage{
-zapSeamounts(dat)
+zapSeamounts(dat, only.mark=FALSE)
 }
 \arguments{
-  \item{dat}{\code{data.frame} -- data object containing fields 
-    \code{major}, \code{minor}, and \code{locality}.}
+  \item{dat}{\code{data.frame} -- data object containing fields \code{major}, \code{minor}, and \code{locality}.}
+  \item{only.mark}{\code{logical} -- if \code{TRUE}, do not remove seamount records
+    but create a new field called \code{'seamount'} and populate it with the names
+    of seamounts if records come from seamounts based on \code{major|minor|locality}.}
 }
 \details{
   The seamounts currently identified for removal are:
@@ -49,16 +51,19 @@ zapSeamounts(dat)
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
   \emph{locus opus}: Institute of Ocean Sciences (IOS), Sidney BC\cr
-  Last modified \code{Rd: 2018-09-18}
+  Last modified \code{Rd: 2020-07-16}
 }
 \note{
   Designed for use with \code{buildCatch}.
 }
 \seealso{
+In package \pkg{PBStools}:\cr
   \code{\link[PBStools]{buildCatch}},
   \code{\link[PBStools]{plotDiag}},
   \code{\link[PBStools]{plotRecon}},
   \code{\link[PBStools]{surveyCatch}}
 }
 \keyword{manip}
+\concept{seamount}
+\concept{catch}
 

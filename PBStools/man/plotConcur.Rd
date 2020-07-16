@@ -10,7 +10,7 @@
 }
 \usage{
 plotConcur(strSpp="410", dbName="GFFOS", spath=.getSpath(),
-     mindep=150, maxdep=435, major=NULL, minor=NULL, top=NULL, trawl=1,
+     mindep=150, maxdep=435, major=NULL, minor=NULL, top=NULL, gear=1,
      saraSpp=c("027","034","394","410","424","435","437","440","442","453"),
      reset.mf=TRUE, eps=FALSE, png=FALSE, pngres=300, colour="topo")
 }
@@ -26,7 +26,7 @@ plotConcur(strSpp="410", dbName="GFFOS", spath=.getSpath(),
   \item{major}{\code{numeric} -- codes for PMFC major areas; default selects \code{major=c(1,3:9)}.}
   \item{minor}{\code{numeric} -- codes for PMFC minor areas.}
   \item{top}{\code{numeric} -- top (first) \emph{N} records to return from an \code{SQL} query.}
-  \item{trawl}{\code{numeric} -- trawl type code usually specified by gear subtype code: \cr
+  \item{gear}{\code{numeric} -- gear type code usually specified by gear subtype code: \cr
     \code{1 =} bottom, \code{2 =} shrimp, \code{3 =} midwater}
   \item{saraSpp}{\code{character} -- codes specifying species listed by COSEWIC as either: \cr
     \dQuote{Special Concern}, \dQuote{Threatened}, or \dQuote{Endangered}.}
@@ -54,9 +54,10 @@ plotConcur(strSpp="410", dbName="GFFOS", spath=.getSpath(),
   Also, objects of interest are saved to the global list object \code{PBStool}.
 }
 \author{
-  Rowan Haigh, Research Biologist\cr
-  Pacific Biological Station (PBS), Fisheries and Oceans Canada (DFO), Nanaimo BC\cr
-  Last modified: \code{RH 2018-01-24}
+  \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
+  Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
+  \emph{locus opus}: Institute of Ocean Sciences (IOS), Sidney BC\cr
+  Last modified \code{Rd: 2020-07-14}
 }
 \seealso{
   \code{\link[PBStools]{preferDepth}}, \code{\link[PBStools]{getData}}, \code{\link[PBStools]{toUpper}} \cr

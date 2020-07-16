@@ -5,7 +5,6 @@
 ##  calcSG..........Calculate growth curve using Schnute growth model.
 ##  calcVB..........Calculate von Bertalanffy growth curve.
 ##  compCsum........Compare cumulative sum curves.
-##  compVB..........Compare fitted von B curves using parameters.
 ##  estOgive........Creates ogives of some metric (e.g., % maturity at age).
 ##  extractAges.....Extract records with positive age and qualify by the selected ageing method.
 ##  genPa...........Generate proportions-at-age using catch curve composition.
@@ -24,7 +23,7 @@
 ##==============================================================================
 
 
-## calcLW-------------------------------2019-10-17
+## calcLW-------------------------------2020-03-06
 ## Calculate length-weight relationship for a fish.
 ## Formerly called calcLenWt.
 ## A bit clumsy when you want just tables (see calcVB)
@@ -184,11 +183,13 @@ calcLW <- function(dat=pop.age, strSpp="396",
 	#if (iii=="Other") {browser();return()}
 	
 					if (iii!="Unknown") {
-						if (is.element(strSpp, c("228"))){ xlim=c(0,75); ylim=c(0,4.5) } ## WAP 
-						if (is.element(strSpp, c("439"))){ xlim=c(0,50); ylim=c(0,1.3) } ## RSR
-						if (is.element(strSpp, c("417"))){ xlim=c(0,60); ylim=c(0,3.5) } ## WWR
+						xaxs=yaxs="r"
+						if (is.element(strSpp, c("228"))){ xlim=c(0,75); ylim=c(0,4.5); xaxs=yaxs="i" } ## WAP 
+						if (is.element(strSpp, c("439"))){ xlim=c(0,50); ylim=c(0,1.3); xaxs=yaxs="i" } ## RSR
+						if (is.element(strSpp, c("417"))){ xlim=c(0,60); ylim=c(0,3.5); xaxs=yaxs="i" } ## WWR
+						if (is.element(strSpp, c("394","425"))){ xlim=c(0,90); ylim=c(0,12); xaxs=yaxs="i" } ## REBS (RER, BSR)
 #browser();return()
-						plot(jitter(idat$len,0), jitter(idat$wt,0), pch=ifelse(grepl("mw$",inObj),18,20), cex=ifelse(plotit,0.5,0.8), col=switch(ttt, Research="dodgerblue", Commercial="orangered","orange"), xlab=linguaFranca("     Length (cm)",l), ylab=linguaFranca("   Weight (kg)",l), main=linguaFranca(iii,l), xlim=xlim, ylim=ylim, bty="l")
+						plot(jitter(idat$len,0), jitter(idat$wt,0), pch=ifelse(grepl("mw$",inObj),18,20), cex=ifelse(plotit,0.5,0.8), col=switch(ttt, Research="dodgerblue", Commercial="orangered","orange"), xlab=linguaFranca("     Length (cm)",l), ylab=linguaFranca("   Weight (kg)",l), main=linguaFranca(iii,l), xlim=xlim, ylim=ylim, bty="l", xaxs=xaxs, yaxs=yaxs)
 						#col=.colBlind[switch(ttt,Research="bluegreen",Commercial="redpurple","orange")], #mgp=c(1.75,.5,0),
 						axis(side=1, at=seq(5,  xlim[2],5),  tcl=-0.25, labels=FALSE)
 						axis(side=1, at=seq(10, xlim[2],10), tcl=-0.5,  labels=FALSE)
@@ -269,11 +270,11 @@ calcLW <- function(dat=pop.age, strSpp="396",
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~calcLW
 
 
-## calcSG-------------------------------2018-12-21
+## calcSG-------------------------------2020-03-10
 ## Calculate growth curve using Schnute growth model.
 ## Note: ameth=3 otoliths broken & burnt
 ## ---------------------------------------------RH
-calcSG <- function(dat=pop.age, strSpp="", yfld="len", tau=c(5,40), fixt0=FALSE,
+calcSG <- function(dat=pop.age, strSpp="", yfld="len", tau=c(5,80), fixt0=FALSE,
    areas=list(major=NULL, minor=NULL, locality=NULL, srfa=NULL,srfs=NULL, popa=NULL),
    ttype=list(commercial=c(1,4,5),research=c(2,3)), stype=c(1,2,6,7), scat=NULL,
    sex=list(Females=2,Males=1), rm.studs=NULL,
@@ -435,6 +436,7 @@ calcSG <- function(dat=pop.age, strSpp="", yfld="len", tau=c(5,40), fixt0=FALSE,
 		}
 		ttype = list('ttype'=.su(ttype))
 	}
+#browser();return()
 	flds=c("ttype","stype","year") #,names(areas))
 	for (i in flds) {
 		expr=paste("dat=biteData(dat,",i,")",sep="")
@@ -668,12 +670,12 @@ calcSG <- function(dat=pop.age, strSpp="", yfld="len", tau=c(5,40), fixt0=FALSE,
 
 						Pcalc <- calcP(P,tau); # t0, yinf, tstar, ystar, zstar (Eqns 24-28, Schnute 1981)
 						unpackList(Pcalc)
-						a  = P[1]; par1 = format(signif(a,4),big.mark=",",scientific=FALSE)
-						b  = P[2]; par2 = format(signif(b,4),big.mark=",",scientific=FALSE)
-						y1 = P[3]; par3 = format(signif(y1,3),big.mark=",",scientific=FALSE)
-						y2 = P[4]; par4 = format(signif(y2,3),big.mark=",",scientific=FALSE)
-						par5 = format(signif(t0,3),big.mark=",",scientific=FALSE)
-						par6 = format(signif(yinf,3),big.mark=",",scientific=FALSE)
+						a  = P[1]; par1 = format(signif(a,4),big.mark=options()$big.mark,scientific=FALSE)
+						b  = P[2]; par2 = format(signif(b,4),big.mark=options()$big.mark,scientific=FALSE)
+						y1 = P[3]; par3 = format(signif(y1,3),big.mark=options()$big.mark,scientific=FALSE)
+						y2 = P[4]; par4 = format(signif(y2,3),big.mark=options()$big.mark,scientific=FALSE)
+						par5 = format(signif(t0,3),big.mark=options()$big.mark,scientific=FALSE)
+						par6 = format(signif(yinf,3),big.mark=options()$big.mark,scientific=FALSE)
 						ovec <- c(n=n1,a,b,y1,y2,t0=t0,yinf=yinf,tstar=tstar,ystar=ystar,zstar=zstar,Ymod=Ymod,Ymin=Ymin,Ymax=Ymax)
 						out[iii,,tmat,amat] <- ovec
 
@@ -698,7 +700,7 @@ calcSG <- function(dat=pop.age, strSpp="", yfld="len", tau=c(5,40), fixt0=FALSE,
 								mw <- format(round(mean(idat$wt,na.rm=TRUE),1),nsmall=1)
 								posX=ifelse(figgy,0.6,0.5); posY=ifelse(figgy,0.40,0.30); difY=ifelse(figgy,0.05,0.025); 
 								cexlab=ifelse(figgy,0.7,1.2)
-							addLabel(posX,posY-difY*0,bquote(bolditalic(n)==.(format(n1,big.mark=","))),adj=0,cex=cexlab)
+							addLabel(posX,posY-difY*0,bquote(bolditalic(n)==.(format(n1,big.mark=options()$big.mark))),adj=0,cex=cexlab)
 							addLabel(posX,posY-difY*1,bquote(bolditalic(a) == .(par1)),adj=0,cex=cexlab)
 							addLabel(posX,posY-difY*2,bquote(bolditalic(b)==.(par2)),adj=0,cex=cexlab)
 							addLabel(posX,posY-difY*3,bquote(bolditalic(y)[1]==.(par3)),adj=0,cex=cexlab)
@@ -706,7 +708,7 @@ calcSG <- function(dat=pop.age, strSpp="", yfld="len", tau=c(5,40), fixt0=FALSE,
 							addLabel(posX,posY-difY*5,bquote(bolditalic(t)[0]==.(par5)),adj=0,cex=cexlab)
 							addLabel(posX,posY-difY*6,bquote(bolditalic(y)[infinity]==.(par6)),adj=0,cex=cexlab)
 								if (!is.null(rm.studs) && is.numeric(rm.studs))
-									addLabel(posX,posY-difY*7,bquote(italic(.(linguaFranca("removed",l)))==.(format(n0-n1,big.mark=","))),adj=0,cex=cexlab)
+									addLabel(posX,posY-difY*7,bquote(italic(.(linguaFranca("removed",l)))==.(format(n0-n1,big.mark=options()$big.mark))),adj=0,cex=cexlab)
 								#if (iii=="Males") {
 								if (i==floor(median(1:nsex))) {
 									subtit2 = gsub("ttype14","commercial",gsub("ttype23","research/survey",subtit))
@@ -761,7 +763,7 @@ calcSG <- function(dat=pop.age, strSpp="", yfld="len", tau=c(5,40), fixt0=FALSE,
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~calcSG
 
 
-## calcVB-------------------------------2019-09-03
+## calcVB-------------------------------2020-04-02
 ## Calculate von Bertalanffy growth curve.
 ## Note: ameth=3 otoliths broken & burnt; ameth=1 surface read only
 ##   areas: list of lists
@@ -775,7 +777,7 @@ calcSG <- function(dat=pop.age, strSpp="", yfld="len", tau=c(5,40), fixt0=FALSE,
 calcVB <- function(dat=pop.age, strSpp="", yfld="len", fixt0=FALSE, 
    areas=list(major=NULL, minor=NULL, locality=NULL, srfa=NULL,srfs=NULL, popa=NULL),
    ttype=list(commercial=c(1,4,5),research=c(2,3)), stype=c(1,2,6,7), scat=NULL,
-   sex=list(Females=2,Males=1), rm.studs=NULL,
+   sex=list(Females=2,Males=1), rm.studs=NULL, subtitle,
    year=NULL, xlim=NULL, ylim=NULL, ameth=c(3,17), jit=c(0,0), 
    eps=FALSE, jpg=FALSE, pdf=FALSE, png=FALSE, tif=FALSE, wmf=FALSE,
    plotname, singles=FALSE, pages=FALSE, tables=TRUE, figures=TRUE,
@@ -1121,6 +1123,7 @@ calcVB <- function(dat=pop.age, strSpp="", yfld="len", fixt0=FALSE,
 									DATA[[ttt]][[iii]] = idat
 									n1   = nrow(idat)
 									ipVec = make.parVec(idat,pVec)
+#browser();return()
 #print(c(i,n1))						
 									calcMin(pvec=ipVec,func=VBfun)
 								} ## end if fit1 bad
@@ -1151,7 +1154,7 @@ calcVB <- function(dat=pop.age, strSpp="", yfld="len", fixt0=FALSE,
 							fits[[amat]][[tmat]][[iii]] = list(xpred=xpred,ypred=ypred)
 
 							if (any(iii==names(sex)) && figures) {
-								plot(0,0, type="n", xlab=linguaFranca("Age",l), ylab=ifelse(isLen, linguaFranca("Length (cm)",l), linguaFranca("Weight (kg)",l)), main=linguaFranca(iii,l), xlim=xlim, ylim=ylim, bty="l",cex.main=ifelse(figgy,1,1.5),cex.lab=ifelse(figgy,1,1.5))
+								plot(0,0, type="n", xlab=linguaFranca("Age",l), ylab=ifelse(isLen, linguaFranca("Length (cm)",l), linguaFranca("Weight (kg)",l)), main=linguaFranca(iii,l), xlim=xlim, ylim=ylim, bty="l", cex.main=ifelse(figgy,1,1.5), cex.lab=ifelse(figgy,1,1.5), xaxs="r", yaxs="r")
 								#abline(h=seq(0,ylim[2],ifelse(ylim[2]<=10,1,5)),v=seq(0,xlim[2],ifelse(xlim[2]<=15,1,ifelse(xlim[2]<=50,5,10))),col="grey90",lwd=0.5)
 								abline(h=pretty(ylim,n=10), v=pretty(xlim,n=10), col="grey90", lwd=0.5)
 								points(jitter(age,jit[1]),jitter(yval,jit[2]),pch=149,col=.colBlind["orange"],cex=ifelse(figgy,0.7,1.2))
@@ -1170,7 +1173,7 @@ calcVB <- function(dat=pop.age, strSpp="", yfld="len", fixt0=FALSE,
 									subtit2 = gsub("ttype14","commercial",gsub("ttype23","research/survey",subtit))
 									subtit2 = gsub("major3456789","coastwide",gsub("major89","5DE",subtit2))
 									subtit2 = gsub("major567","5ABC",gsub("major34","3CD",subtit2))
-									addLabel(.5,.96,subtit2,adj=c(.5,0),cex=cexlab+0.1)
+									addLabel(0.5, 0.96, ifelse(missing(subtitle), subtit2, subtitle), adj=c(0.5, 0), cex=cexlab+0.1) ## (RH: 200402)
 								}
 								box(bty="l")
 							}
@@ -1424,71 +1427,6 @@ compCsum <- function(dat=pop.age, pro=TRUE, strSpp="", xfld="age", plus=60,
 	packList(stuff,"PBStool",tenv=.PBStoolEnv)
 	invisible() }
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~compCsum
-
-
-## compVB-------------------------------2019-10-17
-## Compare fitted von B curves using parameters.
-## ---------------------------------------------RH
-compVB = function(dat, index, A=1:40, subset="sex", 
-   col=c("blue","green4","red"), ymax, 
-   outnam="compVB-RSR", png=FALSE, pngres=400, lang=c("e","f"))
-{
-	VBfun <- function(P, a=1:40) {
-		Linf <- P[1]
-		K    <- P[2]
-		t0   <- P[3]
-		pred <- Linf * (1 - exp(-K * (a - t0)))
-		return(pred)
-	}
-	## Create a subdirectory called `french' for French-language figures
-	createFdir(lang)
-
-	## Use index to subset a potentially large list object
-	if (!missing(index))
-		dat = dat[index]
-
-	## Group
-	if (subset=="sex") {
-		stocks = names(dat)
-		nstock = length(stocks)
-		scols  = rep(col,nstock)[1:nstock]
-		names(scols) = stocks
-#browser();return()
-		xlim = range(A)
-		xlim = xlim + c(-1,1)
-		if (missing(ymax)) {
-			ylim = c(0, max(sapply(dat, function(x){apply(x,2,max)[2]})) )
-			ylim[2] =extendrange(ylim)[2]
-		} else {
-			ylim = c(0,ymax)
-		}
-		fout = fout.e = outnam
-		for (l in lang) {
-			changeLangOpts(L=l)
-			fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
-			if (png) png(paste0(fout,".png"), units="in", res=pngres, width=8, height=6)
-			par(mfrow=c(1,1), mar=c(3.25,3.5,0.5,0.5), oma=c(0,0,0,0), mgp=c(2,0.5,0))
-			plot(NA, xlim=xlim, ylim=ylim, xaxs="i", yaxs="i", las=1, cex.axis=1.2, cex.lab=1.5, xlab=linguaFranca("Age (years)",l), ylab=linguaFranca("Predicted Length (cm)",l))
-			axis(1, at=A, tcl=-0.25, labels=FALSE)
-			abline(h=seq(0,ymax,2), v=c(0,A,A+1), col="whitesmoke", lwd=0.5)
-			for (i in c("Male","Female")) {
-				lty = ifelse(i=="Female",1,3)
-				for (j in stocks) {
-					col = scols[j]
-					vb = VBfun(dat[[j]][i,2:4], a=A)
-					lines(A, vb, lwd=3, col=col, lty=lty)
-				}
-			}
-			lcol = rep(scols,nstock)
-			addLegend(0.9,0.05,lty=rep(c(1,3),each=nstock), col=lcol, xjust=1, yjust=0, text.col=lcol, lwd=3, seg.len=4, bty="n",
-				legend=linguaFranca(paste0(rep(stocks,2)," -- ",rep(c("Females","Males"),each=nstock)),l), cex=1.25)
-			box(col="slategray")
-			if (png) dev.off()
-		}; eop()
-#browser();return()
-	} ## end if subset=="sex"
-}
-##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~compVB
 
 
 ## estOgive-----------------------------2019-10-09
@@ -2278,11 +2216,11 @@ histMetric <- function(dat=pop.age, xfld="age", xint=1, minN=50,
 #---------------------------------------histMetric
 
 
-## histTail-----------------------------2019-10-15
+## histTail-----------------------------2020-03-18
 ## Create a histogram showing tail details
 ## ---------------------------------------------RH
 histTail <-function(dat=pop.age, xfld="age", tailmin=NULL, 
-   bcol="gold", tcol="moccasin",
+   xlim=c(0,100), bcol="gold", tcol="moccasin",
    wmf=FALSE, png=FALSE, pngres=400, PIN=c(6.5,3.5), 
    ioenv=.GlobalEnv, lang=c("e","f"), ...)
 {
@@ -2313,14 +2251,19 @@ histTail <-function(dat=pop.age, xfld="age", tailmin=NULL,
 			do.call("win.metafile",list(filename=paste0(fout,".wmf"), width=PIN[1], height=PIN[2]))
 		else if (png) png(paste0(fout,".png"), units="in", res=pngres, width=PIN[1], height=PIN[2])
 		else resetGraph()
-		expandGraph(mfrow=c(1,1),mar=c(3,5,.5,.5),oma=c(0,0,0,0),las=1,xaxs="i",yaxs="i")
+		expandGraph(mfrow=c(1,1), mar=c(2.75,4,1,1), oma=c(0,0,0,0), las=1, xaxs="i", yaxs="i", cex.axis=0.9, cex.lab=1.1)
 		
 		truehist = MASS::truehist
-#browser();return()
-		do.call(truehist, args=list(data=x, prob=prob, nbins=50, col=bcol, cex.lab=1.2, xlab=linguaFranca(xlab,l)))
 		#evalCall(truehist,argu=list(data=x,col=bcol,cex.lab=1.2,xlab=xlab),...,checkpar=TRUE)
+		#do.call(truehist, args=list(data=x, prob=prob, nbins=50, col=bcol, cex.lab=1.2, xlab=linguaFranca(xlab,l)))
+		xoff = -0.5
+		xmax = max(max(x),xlim[2])
+		do.call(truehist, args=list(data=x, prob=prob, breaks=seq(1,xmax,1), xlim=xlim, xaxt="n", col=bcol, xlab=linguaFranca(xlab,l)))
+		axis(1, at=seq(5+xoff,xmax+xoff,5), labels=FALSE, tcl=-0.25)
+		axis(1, at=seq(10+xoff,xmax+xoff,10), labels=seq(10,xmax,10), tcl=-0.5)
+#browser();return()
 		ylab = paste(ifelse(prob,ifelse((wmf|png)&&PIN[2]<3.5,"Rel. Freq.","Relative Frequency"),"Frequency")," ( N = ",format(nx,scientific=FALSE,big.mark=options()$big.mark)," )",sep="")
-		mtext(linguaFranca(ylab,l),side=2,line=3.5,cex=1.2,las=0)
+		mtext(linguaFranca(ylab,l), side=2, line=2.75, cex=par()$cex.lab, las=0)
 		if (!is.null(tailmin)){
 			z = x>=tailmin & !is.na(x); nz=sum(z)
 			brks = ((tailmin-1):max(x[z]))+0.5
@@ -4097,7 +4040,7 @@ sumBioTabs=function(dat, fnam="sumBioTab.csv", samps=TRUE, specs=TRUE,
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~sumBioTabs
 
 
-## weightBio----------------------------2019-10-16
+## weightBio----------------------------2020-05-11
 ## Weight age|length frequencies|proportions by catch|density.
 ##   adat = age123 from query 'gfb_bio.sql'    -- e.g., getData("gfb_bio.sql","GFBioSQL",strSpp="607",path=.getSpath()); bio607=processBio()
 ##   cdat = cat123gfm -- call 'fos_mcatSPP.sql' to get catches from GFFOS' GF_MERGED_CATCH table. (RH 190807)
@@ -4679,7 +4622,7 @@ weightBio = function(adat, cdat, sunit="TID", sweight="catch",
 					do.call("win.metafile",list(filename=paste0(fout,".wmf"), width=switch(nlay,shortside,longside,longside), height=switch(nlay,longside,shortside,longside)))
 				else resetGraph()
 				expandGraph(mfrow=c(rows,cols),mar=c(2.5,2.75,0.25,0.5),mgp=c(1.5,0.25,0),oma=c(0,0,0,0))
-				clrs=rep(clrs,length(sex))[1:length(sex)]
+				##clrs=rep(clrs,length(sex))[1:length(sex)]
 	
 				for (k in 1:nsex) {
 					kk  = sex[k]
@@ -4696,7 +4639,10 @@ weightBio = function(adat, cdat, sunit="TID", sweight="catch",
 							x = regimes[[i]]; a1=-min(x); a2=-max(x)
 							y1lo=a1+x1; y1hi=a2+x1; y2lo=a1+x2; y2hi=a2+x2
 							xreg=c(x1,x1,x2,x2); yreg=c(y1lo,y1hi,y2hi,y2lo)
-							polygon(xreg,yreg,border=FALSE, col=lucent("orange",0.2)) #"orange" #"floralwhite") #col="grey92")
+							## polygon(xreg,yreg,border=FALSE, col=lucent("orange",0.2)) #"orange" #"floralwhite") #col="grey92")
+#browser();return()
+							if (is.null(clrs$r)) clrs[["r"]] = lucent("orange",0.2)
+							polygon(xreg,yreg,border=FALSE, col=clrs[["r"]])
 						}
 						par(new=TRUE)
 					} 

@@ -12,7 +12,7 @@
 compAF(x, year=2003, sex=2, amax=40, pfld="wp",
    png=FALSE, pngres=400, PIN=c(10,7.5),
    outnam, clrs=c("red","black"), ltys=1, 
-   type="cumul", lang=c("e","f"))
+   type="cumul", fac="len", lang=c("e","f"))
 }
 \arguments{
   \item{x}{\code{list} -- list of arrays by group category containing
@@ -30,6 +30,7 @@ compAF(x, year=2003, sex=2, amax=40, pfld="wp",
   \item{ltys}{\code{numeric} -- vector of line types by category.}
   \item{type}{\code{character} -- type of line plot: \code{"cumul"} 
     for cumulative or \code{"discr"} for discrete frequency distributuon.}
+  \item{fac}{\code{character} -- field name in bio data that contains data for comparison (usually \code{'age'} or \code{'len'}).}
   \item{lang}{\code{character} -- a vector of letters that denote the language for output:
     currently only \code{"e"} (english) and \code{"f"} (french).}
 }
@@ -48,7 +49,7 @@ compAF(x, year=2003, sex=2, amax=40, pfld="wp",
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
   \emph{locus opus}: Institute of Ocean Sciences (IOS), Sidney BC\cr
-  Last modified \code{Rd: 2019-03-21}
+  Last modified \code{Rd: 2020-07-16}
 }
 \seealso{
 In package \pkg{PBStools}:\cr

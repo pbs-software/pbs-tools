@@ -7,10 +7,11 @@
   Compare fitted von Bretalanffy curves using previously estimated parameters.
 }
 \usage{
-compVB(dat, index, A=1:40, subset="sex", 
-   col=c("blue","green4","red"), ymax, 
+compVB(dat, index, A=1:40, subset=list(sex=c("Male","Female")), 
+   col=c("blue","green4","red"), lty=c(1,2,3), ymax,
    outnam="compVB-RSR", png=FALSE, pngres=400, lang=c("e","f"))
 }
+
 %- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{dat}{\code{numeric list} -- list of matrices where each row represents
@@ -20,6 +21,7 @@ compVB(dat, index, A=1:40, subset="sex",
   \item{A}{\code{numeric} -- vector of ages spanning the desired range for calculating y-values (e.g.,lengths).}
   \item{subset}{\code{character} -- plot type, but there is only one choice (\code{"sex"}) currently.}
   \item{col}{\code{character|numeric} -- vector of colours to use for each \code{index}.}
+  \item{lty}{\code{numeric} -- vector of line types to use for each \code{index}.}
   \item{ymax}{\code{numeric} -- maximum y-value for plot.}
   \item{outnam}{\code{character} -- name for output file (\code{.png}).}
   \item{png}{\code{logical} -- if \code{TRUE}, save the plot as a portable network graphics (\code{".png"}) file.}
@@ -36,8 +38,8 @@ compVB(dat, index, A=1:40, subset="sex",
 \author{
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
-  \emph{opus locus}: Institute of Ocean Sciences (IOS), Sidney BC\cr
-  Last modified \code{Rd: 2018-08-15}
+  \emph{locus opus}: Institute of Ocean Sciences (IOS), Sidney BC\cr
+  Last modified \code{Rd: 2020-07-16}
 }
 \note{
   Code is currently hardwired to loop through \code{"Males"} and \code{"Females"}.

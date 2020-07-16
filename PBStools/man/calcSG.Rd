@@ -6,7 +6,7 @@
   data using a versatile Schnute growth model.
 }
 \usage{
-calcSG(dat=pop.age, strSpp="", yfld="len", tau=c(5,40), fixt0=FALSE,
+calcSG(dat=pop.age, strSpp="", yfld="len", tau=c(5,80), fixt0=FALSE,
    areas=list(major=NULL, minor=NULL, locality=NULL, srfa=NULL,srfs=NULL, popa=NULL),
    ttype=list(commercial=c(1,4,5),research=c(2,3)), stype=c(1,2,6,7), scat=NULL,
    sex=list(Females=2,Males=1), rm.studs=NULL,

@@ -497,13 +497,14 @@ getMonth = function(dates, type=1)
 ## -----------------------------------------PJS|RH
 getSpecies = function(species)
 {
-#	tempfile = paste0(convSlashes(tempdir(),"unix"),"/tmpsurvey.txt")
+	#ici = lenv() ## RH 200716
+	#tempfile = paste0(convSlashes(tempdir(),"unix"),"/tmpsurvey.txt")
 	N = countVec(species)  ## count if species~=. 
 	if (N>0) {
 #		save `tmpsurvey' ## wtf?
 		if (length(.su(species)) > 1)
 			stop ("More than one species code in the file\n\texiting program...")
-		data(spn,package="PBSdata")
+		#data(spn, package="PBSdata", envir=ici) ## RH 200716
 		z = !is.na(species)
 		species[z] = pad0(species[z], 3)
 		#species[z] = spn[as.character(species[z])]
@@ -727,13 +728,14 @@ plotIndex = function(bootbomb, type="PJS", surv=ttcall(surveyname),
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotIndex
 
 
-## prepGFsurv-------------------------2019-08-02
+## prepGFsurv---------------------------2020-07-16
 ##  Prepare GF surveys using PJS codes.
 ## -----------------------------------------PJS|RH
 prepGFsurv = function(file, survey, strSpp, datemask, doorspread=61.6,
    shrimpyear=1975, savefile=TRUE, usevar=FALSE, attended=FALSE,
    spath="C:/Users/haighr/Files/Projects/R/Develop/PBStools/Authors/SQLcode")
 {
+	ici = lenv() ## RH 200716
 	#syntax, File(string) SUrvey(int) [DAtemask(string) DOorspread(real 61.6) SHrimpyear(int 1975)] /*
 	#	*/ [noSAvefile noUSevar noATtended]
 
@@ -772,7 +774,7 @@ prepGFsurv = function(file, survey, strSpp, datemask, doorspread=61.6,
 		stop("\n\n!!!!! String species neither supplied by user nor identified in file name.\n\tSupply species HART code to 'strSpp'\n\n")
 #browser();return()
 
-	data(spn, package="PBSdata")
+	data(spn, package="PBSdata", envir=ici) ## RH 200716
 	speciesname = spn[strSpp]
 	ttput(speciesname)
 
@@ -1182,12 +1184,13 @@ prepQCSsyn = function(file, survey)
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~prepQCSsyn
 
 
-## prepNMFStri---------------------------2019-08-02
+## prepNMFStri--------------------------2020-07-16
 ##  Prepare US National Marine Fisheries Service
 ##  triennial survey data from WCVI.
 ## -----------------------------------------PJS|RH
 prepNMFStri = function(file, survey=5)
 {
+	ici = lenv() ## RH 200716
 	surveyname = "NMFS Triennial"
 	ttput(surveyname)
 	ttput(survey)
@@ -1241,7 +1244,7 @@ prepNMFStri = function(file, survey=5)
 
 	## GFBio has no information on tows in Canada vs USA other than strata 19, 29, and 39.
 	## Use shapefile 'eez.bc' in package PBSdata to delimit tows based on their geographical coordinates
-	data(eez.bc, package="PBSdata")
+	data(eez.bc, package="PBSdata", envir=ici) ## RH 200716
 	dat$EID = 1:nrow(dat)
 	dat$X   = dat$longitude
 	dat$Y   = dat$latitude

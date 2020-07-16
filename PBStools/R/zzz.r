@@ -16,7 +16,7 @@
 -----------------------------------------------------------
 PBS Tools ", pkg_info$Version, " -- Copyright (C) 2007-",year," Fisheries and Oceans Canada
 
-A complete user guide 'PBStools-UG.pdf' is located at 
+A somewhat complete user guide 'PBStools-UG.pdf' is located at 
 ", userguide_path, "
 
 Packaged on ", pkg_date, "
@@ -38,13 +38,13 @@ We may not be big, but we're small.
 # ===================
 if(getRversion() >= "2.15.1") utils::globalVariables(names=c(
 	".onClose",".PBSmod",".runModHelperQuit",
-	"A","acut","adat","Afile","age","agg","AID","amax","aModel","areas","autoA","autoD","aVal",
-	"B","b0","b5","barcol","bathy","bbonly","Bboot","bcol","bdat","Best","bgsamp","bgtab","bh","bio440","Bobs","boot","boot.ci","boxpars","boxwidth","Bqnt","Bt","bta","Btot","bugsData",
+	"A","acut","adat","Afile","age","agg","AID","amax","aModel","areas","assflds","autoA","autoD","aVal",
+	"B","b0","b5","barcol","barf","bathy","bbonly","Bboot","bcol","bdat","Best","bgsamp","bgtab","bh","bio440","Bobs","boot","boot.ci","bootci","booty","boxpars","boxwidth","Bqnt","Bt","bta","Btot","bugsData",
 	"C1","C2","case","cast","cat440rec","catch","Cbar","Cbox","Ccat","ccol","cdata","Ceq","chn1","chn2","clara","clen","Clin","clwd","Cnum","cobs","Cpoi","cpuTime","cthin","ctot","Ctrd","Cval",
-	"dat","DATA","datt","dBars","dbName","ddat","diaDir","disA","DLIM",
-	"edat","elapTime","empinf","eN","eps","evals",
+	"dat","DATA","datt","dBars","dbName","ddat","defaultdoorspread","diaDir","disA","DLIM",
+	"edat","eez.bc","elapTime","empinf","eN","eps","evals","extra",
 	"FID","figDir","fillBars","firstSerial","fminE","fminS","fnam","Fout","formalArgs","fqtName","Ft","ftime","func",
-	"g","gear","gfbdat","glmfit","gma.popymr","group","Gv2",
+	"g","gear","gfbdat","gigflds","glmfit","gma.popymr","group","Gv2",
 	"hadley","hide0","HSreg","HStrc",
 	"idxD","idxL","idxM","inone","IRRmin","is.pred","isobath","iters",
 	"k","K",
@@ -55,8 +55,8 @@ if(getRversion() >= "2.15.1") utils::globalVariables(names=c(
 	"pa.obs","pa.raw","parVec","path","pathN","PBSdat","PBStool","PBSmin","Pfig","pfout.e","phi","pi.obs","pix","pjsa","PLIM","pmfc","PMFC","pmon","pnam","poi","pop.age","pop.pmr.qcss","popa","powr","prefix","pset","psize","Pstart","pwd","pyr",
 	"q2","qboxplot","qq","qtName","quants",
 	"rate","rates","reltol","repN","rho","RkB","Roff","RPmax","RPmin","ryrs",
-	"s1","s2","samplesGetFirstChain","samplesGetLastChain","samplesHistory","samplesSet","SB","Scat","Sdat","sdate","seepa","seepi","set","sex","SG","SGdat","showC","showD","showE","showH","showL","showM","showQ","SID","sigma","species","spn","spp","srfa","srfs","SSB","steptol","sthin","storageID","strArea","strat","strGear","strSpp","strYear","stype","surveys",
-	"t0","tabDir","tau","tcl","tdate","theta","tran","truehist","trusted","tstar","ttype","type",
+	"s1","s2","samplesGetFirstChain","samplesGetLastChain","samplesHistory","samplesSet","SB","Scat","Sdat","sdate","seepa","seepi","set","sex","SG","SGdat","showC","showD","showE","showH","showL","showM","showQ","SID","sigma","species","speciesname","spn","spp","srfa","srfs","SSB","ssid","steptol","sthin","storageID","strArea","strat","stratum","strGear","strSpp","strYear","stype","survey","surveyname","surveys","synflds",
+	"t0","tabDir","tau","tcl","tdate","theta","tran","triflds","truehist","trusted","tstar","ttype","type",
 	"Ugear","uid","Umajor","Usex","Usrfa","Usrfs","Ustype","Uttype",
 	"VBdat","Vend","vessel","Vstart",
 	"wgta","wgtat","wmf","wted",
@@ -64,6 +64,7 @@ if(getRversion() >= "2.15.1") utils::globalVariables(names=c(
 	"y","year","years","yfld","yfun","yinf","Yinf","ylim","YLIM","Ymax","Ymin","Ymod","ypos","yr","ystar","ytck",
 	"z","Z","za","zero","zfill","Zlim","zsho","zstar","zstn"
 	), package="PBStools")
+
 
 ##quantBox------------------------------2018-04-03
 ## Redefine boxplot to show quantiles (RH 150910)

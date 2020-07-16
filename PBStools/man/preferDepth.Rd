@@ -8,21 +8,19 @@
 }
 \usage{
 preferDepth(strSpp="410", fqtName="pht_fdep.sql", dbName="PacHarvest",
-     spath=NULL, type="SQL", hnam=NULL, get.effort=FALSE, lang=c("e","f"))
+   spath=NULL, type="SQL", hnam=NULL, get.effort=FALSE, lang=c("e"))
 }
 \arguments{
-  \item{strSpp}{\code{character} -- string specifying the code for a species that appears in the
-    target database }
-  \item{fqtName}{\code{character} -- string specifying the name of a local file (f), an SQL query 
-    file (q), or an MDB table (t)}
+  \item{strSpp}{\code{character} -- string specifying the code for a species that appears in the target database }
+  \item{fqtName}{\code{character} -- string specifying the name of a local file (f), an SQL query file (q), or an MDB table (t)}
   \item{dbName}{\code{character} -- string specifying the name of an SQL DSN for an ODBC call to 
     the SQL Server database \code{DFBCV9TWVASP001}, or an MDB database}
   \item{spath}{\code{character} -- string specifying the path to the file \code{fqtName}}
   \item{type}{\code{character} -- string specifying the file type: \code{"SQL"}, \code{"MDB"}, or \code{"FILE"}}
   \item{hnam}{\code{character} -- string specifying the name of a history file}
   \item{get.effort}{\code{logical} -- if \code{TRUE}, get the trawl effort data right away.}
-  \item{lang}{\code{character} -- a vector of letters that denote the language for output:
-    currently only \code{"e"} (english) and \code{"f"} (french).}
+  \item{lang}{\code{character} -- a letter that denotes the language for output:
+    currently only \code{"e"} (english) and \code{"f"} (french) available.}
 }
 \details{
   The function \code{preferDepth()} creates an interactive GUI that can be used
@@ -88,7 +86,7 @@ preferDepth(strSpp="410", fqtName="pht_fdep.sql", dbName="PacHarvest",
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
   \emph{locus opus}: Institute of Ocean Sciences (IOS), Sidney BC\cr
-  Last modified \code{Rd: 2019-12-12}
+  Last modified \code{Rd: 2020-07-16}
 }
 \seealso{
   \code{\link[PBStools]{getData}}, \code{\link[PBStools]{calcHabitat}}, \code{\link[PBStools]{histMetric}} \cr

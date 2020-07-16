@@ -7,7 +7,7 @@
 }
 \usage{
 histTail(dat=pop.age, xfld="age", tailmin=NULL, 
-   bcol="gold", tcol="moccasin",
+   xlim=c(0,100), bcol="gold", tcol="moccasin",
    wmf=FALSE, png=FALSE, pngres=400, PIN=c(6.5,3.5), 
    ioenv=.GlobalEnv, lang=c("e","f"), ...)
 }
@@ -15,13 +15,14 @@ histTail(dat=pop.age, xfld="age", tailmin=NULL,
   \item{dat}{\code{data.frame} -- data file of biology metrics (e.g., \code{pop.age}).}
   \item{xfld}{\code{character} -- string specifying the field containing the metric of interest.}
   \item{tailmin}{\code{numeric} -- value of \code{xfld} to start the tail plot.}
+  \item{xlim}{\code{numeric} -- limits of the x-axis spanning ages or lengths.}
   \item{bcol}{\code{character|numeric} -- fill colour for the main histogram bars.}
   \item{tcol}{\code{character|numeric} -- fill colour for the tail histogram bars.}
-  \item{wmf}{\code{logical} -- if \code{TRUE}, send plot to a \code{.wmf} file.}
-  \item{png}{\code{logical} -- if \code{TRUE}, send plot to a \code{.png} file.}
-  \item{pngres}{\code{numeric} -- resolution (pixels/inch) for the \code{.png} figure.}
+  \item{wmf}{\code{logical} -- if \code{TRUE}, send plot to a \code{'.wmf'} file.}
+  \item{png}{\code{logical} -- if \code{TRUE}, send plot to a \code{'.png'} file.}
+  \item{pngres}{\code{numeric} -- resolution (pixels/inch) for the \code{'.png'} figure.}
   \item{PIN}{\code{numeric} -- two-element vector specifying output size (inches) 
-    as width and height for the \code{.png} figure.}
+    as width and height for the \code{'.png'} figure.}
   \item{ioenv}{\code{environment} -- input/output environment for function input data and output results.}
   \item{lang}{\code{character} -- a vector of letters that denote the language for output:
     currently only \code{"e"} (english) and \code{"f"} (french).}
@@ -62,7 +63,7 @@ pbsfun()
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
   \emph{locus opus}: Institute of Ocean Sciences (IOS), Sidney BC\cr
-  Last modified \code{Rd: 2019-10-02}
+  Last modified \code{Rd: 2020-07-16}
 }
 \seealso{
   \code{\link[PBStools]{histMetric}} \cr

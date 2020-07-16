@@ -5,6 +5,8 @@
 ##  compAF..........Compare age frequencies using discrete or cumulative distribution plots.
 ##  compBmsy........Compare biomass posteriors relative to Bmsy or Bavg.
 ##  compLen.........Compare annual length distributions among surveys series or commercial gears.
+##  compVB..........Compare fitted von B curves using parameters.
+##  compVBpars......Compare MCMC derived parameters from von Bertalanffy model.
 ##  createMA........Create table of DFO management actions for Appendix A (catch).
 ##  imputeRate......Impute rate of return from an investment with irregular contributions/withdrawals.
 ##  makeAgeErr......Make an ageing error matrix for Awatea.
@@ -56,20 +58,21 @@ calcMA = function(x,y,y2,period=270,every=10)
 #-------------------------------------------calcMA
 
 
-## compAF-------------------------------2019-10-16
+## compAF-------------------------------2020-04-07
 ## Compare age frequencies using discrete or
 ## cumulative distribution plots.
 ## ---------------------------------------------RH
 compAF=function(x, year=2003, sex=2, amax=40, pfld="wp",
    png=FALSE, pngres=400, PIN=c(10,7.5),
    outnam, clrs=c("red","black"), ltys=1, 
-   type="cumul", lang=c("e","f"))
+   type="cumul", fac="len", lang=c("e","f"))
 {
 	if (length(x)==0) stop("Supply a named list for x")
 	std   = function(x){x/sum(x)}
 	ncomp = length(x)
 	nsex  = length(sex)
 	ntype = length(type)
+#browser();return()
 	years = sapply(x,function(xx){
 		noto=apply(xx[,,,"n",drop=FALSE],2,sum,na.rm=TRUE)
 		yrs = as.numeric(names(noto[noto>0]))
@@ -112,14 +115,15 @@ compAF=function(x, year=2003, sex=2, amax=40, pfld="wp",
 					if(!is.element(yy,dimnames(xx)$year)) 0 
 					else sum(xx[,yy,ss,"n"])
 				})
-				legtxt = paste0(names(notos)," ",round(notos)," otos")
+				legtxt = paste0(names(notos)," ",round(notos), switch(fac, 'age'=" otos", 'len'=" lens"))
 				ylim = c(0,max(sapply(xvec,max),na.rm=TRUE))
 	
 				if ("discr" %in% type) {
 					plot(0,0, xlim=c(1,amax), ylim=ylim, type="n", xlab="", ylab="", xaxt="n", yaxt="n")
 					sapply(nord, function(n){
 						if (!all(is.na(xvec[[n]])))
-							lines(1:length(xvec[[n]]), xvec[[n]], col=col[n], lty=lty[n], lwd=ifelse(n==1,3,2)) } )
+							#lines(1:length(xvec[[n]]), xvec[[n]], col=col[n], lty=lty[n], lwd=ifelse(n==1,3,2)) } )
+							lines(1:length(xvec[[n]]), xvec[[n]], col=col[n], lty=lty[n], lwd=2) } )
 					addLabel(0.95, 0.95, paste0(yy, " - ", linguaFranca(switch(s,"Male","Female"),l)), adj=1)
 				}
 				if ("cumul" %in% type) {
@@ -128,10 +132,12 @@ compAF=function(x, year=2003, sex=2, amax=40, pfld="wp",
 					if (all(notos==0))
 						addLabel(0.5, 0.5, linguaFranca("NO DATA",l), col="red", cex=1.2)
 					else 
-						abline(h=seq(0.1,0.9,0.1), v=seq(5,amax-5,5), col=lucent("grey",0.4))
+						#abline(h=seq(0.1,0.9,0.1), v=seq(5,amax-5,5), col=lucent("grey",0.4))
+						abline(h=seq(0,1,0.1), v=seq(0,amax,5), col=lucent("grey",0.4))
 					sapply(nord, function(n){
 						if (!all(is.na(xvec[[n]]))) {
-							lines(1:length(xvec[[n]]), cumsum(xvec[[n]]), col=col[n], lty=lty[n], lwd=ifelse(n==1,3,2))
+							#lines(1:length(xvec[[n]]), cumsum(xvec[[n]]), col=col[n], lty=lty[n], lwd=ifelse(n==1,3,2))
+							lines(1:length(xvec[[n]]), cumsum(xvec[[n]]), col=col[n], lty=lty[n], lwd=2)
 						}
 					} )
 					addLabel(0.05, 0.95, paste0(yy, ifelse(np==1, linguaFranca(switch(s," - Male"," - Female"),l), "")), adj=c(0,1), cex=1.2)
@@ -150,7 +156,8 @@ compAF=function(x, year=2003, sex=2, amax=40, pfld="wp",
 					addLegend(0.025,0.975,bty="n", lty=lty, seg.len=1, col=col, legend=linguaFranca(gsub("_"," ",legtxt),l), yjust=1, xjust=0, lwd=2, cex=0.9)
 			} ## end s (sex) loop
 		} ## end y (year) loop
-		mtext (linguaFranca("Age",l), side=1, outer=TRUE, line=2.5, cex=1.5)
+		#mtext (linguaFranca("Age",l), side=1, outer=TRUE, line=2.5, cex=1.5)
+		mtext (linguaFranca(switch(fac, 'age'="Age", 'len'="Length (cm)"),l), side=1, outer=TRUE, line=2.5, cex=1.5)
 		mtext (linguaFranca(paste0(ifelse(type=="cumul","Cumulative ",""), "Frequency"),l), side=2, outer=TRUE, line=2.5, cex=1.25, las=0)
 		if(png) dev.off()
 	}; eop()
@@ -158,7 +165,7 @@ compAF=function(x, year=2003, sex=2, amax=40, pfld="wp",
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~compAF
 
 
-## compBmsy-----------------------------2019-11-22
+## compBmsy-----------------------------2020-04-20
 ## Compare biomass posteriors relative to Bmsy or Bavg
 ## ---------------------------------------------RH
 compBmsy = function(Bspp, spp="POP", Mnams=c("Est M","Fix M"),
@@ -241,19 +248,21 @@ compBmsy = function(Bspp, spp="POP", Mnams=c("Est M","Fix M"),
 				do.call("win.metafile",list(filename=paste(fout,".wmf",sep=""), width=width*1.25, height=height*1.25))
 			if (is.null(left.space))
 				left.space = (max(nchar(names(Bmsy)))-ifelse(spplabs,nchar(spp),0))^0.9
-			par(mar=c(4,left.space,0.5,0.5),cex=ifelse(f%in%c("png","eps"),1,1.2),mgp=c(1.6,0.6,0))
+			len.lab = max(sapply(names(Bmsy),nchar))                      ## RH 200420
+			cex.lab = ifelse(len.lab>20, 0.9, ifelse(len.lab>15, 1, 1.2)) ## RH 200420
+			par(mar=c(4,left.space + ifelse(l=="f",2,0), 0.5, 0.5),cex=ifelse(f%in%c("png","eps"),1,1.2),mgp=c(1.6,0.6,0))
 			quantBox(Bmsy, horizontal=TRUE, las=1, xlim=c(0.5,nmods+top.space), ylim=ylim, cex.axis=1.2, yaxs="i", outline=FALSE,
-				pars=list(boxwex=boxwidth,medlwd=2,whisklty=1),quants=quants,names=FALSE)
-	
+				pars=list(boxwex=boxwidth,medlwd=2,whisklty=1), quants=quants, names=FALSE)
 			if (Nrats>0)
 				abline(v=ratios,col=rep(rcol,Nrats)[1:Nrats],lty=2,lwd=2)
 	
-			#	segments(v=ratios,col=rep(c("red","green4","blue"),Nrats)[1:Nrats],lty=2,lwd=2)
-			quantBox(Bmsy, horizontal=TRUE, las=1, xlim=c(0.5,nmods+1), ylim=ylim, cex.axis=1.2, yaxs="i", outline=FALSE, names=linguaFranca(names(Bmsy),l), pars=list(boxwex=boxwidth, medlwd=2, whisklty=1, medcol=medcol, boxfill=boxfill, ...), add=TRUE, quants=quants)
+			## segments(v=ratios,col=rep(c("red","green4","blue"),Nrats)[1:Nrats],lty=2,lwd=2)
+			quantBox(Bmsy, horizontal=TRUE, las=1, xlim=c(0.5,nmods+1), ylim=ylim, cex.axis=1.2, yaxs="i", outline=FALSE, names=FALSE, pars=list(boxwex=boxwidth, medlwd=2, whisklty=1, medcol=medcol, boxfill=boxfill, ...), add=TRUE, quants=quants)
+			## if (length(Bmsy)==1)  ## for some reason, a label is not added when there is only 1 boxplot.
+			##	axis(2, at=1, labels=linguaFranca(names(Bmsy),l), las=1, cex.axis=1.2)
+			axis(2, at=1:length(Bmsy), labels=linguaFranca(names(Bmsy),l), las=1, cex.axis=cex.lab) ## RH 200420
 #browser();return()
-			if (length(Bmsy)==1)  ## for some reason, a label is not added when there is only 1 boxplot.
-				axis(2, at=1, labels=linguaFranca(names(Bmsy),l), las=1, cex.axis=1.2)
-	
+
 			if (Norats>0){
 				orange = attributes(oratios)$range
 				if (!is.null(orange)){
@@ -313,7 +322,7 @@ compBmsy = function(Bspp, spp="POP", Mnams=c("Est M","Fix M"),
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~compBmsy
 
 
-## compLen------------------------------2019-10-17
+## compLen------------------------------2020-06-16
 ##  Compare lengths (or ages) among groups by sex.
 ##  For example, compare annual length distributions
 ##  among surveys series or commercial gears.
@@ -321,7 +330,7 @@ compBmsy = function(Bspp, spp="POP", Mnams=c("Est M","Fix M"),
 compLen = function(dat, strSpp, fld="len", lbin=1, sex=c(2,1),
    gfld="SSID", gval=list(16,1,4), yrs, ttype, stype, scat, exlax,
    strat=FALSE, boot=FALSE, R=10, bxpsep=0.2, bxpcol="black", 
-   ylim=NULL, legpos=c(0.025,0.4), 
+   ylim=NULL, legpos=c(0.025,0.4), stock.name,
    png=FALSE, pngres=400, PIN=c(8,8), lang=c("e","f"))
 {
 	datnam = as.character(substitute(dat))
@@ -336,6 +345,7 @@ compLen = function(dat, strSpp, fld="len", lbin=1, sex=c(2,1),
 		dat = dat[is.element(dat$stype, stype),]
 	if (!missing(scat))
 		dat = dat[is.element(dat$scat, scat),]
+	if (nrow(dat)==0) stop("No records for this species/stock")
 
 	gval = sapply(gval, function(x){xout = intersect(x, .su(dat[,gfld])); if(length(xout)==0) NA else xout}, simplify=FALSE)
 	gval = gval[!is.na(gval)]
@@ -353,15 +363,18 @@ compLen = function(dat, strSpp, fld="len", lbin=1, sex=c(2,1),
 	Lbin = .su(ceiling(.su(dat[,fld])/lbin)*lbin)
 
 	if (gfld=="SSID") {
-		ssnames = c("QCS Synoptic", "WCVI Synoptic", "WCHG Synoptic", "HS Synoptic", "IPHC Longline", "Shrimp Trawl")
-		names(ssnames) = names(bxpcol) = c(1,4,16,3,14,670)
+		#ssnames = c("QCS Synoptic", "WCVI Synoptic", "WCHG Synoptic", "HS Synoptic", "IPHC Longline", "Shrimp Trawl")
+		#names(ssnames) = names(bxpcol) = c(1,4,16,3,14,670)
+		ssnames = names(ssid)
+#browser();return()
+		names(ssnames) = names(bxpcol) = sapply(ssid,paste0,collapse="|")
 	} else if (gfld=="major") {
-		if (strSpp=="417") {
+		if (any(strSpp %in% "417")) {
 			ssnames = c("BCS", "BCC", "BCN")
 			names(ssnames)[1] = names(bxpcol)[1] = names(gval)[grep("3|4",names(gval))]
 			names(ssnames)[2] = names(bxpcol)[2] = names(gval)[grep("5|6|7|8",names(gval))]
 			names(ssnames)[3] = names(bxpcol)[3] = names(gval)[grep("9",names(gval))]
-		} else if (strSpp=="435") {
+		} else if (any(strSpp %in% "435")) {
 			#ssnames = c("3CD", "5AB", "5CDE")
 			ssnames = c("South", "North")
 			names(ssnames)[1] = names(bxpcol)[1] = names(gval)[grep("3|4",names(gval))]
@@ -370,19 +383,33 @@ compLen = function(dat, strSpp, fld="len", lbin=1, sex=c(2,1),
 			names(ssnames)[2] = names(bxpcol)[2] = names(gval)[grep("5|6|7|8|9",names(gval))]
 		}
 	} else if (gfld=="gear") {
-		ssnames = c("BT", "MW", "LL")
-		gnames  = c("1|8","6","5")
+		#ssnames = c("BT", "MW", "LL")
+		#gnames  = c("1|8","6","5")
+		ssnames = names(gear)
+		gnames  = sapply(gear,paste0,collapse="|")
 		for (i in 1:length(ssnames)) {
 			if (any(grepl(gnames[i],names(gval))))
 				names(ssnames)[i] = names(bxpcol)[i] = names(gval)[grep(gnames[i],names(gval))]
-			else
-				ssnames = ssnames[grep(gnames[i],names(gval),invert=TRUE)]
+			#else
+			#	ssnames = ssnames[grep(gnames[i],names(gval),invert=TRUE)]
 		}
+		ssnames[!is.na(names(ssnames))]
+#browser();return()
 		bxpcol = bxpcol[names(ssnames)]
 	}
 	loca    = lenv()
 	data(species, package="PBSdata", envir=loca)
-	spp3    = species[strSpp, "code3"]
+#browser();return()
+	if (missing(stock.name)) { ## RH 200616
+		if (grepl("BSR|RER|HYB|REBS", strSpp))
+			spp3 = strSpp
+		else 
+			spp3 = paste0(species[strSpp, "code3"],collapse="|")
+	} else {
+		spp3 = stock.name ## prone to breaking but use for now (RH 200616)
+	}
+
+	#spp3    = if(all(strSpp=="REBS")) "REBS" else if(all(strSpp=="HYB")) "HYB" else paste0(species[strSpp, "code3"],collapse="|")
 
 	out  = if (gfld=="SSID") "-Surv" else paste0("-tt(",paste0(.su(dat$ttype),collapse=""),")")
 	poo  = if (missing(exlax)) "" else paste0("-(",exlax,")")
@@ -406,12 +433,12 @@ compLen = function(dat, strSpp, fld="len", lbin=1, sex=c(2,1),
 				#plot(0,0,type="n",xlim=xlim,ylim=ylim,xlab="",ylab="", mgp=c(1.5,0.5,0))
 			} else {
 				quantBox(sapply(Qbox,function(x){NA},simplify=F), type="n", ylim=ylim, xlab="", ylab="")
+				abline(v=seq(0.5,par()$usr[2],1),col="grey95")
 			}
 			sapply(1:length(Idat), function(i) {  ## loop through index 
 				ii  = names(Idat)[i]
 #if (i==5) {browser();return()}
 				idat = Idat[[i]]
-#browser();return()
 				ival  = split(idat[,fld],idat$year)
 				if (strat){
 					yrs  = .su(idat$year)
@@ -492,26 +519,29 @@ compLen = function(dat, strSpp, fld="len", lbin=1, sex=c(2,1),
 				}
 				if (!is.null(ival)) {
 					attr(ival,"Ymean") = Ymean
-					qbox = Qbox
+					qbox   = Qbox
 					qbox[names(ival)] = ival
-					wbxp = (bxpsep*2)^(2)  ## reverse calcs in function bxp (sort of)
+					#wbxp  = (bxpsep*2)^(2)  ## reverse calcs in function bxp (sort of)
+					wbxp   = ifelse(length(gval)==1, 0.5, 1/length(gval))
 					midout = ((wbxp*length(gval)/2)-wbxp/2) * c(-1,1)
 					xoff   = seq(midout[1],midout[2],length.out=length(gval))
-					pars = list(boxwex=wbxp, whisklty=1, boxcol="gainsboro", boxfill=lucent(bxpcol[ii],0.5), medcol="black", medlwd=3)
-					xpos = (1:length(qbox)) + xoff[i]
-					qxy = quantBox(qbox, outline=FALSE, pars=pars, add=TRUE, xaxt="n", at=xpos)
-					imean = match(names(Ymean),names(Qbox))
+					pars   = list(boxwex=wbxp, whisklty=1, boxcol="gainsboro", boxfill=lucent(bxpcol[ii],0.5), medcol="black", medlwd=2)
+					xpos   = (1:length(qbox)) + xoff[i]
+					qxy    = quantBox(qbox, outline=FALSE, pars=pars, add=TRUE, xaxt="n", at=xpos)
+					imean  = match(names(Ymean),names(Qbox))
 					#points(xpos[imean],Ymean,pch=21,col=bxpcol[i],bg="white",cex=0.8)
 				} else {
 				}
 			}) ## end i (index) loop
+#browser();return()
 			mtext(linguaFranca(ifelse(fld %in% c("len"), "Length (cm)", "Age (y)"),l), side=2, line=2.25, cex=1.5, las=0)
 			yleg = ifelse(fld=="age" && gfld=="SSID", 0.9, 0.05)
 			addLabel(0.025, yleg, linguaFranca(paste0(spp3, " ",switch(s,"Males","Females")),l), cex=1.2, adj=c(0,0))
 			if (par()$mfg[1]==1) {
+				leglab = gsub("_"," ",ssnames[names(gval)])
 #browser();return()
-				addLegend(legpos[1], legpos[2], bty="n", fill=lucent(bxpcol[names(gval)],0.5), border="gainsboro", legend=linguaFranca(ssnames[names(gval)],l), xjust=0, yjust=1)
-				if (gfld %in% c("gear","major"))
+				addLegend(legpos[1], legpos[2], bty="n", fill=lucent(bxpcol[names(gval)],0.5), border="gainsboro", legend=linguaFranca(leglab,l), xjust=0, yjust=1)
+				if (gfld %in% c("off.gear","major"))
 					addLabel(0.975, 0.95, txt=linguaFranca( sub("bioDat","",datnam),l), cex=1.2, adj=c(1,1))
 			}
 		} ## end s (sex) loop
@@ -522,7 +552,163 @@ compLen = function(dat, strSpp, fld="len", lbin=1, sex=c(2,1),
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~compLen
 
 
-## createMA-----------------------------2020-01-13
+## compVB-------------------------------2020-03-30
+## Compare fitted von B curves using parameters.
+## ---------------------------------------------RH
+compVB = function(dat, index, A=1:40, subset=list(sex=c("Male","Female")), 
+   col=c("blue","green4","red"), lty=c(1,2,3), ymax,
+   outnam="compVB-RSR", png=FALSE, pngres=400, lang=c("e","f"))
+{
+	VBfun <- function(P, a=1:40) {
+		Linf <- P[1]
+		K    <- P[2]
+		t0   <- P[3]
+		pred <- Linf * (1 - exp(-K * (a - t0)))
+		return(pred)
+	}
+	## Create a subdirectory called `french' for French-language figures
+	createFdir(lang)
+
+	## Use index to subset a potentially large list object
+	if (!missing(index))
+		dat = dat[index]
+
+	## Group
+	if (any(names(subset)=="sex")) {
+		iii    = subset[["sex"]]
+		nsex   = length(iii)
+		stocks = names(dat)
+		nstock = length(stocks)
+		nss    = nstock * nsex
+		#scols  = rep(col,nstock)[1:nstock]; names(scols) = stocks
+		#sltys  = rep(lty,nstock)[1:nstock]; names(sltys) = stocks
+		scols  = rep(col,nss)[1:nss]; names(scols) = paste0(rep(stocks,nsex),".",rep(sex,each=nstock))
+		sltys  = rep(lty,nss)[1:nss]; names(sltys) = paste0(rep(stocks,nsex),".",rep(sex,each=nstock))
+		xlim = range(A)
+		xlim = xlim + c(-1,1)
+		if (missing(ymax)) {
+			ylim = c(0, max(sapply(dat, function(x){apply(x,2,max)[2]})) )
+			ylim[2] =extendrange(ylim)[2]
+		} else {
+			ylim = c(0,ymax)
+		}
+		fout = fout.e = outnam
+		for (l in lang) {
+			changeLangOpts(L=l)
+			fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
+			if (png) png(paste0(fout,".png"), units="in", res=pngres, width=8, height=6)
+			par(mfrow=c(1,1), mar=c(3.25,3.5,0.5,0.5), oma=c(0,0,0,0), mgp=c(2,0.5,0))
+			plot(NA, xlim=xlim, ylim=ylim, xaxs="i", yaxs="i", las=1, cex.axis=1.2, cex.lab=1.5, xlab=linguaFranca("Age (years)",l), ylab=linguaFranca("Predicted Length (cm)",l))
+			axis(1, at=A, tcl=-0.25, labels=FALSE)
+			abline(h=seq(0,ymax,2), v=c(0,A,A+1), col="whitesmoke", lwd=0.5)
+			for (i in iii) {
+				for (j in stocks) {
+					ij = paste(j,i,sep=".")
+#browser();return()
+					lty = sltys[ij]
+					col = scols[ij]
+					vb = VBfun(dat[[j]][i,2:4], a=A)
+					lines(A, vb, lwd=3, col=col, lty=lty)
+#if (i=="Male") {browser();return()}
+				}
+			}
+			lcol = rep(scols,nstock)
+			llty = rep(sltys,nstock)
+			legtxt = paste0(rep(stocks,length(iii))," -- ",rep(iii,each=nstock))
+			legtxt = gsub("\\."," ", gsub("\\.mcmc|\\.err","",legtxt))
+			addLegend(0.9,0.05, lty=llty, col=lcol, xjust=1, yjust=0, text.col=lcol, lwd=3, seg.len=3.5, bty="n",
+				legend=linguaFranca(legtxt,l), cex=1.25)
+			box(col="slategray")
+			if (png) dev.off()
+		}; eop()
+	} ## end if subset=="sex"
+}
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~compVB
+
+
+## compVBpars---------------------------2020-06-16
+##  Compare MCMC derived parameters from von Bertalanffy model
+## ---------------------------------------------RH
+compVBpars = function(bfiles, prefix="vbstan.barf.", 
+   pnams=c("linf","k","t0"), nmcmc=4000, redo.QVB=TRUE,
+   quants=c(0.05,0.25,0.5,0.75,0.95), bcol =c("orange", "green4"),
+   outnam, png=FALSE, pngres=400, PIN=c(8,8), lang=c("e","f"))
+{
+	## Compare quantile plots for each parameter
+	bnams = gsub("\\.rda$","",gsub(prefix,"",bfiles))
+	if (!file.exists("QVB.rda") || redo.QVB) {
+		QVB   = array(NA, dim=c(nmcmc, length(pnams), length(bfiles)), dimnames=list(1:nmcmc, pnams, bnams))
+		ii = as.character(1:nmcmc); jj = pnams
+		for (i in 1:length(bfiles)) {
+			kk = bnams[i]
+			ifile = load(bfiles[i])
+			idat  = array(unlist(barf$p[pnams]), dim=c(nmcmc,length(pnams)), dimnames=list(1:nmcmc, pnams))
+			QVB[ii,jj,kk] = idat[ii,jj]
+		}
+		save("QVB", file="QVB.rda")
+	} else {
+		load("QVB.rda")
+	}
+	QVB = QVB[,,bnams,drop=FALSE]
+	pvb.med = apply(QVB[,1,],2,median)
+	pvb.ord = order(pvb.med)
+	col.ord = rep("white", length(pvb.ord))
+	z.bsr   = grep("bsr|425",names(pvb.med)[pvb.ord])
+	col.ord[z.bsr] = bcol[1]
+	z.rer   = grep("rer|394",names(pvb.med)[pvb.ord])
+	col.ord[z.rer] = bcol[2]
+
+	colgrey = "grey60"
+	bpars = list(boxwex=0.5, boxcol=colgrey, boxfill=lucent((col.ord),0.50), medcol=(col.ord), whisklty=1, whiskcol=colgrey, staplecol=colgrey)
+
+	if (missing(outnam))
+		outnam = paste0(prefix, ".pars.compare")
+	fout.e = outnam
+	for (l in lang) {  ## could switch to other languages if available in 'linguaFranca'.
+		changeLangOpts(L=l)
+		fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
+#browser();return()
+		if (png) png(paste0(fout,".png"), units="in", res=pngres, width=PIN[1], height=PIN[2])
+		expandGraph(mfrow=c(3,1),mar=c(3.5,0,1,1), oma=c(0,12,0,0))
+
+		for (p in 1:length(pnams)) {
+			pp  = p[1]
+			pvb = QVB[,pp,]
+			pvb.med = apply(pvb,2,median)
+	
+			if (p==0) pvb.ord = order(pvb.med) ## disable for now
+	
+			if (p==0) { ## disable for now
+				pvb.nam = names(pvb.med)
+				pvb.new = c(sort(pvb.nam[grep("\\.female",pvb.nam)]), sort(pvb.nam[grep("\\.male",pvb.nam)]))
+				## Highly specific
+				t1=rep(c(rep("len.surv.",4),rep("len.syn.",2)),2)
+				t2=rep(c("425G.","394G.",rep(c("bsr.","rer."),2)),2)
+				t3=rep(c("female","male"), each=6)
+				pvb.new = paste0(t1,t2,t3)
+				pvb.ord = match(rev(pvb.new),pvb.nam)
+			}
+			#pdat.qnt = quantile(pdat, quants)
+	
+			ppp = c(expression(italic(L)[infinity]),expression(italic(K)),expression(italic(t)[0]),expression(italic(sigma)))[p]
+			pvb.rev = pvb
+			quantBox(pvb[,pvb.ord], horizontal=T, outline=F, pars=bpars, yaxt="n", cex.axis=1.2)
+			mtext(ppp, side=1, line=2.25, cex=1.5)
+			if (par()$mfg[2]==1) {
+				ylab = gsub("\\."," ", gsub("surv\\.","", gsub("bsr","BSR",gsub("rer","RER",gsub("len\\.","",colnames(pvb)[pvb.ord])))))
+				## Modify the names of the stocks and genetic species (probably should make ylab an argument to the function):
+				ylab = gsub("394G","RER",gsub("425G","BSR",gsub("RER","REBS south",gsub("BSR","REBS north",ylab))))
+				mtext (linguaFranca(ylab,l), at=1:length(ylab), side=2, las=1, line=0.5, adj=1, cex=1)
+			}
+		}
+		if (png) dev.off()
+	}; eop()
+#browser();return()
+}
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~compVBpars
+
+
+## createMA-----------------------------2020-03-24
 ##  Create table of DFO management actions for
 ##  Catch Appendix A tailored to species using 'strSppp'.
 ## ---------------------------------------------RH
@@ -540,13 +726,13 @@ createMA =function(yrs=1979:2019, strSpp="POP", addletters=TRUE)
 	dfo.acts[["1980"]][["POP"]] = "POP: Started experimental over-harvesting of SW Vancouver Island POP stock."
 	##-----1981--------------------------
 	dfo.acts[["1981"]][["SBF"]] = "SBF: Started limited vessel entry for Sablefish fleet."
-	dfo.acts[["1981"]][["WAP"]] = "Pollock TAC (1981-1994): only 4B=Areas 13-18, 29"
+	dfo.acts[["1981"]][["WAP"]] = "WAP: Pollock TAC (1981-1994): only 4B=Areas 13-18, 29"
 	##-----1983--------------------------
 	dfo.acts[["1983"]][["POP"]] = "POP: Started experimental unlimited harvesting of Langara Spit POP stock (5EN)."
 	##-----1984--------------------------
 	dfo.acts[["1984"]][["POP"]] = "POP: Ended experimental over-harvesting of SW Vancouver Island POP stock."
 	##-----1990--------------------------
-	dfo.acts[["1990"]][["PAH|SBF"]] = "PAH|SBF: Started \\emph{Individual Vessel Quotas} (IVQ) systems for Halibut and Sablefish."
+	dfo.acts[["1990"]][["PAH|SBF"]] = paste0(strSpp,": Started \\emph{Individual Vessel Quotas} (IVQ) systems for Halibut and Sablefish.")
 	##-----1991--------------------------
 	dfo.acts[["1991"]][["PAH"]] = "PAH: Started \\emph{Dockside Monitoring Program} (DMP) for the Halibut fleet."
 	dfo.acts[["1991"]][["QBR|YYR"]] = "H\\&L: Started limited vessel entry for \\emph{Hook and Line} (H\\&L) fleet inside."
@@ -555,41 +741,43 @@ createMA =function(yrs=1979:2019, strSpp="POP", addletters=TRUE)
 	##-----1993--------------------------
 	dfo.acts[["1993"]][["POPa"]] = "POP: Stopped experimental fishing of Langara Spit POP stock."
 	dfo.acts[["1993"]][["POPb"]] = "POP: Closed POP fishery in PMFC area 5EN (Langara Spit)."
+	dfo.acts[["1993"]][["RER|REBS"]] = "RER: Trip limits for trawl specified for the first time."
 	##-----1994--------------------------
 	dfo.acts[["1994"]][["@@@"]] = "TWL: Started a dockside monitoring program (DMP) for the Trawl fleet."
-	dfo.acts[["1994"]][["POP|YMR|RER|CAR|SGR|YTR|RSR|WWR|SKR|SST|LST"]] = "As a means of both reducing at-sea discarding and simplifying the harvesting regime, rockfish aggregation was implemented. Through consultation with GTAC, the following aggregates were identified: Agg~1=~POP, YMR, RER, CAR, SGR, YTR; Agg~2=~RSR, WWR; Agg~3=~SKR, SST, LST; Agg~4=~ORF."
+	dfo.acts[["1994"]][["POP|YMR|RER|CAR|SGR|YTR|RSR|WWR|SKR|SST|LST|REBS"]] = "TWL: As a means of both reducing at-sea discarding and simplifying the harvesting regime, rockfish aggregation was implemented. Through consultation with GTAC, the following aggregates were identified: Agg~1=~POP, YMR, RER, CAR, SGR, YTR; Agg~2=~RSR, WWR; Agg~3=~SKR, SST, LST; Agg~4=~ORF."
 	##-----1995--------------------------
 	dfo.acts[["1995"]][["BOR|RBR|RSR|SST"]] = "H\\&L: Implemented catch limits (monthly) on rockfish aggregates for H\\&L."
-	dfo.acts[["1995"]][["WAP"]] = "Pollock TAC areas: 5CDE=5CD; 5AB=Area 12; 4B=Areas 13-18, 29."
-	dfo.acts[["1995"]][["CAR|SGR|YTR|WWR|RER|POP|YMR|RSR|SKR|SST|LST"]] = "TWL: As a means of both reducing at-sea discarding and simplifying the harvesting regime, rockfish aggregation was implemented. Through consultation with GTAC, the following aggregates were identified: Agg~1=~CAR, SGR, YTR, WWR, RER; Agg~2=~POP, YMR, RSR; Agg~3=~SKR, SST, LST; Agg~4=~ORF."
+	dfo.acts[["1995"]][["WAP"]] = "WAP: Pollock TAC areas: 5CDE=5CD; 5AB=Area 12; 4B=Areas 13-18, 29."
+	dfo.acts[["1995"]][["CAR|SGR|YTR|WWR|RER|POP|YMR|RSR|SKR|SST|LST|REBS"]] = "TWL: Trawl aggregates established in 1994 changed: Agg~1=~CAR, SGR, YTR, WWR, RER; Agg~2=~POP, YMR, RSR; Agg~3=~SKR, SST, LST; Agg~4=~ORF."
 	##-----1996--------------------------
 	dfo.acts[["1996"]][["@@@"]] = "TWL: Started 100\\% onboard observer program for offshore Trawl fleet."
 	dfo.acts[["1996"]][["BOR|RBR|RSR|SST"]] = "H\\&L: Started DMP for H\\&L fleet."
-	dfo.acts[["1996"]][["YTR|WWR|CAR|SGR|POP|YMR|RER|SKR|RSR|SCR|SST|LST"]] = "H\\&L: Rockfish aggregation will continue on a limited basis in 1996: Agg~1=~YTR, WWR; Agg~2=~CAR, SGR; Agg~3=~POP, YMR; Agg~4=~RER, SKR; Agg~5=~RSR, SCR; Agg~6=~ORF incl. SST, LST"
+	dfo.acts[["1996"]][["YTR|WWR|CAR|SGR|POP|YMR|RER|SKR|RSR|SCR|SST|LST|REBS"]] = "H\\&L: Rockfish aggregation will continue on a limited basis in 1996: Agg~1=~YTR, WWR; Agg~2=~CAR, SGR; Agg~3=~POP, YMR; Agg~4=~RER, SKR; Agg~5=~RSR, SCR; Agg~6=~ORF incl. SST, LST"
 	dfo.acts[["1996"]][["WAP"]] = "WAP: Pollock TAC areas: 5CDE=5CD; 5AB=Areas 11,12; 4B=Areas 13-18, 29"
 	##-----1997--------------------------
 	dfo.acts[["1997"]][["@@@"]] = "TWL: Started IVQ system for Trawl \\emph{Total Allowable Catch} (TAC) species (April 1, 1997)"
-	dfo.acts[["1997"]][["BOR|RBR"]] = "TWL: Implemented catch limits (15,000 lbs per trip) on combined non-TAC rockfish for the Trawl fleet."
-	dfo.acts[["1997"]][["POP|YMR"]] = "POP|YMR: Permanent boundary adjustment -- Pacific Ocean Perch and Yellowmouth Rockfish caught within Subarea 102-3 and those portions of Subareas 142-1, 130-3 and 130-2 found southerly and easterly of a straight line commencing at 52$^\\circ$20$'$00$''$N 131$^\\circ$36$'$00$''$W thence to 52$^\\circ$20$'$00$''$N 132$^\\circ$00$'$00$''$W thence to 51$^\\circ$30$'$00$''$N 131$^\\circ$00$'$00$''$W and easterly and northerly of a straight line commencing at 51$^\\circ$30$'$00$''$N 131$^\\circ$00$'$00$''$W thence to 51$^\\circ$39$'$20$''$N 130$^\\circ$30$'$30$''$W will be deducted from the vessel's 5CD IVQ for those two species."
-	dfo.acts[["1997"]][["QBR|CPR|CHR|TIR|CAR|SGR|RER|SKR|SST|LST|POP|YMR|RSR|YTR|BKR|WWR"]] = "H\\&L: All H\\&L rockfish, with the exception of YYR, shall be managed under the following rockfish aggregates: Agg~1=~QBR, CPR; Agg~2=~CHR, TIR; Agg~3=~CAR, SGR; Agg~4=~RER, SKR, SST, LST; Agg~5=~POP, YMR, RSR; Agg~6=~YTR, BKR, WWR; Agg~7=~ORF excluding YYR."
+	dfo.acts[["1997"]][["BOR|RBR"]] = paste0(strSpp,": Implemented catch limits (15,000 lbs per trip) on combined non-TAC rockfish for the Trawl fleet.")
+	dfo.acts[["1997"]][["POP|YMR"]] = paste0(strSpp,": Permanent boundary adjustment -- Pacific Ocean Perch and Yellowmouth Rockfish caught within Subarea 102-3 and those portions of Subareas 142-1, 130-3 and 130-2 found southerly and easterly of a straight line commencing at 52$^\\circ$20$'$00$''$N 131$^\\circ$36$'$00$''$W thence to 52$^\\circ$20$'$00$''$N 132$^\\circ$00$'$00$''$W thence to 51$^\\circ$30$'$00$''$N 131$^\\circ$00$'$00$''$W and easterly and northerly of a straight line commencing at 51$^\\circ$30$'$00$''$N 131$^\\circ$00$'$00$''$W thence to 51$^\\circ$39$'$20$''$N 130$^\\circ$30$'$30$''$W will be deducted from the vessel's 5CD IVQ for those two species.")
+	dfo.acts[["1997"]][["QBR|CPR|CHR|TIR|CAR|SGR|RER|SKR|SST|LST|POP|YMR|RSR|YTR|BKR|WWR|REBS"]] = "H\\&L: All H\\&L rockfish, with the exception of YYR, shall be managed under the following rockfish aggregates: Agg~1=~QBR, CPR; Agg~2=~CHR, TIR; Agg~3=~CAR, SGR; Agg~4=~RER, SKR, SST, LST; Agg~5=~POP, YMR, RSR; Agg~6=~YTR, BKR, WWR; Agg~7=~ORF excluding YYR."
 	##-----1998--------------------------
 	dfo.acts[["1998"]][["YYR"]] = "H\\&L: Aggregate 4 -- Option A: a quantity of Aggregates 2 to 5 and 7 combined not to exceed 100\\% of the total of Aggregate 1 per landing; an overage of Aggregate 1 and 6 up to a maximum of 10\\% per fishing period which shall be deducted from the vessel's succeeding fishing period limit. Option B: a quantity of Aggregates 2 to 7 combined not to exceed 100\\% of the Yelloweye rockfish per landing. Option C: 20,000 pounds of Aggregate 4 per fishing period; an overage for each of the Aggregates 3 to 5 and, Aggregates 6 and 7 combined, up to a maximum of 20\\% per fishing period which shall be deducted from the vessel's succeeding fishing period limit."
 	##-----2000--------------------------
 	dfo.acts[["2000"]][["PAH|RBR"]] = "PAH: Implemented catch limits (20,000 lbs per trip) on rockfish aggregates for the Halibut option D fleet."
-	dfo.acts[["2000"]][["RBR|SST|PAH"]] = "H\\&L: Implemented formal allocation of rockfish species between Halibut and H\\&L sectors."
+	dfo.acts[["2000"]][["PAH|RBR|SST|BSR|RER|REBS"]] = "H\\&L: Implemented formal allocation of rockfish species between Halibut and H\\&L sectors."
 	dfo.acts[["2000"]][["@@@"]] = "ALL: Formal discussions between the hook and line rockfish (ZN), halibut and trawl sectors were initiated in 2000 to establish individual rockfish species allocations between the sectors to replace the 92/8 split. Allocation arrangements were agreed to for rockfish species that are not currently under TAC. Splits agreed upon for these rockfish will be implemented in the future when or if TACs are set for those species."
-	dfo.acts[["2000"]][["LST|SST"]] = "LST|SST: DFO cut LST TAC off WCVI to 404~t and set a conditional TAC of 425~t for an exploratory fishery north of 230$^\\circ$ true from Lookout Is."
+	dfo.acts[["2000"]][["LST|SST"]] = "TWL: DFO cut LST TAC off WCVI to 404~t and set a conditional TAC of 425~t for an exploratory fishery north of 230$^\\circ$ true from Lookout Island."
 	##-----2001--------------------------
 	dfo.acts[["2001"]][["SGR"]] = "SGR: TAC reduction (3y) for SGR -- DFO has adopted conservative F=M harvest strategy in establishing the Silvergrey Rockfish TAC for all areas except 5AB. In 5AB the TAC will be stepped downward by 60 tonnes annually for each of the 2001/2002, 2003/2004 and 2003/2004 seasons to achieve this harvest strategy."
 	dfo.acts[["2001"]][["POP"]] = "POP: TAC reduction (3y) for POP -- DFO reduced the 5CD POP TAC by 300 tonnes for research use as payment for the Hecate Strait Pacific Cod charter for each of the next three fishing seasons."
 	dfo.acts[["2001"]][["BOR"]] = "BOR: PSARC (now CSAP) concerned that the decline of abundance indices for Bocaccio from the West Coast Vancouver Island (WCVI) Shrimp survey data and, in particular, the U.S. Triennial survey data reflected a serious decline. A detailed review of all survey indices was recommended to assess trends in Bocaccio abundance."
+	dfo.acts[["2001"]][["BSR|RER|REBS"]] = "RER: Set commercial allocations among sectors (ongoing to 2019): Trawl 55.8\\%, H\\&L 41.17\\%, Halibut 3.03\\%."
 	##-----2002--------------------------
 	dfo.acts[["2002"]][["QBR|YYR|CPR|CHR|TIR"]] = "H\\&L: Established the inshore rockfish conservation strategy."
 	dfo.acts[["2002"]][["@@@"]] = "TWL: Closed areas to preserve four hexactinellid (glassy) sponge reefs."
 	dfo.acts[["2002"]][["LST|SST"]] = "TWL: Managers created 5 LST management zones coastwide (WCVI, Triangle, Tidemarks, Flamingo, Rennell); zones north of WCVI were designated ``experimental''."
 	dfo.acts[["2002"]][["BOR"]] = "BOR: Status of Bocaccio was designated as `Threatened' by the Committee on the Status of Endangered Wildlife in Canada (COSEWIC) in November 2002. The designation was based on a new status report that indicated a combination of low recruitment and high fishing mortality had resulted in severe declines and low spawning abundance of this species. As the Species at Risk Act (SARA) was not yet in place, there was no legal designation for Bocaccio. Protection under SARA would only come in the event that this species was listed, by regulation, under the Act."
 	##-----2003--------------------------
-	dfo.acts[["2003"]][["BOR|CAR|LST|RER|YMR|YYR"]] = "ALL: Species at Risk Act (SARA) came into force in 2003."
+	dfo.acts[["2003"]][["BOR|CAR|LST|YMR|YYR|BSR|RER|REBS"]] = paste0(strSpp,": Species at Risk Act (SARA) came into force in 2003.")
 	##-----2004--------------------------
 	dfo.acts[["2004"]][["BOR"]] = "BOR: DFO reviewed management measures in the groundfish fisheries to assess the impacts on listed species under SARA. Voluntary program for the trawl fleet was developed and implemented in 2004 in which groundfish trawl vessels directed the proceeds of all landed Bocaccio Rockfish for research and management purposes. Ongoing to 2019."
 	##-----2005--------------------------
@@ -604,13 +792,16 @@ createMA =function(yrs=1979:2019, strSpp="POP", addletters=TRUE)
 	dfo.acts[["2006"]][["SST"]] = "H\\&L: Annual non-directed species caps by fishery -- Shortspine Thornyhead (Dogfish = 0.05\\% Dogfish IVQ, Outside ZN = 1881 lbs., Halibut = 8000 lbs., Sablefish = 10,512 lbs.)"
 	dfo.acts[["2006"]][["QBR|YYR|CPR|CHR|TIR"]] = "H\\&L: To support rockfish research the Groundfish Hook and Line Sub Committee (GHLSC) agreed to set aside 5\\% of the ZN allocations for research purposes."
 	##-----2007--------------------------
-	dfo.acts[["2007"]][["SST|RER"]] = "PAH: Amendment to Halibut IVQ cap for SST and RER -- reallocations can only occur in blocks up to 4000 lbs or until the vessel species cap is met. Once the first 4000 lbs has been caught additional IVQ can be reallocated onto the licence up to 4000 lbs. This can continue until the vessel species cap is met."
+	dfo.acts[["2007"]][["SST|BSR|RER|REBS"]] = paste0(strSpp,": Amendment to Halibut IVQ cap for SST and RER -- reallocations can only occur in blocks up to 4000 lbs or until the vessel species cap is met. Once the first 4000 lbs has been caught additional IVQ can be reallocated onto the licence up to 4000 lbs. This can continue until the vessel species cap is met.")
 	dfo.acts[["2007"]][["BOR"]] = "BOR: COSEWIC reconfirmed Bocaccio's Threatened designation, and the species re-entered the SARA listing process in 2007."
+	##-----2009--------------------------
+	dfo.acts[["2009"]][["LST|RER|BSR|REBS"]] = paste0(strSpp,": Listed as species of `Special Concern' under SARA; management plan required.")
 	##-----2011--------------------------
 	dfo.acts[["2011"]][["POP"]] = "POP: TAC adjustment (3y) for POP -- combined 5ABCD POP TAC reduction to 3413\\,t will be achieved over a three year period through an annual reduction of 258\\,t. The expected catch level will be 68\\% of TAC."
 	dfo.acts[["2011"]][["RBR"]] = "RBR: TAC implementation for RBR -- 1,300,000 lbs has been set for Redbanded Rockfish coastwide (50\\% allocated to trawl, 37.5\\% allocated to rockfish outside and 12.5\\% allocated to halibut) and harvesters are now responsible for this mortality."
 	##-----2012--------------------------
 	dfo.acts[["2012"]][["@@@"]] = "TWL: Froze the footprint of where groundfish bottom trawl activities can occur (all vessels under the authority of a valid Category T commercial groundfish trawl license selecting Option A as identified in the IFMP)."
+	dfo.acts[["2009"]][["LST|RER|BSR|REBS"]] = paste0(strSpp,": Management plan published, with goal to maintain sustainable populations of LST and REBS within each species' known range in Canadian Pacific waters.")
 	##-----2013--------------------------
 	dfo.acts[["2013"]][["@@@"]] = "TWL: To support groundfish research, the groundfish trawl industry agreed to the trawl TAC offsets to account for unavoidable mortality incurred during the joint DFO-Industry groundfish multi-species surveys in 2013."
 	dfo.acts[["2013"]][["POP"]] = "POP: New species-area groups have been created for Pacific Ocean Perch for 3CD, 5AB, 5C and 5DE."
@@ -639,7 +830,6 @@ createMA =function(yrs=1979:2019, strSpp="POP", addletters=TRUE)
 	}, spp=strSpp)
 	out = out[!sapply(out,is.null)]
 	rout = lapply(names(out),function(i){
-
 		df = data.frame(
 			year=rep(as.numeric(i),length(i)),
 			comment = as.vector(out[[i]]))
@@ -649,8 +839,10 @@ createMA =function(yrs=1979:2019, strSpp="POP", addletters=TRUE)
 		sout = data.frame(code=c(letters,LETTERS)[1:nrow(sout)],sout)
 		code.year = sapply(split(sout$code,sout$year),paste0,collapse=",")
 		write.csv(code.year,"code.year.csv")
-#browser();retrun()
 	}
+	## Get rid of Latex controls
+	sout$comment = gsub("emph\\{","",gsub("}","",gsub("~","",gsub("\\\\","",sout$comment))))
+#browser();retrun()
 	write.csv(sout, file=paste0("dfo.mgmt.acts.", strSpp, ".csv"), row.names=F)
 	return(sout)
 }
@@ -965,7 +1157,7 @@ if(is.na(LL1)) {browser();return()}
 #=======================================imputeRate
 
 
-## makeAgeErr---------------------------2019-11-23
+## makeAgeErr---------------------------2020-05-24
 ## Make an ageing error matrix for Awatea.
 ##  (first used for YMR in 2011)
 ## type = "simple" : symmetric matrix
@@ -1019,6 +1211,8 @@ makeAgeErr = function(type="simple", strSpp, sql=FALSE,
 		}
 		errmat[Amax,Amax] = 0 ## initialize for accumulation
 
+		collect=list()
+		collect[["zscores"]] = list()
 		for (a in 1:Amax) {
 			aa = a + seq(-Noff,Noff,1)
 			if (type=="cverr") {
@@ -1029,6 +1223,7 @@ makeAgeErr = function(type="simple", strSpp, sql=FALSE,
 			} else {
 				zscores = dnorm(seq(qnorm(0.01), qnorm(0.99), len=length(aa)))
 			}
+			collect[["zscores"]][[a]] = zscores
 			pp = zscores/sum(zscores)
 			zz = aa>0 & aa<Amax
 			errmat[a,aa[zz]] = pp[zz]
@@ -1036,6 +1231,7 @@ makeAgeErr = function(type="simple", strSpp, sql=FALSE,
 			if (any(zzz)) errmat[a,Amax] = errmat[a,Amax] + sum(pp[zzz])
 #if (a==49) {browser();return()}  ## NEED TO FIX THIS
 		}
+#browser();return()
 		#for (i in 1:Noff) {
 		#	diag(errmat[1:(Amax-i), (1+i):Amax]) = SD[1:(Amax-i)]  ## e.g. diag(errmat[1:49,2:50])=out[1:49,"SD"]
 		#	diag(errmat[(1+i):Amax, 1:(Amax-i)]) = SD[(1+i):Amax]  ## e.g. diag(errmat[2:50,1:49])=out[2:50,"SD"]
@@ -1112,20 +1308,21 @@ makeAgeErr = function(type="simple", strSpp, sql=FALSE,
 			mess = paste0("getFile(aerr", strSpp, ", reload=TRUE); edat = aerr", strSpp)
 			eval(parse(text=mess))
 		}
-		if (strSpp %in% ("435")) ## get rid of obvious error in SPID 10536208
+		if (strSpp %in% ("435")) { ## get rid of obvious error in SPID 10536208
 			edat = edat[edat$amax <1000 & !is.na(edat$amax),]
 
-		## ========================================
-		## Temporary fix for young-age BOR (191030)
-		z1 = is.element(edat$spp,"435") & is.element(edat$year,2017) & is.element(edat$age,1)
-		z2 = is.element(edat$spp,"435") & is.element(edat$year,2019) & is.element(edat$age,2)
-		edat$amin[z1] = 2; edat$amax[z1] = pmax(edat$amax[z1],2)
-		edat$amin[z2] = 4; edat$amax[z2] = pmax(edat$amax[z2],4)
-		## ========================================
+			## ========================================
+			## Temporary fix for young-age BOR (191030)
+			z1 = is.element(edat$spp,"435") & is.element(edat$year,2017) & is.element(edat$age,1)
+			z2 = is.element(edat$spp,"435") & is.element(edat$year,2019) & is.element(edat$age,2)
+			edat$amin[z1] = 2; edat$amax[z1] = pmax(edat$amax[z1],2)
+			edat$amin[z2] = 4; edat$amax[z2] = pmax(edat$amax[z2],4)
+			## ========================================
+		}
 
 		agelst = apply(edat[,c("amin","amax")],1,function(x){x[1]:x[2]})
 		names(agelst) = edat$age
-	
+
 		bigage = max(edat$age)
 		ages = as.list(1:bigage); names(ages) = 1:bigage
 		for (i in 1:bigage) {
@@ -1144,7 +1341,6 @@ makeAgeErr = function(type="simple", strSpp, sql=FALSE,
 			amore = c(max(1,(min(x)-less)):(max(x)+more))
 			pmore = rep(1,length(amore))
 			names(pmore) = amore
-#browser();return()
 			pmore[names(alen)] = alen
 			return(pmore)
 		}
@@ -1185,12 +1381,13 @@ makeAgeErr = function(type="simple", strSpp, sql=FALSE,
 			#errmat[names(avec),ii] = avec  ## columns added to 1 but rows should add to 1
 			errmat[ii,names(avec)] = avec
 		}
-#browser();return()
 
 		errtab = array(0,dim=c(Amax,1+Ndiff*2),dimnames=list(obs=1:Amax, diff=-Ndiff:Ndiff))
 		for (i in 1:Amax) {
 			ii = as.character(i)
+#if (ii=="139"){browser();return()}
 			avec = age.err[[ii]]
+			if (is.null(avec)) next
 			names(avec)=as.numeric(names(avec))-i
 			adiff = as.numeric(names(avec))
 			avec[as.character(-Ndiff)] = sum(avec[adiff<=-Ndiff])
@@ -1199,11 +1396,13 @@ makeAgeErr = function(type="simple", strSpp, sql=FALSE,
 			errtab[ii,names(Avec)] = Avec
 		}
 
+
 		noto = sapply(split(edat$SPID,edat$age),length)
 		Noto = rep(0,Amax); names(Noto) = 1:Amax
 		nn = intersect(names(Noto),names(noto))
 		Noto[nn] = noto[nn]
 		Noto[as.character(Amax)] = sum(noto[as.numeric(names(noto))>=Amax])
+#browser();return()
 		attr(errmat,"Noto") = Noto
 		attr(errtab,"Noto") = Noto
 
@@ -1233,7 +1432,7 @@ makeAgeErr = function(type="simple", strSpp, sql=FALSE,
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~makeAgeErr
 
 
-## plotAgeErr---------------------------2019-10-16
+## plotAgeErr---------------------------2020-03-23
 ## Plot ageing precision data
 ##   (modified from code by Sean Anderson, PBS)
 ## Arguments:
@@ -1256,6 +1455,11 @@ plotAgeErr = function(dat, nsamp, xlim=NULL, ylim=NULL, jitter=0.25, seed=42,
 	opar = par(no.readonly=T); on.exit(par(opar))
 	strSpp = as.character(.su(dat$spp))
 	sppNam = toUpper(tolower(.su(dat$spn)))
+	if (grepl("/", sppNam)) {
+		for (i in 1:26)
+			sppNam = sub(paste0("/",letters[i]), paste0("/",LETTERS[i]), sppNam)
+	}
+#browser();return()
 
 	## Create a subdirectory called `french' for French-language figures
 	createFdir(lang)
@@ -1331,7 +1535,7 @@ plotAgeErr = function(dat, nsamp, xlim=NULL, ylim=NULL, jitter=0.25, seed=42,
 		axis(1, at=seq(0,xlim[2],ifelse(xlim[2]<80,1,5)), labels=F, tcl=-0.2)
 		axis(2, at=seq(0,ylim[2],ifelse(ylim[2]<80,1,5)), labels=F, tcl=-0.2)
 		abline(0,1,col=lucent("green4",0.5),lwd=2)
-		## This seems to take a long time:
+		## Drawing segments takes a long time, especially when sending to PNG device:
 		segments(x0=dat$r1_amin, y0=dat$r2_age, x1=dat$r1_amax, y1=dat$r2_age, col=lucent("grey50",0.5),lwd=2)
 		segments(x0=dat$r1_age, y0=dat$r2_amin, x1=dat$r1_age, y1=dat$r2_amax, col=lucent("grey50",0.5),lwd=2)
 #browser();return()
@@ -1347,7 +1551,7 @@ plotAgeErr = function(dat, nsamp, xlim=NULL, ylim=NULL, jitter=0.25, seed=42,
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotAgeErr
 
 
-## plotBTMW-----------------------------2019-04-26
+## plotBTMW-----------------------------2020-02-19
 ##  Plot for bottom (BT) vs. midwater (MW) trawl catch
 ##  WHEN MC.GEAR IN ('BOTTOM TRAWL','UNKNOWN TRAWL') THEN 1
 ##  WHEN MC.GEAR IN ('TRAP') THEN 2
@@ -1357,59 +1561,98 @@ plotAgeErr = function(dat, nsamp, xlim=NULL, ylim=NULL, jitter=0.25, seed=42,
 ##  WHEN MC.GEAR IN ('LONGLINE OR HOOK AND LINE','TRAP OR LONGLINE OR HOOK AND LINE') THEN 8
 ## ---------------------------------------------RH
 plotBTMW = function(dat, strSpp="417", years=1996:2018, major=3:9, 
-   gear, stocks, png=FALSE, pngres=400, PIN=c(8,6) , lang=c("e","f"))
+   glist=list(gear=c(1:4)), removeSM=FALSE, ymax,
+   png=FALSE, pngres=400, PIN=c(8,6) , lang=c("e","f"))
 {
-	dat$year = as.numeric(substring(dat$date,1,4))
+	flds = colnames(dat)
+	if (removeSM) ## seamounts
+		dat    = zapSeamounts(dat)
+	else if (!is.element("seamount",flds))
+		dat = zapSeamounts(dat, only.mark=TRUE)
+	if (!is.element("year",flds))
+		dat$year = as.numeric(substring(dat$date,1,4))
 	dat = dat[is.element(dat$year, years),]
 	dat = dat[is.element(dat$major, major),]
-	if (!missing(gear))
-		dat = dat[is.element(dat$gear, gear),]
-	dat$catch = dat$landed + dat$discard
-	dat = dat[dat$catch > 0,]
+	if (!is.element("catKg",flds))
+		dat$catKg = dat$landed + dat$discard
+	dat = dat[dat$catKg > 0,]
 
-	gcode = c("Unknown", "Bottom_Trawl", "Trap", "Midwater_Trawl", "Hook_&_Line", "Longline", "Mixed_H&L")
-	glty  = c(6,1,5,2,3,4,3)
-	glty  = rep(1,length(gcode))
-	gpch  = c(4,21,8,24,22,17,6)
-	gbg   = c(NA,"cyan",NA,"mistyrose1","green",NA,NA)
-	gcol  = c("black","blue","purple","red","green4","orange","gold")
-	names(gcode) = names(glty) = names(gcol) = names(gpch) = names(gbg) = c(0:5, 8)
+	gcodes = list(
+		gear   = c('0'="Unknown", '1'="Bottom_Trawl", '2'="Trap", '3'="Midwater_Trawl", '4'="Hook_&_Line", '5'="Longline", '8'="Mixed_H&L"),
+		fid    = c('0'="Unknown", '1'="Trawl", '2'="Halibut", '3'="Sablefish", '4'="Dogfish/Lingcod", '5'="H&L_Rockfish", '8'="GF_Longline", '9'="Foreign"),
+		sector = c('0'="UNKNOWN", '1'="FOREIGN", '2'="GROUNDFISH LONGLINE", '3'="GROUNDFISH TRAWL", '4'="HALIBUT", '5'="HALIBUT AND SABLEFISH", '6'="K/L", '7'="K/ZN", '8'="LINGCOD", '9'="ROCKFISH INSIDE",'10'="ROCKFISH OUTSIDE", '11'="SABLEFISH", '12'="SCHEDULE II", '13'="SPINY DOGFISH", '14'="ZN"),
+		fishery = c('0'="Unknown", '1'="BSR_trawl", '2'="BSR_other", '3'="RER_trawl", '4'="RER_other", '5'="HYB_trawl", '6'="HYB_other")
+	)
 
-	tab = crossTab(dat, c("year","gear"), "catch")
-#browser();return()
+	gtabs  = list()
+	if (png) createFdir(lang)
 
-	xlim = range(years)
-	xval = as.numeric(rownames(tab))
-	ylim = c(0, max(tab))
-	onam = paste0("Catch_BTMW_", strSpp)
-
-	createFdir(lang)
-	fout = fout.e = onam
-#browser();return()
-
-	for (l in lang) {
-		fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
-		changeLangOpts(L=l)
-		if (png) png (filename=paste0(fout,".png"), width=PIN[1], height=PIN[2], units="in", res=pngres)
-		expandGraph(mar=c(3,3,1.2,0.5), mgp=c(1.6,0.5,0))
-		plot(0,0, xlim=xlim, ylim=ylim, type="b", xlab="", ylab="", cex.axis=1.2)
-		axis(1, at=years, labels=FALSE, tcl=-0.25)
-		for (i in 1:ncol(tab)) {
-			ii = colnames(tab)[i]
-			lines(xval, tab[,ii], lty=glty[ii], col=gcol[ii], lwd=3 )
-			points(xval, tab[,ii], pch=gpch[ii], col=gcol[ii], bg=gbg[ii],cex=1.75)
+	for (g in 1:length(glist)) {
+		gval  = glist[[g]]
+		gnam  = names(glist)[g]
+		if (!is.element(gnam,flds)) next
+		gcode = gcodes[[gnam]]
+		ncode = length(gcode)
+		if (gnam %in% c("sector","fishery")) {  ## convert values in gdat to codes
+			zcode = as.numeric(names(gcode))
+			names(zcode) = as.vector(gcode)
+			zdat = dat
+			zdat[,gnam] = zcode[zdat[,gnam]]
+		} else {
+			zdat = dat
 		}
-		iii =  match(colnames(tab),0:9)
-#browser(); return()
-		addLegend(0.95, 0.95, lty=glty[iii], seg.len=3, lwd=2, col=gcol[iii], pch=gpch[iii], pt.bg=gbg[iii], pt.cex=1.75, legend=linguaFranca(gsub("_"," ",gcode[iii]),l), cex=1.5, xjust=1, yjust=1, bty="n")
-		mtext(linguaFranca("Year",l),side=1,line=1.75,cex=1.5)
-		mtext(linguaFranca("Catch (t)",l),side=2,line=1.75,cex=1.5)
-		if (png) dev.off()
-	}; eop()
+#browser();return()
+		gdat  = zdat[is.element(zdat[,gnam], gval),]
 
-	colnames(tab) = gcode[colnames(tab)]
-	write.csv(tab, paste0(onam,".csv"))
-	invisible(return(tab))
+		#glty  = rep(c(6,1,5,2,3,4,3),ncode)[1:ncode]
+		glty  = rep(1,ncode)
+		gpch  = rep(c(4,21,8,24,22,25,6,5,3,2,1,7,9:16),ncode)[1:ncode]
+		gcol  = rep(c("black","blue","purple","red","green4","darkgoldenrod1","coral","navy",.colBlind[-1],.colGnuplot[1:5]),ncode)[1:ncode]
+		gbg   = rep(c(NA,"cyan",NA,"mistyrose1","green","yellow2",rep(NA,14)),ncode)[1:ncode]
+		names(glty) = names(gcol) = names(gpch) = names(gbg) = names(gcode)
+
+		#gtab  = ttcall(gtabs)[[gnam]]
+		#if (is.null(gtab) || !all(years %in% rownames(gtab)) || removeSM){
+		#	gtab  = crossTab(gdat, c("year",gnam), "catKg")
+		#} else {
+		#	colnames(gtab) = names(gcode)[match(colnames(gtab),gcode)]  ## reverse engineer colnames
+		#	gtab = gtab[as.character(years),]
+		#}
+		gtab  = crossTab(gdat, c("year",gnam), "catKg")
+
+		xlim  = range(years)
+		xval  = as.numeric(rownames(gtab))
+		ylim  = c(0, ifelse(missing(ymax), max(gtab)*1.2, ymax))
+		onam  = paste0("Catch_", strSpp, "_", gnam)
+		fout  = fout.e = onam
+
+		for (l in lang) {
+			fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
+			changeLangOpts(L=l)
+			if (png) png (filename=paste0(fout,".png"), width=PIN[1], height=PIN[2], units="in", res=pngres)
+			expandGraph(mar=c(3,3,1.2,0.5), mgp=c(1.6,0.5,0))
+			plot(0,0, xlim=xlim, ylim=ylim, type="n", xlab="", ylab="", cex.axis=1.2)
+			axis(1, at=years, labels=FALSE, tcl=-0.25)
+			for (i in 1:ncol(gtab)) {
+				ii = colnames(gtab)[i]
+#browser();return()
+				lines(xval, gtab[,ii], lty=glty[ii], col=gcol[ii], lwd=3 )
+				points(xval, gtab[,ii], pch=gpch[ii], col=gcol[ii], bg=gbg[ii],cex=1.5)
+			}
+			iii = intersect(as.character(gval),colnames(gtab)) ## use names instead of numeric indices
+#browser(); return()
+			addLegend(0.99, 0.99, lty=glty[iii], seg.len=3, lwd=2, col=gcol[iii], pch=gpch[iii], pt.bg=gbg[iii], pt.cex=1.75, legend=linguaFranca(gsub("_"," ",gcode[iii]),l), cex=1.2, xjust=1, yjust=1, bty="n")
+			mtext(linguaFranca("Year",l),side=1,line=1.75,cex=1.5)
+			mtext(linguaFranca("Catch (t)",l),side=2,line=1.75,cex=1.5)
+			if (png) dev.off()
+		}; eop()
+
+		colnames(gtab) = gcode[colnames(gtab)]
+		write.csv(gtab, paste0(onam,".csv"))
+		gtabs[[gnam]] = gtab
+	}
+	ttput(gtabs)
+	invisible(return(gtabs))
 }
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotBTMW
 
@@ -1468,16 +1711,18 @@ plotMW = function(dat, xlim, ylim, outnam="Mean-Weight-Compare",
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotMW
 
 
-## processBio---------------------------2020-01-20
+## processBio---------------------------2020-05-24
 ## Process results from 'gfb_bio.sql' query.
 ##  zflds = new fields to move to end of file to save PJS 
 ##          having to reorder his database all the time
 ## ---------------------------------------------RH
 processBio = function(dat=PBSdat, strSpp, addsrfa=TRUE, 
    addsrfs=TRUE, addpopa=TRUE, addstock=TRUE, addsort=TRUE,
-   maxrows=5e4, zflds=c("ssrc","AC","FOSTID"))
+   useSM=FALSE, maxrows=5e4, zflds=c("ssrc","AC","FOSTID"))
 {
 	f=function(x){format(x,scientific=FALSE,big.mark=",")}
+	if (!useSM)
+		dat = zapSeamounts(dat)  ## remove seamount data
 	atts=attributes(dat)[setdiff(names(attributes(dat)),c("names","row.names","class"))] # extra attributes to retain
 	N=nrow(dat); nloop=ceiling(nrow(dat)/maxrows)
 	DAT=NULL
@@ -1540,13 +1785,13 @@ processBio = function(dat=PBSdat, strSpp, addsrfa=TRUE,
 			##   479    175   1216    983      6   5044   1100      3     12 
 		}
 		if (strSpp=="REBS") {
-			idat$spp0 = idat$spp
+			idat$sppG = idat$spp
 			idat$gene = rep(0,nrow(idat))
-			gBSR = grepl("18",idat$exist); idat$spp[gBSR]  = "425"; idat$gene[gBSR] = 1
-			gRER = grepl("19",idat$exist); idat$spp[gRER]  = "394"; idat$gene[gRER] = 1
-			gHY1 = grepl("20",idat$exist); idat$spp[gHY1]  = "HY1"; idat$gene[gHY1] = 1
-			gHY2 = grepl("21",idat$exist); idat$spp[gHY2]  = "HY2"; idat$gene[gHY2] = 1
-			gFAIL= grepl("22",idat$exist); idat$spp[gFAIL] = "FAIL";idat$gene[gFAIL] = 1
+			gBSR = grepl("18",idat$exist); idat$sppG[gBSR]  = "425"; idat$gene[gBSR] = 1
+			gRER = grepl("19",idat$exist); idat$sppG[gRER]  = "394"; idat$gene[gRER] = 1
+			gHY1 = grepl("20",idat$exist); idat$sppG[gHY1]  = "HY1"; idat$gene[gHY1] = 1
+			gHY2 = grepl("21",idat$exist); idat$sppG[gHY2]  = "HY2"; idat$gene[gHY2] = 1
+			gFAIL= grepl("22",idat$exist); idat$sppG[gFAIL] = "FAIL";idat$gene[gFAIL] = 1
 			idat$stock = rep("",nrow(idat))
 			idat$stock[is.element(idat$major,3:6)] = "RER"
 			idat$stock[is.element(idat$major,8:9)] = "BSR"
@@ -1559,17 +1804,20 @@ processBio = function(dat=PBSdat, strSpp, addsrfa=TRUE,
 	} # end nloop
 	if (!any(is.na(DAT$X)) && !any(is.na(DAT$Y))) DAT=as.EventData(DAT)
 	attributes(DAT)=c(attributes(DAT),atts)
+	attr(DAT, "version") = Sys.time()
 	return(DAT)
 }
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~processBio
 
 
-## processMap---------------------------2019-10-02
+## processMap---------------------------2020-05-24
 ## Process PBSdat created by call to `fos_map_density.sql'
 ## to create a map object for stock assessment.
 ## ---------------------------------------------RH
-processMap = function(dat=PBSdat, strSpp, prefix="map")
+processMap = function(dat=PBSdat, strSpp, prefix="map", useSM=FALSE)
 {
+	if (!useSM)
+		dat = zapSeamounts(dat)  ## remove seamount data
 	## Replace zero-effort fields when catch exists
 	z0 = round(dat$eff,5) <= 0 & round(dat[,strSpp],5) > 0
 	z1 = round(dat$eff,5) > 0 & round(dat[,strSpp],5) > 0

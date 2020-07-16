@@ -10,6 +10,51 @@ Authors: RH  = Rowan Haigh
          BK  = Brian Krishka
 ------------------------------
 
+1.40.2 (2020-07-16)  [Rcheck=T, Rbuild=T]
+  * M01_Utility.r
+    + Added new function `calcHM' to calculate harmonic mean. (RH 200713)
+      - Parallels function `calcGM' in PBSmodelling
+      - Harmonic mean is one of the three Pythagorean means.
+      -  (i) harmonic mean is always the least of the three means,
+      -  (ii) arithmetic mean is always the greatest of the three, and 
+      -  (iii) geometric mean is always in between.
+    + Added new argument `localnames' to function `linguaFranca' specifically to deal with names of fishing localities. (RH 200630)
+  * M02_Biology.r
+    + Moved function `compVB' from M02_Biology to M06_Assessment. (RH 200714)
+    + Modified function `weightBio' to change regime colours. (RH 200511)
+    + Modified function `calcVB' with new argument `subtitle'. (RH 200402)
+    + Modified function `compVB' to make argument `subset' more flexible. (RH 200330)
+    + Modified function `histTail' by adding new argument `xlim'. (RH 200318)
+    + Modified function `calcSG' to render `big.marks' properly based on language. (RH 200310)
+    + Modified function `calcLW' to make axis selections for REBS (BSR & RER). (RH 200306)
+  * M05_Spatial.r
+    + Modified `plotLocal' to support french figures. (RH 200618)
+    + Modified `plotLocal' to show Combined fisheries. (RH 200511)
+    + Changed argument in `plotConcur' from `trawl' to `gear' (RH 200226)
+    + Made small changes to function `clarify'. (RH 200226)
+    + Changed argument default in `preferDepth' from lang=c("e","f") to lang=c("e"). (RH 200214)
+  * M06_Assessment.r
+    + Moved function `compVB' from M02_Biology to M06_Assessment. (RH 200714)
+    + Added new function `compVBpars' to compare parameters from various von Bertalanffy fits using boxplots of quantiles. (RH 200616)
+    + Added new argument to function `compLen' called `stock.name'. (RH 200616)
+    + Added new logical argument `useSM' to functions `processBio' and `processMap' to use or remove seamount data. (RH 200524)
+    + Modified function `makeAgeErr' by adding new collection list for zscores. (RH 200524)
+    + Modified function `compBmsy' to make axis labelling more flexible. (RH 200420)
+    + Made small changes in function `makeAgeErr'. (RH 200410)
+    + Modified function `compAF' -- added new argument called `fac' to compare LF or AF. (RH 200407)
+    + Modified function `compLen' to deal with REBS species. (RH 200401)
+    + Modified function `createMA' to include management actions for REBS. (RH 200324)
+    + Made small changes in function `plotAgeErr'. (RH 200323)
+    + Made small changes to genetic designation in function `processBio' (RH 200316)
+    + Modified function `plotBTMW' to deal with multiple gear types and grouping categories.(RH 200219)
+  * M07_CatchRecon.r
+    + Changed 'TAR' to 'IRF' and 'RFA' to 'IRF' for clarity when 'TAR' can mean target for other fisheries.
+    + Added new argument `mark.only' to function `zapSeamounts'. (RH 200218)
+  * M09_PJSsurvey.r
+    + Changed call to `data' to place specified data object in function environment for `prepGFsurv' and `prepNMFStri' (RH 200716)
+  * SQL code
+    + Changed query `fos_concurrent.sql' to get four gear types: 1=bottom trawl, 2=midwater trawl, 3=hook&line, 4=trap (RH 200217)
+
 1.40.1 (2020-01-28)  [Rcheck=F, Rbuild=F]
   * M01_Utility.r
     + Added a few more translation snippets to function `linguaFranca'. (RH 200120)

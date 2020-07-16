@@ -10,7 +10,7 @@
   providing one language common to speakers of multiple languages (so ironic).
 }
 \usage{
-linguaFranca(x, lang="e", little=4, strip=FALSE)
+linguaFranca(x, lang="e", little=4, strip=FALSE, localnames=FALSE)
 }
 \arguments{
   \item{x}{\code{character} -- a vector of english words common in BC stock assessments.}
@@ -19,6 +19,7 @@ linguaFranca(x, lang="e", little=4, strip=FALSE)
   \item{little}{\code{numeric} -- the number of characters that defines a little word that is
     only translated when it appears by itself.}
   \item{strip}{\code{logical} -- if \code{TRUE}, strip off the translated words' names attribute.}
+  \item{localnames}{\code{logical} -- if \code{TRUE}, devote the function to translating names of fishing localities.}
 }
 \details{
   The translation code is simplistic in that it throws each word or 
@@ -48,7 +49,7 @@ linguaFranca(x, lang="e", little=4, strip=FALSE)
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
   \emph{locus opus}: Institute of Ocean Sciences (IOS), Sidney BC\cr
-  Last modified \code{Rd: 2019-03-22}
+  Last modified \code{Rd: 2020-07-14}
 }
 \note{
   Contact \href{mailto:ann.mariscak@dfo-mpo.gc.ca}{Ann Mariscak} (CSAP office)

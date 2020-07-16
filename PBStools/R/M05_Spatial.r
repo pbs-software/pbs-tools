@@ -461,7 +461,7 @@ calcSurficial <- function(surf="qcb", hab,
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~calcSurficial
 
 
-## clarify------------------------------2019-11-05
+## clarify------------------------------2020-02-26
 ##  Analyse catch proportions in blocks, then cluster into fisheries groups.
 ##  Initially, done to address the CASSIS proposal and its impact (John Pringle).
 ##  CASSIS = CAScadia SeISmic experiment
@@ -592,7 +592,7 @@ clarify <- function(dat, cell=c(0.1,0.075), nG=8,
 		if (ii) {
 			if (is.null(PIN))
 				PIN = par()$pin/max(par()$pin)*hpage
-			fn = paste(fnam,ifelse(is.null(targ),"",targ),"-Clara-nG",nG,"-(",paste(round(PIN,1),collapse="x"),")",sep="")
+			fn = paste(fnam,ifelse(is.null(targ),"",paste0("-",targ)),"-Clara-nG",nG,"-(",paste(round(PIN,1),collapse="x"),")",sep="")
 			if (i=="png" && ii)      png(filename=paste0(fn,".png"), units="in", res=pngres, width=PIN[1], height=PIN[2]) 
 			else if (i=="eps" && ii) postscript(paste(fn,".eps",sep=""),width=PIN[1],height=PIN[2],paper="special") 
 			else if (i=="wmf" && ii) do.call("win.metafile",list(filename=paste(fn,".wmf",sep=""),width=PIN[1],height=PIN[2]))
@@ -796,16 +796,16 @@ findHoles = function(polyset, minVerts=25, nlevs=1, use.sp.pkg=TRUE)
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~findHoles
 
 
-## plotConcur---------------------------2019-02-01
+## plotConcur---------------------------2020-02-26
 ## Horizontal barplot of concurrent species in tows.
 ## ---------------------------------------------RH
 plotConcur = function(strSpp="410", dbName="GFFOS", spath=.getSpath(),
-   mindep=150, maxdep=435, major=NULL, minor=NULL, top=NULL, trawl=1,
+   mindep=150, maxdep=435, major=NULL, minor=NULL, top=NULL, gear=1,
    saraSpp=c("027","034","394","410","424","435","437","440","442","453"),
    reset.mf=TRUE, eps=FALSE, png=FALSE, pngres=300, colour="topo")
 {
 	assign("PBStool",list(module="M03_Fishery",call=match.call(),args=args(plotConcur),plotname="Concur"),envir=.PBStoolEnv)
-	data("species", "gear", package="PBSdata", envir=penv())
+	data("species", package="PBSdata", envir=penv())
 	zspp=species$name!=species$latin
 	species$name[zspp] = toUpper(species$name[zspp])
 
@@ -814,10 +814,10 @@ plotConcur = function(strSpp="410", dbName="GFFOS", spath=.getSpath(),
 
 	if (dbName=="GFFOS")
 		getData("fos_concurrent.sql", "GFFOS", strSpp, path=spath,
-			mindep=mindep, maxdep=maxdep, major=major, dummy=minor, top=top, gear=trawl, tenv=penv())
+			mindep=mindep, maxdep=maxdep, major=major, dummy=minor, top=top, gear=gear, tenv=penv())
 	else if (dbName=="PacHarvest")
-		getData("pht_concurrent.sql","PacHarvest",strSpp,path=spath,
-			mindep=mindep,maxdep=maxdep,major=major,dummy=minor,top=top,gear=trawl,tenv=penv())
+		getData("pht_concurrent.sql","PacHarvest", strSpp, path=spath,
+			mindep=mindep,maxdep=maxdep,major=major,dummy=minor,top=top,gear=gear,tenv=penv())
 	else if (dbName=="PacHarvHL")
 		getData("phhl_concurrent.sql","PacHarvHL",strSpp,path=spath,
 			mindep=mindep,maxdep=maxdep,major=major,dummy=minor,top=top,tenv=penv())
@@ -825,6 +825,7 @@ plotConcur = function(strSpp="410", dbName="GFFOS", spath=.getSpath(),
 		showError("Choices for 'dbName' are 'GFFOS', 'PacHarvest' or 'PacHarvHL'")
 	dat = PBSdat
 	sql = attributes(PBSdat)$sql
+#browser();return()
 
 	dat$spp   = as.character(dat$spp)
 	dat$code  = pad0(dat$code,3)
@@ -833,7 +834,7 @@ plotConcur = function(strSpp="410", dbName="GFFOS", spath=.getSpath(),
 	dat  = dat[rev(order(dat$pct)),]
 	dat$spp = toUpper(dat$spp)
 
-	plotname <- paste("Concur",strSpp,dbName,paste0(c("Bottom","Shrimp","Midwater")[trawl],collapse="+"),sep="-")
+	plotname <- paste("Concur",strSpp,dbName,paste0(c("Btrawl","Mtrawl","HookLine","Trap")[gear],collapse="+"),sep="-")
 	plotname <- paste0(plotname, "-d(", mindep, "-", maxdep, ")")
 	if (!is.null(minor) && !all(minor==999)) plotname = sub(strSpp,paste(strSpp,"-minor(",paste(minor,collapse=""),")",sep=""),plotname)
 	if (!is.null(major)) plotname = sub(strSpp,paste(strSpp,"-major(",paste(major,collapse=""),")",sep=""),plotname)
@@ -1095,7 +1096,7 @@ plotGMA = function(gma=gma.popymr, xlim=c(-134,-123), ylim=c(48.05,54.95),
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotGMA
 
 
-## plotLocal----------------------------2019-01-22
+## plotLocal----------------------------2020-06-18
 ## Plot DFO fishing localities with the highest catch.
 ## ---------------------------------------------RH
 plotLocal = function(dat, area, aflds=NULL, pcat=0.95, cpue=FALSE, powr=1,
@@ -1112,8 +1113,8 @@ plotLocal = function(dat, area, aflds=NULL, pcat=0.95, cpue=FALSE, powr=1,
 
 	if (!missing(years))
 		dat = dat[is.element(as.numeric(substring(dat$date,1,4)),years),]
-	xbnd = xlim+diff(xlim)*0.04*c(1,-1) ## outer X boundaries for polygon labels
-	ybnd = ylim+diff(ylim)*0.04*c(1,-1) ## outer Y boundaries for polygon labels
+	xbnd = xlim+diff(xlim)*0.02*c(1,-1) ## outer X boundaries for polygon labels
+	ybnd = ylim+diff(ylim)*0.02*c(1,-1) ## outer Y boundaries for polygon labels
 
 
 	pdata = attributes(area)$PolyData
@@ -1163,16 +1164,18 @@ plotLocal = function(dat, area, aflds=NULL, pcat=0.95, cpue=FALSE, powr=1,
 		dat = dat[dat$catKG > 0 & !is.na(dat$catKG),]  ## catch
 	dat$catKG = dat$catKG
 
-	if (!missing(strSpp)) {
+	if (!missing(strSpp))
 		data(species, package="PBSdata", envir=fenv)
+	if (strSpp=="394")
+		sppnam = "Rougheye/Blackspotted Rockfish"
+	else
 		sppnam = toUpper(species[strSpp,"name"])
-	}
 	if (fidtype=="PBStools") {
-		FID = 1:5
+		FID = 1:6
 		if (short)
-			names(FID) = c("T","H","S","DL","HL") ## short-name defaults
+			names(FID) = c("T","H","S","DL","HL","C") ## short-name defaults
 		else
-			names(FID) = c("Trawl","Halibut","Sablefish","Dogfish.Lingcod","HL.Rockfish") ## long-name defaults
+			names(FID) = c("Trawl","Halibut","Sablefish","Dogfish.Lingcod","HL.Rockfish","Combined") ## long-name defaults
 		dat$fid[is.element(dat$fid,9)] = 1       ## put FOREIGN sector catch into trawl
 	} else if (fidtype=="GFFOS") {
 		getData("FISHERY",dbName="GFFOS")
@@ -1182,11 +1185,15 @@ plotLocal = function(dat, area, aflds=NULL, pcat=0.95, cpue=FALSE, powr=1,
 		stop ("fidtype specified is not recognised")
 	}
 	if (is.null(fid)) {
-		fid = .su(dat$fid)
+		dat.fid.old = dat$fid
+		dat$fid = rep(6,nrow(dat))
+		#fid = .su(dat$fid)
 	} else {
 		dat = dat[is.element(dat$fid,fid),]
 		if (nrow(dat)==0) stop ("No records with specified fid")
 	}
+	if (is.null(fid))
+		fid = 6
 	fid =  FID[match(fid,FID,nomatch=0)]
 
 	data("nepacLL", package="PBSmapping", envir=fenv)
@@ -1230,31 +1237,37 @@ plotLocal = function(dat, area, aflds=NULL, pcat=0.95, cpue=FALSE, powr=1,
 		fdata$col = paint[sVec]  ## include 0 catch as a common base for all scaling
 		topN   = fdata[1:(min(nrow(fdata),Ntop)),]
 
-		topcat = unlist(formatCatch(topN$catT,3))
-		legtxt = paste0(topcat," - ",1:nrow(topN),". ",topN$name)
+		#topcat = unlist(formatCatch(topN$catT,3))
+		#legtxt = paste0(topcat," - ",1:nrow(topN),". ",topN$name)
 		if (plot) {
 			fout = fout.e = paste0(outnam,".",ff)
 			for (l in lang) {  ## could switch to other languages if available in 'linguaFranca'.
+				changeLangOpts(L=l)
 				fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
+				topcat = unlist(formatC(topN$catT,3,format="fg",big.mark=options()$big.mark))
+				legtxt = paste0(topcat, " - ", 1:nrow(topN), switch(l,'e'=". ",'f'=", "), linguaFranca(topN$name,l,localnames=T))
 				if (png) png(filename=paste0(fout,".png"), width=PIN[1], height=PIN[2], units="in", res=pngres)
 				plotMap(area, type="n", plt=c(0.06,0.99,0.06,0.99), 
 					xlim=xlim, ylim=ylim, mgp=c(2.2,0.5,0), cex.axis=1.2, cex.lab=1.5)
 				if (showAll)
 					addPolys(area, border="grey", col="transparent")
-#browser();return()
 				addPolys(area, polyProps=fdata[fdata$catT>0,]) ## only add polys with cpue|catch > 0
 				addPolys(nepacLL, col="lightyellow1", border="grey20", lwd=0.5)
 				#text(fdata$X[1:Ntop],fdata$Y[1:Ntop],1:Ntop,cex=0.8)
-				text(pmin(pmax(fdata$X[1:Ntop],xbnd[1]),xbnd[2]), pmin(pmax(fdata$Y[1:Ntop],ybnd[1]),ybnd[2]), 1:Ntop, cex=0.8)
-				addLegend(0.975, 0.95, fill=topN$col, legend=legtxt, bty="n", title=linguaFranca(paste0("Fishery: ",ff, " - top ", ifelse(cpue, "CPUE (kg/h)", "catch (t)")),l), xjust=1, title.adj=0)
+				#text(pmin(pmax(fdata$X[1:Ntop],xbnd[1]),xbnd[2]), pmin(pmax(fdata$Y[1:Ntop],ybnd[1]),ybnd[2]), 1:Ntop, cex=0.8)
+				inbox = (1:nrow(fdata))<=Ntop & fdata$X>xbnd[1] & fdata$X<xbnd[2] & fdata$Y>ybnd[1] & fdata$Y<ybnd[2]
+				text(fdata$X[inbox], fdata$Y[inbox], (1:nrow(fdata))[inbox], cex=0.8)
+				addLegend(0.99, 0.95, fill=topN$col, legend=legtxt, bty="n", title=linguaFranca(paste0("Fishery: ",ff, " - top ", ifelse(cpue, "CPUE (kg/h)", "catch (t)")),l), xjust=1, title.adj=0, cex=0.9)
+#browser();return()
 				if (!missing(strSpp)) {
 					derange = paste0(gsub("-",".",range(fdat$date,na.rm=T)),collapse=" to ")
-					addLabel(0.5, 0.96, linguaFranca(sppnam,l), cex=1.2, adj=c(0,0))
+#browser();return()
+					addLabel(0.3755, 0.96, linguaFranca(sppnam,l), cex=1.2, adj=c(0,0))
 					addLabel(0.975, 0.96, linguaFranca(paste0("(", derange, ")"),l), cex=0.8, adj=c(1,0))
 				}
 				box()
 				if (png) dev.off()
-			} ## end l (lang) loop
+			} ; eop()
 		}    ## end if plot
 		if (csv) {
 			#write.csv(fdata, paste0(outnam,".",fidnam[f],".csv"), row.names=FALSE)
@@ -1533,11 +1546,11 @@ plotTertiary = function(x=c(100,5,25,10,50), pC=c(0.5,0.5), r=0.5,
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotTertiary
 
 
-## preferDepth--------------------------2019-10-29
+## preferDepth--------------------------2020-02-14
 ## Histogram showing depth-of-capture
 ## ---------------------------------------------RH
 preferDepth = function(strSpp="410", fqtName="pht_fdep.sql", dbName="PacHarvest",
-   spath=NULL, type="SQL", hnam=NULL, get.effort=FALSE, lang=c("e","f"))
+   spath=NULL, type="SQL", hnam=NULL, get.effort=FALSE, lang=c("e"))
 {
 	warn <- options()$warn; options(warn=-1)
 	effort = ttcall(PBStool)$effort  ## recover effort, if it exists, to save time

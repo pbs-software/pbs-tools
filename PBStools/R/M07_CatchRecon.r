@@ -9,7 +9,7 @@
 ##==============================================================================
 
 
-## buildCatch---------------------------2019-10-15
+## buildCatch---------------------------2020-02-27
 ## Catch reconstruction algorithm for BC rockfish.
 ## Use ratios of RRF (reconstructed rockfish) to ORF 
 ## (rockfish other than POP) landings for multiple fisheries.
@@ -78,6 +78,7 @@ buildCatch=function(
 	fshnam  = c("trawl","h&l","trap",rep("h&l",6),"combined")  ## general category vector
 	fidfive = c("Trawl","Halibut","Sablefsh","DogLing","HLRock")
 	REFYRS  = .su(unlist(refyrs))
+	## REFYRS  = 1991:2019  ## just as an experiment
 
 #browser();return()
 	run.details = paste0( orfSpp, 
@@ -118,6 +119,7 @@ buildCatch=function(
 
 	if (!sql.only && !file.exists(run.name))
 		dir.create(run.name)
+#browser();return()
 	writeLines(run.details, con=paste0(ifelse(sql.only,".",run.name),"/run.details.txt"))
 #browser();return()
 	datDir = paste0(run.name,"/data")
@@ -373,7 +375,7 @@ buildCatch=function(
 				"Ideally, 'dbdat' should contain data frames:\n", 
 				"'ph3cat' = PacHarv3 database (all fisheries)\n")
 			if (useGFM)
-				mess = paste0(mess,"'gfmdat' = GFFOS merged catch table GF_MERGED_CATCh\n")
+				mess = paste0(mess,"'gfmdat' = GFFOS merged catch table GF_MERGED_CATCH\n")
 			else {
 				mess = paste0(mess,
 				"'gfcdat' = GFCatch database (trawl, trap, h&l)\n",
@@ -385,14 +387,14 @@ buildCatch=function(
 				"'fosdat' = GFFOS database on the GFSH server (all fisheries)\n",
 				"'jvhdat' = GFBioSQL database (joint-venture hake)\n")
 			}
-			mess = paste0(mess,"with fields:\nc( 'fid', 'date', 'major', 'landed', 'discard', 'POP', 'ORF', 'TAR' )")
+			mess = paste0(mess,"with fields:\nc( 'fid', 'date', 'major', 'landed', 'discard', 'POP', 'ORF', 'IRF' )")
 			showError(mess,as.is=TRUE,x=0.05,adj=0,cex=1.2)
 		}
 
 		lenv=sys.frame(sys.nframe()) ## local environment
-		cflds = c("landed","discard","POP","ORF","TAR")
+		cflds = c("landed","discard","POP","ORF","IRF")
 		keep  = c("fid","date","major","minor",cflds)
-		ufos  = c("POP","PAH","SBF","DOG","RFA","RFA","PAH","DOG","LIN")
+		ufos  = c("POP","PAH","SBF","DOG","IRF","IRF","PAH","DOG","LIN")
 	}
 	## end skip if sql.only ------------------------------------------
 
@@ -585,6 +587,7 @@ buildCatch=function(
 		}
 		packList(c("nSMrec","tSMcat"),"CR",tenv=.PBStoolEnv)
 	}
+#browser();return()
 	## -----------------------------------------------------------------------------------
 	## For expediency add ORF and POP together to get TRF; also get year if it's not there
 	## -----------------------------------------------------------------------------------
@@ -649,7 +652,7 @@ buildCatch=function(
 	## -----------------------------------------
 	.flush.cat("   PacHarv3 records ...\n")
 	ph3cat = as.data.frame(t(apply(ph3dat,1,function(x){
-		ufos = c("POP","ORF","PAH","SBF","DOG","LIN","RFA")
+		ufos = c("POP","ORF","PAH","SBF","DOG","LIN","IRF")
 		ufid = c(1,1,2,3,4,4,5); names(ufid) = ufos
 		f = x["fid"]
 		if (f==0) { 
@@ -674,7 +677,6 @@ buildCatch=function(
 	## -----------------------------------------------------------------------------------
 	ph3cat = ph3cat[is.element(ph3cat$fid, c(2:5)),]
 	ph3cat = ph3cat[ph3cat$year<2006 & !is.na(ph3cat$year),]
-#browser();return()
 	ph3cat = ph3cat[,-1] ## get rid of 'year'
 	save("ph3cat",file=paste0(datDir,"/ph3cat.rda"))
 
@@ -730,6 +732,7 @@ buildCatch=function(
 		trash  = apply(gfmcat[,cflds],1,function(x){all(x==0)})
 		gfmcat = gfmcat[!trash,]; dimnames(gfmcat)[[1]]=1:nrow(gfmcat)
 		save("gfmcat",file=paste0(datDir,"/gfmcat.rda"))
+#browser();return()
 	}
 	else {
 		dbs = c("ph3cat","gfccat","phtcat","phhcat","phscat","phvcat","phfcat","foscat","jvhdat")
@@ -872,7 +875,6 @@ buildCatch=function(
 	MM = c(1,3:9) # always use coastwide set
 	mm = as.character(MM)
 	Cflds=c("landed","discard","POP","ORF","TRF","TAR")
-#browser();return()
 
 	## -------------------------------------------------------------
 	## Collect repcat landings (t), including those in unknown areas
@@ -900,7 +902,9 @@ buildCatch=function(
 				POP=  sapply(split(jdat$POP,jdat$year),sum,na.rm=TRUE)/1000.
 				ORF=  sapply(split(jdat$ORF,jdat$year),sum,na.rm=TRUE)/1000.
 				TRF=  sapply(split(jdat$TRF,jdat$year),sum,na.rm=TRUE)/1000.
-				TAR=  sapply(split(jdat$TAR,jdat$year),sum,na.rm=TRUE)/1000.
+				## Tentatively set TAR to the 5 Inshore Rockfish species but 
+				## see delta ratios for which TAR is actually used (search for [mirror1])
+				TAR=  sapply(split(jdat$IRF,jdat$year),sum,na.rm=TRUE)/1000.
 #print(c(names(landed),jj,kk,a))
 #if (jj=="1" && kk=="4" && a=="gfmcat") {browser();return()}
 
@@ -913,6 +917,7 @@ buildCatch=function(
 					discard=sapply(split(jdat$discard,jdat$year),sum,na.rm=TRUE)/1000.
 					catmod0[names(discard),jj,kk,"discard",a] = discard }
 	} } } ## close loops j & k & i
+#browser();return()
 
 	if (diagnostics){
 		for (spp in dimnames(catmod0)$catch) {
@@ -1143,7 +1148,7 @@ buildCatch=function(
 		else {
 			if (k==1) {
 				tmpdat = gfcdat[is.element(gfcdat$fid,1),]
-				tmpdat$TAR = tmpdat$RFA
+				tmpdat$TAR = tmpdat$IRF
 				kfld = intersect(intersect(names(tmpdat),names(phtdat)),names(fosdat))
 				rawdat = rbind(tmpdat[,kfld],phtdat[,kfld],fosdat[is.element(fosdat$fid,1),kfld])
 			} else if (k==2) {
@@ -1164,9 +1169,9 @@ buildCatch=function(
 				rawdat = rbind(tmpdat[,kfld],phfdat[is.element(phfdat$fid,4),kfld],fosdat[is.element(fosdat$fid,4),kfld])
 			} else if (k==5) {
 				tmpda1 = gfcdat[is.element(gfcdat$fid,5),]
-				tmpda1$TAR = tmpda1$RFA
+				tmpda1$TAR = tmpda1$IRF
 				tmpda2 = phvdat[is.element(phvdat$fid,5),]
-				tmpda2$TAR = tmpda2$RFA
+				tmpda2$TAR = tmpda2$IRF
 				kfld = intersect(intersect(intersect(names(tmpda1),names(tmpda2)),names(phfdat)),names(fosdat))
 				rawdat = rbind(tmpda1[,kfld],tmpda2[,kfld],phfdat[is.element(phfdat$fid,5),kfld],fosdat[is.element(fosdat$fid,5),kfld])
 			}
@@ -1507,6 +1512,7 @@ buildCatch=function(
 				ii = as.character(refyrs[[k]])
 				kland = rland[ii,,,drop=FALSE]
 				kdisc = rdisc[ii,,,drop=FALSE]
+#browser();return()
 				if (useGM) {
 					kgmat = apply(kland, 2:3, calcGM, exzero=TRUE)[,k,drop=FALSE]
 					kdmat = apply(kdisc, 2:3, calcGM, exzero=TRUE)[,k,drop=FALSE]
@@ -1525,6 +1531,7 @@ buildCatch=function(
 			## save annual gamma rates for RRF/orfSpp
 			GREFS = rland
 			save("GREFS",file=paste0(datDir,"/GREFS",strSpp,".rda"))
+			ttput(GREFS)
 		}
 	}
 	save("RATES",file=paste0(datDir,"/RATES",strSpp,".rda")) ## save target-specific gamma rates
@@ -2712,11 +2719,11 @@ surveyCatch = function(strSpp="396", spath=.getSpath(), gfbdat=NULL,
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~surveyCatch
 
 
-## zapSeamounts-------------------------2018-09-17
+## zapSeamounts-------------------------2020-02-18
 ## Remove seamount records use combinations of 
 ## major, minor, and locality codes.
 ## ---------------------------------------------RH
-zapSeamounts = function(dat) {
+zapSeamounts = function(dat, only.mark=FALSE) {
 	seamounts = t(data.frame(
 		heck=c(3,24,11), eickelberg=c(3,24,12), union=c(4,27,5), dellwood=c(5,11,8), bowie=c(9,31,10),
 		pratt=c(10,33,6), surveyor=c(10,33,7), durgin=c(10,33,8), murray=c(10,40,4), cowie=c(10,40,5),
@@ -2727,6 +2734,8 @@ zapSeamounts = function(dat) {
 	if (!is.element("year",colnames(idat)))
 		idat$year = as.numeric(substring(idat$date,1,4))
 	yrs = .su(idat$year); nyrs = length(yrs)
+	if (only.mark)
+		idat$seamount = rep("",nrow(idat))
 	SMrem = array(0, dim=c(nyrs,nrow(seamounts),2), dimnames=list(year=yrs, seamount=rownames(seamounts), value=c("nrec","tcat")))
 	nSMrec = tSMcat = list()
 	if (!all(c("major","minor","locality") %in% names(idat))) { 
@@ -2739,20 +2748,26 @@ zapSeamounts = function(dat) {
 			.flush.cat(jjj,ifelse(j<nrow(seamounts),",",""), sep="")
 			seamo = is.element(idat$major,jj[1]) & is.element(idat$minor,jj[2]) & is.element(idat$locality,jj[3])
 			if (sum(seamo)==0) next
-			ij = paste0(jjj, "(", paste0(jj,collapse="."), ")")
-			nrec = table(idat$year[seamo])
-			SMrem[names(nrec),jjj,"nrec"] = nrec
-			catflds = names(idat)[is.element(names(idat),c("landed","discard","catKg"))]
-			if (length(catflds)>0){
-				tcat  = sapply(split(apply(idat[seamo,catflds,drop=FALSE],1,sum),idat$year[seamo]),sum)/1000.
-				SMrem[names(tcat),jjj,"tcat"] = tcat
+			if (only.mark) {
+				idat$seamount[seamo] = jjj
+			} else {
+#browser();return()
+				ij = paste0(jjj, "(", paste0(jj,collapse="."), ")")
+				nrec = table(idat$year[seamo])
+				SMrem[names(nrec),jjj,"nrec"] = nrec
+				catflds = names(idat)[is.element(names(idat),c("landed","discard","catKg"))]
+				if (length(catflds)>0){
+					tcat  = sapply(split(apply(idat[seamo,catflds,drop=FALSE],1,sum),idat$year[seamo]),sum)/1000.
+					SMrem[names(tcat),jjj,"tcat"] = tcat
+				}
+				idat = idat[!seamo,]
 			}
-			idat = idat[!seamo,]
 		}
 		.flush.cat("\n")
 	}
+	if (only.mark)
+		return(idat)
 	keep = apply(SMrem[,,"nrec"],1,sum)>0 ## only keep the years when seamount catches occurred
-#browser();return()
 	attr(idat,"seamounts") = seamounts
 	attr(idat,"SMrem") = if(sum(keep)>0) SMrem[keep,,,drop=FALSE] else NULL
 	return(idat)

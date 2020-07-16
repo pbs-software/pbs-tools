@@ -1,0 +1,34 @@
+-- AME's set of IPHC queries
+-- If any of this first call changes then update table in text (currently
+--  in Andy's yeye15reproduce repo, will get moved to gfsynopsis), and make
+--  sure you change it in get-iphc-set-level.sql also
+SELECT YEAR(TRIP_START_DATE) AS year,
+	T.TRIP_ID AS tripID,
+	FE.FISHING_EVENT_ID AS setID,
+	FE.MAJOR_STAT_AREA_CODE AS major,
+	BLOCK_DESIGNATION AS block,
+	FE_MAJOR_LEVEL_ID AS setInTrip,
+	-(FE.FE_START_LONGITUDE_DEGREE + FE_START_LONGITUDE_MINUTE/60) AS long,
+	FE.FE_START_LATTITUDE_DEGREE + FE.FE_START_LATTITUDE_MINUTE/60 AS lat,
+	LGLSP_HOOK_COUNT AS obsHooksPerSet, 
+	LGLSP_HOOKS_SET_COUNT AS deplHooksPerSet,
+	SKATE_COUNT AS skatesCount,
+	EFFECTIVE_SKATE AS effSkateIPHC,
+
+  U.USABILITY_CODE AS iphcUsabilityCode,
+  USABILITY_DESC AS iphcUsabilityDesc
+  
+FROM FISHING_EVENT FE
+	INNER JOIN TRIP T ON FE.TRIP_ID = T.TRIP_ID 
+	INNER JOIN TRIP_SURVEY TS ON TS.TRIP_ID = T.TRIP_ID
+	INNER JOIN SURVEY S ON S.SURVEY_ID = TS.SURVEY_ID
+	LEFT JOIN LONGLINE_SPECS LGLSP ON LGLSP.FISHING_EVENT_ID = FE.FISHING_EVENT_ID
+	LEFT JOIN IPHC_EFFECTIVE_SKATE ES ON ES.FISHING_EVENT_ID = FE.FISHING_EVENT_ID  -- exclude
+	INNER JOIN USABILITY U ON U.USABILITY_CODE = LGLSP.USABILITY_CODE
+	
+WHERE SURVEY_SERIES_ID = '14' AND FE_PARENT_EVENT_ID IS NULL
+ORDER BY year, T.TRIP_ID, FE.FISHING_EVENT_ID
+
+-- getData("gfb_iphc_set_info.sql", dbName="GFBioSQL", strSpp="435")
+-- qu("gfb_iphc_set_info.sql", dbName="GFBioSQL", strSpp="394")
+

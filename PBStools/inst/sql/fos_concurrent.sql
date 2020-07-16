@@ -1,5 +1,6 @@
 -- Norm Olsen's query (greatly modified) to get top N percentage catch
--- Last modified: 2017-06-13 (RH) to access GFFOS' GF_MERGED_CATCH table
+-- Modified to access GFFOS' GF_MERGED_CATCH table (RH 170613)
+-- Changed to get four gear types: 1=bottom trawl, 2=midwater trawl, 3=hook&line, 4=trap (RH 200217)
 SET NOCOUNT ON
 
 @INSERT('meanSppWt.sql')  -- getData now inserts the specified SQL file assuming it's on the path specified in getData
@@ -23,15 +24,15 @@ WHERE
   --ROWNUM <= 100 AND
   --C.SPECIES_CODE  IN (@sppcode) AND
   C.SPECIES_CODE NOT IN ('004','848','849','999','XXX') AND
-  C.FISHERY_SECTOR IN ('GROUNDFISH TRAWL', 'JOINT VENTURE TRAWL', 'FOREIGN') AND
+  --C.FISHERY_SECTOR IN ('GROUNDFISH TRAWL', 'JOINT VENTURE TRAWL', 'FOREIGN') AND -- want all fishery sectors
   (COALESCE(C.MAJOR_STAT_AREA_CODE,'00') IN (@major) OR COALESCE(C.MINOR_STAT_AREA_CODE,'00') IN (@dummy)) AND
   COALESCE(C.BEST_DEPTH,0) BETWEEN @mindep AND @maxdep AND
-  (CASE WHEN
-    C.GEAR IN ('BOTTOM TRAWL', 'UNKNOWN TRAWL') 
-    THEN 1
-  WHEN
-    C.GEAR IN ('MIDWATER TRAWL')
-  THEN 3 ELSE 0 END) IN (@gear) AND
+  (CASE
+    WHEN C.GEAR IN ('BOTTOM TRAWL','UNKNOWN TRAWL') THEN 1                         -- Bottom Trawl
+    WHEN C.GEAR IN ('MIDWATER TRAWL') THEN 2                                       -- Midwater Trawl
+    WHEN C.GEAR IN ('HOOK AND LINE','LONGLINE','LONGLINE OR HOOK AND LINE') THEN 3 -- Hook & Line
+    WHEN C.GEAR IN ('TRAP','TRAP OR LONGLINE OR HOOK AND LINE') THEN 4             -- Trap
+    ELSE 0 END) IN (@gear) AND
   C.BEST_DATE >= '1996-02-17'  -- Chose start of observer program to properly compare among all species
 
 DECLARE @total AS FLOAT
@@ -42,7 +43,7 @@ SET @total = (SELECT
 SELECT TOP @top 
   SP.SPECIES_CDE AS code,
   SP.SPECIES_DESC AS spp,
-  SUM(AC.LANDED + AC.DISCARDED)/1e6 AS catKt,
+  SUM(AC.LANDED + AC.DISCARDED)/1e6 AS catKt,  -- kilotonnes
   SUM(AC.LANDED + AC.DISCARDED) / @total * 100 AS pct
 --INTO #WASTELAND
 FROM
@@ -62,4 +63,5 @@ ORDER BY SUM(AC.LANDED + AC.DISCARDED) / @total DESC
 -- getData("pht_concurrent.sql","PacHarvest",strSpp="396",major=5:7,mindep=70,maxdep=441,dummy=1) -- QCS (567)
 -- getData("pht_concurrent.sql","PacHarvest",strSpp="228",major=5:6,dummy=12,mindep=70,maxdep=441,gear=c(1,3)) -- QCS (major 5+6 and minor 12)
 -- qu("fos_concurrent.sql",dbName="GFFOS",strSpp="396",major=5:7,mindep=96,maxdep=416,dummy=34,top=20,gear=1) -- QCS (major 567 and minor 34)
+-- qu("fos_concurrent.sql",dbName="GFFOS",strSpp="394",major=8:9,mindep=137,maxdep=845,top=25,gear=3) -- WCHG H&L
 
