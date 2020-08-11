@@ -2283,7 +2283,7 @@ histTail <-function(dat=pop.age, xfld="age", tailmin=NULL,
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~histTail
 
 
-## mapMaturity--------------------------2019-10-09
+## mapMaturity--------------------------2020-08-10
 ## Plot maturity chart to see relative occurrence
 ## of maturity stages by month.
 ## Notes:
@@ -2514,14 +2514,14 @@ mapMaturity <- function (dat=pop.age, strSpp="", type="map", mats=1:7,
 						zbig = bubbmat==max(bubbmat)
 						nbig = bubbmat.orig[zbig]
 						cbig = monthcat[apply(zbig,2,any)]
-						mbig = month.abb[as.numeric(names(cbig))]
-						lout = paste0("Bubbles: largest = ", nbig, " specimens weighted by ", mbig ," catch = ", round(cbig), " t")
+						mbig = linguaFranca(month.abb[as.numeric(names(cbig))],l)
+						lout = paste0("Bubbles: largest = ", nbig, " specimens weighted by catch in ", mbig, " = ", round(cbig), " t")
+#browser();return()
 					} else {
 						if (is.psex)
 							freqmat = bubbmat
 						else
 							freqmat = apply(bubbmat,ifelse(byrow,1,2),function(x){if (all(x==0)) x else x/sum(x)})  # proportions by column
-#browser();return()
 						lout = paste0("Bubbles: largest = ",round(max(freqmat),3),", smallest = ",round(min(freqmat[freqmat>0]),3))
 					}
 					CALCS[[sexlab]][["bubbmat"]] = bubbmat

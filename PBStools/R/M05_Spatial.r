@@ -796,18 +796,20 @@ findHoles = function(polyset, minVerts=25, nlevs=1, use.sp.pkg=TRUE)
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~findHoles
 
 
-## plotConcur---------------------------2020-02-26
+## plotConcur---------------------------2020-07-28
 ## Horizontal barplot of concurrent species in tows.
 ## ---------------------------------------------RH
 plotConcur = function(strSpp="410", dbName="GFFOS", spath=.getSpath(),
    mindep=150, maxdep=435, major=NULL, minor=NULL, top=NULL, gear=1,
    saraSpp=c("027","034","394","410","424","435","437","440","442","453"),
-   reset.mf=TRUE, eps=FALSE, png=FALSE, pngres=300, colour="topo")
+   reset.mf=TRUE, eps=FALSE, png=FALSE, pngres=300, colour="topo", 
+   outnam, lang=c("e","f"))
 {
-	assign("PBStool",list(module="M03_Fishery",call=match.call(),args=args(plotConcur),plotname="Concur"),envir=.PBStoolEnv)
+	assign("PBStool",list(module="M03_Fishery",call=match.call(),args=args(plotConcur),outnam="Concur"),envir=.PBStoolEnv)
 	data("species", package="PBSdata", envir=penv())
 	zspp=species$name!=species$latin
 	species$name[zspp] = toUpper(species$name[zspp])
+	print.tab = TRUE
 
 	## If dummy is not specified it defaults to '' which is tranlsated as minor=0 and unwanted records are collected
 	if (is.null(minor)) minor = 999 ## doesn't exist -- used to fool SQL
@@ -821,8 +823,14 @@ plotConcur = function(strSpp="410", dbName="GFFOS", spath=.getSpath(),
 	else if (dbName=="PacHarvHL")
 		getData("phhl_concurrent.sql","PacHarvHL",strSpp,path=spath,
 			mindep=mindep,maxdep=maxdep,major=major,dummy=minor,top=top,tenv=penv())
-	else
-		showError("Choices for 'dbName' are 'GFFOS', 'PacHarvest' or 'PacHarvHL'")
+	else {
+		## Assume CSV file exists from previous query
+		if (file.exists(paste0(dbName,".csv"))) {
+			PBSdat = read.csv(paste0(dbName,".csv"), check.names=FALSE)
+			print.tab = FALSE
+		} else
+			showError("SQL choices for 'dbName' are 'GFFOS', 'PacHarvest' or 'PacHarvHL'\n\tor supply name of a local CSV file")
+	}
 	dat = PBSdat
 	sql = attributes(PBSdat)$sql
 #browser();return()
@@ -834,63 +842,71 @@ plotConcur = function(strSpp="410", dbName="GFFOS", spath=.getSpath(),
 	dat  = dat[rev(order(dat$pct)),]
 	dat$spp = toUpper(dat$spp)
 
-	plotname <- paste("Concur",strSpp,dbName,paste0(c("Btrawl","Mtrawl","HookLine","Trap")[gear],collapse="+"),sep="-")
-	plotname <- paste0(plotname, "-d(", mindep, "-", maxdep, ")")
-	if (!is.null(minor) && !all(minor==999)) plotname = sub(strSpp,paste(strSpp,"-minor(",paste(minor,collapse=""),")",sep=""),plotname)
-	if (!is.null(major)) plotname = sub(strSpp,paste(strSpp,"-major(",paste(major,collapse=""),")",sep=""),plotname)
-	write.csv(dat,paste(plotname,".csv",sep=""),row.names=FALSE)
+	if (missing(outnam)) {
+		outnam <- paste("Concur",strSpp,dbName,paste0(c("Btrawl","Mtrawl","HookLine","Trap")[gear],collapse="+"),sep="-")
+		outnam <- paste0(outnam, "-d(", mindep, "-", maxdep, ")")
+		if (!is.null(minor) && !all(minor==999)) outnam = sub(strSpp,paste(strSpp,"-minor(",paste(minor,collapse=""),")",sep=""),outnam)
+		if (!is.null(major)) outnam = sub(strSpp,paste(strSpp,"-major(",paste(major,collapse=""),")",sep=""),outnam)
+	}
+	write.csv(dat,paste(outnam,".csv",sep=""),row.names=FALSE)
 
 	## Re-format the same table so that it's latex-ready
-	textab = dat
-	textab$code  = pad0(textab$code,3)
-	#textab$spp   = toUpper(textab$spp)
-	textab$latin = paste("\\emph{",textab$latin,"}",sep="")
-	textab$catKt = format(round(textab$catKt * 1000.),big.mark=",",trim=TRUE)
-	textab$pct   = show0(round(textab$pct,3),3)
-	names(textab)=c("Code","Species","Latin name","Catch (t)","Catch (\\%)")
-	write.csv(textab,paste("tex-",plotname,".csv",sep=""),row.names=FALSE)
-	## Note: to read the table back into R use 'read.csv("xyz.csv",check.names=FALSE)'
+	if (print.tab) {
+		textab = dat
+		textab$code  = pad0(textab$code,3)
+		#textab$spp   = toUpper(textab$spp)
+		textab$latin = paste("\\emph{",textab$latin,"}",sep="")
+		textab$catKt = format(round(textab$catKt * 1000.),big.mark=",",trim=TRUE)
+		textab$pct   = show0(round(textab$pct,3),3)
+		names(textab)=c("Code","Species","Latin name","Catch (t)","Catch (\\%)")
+		write.csv(textab,paste("tex-",outnam,".csv",sep=""),row.names=FALSE)
+		## Note: to read the table back into R use 'read.csv("xyz.csv",check.names=FALSE)'
+	}
 
 	##----- Plotting -----
 	dat  = dat[order(dat$pct),] # for plotting as horizontal bars w/ largest at top
-	if (eps) {
-		postscript(file=paste(plotname,"eps",sep="."),width=10,height=6,horizontal=FALSE,paper="special")
-		par(mfrow=c(1,1),cex=0.8,mar=c(3,12,0.5,1),oma=c(0,0,0,0),mgp=c(1.5,.5,0))
-	} else if (png) {
-		plotname <- paste(plotname,"png",sep=".")
-		png(plotname, units="in", res=pngres, width=6.5, height=3.5)
-		par(mfrow=c(1,1), cex=0.7, mar=c(3,10,0.5,1), oma=c(0,0,0,0), mgp=c(1.5,0.5,0))
-	} else if (reset.mf)
-		expandGraph(mfrow=c(1,1), cex=1.0, mar=c(4,10,1,1), oma=c(0,0,0,0), mgp=c(2,.5,0))
-	else
-		expandGraph(cex=1.0,mar=c(4,10,1,1),mgp=c(2,.5,0))
-	if (colour=="topo")
-		barcol = topo.colors(nrow(dat))
-	if (colour=="sombre")
-		barcol = rep("gainsboro",nrow(dat))
-	xy <- barplot(dat$pct, col=barcol, names.arg=dat$spp, horiz=TRUE, las=1, col.axis="grey20", xlab="Percent", cex.axis=0.8)
-	z <- xy[match(species[saraSpp,"name"],dat$spp)]
-	zbar = is.element(dat$spp,species[saraSpp,"name"])
-	if (any(!is.na(z))) {
-		axis(side=2, at=z, las=1, tick=FALSE, labels=species[saraSpp,"name"], col.axis="red")
-		if (!is.element(colour,c("topo")) && !is.null(colour)) {
-			barcol[zbar] = "pink"
-			barplot(dat$pct, col=barcol, names.arg=NULL, horiz=TRUE, las=1,col.axis="grey20", xaxt="n", yaxt="n", add=TRUE)
+	fout.e = fout = outnam
+	for (l in lang) {
+		changeLangOpts(L=l)
+		fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
+		if (eps) {
+			postscript(file=paste0(fout,".eps"),width=10,height=6,horizontal=FALSE,paper="special")
+			par(mfrow=c(1,1),cex=0.8,mar=c(3,12,0.5,1),oma=c(0,0,0,0),mgp=c(1.5,.5,0))
+		} else if (png) {
+			png(filename=paste0(fout,".png"), units="in", res=pngres, width=6.5, height=3.5)
+			par(mfrow=c(1,1), cex=0.7, mar=c(3,switch(l,'e'=10,'f'=12),0.5,1), oma=c(0,0,0,0), mgp=c(1.5,0.5,0))
+		} else if (reset.mf)
+			expandGraph(mfrow=c(1,1), cex=1.0, mar=c(4,switch(l,'e'=10,'f'=12),1,1), oma=c(0,0,0,0), mgp=c(2,.5,0))
+		else
+			expandGraph(cex=1.0,mar=c(4,switch(l,'e'=10,'f'=12),1,1),mgp=c(2,.5,0))
+		if (colour=="topo")
+			barcol = topo.colors(nrow(dat))
+		if (colour=="sombre")
+			barcol = rep("gainsboro",nrow(dat))
+		xy <- barplot(dat$pct, col=barcol, names.arg=linguaFranca(dat$spp,l), horiz=TRUE, las=1, col.axis="grey30", xlab=switch(l,'e'="Percent",'f'="Pourcentage"), cex.axis=0.8)
+		z <- xy[match(species[saraSpp,"name"],dat$spp)]
+		zbar = is.element(dat$spp,species[saraSpp,"name"])
+		if (any(!is.na(z))) {
+			axis(side=2, at=z, las=1, tick=FALSE, labels=linguaFranca(species[saraSpp,"name"],l), col.axis="red")
+			if (!is.element(colour,c("topo")) && !is.null(colour)) {
+				barcol[zbar] = "pink"
+				barplot(dat$pct, col=barcol, names.arg=NULL, horiz=TRUE, las=1,col.axis="grey20", xaxt="n", yaxt="n", add=TRUE)
+			}
 		}
-	}
-	z <- xy[match(species[strSpp,"name"],dat$spp)]
-	zbar = is.element(dat$spp,species[strSpp,"name"])
-	if (!is.na(z)) {
-		axis(side=2, at=z, las=1, tick=FALSE, labels=species[strSpp,"name"], col.axis="blue")
-		if (!is.element(colour,c("topo")) && !is.null(colour)) {
-			barcol[zbar] = "lightblue1"
-			barplot(dat$pct, col=barcol, names.arg=NULL, horiz=TRUE, las=1,col.axis="grey20", xaxt="n", yaxt="n", add=TRUE)
+		z <- xy[match(species[strSpp,"name"],dat$spp)]
+		zbar = is.element(dat$spp,species[strSpp,"name"])
+		if (!is.na(z)) {
+			axis(side=2, at=z, las=1, tick=FALSE, labels=linguaFranca(species[strSpp,"name"],l), col.axis="blue")
+			if (!is.element(colour,c("topo")) && !is.null(colour)) {
+				barcol[zbar] = "lightblue1"
+				barplot(dat$pct, col=barcol, names.arg=NULL, horiz=TRUE, las=1,col.axis="grey20", xaxt="n", yaxt="n", add=TRUE)
+			}
 		}
-	}
-	addLabel(0.90,0.20,bquote(Sigma~Catch(kt) == .(round(sum(dat$catKt)))), cex=1.2, adj=1)
-	addLabel(0.90,0.15,bquote(Sigma~Catch('%') == .(round(sum(dat$pct),1))), cex=1.2, adj=1)
-
-	if (eps|png) dev.off()
+		addLabel(0.90,0.20,bquote(Sigma~Catch(kt) == .(round(sum(dat$catKt)))), cex=1.2, adj=1)
+		addLabel(0.90,0.15,bquote(Sigma~Catch('%') == .(round(sum(dat$pct),1))), cex=1.2, adj=1)
+	
+		if (eps|png) dev.off()
+	}; eop()
 	packList(c("dat","xy","z","sql"),"obj.preferDepth",tenv=.PBStoolEnv)
 	invisible(dat) }
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotConcur
@@ -1246,6 +1262,7 @@ plotLocal = function(dat, area, aflds=NULL, pcat=0.95, cpue=FALSE, powr=1,
 				fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
 				topcat = unlist(formatC(topN$catT,3,format="fg",big.mark=options()$big.mark))
 				legtxt = paste0(topcat, " - ", 1:nrow(topN), switch(l,'e'=". ",'f'=", "), linguaFranca(topN$name,l,localnames=T))
+##legtest<<-topN$name
 				if (png) png(filename=paste0(fout,".png"), width=PIN[1], height=PIN[2], units="in", res=pngres)
 				plotMap(area, type="n", plt=c(0.06,0.99,0.06,0.99), 
 					xlim=xlim, ylim=ylim, mgp=c(2.2,0.5,0), cex.axis=1.2, cex.lab=1.5)
@@ -1255,9 +1272,9 @@ plotLocal = function(dat, area, aflds=NULL, pcat=0.95, cpue=FALSE, powr=1,
 				addPolys(nepacLL, col="lightyellow1", border="grey20", lwd=0.5)
 				#text(fdata$X[1:Ntop],fdata$Y[1:Ntop],1:Ntop,cex=0.8)
 				#text(pmin(pmax(fdata$X[1:Ntop],xbnd[1]),xbnd[2]), pmin(pmax(fdata$Y[1:Ntop],ybnd[1]),ybnd[2]), 1:Ntop, cex=0.8)
-				inbox = (1:nrow(fdata))<=Ntop & fdata$X>xbnd[1] & fdata$X<xbnd[2] & fdata$Y>ybnd[1] & fdata$Y<ybnd[2]
-				text(fdata$X[inbox], fdata$Y[inbox], (1:nrow(fdata))[inbox], cex=0.8)
-				addLegend(0.99, 0.95, fill=topN$col, legend=legtxt, bty="n", title=linguaFranca(paste0("Fishery: ",ff, " - top ", ifelse(cpue, "CPUE (kg/h)", "catch (t)")),l), xjust=1, title.adj=0, cex=0.9)
+				inbox = (1:nrow(fdata))<=Ntop #& fdata$X>xbnd[1] & fdata$X<xbnd[2] & fdata$Y>ybnd[1] & fdata$Y<ybnd[2]
+				text(pmax(par()$usr[1]+abs(diff(par()$usr[1:2]))*0.025,fdata$X[inbox]), fdata$Y[inbox], (1:nrow(fdata))[inbox], cex=0.8)
+				addLegend(0.99, 0.95, fill=topN$col, legend=legtxt, bty="n", title=linguaFranca(paste0("Fishery: ",ff, " - ", ifelse(cpue, "CPUE (kg/h)", "catch (t)")),l), xjust=1, title.adj=0, cex=0.9)
 #browser();return()
 				if (!missing(strSpp)) {
 					derange = paste0(gsub("-",".",range(fdat$date,na.rm=T)),collapse=" to ")
@@ -1597,10 +1614,12 @@ preferDepth = function(strSpp="410", fqtName="pht_fdep.sql", dbName="PacHarvest"
 	frame(); addLabel(.5,.5,"Effort loaded",col="darkgreen",cex=1.2)
 }
 
-##.preferDepth.getDepth-----------------2019-01-22
+##.preferDepth.getDepth-----------------2020-07-28
 .preferDepth.getDepth <- function()
 {
 	opar <- par(lwd=2); on.exit(par(opar))
+	env.getDepth = lenv()
+	data("species",package="PBSdata",envir=env.getDepth)
 	getWinVal(scope="L",winName="window")
 	act <- getWinAct()[1]
 	if (!is.null(act) && act=="getdata")
@@ -1641,6 +1660,7 @@ preferDepth = function(strSpp="410", fqtName="pht_fdep.sql", dbName="PacHarvest"
 			setWinVal(list(strSpp=spp),winName="window")
 		}
 		ttput(PBSdat)
+		depth=PBSdat; save("depth",file=paste0("depth",spp,".",substring(gsub("-","",Sys.Date()),3),".rda"))
 	}
 	assign("dat",PBSdat)
 	if (nrow(dat)==0)
@@ -1800,13 +1820,13 @@ preferDepth = function(strSpp="410", fqtName="pht_fdep.sql", dbName="PacHarvest"
 						addLabel(.98,.90,paste(ifelse(i==0,"",i),ifelse(j==0,"",j), sep=ifelse(nrow==1 | ncol==1,""," \225 ")),col="grey30",adj=c(1,1))
 					} else {
 						ylabpos = 0.88; labcex = 1; labinc = 0.05 #diff(par()$usr[3:4])*0.05
+						this.species = switch(l, 'e'=species[strSpp,"code3"], 'f'=eval(parse(text=deparse("cette esp\u{00E8}ce"))) )
 						data(species,package="PBSdata",envir=penv())
-						addLabel(.98, ylabpos, paste0( species[strSpp,"name"],"\n",yy), adj=c(1,0.5), col="black", cex=labcex)
-						addLabel(.98, ylabpos-2*labinc, paste0(species[strSpp,"code3"], " = ",format(ntows,big.mark=options()$big.mark)," events"),cex=labcex-0.1,col="grey30",adj=c(1,1)) 
-						addLabel(.98, ylabpos-3*labinc, paste0(species[strSpp,"code3"], " = ",format(round(max(cc,na.rm=TRUE)), big.mark=options()$big.mark)," t"),cex=labcex-0.1,col="grey30",adj=c(1,1))
+						addLabel(0.98, ylabpos, linguaFranca(paste0( species[strSpp,"name"],"\n",yy),l), adj=c(1,0.5), col="black", cex=labcex)
+						addLabel(0.98, ylabpos-2*labinc, paste0(this.species," = ", format(ntows,big.mark=options()$big.mark), linguaFranca(" events",l)), cex=labcex-0.1, col="grey30", adj=c(1,1)) 
+						addLabel(0.98, ylabpos-3*labinc, paste0(this.species, " = ",format(round(max(cc,na.rm=TRUE)), big.mark=options()$big.mark)," t"), cex=labcex-0.1, col="grey30", adj=c(1,1))
 						if (isE && showE) {##---Total effort (h) in depth range specified
-							#addLabel(.98, ylabpos-4*labinc, paste("E =",format(round(ee), big.mark=options()$big.mark),"h"),cex=labcex-0.1,col="grey30",adj=c(1,1))
-							addLabel(.98, ylabpos-4*labinc, paste0("ALL = ",format(round(ee), big.mark=options()$big.mark)," events"),cex=labcex-0.1,col="grey30",adj=c(1,1))
+							addLabel(0.98, ylabpos-4*labinc, paste0(switch(l,'e'="ALL = ",'f'=eval(parse(text=deparse("toutes les esp\u{00E8}ces = "))) ), format(round(ee), big.mark=options()$big.mark), linguaFranca(" events",l)), cex=labcex-0.1, col="grey30", adj=c(1,1))
 						}
 					}
 				}
@@ -1816,10 +1836,10 @@ preferDepth = function(strSpp="410", fqtName="pht_fdep.sql", dbName="PacHarvest"
 				box();
 			}
 		}
-		mtext(paste("Depth (m)",ifelse(ncol==1,"",paste(" [",ifelse(yba,"area","year"),
-			"by column ]"))),outer=TRUE,side=1,line=2*nrow^0.25,cex=1.2)
-		mtext(paste("Proportions",ifelse(nrow==1,"",paste(" [",ifelse(yba,"year","area"),
-			"by row ]"))),outer=TRUE,side=2,line=3.25,cex=1.25,las=0)
+		mtext(linguaFranca(paste("Depth (m)",ifelse(ncol==1,"",paste(" [",ifelse(yba,"area","year"),
+			"by column ]"))),l),outer=TRUE,side=1,line=2*nrow^0.25,cex=1.2)
+		mtext(linguaFranca(paste("Proportions",ifelse(nrow==1,"",paste(" [",ifelse(yba,"year","area"),
+			"by row ]"))),l),outer=TRUE,side=2,line=3.25,cex=1.25,las=0)
 		if (eps|png|wmf) dev.off()
 	}; eop()
 	invisible() 

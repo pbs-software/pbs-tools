@@ -544,12 +544,12 @@ gatherVals = function(x, columns){
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~gatherVals
 
 
-#getData--------------------------------2016-12-01
-# Get data from a variety of sources.
-# subQtrust -- if user has no DFO trusted credentials:
-#   if (type=="SQL"), c(trusted, uid, pwd) copied to `subQtrust'
-#   if (type=="ORA") user MUST supply `subQtrust' list.
-#-----------------------------------------------RH
+## getData------------------------------2016-12-01
+## Get data from a variety of sources.
+## subQtrust -- if user has no DFO trusted credentials:
+##   if (type=="SQL"), c(trusted, uid, pwd) copied to `subQtrust'
+##   if (type=="ORA") user MUST supply `subQtrust' list.
+## ---------------------------------------------RH
 getData <-function(fqtName, dbName="PacHarvest", strSpp=NULL, server=NULL,
    type="SQL", path=getwd(), trusted=TRUE, uid="", pwd="",
    subQtrust = list(trusted=TRUE, uid="", pwd=""),
@@ -573,9 +573,9 @@ getData <-function(fqtName, dbName="PacHarvest", strSpp=NULL, server=NULL,
 		strQ = fqtName
 	pfenv=parent.frame(1)
 	if (exists(strQ,where=pfenv) && length(get(strQ,envir=pfenv))==1 && is.character(get(strQ,envir=pfenv)))
-		fqtName=get(strQ,envir=pfenv)       ### variable string name
+		fqtName=get(strQ,envir=pfenv)     ## variable string name
 	else fqtName=strQ
-	envs=sys.frames()                      ### list all environments currently open
+	envs=sys.frames()                    ## list all environments currently open
 	if (type=="FILE") {
 		expr=paste("getFile(\"",fqtName,"\",path=\"",path,"\",senv=senv,use.pkg=TRUE,try.all.frames=TRUE,tenv=penv()); ",sep="")
 		expr=paste(expr,"PBSdat=",fqtName,";",sep="")
@@ -606,7 +606,7 @@ getData <-function(fqtName, dbName="PacHarvest", strSpp=NULL, server=NULL,
 			"attr(PBSdat,\"fqt\")=\"",fqtName,"\"",sep="")
 		eval(parse(text=expr)) }
 	else if (any(type==c("SQL","ORA","SQLX","ORAX"))) {
-		### If a direct expression, execute it. If no species, grab a table.
+		## If a direct expression, execute it. If no species, grab a table.
 		if (any(type==c("SQLX","ORAX")) || is.null(strSpp) || strSpp=="") {
 			isExpr = ifelse(any(type==c("SQLX","ORAX")),TRUE,FALSE)
 			expr=paste(c("datt=.getSQLdata(dbName=\"",dbName,"\"",
@@ -615,32 +615,32 @@ getData <-function(fqtName, dbName="PacHarvest", strSpp=NULL, server=NULL,
 				",server=\"",server,"\",type=\"",substring(type,1,3),"\",rownum=",rownum,
 				",trusted=",trusted,",uid=\"",uid,"\",pwd=\"",pwd,"\",...)"),collapse="")
 #browser();return()
-			timeQ0=proc.time()[1:3]  ### start timing SQL query
+			timeQ0=proc.time()[1:3]  ## start timing SQL query
 			eval(parse(text=expr)) 
 			timeQ = round(proc.time()[1:3]-timeQ0,2) }
 		else {
 			data(species,envir=penv())
 			suni = function(x) {sort(unique(x))}
-			alfSpp=suni(species$code[species$fish])                 ### all fish species
-			trfSpp=suni(species$code[species$rf])                   ### total rockfish species
-			orfSpp=setdiff(trfSpp,"396")                            ### other rockfish species
-			tffSpp=suni(species$code[species$ff])                   ### total flatfish species
-			offSpp=setdiff(tffSpp,"602")                            ### other flatfish species
-			carSpp=suni(species$code[is.element(species$taxon,2)])  ### cartilaginous species
-			sssSpp=setdiff(carSpp,c("065","066"))                   ### shark and skate species
-			invSpp=suni(species$code[species$invert])               ### invertebrates
-			t01Spp=suni(species$code[is.element(species$taxon,1)])  ### taxon 1:  Agnatha (hagfish, lampreys)
-			t02Spp=suni(species$code[is.element(species$taxon,2)])  ### taxon 2:  Chondrichthyes (sharks, rays, chimaeras)
-			t03Spp=suni(species$code[is.element(species$taxon,3)])  ### taxon 3:  Clupeiformes (herring, anchovies)
-			t04Spp=suni(species$code[is.element(species$taxon,4)])  ### taxon 4:  Salmonidae (salmon, trout)
-			t05Spp=suni(species$code[is.element(species$taxon,5)])  ### taxon 5:  Osmeridae (smelts)
-			t06Spp=suni(species$code[is.element(species$taxon,6)])  ### taxon 6:  Myctophidae (lanternfishes)
-			t07Spp=suni(species$code[is.element(species$taxon,7)])  ### taxon 7:  Gadidae (codfishes)
-			t08Spp=suni(species$code[is.element(species$taxon,8)])  ### taxon 8:  Macrouridae (grenadiers)
-			t09Spp=suni(species$code[is.element(species$taxon,9)])  ### taxon 9:  Scombridae (mackerels, tunas)
-			t10Spp=suni(species$code[is.element(species$taxon,10)]) ### taxon 10: Scorpaenidae (scorpionfishes)
-			t11Spp=suni(species$code[is.element(species$taxon,11)]) ### taxon 11: Hexagrammidae (greenlings)
-			t12Spp=suni(species$code[is.element(species$taxon,12)]) ### taxon 12: Pleuronectiformes (flounders, soles, halibut)
+			alfSpp=suni(species$code[species$fish])                 ## all fish species
+			trfSpp=suni(species$code[species$rf])                   ## total rockfish species
+			orfSpp=setdiff(trfSpp,"396")                            ## other rockfish species
+			tffSpp=suni(species$code[species$ff])                   ## total flatfish species
+			offSpp=setdiff(tffSpp,"602")                            ## other flatfish species
+			carSpp=suni(species$code[is.element(species$taxon,2)])  ## cartilaginous species
+			sssSpp=setdiff(carSpp,c("065","066"))                   ## shark and skate species
+			invSpp=suni(species$code[species$invert])               ## invertebrates
+			t01Spp=suni(species$code[is.element(species$taxon,1)])  ## taxon 1:  Agnatha (hagfish, lampreys)
+			t02Spp=suni(species$code[is.element(species$taxon,2)])  ## taxon 2:  Chondrichthyes (sharks, rays, chimaeras)
+			t03Spp=suni(species$code[is.element(species$taxon,3)])  ## taxon 3:  Clupeiformes (herring, anchovies)
+			t04Spp=suni(species$code[is.element(species$taxon,4)])  ## taxon 4:  Salmonidae (salmon, trout)
+			t05Spp=suni(species$code[is.element(species$taxon,5)])  ## taxon 5:  Osmeridae (smelts)
+			t06Spp=suni(species$code[is.element(species$taxon,6)])  ## taxon 6:  Myctophidae (lanternfishes)
+			t07Spp=suni(species$code[is.element(species$taxon,7)])  ## taxon 7:  Gadidae (codfishes)
+			t08Spp=suni(species$code[is.element(species$taxon,8)])  ## taxon 8:  Macrouridae (grenadiers)
+			t09Spp=suni(species$code[is.element(species$taxon,9)])  ## taxon 9:  Scombridae (mackerels, tunas)
+			t10Spp=suni(species$code[is.element(species$taxon,10)]) ## taxon 10: Scorpaenidae (scorpionfishes)
+			t11Spp=suni(species$code[is.element(species$taxon,11)]) ## taxon 11: Hexagrammidae (greenlings)
+			t12Spp=suni(species$code[is.element(species$taxon,12)]) ## taxon 12: Pleuronectiformes (flounders, soles, halibut)
 			t00Spp=intersect(alfSpp,suni(species$code[!is.element(species$taxon,1:12)])) ### taxon 00: All fish not part of a taxon group
 			if (is.null(mnwt)) {
 				if (type=="ORA") 
@@ -648,7 +648,7 @@ getData <-function(fqtName, dbName="PacHarvest", strSpp=NULL, server=NULL,
 				else 
 					mnwt=species[strSpp,c("gfbcwt","gfbrwt"),drop=FALSE]
 				mnwt=apply(mnwt,1,function(x){if(all(is.na(x))) 1.0 else max(x[!is.na(x)])}) 
-				mnwt=mean(mnwt)} ### mean weight of one or more species in kg
+				mnwt=mean(mnwt)} ## mean weight of one or more species in kg
 			sppS <- paste("'",paste(strSpp,collapse="','"),"'",sep="")
 			sppT <- paste("'",paste(tarSpp,collapse="','"),"'",sep="")
 			sALF <- paste("'",paste(alfSpp,collapse="','"),"'",sep="")
@@ -672,7 +672,7 @@ getData <-function(fqtName, dbName="PacHarvest", strSpp=NULL, server=NULL,
 			sT11 <- paste("'",paste(t11Spp,collapse="','"),"'",sep="")
 			sT12 <- paste("'",paste(t12Spp,collapse="','"),"'",sep="")
 			sT00 <- paste("'",paste(t00Spp,collapse="','"),"'",sep="")
-			# If Oracle SQL is called from SQL Server via OPENQUERY
+			## If Oracle SQL is called from SQL Server via OPENQUERY
 			pppS <- paste("''",paste(strSpp,collapse="'',''"),"''",sep="")
 			pppT <- paste("''",paste(tarSpp,collapse="'',''"),"''",sep="")
 			pALF <- paste("''",paste(alfSpp,collapse="'',''"),"''",sep="")
@@ -696,7 +696,7 @@ getData <-function(fqtName, dbName="PacHarvest", strSpp=NULL, server=NULL,
 			pT11 <- paste("''",paste(t11Spp,collapse="'',''"),"''",sep="")
 			pT12 <- paste("''",paste(t12Spp,collapse="'',''"),"''",sep="")
 			pT00 <- paste("''",paste(t00Spp,collapse="'',''"),"''",sep="")
-			#-------------------------------------------------------------
+			##------------------------------------------------------------
 			qnam <- paste(path,fqtName,sep="/")
 			strQ <- readLines(qnam)
 			strQ <- PBSmodelling::.trimWhiteSpace(strQ)
@@ -723,9 +723,9 @@ getData <-function(fqtName, dbName="PacHarvest", strSpp=NULL, server=NULL,
 			}
 			##+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 			begC <- regexpr("--",strQ)
-			isC  <- begC>0                               ### identify comments
-			strQ[isC]=substring(strQ[isC],0,begC[isC]-1) ### strip comments
-			strQ <- strQ[!strQ==""]                      ### strip blank lines
+			isC  <- begC>0                               ## identify comments
+			strQ[isC]=substring(strQ[isC],0,begC[isC]-1) ## strip comments
+			strQ <- strQ[!strQ==""]                      ## strip blank lines
 			strQ <- paste(strQ,collapse=" ")
 			if (type=="ORA") 
 				strQ <- gsub(pattern="@table",replacement=dbName,x=strQ)
@@ -752,7 +752,7 @@ getData <-function(fqtName, dbName="PacHarvest", strSpp=NULL, server=NULL,
 			strQ <- gsub(pattern="@t11code",replacement=sT11,x=strQ)
 			strQ <- gsub(pattern="@t12code",replacement=sT12,x=strQ)
 			strQ <- gsub(pattern="@t00code",replacement=sT00,x=strQ)
-			# If Oracle SQL is called from SQL Server via OPENQUERY
+			## If Oracle SQL is called from SQL Server via OPENQUERY
 			strQ <- gsub(pattern="@~sppcode",replacement=pppS,x=strQ)
 			strQ <- gsub(pattern="@~tarcode",replacement=pppT,x=strQ)
 			strQ <- gsub(pattern="@~alfcode",replacement=pALF,x=strQ)
@@ -776,7 +776,7 @@ getData <-function(fqtName, dbName="PacHarvest", strSpp=NULL, server=NULL,
 			strQ <- gsub(pattern="@~t11code",replacement=pT11,x=strQ)
 			strQ <- gsub(pattern="@~t12code",replacement=pT12,x=strQ)
 			strQ <- gsub(pattern="@~t00code",replacement=pT00,x=strQ)
-			#--------------------------------------------------------
+			##-------------------------------------------------------
 			strQ <- gsub(pattern="@mnwt",replacement=mnwt,x=strQ)
 			strQ <- gsub(pattern="@mindep",replacement=ifelse(is.null(mindep),0,mindep),x=strQ)
 			strQ <- gsub(pattern="@maxdep",replacement=ifelse(is.null(maxdep),1200,maxdep),x=strQ)
@@ -813,7 +813,7 @@ getData <-function(fqtName, dbName="PacHarvest", strSpp=NULL, server=NULL,
 			strQ <- gsub(pattern="@dummy",replacement=ifelse(is.null(dummy),"''",  ## default does not work for numeric
 				ifelse(is.numeric(dummy),paste(dummy,collapse=","),
 				ifelse(is.character(dummy),paste("'",paste(dummy,collapse="','"),"'",sep=""),"''"))),x=strQ)
-			#assign("sql",strQ,envir=tenv)
+			ttput(strQ)
 #browser();return()
 			expr <-paste("datt=.getSQLdata(dbName=\"",dbName,"\",strSQL=\"",strQ,
 			"\",server=\"",server,"\",type=\"",type,"\",trusted=",trusted,
@@ -850,25 +850,26 @@ getData <-function(fqtName, dbName="PacHarvest", strSpp=NULL, server=NULL,
 	assign("FQtime",FQtime,envir=tenv)
 	assign("sql",strQ,envir=tenv)
 	junk=gc(verbose=FALSE) ### garbage collection (shunt messages to junk also)
-	invisible(strQ) }
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~getData
+	invisible(strQ)
+}
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~getData
 
-#.getSQLdata----------------------------2014-05-01
-# Retrieves a data frame from SQL Server
-#-----------------------------------------------RH
+## .getSQLdata--------------------------2014-05-01
+##  Retrieves a data frame from SQL Server
+## ---------------------------------------------RH
 .getSQLdata <- function(dbName, qtName=NULL, strSQL=NULL,
      server=NULL, type="SQL", trusted=TRUE, uid="", pwd="", 
      rownum=0,...) {
 	#if (!require(RODBC, quietly=TRUE)) stop("`RODBC` package is required")
-	### Use forward slashes "/" for server otherwise the translation
-	### is too dependent on the number of times "\" is escaped
+	## Use forward slashes "/" for server otherwise the translation
+	## is too dependent on the number of times "\" is escaped
 	if (is.null(server) || server=="") {
 		#getFile(".PBSserver", path = .getSpath(),tenv=penv())
 		server = .PBSserver[1]; type="SQL" }
 	driver= list(...)$driver
 #browser();return()
 	if (type=="SQL") driver=ifelse(is.null(driver),"SQL Server",driver)
-	#else if (type=="ORA") driver="Oracle ODBC Driver" ### "Microsoft ODBC for Oracle"
+	#else if (type=="ORA") driver="Oracle ODBC Driver" ## "Microsoft ODBC for Oracle"
 	else if (type=="ORA") driver=ifelse(is.null(driver),"Oracle in OraClient11g_home1",driver)
 	else showError("Only 'SQL' and 'ORA' supported at present")
 	syntax <- paste("Driver={",driver,"}",
@@ -876,14 +877,15 @@ getData <-function(fqtName, dbName="PacHarvest", strSpp=NULL, server=NULL,
 		";Database=",dbName,";Trusted_Connection=",ifelse(trusted,"Yes","No"),sep="")
 	if (!trusted) syntax <- paste(syntax,";UID=",uid,";PWD=",pwd,sep="")
 	if (type=="ORA") syntax = paste(syntax,";TLO=0;QTO=F",sep="")
-	syntax=gsub("/","\\\\",syntax) ### finally convert "/" to "\\"
+	syntax=gsub("/","\\\\",syntax)  ## finally convert "/" to "\\"
 	assign("cns",syntax,envir=.PBStoolEnv)
 	cnn <- odbcDriverConnect(connection=syntax)
+#browser();return()
 #if (type=="ORA") {browser();return()}
 	if (is.null(qtName) && is.null(strSQL))
 		showError("Must specify either 'qtName' or 'strSQL'")
 	if (!is.null(qtName)) {
-		### sqlFetch doesn't work for Oracle tables (thanks Norm)
+		## sqlFetch doesn't work for Oracle tables (thanks Norm)
 		if (type=="ORA")
 			query=paste("SELECT * FROM ", paste(dbName,qtName,sep="."),
 				ifelse(rownum>0,paste(" WHERE ROWNUM <=",rownum),""),sep="")
@@ -892,9 +894,9 @@ getData <-function(fqtName, dbName="PacHarvest", strSpp=NULL, server=NULL,
 		dat <- sqlQuery(cnn, query, rows_at_time=1) }
 	else { 
 		arg.list = list(...)[!is.element(names(list(...)),"driver")]
-		# seems you cannot just pass a list into ..., even if ... is rendered as a list by the function.
+		## seems you cannot just pass a list into ..., even if ... is rendered as a list by the function.
 		if (length(arg.list)>0) { 
-			arg.vec = sapply(names(arg.list),function(x){paste(x,"=",paste(deparse(arg.list[[x]]),collapse=""),sep="")}) # deparse breaks lines
+			arg.vec = sapply(names(arg.list),function(x){paste(x,"=",paste(deparse(arg.list[[x]]),collapse=""),sep="")}) ## deparse breaks lines
 			args = paste(arg.vec,collapse=", ")
 			expr = paste("dat = sqlQuery(cnn, strSQL, ",args,")",sep="")
 #print(expr); #browser()
@@ -906,45 +908,52 @@ getData <-function(fqtName, dbName="PacHarvest", strSpp=NULL, server=NULL,
 			showMessage("No records returned. Maybe try again with 'rows_at_time=1'.",col="blue")
 	}
 	odbcClose(cnn)
-	return(dat) }
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~.getSQLdata
+	return(dat)
+}
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~.getSQLdata
 
-#.getMDBdata----------------------------2010-07-22
-# Retrieves a data frame from MDB query or table
-#-----------------------------------------------RH
-.getMDBdata <- function(mdbTable, qtName, rownum=0, ...) {
+## .getMDBdata--------------------------2010-07-22
+##  Retrieves a data frame from MDB query or table
+## ---------------------------------------------RH
+.getMDBdata <- function(mdbTable, qtName, rownum=0, ...)
+{
 	#if (!require(RODBC, quietly=TRUE)) stop("`RODBC` package is required")
 	cnn <- odbcConnectAccess(access.file=mdbTable)
 	query=paste("SELECT ",ifelse(rownum>0,paste("TOP",rownum),"")," * FROM ",qtName,sep="")
 	dat <- sqlQuery(cnn, query, ...)
 	odbcClose(cnn)
-	return(dat) };
+	return(dat)
+}
 
-#.getDBFdata----------------------------2010-07-22
-# Retrieves data from a DBF file
-#-----------------------------------------------RH
-.getDBFdata <- function(dbfTable, qtName, ...) {
+## .getDBFdata--------------------------2010-07-22
+##  Retrieves data from a DBF file
+## ---------------------------------------------RH
+.getDBFdata <- function(dbfTable, qtName, ...)
+{
 	if (nchar(qtName)>8) showError("Rename DBF file using 8 or less characters")
 	#if (!require(RODBC, quietly=TRUE)) stop("`RODBC` package is required")
 	cnn <- odbcConnectDbase(dbf.file=dbfTable)
 	dat <- sqlQuery(cnn, paste("SELECT * FROM",qtName),...)
 	odbcClose(cnn)
-	return(dat) };
+	return(dat)
+}
 
-#.getXLSdata----------------------------2013-01-30
-# Retrieves data from an XLS worksheet
-# Note: Data truncated to 255 characters with Excel ODBC driver
-# Fix : http://support.microsoft.com/kb/189897/en-us
-# regjump HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Jet\4.0\Engines\Excel
-# Set TypeGuessRows DWORD Value to 0 (scan all rows). OK for most small tables.
-#-----------------------------------------------RH
-.getXLSdata <- function(xlsTable, qtName, ...) {
+## .getXLSdata--------------------------2013-01-30
+##  Retrieves data from an XLS worksheet
+##  Note: Data truncated to 255 characters with Excel ODBC driver
+##  Fix : http://support.microsoft.com/kb/189897/en-us
+##  regjump HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Jet\4.0\Engines\Excel
+##  Set TypeGuessRows DWORD Value to 0 (scan all rows). OK for most small tables.
+## ---------------------------------------------RH
+.getXLSdata <- function(xlsTable, qtName, ...)
+{
 	#if (!require(RODBC, quietly=TRUE)) stop("`RODBC` package is required")
 	cnn <- odbcConnectExcel(xls.file=xlsTable)
 	dat <- sqlFetch(cnn, qtName, ...)
 	odbcClose(cnn)
-	return(dat) };
-#====================================getData group
+	return(dat)
+}
+##===================================getData group
 
 
 #getFile--------------------------------2013-01-25
@@ -1185,7 +1194,7 @@ isThere = function(x, envir=parent.frame()) {
 	genv = function(){ .GlobalEnv }                # global environment
 
 
-## linguaFranca-------------------------2020-06-30
+## linguaFranca-------------------------2020-08-11
 ## Translate English phrases to French (other languages possible)
 ## for use in plotting figures with French labels.
 ## Note that 'gsub' has a limit to its nesting depth.
@@ -1201,29 +1210,32 @@ linguaFranca = function(x, lang="e", little=4, strip=FALSE, localnames=FALSE)
 	if (lang=="f") {
 		## Deal with locality names separately form the main function when localnames=TRUE
 		if (localnames) {
-			locals  = x
+			locals = x
+			locals = gsub("Below Middle Bank","Middle Bank (below)",locals)
+			locals = gsub("Deep Big Bank","Big Bank (deep)",locals)
+#browser();return()
 			localset = strsplit(locals,"/")
 			locawords = lapply(localset,strsplit, split=" ")
-			locowords = sapply(locawords,function(x){
-				locoset = sapply (x, function(xx){
+			locowords = sapply(locawords,function(xx){
+				locoset = sapply (xx, function(xxx){
 					## Shift words to the front
-					pattern = "[Ii]sland|[Cc]anyon|[Ss]ound|[Ss]pit|[Bb]ay|[Pp]oint|[Ss]pot|[Ii]nlet|[Dd]oughnut"
-					if (any(grepl(pattern,xx))) {
-						xrev = c(xx[grep(pattern,xx)],xx[grep(pattern,xx,invert=T)])
+					pattern = "[Ii]sland|[Cc]anyon|[Ss]ound|[Ss]pit|[Bb]ay|[Pp]oint|[Ss]pot|[Ii]nlet|[Dd]oughnut|[Bb]ank|[Ll]ake"
+					if (any(grepl(pattern,xxx))) {
+						xrev = c(xx[grep(pattern,xxx)],xxx[grep(pattern,xxx,invert=T)])
 						return(paste0(xrev,collapse=" "))
 					}
 					## Shift words to the back
 					pattern = "[Nn]orth|[Ss]outh|[Ee]ast|[Ww]est|[S][E]|[Dd]eep|[Oo]utside"
-					if (any(grepl(pattern,xx))) {
-						xrev = c(xx[grep(pattern,xx,invert=T)],xx[grep(pattern,xx)])
+					if (any(grepl(pattern,xxx))) {
+						xrev = c(xxx[grep(pattern,xxx,invert=T)],xxx[grep(pattern,xxx)])
 						return(paste0(xrev,collapse=" "))
 					}
-					else return(paste0(xx,collapse=" "))
+					else return(paste0(xxx,collapse=" "))
 				})
 				return(paste0(locoset,collapse="/"))
 			})
 			## Locality names
-			xloco = sapply(locowords, function(loco){
+			xloco = sapply(locowords, function(xx){
 				gsub(" and ", " et ",
 				gsub("fm", "br",
 				gsub("[Bb]ay", "Baie",
@@ -1232,20 +1244,24 @@ linguaFranca = function(x, lang="e", little=4, strip=FALSE, localnames=FALSE)
 				gsub("[Cc]ape", "Cap",
 				gsub("[Dd]eep", "Profonde",
 				gsub("[Ee]ast", "Est",
-				gsub("[Ww]est", "Ouest",
+				gsub("[Ll]ake", "Lac",
 				gsub("[Ss]pot", "Place",
 				gsub("[Ss]pit", "Broche",
+				gsub("[Ww]est", "Ouest",
 				gsub("\\(deep)", "(profonde)",
 				gsub("[Nn]orth", "Nord",
 				gsub("[Ss]outh", "Sud",
 				gsub("[Ii]nlet", eval(parse(text=deparse("Entr\u{00E9}e"))),
 				gsub("[Ss]ound", eval(parse(text=deparse("D\u{00E9}troit"))),
+				gsub("\\(below)", "(dessous)",
 				gsub("[Ii]sland", eval(parse(text=deparse("\u{00CE}le"))),
 				gsub("[Ff]ather", eval(parse(text=deparse("P\u{00E8}re"))),
 				gsub("[Ii]nshore", eval(parse(text=deparse("C\u{00F4}tier"))),
 				gsub("[Oo]utside", "Dehors",
 				gsub("[Dd]oughnut", "Beignet",
-				loco)))))))))))))))))))))
+				gsub("\\(shallow)", "(peu profonde)",
+				gsub("[Oo]ffshore", eval(parse(text=deparse("Extac\u{00F4}tier"))),
+				xx)))))))))))))))))))))))))
 			})
 #browser();return()
 			return(xloco)
@@ -1259,16 +1275,12 @@ linguaFranca = function(x, lang="e", little=4, strip=FALSE, localnames=FALSE)
 #browser();return()
 		if (any(zlil)) {
 			## les petits mots de bouche (stand-alone words)
-			xlil = sapply(lilword, function(x0){
+			xlil = sapply(lilword, function(xx){
 				gsub("[Aa]nd", "et",
 				gsub("[Aa]vg", "moy",
-				gsub("[B][C]", "C-B",
-				gsub("[H][S]", "DH",
-				gsub("[Q][C][S]", "BRC",
-				gsub("[W][C][H][G]", "COHG",
-				gsub("[W][C][V][I]", "COIV",
 				gsub("[Ll]ag", eval(parse(text=deparse("d\u{00E9}calage"))),
 				gsub("[Aa]ge", eval(parse(text=deparse("\u{00E2}ge"))),
+				gsub("[Aa]ll", "tous",
 				gsub("[Ss]ex", "sexe",
 				gsub("[Yy]ear", eval(parse(text=deparse("ann\u{00E9}e"))),
 				gsub("[Mm]ale", eval(parse(text=deparse("m\u{00E2}le"))),
@@ -1279,10 +1291,55 @@ linguaFranca = function(x, lang="e", little=4, strip=FALSE, localnames=FALSE)
 				gsub("[Cc]om(m?)", "com",
 				gsub("[Rr]es(e?)", "rec",
 				gsub("[Ss]ur(v?)", "rel",
-				x0)))))))))))))))))))
+				xx)))))))))))))))
+			})
+			## dat abbreviations
+			xlil = sapply(xlil, function(xx){
+				gsub("[Jj]an", "jan",
+				gsub("[Ff]eb", eval(parse(text=deparse("f\u{00E9}v"))),
+				gsub("[Mm]ar", "mar",
+				gsub("[Aa]pr", "avr",
+				gsub("[Mm]ay", "mai",
+				gsub("[Jj]un", "juin",
+				gsub("[Jj]ul", "juil",
+				gsub("[Aa]ug", eval(parse(text=deparse("ao\u{00FB}"))),
+				gsub("[Ss]ep", "sep",
+				gsub("[Oo]ct", "oct",
+				gsub("[Nn]ov", "nov",
+				gsub("[Dd]ec", eval(parse(text=deparse("d\u{00E9}c"))),
+				xx))))))))))))
+			})
+			## species acronyms
+			xlil = sapply(xlil, function(xx){
+				gsub("[B][O][R]", "SBO",  ## Bocaccio
+				gsub("[P][O][P]", "SLM",  ## Pacific Ocean Perch
+				gsub("[R][E][R]", eval(parse(text=deparse("SO\u{00C9}"))),  ## Rougheye
+				gsub("[R][S][R]", "SRR",  ## Redstripe
+				gsub("[S][G][R]", "SAR",  ## Silvergray
+				gsub("[W][A][P]", "GLA",  ## Walleye Pollock
+				gsub("[W][W][R]", "SVV",  ## Widow
+				gsub("[Y][M][R]", "SBJ",  ## Yellowmouth
+				gsub("[Y][T][R]", "SQJ",  ## Yellowtail
+				gsub("[Y][Y][R]", "SYJ",  ## Yelloweye
+				xx))))))))))
+			})
+			## Area acronyms
+			xlil = sapply(xlil, function(xx){
+				gsub("[B][C]", "C-B",
+				gsub("[H][S]", "DH",
+				gsub("[B][C][C]", "CBc",
+				gsub("[B][C][N]", "CBn",
+				gsub("[B][C][S]", "CBs",
+				gsub("[C][S][T]", eval(parse(text=deparse("C\u{00D4}TE"))),
+				gsub("[D][F][O]", "MPO",
+				gsub("[P][B][S]", "SBP",
+				gsub("[Q][C][S]", "BRC",
+				gsub("[W][C][H][G]", "COHG",
+				gsub("[W][C][V][I]", "COIV",
+				xx)))))))))))
 			})
 			## ridiculous acronyms
-			xlil = sapply(xlil, function(xa){
+			xlil = sapply(xlil, function(xx){
 #browser();return()
 				gsub("[B][T]", "CF",             ## bottom trawl   = chalut de fond
 				gsub("[M][W]", "CP",             ## midwater trawl = chalut p\'{e}lagique
@@ -1299,51 +1356,62 @@ linguaFranca = function(x, lang="e", little=4, strip=FALSE, localnames=FALSE)
 				gsub("[R][S][S]", "SRC",         ## somme r\'{e}siduelle de carr\'{e}s
 				gsub("[U][S][R]", "RSS",         ## r\'{e}f\'{e}rence de stock sup\'{e}rieure
 				gsub("[M][C][M][C]", "MCCM",     ## Monte Carlo \`{a} cha\^{i}ne de Markov
-				xa)))))))))))))))
-			})
-			## dat abbreviations
-			xlil = sapply(xlil, function(xb){
-				gsub("[Jj]an", "jan",
-				gsub("[Ff]eb", eval(parse(text=deparse("f\u{00E9}v"))),
-				gsub("[Mm]ar", "mar",
-				gsub("[Aa]pr", "avr",
-				gsub("[Mm]ay", "mai",
-				gsub("[Jj]un", "juin",
-				gsub("[Jj]ul", "juil",
-				gsub("[Aa]ug", eval(parse(text=deparse("ao\u{00FB}"))),
-				gsub("[Ss]ep", "sep",
-				gsub("[Oo]ct", "oct",
-				gsub("[Nn]ov", "nov",
-				gsub("[Dd]ec", eval(parse(text=deparse("d\u{00E9}c"))),
-				xb))))))))))))
+				xx)))))))))))))))
 			})
 			xout[xLpos] = xlil
 		}
 		## words or phrases that appear in strings
 		if (any(zbig)) {
-			## species names
-			xspp = sapply(bigword, function(xs){
-				gsub("[R][S][R]", "SRR",
+			## rockfish species names
+			xspp1 = sapply(bigword, function(xx){
+				gsub("[Bb]ocaccio", eval(parse(text=deparse("s\u{00E9}baste bocace"))),
 				gsub("[Ww]idow [Rr]ockfish", "veuve",
-				gsub("[Ww]alleye [Pp]ollock", "goberge",
-				gsub("[R][E][B][S] [Nn]orth", "REBS nord",
-				gsub("[R][E][B][S] [Ss]outh", "REBS sud",
+				gsub("[Cc]anary [Rr]ockfish", eval(parse(text=deparse("s\u{00E9}baste canari"))),
 				gsub("[Rr]ougheye [Rr]ockfish", eval(parse(text=deparse("s\u{00E9}baste \u{00E0} oeil \u{00E9}pineux"))),
 				gsub("[Rr]edbanded [Rr]ockfish", eval(parse(text=deparse("s\u{00E9}baste \u{00E0} bandes rouges"))),
 				gsub("[Rr]edstripe [Rr]ockfish", eval(parse(text=deparse("s\u{00E9}baste \u{00E0} raie rouge"))),
-				gsub("[Yy]elloweye [Rr]ockfish", eval(parse(text=deparse("s\u{00E9}bastes aux yeux jaunes"))),
+				gsub("[Ss]harpchin [Rr]ockfish", eval(parse(text=deparse("s\u{00E9}baste \u{00E0} menton pointu"))),
+				gsub("[Ss]plitnose [Rr]ockfish", eval(parse(text=deparse("s\u{00E9}baste \u{00E0} bec-de-li\u{00E8}vre"))),
+				gsub("[Yy]elloweye [Rr]ockfish", eval(parse(text=deparse("s\u{00E9}baste aux yeux jaunes"))),
+				gsub("[Yy]ellowtail [Rr]ockfish", eval(parse(text=deparse("s\u{00E9}baste \u{00E0} queue jaune"))),
 				gsub("[Yy]ellowmouth [Rr]ockfish", eval(parse(text=deparse("s\u{00E9}baste \u{00E0} bouche jaune"))),
 				gsub("[Bb]lackspotted [Rr]ockfish", eval(parse(text=deparse("s\u{00E9}baste \u{00E0} taches noires"))),
 				gsub("[Ss]hortspine [Tt]hornyhead", eval(parse(text=deparse("s\u{00E9}bastolobe \u{00E0} courtes \u{00E9}pines"))),
 				gsub("[Pp]acific [Oo]cean [Pp]erch", eval(parse(text=deparse("s\u{00E9}baste \u{00E0} longue m\u{00E2}choire"))),
+				gsub("[Ss]ilvergr[ae]y [Rr]ockfish", eval(parse(text=deparse("s\u{00E9}baste argent\u{00E9}"))),
 				gsub("[Rr]ougheye/[Bb]lackspotted [Rr]ockfish", eval(parse(text=deparse("s\u{00E9}baste \u{00E0} oeil \u{00E9}pineux/\u{00E0} taches noires"))),
-				xs))))))))))))))
+				xx))))))))))))))))
 			})
+			## rockfish species names
+			xspp2 = sapply(xspp1, function(xx){
+				gsub("[Ss]quid", "calmar",
+				gsub("[Ll]ingcod", "morue-lingue",
+				gsub("[Ss]ablefish", eval(parse(text=deparse("morue charbonni\u{00E8}re"))),
+				gsub("[Rr]ex [Ss]ole", "plie royale",
+				gsub("[Bb]ig [Ss]kate", eval(parse(text=deparse("raie biocell\u{00E9}e"))),
+				gsub("[Rr]ock [Ss]ole", "fausse limande",
+				gsub("[Dd]over [Ss]ole", "limande-sole",
+				gsub("[Pp]acific [Cc]od", "morue du Pacifique",
+				gsub("[Ee]nglish [Ss]ole", "carlottin anglais",
+				gsub("[Pp]etrale [Ss]ole", "plie de Californie",
+				gsub("[Pp]acific [Hh]ake", "merlu du Pacifique",
+				gsub("[Ff]lathead [Ss]ole", eval(parse(text=deparse("plie \u{00E0} t\u{00EA}te plate"))),
+				gsub("[Ss]piny [Dd]ogfish", "aiguillat commun",
+				gsub("[Ll]ongnose [Ss]kate", "pocheteau long-nez",
+				gsub("[Pp]acific [Hh]alibut", eval(parse(text=deparse("fl\u{00E9}tan du Pacifique"))),
+				gsub("[Pp]acific [Hh]erring", "hareng du Pacifique",
+				gsub("[Ss]potted [Rr]atfish", eval(parse(text=deparse("chim\u{00E8}re d'Am\u{00E9}rique"))),
+				gsub("[Ww]alleye [Pp]ollock", "goberge de l'Alaska",
+				gsub("[Aa]rrowtooth [Ff]lounder", eval(parse(text=deparse("plie \u{00E0} grande bouche"))),
+				xx)))))))))))))))))))
+			})
+#browser();return()
 			## geographic words
-			xgeo = sapply(xspp, function(xg){
-				gsub("[B][C]", "C-B",
+			xgeo = sapply(xspp2, function(xx){
+				gsub("[B][C]", eval(parse(text=deparse("C-B\u{2000}"))),
 				gsub("[H][S]", "DH",
 				gsub("[Q][C][S]", "BRC",
+				gsub("[P][B][S]", "SBP",
 				gsub("[W][C][H][G]", "COHG",
 				gsub("[W][C][V][I]", "COIV",
 				gsub("[Aa]rea\\(km", "superficie(km",
@@ -1355,12 +1423,12 @@ linguaFranca = function(x, lang="e", little=4, strip=FALSE, localnames=FALSE)
 				gsub("[Mm]itchell's [Gg]ully", "goulet de Mitchell",
 				gsub("[Ee]ncountered [Aa]rea", "zone de rencontre",
 				gsub("[Gg]oose [Ii]sland [Gg]ully", eval(parse(text=deparse("goulet de l'\u{00EE}le Goose"))),
-				gsub("[Qq]ueen [Cc]harlotte [Ss]ound", "bassin de la Reine Charlotte",
-				gsub("[Qq]ueen [Cc]harlotte [Ss]trait", eval(parse(text=deparse("d\u{00E9}troit de la Reine Charlotte"))),
-				xg))))))))))))))))
+				gsub("[Qq]ueen [Cc]harlotte [Ss]ound", "bassin de la Reine-Charlotte",
+				gsub("[Qq]ueen [Cc]harlotte [Ss]trait", eval(parse(text=deparse("d\u{00E9}troit de la Reine-Charlotte"))),
+				xx)))))))))))))))))
 			})
 			## large unwieldy phrases (poo)
-			xpoo = sapply(xgeo, function(x9){
+			xpoo = sapply(xgeo, function(xx){
 				gsub("[Uu]nsorted [A][F]", eval(parse(text=deparse("F\u{00C2} non tri\u{00E9}es"))),
 				gsub("[Yy]ear of [Bb]irth", eval(parse(text=deparse("ann\u{00E9}e de naissance"))),
 				gsub("CPUE [Nn]ot [Uu]sed", eval(parse(text=deparse("CPUE non utilis\u{00E9}e"))),
@@ -1370,13 +1438,14 @@ linguaFranca = function(x, lang="e", little=4, strip=FALSE, localnames=FALSE)
 				gsub("[Pp]arameter [Ee]stimate", eval(parse(text=deparse("estimation de param\u{00E8}tre"))),
 				gsub("[Ll]ong-[Tt]erm [Mm]edian", eval(parse(text=deparse("m\u{00E9}diane \u{00E0} long terme"))),
 				gsub("[Rr]elative to [Uu]nfished", eval(parse(text=deparse("par rapport \u{00E0} non exploit\u{00E9}"))),
+				gsub("[Ww]eighted by [Cc]atch", eval(parse(text=deparse("pond\u{00E9}r\u{00E9} par les prises"))),
 				gsub("[Mm]ax [Ff]ishing [Mm]ortality", eval(parse(text=deparse("mortalit\u{00E9} max par p\u{00EA}che"))),
 				gsub("[Ff]ishing [Mm]ortality [Rr]ate", eval(parse(text=deparse("taux de mortalit\u{00E9} par p\u{00EA}che"))),
 				gsub("[Mm]ean [Ff]ishing [Mm]ortality", eval(parse(text=deparse("mortalit\u{00E9} moyenne par p\u{00EA}che"))),
 				gsub("[Nn]ormali[sz]ed [Rr]esiduals", eval(parse(text=deparse("r\u{00E9}sidus normalis\u{00E9}s"))),
 				gsub("[Ss]tandardi[sz]ed [Rr]esiduals", eval(parse(text=deparse("r\u{00E9}sidus standardis\u{00E9}s"))),
 				gsub("[Ss]tudenti[sz]ed [Rr]esiduals", eval(parse(text=deparse("r\u{00E9}sidus standardis\u{00E9}s"))),
-				gsub("[Rr]esidual [Ss]um of [Ss]quares", eval(parse(text=deparse("somme r\u{00E9}siduelle de carr\u{00E9}s"))),
+				gsub("[Rr]esidual [Ss]um of [Ss]quares", eval(parse(text=deparse("somme r\u{00E9}siduelle des carr\u{00E9}s"))),
 				gsub("[Mm]edian [Ff]ishing [Mm]ortality", eval(parse(text=deparse("mortalit\u{00E9} m\u{00E9}diane par p\u{00EA}che"))),
 				gsub("[Ll]og [Rr]ecruitment [Dd]eviations", eval(parse(text=deparse("Log \u{00E9}carts de recrutement"))),
 				gsub("[Aa]uto-[Cc]orrelation [Ff]unction of", eval(parse(text=deparse("Fonction d'auto-corr\u{00E9}lation de"))),
@@ -1385,42 +1454,43 @@ linguaFranca = function(x, lang="e", little=4, strip=FALSE, localnames=FALSE)
 				gsub("[Aa]ll [Cc]ommercial [Gg]roundfish [Ff]isheries", eval(parse(text=deparse("Toutes les p\u{00EA}ches commerciales de poisson de fond"))),
 				gsub("[Bb]iomass [Rr]elative to [Aa]verage [Bb]iomass", eval(parse(text=deparse("Biomasse par rapport \u{00E0} la biomasse moyenne"))),
 				gsub("[Bb]iomass [Rr]elative to [Uu]nfished [Ee]quilibrium", eval(parse(text=deparse("Biomasse par rapport \u{00E0} l'\u{00E9}quilibre non exploit\u{00E9}"))),
-				x9))))))))))))))))))))))))
+				xx)))))))))))))))))))))))))
 			})
 			## three words
-			xthree = sapply(xpoo, function(x3){
+			xthree = sapply(xpoo, function(xx){
 				gsub("fit early mats", eval(parse(text=deparse("adapt\u{00E9} premi\u{00E8}res mats"))),
 				gsub("[Aa]ge [Ee]rr ", eval(parse(text=deparse("err d'\u{00E2}ge "))),
 				gsub("[Nn]o [Ss]urv [Aa]ge", eval(parse(text=deparse("pas d'\u{00E2}ge enq"))),
 				gsub("[Aa]nnual [Mm]ean [Ww]eight", "poids moyen annuel",
+				gsub("[Dd]egrees [Oo]f [Ff]reedom", eval(parse(text=deparse("degr\u{00E9}s de libert\u{00E9}"))),
 				gsub("[Cc][Vv] [Pp]rocess [Ee]rror", "erreur de processus de CV",
 				gsub("[Nn]o [G][I][G]/[Tt]riennial", "pas GIG/triennal",
-				gsub("([Tt]op|[Hh]ighest) [Cc]atch", eval(parse(text=deparse("capture la plus \u{00E9}lev\u{00E9}e"))),
+				gsub("([Tt]op|[Hh]ighest) [Cc]atch", eval(parse(text=deparse("prise la plus \u{00E9}lev\u{00E9}e"))),
 				gsub("[Mm]ax [Ee]xploitation [Rr]ate", "taux d'exploitation max",
 				gsub("[Ff]emale [Ss]pawning [Bb]iomass", "biomasse reproductrice femelles",
 				gsub("[R][E][B][S] [Nn]orth [Cc]omposite", "composite du REBS nord",
 				gsub("[R][E][B][S] [Ss]outh [Cc]omposite", "composite du REBS sud",
-				x3)))))))))))
+				xx))))))))))))
 			})
 #browser();return()
 			## bigger double words
-			xtwo.big = sapply(xthree, function(x2b){
+			xtwo.big = sapply(xthree, function(xx){
 				gsub("[Bb]ottom [Tt]rawl", "chalut de fond",
 				gsub("[Rr]educe [Cc]atch", eval(parse(text=deparse("r\u{00E9}duire les prises"))),
 				gsub("[Uu]nknown [Tt]rawl", "chalut inconnu",
 				gsub("[Ss]hrimp [Tt]rawl",  eval(parse(text=deparse("chalut \u{00E0} crevettes"))),
 				gsub("[Mm]idwater [Tt]rawl", eval(parse(text=deparse("chalut p\u{00E9}lagique"))),
 				gsub("[Rr]elative [Vv]alue", "valeur relative",
-				gsub("[Cc]atch [Ss]trategy", eval(parse(text=deparse("strat\u{00E9}gie de capture"))),
+				gsub("[Cc]atch [Ss]trategy", eval(parse(text=deparse("strat\u{00E9}gie de prises"))),
 				gsub("[Pp]rimary [Rr]eader", "technicien principal",
 				gsub("[Ii]ncrease [Cc]atch", "augmenter les prises",
 				gsub("[Dd]ecrease [Cc]atch", "diminuer les prises",
 				gsub("[Pp]arameter [Vv]alue", eval(parse(text=deparse("valeur du param\u{00E8}tre"))),
 				gsub("[Ss]econdary [Rr]eader", "technicien secondaire",
-				gsub("[Cc]ommercial [Tt]rawl", "chalut commercial",
+				gsub("[Cc]ommercial [Tt]rawl", eval(parse(text=deparse("p\u{00EA}che commerciale au chalut"))),
 				gsub("[Rr]elative [Bb]iomass", "biomasse relative",
 				gsub("[Ss]pawning [Bb]iomass", "biomasse reproductrice",
-				gsub("[Ss]ensitivity [Rr]uns", eval(parse(text=deparse("\u{00E9}xecutions de sensibilit\u{00E9}"))),
+				gsub("[Ss]ensitivity [Rr]uns", eval(parse(text=deparse("ex\u{00E9}cutions de sensibilit\u{00E9}"))),
 				gsub("[Ee]xploitation [Rr]ate", "taux d'exploitation",
 				gsub("[Ff]ishing [Mm]ortality", eval(parse(text=deparse("mortalit\u{00E9} par p\u{00EA}che"))),
 				gsub("[Dd]erived [Qq]uantities", eval(parse(text=deparse("quantit\u{00E9}s d\u{00E9}riv\u{00E9}es"))),
@@ -1431,23 +1501,24 @@ linguaFranca = function(x, lang="e", little=4, strip=FALSE, localnames=FALSE)
 				gsub("[Cc]umulative [Ff]requency", eval(parse(text=deparse("fr\u{00E9}quence cumulative"))),
 				gsub("[Tt]heoretical [Qq]uantiles", eval(parse(text=deparse("quantiles th\u{00E9}oriques"))),
 				gsub("[Pp]osterior [Dd]istribution", eval(parse(text=deparse("distribution post\u{00E9}rieure"))),
-				x2b))))))))))))))))))))))))))
+				xx))))))))))))))))))))))))))
 			})
 			## smaller double words
 #browser();return()
-			xtwo.med = sapply(xtwo.big, function(x2m){
+			xtwo.med = sapply(xtwo.big, function(xx){
 				gsub("[Nn]o CPUE", "pas de CPUE",
 				gsub("[Nn]o CVpro", "pas de CVpro",
 				gsub("[Ii]n [Yy]ear", eval(parse(text=deparse("dans l'ann\u{00E9}e"))),
 				gsub("CPUE [Ii]ndex", "indice de CPUE",
 				gsub("[Ee]stimate M", "estimer M",
 				gsub("[Mm]ax [Aa]ge", eval(parse(text=deparse("\u{00E2}ge max"))),
-				gsub("[A]lt [Cc]atch", "capture alt",
-				gsub("[Aa]ge \\(year", eval(parse(text=deparse("\u{00E2}ge (ann\u{00E9}e"))),
+				gsub("[A]lt [Cc]atch", "prises alt",
+				gsub("[Aa]ge \\(y(ear)?", eval(parse(text=deparse("\u{00E2}ge (ann\u{00E9}e"))),
 				gsub("[Ee]nd [Yy]ear", eval(parse(text=deparse("ann\u{00E9}e de fin"))),
-				gsub("[Bb]ase [Cc]ase", "cas de base",
-				gsub("[Bb]ase [Rr]uns", eval(parse(text=deparse("\u{00E9}xecutions de cas de base"))),
-				gsub("[Cc]entral [Rr]un", eval(parse(text=deparse("\u{00E9}xecution centrale"))),
+				gsub("[Ss]urvey [Yy]ear", eval(parse(text=deparse("ann\u{00E9}e du relev\u{00E9}"))),
+				gsub("[Bb]ase [Cc]ase", eval(parse(text=deparse("sc\u{00E9}nario de r\u{00E9}f\u{00E9}rence"))),
+				gsub("[Bb]ase [Rr]uns", eval(parse(text=deparse("ex\u{00E9}cutions des sc\u{00E9}narios de r\u{00E9}f\u{00E9}rence"))),
+				gsub("[Cc]entral [Rr]un", eval(parse(text=deparse("ex\u{00E9}cution centrale"))),
 				gsub("[Bb]ut [Ff]ixed", "mais fixe",
 				gsub("[Aa]ge [Cc]lass", eval(parse(text=deparse("classe d'\u{00E2}ge"))),
 				gsub("min [B] [Yy]ear", eval(parse(text=deparse("ann\u{00E9}e de min B"))),
@@ -1460,22 +1531,22 @@ linguaFranca = function(x, lang="e", little=4, strip=FALSE, localnames=FALSE)
 				gsub("[Ff]ishing [Ee]ffort", eval(parse(text=deparse("effort de p\u{00EA}che"))),
 				gsub("[Aa]g(e)?ing [Ee]rror", "erreur de vieillissement",
 				gsub("[Mm]ean [Aa]ge \\(year", eval(parse(text=deparse("\u{00E2}ge moyen (ann\u{00E9}e"))),
-				gsub("[Hh]al[fv](e)? [Cc]atch", eval(parse(text=deparse("moiti\u{00E9} capture"))),
+				gsub("[Hh]al[fv](e)? [Cc]atch", eval(parse(text=deparse("moiti\u{00E9} prise"))),
 				gsub("[Mm]ean\\([Cc][Pp][Uu][Ee])", "moyenne(cpue)",
-				x2m))))))))))))))))))))))))))
+				xx)))))))))))))))))))))))))))
 			})
 			## single words 10 or more characters
-			xone.big = sapply(xtwo.med, function(x1b){
+			xone.big = sapply(xtwo.med, function(xx){
 				gsub("[Hh]istorical", "historique",
 				gsub("[Pp]roportion", "proportion",
 				gsub("[Cc]ommercial", "commercial",
 				gsub("[Vv]ulnerable", eval(parse(text=deparse("vuln\u{00E9}rable"))),
 				gsub("[Rr]ecruitment", "recrutement",
 				gsub("[Ss]electivity", eval(parse(text=deparse("s\u{00E9}lectivit\u{00E9}"))),
-				x1b))))))
+				xx))))))
 			})
 			## single words with 7-9 characters
-			xone.med = sapply(xone.big, function(x1m){
+			xone.med = sapply(xone.big, function(xx){
 				gsub("[Bb]iomass(e)?", "biomasse",
 				gsub("[Dd]ensity", eval(parse(text=deparse("densit\u{00E9}"))),
 				gsub("[Hh]ealthy", "saine",
@@ -1486,6 +1557,7 @@ linguaFranca = function(x, lang="e", little=4, strip=FALSE, localnames=FALSE)
 				gsub("[Cc]autious", "prudence",
 				gsub("[Oo]bserved", eval(parse(text=deparse("observ\u{00E9}"))),
 				gsub("[Rr]ecruits", "recrues",
+				gsub("[Rr]esearch", "recherche",
 				gsub("[Ss]ynoptic", "synoptique",
 				gsub("[Mm]aturity", eval(parse(text=deparse("maturit\u{00E9}"))),
 				gsub("[Ss]pawning", "frayant",
@@ -1495,18 +1567,19 @@ linguaFranca = function(x, lang="e", little=4, strip=FALSE, localnames=FALSE)
 				gsub("[Rr]esiduals", eval(parse(text=deparse("r\u{00E9}sidus"))),
 				gsub("[Tt]riennial", "triennal",
 				gsub("[Ff]requency", eval(parse(text=deparse("la fr\u{00E9}quence"))),
-				x1m)))))))))))))))))))
+				xx))))))))))))))))))))
 			})
 			## single words up to 6 characters
-			xone.small = sapply(xone.med, function(x1s){
+			xone.small = sapply(xone.med, function(xx){
 				gsub(" \\(y)", " (an.)",
 				gsub("^[Aa]ge ", eval(parse(text=deparse("\u{00E2}ge "))),
 				gsub("^[Yy]ear ", eval(parse(text=deparse("ann\u{00E9}e "))),
 				gsub("[N]orth", "Nord",
 				gsub("[S]outh", "Sud",
-				gsub("[Cc]ell", "cellule",
+				gsub("/[Cc]ell", "/cellule", ## need qualifier for Big Skate (raie biocell\'{e}e)?
 				gsub("[Mm]ale", eval(parse(text=deparse("m\u{00E2}le"))),
-				gsub("[Cc]atch", "capture",
+				gsub("[Cc]atch", "prises",
+				gsub("[Dd]epth", "profondeur",
 				gsub("[Ii]ndex", "indice",
 				gsub("[Mm]onth", "mois",
 				gsub("[Oo]ther", "autre",
@@ -1522,52 +1595,58 @@ linguaFranca = function(x, lang="e", little=4, strip=FALSE, localnames=FALSE)
 				gsub("[Ss]ample", eval(parse(text=deparse("\u{00E9}chantillon"))),
 				gsub("[Ss]eason", "saison",
 				gsub("[Ss]eries", eval(parse(text=deparse("s\u{00E9}ries"))),
-				gsub("[Ss]urvey", eval(parse(text=deparse("relev\u{00E9}"))),
-				gsub("[Vv]essel", "bateau",
+				gsub("[Ss]urv(ey)?", eval(parse(text=deparse("relev\u{00E9}"))),
+				gsub("[Vv]essel", "navire",
 				gsub("[Ww]eight", "poids",
 				gsub(" [Mm]ajor ", " zone ",
-				x1s)))))))))))))))))))))))))))
+				xx))))))))))))))))))))))))))))
 			})
+#browser();return()
 			## words describing fisheries
 #browser();return()
-			xfish = sapply(xone.small, function(xf){
+			xfish = sapply(xone.small, function(xx){
 				gsub("[Mm]ajor", "principal",
 				gsub("[Mm]inor", "secondaire",
 				gsub("[Ss]able", "morue",
 				gsub("[Tt]rawl", "chalut",
 				gsub("[Aa]ssess", eval(parse(text=deparse("\u{00E9}val"))),
 				gsub("[Ss]almon", "saumon",
+				gsub("[Ss]orted", eval(parse(text=deparse("tri\u{00E9}es"))),
 				gsub("[Dd]ogfish", "aiguillat",
 				gsub("[Hh]alibut", eval(parse(text=deparse("fl\u{00E9}tan"))),
 				gsub("[Ll]anding", eval(parse(text=deparse("d\u{00E9}barquement"))),
-				gsub("[Ll]ingcod", "lingotte",
 				gsub("[Ss]urv\\:", "relev:",
 				gsub("[Ss]urv\\_", "relev_",
 				gsub("[Ll]ongline", "palangre",
-				gsub("[Ss]ablefish", eval(parse(text=deparse("morue charbonni\u{00E8}re"))),
+				gsub("[Uu]nsorted", eval(parse(text=deparse("non tri\u{00E9}es"))),
 				gsub("[Dd]og/[Ll]in", "aig/lin",
 				gsub("[Ff]ish(ery|ing)", eval(parse(text=deparse("p\u{00EA}che"))),
 				gsub("[S][B][F] [Tt]rap", "MC casier",
 				gsub("[Hh](\\_)?[Ll]rock", eval(parse(text=deparse("HLs\u{00E9}b"))),
+				gsub("[R][E][B][S] [Nn]orth", "REBS nord",
+				gsub("[R][E][B][S] [Ss]outh", "REBS sud",
 				gsub("[Hh]ook [\\&|Aa](nd)? [Ll]ine", eval(parse(text=deparse("hame\u{00E7}on et lignes"))),
 				gsub("[Hh][Ll](\\_|\\.| )[Rr]ockfish", eval(parse(text=deparse("HL.s\u{00E9}baste"))),
 				gsub("[Hh](\\&|\\.)[Ll](\\_|\\.| )[Rr]ockfish", eval(parse(text=deparse("H&L s\u{00E9}baste"))),
-				xf)))))))))))))))))))))
+				xx)))))))))))))))))))))))
 			})
 #browser();return()
 			## single words describing biology
-			xbio = sapply(xfish, function(xb){
+			xbio = sapply(xfish, function(xx){
 				gsub("[Ss]pent", eval(parse(text=deparse("us\u{00E9}"))),
 				gsub("[Mm]ature", "mature",
 				gsub("[Ee]mbryos", "embryons",
+				gsub("[Oo]tolith", "otolithe",
 				gsub("[Rr]esting", "repos",
 				gsub("[Ii]mmature", "immature",
+				gsub("[Pp]ectoral", "pectorale",
 				gsub("[Mm]aturing", eval(parse(text=deparse("\u{00E0} maturit\u{00E9}"))),
+				gsub("[Ss]pecimen", eval(parse(text=deparse("sp\u{00E9}cimen"))),
 				gsub("[Ff]ertili[sz]ed", eval(parse(text=deparse("fertilis\u{00E9}"))),
-				xb)))))))
+				xx))))))))))
 			})
 			## ridiculous acronyms
-			xacro = sapply(xbio, function(xa){
+			xacro = sapply(xbio, function(xx){
 				gsub("[A][E]", "EV",             ## ageing error = erreur de vieillissement
 				gsub("[B][T]", "CF",             ## bottom trawl   = chalut de fond
 				gsub("[M][W]", "CP",             ## midwater trawl = chalut p\'{e}lagique
@@ -1578,23 +1657,39 @@ linguaFranca = function(x, lang="e", little=4, strip=FALSE, localnames=FALSE)
 				gsub("[M][S][Y]", "RMS",         ## rendement maximal soutenu
 				gsub("[m][s][y]", "rms",         ## rendement maximal soutenu (be careful of words ending in 'msy')
 				gsub("[M][C][M][C]", "MCCM",     ## Monte Carlo \`{a} cha\^{i}ne de Markov
-				xa))))))))))
+				xx))))))))))
 			})
-			xbig = 
+			## species code3 acros
+			xcode = sapply(xacro, function(xx){
+				gsub("[B][O][R]", "SBO",  ## Bocaccio
+				gsub("[P][O][P]", "SLM",  ## Pacific Ocean Perch
+				gsub("[R][E][R]", eval(parse(text=deparse("SO\u{00C9}"))),  ## Rougheye
+				gsub("[R][S][R]", "SRR",  ## Redstripe
+				gsub("[S][G][R]", "SAR",  ## Silvergray
+				gsub("[W][A][P]", "GLA",  ## Walleye Pollock
+				gsub("[W][W][R]", "SVV",  ## Widow
+				gsub("[Y][M][R]", "SBJ",  ## Yellowmouth
+				gsub("[Y][T][R]", "SQJ",  ## Yellowtail
+				gsub("[Y][Y][R]", "SYJ",  ## Yelloweye
+				xx))))))))))
+			})
+			## final swipe through
+			xbig = sapply(xcode, function(xx){
 				gsub("0\\.","0,",     ## primarily for sigmaR
 				gsub("1\\.","1,",     ## primarily for sigmaR
 				gsub(" of "," de ",
 				gsub(" or "," ou ",
 				gsub(" [\\&|Aa](nd)? "," et ",
 				gsub(" by ", " par ",
+				gsub(" in ", " en ",
 				gsub(" to ", eval(parse(text=deparse(" \u{00E0} "))),
 				gsub(" but ", " mais ",
 				gsub("^no ", "pas de ",
 				gsub(" no ", " pas de ",
 				gsub("\\(/y(r?))", "(/an)",
 				gsub("2y(r?)", "2an",
-			xacro))))))))))))
-
+				xx)))))))))))))
+			})
 			xout[xBpos] = xbig
 		}
 		#} 
@@ -1606,16 +1701,18 @@ linguaFranca = function(x, lang="e", little=4, strip=FALSE, localnames=FALSE)
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~linguaFranca
 
 
-#listTables-----------------------------2013-01-17
-# List tables in specified SQL, ORA, or MDB database.
-#-----------------------------------------------RH
+## listTables---------------------------2020-07-20
+##  List tables in specified SQL, ORA, or MDB database.
+## ---------------------------------------------RH
 listTables <- function (dbName, pattern=NULL, path=getwd(), 
    server=NULL, type="SQL", ttype=NULL, trusted=TRUE, uid="", 
    pwd="", silent=FALSE, tenv=.GlobalEnv)
 {
+	on.exit(odbcCloseAll())
 	if (is.null(server)) {
 		#getFile(".PBSserver", path=.getSpath(), tenv=penv())
-		server = .PBSserver[1] }
+		server = .PBSserver[1]
+	}
 	if (type=="SQL") driver="SQL Server"
 	else if (type=="ORA") driver="Oracle in OraClient11g_home1" #"Oracle ODBC Driver" # DFO standard
 	else if (type=="MDB") mdbTable=paste(path,"/",dbName,".mdb",sep="")
@@ -1626,21 +1723,27 @@ listTables <- function (dbName, pattern=NULL, path=getwd(),
 			";Database=", dbName, ";Trusted_Connection=", ifelse(trusted, 
 			"Yes", "No"), sep = "")
 		if (!trusted) syntax = paste(syntax, ";UID=", uid, ";PWD=", pwd, sep = "")
-		cnn <- odbcDriverConnect(connection = syntax)  }
-	else if (type=="MDB") {
-		cnn = odbcConnectAccess(access.file=mdbTable) }
+		cnn <- odbcDriverConnect(connection = syntax)
+	} else if (type=="MDB") {
+		cnn = odbcConnectAccess(access.file=mdbTable)
+	}
 	assign("cns",cnn,envir=tenv)
 	if (type=="ORA") dat = sqlTables(cnn,schema=dbName)
 	else             dat = sqlTables(cnn)
 	assign("PBSdat",dat,envir=tenv)
 	odbcClose(cnn)
 
+	if (length(dat)==1 && dat==-1) {
+		assign("PBSdat","No tables",envir=tenv)
+		invisible(return("No tables"))
+		}
 	if (!is.null(ttype)) dat=dat[is.element(dat$TABLE_TYPE,ttype),]
 	tabs = dat$TABLE_NAME
 	if (!is.null(pattern)) tabs <- findPat(pattern,tabs)
 	if (!silent) print(tabs)
-	invisible(tabs) }
-#---------------------------------------listTables
+	invisible(return(tabs))
+}
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~listTables
 
 
 #prime----------------------------------2010-03-25

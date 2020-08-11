@@ -349,7 +349,9 @@ compLen = function(dat, strSpp, fld="len", lbin=1, sex=c(2,1),
 
 	gval = sapply(gval, function(x){xout = intersect(x, .su(dat[,gfld])); if(length(xout)==0) NA else xout}, simplify=FALSE)
 	gval = gval[!is.na(gval)]
-	names(gval) = sapply(gval,paste0,collapse="+")
+#browser();return()
+	if (is.null(names(gval)))
+		names(gval) = sapply(gval,paste0,collapse="+")
 	dat$group = rep(NA,nrow(dat))
 	for (i in names(gval))
 		dat$group[is.element(dat[,gfld],gval[[i]])] = i
@@ -385,17 +387,18 @@ compLen = function(dat, strSpp, fld="len", lbin=1, sex=c(2,1),
 	} else if (gfld=="gear") {
 		#ssnames = c("BT", "MW", "LL")
 		#gnames  = c("1|8","6","5")
-		ssnames = names(gear)
-		gnames  = sapply(gear,paste0,collapse="|")
+		ssnames = names(gval)
+		gnames  = sapply(gval,paste0,collapse="|")
 		for (i in 1:length(ssnames)) {
 			if (any(grepl(gnames[i],names(gval))))
 				names(ssnames)[i] = names(bxpcol)[i] = names(gval)[grep(gnames[i],names(gval))]
-			#else
+			else
+				names(ssnames)[i] = names(bxpcol)[i] = names(gval)[i]
 			#	ssnames = ssnames[grep(gnames[i],names(gval),invert=TRUE)]
 		}
 		ssnames[!is.na(names(ssnames))]
-#browser();return()
 		bxpcol = bxpcol[names(ssnames)]
+#browser();return()
 	}
 	loca    = lenv()
 	data(species, package="PBSdata", envir=loca)
@@ -413,7 +416,8 @@ compLen = function(dat, strSpp, fld="len", lbin=1, sex=c(2,1),
 
 	out  = if (gfld=="SSID") "-Surv" else paste0("-tt(",paste0(.su(dat$ttype),collapse=""),")")
 	poo  = if (missing(exlax)) "" else paste0("-(",exlax,")")
-	fout = fout.e = paste0(spp3, ifelse(fld=="len","-Len","-Age"), out , poo, "-g(", gfld, ")", ifelse(strat,"-(strat)","-(obs)"))
+	goo  = if (gfld=="gear")  paste0(paste0(names(gnames),"=",gsub("\\|","+",gnames)),collapse="_") else gfld
+	fout = fout.e = paste0(spp3,"-(", datnam, ")", out , poo, "-g(", goo, ")", ifelse(strat,"-(strat_","-(obs_"),fld,")")
 #browser();return()
 
 	for (l in lang) {  ## could switch to other languages if available in 'linguaFranca'.
@@ -437,6 +441,7 @@ compLen = function(dat, strSpp, fld="len", lbin=1, sex=c(2,1),
 			}
 			sapply(1:length(Idat), function(i) {  ## loop through index 
 				ii  = names(Idat)[i]
+#browser();return()
 #if (i==5) {browser();return()}
 				idat = Idat[[i]]
 				ival  = split(idat[,fld],idat$year)
@@ -521,7 +526,7 @@ compLen = function(dat, strSpp, fld="len", lbin=1, sex=c(2,1),
 					attr(ival,"Ymean") = Ymean
 					qbox   = Qbox
 					qbox[names(ival)] = ival
-					#wbxp  = (bxpsep*2)^(2)  ## reverse calcs in function bxp (sort of)
+					#wbxp  = (bxpsep*2)^(2)  ## reverse calcs in function bxp (sort of)  ## used for WWR 2019
 					wbxp   = ifelse(length(gval)==1, 0.5, 1/length(gval))
 					midout = ((wbxp*length(gval)/2)-wbxp/2) * c(-1,1)
 					xoff   = seq(midout[1],midout[2],length.out=length(gval))
@@ -532,8 +537,8 @@ compLen = function(dat, strSpp, fld="len", lbin=1, sex=c(2,1),
 					#points(xpos[imean],Ymean,pch=21,col=bxpcol[i],bg="white",cex=0.8)
 				} else {
 				}
-			}) ## end i (index) loop
 #browser();return()
+			}) ## end i (index) loop
 			mtext(linguaFranca(ifelse(fld %in% c("len"), "Length (cm)", "Age (y)"),l), side=2, line=2.25, cex=1.5, las=0)
 			yleg = ifelse(fld=="age" && gfld=="SSID", 0.9, 0.05)
 			addLabel(0.025, yleg, linguaFranca(paste0(spp3, " ",switch(s,"Males","Females")),l), cex=1.2, adj=c(0,0))
@@ -541,13 +546,14 @@ compLen = function(dat, strSpp, fld="len", lbin=1, sex=c(2,1),
 				leglab = gsub("_"," ",ssnames[names(gval)])
 #browser();return()
 				addLegend(legpos[1], legpos[2], bty="n", fill=lucent(bxpcol[names(gval)],0.5), border="gainsboro", legend=linguaFranca(leglab,l), xjust=0, yjust=1)
-				if (gfld %in% c("off.gear","major"))
+				if (gfld %in% c("gear","major"))
 					addLabel(0.975, 0.95, txt=linguaFranca( sub("bioDat","",datnam),l), cex=1.2, adj=c(1,1))
 			}
 		} ## end s (sex) loop
 		mtext(linguaFranca("Year",l), side=1, outer=TRUE, line=0.5, cex=1.5)
 		if (png) dev.off()
 	}; eop()
+#browser();return()
 }
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~compLen
 
@@ -582,8 +588,9 @@ compVB = function(dat, index, A=1:40, subset=list(sex=c("Male","Female")),
 		nss    = nstock * nsex
 		#scols  = rep(col,nstock)[1:nstock]; names(scols) = stocks
 		#sltys  = rep(lty,nstock)[1:nstock]; names(sltys) = stocks
-		scols  = rep(col,nss)[1:nss]; names(scols) = paste0(rep(stocks,nsex),".",rep(sex,each=nstock))
-		sltys  = rep(lty,nss)[1:nss]; names(sltys) = paste0(rep(stocks,nsex),".",rep(sex,each=nstock))
+#browser();return()
+		scols  = rep(col,nss)[1:nss]; names(scols) = paste0(rep(stocks,nsex),".",rep(iii,each=nstock))
+		sltys  = rep(lty,nss)[1:nss]; names(sltys) = paste0(rep(stocks,nsex),".",rep(iii,each=nstock))
 		xlim = range(A)
 		xlim = xlim + c(-1,1)
 		if (missing(ymax)) {
@@ -1551,7 +1558,7 @@ plotAgeErr = function(dat, nsamp, xlim=NULL, ylim=NULL, jitter=0.25, seed=42,
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotAgeErr
 
 
-## plotBTMW-----------------------------2020-02-19
+## plotBTMW-----------------------------2020-08-07
 ##  Plot for bottom (BT) vs. midwater (MW) trawl catch
 ##  WHEN MC.GEAR IN ('BOTTOM TRAWL','UNKNOWN TRAWL') THEN 1
 ##  WHEN MC.GEAR IN ('TRAP') THEN 2
@@ -1641,7 +1648,7 @@ plotBTMW = function(dat, strSpp="417", years=1996:2018, major=3:9,
 			}
 			iii = intersect(as.character(gval),colnames(gtab)) ## use names instead of numeric indices
 #browser(); return()
-			addLegend(0.99, 0.99, lty=glty[iii], seg.len=3, lwd=2, col=gcol[iii], pch=gpch[iii], pt.bg=gbg[iii], pt.cex=1.75, legend=linguaFranca(gsub("_"," ",gcode[iii]),l), cex=1.2, xjust=1, yjust=1, bty="n")
+			addLegend(0.99, ifelse(strSpp %in% c("417"), 0.50,0.99), lty=glty[iii], seg.len=3, lwd=2, col=gcol[iii], pch=gpch[iii], pt.bg=gbg[iii], pt.cex=1.75, legend=linguaFranca(gsub("_"," ",gcode[iii]),l), cex=1.2, xjust=1, yjust=1, bty="n")
 			mtext(linguaFranca("Year",l),side=1,line=1.75,cex=1.5)
 			mtext(linguaFranca("Catch (t)",l),side=2,line=1.75,cex=1.5)
 			if (png) dev.off()
@@ -1692,7 +1699,7 @@ plotMW = function(dat, xlim, ylim, outnam="Mean-Weight-Compare",
 		fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
 		if (png) png(paste0(fout,".png"), units="in", res=400, width=8, height=6)
 		par(mfrow=c(1,1), mar=c(3.5,3.8,0.5,0.5), oma=c(0,0,0,0), mgp=c(2.25,0.5,0))
-		plot(0, xlim=xlim, ylim=ylim, type="n", xlab=linguaFranca("Year",l), ylab=linguaFranca("Mean Weight (kg)",l), cex.axis=1.2, cex.lab=1.5)
+		plot(0, xlim=xlim, ylim=ylim, type="n", xlab=linguaFranca("Year",l), ylab=linguaFranca("Mean Weight (kg)",l), cex.axis=1.2, cex.lab=1.5, las=1)
 		z = is.element(x,dat$year)
 		for (i in sord) {
 			if (!is.element(i,stocks)) next
@@ -1704,7 +1711,7 @@ plotMW = function(dat, xlim, ylim, outnam="Mean-Weight-Compare",
 			points(x, y, pch=spch[i], col=scol[i], bg="ghostwhite", cex=scex[i], lwd=slwd[i])
 		}
 		ii = gsub("^[s]","",stocks)
-		addLegend(0.05,0.97, pch=spch[ii], col=scol[ii], lty=slty[ii], lwd=slwd[ii], pt.cex=scex[ii], pt.bg="ghostwhite", seg.len=5, legend=ii, bty="n")
+		addLegend(0.05,0.97, pch=spch[ii], col=scol[ii], lty=slty[ii], lwd=slwd[ii], pt.cex=scex[ii], pt.bg="ghostwhite", seg.len=5, legend=linguaFranca(ii,l), bty="n")
 		if (png) dev.off()
 	}; eop()
 }
@@ -1894,10 +1901,13 @@ quantAges =function(bioDat, dfld="age", afld="major", tfld="year",
 
 	#mcol  = .colBlind[c("skyblue","blue")]
 	#fcol  = .colBlind[c("vermillion","redpurple")]
-	#mcol   = c("cyan","blue","darkblue")
-	#fcol   = c("pink","red","darkred")
-	mcol   = c("springgreen","darkgreen","green3")
-	fcol   = c("gold","orange4","goldenrod")
+	if (strSpp %in% c("RSR","WWR")){
+		mcol   = c("cyan","blue","darkblue")
+		fcol   = c("pink","red","darkred")
+	} else {
+		mcol   = c("springgreen","darkgreen","green3")
+		fcol   = c("gold","orange4","goldenrod")
+	}
 	boxwex = ifelse(type=="area",0.25,0.35)
 	Qage   = list()
 

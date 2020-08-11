@@ -1,6 +1,15 @@
 -- Calculate mean weight of a fish species from GFBioSQL 
 -- for converting discarded pieces to kg in GFFOS.
 -- Last modified: 2014-12-12
+-- =====================================
+-- Start PJS calculations of mean weight
+-- =====================================
+-- PJS Algorithm Step 2 - calculate mean weight by sex for each sample (~= tow)
+-- PJS Algorithm Step 3 - calculate mean weight by sex and trip from samples on the same trip, weighted by tow weight of RRF
+-- PJS Algorithm Step 4 - calculate mean weight by sex and quarter, weighted by trip catch of RRF
+-- PJS Algorithm Step 6 - calculate single mean weight for all years (equal weight for each year)
+
+
 SET NOCOUNT ON
 
 -- Create data table for calculating mean weight from lengths
@@ -29,7 +38,7 @@ FROM
   B21_Samples B21 ON
     B21.SAMPLE_ID = B22.SAMPLE_ID
 WHERE
-  B21.TRIP_SUB_TYPE_CODE IN (1,4) AND
+  B21.TRIP_SUB_TYPE_CODE IN (1,4,5) AND
   B21.MAJOR_STAT_AREA_CODE IN (@major) AND
   B21.GEAR_CODE IN (1,2,4,5,6) AND
   B21.SPECIES_CATEGORY_CODE IN (1) AND
@@ -392,3 +401,8 @@ SELECT * FROM #mean_weight
 --qu("gfb_mean_weight.sql",dbName="GFBioSQL",strSpp="440",major=3:9)
 --qu("gfb_mean_weight.sql",dbName="GFBioSQL",strSpp="228",major=1)
 --qu("gfb_mean_weight.sql",dbName="GFBioSQL",strSpp="439",major=3:9)
+--qu("gfb_mean_weight.sql",dbName="GFBioSQL",strSpp="410",major=3:9)
+--qu("gfb_mean_weight.sql",dbName="GFBioSQL",strSpp="417",major=3:9)
+--qu("gfb_mean_weight.sql",dbName="GFBioSQL",strSpp="435",major=3:9)  -- BOR (180912, 190705)
+--qu("gfb_mean_weight.sql",dbName="GFBioSQL",strSpp="437",major=3:9)  -- CAR (180622, 200720)
+--qu("gfb_mean_weight.sql",dbName="GFBioSQL",strSpp="440",major=3:9)  -- YMR (180925, 200720)

@@ -21,6 +21,7 @@ SELECT --TOP 100
   'fid'   = 1,
   'sector' = 'GROUNDFISH TRAWL',
   'year'  = isNull(Year(COALESCE(E.Start_FE,E.OBFL_START_DT,E.OBFL_END_DT,OC.OFFLOAD_DATE)),9999),
+  'date'  = CONVERT(VARCHAR(10),COALESCE(E.Start_FE,E.OBFL_START_DT,E.OBFL_END_DT,OC.OFFLOAD_DATE),20),
   'major' = COALESCE(E.OBFL_MAJOR_STAT_AREA_CDE, OC.MAJOR_STAT_AREA, 0),
   'minor' = COALESCE(E.OBFL_MINOR_STAT_AREA_CDE, OC.MINOR_STAT_AREA, 0),
   'locality' = COALESCE(E.OBFL_LOCALITY_CDE, OC.LOCALITY_CDE, 0),
@@ -61,6 +62,7 @@ SELECT --TOP 100
     ELSE 0 END) AS \"fid\",
   C.FISHERY_SECTOR AS \"sector\",
   ISNULL(Year(COALESCE(C.BEST_DATE,C.START_DATE)),9999) AS \"year\",
+  CONVERT(VARCHAR(10),COALESCE(C.BEST_DATE,C.START_DATE),20) AS \"date\",
   CAST(COALESCE(C.MAJOR_STAT_AREA_CODE,'00') AS NUMERIC) AS \"major\",
   CAST(COALESCE(C.MINOR_STAT_AREA_CODE,'00') AS NUMERIC) AS \"minor\",
   COALESCE(C.LOCALITY_CODE,0) AS \"locality\",
@@ -126,5 +128,5 @@ FROM #PHTDEP
   UNION ALL SELECT * FROM #FOSDEP
 
 --getData("pht_fdep.sql","PacHarvest",strSpp="396",major=5:7)
---qu("pht_fdep.sql",dbName="PacHarvest",strSpp="228")
+--qu("pht_fdep.sql",dbName="PacHarvest",strSpp="417")
 

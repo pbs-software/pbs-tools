@@ -1,6 +1,6 @@
 Package: PBStools
-Version: 1.40.2
-Date:    2020-07-16
+Version: 1.40.3
+Date:    2020-08-11
 Title:   Tools for the Efficient Execution of Onerous Tasks
 Authors@R: c(
    person("Rowan", "Haigh", role = c("aut", "cre"), email = "rowan.haigh@dfo-mpo.gc.ca"),

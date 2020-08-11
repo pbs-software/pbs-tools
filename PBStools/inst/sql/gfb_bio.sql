@@ -5,6 +5,27 @@
 SET NOCOUNT ON
 
 ---------------------------SPECIMEN QUERIES---------------------------
+
+--------------------------------------------------
+-- EXISTENCE_CODE includes genetic results for REBS, among assorted micellaneous observations
+-- NOTE: Any one specimen can be tagged with multiple EXISTENCE_CODEs
+-- Relevant genetic codes:
+-- 16 = ROUGHEYE/BLACKSPOTTED - ROUGHEYE (USER GUESS)
+-- 17 = ROUGHEYE/BLACKSPOTTED - BLACKSPOTTED (USER GUESS)
+-- 18 = SMA6 & MTSNP COI_496 RESOLVED GENETIC ID: BLACKSPOTTED ROCKFISH
+-- 19 = SMA6 & MTSNP COI_496 RESOLVED GENETIC ID: ROUGHEYE ROCKFISH
+-- 20 = SMA6 & MTSNP COI_496 RESOLVED GENETIC ID: HYBRID (RE/BS) F1+ (first generation or later)
+-- 21 = SMA6 & MTSNP COI_496 RESOLVED GENETIC ID: HYBRID (RE/BS) F2+ (second generation or later)
+-- 22 = SMA6 & MTSNP COI_496 RESOLVED GENETIC ID: FAILURE
+-- 23 = SMA6: BLACKSPOTTED/BLACKSPOTTED - NUCLEAR DNA MARKER USMA6 ALLELES ARE BLACKSPOTTED ROCKFISH
+-- 24 = SMA6: ROUGHEYE/ROUGHEYE - NUCLEAR DNA MARKER USMA6 ALLELES ARE ROUGHEYE ROCKFISH
+-- 25 = SMA6: BLACKSPOTTED/ROUGHEYE - NUCLEAR DNA MARKER USMA6 ARE BLACKSPOTTED ROCKFISH AND ROUGHEYE ROCKFISH
+-- 26 = SMA6: NO AMPLIFICATION OF LOCUS (FAILURE)
+-- 27 = MTSNP: BLACKSPOTTED - MITOCHONDRIAL DNA SINGLE NUCLEOTIDE PLYOMORPHISM COI_496_C: BLACKSPOTTED ROCKFISH
+-- 28 = MTSNP: ROUGHEYE - MITOCHONDRIAL DNA SINGLE NUCLEOTIDE POLYMORPHISM COI_496_T: ROUGHEYE ROCKFISH
+-- 29 = MTSNP: NO AMPLIFICATION OF LOCUS (FAILURE)
+-- 31 = ROUGHEYE/BLACKSPOTTED - HYBRID (USER GUESS)
+--------------------------------------------------
 SELECT --TOP 40
   SAMPLE_ID,
   SPECIMEN_ID,
@@ -593,6 +614,8 @@ SELECT * FROM #GFBBIO
 -- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="435") -- Bocaccio (BOR: 190107, 190620, 190709, 190812, 190822, 190903, 191003)
 -- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="394") -- Rougheye Rockfish (RER: 191015, 191220, 200106 for PJS|RH)
 -- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="425") -- Blackspotted Rockfish (BSR: 191015, 191220, 200106 for PJS|RH)
--- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp=c("394","425")) -- Rougheye/Blackspotted (REBS: 200107 for PJS|RH)
--- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp=c("610")) -- Rex Sole (RXL: 200123 for MPF)
+-- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="610") -- Rex Sole (RXL: 200123 for MPF)
+-- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp=c("394","425")) -- Rougheye/Blackspotted (REBS: 200107, 200228, 200316 for PJS|RH)
+-- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="437") -- Canary Rockfish (CAR: 200720)
+-- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="440") -- Yellowmouth Rockfish (YMR: 200720)
 
