@@ -1,19 +1,19 @@
 \name{plotProp}
 \alias{plotProp}
-\title{Display Proportions-at-Age Using Bubble Plots}
+\title{Display Proportions as Bubbles}
 \description{
   Display proportions-at-age (or proportions-at-length or proportions-at-weight)
   \emph{vs}. year using the \bold{PBSmodelling} function \code{plotBubbles}
   controlled by an interactive GUI.
 }
 \usage{
-plotProp(fnam="pop.age", hnam=NULL, ioenv=.GlobalEnv, ...) 
+plotProp(fnam, hnam=NULL, ioenv=.GlobalEnv, ...) 
 }
 \arguments{
-  \item{fnam}{ string specifying file name }
-  \item{hnam}{string name of a history file}
-  \item{ioenv}{input/output environment for function input data and output results.}
-  \item{...}{additional arguments for \code{plotProp}.}
+  \item{fnam}{\code{character} -- string specifying file name}
+  \item{hnam}{\code{character} -- string name of a history file}
+  \item{ioenv}{\code{environment} -- input/output environment for function input data and output results}
+  \item{...}{\code{dots} -- additional arguments for \code{plotProp}}
 }
 \details{
   This function creates an interactive GUI that can be used to display 
@@ -74,13 +74,22 @@ plotProp(fnam="pop.age", hnam=NULL, ioenv=.GlobalEnv, ...)
 \note{
   When first invoking the GUI with \code{plotProp}, Press <GO> before qualifing
   the data with the <Areas> and <Types> buttons.
+  These should be synchronised with the notebook tabs in the GUI.
+
+  \emph{Warning}: the code was recently tweaked to deal with R objects rather than SQL query results.
+  If starting the GUI without an R object, the notebook tabs <Areas> and <Types> will likely not display any options.
+  The interactive pop-GUIs should still work, but the functionality has not been tested.
 }
 \author{
-  Rowan Haigh, Research Biologist \cr
-  Pacific Biological Station, Fisheries and Oceans Canada, Nanaimo BC
+  \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
+  Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
+  \emph{locus opus}: Institute of Ocean Sciences (IOS), Sidney BC\cr
+  Last modified \code{Rd: 2020-10-08}
 }
 \seealso{
+In package \pkg{PBStools}:\cr
   \code{\link{pop.age}}, \code{\link{getData}}, \cr
-  \pkg{PBSmodelling}: \code{\link[PBSmodelling]{plotBubbles}}
+In package \pkg{PBSmodelling}:\cr
+  \code{\link[PBSmodelling]{plotBubbles}}
 }
 \keyword{hplot}

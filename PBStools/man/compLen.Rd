@@ -11,7 +11,7 @@
 compLen(dat, strSpp, fld="len", lbin=1, sex=c(2,1),
    gfld="SSID", gval=list(16,1,4), yrs, ttype, stype, scat, exlax,
    strat=FALSE, boot=FALSE, R=10, bxpsep=0.2, bxpcol="black", 
-   ylim=NULL, legpos=c(0.025,0.4), stock.name,
+   ylim=NULL, legpos=c(0.025,0.4), stock.name, outnam,
    png=FALSE, pngres=400, PIN=c(8,8), lang=c("e","f"))
 }
 \arguments{
@@ -35,6 +35,7 @@ compLen(dat, strSpp, fld="len", lbin=1, sex=c(2,1),
   \item{ylim}{\code{numeric} -- limits of the y-axis.}
   \item{legpos}{\code{numeric} -- relative position on plot to add legend.}
   \item{stock.name}{\code{character} -- optional stock name.}
+  \item{outnam}{\code{character} -- explicit output name to override an internally generated one.}
   \item{png}{\code{logical} -- if \code{TRUE}, send the figure to a \code{.png} file.}
   \item{pngres}{\code{numeric} -- resolution for output file (pixesl/inch).}
   \item{PIN}{\code{numeric} -- two-element vector specifying the width and height (both in inches) of the \code{.png} file.}
@@ -47,7 +48,7 @@ compLen(dat, strSpp, fld="len", lbin=1, sex=c(2,1),
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
   \emph{locus opus}: Institute of Ocean Sciences (IOS), Sidney BC\cr
-  Last modified \code{Rd: 2020-07-14}
+  Last modified \code{Rd: 2020-10-13}
 }
 \note{
   Developed to demonstrate and support stock separation for Redstripe Rockfish.

@@ -10,6 +10,24 @@ Authors: RH  = Rowan Haigh
          BK  = Brian Krishka
 ------------------------------
 
+1.40.4 (2020-10-08)  [Rcheck=T, Rbuild=T]
+  * M01_Utility.r
+    + Added functionality to `addStrip' and removed a bug. (RH 201006)
+    + Updated function `linguaFranca' (RH 201007)
+  * M02_Biology.r
+    + Made minor revisions to function `estOgive'. (RH 200915)
+    + Added new argument `outnam' to function `histTail' and tweaked code for better functionality. (RH 200914)
+    + Added new argument `PIN' to function `mapMaturity' and removed argument `hpage'. (RH 200914) 
+    + Made extensive revisions to function `plotProp' (RH 200930)
+      - main function requires input object to collect summares of data types and areas (likely breaks the SQL usability for now)
+      - GUI has three tabs: `IO', `Areas', and `Types', which interact (more-or-less) with pop choices.
+  * M06_Assessment.r
+    + Modified function `compLen' to perform more consistent colour matching to categories. (RH 200930)
+  * GUI code
+    + Updated `plotPropWin.txt' to implement three-tab notebook.
+  * SQL code
+    + Added two new SQL queries: `fos_optA_ttypes.sql' and `gfb_catmat_2011.sql' (RH 200930)
+
 1.40.3 (2020-08-11)  [Rcheck=F, Rbuild=F]
   * M01_Utility.r
     + Modified function `linguaFranca' to add new words and to standardise subfunction arguments. (RH 200811)

@@ -76,12 +76,17 @@
 .colGnuplot = c("#e41a1c","#377eb8","#4daf4a","#984ea3","#ff7f00","#ffff33","#a65628","#f781bf")
 
 
-## addStrip-----------------------------2015-12-01
+## addStrip-----------------------------2020-10-06
 ## Add a vertical colour strip as a legend.
 ## ---------------------------------------------RH
 addStrip = function (x, y, col, lab, xwidth=0.01, yheight=0.3, ...) 
 {
-	if (dev.cur()>1) { oldpar=par(no.readonly=TRUE); on.exit(par(oldpar)) }
+	#if (dev.cur()>1) { oldpar=par(no.readonly=TRUE); on.exit(par(oldpar)) }  ## screws up par()$mfg
+	if (dev.cur()>1) { usr=par()$usr; on.exit(par(usr=usr)) }
+	fenv = lenv()
+	dots = list(...); unpackList(dots)
+	if (!exists("border", envir=fenv)) border = "gainsboro"
+	if (!exists("cex.txt", envir=fenv)) cex.txt = 0.9
 	uxy <- par()$usr
 	x1 <- uxy[1];  x2 <- uxy[2]
 	y1 <- uxy[3];  y2 <- uxy[4]
@@ -101,8 +106,8 @@ addStrip = function (x, y, col, lab, xwidth=0.01, yheight=0.3, ...)
 	ypol = numeric()
 	for (i in 1:ncol)
 		ypol = c(ypol, c(yval[i],rep(yval[i+1],2),yval[i],NA))
-	polygon(xpol,ypol,border="gray30",col=col)
-	text(xval[2]+0.25*xw0, yval[1:ncol]+diff(yval)/2,labels=lab,cex=0.9,adj=0)
+	polygon(xpol,ypol,border=border,col=col)
+	text(xval[2]+0.25*xw0, yval[1:ncol]+diff(yval)/2,labels=lab,cex=cex.txt,adj=0)
 	invisible()
 }
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~addStrip
@@ -1194,7 +1199,7 @@ isThere = function(x, envir=parent.frame()) {
 	genv = function(){ .GlobalEnv }                # global environment
 
 
-## linguaFranca-------------------------2020-08-11
+## linguaFranca-------------------------2020-10-07
 ## Translate English phrases to French (other languages possible)
 ## for use in plotting figures with French labels.
 ## Note that 'gsub' has a limit to its nesting depth.
@@ -1408,8 +1413,10 @@ linguaFranca = function(x, lang="e", little=4, strip=FALSE, localnames=FALSE)
 #browser();return()
 			## geographic words
 			xgeo = sapply(xspp2, function(xx){
-				gsub("[B][C]", eval(parse(text=deparse("C-B\u{2000}"))),
+				##gsub("[B][C]", eval(parse(text=deparse("C-B\u{2000}"))),
+				gsub("^[B][C]([[:space:]]+)?", eval(parse(text=deparse("C-B\u{2000}"))),
 				gsub("[H][S]", "DH",
+				gsub("[Cc]oast", eval(parse(text=deparse("c\u{00F4}te"))),
 				gsub("[Q][C][S]", "BRC",
 				gsub("[P][B][S]", "SBP",
 				gsub("[W][C][H][G]", "COHG",
@@ -1425,7 +1432,7 @@ linguaFranca = function(x, lang="e", little=4, strip=FALSE, localnames=FALSE)
 				gsub("[Gg]oose [Ii]sland [Gg]ully", eval(parse(text=deparse("goulet de l'\u{00EE}le Goose"))),
 				gsub("[Qq]ueen [Cc]harlotte [Ss]ound", "bassin de la Reine-Charlotte",
 				gsub("[Qq]ueen [Cc]harlotte [Ss]trait", eval(parse(text=deparse("d\u{00E9}troit de la Reine-Charlotte"))),
-				xx)))))))))))))))))
+				xx))))))))))))))))))
 			})
 			## large unwieldy phrases (poo)
 			xpoo = sapply(xgeo, function(xx){
@@ -1547,7 +1554,7 @@ linguaFranca = function(x, lang="e", little=4, strip=FALSE, localnames=FALSE)
 			})
 			## single words with 7-9 characters
 			xone.med = sapply(xone.big, function(xx){
-				gsub("[Bb]iomass(e)?", "biomasse",
+				gsub("[C]entral", "centrale",
 				gsub("[Dd]ensity", eval(parse(text=deparse("densit\u{00E9}"))),
 				gsub("[Hh]ealthy", "saine",
 				gsub("[Ll]argest", "le plus grand",
@@ -1558,7 +1565,6 @@ linguaFranca = function(x, lang="e", little=4, strip=FALSE, localnames=FALSE)
 				gsub("[Oo]bserved", eval(parse(text=deparse("observ\u{00E9}"))),
 				gsub("[Rr]ecruits", "recrues",
 				gsub("[Rr]esearch", "recherche",
-				gsub("[Ss]ynoptic", "synoptique",
 				gsub("[Mm]aturity", eval(parse(text=deparse("maturit\u{00E9}"))),
 				gsub("[Ss]pawning", "frayant",
 				gsub("[Ss]mallest", "le plus petit",
@@ -1567,7 +1573,9 @@ linguaFranca = function(x, lang="e", little=4, strip=FALSE, localnames=FALSE)
 				gsub("[Rr]esiduals", eval(parse(text=deparse("r\u{00E9}sidus"))),
 				gsub("[Tt]riennial", "triennal",
 				gsub("[Ff]requency", eval(parse(text=deparse("la fr\u{00E9}quence"))),
-				xx))))))))))))))))))))
+				gsub("[Bb]iomass(e)?", "biomasse",
+				gsub("[Ss][Yy][Nn][Oo][Pp][Tt][Ii][Cc]", "synoptique",
+				xx)))))))))))))))))))))
 			})
 			## single words up to 6 characters
 			xone.small = sapply(xone.med, function(xx){
@@ -1582,7 +1590,7 @@ linguaFranca = function(x, lang="e", little=4, strip=FALSE, localnames=FALSE)
 				gsub("[Dd]epth", "profondeur",
 				gsub("[Ii]ndex", "indice",
 				gsub("[Mm]onth", "mois",
-				gsub("[Oo]ther", "autre",
+				gsub("[Oo][Tt][Hh][Ee][Rr]", "autre",
 				gsub("[Ss]cale", eval(parse(text=deparse("\u{00E9}chelle"))),
 				gsub("[Bb]ubble", "bulle",
 				gsub("[Ee]vents", eval(parse(text=deparse("\u{00E9}v\u{00E9}nements"))),
@@ -1608,7 +1616,7 @@ linguaFranca = function(x, lang="e", little=4, strip=FALSE, localnames=FALSE)
 				gsub("[Mm]ajor", "principal",
 				gsub("[Mm]inor", "secondaire",
 				gsub("[Ss]able", "morue",
-				gsub("[Tt]rawl", "chalut",
+				gsub("[Tt][Rr][Aa][Ww][Ll]", "chalut",
 				gsub("[Aa]ssess", eval(parse(text=deparse("\u{00E9}val"))),
 				gsub("[Ss]almon", "saumon",
 				gsub("[Ss]orted", eval(parse(text=deparse("tri\u{00E9}es"))),
@@ -1620,7 +1628,7 @@ linguaFranca = function(x, lang="e", little=4, strip=FALSE, localnames=FALSE)
 				gsub("[Ll]ongline", "palangre",
 				gsub("[Uu]nsorted", eval(parse(text=deparse("non tri\u{00E9}es"))),
 				gsub("[Dd]og/[Ll]in", "aig/lin",
-				gsub("[Ff]ish(ery|ing)", eval(parse(text=deparse("p\u{00EA}che"))),
+				gsub("[Ff][Ii][Ss][Hh]([Ee][Rr][Yy]|ing)", eval(parse(text=deparse("p\u{00EA}che"))),
 				gsub("[S][B][F] [Tt]rap", "MC casier",
 				gsub("[Hh](\\_)?[Ll]rock", eval(parse(text=deparse("HLs\u{00E9}b"))),
 				gsub("[R][E][B][S] [Nn]orth", "REBS nord",
@@ -1661,6 +1669,7 @@ linguaFranca = function(x, lang="e", little=4, strip=FALSE, localnames=FALSE)
 			})
 			## species code3 acros
 			xcode = sapply(xacro, function(xx){
+				gsub("[A][R][F]", "PGB",  ## Bocaccio
 				gsub("[B][O][R]", "SBO",  ## Bocaccio
 				gsub("[P][O][P]", "SLM",  ## Pacific Ocean Perch
 				gsub("[R][E][R]", eval(parse(text=deparse("SO\u{00C9}"))),  ## Rougheye
@@ -1671,7 +1680,7 @@ linguaFranca = function(x, lang="e", little=4, strip=FALSE, localnames=FALSE)
 				gsub("[Y][M][R]", "SBJ",  ## Yellowmouth
 				gsub("[Y][T][R]", "SQJ",  ## Yellowtail
 				gsub("[Y][Y][R]", "SYJ",  ## Yelloweye
-				xx))))))))))
+				xx)))))))))))
 			})
 			## final swipe through
 			xbig = sapply(xcode, function(xx){

@@ -39,8 +39,8 @@ makeLTH(xtab.table, table.caption, table.label,
   on \code{tex.stackexchange}, and modified by:\cr
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
-  \emph{opus locus}: Institute of Ocean Sciences (IOS), Sidney BC\cr
-  Last modified \code{Rd: 2018-07-03}\cr
+  \emph{locus opus}: Institute of Ocean Sciences (IOS), Sidney BC\cr
+  Last modified \code{Rd: 2020-10-08}\cr
 }
 \references{
   \href{https://tex.stackexchange.com/questions/41067/caption-for-longtable-in-sweave?rq=1}{Caption for longtable in Sweave}

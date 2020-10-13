@@ -327,36 +327,36 @@ buildCatch(
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
   \emph{locus opus}: Institute of Ocean Sciences (IOS), Sidney BC\cr
-  Last modified \code{Rd: 2019-10-02}
+  Last modified \code{Rd: 2020-10-13}
 }
 \references{
   Edwards, A.M., Haigh, R. and Starr, P.J. (2014a)
-  \href{http://www.dfo-mpo.gc.ca/csas-sccs/publications/resdocs-docrech/2013/2013_092-eng.html}{Pacific Ocean Perch (\emph{Sebastes alutus}) stock assessment for the north and west coasts of Haida Gwaii, British Columbia}. 
+  \href{https://www.dfo-mpo.gc.ca/csas-sccs/publications/resdocs-docrech/2013/2013_092-eng.html}{Pacific Ocean Perch (\emph{Sebastes alutus}) stock assessment for the north and west coasts of Haida Gwaii, British Columbia}. 
   \emph{DFO Can. Sci. Advis. Sec. Res. Doc.} \bold{2013/092}: vi + 126 pp.
 
   Edwards, A.M., Haigh, R. and Starr, P.J. (2014b)
-  \href{http://www.dfo-mpo.gc.ca/csas-sccs/Publications/ResDocs-DocRech/2013/2013_093-eng.html}{Pacific Ocean Perch (\emph{Sebastes alutus}) stock assessment for the west coast of Vancouver Island, British Columbia}.
+  \href{https://www.dfo-mpo.gc.ca/csas-sccs/Publications/ResDocs-DocRech/2013/2013_093-eng.html}{Pacific Ocean Perch (\emph{Sebastes alutus}) stock assessment for the west coast of Vancouver Island, British Columbia}.
   \emph{DFO Can. Sci. Advis. Sec. Res. Doc.} \bold{2013/093}: vi + 135 pp.
 
   Haigh, R. and Yamanaka, K.L. (2011)
-  \href{http://www.dfo-mpo.gc.ca/Library/344242.pdf}{Catch history reconstruction for rockfish (\emph{Sebastes} spp.) caught in British Columbia coastal waters}.
+  \href{https://waves-vagues.dfo-mpo.gc.ca/Library/344242.pdf}{Catch history reconstruction for rockfish (\emph{Sebastes} spp.) caught in British Columbia coastal waters}.
   \emph{Canadian Technical Report of Fisheries and Aquatic Sciences} \bold{2943}: viii + 124 pp.
 
   Ketchen, K.S. (1980)
-  \href{http://waves-vagues.dfo-mpo.gc.ca/Library/10079.pdf}{Reconstruction of Pacific Ocean Perch (\emph{Sebastes alutus}) stock history in Queen Charlotte sound}.
+  \href{https://waves-vagues.dfo-mpo.gc.ca/Library/10079.pdf}{Reconstruction of Pacific Ocean Perch (\emph{Sebastes alutus}) stock history in Queen Charlotte sound}.
   Part I. Estimation of foreign catches, 1965--1976. 
   \emph{Can. Manuscr. Rep. Fish. Aquat. Sci.} \bold{1570}: iv + 46 pp.
 
   Rutherford, K.L. (1999)
-  \href{http://www.dfo-mpo.gc.ca/Library/243214.pdf}{A brief history of GFCatch (1954--1995), the groundfish catch and effort database at the Pacific Biological Station}.
+  \href{https://waves-vagues.dfo-mpo.gc.ca/Library/243214.pdf}{A brief history of GFCatch (1954--1995), the groundfish catch and effort database at the Pacific Biological Station}.
   \emph{Can. Tech. Rep. Fish. Aquat. Sci.} \bold{2299}: v + 66 pp.
 
   Starr, P.J., Kronlund, A.R., Olsen, N. and Rutherford, K. (2014, in revision)
-  \href{http://www.dfo-mpo.gc.ca/csas-sccs/Publications/SAR-AS/2015/2015_010-eng.html}{Yellowtail Rockfish (\emph{Sebastes flavidus}) stock assessment for the coast of British Columbia, Canada (working paper)}.
+  \href{https://www.dfo-mpo.gc.ca/csas-sccs/Publications/SAR-AS/2015/2015_010-eng.html}{Yellowtail Rockfish (\emph{Sebastes flavidus}) stock assessment for the coast of British Columbia, Canada (working paper)}.
   \emph{DFO Can. Sci. Advis. Sec. Res. Doc.} \bold{2015/nnn}: x + 58 pp.
 
   Yamanaka, K.L., McAllister, M.M., Etienne, M.P., Edwards, A.M. and Haigh, R. (2018)
-  \href{http://www.dfo-mpo.gc.ca/csas-sccs/Publications/ResDocs-DocRech/2018/2018_001-eng.html}{Assessment for the outside population of Yelloweye Rockfish (\emph{Sebastes ruberrimus}) for British Columbia, Canada in 2014}.
+  \href{https://www.dfo-mpo.gc.ca/csas-sccs/Publications/ResDocs-DocRech/2018/2018_001-eng.html}{Assessment for the outside population of Yelloweye Rockfish (\emph{Sebastes ruberrimus}) for British Columbia, Canada in 2014}.
   \emph{DFO Can. Sci. Advis. Sec. Res. Doc.} \bold{2018/001}: ix + 150 pp.
 }
 \seealso{

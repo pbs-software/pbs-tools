@@ -7,10 +7,10 @@
 \usage{
 mapMaturity(dat=pop.age, strSpp="", type="map", mats=1:7,
    sex=list(Females=2), ttype=1:5, stype=c(1,2,6,7), areas=list(major=3:9),
-   stock, catch, brks=c(0,0.05,0.1,0.25,0.5,1), byrow=FALSE, hpage=6,
+   stock, catch, brks=c(0,0.05,0.1,0.25,0.5,1), byrow=FALSE,
    clrs=list(colorRampPalette(c("honeydew","lightgreen","black"))(5),
    colorRampPalette(c("aliceblue","skyblue2","black"))(5)),
-   outnam, eps=FALSE, png=FALSE, wmf=FALSE, pngres=400,
+   outnam, eps=FALSE, png=FALSE, wmf=FALSE, pngres=400, PIN=c(8.5,6),
    ioenv=.GlobalEnv, lang=c("e","f"))
 }
 
@@ -44,7 +44,6 @@ mapMaturity(dat=pop.age, strSpp="", type="map", mats=1:7,
   \item{brks}{\code{numeric} -- relative breaks from 0 to 1 to partition the maturity data (only used for \code{type="map"}).}
   \item{byrow}{\code{logical} -- if \code{TRUE}, the observed monthly frequencies are transformed to proportions by maturity code; 
     if \code{FALSE}, the observed maturity frequencies are transformed to proportions by month.}
-  \item{hpage}{\code{numeric} -- height of page in inches if figure is sent to an image file.}
   \item{clrs}{\code{character} -- list of colour vectors that match the \code{sex} list (above). 
     If \code{type="map"}, the colour vectors should match the relative intervals defined by \code{brks}.
     \emph{This argument needs some work to accommodate the newly added "bubb" type.}}
@@ -53,6 +52,7 @@ mapMaturity(dat=pop.age, strSpp="", type="map", mats=1:7,
   \item{png}{\code{logical} -- if \code{TRUE}, send plot to a raster \code{.png} file.}
   \item{wmf}{\code{logical} -- if \code{TRUE}, send plot to a vector \code{.wmf} file.}
   \item{pngres}{\code{numeric} -- resolution (pixels/inch) of \code{".png"} file.}
+  \item{PIN}{\code{numeric} -- vector of width and height (inches) for the output \code{png} file.}
   \item{ioenv}{\code{environment} -- input/output environment for function input data and output results.}
   \item{lang}{\code{character} -- a vector of letters that denote the language for output:
     currently only \code{"e"} (english) and \code{"f"} (french).}
@@ -128,17 +128,18 @@ pbsfun()
 \author{
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
-  \emph{opus locus}: Institute of Ocean Sciences (IOS), Sidney BC\cr
-  Last modified \code{Rd: 2018-09-07}
+  \emph{locus opus}: Institute of Ocean Sciences (IOS), Sidney BC\cr
+  Last modified \code{Rd: 2020-10-08}
 }
 \seealso{
+In package \pkg{PBStools}:\cr
   \code{\link[PBStools]{crossTab}},
   \code{\link[PBStools]{estOgive}},
   \code{\link[PBStools]{getData}},
   \code{\link[PBStools]{plotAgeErr}},
   \code{\link[PBStools]{processBio}},
-  \code{\link[PBStools]{weightBio}}
-
-  \code{\link[PBSdata]{pop.age}} in \pkg{PBSdata}
+  \code{\link[PBStools]{weightBio}}\cr
+In package \pkg{PBStools}:\cr
+  \code{\link[PBSdata]{pop.age}}
 }
 \keyword{hplot}

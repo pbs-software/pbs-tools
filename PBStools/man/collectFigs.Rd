@@ -70,10 +70,13 @@ GS_OPTIONS=-dEmbedAllFonts=true -dPDFSETTINGS=/printer -dAutoRotatePages=/None
   file when written to the system directory specified by the user.
 }
 \references{
-  \url{http://latex-community.org/forum/viewtopic.php?f=5&t=21405}
+  \url{https://latex.org/forum/viewtopic.php?f=5&t=21405}
 }
 \author{
-  Rowan Haigh, Pacific Biological Station, Fisheries and Oceans Canada, Nanaimo BC
+  \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
+  Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
+  \emph{locus opus}: Institute of Ocean Sciences (IOS), Sidney BC\cr
+  Last modified \code{Rd: 2020-10-13}
 }
 \note{
   The latex \code{bin} directory (e.g., \code{C:\\Apps\\MiKTeX\\miktex\\bin})

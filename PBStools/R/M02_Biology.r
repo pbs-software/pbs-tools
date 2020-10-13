@@ -1429,7 +1429,7 @@ compCsum <- function(dat=pop.age, pro=TRUE, strSpp="", xfld="age", plus=60,
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~compCsum
 
 
-## estOgive-----------------------------2019-10-09
+## estOgive-----------------------------2020-09-15
 ## Creates ogives of some metric (e.g., % maturity at age).
 ## Arguments:
 ##   dat     - specimen morphometrics data from GFBio
@@ -1664,13 +1664,13 @@ estOgive <- function(dat=pop.age, strSpp="", method=c("DN"),
 		else if (wmf && .Platform$OS.type=="windows")
 			do.call("win.metafile", list(filename=paste0(fout,".wmf"), width=PIN[1], height=PIN[2]))
 		else if (png) png(filename=paste0(fout,".png"), width=PIN[1], height=PIN[2], units="in", res=400)
-		else resetGraph()
+		#else resetGraph()
 		expandGraph(mfrow=c(1,1),mai=c(.6,.7,0.05,0.05),omi=c(0,0,0,0),las=1,lwd=1)
 		MDX = xlim[2]/3
 	
 		plot(0,0, type="n", xlab="", ylab="", xaxt="n", yaxt="n", xlim=xlim, ylim=c(0,1))
 		abline(h=.5,col="gainsboro",lty=1,lwd=2)
-		abline(h=seq(0,1,.1),v=seq(0,xlim[2],ifelse(xlim[2]<30,1,ifelse(xlim[2]<60,2,5))),col="gainsboro",lty=2,lwd=1)
+		abline(h=seq(0,1,0.1), v=seq(0,xlim[2],ifelse(xlim[2]<30,1,ifelse(xlim[2]<60,2,5))), col="gainsboro", lty=3, lwd=1)
 		if(ofld=="age") axis(1,at=seq(floor(xlim[1]),ceiling(xlim[2]),1),tcl=-.2,labels=FALSE)
 		axis(1,at=seq(floor(xlim[1]),ceiling(xlim[2]),ifelse(xlim[2]<=10,1,5)),tcl=-.4,labels=FALSE)
 		axis(1,at=seq(floor(xlim[1]),ceiling(xlim[2]),ifelse(xlim[2]<=10,2,10)),tcl=-.5,mgp=c(0,.5,0),cex=.9)
@@ -2216,13 +2216,13 @@ histMetric <- function(dat=pop.age, xfld="age", xint=1, minN=50,
 #---------------------------------------histMetric
 
 
-## histTail-----------------------------2020-03-18
+## histTail-----------------------------2020-09-14
 ## Create a histogram showing tail details
 ## ---------------------------------------------RH
 histTail <-function(dat=pop.age, xfld="age", tailmin=NULL, 
    xlim=c(0,100), bcol="gold", tcol="moccasin",
    wmf=FALSE, png=FALSE, pngres=400, PIN=c(6.5,3.5), 
-   ioenv=.GlobalEnv, lang=c("e","f"), ...)
+   ioenv=.GlobalEnv, outnam, lang=c("e","f"), ...)
 {
 	## Create a subdirectory called `french' for French-language figures
 	createFdir(lang)
@@ -2241,38 +2241,43 @@ histTail <-function(dat=pop.age, xfld="age", tailmin=NULL,
 	nyr  = table(dat$year)
 	xlab = paste(toupper(substring(xfld,1,1)),substring(xfld,2),sep="",collapse=" ")
 	spp  = attributes(dat)$spp
-	fnam = paste0(spp,"-Hist-",xlab)
+	if (missing(outnam))
+		outnam = paste0(spp,"-Hist-",xlab)
 
-	fout = fout.e = fnam
+	fout = fout.e = outnam
 	for (l in lang) {
 		changeLangOpts(L=l)
 		if (l=="f") fout = paste0("./french/",fout.e)  ## could repeat for other languages
 		if (wmf && .Platform$OS.type=="windows")
 			do.call("win.metafile",list(filename=paste0(fout,".wmf"), width=PIN[1], height=PIN[2]))
 		else if (png) png(paste0(fout,".png"), units="in", res=pngres, width=PIN[1], height=PIN[2])
-		else resetGraph()
+		else resetGraph(reset.mf=FALSE)
 		expandGraph(mfrow=c(1,1), mar=c(2.75,4,1,1), oma=c(0,0,0,0), las=1, xaxs="i", yaxs="i", cex.axis=0.9, cex.lab=1.1)
 		
 		truehist = MASS::truehist
 		#evalCall(truehist,argu=list(data=x,col=bcol,cex.lab=1.2,xlab=xlab),...,checkpar=TRUE)
 		#do.call(truehist, args=list(data=x, prob=prob, nbins=50, col=bcol, cex.lab=1.2, xlab=linguaFranca(xlab,l)))
 		xoff = -0.5
-		xmax = max(max(x),xlim[2])
+		xmax = ceiling(max(max(x),xlim[2]))
 		do.call(truehist, args=list(data=x, prob=prob, breaks=seq(1,xmax,1), xlim=xlim, xaxt="n", col=bcol, xlab=linguaFranca(xlab,l)))
 		axis(1, at=seq(5+xoff,xmax+xoff,5), labels=FALSE, tcl=-0.25)
 		axis(1, at=seq(10+xoff,xmax+xoff,10), labels=seq(10,xmax,10), tcl=-0.5)
-#browser();return()
 		ylab = paste(ifelse(prob,ifelse((wmf|png)&&PIN[2]<3.5,"Rel. Freq.","Relative Frequency"),"Frequency")," ( N = ",format(nx,scientific=FALSE,big.mark=options()$big.mark)," )",sep="")
 		mtext(linguaFranca(ylab,l), side=2, line=2.75, cex=par()$cex.lab, las=0)
 		if (!is.null(tailmin)){
+			if (tailmin<=0) {
+				qstart  = 0.975
+				tailmin = floor(quantile(x, qstart))
+			} else qstart = signif(ecdf(x)(tailmin),3)
+#browser();return()
 			z = x>=tailmin & !is.na(x); nz=sum(z)
-			brks = ((tailmin-1):max(x[z]))+0.5
-			par(new=TRUE, plt=c(0.65,0.95,0.5,0.8))
+			brks = ((tailmin-1):ceiling(max(x[z])))+0.5
+			par(new=TRUE, plt=c(0.7,0.975,0.6,0.9))
 			evalCall(hist, argu=list(x=x[z], breaks=brks, probability=zoomprob, col=tcol,
-				main=linguaFranca("Tail details",l), col.main="grey70", mgp=c(1.75,0.5,0),
+				main=paste0(linguaFranca("Tail details",l)," (q=",qstart,")"), col.main="grey70", mgp=c(1.75,0.5,0),
 				xlab=linguaFranca(xlab,l), ylab=linguaFranca(ifelse(prob,"Relative Frequency","Frequency"),l),
 				las=ifelse(zoomprob,0,1), cex.main=0.9), ..., checkdef=TRUE, checkpar=TRUE)
-			addLabel(0.95,0.7, linguaFranca(paste0("Max age = ",max(x[z]),"\nn = ",nz),l), col="grey60", cex=.8, adj=1)
+			addLabel(0.95,0.7, linguaFranca(paste0("Max ",xfld, " = ",max(x[z]),"\nn = ",nz),l), col="grey60", cex=.8, adj=1)
 		}
 		if (wmf|png) dev.off()
 	}; eop()
@@ -2283,7 +2288,7 @@ histTail <-function(dat=pop.age, xfld="age", tailmin=NULL,
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~histTail
 
 
-## mapMaturity--------------------------2020-08-10
+## mapMaturity--------------------------2020-09-14
 ## Plot maturity chart to see relative occurrence
 ## of maturity stages by month.
 ## Notes:
@@ -2293,10 +2298,10 @@ histTail <-function(dat=pop.age, xfld="age", tailmin=NULL,
 ## -----------------------------------------RH/PJS
 mapMaturity <- function (dat=pop.age, strSpp="", type="map", mats=1:7,
    sex=list(Females=2), ttype=1:5, stype=c(1,2,6,7), areas=list(major=3:9),
-   stock, catch, brks=c(0,0.05,0.1,0.25,0.5,1), byrow=FALSE, hpage=6,
+   stock, catch, brks=c(0,0.05,0.1,0.25,0.5,1), byrow=FALSE,
    clrs=list(colorRampPalette(c("honeydew","lightgreen","black"))(5),
    colorRampPalette(c("aliceblue","skyblue2","black"))(5)),
-   outnam, eps=FALSE, png=FALSE, wmf=FALSE, pngres=400,
+   outnam, eps=FALSE, png=FALSE, wmf=FALSE, pngres=400, PIN=c(8.5,6),
    ioenv=.GlobalEnv, lang=c("e","f"))
 {
 	if (is.null(mats) && type!="bubb")
@@ -2380,10 +2385,10 @@ mapMaturity <- function (dat=pop.age, strSpp="", type="map", mats=1:7,
 	} else {
 		z4 = is.element(dat$stock, stock)
 	}
-#browser();return()
 	dat = dat[z0&z1&z2&z3&z4,]
 	dat$month <- as.numeric(substring(dat$date,6,7))
 	dat$day   <- as.numeric(substring(dat$date,9,10))
+#browser();return()
 	if (is.psex && !any(names(areas)=="region")) {
 		dat$region = rep(NA,nrow(dat))
 		for (m in areas) {
@@ -2401,7 +2406,7 @@ mapMaturity <- function (dat=pop.age, strSpp="", type="map", mats=1:7,
 	CALCS = list() # to collect calculations (matrices primarily)
 
 	if (missing(outnam)){
-		fnam = paste0(ifelse(is.psex,"pSex-","Mats-"), strSpp)
+		fnam = paste0(ifelse(is.psex,"mapPsex-","mapMaturity-"), strSpp)
 		if (!all((3:9) %in% .su(dat$major))) fnam = paste0(fnam, "-major(", paste0(.su(dat$major),collapse=""),")")
 		fnam = paste0(fnam, "-ttype(", paste0(.su(dat$ttype),collapse=""),")")
 		fnam = paste0(fnam,"-(by_",ifelse(byrow,"maturity)","month)"),"-(",dnam,")")
@@ -2419,9 +2424,9 @@ mapMaturity <- function (dat=pop.age, strSpp="", type="map", mats=1:7,
 		for (d in 1:length(devs)) {
 			dev = devs[d]; devnam=names(dev)
 			if (!dev) next
-			if (devnam=="eps") postscript(paste0(fout,".eps"), width=8.5, height=hpage, horizontal=FALSE, paper="special")
-			else if (devnam=="png") png(paste0(fout,".png"), units="in", res=pngres, width=8.5, height=hpage)
-			else if (devnam=="wmf") do.call("win.metafile", list(filename=paste0(fout,".wmf"), width=8.5, height=hpage))
+			if (devnam=="eps") postscript(paste0(fout,".eps"), width=PIN[1], height=PIN[2], horizontal=FALSE, paper="special")
+			else if (devnam=="png") png(paste0(fout,".png"), units="in", res=pngres, width=PIN[1], height=PIN[2])
+			else if (devnam=="wmf") do.call("win.metafile", list(filename=paste0(fout,".wmf"), width=PIN[1], height=PIN[2]))
 			else resetGraph()
 			par(mfrow=c(nsex,1), mar = if(type=="map") c(1,4,0,0) else c(4,ifelse(is.psex,7,6),0,0), oma=c(0,0,ifelse(is.psex,4,2),0))
 
@@ -2578,16 +2583,19 @@ mapMaturity <- function (dat=pop.age, strSpp="", type="map", mats=1:7,
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~mapMaturity
 
 
-## plotProp-----------------------------2017-07-18
+## plotProp-----------------------------2020-09-30
 ## Plot proportion-at-age (or length) from GFBio specimen data.
 ## ---------------------------------------------RH
-plotProp <- function(fnam="pop.age",hnam=NULL, ioenv=.GlobalEnv,...)
+plotProp <- function(fnam, hnam=NULL, ioenv=.GlobalEnv, ...)
 {
-	assign("PBStool",list(module="M02_Biology",call=match.call(),args=args(plotProp),ioenv=ioenv,plotname="Rplot"),envir=.PBStoolEnv)
-	fnam=as.character(substitute(fnam))
-	if (!is.character(fnam)) stop("Argument 'fnam' must be a string name of an R dataset")
+	if(!"globo"%in%tlisp() || !"plotProp"%in%ttcall(globo)$func)
+		assign("globo",list(func="plotProp", module="M02_Biology", call=match.call(), args=args(plotProp), ioenv=ioenv, plotname="Rplot"), envir=.PBStoolEnv)
+	fnam = as.character(substitute(fnam))
+	if (!is.character(fnam)) stop("Argument 'fnam' must be a string name of an R object, usually from a call to 'gfb_bio.sql'")
+	getFile(fnam, tenv=ioenv)
+	eval(parse(text=paste0("dat = ", fnam)))
 	options(warn=-1)
-	data(spn,envir=.PBStoolEnv)
+	data(spn, package="PBSdata", envir=.PBStoolEnv)
 
 	path <- paste(system.file(package="PBStools"),"/win",sep=""); 
 	rtmp <- tempdir(); rtmp <- gsub("\\\\","/",rtmp)
@@ -2596,31 +2604,58 @@ plotProp <- function(fnam="pop.age",hnam=NULL, ioenv=.GlobalEnv,...)
 	tfile <- readLines(wnam)
 	tfile <- gsub("@wdf",wtmp,tfile)
 	tfile <- gsub("@fnam",fnam,tfile)
+	#tfile <- gsub("@tmpdir",rtmp,tfile)
+
+	## Collect info on areas available
+	zareas = is.element(colnames(dat),c("major","PMFC","GMA","srfa","srfs","popa","stock"))
+	mareas = lapply(dat[,zareas], function(x){xx=.su(x); xx[is.na(xx) | xx==""]="UNK"; xx})
+	names(mareas) = paste0("M",names(mareas))
+#browser();return()
+	setPBSoptions("Mareas", mareas)
+
+	uareas = sapply(mareas,function(x){rep(FALSE,length(x))},simplify=FALSE)
+	names(uareas) = sub("^M","U",names(mareas))
+	setPBSoptions("Uareas",uareas)
+
+	## Collect info on data types available
+	ztypes = is.element(colnames(dat),c("ttype","stype","gear","SSID","ameth","scat"))
+	mtypes = sapply(dat[,ztypes], .su, simplify=FALSE)
+	names(mtypes) = paste0("M",names(mtypes))
+	setPBSoptions("Mtypes", mtypes)
+
+	utypes = sapply(mtypes,function(x){rep(FALSE,length(x))},simplify=FALSE)
+	names(utypes) = sub("^M","U",names(mtypes))
+	setPBSoptions("Utypes",utypes)
+
+#browser();return()
+	ttget(globo); globo$DATA=dat; ttput(globo)  ## save the original data file
+	.plotProp.chooseAreas(gui=TRUE, tab=TRUE)
+	tfile = c(tfile,"\t## Tab 2 -- choose areas", readLines(paste0(rtmp,"/choose.areas.txt")))
+	.plotProp.chooseTypes(gui=TRUE, tab=TRUE)
+	tfile = c(tfile,"\t## Tab 3 -- choose types", readLines(paste0(rtmp,"/choose.types.txt")))
+	tfile[grep("OK",tfile)] = "null"  ## get rid of the OK button used in pop-up GUIs
+
 
 	if (!is.null(hnam) && is.character(hnam))
 		tfile <- gsub("#import=",paste("import=\"",hnam,"\"",sep=""),tfile)
+	tfile = tfile[grep("^#",tfile,invert=TRUE)] ##Get rid of potentailly confusing deprecated lines
 	writeLines(tfile,con=wtmp)
-	setPBSoptions("Mareas",NULL)
-	setPBSoptions("Uareas",NULL)
-	setPBSoptions("Mtypes",NULL)
-	setPBSoptions("Utypes",NULL)
+#browser();return()
 	createWin(wtmp)
 	invisible()
 }
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotProp
 
-## .plotProp.calcP----------------------2018-10-12
+## .plotProp.calcP----------------------2020-10-07
 ## Perform calculations to get proportions.
 ## ---------------------------------------------RH
 .plotProp.calcP <- function(reload=FALSE) {
 	getWinVal(winName="window",scope="L")
-	ioenv = ttcall(PBStool)$ioenv
+	ioenv = ttcall(globo)$ioenv
 	expr  = paste("getFile(",fnam,",senv=ioenv,use.pkg=TRUE,try.all.frames=TRUE,reload=reload,tenv=penv()); dat=",fnam,sep="")
 	eval(parse(text=expr))
 	
-	ttget(PBStool)
-	PBStool$DATA = dat # save the original
-	ttput(PBStool)
+	#ttget(globo); globo$DATA = dat; ttput(globo) # save the original
 
 	fspp  = attributes(dat)$spp
 	if (!is.null(fspp) && fspp!=spp) { spp=fspp; setWinVal(list(spp=fspp)) }
@@ -2631,17 +2666,17 @@ plotProp <- function(fnam="pop.age",hnam=NULL, ioenv=.GlobalEnv,...)
 
 	## Collect info on areas available
 	#zarea = is.element(colnames(dat),c("major","minor","locality","PMFC","PFMA","PFMS","GMA","srfa","srfs","popa","stock"))
-	zarea = is.element(colnames(dat),c("major","PMFC","GMA","srfa","srfs","popa","stock"))
-	marea = sapply(dat[,zarea], .su, simplify=FALSE)
-	names(marea) = paste0("M",names(marea))
-	setPBSoptions("Mareas", marea)
+	#zarea = is.element(colnames(dat),c("major","PMFC","GMA","srfa","srfs","popa","stock"))
+	#marea = sapply(dat[,zarea], .su, simplify=FALSE)
+	#names(marea) = paste0("M",names(marea))
+	#setPBSoptions("Mareas", marea)
 
 	## Collect info on data types available
 	#ztype = is.element(colnames(dat),c("ttype","stype","gear","SSID","SVID","ameth","scat"))
-	ztype = is.element(colnames(dat),c("ttype","stype","gear","SSID","ameth","scat"))
-	mtype = sapply(dat[,ztype], .su, simplify=FALSE)
-	names(mtype) = paste0("M",names(mtype))
-	setPBSoptions("Mtypes", mtype)
+	#ztype = is.element(colnames(dat),c("ttype","stype","gear","SSID","ameth","scat"))
+	#mtype = sapply(dat[,ztype], .su, simplify=FALSE)
+	#names(mtype) = paste0("M",names(mtype))
+	#setPBSoptions("Mtypes", mtype)
 
 	## Check available fields
 	flds <- names(dat); fldstr <- paste("(",paste(flds,collapse=","),")",collapse="")
@@ -2666,19 +2701,17 @@ plotProp <- function(fnam="pop.age",hnam=NULL, ioenv=.GlobalEnv,...)
 	if (all(Usex==FALSE)) sex <- NULL 
 	else sex <- sort(unique(unlist(lister(Msex)[Usex])))
 
-
 	## Process the areas
 	if (is.null(getPBSoptions("Uareas")))
 		.plotProp.chooseAreas(gui=FALSE)
 	Mareas = getPBSoptions("Mareas"); unpackList(Mareas)
-	Uareas = getPBSoptions("Uareas"); unpackList(Uareas)  ## logicals corresponding to Mareas
+	#Uareas = getPBSoptions("Uareas"); unpackList(Uareas)  ## logicals corresponding to Mareas
+	Uareas = getWinVal()[names(getPBSoptions("Uareas"))]; unpackList(Uareas)  ## logicals from GUI corresponding to Mareas
 
 	for (a in substring(names(Mareas),2)) {
 		aM = paste0("M",a)
 		aU = paste0("U",a)
-		mess = 
-			paste0("if (all(", aU, "==FALSE)) ", a, "=NULL else ",
-			a, "=", aM, "[", aU, "]")
+		mess = paste0("if (all(", aU, "==FALSE)) ", a, "=NULL else ", a, "=", aM, "[", aU, "]")
 		eval(parse(text=mess))
 	}
 
@@ -2686,14 +2719,13 @@ plotProp <- function(fnam="pop.age",hnam=NULL, ioenv=.GlobalEnv,...)
 	if (is.null(getPBSoptions("Utypes")))
 		.plotProp.chooseTypes(gui=FALSE)
 	Mtypes = getPBSoptions("Mtypes"); unpackList(Mtypes)
-	Utypes = getPBSoptions("Utypes"); unpackList(Utypes)  ## logicals corresponding to Mtypes
+	#Utypes = getPBSoptions("Utypes"); unpackList(Utypes)  ## logicals corresponding to Mtypes
+	Utypes = getWinVal()[names(getPBSoptions("Utypes"))]; unpackList(Utypes)  ## logicals from GUI corresponding to Mtypes
 
 	for (a in substring(names(Mtypes),2)) {
 		aM = paste0("M",a)
 		aU = paste0("U",a)
-		mess = 
-			paste0("if (all(", aU, "==FALSE)) ", a, "=NULL else ",
-			a, "=", aM, "[", aU, "]")
+		mess = paste0("if (all(", aU, "==FALSE)) ", a, "=NULL else ", a, "=", aM, "[", aU, "]")
 		eval(parse(text=mess))
 	}
 
@@ -2779,24 +2811,24 @@ plotProp <- function(fnam="pop.age",hnam=NULL, ioenv=.GlobalEnv,...)
 		zmat[i,names(tprop[[i]]),"prop"]   <- tprop[[i]]  }
 	pa <- array(t(zmat[,,"prop"]),dim=c(length(yval),length(xval)),dimnames=list(yval,xval)) 
 	Na <- array(t(zmat[,,"count"]),dim=c(length(yval),length(xval)),dimnames=list(yval,xval))
-	for (i in c("sex","ttype","gear","stype")) { # actually left in data file
+	for (i in c("sex","ttype","gear","stype","SSID")) { # actually left in data file
 		ui=sort(unique(dat[,i])); ui=setdiff(ui,c("",NA))
 		if (length(ui)==0) ui=""
 		else eval(parse(text=paste(i,"=c(",paste(ui,collapse=","),")"))) }
 	areas=c(major,PMFC,srfa,srfs); if (is.null(areas)) areas="all"
 
 	stuff=c("dat","flds","XLIM","xlim","YLIM","ylim","xval","yval","zmat",
-			"freak","nSID","ylist","ycount","pa","Na","xy","yy","sex","ttype","gear","stype","areas")
-	ttget(PBStool)
+			"freak","nSID","ylist","ycount","pa","Na","xy","yy","sex","ttype","gear","stype","areas","SSID")
+	ttget(globo)
 	for (i in stuff)
-		eval(parse(text=paste("PBStool$",i,"=",i,sep="")))
-	ttput(PBStool)
+		eval(parse(text=paste("globo$",i,"=",i,sep="")))
+	ttput(globo)
 	.plotProp.plotP()
 	invisible()
 }
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~.plotProp.calcP
 
-## .plotProp.plotP----------------------2018-08-07
+## .plotProp.plotP----------------------2020-10-07
 ## Guts of the plotting routine.
 ## ---------------------------------------------RH
 .plotProp.plotP <- function(wmf=FALSE,png=FALSE) { ## Start blowing bubbles
@@ -2819,16 +2851,15 @@ plotProp <- function(fnam="pop.age",hnam=NULL, ioenv=.GlobalEnv,...)
 		ux=sort(unique(x)); ux=setdiff(ux,c("",NA))
 		paste(lab,enc[1],paste(ux,collapse=sep),enc[2],sep="") }
 
-	if (is.null(ttcall(PBStool)$xy)) .plotProp.calcP()
+	if (is.null(ttcall(globo)$xy)) .plotProp.calcP()
 	act <- getWinAct()[1]; 
 	if (!is.null(act) && act=="wmf") wmf <- TRUE else wmf <- FALSE
 	if (!is.null(act) && act=="png") png <- TRUE else png <- FALSE
 	getWinVal(winName="window",scope="L")
-	unpackList(ttcall(PBStool),scope="L");
+	unpackList(ttcall(globo),scope="L");
 	#print(plaster(strat)); print(plaster(sex)); print(plaster(ttype)); print(plaster(stype))
 
-	plotname=paste(paste(c(spp,xy[2],plaster(areas,sep="+"),plaster(strat),plaster(sex),
-		plaster(ttype),plaster(gear),plaster(stype)),collapse="-"),sep="")
+	plotname = paste0(c(paste0("age",spp), xy[2], plaster(areas,sep="+"), plaster(strat), plaster(sex), plaster(ttype), plaster(gear), plaster(stype), plaster(SSID)), collapse="-")
 	if (wmf && .Platform$OS.type=="windows")
 		do.call("win.metafile",list(filename=paste(plotname,".wmf",sep=""),width=8,height=8))
 	else if (png)
@@ -2902,10 +2933,10 @@ plotProp <- function(fnam="pop.age",hnam=NULL, ioenv=.GlobalEnv,...)
 	)
 	if (wmf|png) dev.off()
 	stuff=c("infolab","Nlab","Slab","Npos","Spos","plotname")
-	ttget(PBStool)
+	ttget(globo)
 	for (i in stuff)
-		eval(parse(text=paste("PBStool$",i,"=",i,sep="")))
-	ttput(PBStool)
+		eval(parse(text=paste("globo$",i,"=",i,sep="")))
+	ttput(globo)
 	invisible()
 }
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~.plotProp.plotP
@@ -2939,10 +2970,11 @@ plotProp <- function(fnam="pop.age",hnam=NULL, ioenv=.GlobalEnv,...)
 }
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~.plotProp.resetT
 
-## .plotProp.chooseAreas----------------2017-07-18
-.plotProp.chooseAreas <- function(gui=TRUE)
+## .plotProp.chooseAreas----------------2020-09-30
+.plotProp.chooseAreas <- function(gui=TRUE, tab=FALSE)
 {
-	dat = ttcall(PBStool)$DATA
+	ttget(globo)
+	dat = globo$DATA
 	mareas = getPBSoptions("Mareas")
 	if (!gui) {
 		uareas = sapply(mareas,function(x){rep(FALSE,length(x))},simplify=FALSE)
@@ -2966,18 +2998,37 @@ plotProp <- function(fnam="pop.age",hnam=NULL, ioenv=.GlobalEnv,...)
 		winStr = c( winStr,
 			"grid 1 2 sticky=E",
 			"button text=\"Codes\" bg=moccasin font=bold function=doAction sticky=SE action=\"openFile(paste0(system.file(package=`PBStools`),`/win/GFBacodes.txt`))\"",
-			"button text=\" OK \" bg=aquamarine font=bold function=doAction sticky=SE action=\"setPBSoptions(`Uareas`,getWinVal(winName=`pPareas`)); closeWin(`pPareas`)\""
+			"button text=\" OK \" bg=aquamarine font=bold function=doAction sticky=SE action=\"setPBSoptions(`Uareas`,getWinVal(winName=`pPareas`)); setWinVal(getPBSoptions(`Uareas`),winName=`window`); closeWin(`pPareas`)\""
 		)
-		createWin(winStr,astext=TRUE)
-		setWinVal(getPBSoptions("Uareas"),winName="pPareas")
+		if (tab) {
+			winStr = winStr[-1]
+			#Oagrid = globo$Nagrid ## last number of area grids
+			Nagrid = length(grep("grid",winStr))
+			globo$Nagrid = Nagrid
+			nrows  = ceiling(Nagrid/2); 
+			winStr[1] = paste0("grid ", nrows, " 2 toptitle=\"Choose Areas:\" topfont=\"10 bold\"")
+			if (Nagrid%%2==1) winStr=c(winStr,"null")
+			vLins = grep("vector",winStr)
+			vVals = sapply(strsplit(winStr[vLins],"[[:space:]]"),function(x){sub("names=","",grep("names",x,value=T))})
+			#vFuns = paste0(" function=doAction action=\"setWinVal(vars=getWinVal(win=`window`)[`",vVals,"`],win=`pPareas`)\"") 
+#browser();return()
+			vFuns = paste0(" function=doAction action=\"setPBSoptions(option=`Uareas`,value=getWinVal(win=`window`)[`",vVals,"`],sublist=TRUE)\"") 
+			winStr[vLins] = paste0(winStr[vLins],vFuns)
+			writeLines(winStr, con=paste0(tempdir(),"/choose.areas.txt"))
+			ttput(globo)
+		} else {
+			createWin(winStr,astext=TRUE)
+			setWinVal(getPBSoptions("Uareas"),winName="pPareas")
+		}
 	}
 }
-##~~~~~~~~~~~~~~~~~~~~~~~~~~~.plotProp.chooseTypes
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~.plotProp.chooseAreas
 
-## .plotProp.chooseTypes----------------2017-07-18
-.plotProp.chooseTypes <- function(gui=TRUE)
+## .plotProp.chooseTypes----------------2020-09-30
+.plotProp.chooseTypes <- function(gui=TRUE, tab=FALSE)
 {
-	dat = ttcall(PBStool)$DATA
+	ttget(globo)
+	dat = globo$DATA
 	mtypes = getPBSoptions("Mtypes")
 	if (!gui) {
 		utypes = sapply(mtypes,function(x){rep(FALSE,length(x))},simplify=FALSE)
@@ -3001,10 +3052,26 @@ plotProp <- function(fnam="pop.age",hnam=NULL, ioenv=.GlobalEnv,...)
 		winStr = c( winStr,
 			"grid 1 2 sticky=E",
 			"button text=\"Codes\" bg=moccasin font=bold function=doAction sticky=SE action=\"openFile(paste0(system.file(package=`PBStools`),`/win/GFBtcodes.txt`))\"",
-			"button text=\" OK \" bg=lawngreen font=bold function=doAction sticky=SE action=\"setPBSoptions(`Utypes`,getWinVal(winName=`pPtypes`)); closeWin(`pPtypes`)\""
+			"button text=\" OK \" bg=lawngreen font=bold function=doAction sticky=SE action=\"setPBSoptions(`Utypes`,getWinVal(winName=`pPtypes`)); setWinVal(getPBSoptions(`Utypes`),winName=`window`); closeWin(`pPtypes`)\""
 		)
-		createWin(winStr,astext=TRUE)
-		setWinVal(getPBSoptions("Utypes"),winName="pPtypes")
+		if (tab) {
+			winStr = winStr[-1]
+			Ntgrid = length(grep("grid",winStr))
+			globo$Ntgrid = Ntgrid
+			nrows  = ceiling(Ntgrid/2); 
+			winStr[1] = paste0("grid ", nrows, " 2 toptitle=\"Choose Types:\" topfont=\"10 bold\"")
+			if (Ntgrid%%2==1) winStr=c(winStr,"null")
+			vLins = grep("vector",winStr)
+			vVals = sapply(strsplit(winStr[vLins],"[[:space:]]"),function(x){sub("names=","",grep("names",x,value=T))})
+			vFuns = paste0(" function=doAction action=\"setPBSoptions(option=`Utypes`,value=getWinVal(win=`window`)[`",vVals,"`],sublist=TRUE)\"") 
+			winStr[vLins] = paste0(winStr[vLins],vFuns)
+			writeLines(winStr, con=paste0(tempdir(),"/choose.types.txt"))
+			ttput(globo)
+		} else {
+#browser();return()
+			createWin(winStr,astext=TRUE)
+			setWinVal(getPBSoptions("Utypes"),winName="pPtypes")
+		}
 	}
 }
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~.plotProp.chooseTypes
@@ -3520,6 +3587,7 @@ requestAges=function(strSpp, nage=500, year=2016,
 	if (type=="C") catch = Ccat
 	else if (type=="S") catch = Scat
 	else showError ("No catch data")
+#browser();return()
 
 	z = catch$date < as.POSIXct("1996-01-01") | catch$date > Sys.time()
 	catch = catch[!z,]
@@ -3537,9 +3605,9 @@ requestAges=function(strSpp, nage=500, year=2016,
 		samp$tid  = paste(samp$TID_gfb,samp$FEID,sep=".")
 		catch$tid = paste(catch$TID,catch$FEID,sep=".")
 	}
-#browser();return()
 	unpackList(list(...))
 	for (i in intersect(c("TID_gfb","TID_fos"),ls())) {
+#browser();return()
 		eval(parse(text=paste("samp=biteData(samp,",i,")",sep="")))
 		if (nrow(samp)==0) showError(paste0("No sample data for ", i, " = ",get(i)))
 		eval(parse(text=paste("catch=biteData(catch,",i,")",sep="")))

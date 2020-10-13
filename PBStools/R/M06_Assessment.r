@@ -330,10 +330,12 @@ compBmsy = function(Bspp, spp="POP", Mnams=c("Est M","Fix M"),
 compLen = function(dat, strSpp, fld="len", lbin=1, sex=c(2,1),
    gfld="SSID", gval=list(16,1,4), yrs, ttype, stype, scat, exlax,
    strat=FALSE, boot=FALSE, R=10, bxpsep=0.2, bxpcol="black", 
-   ylim=NULL, legpos=c(0.025,0.4), stock.name,
+   ylim=NULL, legpos=c(0.025,0.4), stock.name, outnam,
    png=FALSE, pngres=400, PIN=c(8,8), lang=c("e","f"))
 {
 	datnam = as.character(substitute(dat))
+	## Match colours to gval early on
+	bxpcol = rep(bxpcol,length(gval))[1:length(gval)]; names(bxpcol) = names(gval)
 	gval.o = gval
 	gval.u = unique(unlist(gval))
 	dat  = dat[is.element(dat[,gfld],gval.u) & dat[,fld]>0 & !is.na(dat[,fld]),]
@@ -349,28 +351,47 @@ compLen = function(dat, strSpp, fld="len", lbin=1, sex=c(2,1),
 
 	gval = sapply(gval, function(x){xout = intersect(x, .su(dat[,gfld])); if(length(xout)==0) NA else xout}, simplify=FALSE)
 	gval = gval[!is.na(gval)]
-#browser();return()
 	if (is.null(names(gval)))
 		names(gval) = sapply(gval,paste0,collapse="+")
-	dat$group = rep(NA,nrow(dat))
-	for (i in names(gval))
-		dat$group[is.element(dat[,gfld],gval[[i]])] = i
+	bxpcol = bxpcol[names(gval)] ## retain intended colours
 
+	#dat$group = rep(NA,nrow(dat))  ## problem when gvals overlap between groups
+	#dat$group[is.element(dat[,gfld],gval[[i]])] = i
+	dat.group = qtmp = list()
+	for (i in names(gval)){
+		dat$group = rep(NA,nrow(dat))
+		dat$group[is.element(dat[,gfld],gval[[i]])] = i
+		dat.group[[i]] = dat[,"group",drop=FALSE]
+		qtmp[[i]] = sapply(split(dat[,fld],paste(dat$group,dat$year,sep="-")),quantile,c(0.05,0.95))
+	}
 	xlim = if (missing(yrs)) range(dat$year) else range(yrs)
 	if (is.null(ylim)) {
-		qtmp = sapply(split(dat[,fld],paste(dat$group,dat$year,sep="-")),quantile,c(0.05,0.95))
-		ylim = c(min(qtmp[1,]),max(qtmp[2,]))
+		ylim.group = sapply(qtmp,function(x){c(min(x[1,]),max(x[2,]))})
+		ylim = c(min(ylim.group[1,]),max(ylim.group[2,]))
 	}
 	Qbox = as.list(rep(NA,diff(xlim)+1)); names(Qbox)=xlim[1]:xlim[2]
 	Lbin = .su(ceiling(.su(dat[,fld])/lbin)*lbin)
 
-	if (gfld=="SSID") {
+	if (gfld=="SSID.off") {
 		#ssnames = c("QCS Synoptic", "WCVI Synoptic", "WCHG Synoptic", "HS Synoptic", "IPHC Longline", "Shrimp Trawl")
 		#names(ssnames) = names(bxpcol) = c(1,4,16,3,14,670)
-		ssnames = names(ssid)
+		ssnames = names(gval)
+		gnames  = sapply(gval,paste0,collapse="|")
+		for (i in 1:length(ssnames)) {
+			if (any(grepl(gnames[i],names(gval))))
+				names(ssnames)[i] = names(bxpcol)[i] = names(gval)[grep(gnames[i],names(gval))]
+			else
+				names(ssnames)[i] = names(bxpcol)[i] = names(gval)[i]
+			#	ssnames = ssnames[grep(gnames[i],names(gval),invert=TRUE)]
+		}
 #browser();return()
-		names(ssnames) = names(bxpcol) = sapply(ssid,paste0,collapse="|")
-	} else if (gfld=="major") {
+		ssnames[!is.na(names(ssnames))]
+		bxpcol = bxpcol[names(ssnames)]
+
+
+		#ssnames = names(ssid)
+		#names(ssnames) = names(bxpcol) = sapply(ssid,paste0,collapse="|")
+	} else if (gfld=="major.old") {
 		if (any(strSpp %in% "417")) {
 			ssnames = c("BCS", "BCC", "BCN")
 			names(ssnames)[1] = names(bxpcol)[1] = names(gval)[grep("3|4",names(gval))]
@@ -384,7 +405,7 @@ compLen = function(dat, strSpp, fld="len", lbin=1, sex=c(2,1),
 			#names(ssnames)[3] = names(bxpcol)[3] = names(gval)[grep("7|8|9",names(gval))]
 			names(ssnames)[2] = names(bxpcol)[2] = names(gval)[grep("5|6|7|8|9",names(gval))]
 		}
-	} else if (gfld=="gear") {
+	} else if (gfld=="gear.off") {
 		#ssnames = c("BT", "MW", "LL")
 		#gnames  = c("1|8","6","5")
 		ssnames = names(gval)
@@ -398,8 +419,10 @@ compLen = function(dat, strSpp, fld="len", lbin=1, sex=c(2,1),
 		}
 		ssnames[!is.na(names(ssnames))]
 		bxpcol = bxpcol[names(ssnames)]
-#browser();return()
 	}
+	gnames  = sapply(gval,paste0,collapse="|")
+	ssnames = names(gval)
+#browser();return()
 	loca    = lenv()
 	data(species, package="PBSdata", envir=loca)
 #browser();return()
@@ -417,7 +440,8 @@ compLen = function(dat, strSpp, fld="len", lbin=1, sex=c(2,1),
 	out  = if (gfld=="SSID") "-Surv" else paste0("-tt(",paste0(.su(dat$ttype),collapse=""),")")
 	poo  = if (missing(exlax)) "" else paste0("-(",exlax,")")
 	goo  = if (gfld=="gear")  paste0(paste0(names(gnames),"=",gsub("\\|","+",gnames)),collapse="_") else gfld
-	fout = fout.e = paste0(spp3,"-(", datnam, ")", out , poo, "-g(", goo, ")", ifelse(strat,"-(strat_","-(obs_"),fld,")")
+	foo  = paste0(spp3,"-(", datnam, ")", out , poo, "-g(", goo, ")", ifelse(strat,"-(strat_","-(obs_"),fld,")")
+	fout = fout.e = if (missing(outnam)) foo else outnam
 #browser();return()
 
 	for (l in lang) {  ## could switch to other languages if available in 'linguaFranca'.
@@ -426,9 +450,15 @@ compLen = function(dat, strSpp, fld="len", lbin=1, sex=c(2,1),
 		if (png) png(paste0(fout,".png"), units="in", res=pngres, width=PIN[1], height=PIN[2])
 		par (mfrow=c(2,1), mar=c(1.5,3.5,0.5,0.5), oma=c(1.5,0,0,0), mgp=c(1.5,0.5,0), las=1)
 		for (s in sex) {
-			sdat = dat[is.element(dat$sex,s),]
-			Idat = split(sdat,sdat$group)
-
+			#sdat = dat[is.element(dat$sex,s),]
+			#Idat = split(sdat,sdat$group) ## cannot do this when groups use common records
+			Idat = list()
+			for (i in names(gval)){
+				dat$group = dat.group[[i]][,1]
+				sdat = dat[is.element(dat$sex,s),]
+				Idat[[i]] = sdat[is.element(sdat$group,i),]
+			}
+#browser();return()
 			Idat = Idat[intersect(names(gval),names(Idat))]  ## order them as per user input
 			if (strat && !boot) {
 				resetGraph();expandGraph()
@@ -519,7 +549,7 @@ compLen = function(dat, strSpp, fld="len", lbin=1, sex=c(2,1),
 					Yvals = apply(Ymat,2,function(x,a){(x/sum(x))*a},a=Lbin)
 					Ymean = apply(Yvals,2,function(x){sum(x)})
 				} else {
-					ival  = split(idat[,fld],idat$year)
+					##ival  = split(idat[,fld],idat$year) ## redundant?
 					Ymean = sapply(ival,mean,na.rm=T)
 				}
 				if (!is.null(ival)) {
@@ -527,7 +557,7 @@ compLen = function(dat, strSpp, fld="len", lbin=1, sex=c(2,1),
 					qbox   = Qbox
 					qbox[names(ival)] = ival
 					#wbxp  = (bxpsep*2)^(2)  ## reverse calcs in function bxp (sort of)  ## used for WWR 2019
-					wbxp   = ifelse(length(gval)==1, 0.5, 1/length(gval))
+					wbxp   = ifelse(length(gval)==1, 0.5, 0.90/length(gval))
 					midout = ((wbxp*length(gval)/2)-wbxp/2) * c(-1,1)
 					xoff   = seq(midout[1],midout[2],length.out=length(gval))
 					pars   = list(boxwex=wbxp, whisklty=1, boxcol="gainsboro", boxfill=lucent(bxpcol[ii],0.5), medcol="black", medlwd=2)
@@ -543,7 +573,8 @@ compLen = function(dat, strSpp, fld="len", lbin=1, sex=c(2,1),
 			yleg = ifelse(fld=="age" && gfld=="SSID", 0.9, 0.05)
 			addLabel(0.025, yleg, linguaFranca(paste0(spp3, " ",switch(s,"Males","Females")),l), cex=1.2, adj=c(0,0))
 			if (par()$mfg[1]==1) {
-				leglab = gsub("_"," ",ssnames[names(gval)])
+				leglab = gsub("_"," ",ssnames)
+				#leglab = gsub("_"," ",ssnames[names(gval)])
 #browser();return()
 				addLegend(legpos[1], legpos[2], bty="n", fill=lucent(bxpcol[names(gval)],0.5), border="gainsboro", legend=linguaFranca(leglab,l), xjust=0, yjust=1)
 				if (gfld %in% c("gear","major"))

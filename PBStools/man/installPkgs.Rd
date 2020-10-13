@@ -12,7 +12,7 @@ installPkgs(pkg, repos=getOption("repos"), locdir=tempdir(), also.load=FALSE, ..
 \arguments{
   \item{pkg}{Character vector of package names.}
   \item{repos}{Character vector specifying the base URL(s) of the repositories to use,
-    e.g., the URL of a CRAN mirror such as \url{http://cran.us.r-project.org}.
+    e.g., the URL of a CRAN mirror such as \url{http://lib.stat.cmu.edu/R/CRAN/}.
     If \code{repos=NULL}, then \code{installPkgs} looks for binary zip packages
     in the directory \code{locdir}.}
   \item{locdir}{Character value specifying the directoriy in which local zip files reside.}
@@ -34,8 +34,10 @@ installPkgs(pkg, repos=getOption("repos"), locdir=tempdir(), also.load=FALSE, ..
   \href{https://gist.github.com/stevenworthington/3178163}{Steve Worthington}.
 }
 \author{
-  Rowan Haigh, Research Biologist,\cr
-  Pacific Biological Station, Fisheries and Oceans Canada, Nanaimo BC
+  \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
+  Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
+  \emph{locus opus}: Institute of Ocean Sciences (IOS), Sidney BC\cr
+  Last modified \code{Rd: 2020-10-13}
 }
 \note{
   At some point the function should deal with attached packages (use \code{sessionInfo}).

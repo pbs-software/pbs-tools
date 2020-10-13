@@ -46,13 +46,15 @@ Next
 \value{
   A character vector of strings that reports the ODBC drivers installed on the user's Windows system.
 }
+\references{
+  \href{https://devblogs.microsoft.com/scripting/how-can-i-get-a-list-of-the-odbc-drivers-that-are-installed-on-a-computer/}{ScriptingGuy1}
+  (July 7, 2005), adapted for use in \code{R} by RH.\cr
+}
 \author{
-  \href{https://blogs.technet.microsoft.com/heyscriptingguy/2005/07/07/how-can-i-get-a-list-of-the-odbc-drivers-that-are-installed-on-a-computer/}{ScriptingGuy1}
-  (July 7, 2005), adapted for use in \code{R} by:\cr
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
-  \emph{opus locus}: Institute of Ocean Sciences (IOS), Sidney BC\cr
-  Last modified \code{Rd: 2018-07-03}\cr
+  \emph{locus opus}: Institute of Ocean Sciences (IOS), Sidney BC\cr
+  Last modified \code{Rd: 2020-10-13}
 }
 \seealso{
   \code{\link[PBSmodelling]{clearRcon}}

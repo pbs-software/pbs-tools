@@ -1,13 +1,8 @@
 window name=window title="Proportions-at-Age or Length"
 
-## Top 2 blocks----------------
-#grid 1 3  sticky=W
-## moved to third colum to save space
+notebook name=nbPage tabs="IO Areas Types" font="8" selected=1
 
-grid 1 3 sticky=N ## All controls on one palette
-
-#	notebook name=nbPage tabs="INPUT OUTPUT" font="8" selected=1
-
+grid 1 3 sticky=N ## TAB 1 -- All controls on one palette
 #	grid 1 2 ## Tab OUT with 2 blocks
 
 	## Tab OUT block 1---------------

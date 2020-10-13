@@ -1,6 +1,6 @@
 \name{histTail}
 \alias{histTail}
-\title{Plot Histogram with Optional Tail Zoom}
+\title{Plot Histogram with Tail Zoom}
 \description{
   Plot a histogram for a specified biology metric with an 
   option to zoom in on the tail detail.
@@ -9,7 +9,7 @@
 histTail(dat=pop.age, xfld="age", tailmin=NULL, 
    xlim=c(0,100), bcol="gold", tcol="moccasin",
    wmf=FALSE, png=FALSE, pngres=400, PIN=c(6.5,3.5), 
-   ioenv=.GlobalEnv, lang=c("e","f"), ...)
+   ioenv=.GlobalEnv, outnam, lang=c("e","f"), ...)
 }
 \arguments{
   \item{dat}{\code{data.frame} -- data file of biology metrics (e.g., \code{pop.age}).}
@@ -24,6 +24,7 @@ histTail(dat=pop.age, xfld="age", tailmin=NULL,
   \item{PIN}{\code{numeric} -- two-element vector specifying output size (inches) 
     as width and height for the \code{'.png'} figure.}
   \item{ioenv}{\code{environment} -- input/output environment for function input data and output results.}
+  \item{outnam}{\code{character} -- explicit output name to override an internally generated one.}
   \item{lang}{\code{character} -- a vector of letters that denote the language for output:
     currently only \code{"e"} (english) and \code{"f"} (french).}
   \item{...}{additional arguments to pass to \code{truehist} and \code{hist}.}
@@ -63,12 +64,12 @@ pbsfun()
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
   \emph{locus opus}: Institute of Ocean Sciences (IOS), Sidney BC\cr
-  Last modified \code{Rd: 2020-07-16}
+  Last modified \code{Rd: 2020-10-08}
 }
 \seealso{
-  \code{\link[PBStools]{histMetric}} \cr
-  \pkg{PBSmodelling}: \code{\link[PBSmodelling]{evalCall}} \cr
-  \pkg{MASS}: \code{\link[MASS]{truehist}} \cr
-  \pkg{graphics}: \code{\link[graphics]{hist}}
+In package \pkg{PBStools}:     \code{\link[PBStools]{histMetric}} \cr
+In package \pkg{PBSmodelling}: \code{\link[PBSmodelling]{evalCall}} \cr
+In package \pkg{MASS}:         \code{\link[MASS]{truehist}} \cr
+In package \pkg{graphics}:     \code{\link[graphics]{hist}}
 }
 \keyword{hplot}

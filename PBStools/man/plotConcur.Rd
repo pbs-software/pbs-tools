@@ -1,7 +1,7 @@
 \name{plotConcur}
 \alias{plotConcur}
 \title{
-  Plot Concurrent Species in Fishing Events at Depth
+  Plot Concurrent Species in Fishing Events
 }
 \description{
   Create a barplot of the top \emph{N} concurrent species from 
@@ -10,9 +10,10 @@
 }
 \usage{
 plotConcur(strSpp="410", dbName="GFFOS", spath=.getSpath(),
-     mindep=150, maxdep=435, major=NULL, minor=NULL, top=NULL, gear=1,
-     saraSpp=c("027","034","394","410","424","435","437","440","442","453"),
-     reset.mf=TRUE, eps=FALSE, png=FALSE, pngres=300, colour="topo")
+   mindep=150, maxdep=435, major=NULL, minor=NULL, top=NULL, gear=1,
+   saraSpp=c("027","034","394","410","424","435","437","440","442","453"),
+   reset.mf=TRUE, eps=FALSE, png=FALSE, pngres=300, colour="topo", 
+   outnam, lang=c("e","f"))
 }
 \arguments{
   \item{strSpp}{\code{character} -- string specifying species of interest (often a Hart code for fish).}
@@ -38,6 +39,8 @@ plotConcur(strSpp="410", dbName="GFFOS", spath=.getSpath(),
   \item{colour}{\code{character} -- two colour choices for horizontal bars:\cr
     \code{"topo"} -- gradations from yellow through green to blue, top to bottom;\cr
     \code{"sombre"} -- grey for all species, pink for COSEWIC species, and light blue for \code{strSpp}.}
+  \item{outnam}{\code{character} -- explicit output name to override an internally generated one.}
+  \item{lang}{\code{character} -- a vector of letters that denote the language for output: \code{"e"} (english) and \code{"f"} (french).}
 }
 \details{
   This function originated from Norm Olsen's \code{SQL} code \code{pht_concurrent.sql}
@@ -54,13 +57,19 @@ plotConcur(strSpp="410", dbName="GFFOS", spath=.getSpath(),
   Also, objects of interest are saved to the global list object \code{PBStool}.
 }
 \author{
+  \href{mailto:norm.olsen@dfo-mpo.gc.ca}{Norm Olsen}, Program Head -- Surveys
+
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
   \emph{locus opus}: Institute of Ocean Sciences (IOS), Sidney BC\cr
-  Last modified \code{Rd: 2020-07-14}
+  Last modified \code{Rd: 2020-10-13}
 }
 \seealso{
-  \code{\link[PBStools]{preferDepth}}, \code{\link[PBStools]{getData}}, \code{\link[PBStools]{toUpper}} \cr
+In package \pkg{PBStools}:\cr
+  \code{\link[PBStools]{preferDepth}},
+  \code{\link[PBStools]{getData}},
+  \code{\link[PBStools]{toUpper}}
+
   Available SQL queries: \code{\link[PBStools]{SQLcode}}
 }
 \keyword{hplot}
