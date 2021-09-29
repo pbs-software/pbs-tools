@@ -311,5 +311,5 @@ out = weightBio(age396, Scat396, ctype="S", sunit="SID", SSID=1,
   Available SQL queries: \code{\link[PBStools]{SQLcode}}
 }
 \keyword{datagen}
-\concept{"M02_Biology"}
+\concept{M02_Biology}
 

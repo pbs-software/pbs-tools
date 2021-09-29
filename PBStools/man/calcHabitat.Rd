@@ -1,5 +1,6 @@
 \name{calcHabitat}
 \alias{calcHabitat}
+\alias{plotHabitat}
 \title{Calculate Potential Habitat Using Bathymetry}
 \description{
   Calculate potential habitat using specified bathymetry limits.
@@ -10,6 +11,9 @@ calcHabitat(topofile="bctopo", isob=c(150,435),
    col.hab="greenyellow", col.land="moccasin", col.areas="red",
    xlim=NULL, ylim=NULL, isolab=TRUE, labtit="", plot=TRUE,
    PIN=c(7,8), eps=FALSE, png=FALSE, wmf=FALSE, ioenv=.GlobalEnv)
+
+plotHabitat(fnam="hab228", isob=c(62,448), col.hab="greenyellow",
+   png=FALSE, pngres=400, PIN = c(9,8.7), fout="daHood", lang=c("e","f"))
 }
 \arguments{
   \item{topofile}{\code{character} -- name of topographical ASCII XYZ file downloaded from the Scripps
@@ -34,6 +38,11 @@ calcHabitat(topofile="bctopo", isob=c(150,435),
   \item{png}{\code{logical} -- if \code{TRUE}, send plot to a raster (\code{.png}) file.}
   \item{wmf}{\code{logical} -- if \code{TRUE}, send plot to a metafile (\code{.wmf}) file.}
   \item{ioenv}{\code{environment} -- input/output environment for function input data and output results.}
+
+  \item{fnam}{\code{character} -- name of bathymetry habitat \code{PolySet} output from \code{calcHabitat}.}
+  \item{pngres}{\code{numeric} -- resolution in pixels per inch for the png file.}
+  \item{fout}{\code{character} -- image file name output for \code{plotHabitat}.}
+  \item{lang}{\code{character} -- language for image labels, where \code{'e'}=english and \code{'f'}=french.}
 }
 \details{
   The function uses the dataset \code{bctopo} downloaded from the TOPEX site 
@@ -68,7 +77,7 @@ calcHabitat(topofile="bctopo", isob=c(150,435),
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
   \emph{locus opus}: Institute of Ocean Sciences (IOS), Sidney BC\cr
-  Last modified \code{Rd: 2019-01-31}
+  Last modified \code{Rd: 2021-06-14}
 }
 \seealso{
 In package \pkg{PBStools}:\cr
@@ -88,11 +97,12 @@ In package \pkg{grDevices}:\cr
 \dontrun{
 local(envir=.PBStoolEnv,expr={
 pbsfun=function(){
-  calcHabitat(isob=c(150,435),digits=1) # DBR
+  calcHabitat(isob=c(150,435),digits=1) ## DBR
   invisible() }
 pbsfun()
 })
 }
 }
 \keyword{hplot}
+\concept{COSEWIC}
 

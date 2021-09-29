@@ -8,7 +8,7 @@
   assessment Appendix A (catch data) tailored to the specified species.
 }
 \usage{
-createMA(yrs=1979:2019, strSpp="POP", addletters=TRUE)
+createMA(yrs=1979:2021, strSpp="POP", addletters=TRUE)
 }
 \arguments{
   \item{yrs}{\code{numeric} -- range of years to select management actions applicable to \code{'strSpp'}.}
@@ -34,7 +34,7 @@ createMA(yrs=1979:2019, strSpp="POP", addletters=TRUE)
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
   \emph{locus opus}: Institute of Ocean Sciences (IOS), Sidney BC\cr
-  Last modified \code{Rd: 2019-09-30}
+  Last modified \code{Rd: 2021-09-28}
 }
 \seealso{
 In package \pkg{PBStools}:\cr
@@ -45,11 +45,9 @@ In package \pkg{PBStools}:\cr
 }
 % Add one or more standard keywords, see file 'KEYWORDS' in the
 % R documentation directory (show via RShowDoc("KEYWORDS")):
-% \keyword{ ~kwd1 }
-% \keyword{ ~kwd2 }
+\keyword{file}
+\keyword{documentation}
 % Use only one keyword per line.
 % For non-standard keywords, use \concept instead of \keyword:
-\concept{"M06_Assessment"}
-\concept{appendix}
-\concept{management}
+\concept{M06_Assessment}
 % Use only one concept per line.

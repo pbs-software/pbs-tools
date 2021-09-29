@@ -92,7 +92,7 @@ calcSG(dat=pop.age, strSpp="", yfld="len", tau=c(5,80), fixt0=FALSE,
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
   \emph{locus opus}: Institute of Ocean Sciences (IOS), Sidney BC\cr
-  Last modified \code{Rd: 2018-12-21}
+  Last modified \code{Rd: 2021-06-15}
 }
 \seealso{
   \code{\link{calcVB}}, \code{\link{pop.age}}, \code{\link{parVec}}, \code{\link{getData}}, 
@@ -101,3 +101,4 @@ calcSG(dat=pop.age, strSpp="", yfld="len", tau=c(5,80), fixt0=FALSE,
   \pkg{base}: \code{\link[base]{jitter}}
 }
 \keyword{hplot}
+\concept{M02_Biology}

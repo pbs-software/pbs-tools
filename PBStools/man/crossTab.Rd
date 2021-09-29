@@ -53,4 +53,5 @@ In \pkg{reshape}:\cr
   \code{cast}
 }
 \keyword{manip}
+\concept{M01_Utility}
 

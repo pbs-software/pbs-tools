@@ -8,7 +8,7 @@
 }
 \usage{
 preferDepth(strSpp="410", fqtName="pht_fdep.sql", dbName="PacHarvest",
-   spath=NULL, type="SQL", hnam=NULL, get.effort=FALSE, lang=c("e"))
+   spath=NULL, type="SQL", hnam=NULL, get.effort=FALSE, lang=c("f","e"))
 }
 \arguments{
   \item{strSpp}{\code{character} -- string specifying the code for a species that appears in the target database }
@@ -20,7 +20,7 @@ preferDepth(strSpp="410", fqtName="pht_fdep.sql", dbName="PacHarvest",
   \item{hnam}{\code{character} -- string specifying the name of a history file}
   \item{get.effort}{\code{logical} -- if \code{TRUE}, get the trawl effort data right away.}
   \item{lang}{\code{character} -- a letter that denotes the language for output:
-    currently only \code{"e"} (english) and \code{"f"} (french) available.}
+    \code{"e"} (english) and \code{"f"} (french).}
 }
 \details{
   The function \code{preferDepth()} creates an interactive GUI that can be used
@@ -86,7 +86,7 @@ preferDepth(strSpp="410", fqtName="pht_fdep.sql", dbName="PacHarvest",
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
   \emph{locus opus}: Institute of Ocean Sciences (IOS), Sidney BC\cr
-  Last modified \code{Rd: 2020-07-16}
+  Last modified \code{Rd: 2021-06-15}
 }
 \seealso{
   \code{\link[PBStools]{getData}}, \code{\link[PBStools]{calcHabitat}}, \code{\link[PBStools]{histMetric}} \cr
@@ -112,3 +112,4 @@ pbsfun()
 }
 }
 \keyword{hplot}
+\concept{M05_Spatial}

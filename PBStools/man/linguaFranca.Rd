@@ -70,3 +70,4 @@ In package \pkg{PBStools}:\cr
 % R documentation directory.
 \keyword{manip}% use one of  RShowDoc("KEYWORDS")
 %\keyword{ ~kwd2 }% __ONLY ONE__ keyword per line
+\concept{M01_Utility}

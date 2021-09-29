@@ -27,6 +27,7 @@ import(
 importFrom("graphics", "abline", "arrows", "axis", "barplot", "box", "boxplot", "frame", "hist", "legend", "lines", "mtext", "pairs", "par", "plot", "points", "polygon", "rect", "segments", "text")
 importFrom("grDevices", "col2rgb", "colorRamp", "colorRampPalette", "colors", "contourLines", "dev.cur", "dev.off", "extendrange", "jpeg", "pdf", "png", "postscript", "rgb", "savePlot", "tiff", "topo.colors", "win.metafile")
 importFrom("methods", "as", "formalArgs")
-importFrom("stats", "AIC", "approx", "contr.sum", "dnorm", "ecdf", "hat", "lm", "lowess", "median", "na.omit", "nls", "predict.lm", "qnorm", "qqnorm", "quantile", "rbinom", "residuals", "rgamma", "rnorm", "rstudent", "runif", "sd", "start", "var")
-importFrom("utils", "available.packages", "data", "flush.console", "install.packages", "installed.packages", "packageVersion", "read.csv", "read.table", "write.csv", "write.table")
+importFrom("stats", "AIC", "approx", "contr.sum", "density", "dnorm", "ecdf", "fitted", "hat", "lm", "lowess", "median", "na.omit", "nls", "predict.lm", "qnorm", "qqnorm", "quantile", "rbinom", "residuals", "rgamma", "rnorm", "rstudent", "runif", "sd", "smooth.spline", "start", "var")
+importFrom("utils", "available.packages", "capture.output", "data", "flush.console", "install.packages", "installed.packages", "packageVersion", "read.csv", "read.table", "write.csv", "write.table")
+importFrom("colorspace", "hex", "readhex")
 

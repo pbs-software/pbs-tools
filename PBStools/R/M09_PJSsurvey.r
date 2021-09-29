@@ -149,7 +149,7 @@
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~PJS Notes
 
 
-## calcBiom-----------------------------2019-08-21
+## calcBiom-----------------------------2021-06-09
 ##  Calculate swept-area biomass estimate and 
 ##  bootstrap within strata depending on 'meth':
 ##  If meth==0, strata comprise 'xvar' (usually 'year') only.
@@ -196,12 +196,10 @@ calcBiom = function(dat, reps=0, seed=42, meth=1, fix125flag, xvar="year",
 #			fix125 `density' `stratumvar' `areavar' 
 #		}
 
-	## Create a results matrix for the indices
-	imat = array(0, dim=c(nxvar,5, reps + 1), dimnames=list(xvars,c("B","V","SE","CV","N"), 0:reps))
-
 	dat.need = dat[,c(xvar, stratumvar, areavar, "density")]
 	ntows = table(dat.need[,xvar])
 	ptows = crossTab(dat.need, xvar, "density", countVec)
+#browser();return()
 
 	## from IPHC routines
 	## When sim!="parametric", 'statistic' must take at least two arguments.
@@ -219,6 +217,7 @@ calcBiom = function(dat, reps=0, seed=42, meth=1, fix125flag, xvar="year",
 			vari = (sdev^2 * area^2) / nobs
 			vari[is.na(vari) | !is.finite(vari)] = 0
 			biom = dens * area
+#if (all(s$density==0)) { browser();return() }
 
 			bio = sum(biom)/1000.
 			var = sum(vari)
@@ -228,12 +227,15 @@ calcBiom = function(dat, reps=0, seed=42, meth=1, fix125flag, xvar="year",
 		})
 		bvn = do.call("rbind", lapply(out, data.frame, stringsAsFactors=FALSE))
 		BVN = apply(bvn,2,sum)
-		return(BVN["B"])
+		if (reps>0)
+			return(BVN["B"])
+		else {
+			SE  = sqrt(BVN["V"])/1000.
+			CV  = SE/BVN["B"]
+			CV[is.na(CV) | !is.finite(CV)] = 0
 #browser();return()
-		SE  = sqrt(BVN["V"])/1000.
-		CV  = SE/BVN["B"]
-		CV[is.na(CV) | !is.finite(CV)] = 0
-		return(c(B=BVN[1], V=BVN[2], SE=SE, CV=CV, N=BVN[3]))
+			return(c(B=as.vector(BVN["B"]), V=as.vector(BVN["V"]), SE=as.vector(SE), CV=as.vector(CV), N=as.vector(BVN["N"])))
+		}
 	}
 
 	## Need to bootstrap annual indices separately when using boot::boot because strata assumes one population (as far as I can tell)
@@ -244,23 +246,34 @@ calcBiom = function(dat, reps=0, seed=42, meth=1, fix125flag, xvar="year",
 		ii = as.character(i)
 		.flush.cat(paste0(ii, ifelse(i==rev(xvars)[1], "\n\n", ", ")))
 		idat = dat.need[is.element(dat.need[,xvar], i),]
+		if (all(idat$density==0)) next
 		if (meth==0)      idat$index = idat[,xvar]
 		else if (meth==1) idat$index = paste(idat[,xvar], idat[,stratumvar], sep="-")
 		else stop ("No stratify method available for meth>1")
 		idat$index = as.factor(idat$index)
-
-		## https://stats.stackexchange.com/questions/242404/how-does-the-boot-package-in-r-handle-collecting-bootstrap-samples-if-strata-are
-		# #with strata specified
-		booty[[ii]]  <- boot::boot(idat, sweptArea, R=reps, strata=idat$index)
-		bootci[[ii]] <- boot::boot.ci(booty[[ii]], type = "bca")
+		
+		if (reps==0) {
+			booty[[ii]] = t(as.matrix(sweptArea(idat)))
+		} else {
+			## https://stats.stackexchange.com/questions/242404/how-does-the-boot-package-in-r-handle-collecting-bootstrap-samples-if-strata-are
+			# #with strata specified
+			booty[[ii]]  <- boot::boot(idat, sweptArea, R=reps, strata=idat$index)
+#if(i==2005) {browser();return()}
+			bootci[[ii]] <- boot::boot.ci(booty[[ii]], type = "bca")
+		}
 	}
-	return(list(booty=booty, bootci=bootci, extra=list(ntows=ntows, ptows=ptows)))
+	if (reps==0) {
 #browser();return()
+		analytic = do.call("rbind", lapply(booty, data.frame, stringsAsFactors=FALSE))
+		return(list(analytic=analytic, extra=list(ntows=ntows, ptows=ptows)))
+	} else {
+		return(list(booty=booty, bootci=bootci, extra=list(ntows=ntows, ptows=ptows)))
+	}
 }
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~calcBiom
 
 
-## doSynoptic --------------------------2019-07-30
+## doSynoptic --------------------------2021-06-08
 ##  Get the synoptic file for specified survey and
 ##  go through PJS machinations.
 ## -----------------------------------------PJS|RH
@@ -296,6 +309,10 @@ doSynoptic = function(file, survey, logappendflag=TRUE)
 
 	ustrat   = .su(dat$grouping_code)
 	nstrat  = length(ustrat)
+	if (nstrat==5 && all(.su(dat$trip)==62066)){ ## 2006 WCHG survey
+		ttget(stratum2006)
+		stratum = stratum2006
+	}
 	expr    = expression(dat[ustrat-min(ustrat)+1])  ## need to express 'stratum' as 'dat'
 #browser();return()
 	stratum = keepAtts(dat=stratum, expr, extras=list(ustrat=ustrat))
@@ -504,7 +521,7 @@ getSpecies = function(species)
 #		save `tmpsurvey' ## wtf?
 		if (length(.su(species)) > 1)
 			stop ("More than one species code in the file\n\texiting program...")
-		#data(spn, package="PBSdata", envir=ici) ## RH 200716
+		#data("spn", package="PBSdata", envir=ici) ## RH 200716
 		z = !is.na(species)
 		species[z] = pad0(species[z], 3)
 		#species[z] = spn[as.character(species[z])]
@@ -728,7 +745,7 @@ plotIndex = function(bootbomb, type="PJS", surv=ttcall(surveyname),
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotIndex
 
 
-## prepGFsurv---------------------------2020-07-16
+## prepGFsurv---------------------------2021-06-08
 ##  Prepare GF surveys using PJS codes.
 ## -----------------------------------------PJS|RH
 prepGFsurv = function(file, survey, strSpp, datemask, doorspread=61.6,
@@ -740,7 +757,7 @@ prepGFsurv = function(file, survey, strSpp, datemask, doorspread=61.6,
 	#	*/ [noSAvefile noUSevar noATtended]
 
 	if (missing(file))
-		stop("Supply a CSV file name saved form a call to 'gfb_survey_data.sql'")
+		stop("Supply a CSV file name (e.g. 'SSID=16&species=435.csv') saved form a call to 'gfb_survey_data.sql'")
 	if (missing(survey))
 		stop(paste0("Supply a PJS survey number from:\n",
 	"   1: old Hecate St Survey\n",
@@ -774,7 +791,7 @@ prepGFsurv = function(file, survey, strSpp, datemask, doorspread=61.6,
 		stop("\n\n!!!!! String species neither supplied by user nor identified in file name.\n\tSupply species HART code to 'strSpp'\n\n")
 #browser();return()
 
-	data(spn, package="PBSdata", envir=ici) ## RH 200716
+	data("spn", package="PBSdata", envir=ici) ## RH 200716
 	speciesname = spn[strSpp]
 	ttput(speciesname)
 
@@ -828,8 +845,8 @@ prepGFsurv = function(file, survey, strSpp, datemask, doorspread=61.6,
 
 	#mess = paste0("source(\"prep", fnsurv, ".r\"); dat = prep", fnsurv, "(file=\"", file, "\", survey=", survey, ")")
 	mess = paste0("dat = prep", fnsurv, "(file=\"", file, "\", survey=", survey, ")")
-#browser();return()
 	eval(parse(text=mess))
+#browser();return()
 
 	#qui compress ## qui = quietly
 	if (savefile) {
@@ -1244,7 +1261,7 @@ prepNMFStri = function(file, survey=5)
 
 	## GFBio has no information on tows in Canada vs USA other than strata 19, 29, and 39.
 	## Use shapefile 'eez.bc' in package PBSdata to delimit tows based on their geographical coordinates
-	data(eez.bc, package="PBSdata", envir=ici) ## RH 200716
+	data("eez.bc", package="PBSdata", envir=ici) ## RH 200716
 	dat$EID = 1:nrow(dat)
 	dat$X   = dat$longitude
 	dat$Y   = dat$latitude
@@ -1363,7 +1380,7 @@ prepNMFStri = function(file, survey=5)
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~prepNMFStri
 
 
-## prepWCHGsyn-------------------------2019-07-30
+## prepWCHGsyn-------------------------2021-06-08
 ##  Prepare WCHG (formerly WCQCI) synoptic survey data
 ## -----------------------------------------PJS|RH
 prepWCHGsyn = function(file, survey=9)
@@ -1374,24 +1391,35 @@ prepWCHGsyn = function(file, survey=9)
 	ttput(surveyname)
 	ttput(survey)
 
+	dat    = getLabels(file)
+	label  = attributes(dat)$label ## keep temporarily just to be safe
+
 	stratum = 1:4
 	names(stratum) = c("180-330m", "330-500m", "500-800m", "800-1300m")
 	attr(stratum,"labelends") = getLabelends(labelname=names(stratum))
 	ttput(stratum)
 
-	dat    = getLabels(file)
-	label  = attributes(dat)$label ## keep temporarily just to be safe
+	stratum2006 = 1:5
+	names(stratum2006) = c("150-200m", "200-330m", "330-500m", "500-800m", "800-1300m")
+	attr(stratum2006,"labelends") = getLabelends(labelname=names(stratum2006))
+	ttput(stratum2006)
 
 	expr     = expression(dat[is.element(dat$year, 2006),])
 	only2006 = keepAtts(dat, expr)
 	only2006 = doSynoptic(only2006, survey)
-	only2006 = restratify(only2006, 4, "sdepth", "edepth")
+	ttget(stratum)
+	nstrat = attributes(stratum)$labelends$nstrat
+#browser();return()
+	only2006 = restratify(only2006, strategy=4, "sdepth", "edepth")
 	label[["usability"]] = attributes(only2006)$label$usability[c("describe","codes")]
 	label[["usability"]][["only2006"]] = attributes(only2006)$label$usability[c("note", "Nrows", "nrows", "use")]
+	only2006$stratum = only2006$stratum - 1 ## top (shallowest) stratum not repeated in subsequent years
 
 	expr   = expression(dat[!is.element(dat$year, c(2006, 2014)),])
 	no2006 = keepAtts(dat, expr)
 	no2006 = doSynoptic(no2006, survey)
+	ttget(stratum)
+	nstrat = attributes(stratum)$labelends$nstrat
 	label[["usability"]][["no2006"]] = attributes(no2006)$label$usability[c("note", "Nrows", "nrows", "use")]
 
 	intflds  = intersect(colnames(only2006),colnames(no2006))
@@ -1400,15 +1428,19 @@ prepWCHGsyn = function(file, survey=9)
 
 	## Replace stratum areas for 2006 with those from later years
 	.flush.cat("Replacing area values in 2006 with 2007+ values", "\n")
-	areatab = crossTab(dat[!is.element(dat$year, 2006),], c("year","group"), "area", mean, na.rm=TRUE)
-	areavec = apply(areatab, 2, function(x){ mean(x[x>0 & !is.na(x)]) } )
+	areatab  = crossTab(dat[!is.element(dat$year, 2006),], c("year","group"), "area", mean, na.rm=TRUE)
+	areavec  = apply(areatab, 2, function(x){ mean(x[x>0 & !is.na(x)]) } )
+	avec2006 = c(399,1266,1090,927,2228); names(avec2006) = 125:129 ## from GFB C_Grouping
+	areavec  =  c(areavec, avec2006)
+
 	dat$area[is.element(dat$year, 2006)] = 0
 	fix.area = (dat$area==0 | is.na(dat$area)) & !is.na(dat$group)
 	dat$area[fix.area] = areavec[as.character(dat$group[fix.area])]
+#browser();return()
 
 	## Get rid of deepest stratum (4) -- not fished in 2006 & 2007
-	.flush.cat("Removing deepest stratum (==4: 800-1300 m) [not fished consistently]", "\n\n")
-	expr = expression(dat[!is.na(dat$stratum) & !is.element(dat$stratum,4),])
+	.flush.cat("Removing shallowest stratum(==0: 15-200 m) & deepest stratum (==4: 800-1300 m) [not fished consistently]", "\n\n")
+	expr = expression(dat[!is.na(dat$stratum) & !is.element(dat$stratum,c(0,4)),])
 	dat  = keepAtts(dat, expr)
 
 	## Choose fields for data return

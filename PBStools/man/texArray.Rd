@@ -8,12 +8,12 @@
 }
 \usage{
 texArray(x, table.caption="My table", table.label="tab:mytable",
-   strSpp=NULL, sigdig=3, zero="---", exInt=TRUE, use.round=FALSE,
-   collab=NULL, dash.delim=NULL, tablewidth=6.5, 
+   strSpp=NULL, sigdig=3, zero="---", exInt=TRUE, use.round=FALSE, 
+   collab=NULL, dash.delim=NULL, tablewidth=6.5,
    rm.empty=FALSE, start.page=1, ignore.col=NULL,
    select.rows=NULL, use.row.names=FALSE, name.row.names="row",
    add.header.column=FALSE, new.header=NULL, outnam="mytable", 
-   alignHRC=c("l","l","r"), italics.file=NULL, ...)
+   alignHRC=c("l","l","r"), italics.file=NULL, uscore=" ", ...)
 }
 \arguments{
   \item{x}{\code{numeric} -- array, matrix, or data frame.}
@@ -40,6 +40,7 @@ texArray(x, table.caption="My table", table.label="tab:mytable",
     and the file extension \code{.tex} will be appended to the file name composition).}
   \item{alignHRC}{\code{character} -- align columns: Header, Row Names, and Columns (of data) using "l" (left), "r" (right), or "c" (centre).}
   \item{italics.file}{\code{character} -- file of string names specifying words in table columns to italicise (e.g., genus and species names).}
+  \item{uscore}{\code{character} -- string replacement for underscore characters.}
   \item{...}{arguments to pass to function \code{makeLTH}, specifically:\cr
     \code{struts} -- if \code{TRUE}, add vertical space before and after table header; and\cr
     \code{add.continue} -- if \code{TRUE}, add `continued' messages on tables spanning pages.}
@@ -67,10 +68,19 @@ texArray(x, table.caption="My table", table.label="tab:mytable",
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
   \emph{locus opus}: Institute of Ocean Sciences (IOS), Sidney BC\cr
-  Last modified \code{Rd: 2020-10-08}
+  Last modified \code{Rd: 2021-06-14}
 }
 \seealso{
-  \code{\link[PBStools]{formatCatch}}, \code{\link[PBStools]{makeLTH}}, \code{\link[PBStools]{collectFigs}}
+In package \pkg{PBStools}:\cr
+  \code{\link[PBStools]{collectFigs}},
+  \code{\link[PBStools]{crossTab}},
+  \code{\link[PBStools]{formatCatch}},
+  \code{\link[PBStools]{listTables}},
+  \code{\link[PBStools]{makeLTH}},
+  \code{\link[PBStools]{scaleVec}},
+  \code{\link[PBStools]{splitTab}},
+  \code{\link[PBStools]{texThatVec}},
+  \code{\link[PBStools]{wrapText}}
 }
 \keyword{manip}
 \keyword{print}

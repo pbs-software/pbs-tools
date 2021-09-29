@@ -126,9 +126,9 @@ calcRatio <- function(dat, nfld, dfld, nzero=TRUE, dzero=TRUE, sumF=mean,
 # Dump catch from modern sources used in catch reconstruction.
 #-----------------------------------------------RH
 dumpMod = function(dat,catch=c("landed","discard"),fid=1:5,strSpp="396",dbs=TRUE) {
-	data(pmfc,envir=penv())
+	data("pmfc", package="PBSdata", envir=penv())
 	gmu=pmfc$gmu; names(gmu)=pmfc$major
-	data(species,envir=penv())
+	data("species", package="PBSdata", envir=penv())
 	spp = paste(species[strSpp,"name"]," (",species[strSpp,"latin"],")",sep="")
 	DBS = c("PacHarv3","GFCatch","PacHarvest","PacHarvHL (halibut)","PacHarvSable",
 		"PacHarvHL (DMP)","PacHarvHL (fisherlogs)","GFFOS")
@@ -181,8 +181,8 @@ dumpMod = function(dat,catch=c("landed","discard"),fid=1:5,strSpp="396",dbs=TRUE
 dumpRat = function(strSpp="396", rats=c("alpha","beta","gamma","delta","lambda"), ioenv=.GlobalEnv){
 	expr = paste("getFile(PBStool",strSpp,",senv=ioenv,reload=TRUE,tenv=penv()); dat=PBStool",sep="")
 	eval(parse(text=expr))
-	#data(pmfc); gmu=pmfc$gmu; names(gmu)=pmfc$major
-	data(species,envir=penv())
+	#data("pmfc", package="PBSdata"); gmu=pmfc$gmu; names(gmu)=pmfc$major
+	data("species", package="PBSdata", envir=penv())
 	spp = paste(species[strSpp,"name"]," (",species[strSpp,"latin"],")",sep="")
 	code3 = species[strSpp,"code3"]
 	RATS = c(paste("Proportion of",code3,"landed in Major ID for each FID"),
@@ -825,7 +825,7 @@ plotFOScatch <- function(strSpp="453", majors=c(1,3:9), space=0.5,
 	stuff=c("x","X","fishery","momat")
 	packList(stuff,"PBStool",tenv=.PBStoolEnv)
 
-	data(pmfc,spn,envir=penv())
+	data("pmfc", "spn", package="PBSdata", envir=penv())
 	if (is.null(fplot)) fplot=fishery
 	else fplot = findPat(fplot,fishery)
 	nplot=length(fplot)
@@ -1561,7 +1561,7 @@ trackBycat = function(strSpp="396", major=5:7, mindep=70, maxdep=441,
 	}
 	clrs=c("red","orange","yellow","lightgreen","cyan","royalblue","magenta")
 	attr(bycatch,"clrs") = clrs
-	data(pmfc,envir=penv())
+	data("pmfc", package="PBSdata", envir=penv())
 	save("bycatch",file=paste("bycatch-",paste(pmfc[as.character(major),"gmu"],collapse=""),"-",trawl,".rda",sep=""))
 	} # end the section that checks for rda name
 	else {

@@ -6,8 +6,9 @@
 }
 \usage{
 mapMaturity(dat=pop.age, strSpp="", type="map", mats=1:7,
-   sex=list(Females=2), ttype=1:5, stype=c(1,2,6,7), areas=list(major=3:9),
-   stock, catch, brks=c(0,0.05,0.1,0.25,0.5,1), byrow=FALSE,
+   sex=list(Females=2), ttype=1:5, stype=c(1,2,6,7),
+   areas=list(major=3:9), anams, stock, catch, 
+   brks=c(0,0.05,0.1,0.25,0.5,1), byrow=FALSE,
    clrs=list(colorRampPalette(c("honeydew","lightgreen","black"))(5),
    colorRampPalette(c("aliceblue","skyblue2","black"))(5)),
    outnam, eps=FALSE, png=FALSE, wmf=FALSE, pngres=400, PIN=c(8.5,6),
@@ -36,6 +37,7 @@ mapMaturity(dat=pop.age, strSpp="", type="map", mats=1:7,
     8=random from set requested by vessel master, 9=selected juveniles, and 10=selected adults.}
   \item{areas}{\code{numeric list} -- areas available in the data object, for example:\cr
     \code{list(major=9, major=5:8, major=3:4, region="shelf", region="slope")}}
+  \item{anams}{\code{character} -- area names for labelling y-axis when option is mapping proportions by sex (i.e. \code{mats=NULL}).}
   \item{stock}{\code{character} -- stock label, usually a combination of PMFC \code{major} and \code{minor} areas specific to a species.
     If this argument is specified, it precludes any specification of \code{major}
     and assumes that a field called \code{"stock"} appears in the data file.}
@@ -129,7 +131,7 @@ pbsfun()
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
   \emph{locus opus}: Institute of Ocean Sciences (IOS), Sidney BC\cr
-  Last modified \code{Rd: 2020-10-08}
+  Last modified \code{Rd: 2021-06-15}
 }
 \seealso{
 In package \pkg{PBStools}:\cr
@@ -143,3 +145,4 @@ In package \pkg{PBStools}:\cr
   \code{\link[PBSdata]{pop.age}}
 }
 \keyword{hplot}
+\concept{M02_Biology}

@@ -11,17 +11,20 @@
 }
 \usage{
 plotGMA(gma=gma.popymr, xlim=c(-134,-123), ylim=c(48.05,54.95), 
-   dimfig=c(9,9), eps=FALSE, png=FALSE, extra.labels=NULL, strSpp)
+   dimfig=c(9,9), eps=FALSE, png=FALSE, extra.labels=NULL, isobath,
+   strSpp, lang=c("e","f"))
 }
 \arguments{
-  \item{gma}{PolySet of Groundfish Management Areas (e.g. \bold{PBSdata}\code{::gma.popymr} GMAs).}
-  \item{xlim}{numeric: latitude limits of the map region.}
-  \item{ylim}{numeric: longitude limits of the map region.}
-  \item{dimfig}{numeric: dimensions of the figure region (inches).}
-  \item{eps}{logical: if \code{TRUE}, send the plot to an \code{.eps} file.}
-  \item{png}{logical: if \code{TRUE}, send the plot to a \code{.png} file.}
-  \item{extra.labels}{EventData object that defines coordinates and labels for additional map annotation.}
-  \item{strSpp}{character code (usually Hart) for species.}
+  \item{gma}{\code{PolySet} -- Groundfish Management Areas (e.g. \bold{PBSdata}\code{::gma.popymr} GMAs).}
+  \item{xlim}{\code{numeric} -- latitude limits of the map region.}
+  \item{ylim}{\code{numeric} -- longitude limits of the map region.}
+  \item{dimfig}{\code{numeric} -- dimensions of the figure region (inches).}
+  \item{eps}{\code{logical} -- if \code{TRUE}, send the plot to an \code{.eps} file.}
+  \item{png}{\code{logical} -- if \code{TRUE}, send the plot to a \code{.png} file.}
+  \item{extra.labels}{\code{EventData} -- coordinates and labels for additional map annotation.}
+  \item{isobath}{\code{numeric} -- data frame of isobaths.}
+  \item{strSpp}{\code{character} -- species code (usually Hart).}
+  \item{lang}{\code{character} -- language for image labels, where \code{'e'}=english and \code{'f'}=french.}
 }
 \details{
   The code assumes that the PolySet of GMA areas contains an attribute called \code{PolyData} 
@@ -38,7 +41,10 @@ plotGMA(gma=gma.popymr, xlim=c(-134,-123), ylim=c(48.05,54.95),
   \code{extra.labels} (see Details section above).
 }
 \author{
-  Rowan Haigh, Pacific Biological Station, Fisheries and Oceans Canada, Nanaimo BC.
+  \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
+  Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
+  \emph{locus opus}: Institute of Ocean Sciences (IOS), Sidney BC\cr
+  Last modified \code{Rd: 2021-06-14}
 }
 \seealso{
 The DFO proprietary package \pkg{PBSvault}: \code{gma.popymr}, \code{pfma} \cr

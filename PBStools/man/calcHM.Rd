@@ -49,6 +49,6 @@ In package \pkg{PBStools}:\cr
 \keyword{arith}
 % Use only one keyword per line.
 % For non-standard keywords, use \concept instead of \keyword:
-\concept{utility}
+\concept{M01_Utility}
 % \concept{ ~cpt2 }
 % Use only one concept per line.

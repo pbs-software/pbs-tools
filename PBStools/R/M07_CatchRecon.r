@@ -3,13 +3,15 @@
 ## ------------------------------
 ##  buildCatch......Build a catch history of BC rockfish 1918--present.
 ##  plotDiag........Plot diagnostic data for catch reconstructions.
+##  plotGREFS.......Plot gamma for reference years by fishery.
 ##  plotRecon.......Plot reconstructed catch using barplots stacked by PMFC area.
+##  quickCat........Subsets a large dataset derived from query 'fos_mcatORF.sql'.
 ##  surveyCatch.....Query the survey catch data and make summary tables.
 ##  zapSeamounts....Remove seamount records using combinations of major, minor, and locality codes.
 ##==============================================================================
 
 
-## buildCatch---------------------------2020-02-27
+## buildCatch---------------------------2020-10-15
 ## Catch reconstruction algorithm for BC rockfish.
 ## Use ratios of RRF (reconstructed rockfish) to ORF 
 ## (rockfish other than POP) landings for multiple fisheries.
@@ -67,7 +69,7 @@ buildCatch=function(
 	options(stringsAsFactors=FALSE)
 	on.exit(options(stringsAsFactors=sAF), add=TRUE)
 
-	data(pmfc,species,envir=penv())
+	data("pmfc", "species", package="PBSdata", envir=penv())
 	bigdate = Sys.Date()
 	#numdate = substring(gsub("-","",bigdate),3)
 	numdate = format(Sys.time(),"%y%m%d(%H%M)")
@@ -414,7 +416,7 @@ buildCatch=function(
 		else {
 			.flush.cat("   Oracle -- PacHarv3 (table CATCH_SUMMARY);\n")
 			getData("ph3_fcatORF.sql",dbName="HARVEST_V2_0",strSpp=strSpp,path=spath,
-				server="ORAPROD",type="ORA",trusted=FALSE,uid=uid[1],pwd=pwd[1],tenv=penv())
+				server="ORAPROD.WORLD",type="ORA",trusted=FALSE,uid=uid[1],pwd=pwd[1],tenv=penv())
 			assign("ph3dat",PBSdat);  rm(PBSdat) ## just to be safe
 			dimnames(ph3dat)[[1]]=1:nrow(ph3dat)
 			save("ph3dat",file="ph3dat.rda")
@@ -628,10 +630,26 @@ buildCatch=function(
 		if ("gfmdat"%in%fnam) {
 			i = "gfmdat"
 			eval(parse(text=paste0("idat = ",i)))
-			ai1 = is.element(idat$major,9) & is.element(idat$stock,"5ABC")
-			ai2 = is.element(idat$major,9) & is.element(idat$minor,34) & is.element(idat$locality,c(1,5))
+			## Maybe try a points in polygon routine (see bio.fields.xls for 5C polygon)
+			#dat$major_adj = dat$major
+			poly5C = data.frame(PID=rep(1,6),POS=1:6,X=c(-131.5,-132,-131,-130,-130,-131.2), Y=c(52.33333333,52.33333333,51.5,51.8,52.16666667,52.16666667))
+			poly5C = as.PolySet(poly5C, projection="LL", zone=9)
+			hasXY  = idat$X<0 & !is.na(idat$X) & idat$Y>0 & !is.na(idat$Y)
+			if (any(hasXY)) {
+				if (!is.EventData(idat)){
+					if (!"EID"%in%colnames(idat)) idat$EID = 1:nrow(idat)
+					tmpidat = as.EventData(idat[hasXY,],projection="LL",zone=9)   ## RH 210120
+				}
+				e5C = .is.in(tmpidat, poly5C)
+				if (nrow(e5C$e.in)>0) {
+					tmpidat$major_adj[is.element(tmpidat$EID, e5C$e.in$EID)] = 7  ## 5C
+					idat$major_adj[hasXY] = tmpidat$major_adj                     ## RH 210120
+				}
+			}
+			#ai1 = is.element(idat$major,9) & is.element(idat$stock,"5ABC") ## this needs reconsideration
+			#ai2 = is.element(idat$major,9) & is.element(idat$minor,34) & is.element(idat$locality,c(1,5))
 #browser();return()
-			idat$major[ai1 | ai2] = 7 ## 5C
+			#idat$major[ai1 | ai2] = 7 ## 5C
 			assign(i,idat)
 		}
 	}
@@ -853,7 +871,8 @@ buildCatch=function(
 		icat = get(i)
 		modyrs = c(modyrs,.su(as.numeric(substring(icat$date,1,4))))
 		majmod = c(majmod,.su(icat$major))
-		fid=c(fid,unique(icat$fid)) }
+		fid=c(fid,unique(icat$fid))
+	}
 	modyrs = .su(modyrs); majmod=.su(majmod); fid=.su(fid)
 	modyrs = modyrs[is.element(modyrs,1945:sysyr)]
 
@@ -1177,6 +1196,10 @@ buildCatch=function(
 			}
 		}
 		rawdat$TRF    = rawdat$ORF + rawdat$POP
+		## TAR now called 'IRF' in gfmdat; defined by species and fishery sector:
+		##   TRF in GF|JV trawl; PAH in halibut|halibut+sable|K/L; SBF in Sablefish; DOG in Spiny Dogfish
+		##   LIN in Lingcod; DOG+LIN in SchedII; QBR+CPR+CHR+TIR+YYR in Rockfish Inside|RF Outside|ZN|K/ZN
+		rawdat$TAR    = rawdat$IRF
 		rawdat$aindex = .createIDs(rawdat,aflds)
 		RAWDAT[[kk]]  = refdat = rawdat
 		refdat$year   = as.numeric(substring(refdat$date,1,4))
@@ -1374,7 +1397,7 @@ buildCatch=function(
 		## --------------------------------------------------------------------
 		## If use binomial-gamma for estimating RRF/ORF or RRF/TRF (2014-10-02)
 		## --------------------------------------------------------------------
-		if (useBG) {
+		if (useBG && !strat.gamma) { ## use binomial-gamma
 			if (ll=="POP") .flush.cat("   using binomial-gamma to estimate gamma.\n")
 			getPMRrat = function(x) {
 				if (length(x)==0) pmr = 0 #c(n=0,p=NA,mu=NA,rho=NA)
@@ -1410,7 +1433,7 @@ buildCatch=function(
 				gmat[dimnames(refmat)[[1]],dimnames(refmat)[[2]]] = refmat
 			}
 		}
-		else if (strat.gamma) {
+		else if (strat.gamma && !useBG) {  ## use stratified gamma 
 			gmat = array(0,dim=c(length(mm),length(fid)), dimnames=list(major=mm,fid=fid))
 			for (k in fid) {
 				kk = as.character(k)
@@ -1442,6 +1465,8 @@ buildCatch=function(
 					agamma=NULL; next
 				}
 .flush.cat(c(k,ll,urefc,"\n"))
+#if (k==5 && ll=="TRF") {browser();return()}
+
 				refdat = refdat[is.element(refdat$dzone,names(urefc)),]
 				dnum  = crossTab(refdat,c("year","major","dzone"),"landed",function(x){if(all(is.na(x))) 0 else sum(x,na.rm=TRUE)/1000.}, hadley=hadley)
 				dden  = crossTab(refdat,c("year","major","dzone"),ll,function(x){if(all(is.na(x))) 0 else sum(x,na.rm=TRUE)/1000.}, hadley=hadley)
@@ -1471,7 +1496,7 @@ buildCatch=function(
 #if (k==2 && ll=="ORF") {browser();return()}
 #if (k==5 && ll=="POP") {browser();return()}
 			}
-		} else {
+		} else {  ## use default ratios method
 			## use original method of sums over sums
 			if (ll=="POP") .flush.cat(paste0("   calculating mean of annual ratios (",strSpp,"/",orfSpp,")\n"))
 			z0  = cref[,,,"landed"]==0
@@ -1526,7 +1551,8 @@ buildCatch=function(
 #if (ll=="ORF") {browser();return()}
 		}
 		RATES[["gamma"]][[ll]]   = gmat
-		RATES[["discard"]][[ll]] = dmat  ## not really delta
+		if (!strat.gamma)
+			RATES[["discard"]][[ll]] = dmat  ## not really delta
 		if (ll==orfSpp && !strat.gamma){
 			## save annual gamma rates for RRF/orfSpp
 			GREFS = rland
@@ -1534,6 +1560,7 @@ buildCatch=function(
 			ttput(GREFS)
 		}
 	}
+#browser();return()
 	save("RATES",file=paste0(datDir,"/RATES",strSpp,".rda")) ## save target-specific gamma rates
 	ttput(RATES)
 	if (strat.gamma) {
@@ -2111,6 +2138,7 @@ buildCatch=function(
 			## ----------------------------------------------------------------------------------------
 			## only estimate if useYRstart > 1950 and less than first year of believable reported catch
 			## ----------------------------------------------------------------------------------------
+#if (k==2) {browser();return()}
 			if (estYRend > MEDYRS[1]) { 
 				.flush.cat(paste0("   estimating ",strSpp," from  reconstructing from ",MEDYRS[1]," to ",estYRend,";\n"))
 				estYRS = MEDYRS[1]:estYRend
@@ -2375,7 +2403,7 @@ buildCatch=function(
 	attr(sppnewRRF,"yrs.rec") = yrs.rec # years of reconstructed and reported catch
 	sppnewRRF[,,"10"] = apply(sppnewRRF[,,as.character(fid)],1:2,sum)  ## sum across fisheries
 	
-	#data(pmfc,species,envir=penv())
+	#data("pmfc", "species", package="PBSdata", envir=penv())
 	pmfc.major = pmfc$major; names(pmfc.major) = pmfc$gmu
 
 	## -------------------------------------------------------------------
@@ -2525,6 +2553,81 @@ plotDiag =function(x, description="something",
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotDiag
 
 
+## plotGREFS----------------------------2021-09-28
+## Plot gamma for reference years by fishery.
+## ---------------------------------------------RH
+plotGREFS = function(dat, years=1996:2019, majors=3:9, fid=1,
+   strSpp="394", addRGM=FALSE, onefig=FALSE, vlines,
+   png=FALSE, pngres=400, PIN=c(12,9))
+{
+	calcRGM = function(x) { ## running geometric mean
+		mess = paste0("calcGM(x[1:",1:length(x),"])")
+		RGM  = sapply(mess,function(y){eval(parse(text=y))})
+		return(as.vector(RGM))
+	}
+	mcols = c("grey","blue","skyblue","gold","orange","red","green2","green4")
+	names(mcols) = c(1,3:9)
+	fidnams = c("Trawl","Halibut","Sablefish","Dog/Ling","H&L Rock")
+	cyears  = dimnames(dat)[[1]]
+	years   = intersect(years,as.numeric(cyears))
+	cyears  = as.character(years)
+	onam    = paste0("grefs",strSpp)
+	if (addRGM)
+		onam = paste0(onam,".rgm")
+	if (onefig) {
+		onam = paste0(onam,".fid",paste0(fid,collapse=""))
+		if (png){
+			clearFiles(paste0(onam,".png"))
+			png(paste0(onam,".png"), units="in", res=pngres, width=PIN[1], height=PIN[2])
+		}
+		par(mfrow=c(1,length(fid)), mar=c(3,0,1,0), oma=c(0,3,0,1), mgp=c(1.6,0.5,0))
+	}
+#browser(); return()
+	for (k in fid) {
+		if (!onefig) {
+			fout = paste0(onam,".fid",k)
+			if (png){ 
+				clearFiles(paste0(fout,".png"))
+				png(paste0(fout,".png"), units="in", res=pngres, width=PIN[1], height=PIN[2])
+			}
+			par(mfrow=c(1,1), mar=c(3,3,0.5,0.5), oma=c(0,0,0,0), mgp=c(1.6,0.5,0))
+		}
+		kdat = dat[cyears,,k]
+		yting = !onefig || k == fid[1]
+		ylim = c(0,ifelse(onefig,max(dat[cyears,,as.character(fid)]),max(kdat)))
+#browser();return()
+
+		test = apply(kdat,2,function(x){ ## just in case we want to remove values >2 or 3 SDs
+			ss=2*sd(x); mean(x)>=(x-ss) & mean(x)<=(x+ss)})
+		plot(0,0,xlim=c(years[1],rev(years)[1]),ylim=ylim, type="n", xaxt="n", xlab="Year", yaxt=ifelse(yting,"s","n"), ylab=ifelse(yting,"gamma",""), cex.axis=1.2, cex.lab=1.5)
+		if (!missing(vlines))
+			abline(v=vlines, col="dimgrey", lty=5)
+		sapply(as.list(majors),function(j){
+			jj=as.character(j)
+			lines(years, kdat[cyears,jj], col=lucent(mcols[jj],0.5), lwd=2)
+			if (addRGM)
+				lines(years, calcRGM(kdat[cyears,jj]), lty=3, col=lucent(mcols[jj],0.5), lwd=2)
+		})
+		axis(1, at=years[1]:rev(years)[1], tck=-0.01, labels=F)
+#browser();return()
+		axis(1, at=intersect(seq(1950,2050,ifelse(onefig,5,2)),years), tck=-0.02, labels=T)
+		if (yting)
+			axis(2, at=seq(0,1,0.1), tck=-0.01, labels=F)
+		if (!yting){
+			axis(2, at=seq(0,1,0.1), tck=-0.005, labels=F)
+			axis(2, at=seq(0,1,0.1), tck=0.005, labels=F)
+		}
+		LL = length(fid)==1 && k%in%c(1,2,3,5)
+		if (yting || length(fid)==1) 
+			addLegend(ifelse(LL,0.025,0.95),ifelse(LL,0.99,0.92), lty=1, lwd=2, col=rev(lucent(mcols[as.character(majors)],0.5)), legend=rev(c("3C","3D",paste0("5",LETTERS[1:5]))), bty="n", seg.len=3, xjust=ifelse(LL,0,1), cex=ifelse(png,0.7,1), y.intersp=ifelse(png,0.8,1))
+		addLabel(0.95, 0.95, fidnams[k], cex=1.2, adj=c(1,0))
+		if (png && !onefig) dev.off()
+	}
+	if (png && onefig) dev.off()
+}
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotGREFS
+
+
 ## plotRecon----------------------------2019-03-05
 ## Plot reconstructed catch using barplots
 ## stacked by PMFC area.
@@ -2541,7 +2644,7 @@ plotRecon = function(dat=cat440rec, strSpp="440", major=c(1,3:9), fidout=10,
 	fshnam=c("trawl", "h&l", "trap", rep("h&l",6), "combined") ## general category vector
 	fidnam=c("trawl", "halibut", "sablefish", "sched2", "zn", "sabzn", "sabhal", "dogfish", "lingcod", "combined")
 	fidlab=c(paste0("Fishery -- ",c("Trawl", "Halibut", "Sablefish", "Dogfish / Lingcod", "H&L Rockfish", "Sablefish + ZN",
-		"Sablefish + Halibut", "Dogfish", "Lingcod")), "All Commercial Groundfish Fisheries")
+		"Sablefish + Halibut", "Dogfish", "Lingcod")), "All Groundfish Fisheries") #, "All Commercial Groundfish Fisheries")
 	yy  = as.character(years)
 	if (length(dim(dat))==2) ydat = dat[yy,,drop=FALSE]
 	else                     ydat = dat[yy,,,drop=FALSE]
@@ -2549,7 +2652,7 @@ plotRecon = function(dat=cat440rec, strSpp="440", major=c(1,3:9), fidout=10,
 	clrs = rep("gainsboro",length(MAJ)); names(clrs)=MAJ
 	clrs[as.character(c(1,3:9))]=c("moccasin","blue","lightblue","yellow","orange","red","seagreen","lightgreen")
 	mclrs=clrs[mm]
-	data(pmfc,species,envir=penv())
+	data("pmfc", "species", package="PBSdata", envir=penv())
 	XLAB = dimnames(ydat)[[1]];  xpos=(1:length(XLAB))-.5; zlab=is.element(XLAB,xlab)
 	for (i in fidout){
 		ii=as.character(i)
@@ -2572,7 +2675,7 @@ plotRecon = function(dat=cat440rec, strSpp="440", major=c(1,3:9), fidout=10,
 			else if (wmf && .Platform$OS.type=="windows")
 				do.call("win.metafile", list(filename=paste(fout,".wmf",sep=""), width=PIN[1], height=PIN[2]))
 			else  resetGraph()
-			expandGraph(mar=c(3,3.2,.5,.5),mgp=c(1.6,.5,0))
+			expandGraph(mar=c(3,3.2,1,0.5),mgp=c(1.6,.5,0))
 			barplot(idat,col=0,space=0,xaxt="n",yaxt="n",xaxs="i",ylim=ylim)
 			if (shade && !is.null(yrs.rec)) {
 				## shade the ancient years (Dominion Bureau of Stats)
@@ -2633,8 +2736,8 @@ plotRecon = function(dat=cat440rec, strSpp="440", major=c(1,3:9), fidout=10,
 			segments(rep(0,length(hlin)), hlin, rep(par()$usr[2], length(hlin)), hlin,col="gainsboro")
 			barplot(idat, col=mclrs, space=0, cex.names=0.8, mgp=c(1.5,0.5,0), xaxt="n", xaxs="i", border="grey30", add=TRUE, lwd=0.3)
 			axis(1,at=xpos[zlab],labels=XLAB[zlab],tick=FALSE,las=3,mgp=c(0,.2,0),cex.axis=.8,hadj=1)
-			addLabel(0.05,0.95, species[strSpp,"latin"], font=3, cex=1, col="#400080", adj=0)
-			addLabel(0.05,0.90, linguaFranca(fidlab[i],l), cex=1.2, col="#400080", adj=0)
+			addLabel(0.05,0.975, species[strSpp,"latin"], font=3, cex=1, col="#400080", adj=0)
+			addLabel(0.05,0.925, linguaFranca(fidlab[i],l), cex=1.2, col="#400080", adj=0)
 			mtext(linguaFranca("Year",l), side=1, line=1.75, cex=1.2)
 			mtext(linguaFranca("Catch (t)",l), side=2, line=2, cex=1.3)
 			addStrip(.05, 0.85, col=mclrs, lab=pmfc[mm,"gmu"]) ## RH: New function addition (151201)
@@ -2643,6 +2746,80 @@ plotRecon = function(dat=cat440rec, strSpp="440", major=c(1,3:9), fidout=10,
 	}    ## end i (fidout) loop
 }
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotRecon
+
+
+## quickCat-----------------------------2020-02-19
+##  Subsets a large dataset derived from query 'fos_mcatORF.sql'
+##  to remove non-zero catches of the RRF (landed+discard).
+##  This facilitates crossTab queries for data summaries.
+## ---------------------------------------------RH
+quickCat = function(dat, strSpp="000", removeSM=TRUE)  ## incorporated revampCat
+{
+	flds = colnames(dat)
+	if (removeSM) ## seamounts
+		dat    = zapSeamounts(dat)
+	else if (!is.element("seamount",flds))
+		dat = zapSeamounts(dat, only.mark=TRUE)
+	if (!is.element("year",flds))
+		dat$year  = as.numeric(substring(dat$date,1,4))
+	if (!is.element("catKg",flds))
+		dat$catKg = dat$landed + dat$discard
+	dat = dat[dat$catKg>0 & !is.na(dat$catKg),]
+	dat = dat[is.element(dat$major,3:9),]
+	if (nrow(dat)==0) stop("No recorded catch for this species")
+
+	if (strSpp %in% c("394","425")) {
+		dat$stock = rep("",nrow(dat))
+		dat$stock[is.element(dat$major,8:9)] = "BSR"  ## Blackspotted Rockfish
+		dat$stock[is.element(dat$major,3:6)] = "RER"  ## Rougheye Rockfish
+		dat$stock[is.element(dat$major,7)  ] = "HYB"  ## Hybrids of BSR and RER
+
+		dat$fishery = rep("",nrow(dat))
+		dat$fishery[is.element(dat$major,8:9) & is.element(dat$fid, c(1,9))] = "BSR_trawl"  ## Blackspotted trawl
+		dat$fishery[is.element(dat$major,8:9) & is.element(dat$fid, c(2:5))] = "BSR_other"  ## Blackspotted non-trawl
+		dat$fishery[is.element(dat$major,3:6) & is.element(dat$fid, c(1,9))] = "RER_trawl"  ## Rougheye trawl
+		dat$fishery[is.element(dat$major,3:6) & is.element(dat$fid, c(2:5))] = "RER_other"  ## Rougheye non-trawl
+		dat$fishery[is.element(dat$major,7)   & is.element(dat$fid, c(1,9))] = "HYB_trawl"  ## Hybrids trawl
+		dat$fishery[is.element(dat$major,7)   & is.element(dat$fid, c(2:5))] = "HYB_other"  ## Hybrids non-trawl
+	}
+	flds = colnames(dat)
+
+	if (all(is.element(c("year","fid","catKg"), flds))){
+		tab.fid = crossTab(dat, c("year","fid"), "catKg")
+		fid.nam = c("Trawl","Halibut","Sablefish","Dogfish/Lingcod","H&L Rockfish"); names(fid.nam) = as.character(1:5)
+		colnames(tab.fid) = fid.nam[colnames(tab.fid)]
+		write.csv(tab.fid, file=paste0("cat",strSpp,".fid.sum.csv"))
+		ttput(tab.fid)
+	}
+	if (all(is.element(c("year","fishery","catKg"), flds))){
+		tab.fishery = crossTab(dat, c("year","fishery"), "catKg")
+		write.csv(tab.fishery, file=paste0("cat",strSpp,".fishery.sum.csv"))
+		ttput(tab.fishery)
+	}
+	if (all(is.element(c("year","gear","catKg"), flds))){
+		tab.gear = crossTab(dat, c("year","gear"), "catKg")
+		gear.nam = c("Bottom Trawl","Trap","Midwater Trawl","Hook and Line","Longline"); names(gear.nam) = as.character(1:5)
+		colnames(tab.gear) = gear.nam[colnames(tab.gear)]
+#browser();return()
+		write.csv(tab.gear, file=paste0("cat",strSpp,".gear.sum.csv"))
+		ttput(tab.gear)
+	}
+	if (all(is.element(c("year","db","catKg"), flds))){
+		tab.db = crossTab(dat, c("year","db"), "catKg")
+		write.csv(tab.db, file=paste0("cat",strSpp,".db.sum.csv"))
+		ttput(tab.db)
+	}
+	if (all(is.element(c("year","sector","catKg"), flds))){
+		tab.sector = crossTab(dat, c("year","sector"), "catKg")
+		write.csv(tab.sector, file=paste0("cat",strSpp,".sector.sum.csv"))
+		ttput(tab.sector)
+	}
+
+	mess = paste0("cat",strSpp,"=dat; save(\"cat", strSpp, "\", ", "file=\"cat", strSpp, ".rda\")")
+	eval(parse(text=mess))
+	invisible(return(dat))
+}
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~quickCat
 
 
 ## surveyCatch--------------------------2019-06-05
@@ -2672,7 +2849,7 @@ surveyCatch = function(strSpp="396", spath=.getSpath(), gfbdat=NULL,
 	} else {
 		gfbcat = as.data.frame(gfbtab)
 	}
-	data(pmfc,package="PBSdata",envir=penv())
+	data("pmfc", package="PBSdata", envir=penv())
 	names(gfbcat) = pmfc[names(gfbcat),"gmu"]
 	save("gfbcat",file="gfbcat.rda")
 	if (file.exists(tabDir))
@@ -2734,14 +2911,14 @@ zapSeamounts = function(dat, only.mark=FALSE) {
 	if (!is.element("year",colnames(idat)))
 		idat$year = as.numeric(substring(idat$date,1,4))
 	yrs = .su(idat$year); nyrs = length(yrs)
-	if (only.mark)
-		idat$seamount = rep("",nrow(idat))
 	SMrem = array(0, dim=c(nyrs,nrow(seamounts),2), dimnames=list(year=yrs, seamount=rownames(seamounts), value=c("nrec","tcat")))
 	nSMrec = tSMcat = list()
-	if (!all(c("major","minor","locality") %in% names(idat))) { 
+	if (!all(c("major","minor","locality") %in% colnames(idat))) { 
 		nSMrec[ii] = NA; tSMcat[ii] = NA
 	} else {
 		.flush.cat(as.character(substitute(dat)), ": ")
+		if (only.mark)
+			idat$seamount = rep("",nrow(idat))
 		for (j in 1:nrow(seamounts)) {
 			jj  = seamounts[j,]
 			jjj = rownames(seamounts)[j]
@@ -2749,9 +2926,9 @@ zapSeamounts = function(dat, only.mark=FALSE) {
 			seamo = is.element(idat$major,jj[1]) & is.element(idat$minor,jj[2]) & is.element(idat$locality,jj[3])
 			if (sum(seamo)==0) next
 			if (only.mark) {
+#browser();return()
 				idat$seamount[seamo] = jjj
 			} else {
-#browser();return()
 				ij = paste0(jjj, "(", paste0(jj,collapse="."), ")")
 				nrec = table(idat$year[seamo])
 				SMrem[names(nrec),jjj,"nrec"] = nrec
@@ -2765,8 +2942,11 @@ zapSeamounts = function(dat, only.mark=FALSE) {
 		}
 		.flush.cat("\n")
 	}
-	if (only.mark)
+	if (only.mark) {
+		if(all(idat$seamount==""))
+			idat = idat[,setdiff(colnames(idat),"seamount")]
 		return(idat)
+	}
 	keep = apply(SMrem[,,"nrec"],1,sum)>0 ## only keep the years when seamount catches occurred
 	attr(idat,"seamounts") = seamounts
 	attr(idat,"SMrem") = if(sum(keep)>0) SMrem[keep,,,drop=FALSE] else NULL

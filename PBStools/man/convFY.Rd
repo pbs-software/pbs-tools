@@ -22,7 +22,10 @@ convFY(x, startM=4)
   If \code{startM=1}, the output dates also represent calendar years.
 }
 \author{
-  Rowan Haigh, Pacific Biological Station, Nanaimo BC
+  \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
+  Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
+  \emph{locus opus}: Institute of Ocean Sciences (IOS), Sidney BC\cr
+  Last modified \code{Rd: 2021-06-15}\cr
 }
 \seealso{
   \code{\link{convYM}}, \code{\link{convYP}}
@@ -37,4 +40,5 @@ pbsfun()
 })
 }
 \keyword{manip}
+\concept{M01_Utility}
 

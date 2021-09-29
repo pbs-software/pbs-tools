@@ -10,6 +10,75 @@ Authors: RH  = Rowan Haigh
          BK  = Brian Krishka
 ------------------------------
 
+1.42.0 (2021-09-27)  [Rcheck=T, Rbuild=T]
+  * M01_Utility.r
+    + Added standard deviation calculations to function `calcHM' (RH 210712)
+    + Added more terms to function `linguaFranca' (RH 210916)
+  * M02_Biology.r
+    + Added new function `plotAdens', which plots density distributions of length (waveforms) by age.
+  * M05_Spatial.r
+    + Modified french labelling in `plotGMA` (RH 210809)
+  * M06_Assessment.r
+    + Added three new functions (used for years):
+      - calcCVage  -- Calculate CV of ages based on age or length data; (RH 210907)
+      - plotSnail  -- Plot snail-trail plots for MCMC analysis; used to reside in PBSawatea; (RH 210903)
+      - splineCPUE -- Fit spline curves through CPUE data to determine CV process error. (RH 210616)
+    + Added two arguments (rlty, rlwd) to function `compBmsy' for greater control. (RH 210916)
+    + Modified slightly function `compVB'. (RH 210814)
+    + Updated function `createMA' to include management actions specific to YMR. (RH 210809)
+    + Updated function `plotBTMW' for YMR. (RH 210716)
+  * M07_CatchRecon.r
+    + Added two new functions (used previously):
+      - plotGREFS -- Plot gamma for reference years by fishery; (RH 210715)
+      - quickCat  -- Subsets a large dataset derived from query 'fos_mcatORF.sql'. (RH 210923)
+  * M08_LaTeX.r
+    + Modified function `texArray' to deal with horizontal line delimiters. (RH 210831)
+
+1.41.0 (2021-06-15)  [Rcheck=F, Rbuild=F]
+  * M01_Utility.r
+    + Added new functions `clearFiles' and `darkenRGB' (RH 210609)
+      - Check to see if file exists and keep a copy if it does before removing it.
+      - Programmatically darken the colour of given RGB values.
+    + Updated function `.getSQLdata' to use an updated Oracle driver. (RH 210114)
+    + Updated function `linguaFranca' to convert more english words to french ones. (RH 210426)
+      - Includes new cryptic crap from Stock Synthesis.
+    + Revised hidden function `.plotDev' to detect existing image files and increment new file name. (RH 210421)
+  * M02_Biology.r
+    + Revised function `calcLW' to generate french image files. (RH 21UNKN)
+    + Revised function `calcVB' to accept a user-specified file name. (RH 210304)
+      - Added temporary calcs to get length sdevs by age.
+    + Revised function `extractAges' remove seamounts and/or reason code 9 [RC9=acoustic verification] (RH 201021)
+    + Revised function `getPrey' to save list object to .PBStoolEnv [res.getPrey = list(stomachs=stomachs, prey=prey, spp=spp, spp.prey)] (RH 21UNKN)
+    + Added new argument `anams' (area names) to function `mapMaturity' for labelling y-axis when mapping proportions by sex [mats=NULL]. (RH 21UNKN)
+    + Revised function `requestAges' to recognise revised managment areas for POP and YMR. (RH 21UNKN)
+    + Revised function `weightBio' to use function `clearFiles'. (RH 21UNKN)
+  * M05_Spatial.r
+    + Modified function `calcStockArea' to better determine special area adjustment for POP and YMR. (RH 210209)
+    + Added new argument `lang' to function `clarify' to produce figures in english and french. (RH 200810)
+      - Includes calls to new function `clearFiles' (also for function `plotConcur').
+    + Revised function `plotEO' to add a date range label. (RH 21UNKN)
+    + Modified function `plotGMA'. (RH 190604)
+      - Added new arguments `isobath' and `lang' (for english and french)
+      - Added functionality to add labels and polygons (e.g. 5C polygon adjustment for YMR).
+    + Added new function `plotHabitat' which takes results from `calcHabitat' and re-plots it for the Ecosystem appendix of Res Docs. (RH 210408)
+    + Modified function `preferDepth' to accept existing depth and effort files rather than relying on SQL. (RH 210408)
+  * M06_Assessment.r
+    + Modified function `compAF' to allow groups of years per panel to compare surveys that are not annual. (RH 21UNKN)
+    + Added new function `clearFiles' to `compLen'
+    + Modified function `compVBpars' to better control grouping of compared parameters. (RH 210202)
+    + Added new argument `lang' to `makeAgeErr' for creation of english and french image files. (RH 21UNKN)
+    + Added call to `calcStockArea' in function `processMap'. (RH 21UNKN)
+  * M07_CatchRecon.r
+    + Added better detection of the 5C polygon for YMR and POP. (RH 201015)
+    + Made minor tweaks to function `zapSeamounts'. (RH 21UNKN)
+  * M08_LaTeX.r
+    + Added new argument `scipen' to function `formatCatch' to control the conversion of number formatting to scientific notation. (RH 210420)
+      - Added some text replacement to get rid of leading and trailing spaces (RH 210427)
+    + Added new argument `uscore' to function `texArray' indicating character(s) to replace underscores in text. (RH 210427)
+  * SQL code
+    + Added new SQL queries -- `gfb_sensor.sql', `fos_ymr_top20_clara.sql', `fos_clara_rf_hl.sql', `fos_clara_rf_bt.sql'
+    + Modified SQL queries -- `ph3_fcatORF.sql', `gfb_vbgf.sql', `gfb_catch_records.sql', `gfb_pht_catch.sql, `gfb_fos_catch.sql', `gfb_age_request.sql', `fos_concurrent.sql'
+
 1.40.4 (2020-10-08)  [Rcheck=T, Rbuild=T]
   * M01_Utility.r
     + Added functionality to `addStrip' and removed a bug. (RH 201006)

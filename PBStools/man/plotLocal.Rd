@@ -92,4 +92,4 @@ plotLocal(dat, area, aflds=NULL, pcat=0.95, cpue=FALSE, powr=1,
 % R documentation directory.
 \keyword{hplot}% use one of  RShowDoc("KEYWORDS")
 \keyword{manip}% __ONLY ONE__ keyword per line
-\concept{"M05_Spatial"}
+\concept{M05_Spatial}

@@ -1,11 +1,11 @@
 \name{compBmsy}
 \alias{compBmsy}
 \title{
-  Compare Biomass Posteriors Relative to Bmsy or Bavg
+  Compare Biomass Posteriors Relative to Bmsy
 }
 \description{
-  Compare posterior distributions of biomass from MCMCs for 
-  species and model runs.
+  Compare posterior distributions of biomass from MCMCs for species and model runs. 
+  Biomass can be relative to \eqn{B_{\mathrm{MSY}}}{Bmsy} or other \eqn{B} values.
 }
 \usage{
 compBmsy(Bspp, spp="POP", Mnams=c("Est M","Fix M"),
@@ -13,7 +13,7 @@ compBmsy(Bspp, spp="POP", Mnams=c("Est M","Fix M"),
    quants=c(0.05,0.25,0.5,0.75,0.95),
    zones = c("Critical","Cautious","Healthy"),
    figgy=list(win=T), pngres=400, width=12, height=9, 
-   rcol=c("red","green4","blue"),    ## line cols
+   rcol=c("red","green4","blue"), rlty=rep(2,3), rlwd=rep(2,3),
    ocol = c("#D55E00", "#009E73", "#56B4E9", "#F0E442"),
    lcol = c("red","darkorange","green4"),
    spplabs=TRUE, left.space=NULL, top.space=2, fout=NULL, 
@@ -31,11 +31,11 @@ compBmsy(Bspp, spp="POP", Mnams=c("Est M","Fix M"),
   \item{quants}{\code{numeric}: vector of 5 quantiles that define the boxplot --\cr
     low whisker, box bottom, box middle, box top, high whisker.}
   \item{zones}{\code{character}: vector of names for zones delimited by \code{ratios}.}
-  \item{figgy}{\code{logical}: if \code{TRUE}, send figure to four output files (\code{.eps}, \code{.pdf}, \code{.png}, and \code{.wmf}).}
+  \item{figgy}{\code{logical}: if \code{TRUE}, send figure to four output files (\code{.eps}, \code{.pdf}, \code{.png}, \code{.wmf}).}
   \item{pngres}{\code{numeric}: resolution (pixels/inch) of \code{.png} file.}
   \item{width}{\code{numeric}: width of the output files in inches.}
   \item{height}{\code{numeric}: height of the output files in inches.}
-  \item{rcol}{\code{character}: vector of colour names for the vertical lines depicting \code{ratios}.}
+  \item{rcol, rlty, rlwd}{\code{character|numeric}: vector of colour names, line types, and line widths, respectively, for the vertical lines depicting \code{ratios}.}
   \item{ocol}{\code{character}: vector of colour names for the dots depicting \code{oratios} (e.g. LRP and USR).}
   \item{lcol}{\code{character}: vector of colour names for the \code{zones} labels.}
   \item{spplabs}{\code{logical}: if \code{TRUE}, use the species code when labelling the y-axis.}
@@ -43,12 +43,12 @@ compBmsy(Bspp, spp="POP", Mnams=c("Est M","Fix M"),
   \item{top.space}{\code{numeric}: amount of space to leave at top of plot for labelling.}
   \item{fout}{\code{character}: name for output files (overrides internally-generated names).}
   \item{offset}{\code{numeric}: vertical offsets for LRP and USR from the horizontal quantile boxes.}
-  \item{calcRat}{\code{logical}: if \code{TRUE}, calculate the ratio from the data \cr (e.g., \code{x[["Bt.MCMC"]] / x[["Bmsy.MCMC"]]}).}
-  \item{refpt}{\code{character}: reference point subscript to appear in legend (e.g., \code{"MSY"}).}
-  \item{param}{\code{character}: parameter name (e.g., \code{"M_2"}) if comparing parameter estimates instead of stock status ratios.}
+  \item{calcRat}{\code{logical}: if \code{TRUE}, calculate the ratio from the data \cr (e.g. \code{x[['Bt.MCMC']] / x[['Bmsy.MCMC']]}).}
+  \item{refpt}{\code{character}: reference point subscript to appear in legend (e.g. \code{'MSY'}).}
+  \item{param}{\code{character}: parameter name (e.g. \code{'M_2'}) if comparing parameter estimates instead of stock status ratios.}
   \item{boxlim}{\code{numeric}: horizontal boxplot limits to override \code{ylim} (which looks like \code{xlim}), useful for parameter comparisons.}
   \item{lang}{\code{character} -- a vector of letters that denote the language for output:
-    currently only \code{"e"} (english) and \code{"f"} (french).}
+    currently only \code{'e'} (english) and \code{'f'} (french).}
   \item{\dots}{additional values for \code{\link[PBStools]{quantBox}}'s argument \code{pars}.}
 }
 \details{
@@ -88,14 +88,15 @@ compBmsy(Bspp, spp="POP", Mnams=c("Est M","Fix M"),
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
   \emph{locus opus}: Institute of Ocean Sciences (IOS), Sidney BC\cr
-  Last modified \code{Rd: 2020-10-08}
+  Last modified \code{Rd: 2021-09-28}
 }
 \seealso{
+In package \pkg{PBStools}:\cr
   \code{\link[PBStools]{compAF}},
   \code{\link[PBStools]{plotRecon}},
   \code{\link[PBStools]{quantAges}},
-  \code{\link[PBStools]{quantBox}} \cr
-  \code{compB0} in \pkg{PBSawatea}
+  \code{\link[PBStools]{quantBox}}.
 }
 \keyword{hplot}
+\concept{M06_Assessment}
 

@@ -9,17 +9,20 @@
 }
 \usage{
 formatCatch(dat, N=3, X=0, zero="0", na="---",
-   K=",", exInt=TRUE, use.round=FALSE)
+   K=",", exInt=TRUE, use.round=FALSE, scipen=20)
 }
 \arguments{
-  \item{dat}{data frame/matrix/vector of raw (catch) numbers}
-  \item{N}{number of significant digits}
-  \item{X}{numeric vector of columns to exclude (set to \code{NULL} or \code{0} if selecting all columns).}
-  \item{zero}{character replacement for zero-values}
-  \item{na}{character replacement for \code{NA} values}
-  \item{K}{big mark separator (see \code{format})}
-  \item{exInt}{logical: if \code{TRUE}, exclude integers from manipulation to signicant digits.}
-  \item{use.round}{logical: if \code{TRUE}, round the values to \code{N} decimal places rather than provide \code{N} significant figures.}
+  \item{dat}{\code{numeric} -- data frame/matrix/vector of raw (catch) numbers}
+  \item{N}{\code{numeric} -- number of significant digits}
+  \item{X}{\code{numeric} -- numeric vector of columns to exclude (set to \code{NULL} or \code{0} if selecting all columns).}
+  \item{zero}{\code{character} -- string replacement for zero-values}
+  \item{na}{\code{character} -- string replacement for \code{NA} values}
+  \item{K}{\code{character} -- big mark separator (see \code{format})}
+  \item{exInt}{\code{logical} -- if \code{TRUE}, exclude integers from manipulation to signicant digits.}
+  \item{use.round}{\code{logical} -- if \code{TRUE}, round the values to \code{N} decimal places rather than provide \code{N} significant figures.}
+  \item{scipen}{\code{numeric} -- penalty to be applied when printing numeric values in fixed or exponential notation; 
+    positive values bias towards fixed, negative values towards scientific notation: fixed notation will be preferred 
+    unless it is more than \code{scipen} digits wider.}
 }
 \details{
   The algorithm relies on string manipulation to achieve a result that
@@ -32,7 +35,10 @@ formatCatch(dat, N=3, X=0, zero="0", na="---",
   \code{dimnames} of the input matrix or data frame.
 }
 \author{
-  Rowan Haigh, Pacific Biological Station, Fisheries and Oceans Canada, Nanaimo BC
+  \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
+  Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
+  \emph{locus opus}: Institute of Ocean Sciences (IOS), Sidney BC\cr
+  Last modified \code{Rd: 2021-06-14}
 }
 \note{
   If the input table has no \code{dimnames}, one will be added with format \cr
@@ -42,8 +48,11 @@ formatCatch(dat, N=3, X=0, zero="0", na="---",
   one-column data frame.
 }
 \seealso{
-  \code{\link[PBStools]{buildCatch}}, \code{\link[PBStools]{dumpMod}}, 
-  \code{\link[PBStools]{plotRecon}}, \code{\link[PBStools]{makeLTH}},
+In package \pkg{PBStools}:\cr
+  \code{\link[PBStools]{buildCatch}},
+  \code{\link[PBStools]{dumpMod}},
+  \code{\link[PBStools]{plotRecon}},
+  \code{\link[PBStools]{makeLTH}},
   \code{\link[PBStools]{texArray}}
 }
 \examples{

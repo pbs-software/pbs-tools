@@ -32,7 +32,10 @@ spooler(xlist, newfld="area", target)
   The \code{target} data frame augmented with the new field \code{newfld}.
 }
 \author{
-  Rowan Haigh, Pacific Biological Station, Nanaimo BC
+  \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
+  Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
+  \emph{locus opus}: Institute of Ocean Sciences (IOS), Sidney BC\cr
+  Last modified \code{Rd: 2021-06-15}\cr
 }
 \seealso{
   \code{\link{biteData}}, \code{\link{compCsum}}
@@ -50,3 +53,4 @@ pbsfun()
 }
 \keyword{data}
 \keyword{utilities}
+\concept{M01_Utility}

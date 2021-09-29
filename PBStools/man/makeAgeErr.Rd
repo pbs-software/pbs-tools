@@ -7,9 +7,10 @@
   Make an ageing error matrix for Awatea/Coleraine input.
 }
 \usage{
-makeAgeErr(type="simple", strSpp, sql=FALSE, Amax=45,
-   ondiag=0.8, offdiag=0.1, corner=0.9, Ndiff=5,
-   CV, Noff=1, less=0, more=0, png=FALSE, ptype="bubble")
+makeAgeErr(type="simple", strSpp, sql=FALSE,
+   Amax=45, ondiag=0.8, offdiag=0.1, corner=0.9,
+   Ndiff=5, CV, Noff=1, less=0, more=0,
+   png=FALSE, ptype="bubble", lang=c("e","f"))
 }
 \arguments{
   \item{type}{\code{character} -- type descriptor for building the ageing error matrix of proportions (ranging from 0 to 1).}
@@ -26,6 +27,7 @@ makeAgeErr(type="simple", strSpp, sql=FALSE, Amax=45,
   \item{more}{\code{numeric} -- tweak number of offsets \code{Noff} on the right.}
   \item{png}{\code{logical} -- if \code{TRUE}, send the plot to a \code{'.png'} file.}
   \item{ptype}{\code{character} -- plot type, either \code{"bubble"} or \code{"bars"}.}
+  \item{lang}{\code{character} -- language for image labels, where \code{'e'}=english and \code{'f'}=french.}
 }
 \details{
   Creates an ageing error matrix of proportions from zero to one that gives
@@ -45,7 +47,7 @@ makeAgeErr(type="simple", strSpp, sql=FALSE, Amax=45,
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
   \emph{locus opus}: Institute of Ocean Sciences (IOS), Sidney BC\cr
-  Last modified \code{Rd: 2019-12-11}
+  Last modified \code{Rd: 2021-06-14}
 }
 \note{
   First used for the Yellowmouth Rockfish (YMR) assessment in 2011.

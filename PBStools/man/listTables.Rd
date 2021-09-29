@@ -39,7 +39,10 @@ listTables(dbName, pattern=NULL, path=getwd(), server=NULL,
   Silently returns a vector of table names.
 }
 \author{
-  Rowan Haigh, Pacific Biological Station, Fisheries and Oceans Canada, Nanaimo BC
+  \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
+  Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
+  \emph{locus opus}: Institute of Ocean Sciences (IOS), Sidney BC\cr
+  Last modified \code{Rd: 2021-06-15}\cr
 }
 \seealso{ 
   \code{\link{getFile}}, \code{\link{getData}}
@@ -65,3 +68,4 @@ pbsfun()
 }
 \keyword{data}
 \keyword{utilities}
+\concept{M01_Utility}

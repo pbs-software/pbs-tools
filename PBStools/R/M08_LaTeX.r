@@ -80,7 +80,7 @@ collectFigs = function(path=".", ext="eps", is.fnum=FALSE,
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~collectFigs
 
 
-## formatCatch--------------------------2019-06-24
+## formatCatch--------------------------2021-04-27
 ## Format a numeric table so that each cell 
 ## displays N significant figures in character format.
 ## Arguments:
@@ -94,8 +94,12 @@ collectFigs = function(path=".", ext="eps", is.fnum=FALSE,
 ##  use.round = if TRUE, round catches to N decimal places.
 ## ---------------------------------------------RH
 formatCatch = function(dat, N=3, X=0, zero="0", na="---",
-   K=",", exInt=TRUE, use.round=FALSE)
+   K=",", exInt=TRUE, use.round=FALSE, scipen=20)
 {
+	scipen.old = options()$scipen
+	on.exit(options(scipen=scipen.old))
+	options(scipen=scipen)
+
 	makeCmat =function(x,colname="Y") {
 		matrix(x,ncol=1,dimnames=list(names(x),colname)) }
 	makeRmat =function(x,rowname="Y") {
@@ -132,7 +136,6 @@ formatCatch = function(dat, N=3, X=0, zero="0", na="---",
 		zbig   = dat[,-(X)]<1 & cdat[,-(X)]=="1" & !is.na(dat[,-(X)])
 		if (any(zsmall)) cdat[,-(X)][zsmall] = paste0("<",10^(-N))
 		if (any(zbig))   cdat[,-(X)][zbig]   = paste0(">",1-10^(-N))
-#browser();return()
 		cdat[,-(X)][zdat|nadat] = zero  ## temporarily overwrite NAs as zeroes but next line adjust this.
 		cdat[,-(X)][nadat]      = na
 		## final check for NAs (usually in excluded columns X)
@@ -147,18 +150,19 @@ formatCatch = function(dat, N=3, X=0, zero="0", na="---",
 
 	flat=FALSE
 	if (nrow(dat)==1) flat=TRUE
-	cdat = apply(dat,2,as.character)
+	cdat = apply(dat,2,function(x){xx=as.character(x); xxx=sub("^\\s+|\\s+$","",xx); return(xxx)}) ## (RH 210427) get rid of leading and trailing spaces
 	if (flat)
 		cdat = makeRmat(cdat,rownames(dat))
 	cdat = as.data.frame(cdat); dimnames(cdat) = dnam
 	for (i in dnam[[2]][-(X)]) {
 		idat = cdat[,i]
 		istr = strsplit(as.character(idat),split="\\.")
+#browser();return()
 		inum = sapply(istr, function(x,N,K,zero,na){
 			if (is.na(x[1])) return(na)
 			x1 = format(round(as.numeric(x[1])),big.mark=K,trim=TRUE,scientific=FALSE)
 			X1 = format(as.numeric(paste(x,collapse=".")),digits=N,big.mark=K,trim=TRUE,scientific=FALSE)
-			if (x1=="0" && X1=="0") return(zero) ## RH (151113) catch instances when 0 has been changed to "0.00000" by as.character
+			if (x1=="0" && X1=="0") return(zero) ## (RH 151113) catch instances when 0 has been changed to "0.00000" by as.character
 			n2 = N - nchar(x[1])
 			if (length(x)==1) {
 				if (x[1]=="0")  ival = zero
@@ -170,27 +174,22 @@ formatCatch = function(dat, N=3, X=0, zero="0", na="---",
 				if (nchar(x[1])>=N) ival = X1
 				else {
 					if (x1=="0") {
-						# exclude leading zeroes using 'clipVector' from 'PBSmodelling' package
+						## exclude leading zeroes using 'clipVector' from 'PBSmodelling' package
 						x2ex0 = paste(clipVector(strsplit(x[2],split="")[[1]],"0",1),collapse="")
-						n20   = nchar(x[2])-nchar(x2ex0) # number of leading zeroes
+						n20   = nchar(x[2])-nchar(x2ex0) ## number of leading zeroes
 						if (N-nchar(x2ex0) > 0 )
 							x[2] = paste(x[2],paste(rep(0,N-nchar(x2ex0)+1),collapse=""),sep="")
-						n2 = N + n20 # adjusted for leading zeroes
+						n2 = N + n20 ## adjusted for leading zeroes
 					}
 					else {
 						n2 = N - nchar(x[1])
 					}
-					x[2] = paste(x[2],paste(rep(0,N+1),collapse=""),sep="") # pad with extra zeroes as a precautionary measure
-#browser();return()
-#if (x[1]=="10" & x[2]=="000") {browser();return() }
+					x[2] = paste0(x[2],paste(rep(0,N+1),collapse="")) ## pad with extra zeroes as a precautionary measure
 					x2 = pad0(round(as.numeric(substring(x[2],1,n2+2))/100),n2)
 					if (as.numeric(x2) %in% 10^(0:10)) ival = format(as.numeric(gsub(",","",X1)),nsmall=n2-as.numeric(is.element(as.numeric(x1),10^(1:10)-1)),big.mark=K,trim=TRUE,scientific=FALSE)
-					#if (x2=="10") ival = format(as.numeric(gsub(",","",X1)),nsmall=n2,big.mark=K,trim=TRUE,scientific=FALSE)
-					#show0(as.numeric(gsub(",","",X1)),n2,add2int=TRUE)
 					else ival = paste(x1,x2,sep=".")
 				}
 			}
-#browser();return()
 			return(ival)
 		},N=N,K=K,zero=zero,na=na)
 		cdat[[i]] = inum
@@ -276,16 +275,16 @@ splitTab = function(tab, np=3, row.names=TRUE, row.label="row", row.numeric=FALS
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~splitTab
 
 
-## texArray-----------------------------2019-11-27
+## texArray-----------------------------2021-04-20
 ## Flatten and format an array for latex output.
 ## ---------------------------------------------RH
 texArray =function(x, table.caption="My table", table.label="tab:mytable",
    strSpp=NULL, sigdig=3, zero="---", exInt=TRUE, use.round=FALSE, 
-   collab=NULL, dash.delim=NULL, tablewidth=6.5, 
+   collab=NULL, dash.delim=NULL, tablewidth=6.5,
    rm.empty=FALSE, start.page=1, ignore.col=NULL,
    select.rows=NULL, use.row.names=FALSE, name.row.names="row",
    add.header.column=FALSE, new.header=NULL, outnam="mytable", 
-   alignHRC=c("l","l","r"), italics.file=NULL, ...)
+   alignHRC=c("l","l","r"), italics.file=NULL, uscore=" ", ...)
 {
 	if (!is.array(x) && !is.matrix(x) && !is.data.frame(x)) stop("input an array or a matrix")
 	N = dim(x)
@@ -341,7 +340,7 @@ texArray =function(x, table.caption="My table", table.label="tab:mytable",
 				c1 = new.header
 			else{
 			here = lenv()
-			data(pmfc,envir=here)
+			data("pmfc", package="PBSdata", envir=here)
 			dnams = dimnames(x)[as.numeric(names(Zsort))]
 			dlist = sapply(names(dnams),function(d,dd){paste(d,dd[[d]],sep=":")},dd=dnams,simplify=FALSE)
 			names(dlist) = names(Zsort)
@@ -441,15 +440,14 @@ texArray =function(x, table.caption="My table", table.label="tab:mytable",
 		else X = grep(FALSE,goonum)
 		if (!is.null(ignore.col))
 			X = union(X[X!=0],ignore.col)
-#browser();return()
 		goo = formatCatch(goo,N=sigdig,zero=zero,X=X,use.round=use.round,exInt=exInt)
+#browser();return()
 	}
 	colnames(goo)=collab ## sapply can screw up colnames if they are not unique
 
-#browser();return()
 	if (use.row.names) {
 		rows = dimnames(goo)[[1]]
-		if (length(N)>2) {
+		if (L>2) { ## higher than two-dimensional array
 			rows = sapply(strsplit(rows,"-"),function(x){paste(x[-1],sep="",collapse="-")})
 			rows = gsub("Females","F",gsub("Males","M",rows))
 		}
@@ -486,20 +484,16 @@ texArray =function(x, table.caption="My table", table.label="tab:mytable",
 
 	ncol     = dim(goo)[[2]] - as.numeric(add.header.column) - as.numeric(use.row.names)
 	## Length of align is one greater than ncol(x) if x is a data.frame
-	tabalign = paste0("c",ifelse(add.header.column, alignHRC[1], ""), ifelse(use.row.names, alignHRC[2], ""), paste(rep(alignHRC[3], ncol), collapse=""))
+	#tabalign = paste0("c",ifelse(add.header.column, alignHRC[1], ""), ifelse(use.row.names, alignHRC[2], ""), paste(rep(alignHRC[3], ncol), collapse=""))
+	tabalign = paste0(alignHRC[1], ifelse(add.header.column, alignHRC[1], ""), ifelse(use.row.names, alignHRC[2], ""), paste(rep(alignHRC[3], ncol), collapse=""))
 	fldsize  = newsize = c(0,apply(goo,2,function(x){if (all(is.na(x))) 1 else max(nchar(x),na.rm=TRUE)})) # due to extra column nonsense
 	hdrsize  = sapply(strsplit(colnames(goo),split="[[:space:][:punct:]]"),function(x){xx = nchar(x); if (length(xx)==0) 0 else(max(xx))})
+	#fldsize  = newsize = c(0,apply(goo,2,function(x){if (all(is.na(x))) 0.1 else max(strwidth(x,font=1,units="in"),na.rm=TRUE)})) # due to extra column nonsense
+	#hdrsize  = strwidth(colnames(goo),font=1,units="in")
 
-	## No longer any need to do a field fix because all fields are adjusted below
-#	fldfix   = fldsize>80
-#	if (any(fldfix)) {
-#		newsize[fldfix] = 80
-#		fldprop  = round(0.9*newsize/sum(newsize),2)
-#		fldalign = strsplit(tabalign,"")[[1]]
-#		fldalign[fldfix] = paste(">{\\raggedright\\arraybackslash}p{",fldprop[fldfix],"\\textwidth}",sep="")
-#		tabalign = fldalign #paste(fldalign,collapse="")
-#		#tabalign = paste(">{\\raggedright\\arraybackslash}",tabalign,sep="")
-#	}
+#browser();return()
+	colnames(goo) = gsub("\\_",uscore,colnames(goo)) ## (RH 210420)
+	goo = as.data.frame(sapply(goo,function(x){gsub("\\_",uscore,x)}))
 
 	## Italicise words from italics.file, if supplied
 	if (!is.null(italics.file) && file.exists(italics.file)){
@@ -521,9 +515,14 @@ texArray =function(x, table.caption="My table", table.label="tab:mytable",
 
 #browser();return()
 	xtab = xtable::xtable(goo,align=tabalign)
-	longtable.header = makeLTH(xtab,table.caption,table.label,...)
-	add.to.row = if (length(rows.line)==0) list(pos = list(-1, nrow(xtab)), command = c( longtable.header, "%"))
-		else list(pos = list(-1, rows.line, nrow(xtab)), command = c( longtable.header, "\\hdashline[0.5pt/2pt]", "%"))
+	longtable.header = makeLTH(xtab,table.caption,table.label)
+	if (!is.null(list(...)$add.to.row)) {
+		add.to.row = list(...)$add.to.row
+	} else if (length(rows.line)==0) {
+		add.to.row = list(pos = list(-1, nrow(xtab)), command = c( longtable.header, "%"))
+	} else {
+		add.to.row = list(pos = list(-1, rows.line, nrow(xtab)), command = c( longtable.header, "\\hdashline[0.5pt/2pt]", "%"))
+	}
 	#if (!is.null(add.to.row)) {
 	#	ADD.TO.ROW[["pos"]] = c(add.to.row[["pos"]], ADD.TO.ROW[["pos"]])
 	#	ADD.TO.ROW[["command"]] = c(add.to.row[["command"]], ADD.TO.ROW[["command"]]) }
@@ -562,7 +561,6 @@ texArray =function(x, table.caption="My table", table.label="tab:mytable",
 		return(mess)
 	}
 	fldalign = toupper(strsplit(tabalign,"")[[1]][-1])
-#browser();return()
 
 	## RH (2017-05-18) Adjust column widths to fit data and allow for minimum width before allocating to table width
 	colsize  = pmax(fldsize[-1],hdrsize)        ## compare nchar in data column and column header
@@ -570,10 +568,10 @@ texArray =function(x, table.caption="My table", table.label="tab:mytable",
 	minprop  = pmax(fldprop,1/ncol(goo))        ## make sure some fields are not too small by considering # columns as a proportion
 	adjprop  = minprop/sum(minprop)             ## standardise the adjusted column proportions
 	fldwidth = round(adjprop * tablewidth,2)    ## allocate column dimensions as proportion of table width
+#browser();return()
 
 	#bigmess  = paste0(sapply(1:length(fldwidth), function(N, a, w) { LCR(align=fldalign[N], width=fldwidth[N]) } ),collapse="")
 	bigmess  = paste0(sapply(1:length(fldwidth), function(N) { LCR(align=fldalign[N], width=fldwidth[N]) } ),collapse="")
-#browser();return()
 
 	texfile[ltdelim[1]] = gsub(substring(tabalign,2,nchar(tabalign)),bigmess,texfile[ltdelim[1]])
 	writeLines(texfile,sub("\\.tex","+.tex",texout))

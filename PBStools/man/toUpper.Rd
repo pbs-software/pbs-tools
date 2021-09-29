@@ -24,11 +24,15 @@ toUpper(x, exclude=c("&","and","exact","or","in","on","organic","pelagic",
 	The input vector where the first letter of all words are capitalised.
 }
 \author{
-  Rowan Haigh, Pacific Biological Station, Fisheries and Oceans Canada, Nanaimo BC
+  \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
+  Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
+  \emph{locus opus}: Institute of Ocean Sciences (IOS), Sidney BC\cr
+  Last modified \code{Rd: 2021-06-15}\cr
 }
 \seealso{
   \code{\link[PBStools]{revStr}}, \code{\link[PBStools]{scaleVec}}, \code{\link[PBStools]{plotConcur}} \cr
   \pkg{PBSdata}: \code{\link[PBSdata]{species}}
 }
 \keyword{character}
+\concept{M01_Utility}
 

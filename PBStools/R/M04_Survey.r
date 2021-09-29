@@ -502,7 +502,7 @@ showIndices =  function(strSpp="396", serID=1, survID=NULL, bootID,
    outnam="relAbund", png=FALSE, pngres=400, PIN=c(7,7))
 {
 	assign("PBStool",list(module="M04_Survey",call=match.call(),args=args(showIndices)),envir=tenv)
-	data(spn,envir=penv())
+	data("spn", package="PBSdata", envir=penv())
 	surveys  = getBootRuns(strSpp)
 	survBoot = surveys[,c("serID","survID","bootID","runDesc")]
 #browser();return()
@@ -747,7 +747,7 @@ trend <- function(strSpp="442", fqtName="gfb_iphc.sql",
    dbName="GFBioSQL", spath=NULL, type="SQL", ioenv=.GlobalEnv, hnam=NULL)
 {
 	warn <- options()$warn; options(warn=-1)
-	data(spn,envir=ioenv)
+	data("spn", package="PBSdata", envir=ioenv)
 	if (exists("PBSdat",envir=ioenv)) rm(PBSdat,pos=ioenv)
 	assign("PBStool",list(module="M04_Survey",call=match.call(),args=args(trend),ioenv=ioenv,plotname="Rplot"),envir=.PBStoolEnv)
 
@@ -813,7 +813,7 @@ trend <- function(strSpp="442", fqtName="gfb_iphc.sql",
 		fnam = getWinVal()$fnam
 		tget(PBSdat,tenv=ioenv) }
 	else if (fnam %in% c("iphc.rbr","iphc.rer","iphc.yyr"))
-		eval(parse(text=paste("data(",fnam,",envir=penv())",sep=""))) 
+		eval(parse(text=paste("data(\"",fnam,"\", package=\"PBSdata\", envir=penv())",sep=""))) 
 	else 
 		eval(parse(text=paste("getFile(",fnam,",senv=ioenv,tenv=penv())",sep=""))) 
 	eval(parse(text=paste("dat=",fnam,sep="")))

@@ -57,7 +57,10 @@ predictRER(S, L, N)
   (Teleostei: Scorpaeniformes). \emph{Fisheries Bulletin} \bold{106}: 111--134.
 }
 \author{
-  Rowan Haigh, Pacific Biological Station, Fisheries & Oceans Canada, Nanaimo BC.
+  \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
+  Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
+  \emph{locus opus}: Institute of Ocean Sciences (IOS), Sidney BC\cr
+  Last modified \code{Rd: 2021-06-15}\cr
 }
 \seealso{
   \code{\link{simRER}}, \code{\link{simBSR}}
@@ -78,4 +81,5 @@ pbsfun()
 })
 }
 \keyword{multivariate}
+\concept{M02_Biology}
 

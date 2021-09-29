@@ -23,11 +23,16 @@ fitLogit(dat, yfld="pmat", xflds="age")
   observations. See the 'Value' section of the \code{glm} help file.
 }
 \author{
-  Rob Kronlund, Pacific Biological Station, Nanaimo BC
+  Rob Kronlund, Pacific Biological Station, Nanaimo BC\cr
+  Maintainer: \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
+  Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
+  \emph{locus opus}: Institute of Ocean Sciences (IOS), Sidney BC\cr
+  Last modified \code{Rd: 2021-06-15}\cr
 }
 \seealso{
   \code{\link{estOgive}}
 }
 \keyword{distribution}
 \keyword{regression}
+\concept{M01_Utility}
 

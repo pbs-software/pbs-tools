@@ -1,6 +1,7 @@
 ## =============================================================================
 ## Module 6: Assessment
 ## --------------------
+##  calcCVage.......Calculate CV of ages based on age or length data.
 ##  calcMA..........Calculate a moving average using a fixed period occurring every x units.
 ##  compAF..........Compare age frequencies using discrete or cumulative distribution plots.
 ##  compBmsy........Compare biomass posteriors relative to Bmsy or Bavg.
@@ -13,10 +14,98 @@
 ##  plotAgeErr......Plot ageing precision data from primary and secondary readers.
 ##  plotBTMW........Plot bottom (BT) vs. midwater (MW) trawl catch.
 ##  plotMW..........Plot annual mean weights by stock and by PMFC area.
+##  plotSnail.......Plot snail-trail plots for MCMC analysis.
 ##  processBio......Process PBSdat created by call to 'gfb_bio.sql' query.
 ##  processMap......Process PBSdat created by call to `fos_map_density.sql' to create a map object for stock assessment.
 ##  quantAges.......Plot quantile boxes of age by year and/or area, including mean age over time.
+##  splineCPUE......Fit spline curves through CPUE data to determine CV process error.
 ## =============================================================================
+
+
+## calcCVage----------------------------2021-03-16
+##  Calculate CV of ages base on age or length data
+## ---------------------------------------------RH
+calcCVage = function(dat, read_true=1, cvtype="age", Amax=50,
+   min.ages=1:6, min.cv=0.25,
+   plot=TRUE, png=FALSE, pngres=400, PIN=c(8,6), outnam, lang=c("e","f"))
+{
+	readT = paste0("read", read_true)
+#browser();return()
+	dat   = dat[dat[,readT] > 0 & !is.na(dat[,readT]),]
+	if (cvtype=="age")
+		readObs = setdiff(colnames(dat)[grep("^read",colnames(dat))], readT)
+	else
+		readObs = "len"
+	eval(parse(text=paste0("alist = split(dat, dat$read", read_true, ")")))
+	#Amax = max(as.numeric(names(alist)))
+	Atab = array(NA,dim=c(Amax,4), dimnames=list(age=1:Amax, stat=c("N","MU","SD","CV")))
+
+	for (i in 1:length(alist)){
+		ii = names(alist)[i]
+		Atrue = as.numeric(ii)
+		if (Atrue>Amax) next
+		if (ii=="0") next
+		adat = alist[[i]]
+		if (Atrue==Amax && any(as.numeric(names(alist))>Amax)) {
+			for (j in (i+1):length(alist))
+				adat = rbind(adat,alist[[j]])
+		}
+#if (ii=="50") {browser();return()}
+		zpos = adat[,readObs,drop=F]>0
+		Atab[ii,"N"] = sum(zpos)
+		if (sum(zpos)==0) next
+		Atab[ii,"MU"] = mean(adat[,readObs][zpos])
+		if (sum(zpos)==1) {
+			Atab[ii,"SD"] = Atab[ii,"CV"] = 0
+		} else {
+			Atab[ii,"SD"] = sd(adat[,readObs][zpos])
+			Atab[ii,"CV"] = Atab[ii,"SD"] / Atab[ii,"MU"]
+		}
+	}
+#browser();return()
+	cv0 = is.element(Atab[,"CV"],0) | is.na(Atab[,"CV"])
+	while(any(cv0)) {
+	#if (any(cv0)) {
+		cva = (1:nrow(Atab))[cv0]
+		cvb = rbind(Atab[pmax(1,cva-1),"CV"], Atab[pmin(nrow(Atab),cva+1),"CV"])
+		cvc = apply(cvb,2,calcGM)
+		Atab[cv0,"CV"] = cvc
+		cv0 = is.element(Atab[,"CV"],0) | is.na(Atab[,"CV"])
+		#if (any(is.element(Atab[,"CV"],0) | is.na(Atab[,"CV"])))
+		#	stop("Need to deal with multiple missing values")
+	}
+	## Override specific ages with minimum acceptable CVs
+	exCV = is.element(rownames(Atab),min.ages)
+	if (any(exCV))
+		Atab[exCV,"CV"] = pmax(Atab[exCV,"CV"],min.cv)
+#browser();return()
+	names.not = names.arg = rep("",nrow(Atab))
+	names.out = seq(5,Amax,5)
+	names.arg[match(names.out,rownames(Atab))] = names.out
+#browser();return()
+	if (plot) {
+		if (missing(outnam))
+			outnam = paste0("CV",cvtype)
+		fout = fout.e = outnam
+		for (l in lang) {  ## could switch to other languages if available in 'linguaFranca'.
+			changeLangOpts(L=l)
+			fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
+			if (png){ 
+				createFdir(l)
+				clearFiles(paste0(fout,".png"))
+				png(file=paste0(fout,".png"), units="in", res=pngres, width=PIN[1], height=PIN[2])
+			}
+			expandGraph(mfrow=c(1,1), mar=c(3,3,1,1))
+			barplot(Atab[,"CV"], col=switch(cvtype, 'age'="moccasin", 'len'="olivedrab1"), space=0, xlab=linguaFranca("Age (y)",l), ylab=switch(l, 'e'="Coefficient of Variation", 'f'="coefficient de variation"), cex.axis=1.2, cex.lab=1.5, names.arg=names.not)
+			axis(1, at=names.out-0.5, labels=names.out, line=NA, pos=0, tick=F, padj=0, cex=1.2, mgp=c(2,0.2,0))
+			addLegend(0.9,0.9, linguaFranca(paste0("based on ", switch(cvtype, 'age'="age reader observations", 'len'="lengths at age")),l), adj=c(1,0), bty="n")
+			if(png) dev.off()
+		}; eop()
+	}
+	write.csv(Atab,file=paste0(outnam,".csv"))
+	return(Atab)
+}
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~calcCVage
 
 
 #calcMA---------------------------------2011-05-05
@@ -83,10 +172,11 @@ compAF=function(x, year=2003, sex=2, amax=40, pfld="wp",
 	col   = lucent(rep(clrs,ncomp)[1:ncomp],0.5)
 	lty   = rep(ltys,ncomp)[1:ncomp]
 
+	createFdir(lang)
 	fout = fout.e = outnam
 	for (l in lang) {
 		changeLangOpts(L=l)
-		if (l=="f") fout = paste0("./french/",fout.e)  ## could repeat for other languages
+		fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
 		if (png) png(file=paste0(fout,".png"), units="in", res=pngres, width=PIN[1], height=PIN[2])
 		if (ntype==1 && nsex==1) {
 			rc = .findSquare(nyear)
@@ -98,6 +188,8 @@ compAF=function(x, year=2003, sex=2, amax=40, pfld="wp",
 		}
 	
 		xnam = names(x)
+		ydiff = diff(year); udiff=unique(ydiff); ymode=udiff[which.max(tabulate(match(ydiff, udiff)))]
+#browser();return()
 		for (y in year) {
 			for (s in sex) {
 				yy = as.character(y)
@@ -115,16 +207,18 @@ compAF=function(x, year=2003, sex=2, amax=40, pfld="wp",
 					if(!is.element(yy,dimnames(xx)$year)) 0 
 					else sum(xx[,yy,ss,"n"])
 				})
-				legtxt = paste0(names(notos)," ",round(notos), switch(fac, 'age'=" otos", 'len'=" lens"))
+				#legtxt = paste0(names(notos)," ",round(notos), switch(fac, 'age'=" otos", 'len'=" lens"))
+				legtxt = paste0(names(notos)," ",round(notos), " obs")
 				ylim = c(0,max(sapply(xvec,max),na.rm=TRUE))
-	
+				yyy  = if (ymode<=1) yy else paste0(y-ymode+1,"-",y)
+
 				if ("discr" %in% type) {
 					plot(0,0, xlim=c(1,amax), ylim=ylim, type="n", xlab="", ylab="", xaxt="n", yaxt="n")
 					sapply(nord, function(n){
 						if (!all(is.na(xvec[[n]])))
 							#lines(1:length(xvec[[n]]), xvec[[n]], col=col[n], lty=lty[n], lwd=ifelse(n==1,3,2)) } )
 							lines(1:length(xvec[[n]]), xvec[[n]], col=col[n], lty=lty[n], lwd=2) } )
-					addLabel(0.95, 0.95, paste0(yy, " - ", linguaFranca(switch(s,"Male","Female"),l)), adj=1)
+					addLabel(0.95, 0.95, paste0(yyy, " - ", linguaFranca(switch(s,"Male","Female"),l)), adj=1)
 				}
 				if ("cumul" %in% type) {
 					plot(0,0, xlim=c(1,amax), ylim=c(0,1), type="n", xlab="", ylab="", xaxt="n", yaxt="n")
@@ -140,7 +234,7 @@ compAF=function(x, year=2003, sex=2, amax=40, pfld="wp",
 							lines(1:length(xvec[[n]]), cumsum(xvec[[n]]), col=col[n], lty=lty[n], lwd=2)
 						}
 					} )
-					addLabel(0.05, 0.95, paste0(yy, ifelse(np==1, linguaFranca(switch(s," - Male"," - Female"),l), "")), adj=c(0,1), cex=1.2)
+					addLabel(0.05, 0.95, paste0(yyy, ifelse(np==1, linguaFranca(switch(s," - Male"," - Female"),l), "")), adj=c(0,1), cex=1.2)
 					if (par()$mfg[2]==1) {
 						axis(2, at=seq(0,1,0.1), tcl=-0.25, labels=FALSE)
 						axis(2, at=seq(0.2,1,0.2), labels=TRUE, cex.axis=1.1, las=1)
@@ -150,8 +244,10 @@ compAF=function(x, year=2003, sex=2, amax=40, pfld="wp",
 						axis(1, at=seq(10,amax,10), labels=TRUE, cex.axis=1.1, las=1)
 					}
 				}
+#browser();return()
+				zleg = grep(" 0 ",legtxt,invert=T)
 				if (type=="cumul")
-					addLegend(0.975,0.05, bty="n", lty=lty, seg.len=1, col=col, legend=linguaFranca(gsub("_"," ",legtxt),l), yjust=0, xjust=1, lwd=2, cex=0.9)
+					addLegend(0.025,0.8, bty="n", lty=lty[zleg], seg.len=3, col=col[zleg], legend=linguaFranca(gsub("_"," ",legtxt[zleg]),l), yjust=1, xjust=0, lwd=2, cex=0.9)
 				else
 					addLegend(0.025,0.975,bty="n", lty=lty, seg.len=1, col=col, legend=linguaFranca(gsub("_"," ",legtxt),l), yjust=1, xjust=0, lwd=2, cex=0.9)
 			} ## end s (sex) loop
@@ -165,7 +261,7 @@ compAF=function(x, year=2003, sex=2, amax=40, pfld="wp",
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~compAF
 
 
-## compBmsy-----------------------------2020-04-20
+## compBmsy-----------------------------2021-09-16
 ## Compare biomass posteriors relative to Bmsy or Bavg
 ## ---------------------------------------------RH
 compBmsy = function(Bspp, spp="POP", Mnams=c("Est M","Fix M"),
@@ -173,8 +269,8 @@ compBmsy = function(Bspp, spp="POP", Mnams=c("Est M","Fix M"),
    quants=c(0.05,0.25,0.5,0.75,0.95),
    zones = c("Critical","Cautious","Healthy"),
    figgy=list(win=T), pngres=400, width=12, height=9, 
-   rcol=c("red","green4","blue"),    ## line cols
-   ocol = c("#D55E00", "#009E73", "#56B4E9", "#F0E442"), ## dot cols for colour-blind humans (vermillion, bluegreen, skyblue, yellow)
+   rcol=c("red","green4","blue"), rlty=rep(2,3), rlwd=rep(2,3), ## ratio lines: col, lty, lwd
+   ocol = c("#D55E00", "#009E73", "#56B4E9", "#F0E442"),   ## dot cols for colour-blind humans (vermillion, bluegreen, skyblue, yellow)
    lcol = c("red","darkorange","green4"),
    spplabs=TRUE, left.space=NULL, top.space=2, fout=NULL, 
    offset=c(-0.1,0.1), calcRat=TRUE, refpt="MSY", param=NULL, 
@@ -187,6 +283,7 @@ compBmsy = function(Bspp, spp="POP", Mnams=c("Est M","Fix M"),
 		eval(parse(text=mess))
 		gc(verbose=FALSE) }
 	#on.exit(ciao())
+	if(!is.null(left.space)) left.space = rep(left.space,2)[1:2]
 
 	spp = unique(spp)
 	spp = spp[is.element(spp,names(Bspp))]
@@ -247,21 +344,21 @@ compBmsy = function(Bspp, spp="POP", Mnams=c("Est M","Fix M"),
 			else if (.Platform$OS.type=="windows" && f=="wmf") 
 				do.call("win.metafile",list(filename=paste(fout,".wmf",sep=""), width=width*1.25, height=height*1.25))
 			if (is.null(left.space))
-				left.space = (max(nchar(names(Bmsy)))-ifelse(spplabs,nchar(spp),0))^0.9
+				left.space = rep((max(nchar(names(Bmsy)))-ifelse(spplabs,nchar(spp),0))^0.9,2) ## just to be consistent with english vs. french
 			len.lab = max(sapply(names(Bmsy),nchar))                      ## RH 200420
 			cex.lab = ifelse(len.lab>20, 0.9, ifelse(len.lab>15, 1, 1.2)) ## RH 200420
-			par(mar=c(4,left.space + ifelse(l=="f",2,0), 0.5, 0.5),cex=ifelse(f%in%c("png","eps"),1,1.2),mgp=c(1.6,0.6,0))
+			par(mar=c(4, switch(l,'e'=left.space[1],'f'=left.space[2]), 0.5, 0.5), cex=ifelse(f%in%c("png","eps"),1,1.2), mgp=c(1.6,0.6,0))
 			quantBox(Bmsy, horizontal=TRUE, las=1, xlim=c(0.5,nmods+top.space), ylim=ylim, cex.axis=1.2, yaxs="i", outline=FALSE,
 				pars=list(boxwex=boxwidth,medlwd=2,whisklty=1), quants=quants, names=FALSE)
 			if (Nrats>0)
-				abline(v=ratios,col=rep(rcol,Nrats)[1:Nrats],lty=2,lwd=2)
+				abline(v=ratios,col=rep(rcol,Nrats)[1:Nrats],lty=rlty,lwd=rlwd)
 	
 			## segments(v=ratios,col=rep(c("red","green4","blue"),Nrats)[1:Nrats],lty=2,lwd=2)
 			quantBox(Bmsy, horizontal=TRUE, las=1, xlim=c(0.5,nmods+1), ylim=ylim, cex.axis=1.2, yaxs="i", outline=FALSE, names=FALSE, pars=list(boxwex=boxwidth, medlwd=2, whisklty=1, medcol=medcol, boxfill=boxfill, ...), add=TRUE, quants=quants)
 			## if (length(Bmsy)==1)  ## for some reason, a label is not added when there is only 1 boxplot.
 			##	axis(2, at=1, labels=linguaFranca(names(Bmsy),l), las=1, cex.axis=1.2)
-			axis(2, at=1:length(Bmsy), labels=linguaFranca(names(Bmsy),l), las=1, cex.axis=cex.lab) ## RH 200420
 #browser();return()
+			axis(2, at=1:length(Bmsy), labels=linguaFranca(names(Bmsy),l), las=1, cex.axis=cex.lab) ## RH 200420
 
 			if (Norats>0){
 				orange = attributes(oratios)$range
@@ -308,7 +405,7 @@ compBmsy = function(Bspp, spp="POP", Mnams=c("Est M","Fix M"),
 				text(c(ratios),par()$usr[3],labels=show0(round(ratios,2),2),adj=c(1.1,-.5),col=rcol)
 			}
 			if (is.null(param)) {
-				mess = paste0("mtext(expression(italic(B)[italic(t)]/italic(B)[",linguaFranca(refpt,l),"]),side=1,line=2.5,cex=1.5)")
+				mess = paste0("mtext(expression(italic(B)[", t.yr, "]/italic(B)[",linguaFranca(refpt,l),"]),side=1,line=2.5,cex=1.5)")
 			} else {
 				mess = sapply(strsplit(param,"_"),function(x){if(length(x)==1) x else paste0("italic(",x[1],")[",x[2],"]")})
 				mess = paste0("mtext(expression(",mess,"),side=1,line=2.5,cex=2)")
@@ -424,7 +521,7 @@ compLen = function(dat, strSpp, fld="len", lbin=1, sex=c(2,1),
 	ssnames = names(gval)
 #browser();return()
 	loca    = lenv()
-	data(species, package="PBSdata", envir=loca)
+	data("species", package="PBSdata", envir=loca)
 #browser();return()
 	if (missing(stock.name)) { ## RH 200616
 		if (grepl("BSR|RER|HYB|REBS", strSpp))
@@ -442,6 +539,7 @@ compLen = function(dat, strSpp, fld="len", lbin=1, sex=c(2,1),
 	goo  = if (gfld=="gear")  paste0(paste0(names(gnames),"=",gsub("\\|","+",gnames)),collapse="_") else gfld
 	foo  = paste0(spp3,"-(", datnam, ")", out , poo, "-g(", goo, ")", ifelse(strat,"-(strat_","-(obs_"),fld,")")
 	fout = fout.e = if (missing(outnam)) foo else outnam
+	clearFiles(paste0(fout,".png"))
 #browser();return()
 
 	for (l in lang) {  ## could switch to other languages if available in 'linguaFranca'.
@@ -467,7 +565,7 @@ compLen = function(dat, strSpp, fld="len", lbin=1, sex=c(2,1),
 				#plot(0,0,type="n",xlim=xlim,ylim=ylim,xlab="",ylab="", mgp=c(1.5,0.5,0))
 			} else {
 				quantBox(sapply(Qbox,function(x){NA},simplify=F), type="n", ylim=ylim, xlab="", ylab="")
-				abline(v=seq(0.5,par()$usr[2],1),col="grey95")
+				abline(v=seq(0.5,par()$usr[2],1),col="grey90")
 			}
 			sapply(1:length(Idat), function(i) {  ## loop through index 
 				ii  = names(Idat)[i]
@@ -594,7 +692,7 @@ compLen = function(dat, strSpp, fld="len", lbin=1, sex=c(2,1),
 ## ---------------------------------------------RH
 compVB = function(dat, index, A=1:40, subset=list(sex=c("Male","Female")), 
    col=c("blue","green4","red"), lty=c(1,2,3), ymax,
-   outnam="compVB-RSR", png=FALSE, pngres=400, lang=c("e","f"))
+   outnam="compVB-RSR", png=FALSE, pngres=400, lang=c("e","f"), ...)
 {
 	VBfun <- function(P, a=1:40) {
 		Linf <- P[1]
@@ -646,14 +744,17 @@ compVB = function(dat, index, A=1:40, subset=list(sex=c("Male","Female")),
 					lty = sltys[ij]
 					col = scols[ij]
 					vb = VBfun(dat[[j]][i,2:4], a=A)
-					lines(A, vb, lwd=3, col=col, lty=lty)
+					lines(A, vb, col=col, lty=lty, ...) ##lwd=3
 #if (i=="Male") {browser();return()}
 				}
 			}
 			lcol = rep(scols,nstock)
 			llty = rep(sltys,nstock)
 			legtxt = paste0(rep(stocks,length(iii))," -- ",rep(iii,each=nstock))
-			legtxt = gsub("\\."," ", gsub("\\.mcmc|\\.err","",legtxt))
+			if (all(grepl("\\.mcmc",legtxt)))
+				legtxt = gsub("\\."," ", gsub("\\.mcmc|\\.err","",legtxt))
+			else
+				legtxt = gsub("\\."," ", gsub("\\.err","",legtxt))
 			addLegend(0.9,0.05, lty=llty, col=lcol, xjust=1, yjust=0, text.col=lcol, lwd=3, seg.len=3.5, bty="n",
 				legend=linguaFranca(legtxt,l), cex=1.25)
 			box(col="slategray")
@@ -664,37 +765,48 @@ compVB = function(dat, index, A=1:40, subset=list(sex=c("Male","Female")),
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~compVB
 
 
-## compVBpars---------------------------2020-06-16
+## compVBpars---------------------------2021-02-02
 ##  Compare MCMC derived parameters from von Bertalanffy model
 ## ---------------------------------------------RH
 compVBpars = function(bfiles, prefix="vbstan.barf.", 
-   pnams=c("linf","k","t0"), nmcmc=4000, redo.QVB=TRUE,
-   quants=c(0.05,0.25,0.5,0.75,0.95), bcol =c("orange", "green4"),
+   pnams=c("linf","k","t0"), redo.QVB=TRUE, quants=c(0.05,0.25,0.5,0.75,0.95),
+   bcol=c("orange", "green4"), bgrp=c("female","male"), 
    outnam, png=FALSE, pngres=400, PIN=c(8,8), lang=c("e","f"))
 {
 	## Compare quantile plots for each parameter
 	bnams = gsub("\\.rda$","",gsub(prefix,"",bfiles))
 	if (!file.exists("QVB.rda") || redo.QVB) {
-		QVB   = array(NA, dim=c(nmcmc, length(pnams), length(bfiles)), dimnames=list(1:nmcmc, pnams, bnams))
-		ii = as.character(1:nmcmc); jj = pnams
+		#QVB   = array(NA, dim=c(nmcmc, length(pnams), length(bfiles)), dimnames=list(1:nmcmc, pnams, bnams))
 		for (i in 1:length(bfiles)) {
 			kk = bnams[i]
-			ifile = load(bfiles[i])
-			idat  = array(unlist(barf$p[pnams]), dim=c(nmcmc,length(pnams)), dimnames=list(1:nmcmc, pnams))
-			QVB[ii,jj,kk] = idat[ii,jj]
+			if (!file.exists(bfiles[i]))
+				stop(paste0("File '", bfiles[i], "' does not exist."))
+			load(bfiles[i])        ## loads as object 'barf'
+			ibarf = barf$p[pnams]  ## p = random effects fit
+			idat  = as.data.frame(ibarf)
+#browser();return()
+			nmcmc = nrow(idat)
+			if (i==1) {
+				QVB = array(NA, dim=c(dim(idat),length(bfiles)), dimnames=list(1:nmcmc, pnams, bnams))
+				ii = as.character(1:nmcmc); jj = pnams
+			}
+			QVB[ii,jj,kk] = as.matrix(idat[ii,jj])
 		}
 		save("QVB", file="QVB.rda")
 	} else {
 		load("QVB.rda")
 	}
+#browser();return()
+	if (!all(bnams %in% dimnames(QVB)[[3]]))
+		stop ("You need to re-create QVB, set 'redo.QVB=T'")
 	QVB = QVB[,,bnams,drop=FALSE]
 	pvb.med = apply(QVB[,1,],2,median)
 	pvb.ord = order(pvb.med)
 	col.ord = rep("white", length(pvb.ord))
-	z.bsr   = grep("bsr|425",names(pvb.med)[pvb.ord])
-	col.ord[z.bsr] = bcol[1]
-	z.rer   = grep("rer|394",names(pvb.med)[pvb.ord])
-	col.ord[z.rer] = bcol[2]
+	z1      = grep(paste0("\\b",bgrp[1],"\\b"),names(pvb.med)[pvb.ord])
+	col.ord[z1] = bcol[1]
+	z2      = grep(paste0("\\b",bgrp[2],"\\b"),names(pvb.med)[pvb.ord])
+	col.ord[z2] = bcol[2]
 
 	colgrey = "grey60"
 	bpars = list(boxwex=0.5, boxcol=colgrey, boxfill=lucent((col.ord),0.50), medcol=(col.ord), whisklty=1, whiskcol=colgrey, staplecol=colgrey)
@@ -705,7 +817,6 @@ compVBpars = function(bfiles, prefix="vbstan.barf.",
 	for (l in lang) {  ## could switch to other languages if available in 'linguaFranca'.
 		changeLangOpts(L=l)
 		fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
-#browser();return()
 		if (png) png(paste0(fout,".png"), units="in", res=pngres, width=PIN[1], height=PIN[2])
 		expandGraph(mfrow=c(3,1),mar=c(3.5,0,1,1), oma=c(0,12,0,0))
 
@@ -713,25 +824,14 @@ compVBpars = function(bfiles, prefix="vbstan.barf.",
 			pp  = p[1]
 			pvb = QVB[,pp,]
 			pvb.med = apply(pvb,2,median)
-	
-			if (p==0) pvb.ord = order(pvb.med) ## disable for now
-	
-			if (p==0) { ## disable for now
-				pvb.nam = names(pvb.med)
-				pvb.new = c(sort(pvb.nam[grep("\\.female",pvb.nam)]), sort(pvb.nam[grep("\\.male",pvb.nam)]))
-				## Highly specific
-				t1=rep(c(rep("len.surv.",4),rep("len.syn.",2)),2)
-				t2=rep(c("425G.","394G.",rep(c("bsr.","rer."),2)),2)
-				t3=rep(c("female","male"), each=6)
-				pvb.new = paste0(t1,t2,t3)
-				pvb.ord = match(rev(pvb.new),pvb.nam)
-			}
-			#pdat.qnt = quantile(pdat, quants)
+#browser();return()
 	
 			ppp = c(expression(italic(L)[infinity]),expression(italic(K)),expression(italic(t)[0]),expression(italic(sigma)))[p]
-			pvb.rev = pvb
-			quantBox(pvb[,pvb.ord], horizontal=T, outline=F, pars=bpars, yaxt="n", cex.axis=1.2)
+			pvb.plot = pvb[,pvb.ord]; attr(pvb.plot,"class")="matrix"    ## some weird new shit with subsetting and quantBox (RH 210202)
+
+			quantBox(pvb.plot, horizontal=T, outline=F, pars=bpars, yaxt="n", cex.axis=1.2)
 			mtext(ppp, side=1, line=2.25, cex=1.5)
+browser();return()
 			if (par()$mfg[2]==1) {
 				ylab = gsub("\\."," ", gsub("surv\\.","", gsub("bsr","BSR",gsub("rer","RER",gsub("len\\.","",colnames(pvb)[pvb.ord])))))
 				## Modify the names of the stocks and genetic species (probably should make ylab an argument to the function):
@@ -746,11 +846,11 @@ compVBpars = function(bfiles, prefix="vbstan.barf.",
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~compVBpars
 
 
-## createMA-----------------------------2020-03-24
+## createMA-----------------------------2021-07-09
 ##  Create table of DFO management actions for
 ##  Catch Appendix A tailored to species using 'strSppp'.
 ## ---------------------------------------------RH
-createMA =function(yrs=1979:2019, strSpp="POP", addletters=TRUE)
+createMA =function(yrs=1979:2021, strSpp="POP", addletters=TRUE)
 {
 	dfo.acts = as.list(rep(NA,length(yrs)))
 	names(dfo.acts)=yrs
@@ -769,6 +869,12 @@ createMA =function(yrs=1979:2019, strSpp="POP", addletters=TRUE)
 	dfo.acts[["1983"]][["POP"]] = "POP: Started experimental unlimited harvesting of Langara Spit POP stock (5EN)."
 	##-----1984--------------------------
 	dfo.acts[["1984"]][["POP"]] = "POP: Ended experimental over-harvesting of SW Vancouver Island POP stock."
+	##-----1986--------------------------
+	dfo.acts[["1986"]][["POP|YMR|RER"]] = "SRF: Slope rockfish (POP, YMR, RER) coastwide quota = 5000t."
+	##-----1988--------------------------
+	dfo.acts[["1988"]][["YMR"]] = "YMR: The quota for Yellowmouth Rockfish only applies to areas 127, 108, 109, 110, 111 and 130-1. Evidence from surveys and from commercial fishery suggests a common stock from the mouth of Queen Charlotte Sound and possibly to Cape Cook."
+	##-----1989--------------------------
+	dfo.acts[["1989"]][["POP|YMR|CAR|SGR"]] = "TWL: In 1989, quota rockfish comprising Pacific Ocean Perch, Yellowmouth Rockfish, Canary Rockfish and Silvergray Rockfish, will be managed on a coastwide basis."
 	##-----1990--------------------------
 	dfo.acts[["1990"]][["PAH|SBF"]] = paste0(strSpp,": Started \\emph{Individual Vessel Quotas} (IVQ) systems for Halibut and Sablefish.")
 	##-----1991--------------------------
@@ -879,8 +985,17 @@ createMA =function(yrs=1979:2019, strSpp="POP", addletters=TRUE)
 		write.csv(code.year,"code.year.csv")
 	}
 	## Get rid of Latex controls
-	sout$comment = gsub("emph\\{","",gsub("}","",gsub("~","",gsub("\\\\","",sout$comment))))
+	comm = sout$comment
+	comm = gsub("\\$\\^\\\\circ\\$", eval(parse(text=deparse("\u{00B0}"))), comm)
+	comm = gsub("\\$\\'\\$", eval(parse(text=deparse("\u{2032}"))), comm)
+	comm = gsub("\\$\\'\\'\\$", eval(parse(text=deparse("\u{2032}\u{2032}"))), comm)
+	comm = gsub("\\$\\'\\'\\$", eval(parse(text=deparse("\u{2032}\u{2032}"))), comm)
+	comm = gsub("\\\\%", eval(parse(text=deparse("\u{0025}"))), comm)
+	comm = gsub("\\\\&", eval(parse(text=deparse("\u{0026}"))), comm)
+	comm = gsub("\\~", " ", comm)
+	comm = gsub("emph\\{","",gsub("}","",comm))
 #browser();retrun()
+	sout$comment = comm
 	write.csv(sout, file=paste0("dfo.mgmt.acts.", strSpp, ".csv"), row.names=F)
 	return(sout)
 }
@@ -1205,7 +1320,7 @@ if(is.na(LL1)) {browser();return()}
 ## ---------------------------------------------RH
 makeAgeErr = function(type="simple", strSpp, sql=FALSE,
    Amax=45, ondiag=0.8, offdiag=0.1, corner=0.9, Ndiff=5,
-   CV, Noff=1, less=0, more=0, png=FALSE, ptype="bubble")
+   CV, Noff=1, less=0, more=0, png=FALSE, ptype="bubble", lang=c("e","f"))
 {
 	make.errtab = function(errmat, Ndiff) {
 		Amax = dim(errmat)[1]
@@ -1266,6 +1381,7 @@ makeAgeErr = function(type="simple", strSpp, sql=FALSE,
 			zz = aa>0 & aa<Amax
 			errmat[a,aa[zz]] = pp[zz]
 			zzz = aa>=Amax
+#browser();return()
 			if (any(zzz)) errmat[a,Amax] = errmat[a,Amax] + sum(pp[zzz])
 #if (a==49) {browser();return()}  ## NEED TO FIX THIS
 		}
@@ -1280,57 +1396,68 @@ makeAgeErr = function(type="simple", strSpp, sql=FALSE,
 		else
 			spread = "(0.01-0.99)" ## need to modify if this becomes dynamic
 
-		if (strSpp=="435") {
+		onam = paste0("errmat.",ptype,".type=",type,spread,".noff=",Noff,".png")
+		snam = paste0("aerr(",strSpp,").mat.type=",type,spread,".noff=",Noff,".dat")
+		fnam = gsub("dat$","csv", snam)
+
+		if (strSpp=="435" && fnam!="aerr(435).mat.type=dnorm(0.01-0.99).noff=1.csv") {
 			tight = read.csv("aerr(435).mat.type=dnorm(0.01-0.99).noff=1.csv")
 			tight4 = tight[1:4,]
 			tight4[is.na(tight4)] = 0
 			errmat[1:4,] = as.matrix(tight4[,-1]) ## remove 'age' column and convert to matrix for compatability
 		}
-		onam   = paste0("errmat.",ptype,".type=",type,spread,".noff=",Noff,".png")
-#browser(); return()
+		fout  = fout.e = onam
+		if (png) createFdir(lang)
 
-		if (png) png(onam, units="in", res=400, width=8, height=8)
-		expandGraph(mfrow=c(1,1), mar=c(3,3,1,1), oma=c(0,0,0,0))
-		if (ptype=="bubble") {
-			#plotBubbles(errmat, dnam=T, prettyAxis=T, frange=0.01, size=0.1)
-			errbat = errmat
-			rownames(errbat) = -(1:Amax)
-			plotBubbles(errbat, dnam=T, xaxt="n", yaxt="n", frange=0.01, size=0.1)
-			axis(1, at=seq(5,Amax,5), cex=1.2)
-			axis(2, at=seq(-5,-Amax,-5), labels=seq(5,Amax,5), cex=1.2, las=1)
-			mtext("Real Age", side=1, line=1.75, cex=1.5)
-			mtext("Incorrect Age", side=2, line=1.75, cex=1.5)
+		for (l in lang) {
+			fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
 #browser();return()
-		}
-		if (ptype=="bars") {
-			plot(0,0,type="n", xlim=c(1,Amax), ylim=c(1,Amax), xlab="", ylab="", xaxt="n", yaxt="n")
-			tckpos = seq(1, Amax, 5); tcklab = Amax-(tckpos)+1
-			axis(1, at=seq(5,Amax,5), labels=TRUE, cex.axis=1.2)
-			axis(2, at=tckpos, labels=tcklab, cex.axis=1.2)
-			for (i in 1:Amax){
-				ii = Amax-i+1
-				y = errmat[i,]
-				y = y[y>0]
-				x = as.numeric(names(y))
-#if (i==15) {browser();return()}
-				bcol = lucent(ifelse(i%%2, "blue", "green3"),0.5)
-				fcol = lucent(ifelse(i%%2, "cyan", "green"),0.5)
-				drawBars(x, (y+ii), lwd=2, col=bcol, fill=fcol,width=1, base=ii)
+
+			changeLangOpts(L=l)
+			if (png) {
+				clearFiles(fout)
+				png(fout, units="in", res=400, width=8, height=8)
 			}
-		}
-		if (png) dev.off()
-#return()
+			expandGraph(mfrow=c(1,1), mar=c(3,3,1,1), oma=c(0,0,0,0))
+			if (ptype=="bubble") {
+				#plotBubbles(errmat, dnam=T, prettyAxis=T, frange=0.01, size=0.1)
+				errbat = errmat
+				rownames(errbat) = -(1:Amax)
+				plotBubbles(errbat, dnam=T, xaxt="n", yaxt="n", frange=0.01, size=0.1, hide0=T)
+				axis(1, at=seq(5,Amax,5), cex=1.2)
+				axis(2, at=seq(-5,-Amax,-5), labels=seq(5,Amax,5), cex=1.2, las=1)
+				mtext(switch(l, 'e'="True Age", 'f'=eval(parse(text=deparse("le vrai \u{00E2}ge")))), side=1, line=1.75, cex=1.5)
+				mtext(switch(l, 'e'="Misclassified Age", 'f'=eval(parse(text=deparse("l'\u{00E2}ge mal class\u{00E9}")))), side=2, line=1.75, cex=1.5)
 #browser();return()
+			}
+			if (ptype=="bars") {
+				plot(0,0,type="n", xlim=c(1,Amax), ylim=c(1,Amax), xlab="", ylab="", xaxt="n", yaxt="n")
+				tckpos = seq(1, Amax, 5); tcklab = Amax-(tckpos)+1
+				axis(1, at=seq(5,Amax,5), labels=TRUE, cex.axis=1.2)
+				axis(2, at=tckpos, labels=tcklab, cex.axis=1.2)
+				for (i in 1:Amax){
+					ii = Amax-i+1
+					y = errmat[i,]
+					y = y[y>0]
+					x = as.numeric(names(y))
+	#if (i==15) {browser();return()}
+					bcol = lucent(ifelse(i%%2, "blue", "green3"),0.5)
+					fcol = lucent(ifelse(i%%2, "cyan", "green"),0.5)
+					drawBars(x, (y+ii), lwd=2, col=bcol, fill=fcol,width=1, base=ii)
+				}
+			}
+			if (png) dev.off()
+		} ; eop()
+#return()
 		#errtab = make.errtab(errmat, Ndiff=Noff)
 
-		snam = paste0("aerr(",strSpp,").mat.type=",type,spread,".noff=",Noff,".dat")
+		clearFiles(c(snam,fnam))
 		write.table(errmat, file=snam, sep="\t", row.names=FALSE, col.names=FALSE)
-
-		fnam = gsub("dat$","csv", snam)
 		cat(paste(c("age",dimnames(errmat)[[2]]),sep="",collapse=","),"\n",file=fnam)
 		mess = paste(row.names(errmat),
 			apply(errmat,1,function(x){
 				z=x>0;xstr=x;xstr[!z]="";return(paste(xstr,sep="",collapse=","))}),sep=",")
+#browser();return()
 		cat(paste(mess,sep="",collapse="\n"),"\n",file=fnam,append=TRUE)
 
 		packList("errmat", target="obj.makeAgeErr", tenv=.PBStoolEnv)
@@ -1570,8 +1697,8 @@ plotAgeErr = function(dat, nsamp, xlim=NULL, ylim=NULL, jitter=0.25, seed=42,
 		if (png) png(paste0(fout,".png"), units="in", res=pngres, width=PIN[1], height=PIN[2])
 		par(mfrow=c(1,1), mar=c(3.5,3.5,0.5,0.75), oma=c(0,0,0,0), mgp=c(2,0.5,0))
 		plot(dat$r1_age, dat$r2_age, xlim=xlim, ylim=ylim, type="n", xlab="", ylab="", cex.axis=1.2, las=1)
-		axis(1, at=seq(0,xlim[2],ifelse(xlim[2]<80,1,5)), labels=F, tcl=-0.2)
-		axis(2, at=seq(0,ylim[2],ifelse(ylim[2]<80,1,5)), labels=F, tcl=-0.2)
+		axis(1, at=seq(0,xlim[2],ifelse(xlim[2]<60,1,5)), labels=F, tcl=-0.2)
+		axis(2, at=seq(0,ylim[2],ifelse(ylim[2]<60,1,5)), labels=F, tcl=-0.2)
 		abline(0,1,col=lucent("green4",0.5),lwd=2)
 		## Drawing segments takes a long time, especially when sending to PNG device:
 		segments(x0=dat$r1_amin, y0=dat$r2_age, x1=dat$r1_amax, y1=dat$r2_age, col=lucent("grey50",0.5),lwd=2)
@@ -1610,16 +1737,18 @@ plotBTMW = function(dat, strSpp="417", years=1996:2018, major=3:9,
 	if (!is.element("year",flds))
 		dat$year = as.numeric(substring(dat$date,1,4))
 	dat = dat[is.element(dat$year, years),]
-	dat = dat[is.element(dat$major, major),]
+	dat = dat[is.element(dat$major, major),]  ## use major_adj when summamrising YMR catdat for scaling
 	if (!is.element("catKg",flds))
 		dat$catKg = dat$landed + dat$discard
 	dat = dat[dat$catKg > 0,]
+#browser();return() ## use to summarise catch by 'major_adj' for YMR's 'Scaling catch to GMU'
 
 	gcodes = list(
 		gear   = c('0'="Unknown", '1'="Bottom_Trawl", '2'="Trap", '3'="Midwater_Trawl", '4'="Hook_&_Line", '5'="Longline", '8'="Mixed_H&L"),
 		fid    = c('0'="Unknown", '1'="Trawl", '2'="Halibut", '3'="Sablefish", '4'="Dogfish/Lingcod", '5'="H&L_Rockfish", '8'="GF_Longline", '9'="Foreign"),
 		sector = c('0'="UNKNOWN", '1'="FOREIGN", '2'="GROUNDFISH LONGLINE", '3'="GROUNDFISH TRAWL", '4'="HALIBUT", '5'="HALIBUT AND SABLEFISH", '6'="K/L", '7'="K/ZN", '8'="LINGCOD", '9'="ROCKFISH INSIDE",'10'="ROCKFISH OUTSIDE", '11'="SABLEFISH", '12'="SCHEDULE II", '13'="SPINY DOGFISH", '14'="ZN"),
-		fishery = c('0'="Unknown", '1'="BSR_trawl", '2'="BSR_other", '3'="RER_trawl", '4'="RER_other", '5'="HYB_trawl", '6'="HYB_other")
+		fishery = c('0'="Unknown", '1'="BSR_trawl", '2'="BSR_other", '3'="RER_trawl", '4'="RER_other", '5'="HYB_trawl", '6'="HYB_other"), ## REBS only
+		stock = c('UNK'="UNKNOWN", '3C'="3C", '3D5AB'="3D5AB", '5CD'="5CD", '5E'="5E") ## YMR
 	)
 
 	gtabs  = list()
@@ -1636,10 +1765,10 @@ plotBTMW = function(dat, strSpp="417", years=1996:2018, major=3:9,
 			names(zcode) = as.vector(gcode)
 			zdat = dat
 			zdat[,gnam] = zcode[zdat[,gnam]]
+#browser();return()
 		} else {
 			zdat = dat
 		}
-#browser();return()
 		gdat  = zdat[is.element(zdat[,gnam], gval),]
 
 		#glty  = rep(c(6,1,5,2,3,4,3),ncode)[1:ncode]
@@ -1657,6 +1786,7 @@ plotBTMW = function(dat, strSpp="417", years=1996:2018, major=3:9,
 		#	gtab = gtab[as.character(years),]
 		#}
 		gtab  = crossTab(gdat, c("year",gnam), "catKg")
+#browser();return()
 
 		xlim  = range(years)
 		xval  = as.numeric(rownames(gtab))
@@ -1673,9 +1803,9 @@ plotBTMW = function(dat, strSpp="417", years=1996:2018, major=3:9,
 			axis(1, at=years, labels=FALSE, tcl=-0.25)
 			for (i in 1:ncol(gtab)) {
 				ii = colnames(gtab)[i]
-#browser();return()
 				lines(xval, gtab[,ii], lty=glty[ii], col=gcol[ii], lwd=3 )
 				points(xval, gtab[,ii], pch=gpch[ii], col=gcol[ii], bg=gbg[ii],cex=1.5)
+#browser();return()
 			}
 			iii = intersect(as.character(gval),colnames(gtab)) ## use names instead of numeric indices
 #browser(); return()
@@ -1749,6 +1879,140 @@ plotMW = function(dat, xlim, ylim, outnam="Mean-Weight-Compare",
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotMW
 
 
+## plotSnail----------------------------2020-06-24
+## Plot snail-trail plots for MCMC analysis.
+##  AME: replacing "2010" with as.character(currYear - 1)
+##  RH: added assYrs = years past with estimated Bcurr
+##      from previous assessment(s), e.g., 5ABC QCS c(2011, 2017)
+##  RH: Moved function to PBStools on 210727
+## -----------------------------------------AME/RH
+plotSnail=function (BoverBmsy, UoverUmsy, model="SS", yrs=1935:2022,
+   p=c(0.05,0.95), xLim=NULL, yLim=NULL, Lwd=1.5, ngear=1,
+   Cnames, assYrs=NULL, outs=FALSE,         ## outs = outliers
+   ptypes="win", pngres=400, PIN=c(8,6), outnam, lang="e")
+{
+	if (missing(Cnames))
+		Cnames  = tcall("PBStools")$Cnames        ## names of commercial gear
+	if (is.null(Cnames))
+		Cnames = "Some fishery"
+	## BU -- B = spawning biomass, U = harvest rate (or exploitation rate)
+	BUlist = as.list(0:ngear); names(BUlist)=c("Spawning Biomass",Cnames[1:ngear])
+	colnames(BoverBmsy) = sub("^.+_","",colnames(BoverBmsy))
+	colnames(UoverUmsy) = sub("^.+_","",colnames(UoverUmsy))
+	## Awatea -- previous conversation with PJS: we both agree that B2021/Bmsy should be paired with u2020/Umsy
+	## SS3    -- currYear = end of current year (cf. AW beginning of currYear) so currYear for B and u do not need to be offset
+	currYear = rev(yrs)[1]
+	BUlist[[1]] = BoverBmsy[,colnames(BoverBmsy) %in% c(yrs,yrs[length(yrs)]+1)]
+	if (model %in% c("AW","Awatea","SS")) ## now SS has right modYrs
+		BUlist[[1]] = BUlist[[1]][,-1]
+	BUlist[[2]] = UoverUmsy[,colnames(UoverUmsy) %in% yrs]
+	## Separate u if multiple gears (designed for Awatea, not sure how SS displays multiple exploitation by gear)
+#browser();return()
+	for (g in 1:ngear) {
+		if (any(grepl("_",names(UoverUmsy)))) {
+			gfile = UoverUmsy[,grep(paste0("_",g),names(UoverUmsy))]
+			names(gfile) = substring(names(gfile),1,4)
+		} else if (is.list(UoverUmsy)) {
+			gfile = UoverUmsy[[g]]
+		} else {
+			gfile = UoverUmsy
+		}
+		if ( model %in% c("AW","Awatea") || ncol(BUlist[[1]])!=ncol(BUlist[[g+1]]) )
+			BUlist[[g+1]] = gfile[,1:ncol(BUlist[[1]])] ## SS has same lengths of B and u
+	}
+	# Calculate medians to be plotted
+	BUmed    = lapply(BUlist,function(x){apply(x,2,median)})  # median each year
+	colPal   = colorRampPalette(c("grey90", "grey30"))
+	colDots  = list( colorRampPalette(c("slategray2", "slategray4")), colorRampPalette(c("thistle2", "thistle4")) )  ## (RH 210727)
+	colSlime = rep(c("slategray3","thistle"),ngear)[1:ngear]  ## RH 200528
+	colStart = rep(c("green","yellowgreen"),ngear)[1:ngear]
+	colStop  = rep(c("cyan","thistle"),ngear)[1:ngear]  #,"cyan"
+	colLim   = rep(c("blue2","purple"),ngear)[1:ngear]
+	colAss   = rep(c("gold","orange"),ngear)[1:ngear]
+
+	nB = length(BUmed[[1]])
+	if (is.null(xLim))
+		xLim=c(0, max(c(BUmed[[1]], rev(apply(BUlist[[1]],2,quantile,ifelse(outs,1,p[2])))[1], 1)))
+	if (is.null(yLim)) {
+		yUps = sapply(BUlist[(1:ngear)+1],function(x,p){apply(x,2,quantile,p)},p=ifelse(outs,1,p[2]))  ## (RH 200624)
+		yLim=c(0, max(c(sapply(BUmed[(1:ngear)+1],max), max(yUps[nrow(yUps),]), 1)))                   ## (RH 200624)
+#browser();return()
+	}
+	P = list(p=p)
+	if (outs)
+		P = list (o=c(0,1), p=p)
+
+	if (missing(outnam))
+		outnam = "plotSnail"
+	fout = fout.e = outnam
+	for (l in lang) {  ## could switch to other languages if available in 'linguaFranca'.
+		createFdir(lang, dir=".")
+		changeLangOpts(L=l)
+		fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
+		if ("eps" %in% ptypes){
+			clearFiles(paste0(fout,".eps"))
+			postscript(paste0(fout,".eps"), width=PIN[1], height=PIN[2], horizontal=FALSE, paper="special")
+		} else if ("png" %in% ptypes){
+			clearFiles(paste0(fout,".png"))
+			png(paste0(fout,".png"), units="in", res=pngres, width=PIN[1], height=PIN[2])
+		} else if ("wmf" %in% ptypes){
+			clearFiles(paste0(fout,".wmf"))
+			do.call("win.metafile", list(filename=paste0(fout,".wmf"), width=PIN[1], height=PIN[2]))
+		}
+		expandGraph(mfrow=c(1,1), mar= c(3.5,3.5,1,1), mgp=c(2,0.5,0))
+
+		xlab = switch(l, 'e'=expression(paste(italic(B[t])/italic(B)[MSY])),   'f'=expression(paste(italic(B[t])/italic(B)[RMS])) )
+		ylab = if (model %in% c("AW","Awatea","SS"))
+			switch(l, 'e'=expression(paste(italic(u[t-1])/italic(u)[MSY])), 'f'=expression(paste(italic(u[t-1])/italic(u)[RMS])) )
+		else
+			switch(l, 'e'=expression(paste(italic(u[t])/italic(u)[MSY])), 'f'=expression(paste(italic(u[t])/italic(u)[RMS])) )
+
+		plot(0,0, xlim=xLim, ylim=yLim, type="n", xlab=xlab, ylab=ylab, cex.lab=1.25, cex.axis=1.0, las=1)
+		abline(h=1, col=c("grey20"), lwd=2, lty=3)
+		abline(v=c(0.4,0.8), col=c("red","green4"), lwd=2, lty=2)
+		for (i in ngear:1) {
+			lines(BUmed[[1]], BUmed[[i+1]], col=colSlime[i], lwd=Lwd)
+#browser();return()
+			#points(BUmed[[1]], BUmed[[i+1]], type="p", pch=19, col=colPal(nB))
+			points(BUmed[[1]], BUmed[[i+1]], type="p", pch=19, col=colDots[[i]](nB)) ## (RH 210727)
+			points(BUmed[[1]][1], BUmed[[i+1]][1], pch=21, col=1, bg=colStart[i], cex=1.2)
+		}
+		## Use three loops to plot the trace, end-year line segments, end-year points (RH 200624)
+		for (i in ngear:1) {
+			xend = rev(BUmed[[1]])[1]
+			yend = rev(BUmed[[i+1]])[1]
+			xoff = ifelse(as.logical(i%%2),-1,1) * diff(par()$usr[1:2])*0.0015 ## shift final xpos +/- some small amount (RH 200624)
+			for (j in 1:length(P)) {
+				q = P[[j]]
+				lty = ifelse(j==1 && outs, 3, 1)
+				lwd = ifelse(j==1 && outs, 1, 2)
+				## Plot horizontal (BtB0) quantile range
+				xqlo = quantile(BUlist[[1]][,nB],q[1])
+				xqhi = quantile(BUlist[[1]][,nB], q[2])
+				segments(xqlo, yend, xqhi, yend, col=lucent(colLim[i],0.5), lty=lty, lwd=lwd)
+#browser();return()
+				## Plot vertical (UtU0) quantile range
+				yqlo = quantile(BUlist[[i+1]][,nB], q[1])
+				yqhi = quantile(BUlist[[i+1]][,nB], q[2])
+				segments(xend+xoff, yqlo, xend+xoff, yqhi, col=lucent(colLim[i],0.5), lty=lty, lwd=lwd)
+			}
+		}
+		for (i in ngear:1) {
+			xend = rev(BUmed[[1]])[1]
+			yend = rev(BUmed[[i+1]])[1]
+			xoff = ifelse(as.logical(i%%2),-1,1) * diff(par()$usr[1:2])*0.0015 ## shift final xpos +/- some small amount (RH 200624)
+			if (!is.null(assYrs))
+				points(BUmed[[1]][as.character(assYrs)], BUmed[[i+1]][as.character(assYrs)], pch=21, col=1, bg=colAss[i], cex=1.2)
+			points(xend+xoff, yend, pch=21, cex=1.2, col=colLim[i], bg=colStop[i])
+		}
+		if (ngear>1)  addLegend(0.95, 0.80, legend=linguaFranca(Cnames,lang), lty=1, lwd=Lwd, col=colSlime, seg.len=4, xjust=1, bty="n", cex=1)
+		box()
+		if (any(ptypes %in% c("eps","png","wmf"))) dev.off()
+	}; eop()
+}
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotSnail
+
+
 ## processBio---------------------------2020-05-24
 ## Process results from 'gfb_bio.sql' query.
 ##  zflds = new fields to move to end of file to save PJS 
@@ -1774,7 +2038,7 @@ processBio = function(dat=PBSdat, strSpp, addsrfa=TRUE,
 		if (addsrfs)
 			idat$srfs=calcSRFA(idat$major,idat$minor,idat$locality,subarea=TRUE)
 		if (addpopa){
-			if (i==1) data(popa,envir=penv())
+			if (i==1) data("popa", package="PBSdata", envir=penv())
 			datpopa=rep("",nrow(idat))
 			events=idat[!is.na(idat$X) & !is.na(idat$Y),c("EID","X","Y")]
 			if (nrow(events)>0) {
@@ -1784,15 +2048,17 @@ processBio = function(dat=PBSdat, strSpp, addsrfa=TRUE,
 				pdata=attributes(popa)$PolyData; #pdata$label=substring(pdata$label,5)
 				pvec=pdata$label[locs$PID]; names(pvec)=locs$EID
 				names(datpopa)=idat$EID
-				datpopa[names(pvec)]=pvec }
+				datpopa[names(pvec)]=pvec
+			}
 			idat$popa=datpopa
 		}
-		if (addstock) {
+		if (addstock || "major_adj" %in% zflds) {
 			if (missing(strSpp))
 				stop("Must specify a species to determine stock allocation")
 			#idat$stock = calcStockArea(strSpp, major=idat$major, minor=idat$minor)
 			stockSpp = if (strSpp %in% c("REBS","RER","BSR","394","425")) "394" else strSpp
 			idat = calcStockArea(stockSpp, dat=idat)
+#browser();return()
 		}
 		if (addsort) {
 			idat$sort = rep("Z",nrow(idat))
@@ -1836,6 +2102,7 @@ processBio = function(dat=PBSdat, strSpp, addsrfa=TRUE,
 			idat$stock[is.element(idat$major,7)]   = "HYB"
 		}
 		aflds=c("EID","X","Y")
+#browser();return()
 		idat=idat[,c(aflds,setdiff(names(idat),c(aflds,zflds)), zflds)]
 #if(i==2) {browser();return()}
 		DAT=rbind(DAT,idat)
@@ -1888,6 +2155,7 @@ processMap = function(dat=PBSdat, strSpp, prefix="map", useSM=FALSE)
 		#dat$eff[z0&zg] = geff                        ## replace zero effort with mean effort if catch is positive
 	}
 	ttget(dat)
+	dat = calcStockArea(strSpp, dat=dat)
 #browser();return()
 	fidpos = match("fid",names(dat))
 	dat  = as.EventData(data.frame(EID=1:nrow(dat),dat[,-fidpos],fid=dat[,fidpos], check.names=F, stringsAsFactors=F), projection="LL")
@@ -2061,3 +2329,70 @@ quantAges =function(bioDat, dfld="age", afld="major", tfld="year",
 	return(Qage)
 }
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~quantAges
+
+
+## splineCPUE---------------------------2020-04-07
+## Fit spline curves through CPUE data to determine 
+## optimal degrees of freedom (balance between rigorously
+## fitting indices while not removing the majority of the signal)
+## and to calculate CV process error from RSS at optimal DF.
+## ---------------------------------------------RH
+splineCPUE = function(dat, ndf=50, strSpp="ZZZ", 
+   png=FALSE, pngres=400, PIN=c(8,8), lang=c("e","f"))
+{
+	## Collect residual sum of squares by degrees of freedom
+	DF  = seq(2,nrow(dat),length.out=ndf)
+	#DF  = seq(0,1,length.out=100)
+	RSS = rep(NA,length(DF))#; names(RSS) = DF
+	for (i in 1:length(DF)){
+		ii = DF[i]
+		RSS[i] = smooth.spline(dat[,"year"], dat[,"cpue"], df=ii, all.knots=TRUE)$pen.crit
+	}
+	dRSS   = c(0,diff(RSS))
+	df.opt = DF[findPV(min(dRSS),dRSS)]
+	rho_k  = RSS[findPV(min(dRSS),dRSS)]
+
+	createFdir(lang)
+	fout = fout.e = paste0("CPUEres-CVpro-",strSpp)
+	for (l in lang) {
+		changeLangOpts(L=l)
+		fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
+		if (png) png(paste0(fout,".png"), units="in", res=pngres, width=PIN[1], height=PIN[2])
+		expandGraph(mfrow=c(2,2), mar=c(2.75,2.75,0.5,0.5), cex=1)
+	
+		plot(DF, RSS, type="n", xlab=linguaFranca("degrees of freedom",l), ylab=linguaFranca("RSS",l))
+		addLabel(0.5, 0.95, linguaFranca("Residual Sum of Squares",l), adj=0.5)
+		abline(v=df.opt, col="green4", lty=3)
+		lines(DF, RSS, col="red", lwd=2)
+	
+		plot(DF, dRSS, type="n", xlab=linguaFranca("degrees of freedom",l), ylab=paste0("d",linguaFranca("RSS",l)))
+		addLabel(0.5, 0.95, switch(l, 'e'="Change in RSS (~slope)", 'f'="changement dans SRC (~pente)"), adj=0.5)
+		abline(v=df.opt, col="green4", lty=3)
+		lines(DF, dRSS, col="blue", lwd=2)
+		if (ndf<=50)
+			points(DF,dRSS, pch=21, cex=.8, col="blue", bg="yellow")
+	
+		CVpro = sqrt(RSS[findPV(min(dRSS),dRSS)]/(nrow(dat)-2))/mean(dat$cpue)
+	
+		##  Plot the data and the 'optimal' fit
+		plot(cpue ~ year, data = dat, pch=21, col="green4", bg="green", cex=1.1, xlab=linguaFranca("Year",l), ylab=linguaFranca("CPUE",l)) #, main = "data(cpue) & smoothing splines")
+		cpue.spl <- with(dat, smooth.spline(year, cpue, all.knots=TRUE))
+		lines(cpue.spl, col="blue", lty=2, lwd=2)
+	
+		cpue.df <- smooth.spline(dat[,"year"], dat[,"cpue"], df=df.opt, all.knots=TRUE)
+		lines(cpue.df, col="red", lty=1, lwd=2)
+		addLegend(0.02, ifelse(strSpp %in% c("WWR","BSR"), 0.97, 0.2), legend=c(paste0(switch(l, 'e'="fitted df (nu) = ", 'f'=eval(parse(text=deparse("degr\u{00E9}s de libert\u{00E9} ajuste\u{00E9}s (nu) = ")))), signif(cpue.spl$df,4)), paste0(switch(l, 'e'="with nu=", 'f'="avec nu="), signif(df.opt,4), ", rho=", signif(rho_k,4), ", cp=", signif(CVpro,4))), col = c("blue","red"), lty = 2:1, bty="n", bg="transparent", adj=0, cex=0.9)
+#browser();return()
+		## Residual (Tukey Anscombe) plot:
+		plot(residuals(cpue.df) ~ fitted(cpue.df), ylim=c(-0.35,0.45), pch=21, col="red", bg="pink", cex=1.1, xlab=paste0(linguaFranca("Fitted",l)," CPUE"), ylab=paste0("CPUE ", linguaFranca("residuals",l)))
+		abline(h = 0, col = "red")
+		## consistency check:
+		stopifnot(all.equal(dat$cpue, fitted(cpue.df) + residuals(cpue.df)))
+		## The chosen inner knots in original x-scale :
+		with(cpue.df$fit, min + range * knot[-c(1:3, nk+1 +1:3)]) # == unique(cpue$year)
+
+		if (png) dev.off()
+	}; eop()
+	return(list(DF=df.opt, RSS=RSS[findPV(min(dRSS),dRSS)], CVpro=CVpro))
+}
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~splineCPUE

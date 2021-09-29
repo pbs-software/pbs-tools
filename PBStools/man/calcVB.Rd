@@ -10,9 +10,9 @@ calcVB(dat=pop.age, strSpp="", yfld="len", fixt0=FALSE,
    areas=list(major=NULL, minor=NULL, locality=NULL, srfa=NULL,srfs=NULL, popa=NULL),
    ttype=list(commercial=c(1,4,5),research=c(2,3)), stype=c(1,2,6,7), scat=NULL,
    sex=list(Females=2,Males=1), rm.studs=NULL, subtitle,
-   year=NULL, xlim=NULL, ylim=NULL, ameth=c(3,17), jit=c(0,0), 
+   year=NULL, xlim=NULL, ylim=NULL, ameth=c(2,3,17), jit=c(0,0), 
    eps=FALSE, jpg=FALSE, pdf=FALSE, png=FALSE, tif=FALSE, wmf=FALSE,
-   plotname, singles=FALSE, pages=FALSE, tables=TRUE, figures=TRUE,
+   outnam, singles=FALSE, pages=FALSE, tables=TRUE, figures=TRUE,
    ioenv=.GlobalEnv, lang=c("e","f"))
 }
 \arguments{
@@ -44,7 +44,7 @@ calcVB(dat=pop.age, strSpp="", yfld="len", fixt0=FALSE,
   \item{png}{\code{logical} -- if \code{TRUE}, send plot to a raster \code{.png} file.}
   \item{tif}{\code{logical} -- if \code{TRUE}, send plot to a raster \code{.tif} file.}
   \item{wmf}{\code{logical} -- if \code{TRUE}, send plot to a vector \code{.wmf} file.}
-  \item{plotname}{\code{character} -- explicit image file name to override an internally generated one.}
+  \item{outnam}{\code{character} -- explicit image file name to override an internally generated one.}
   \item{singles}{\code{logical} -- if \code{TRUE} and \code{eps|jpg|pdf|png|tif|wmf}, send each area/trip type combination to separate files.}
   \item{pages}{\code{logical} -- if \code{TRUE} and \code{eps|jpg|pdf|png|tif|wmf}, send each page of area plots to separate files.}
   \item{tables}{\code{logical} -- if \code{TRUE} and \code{lang="e"}, download output into \code{.csv} tables.}
@@ -88,7 +88,7 @@ calcVB(dat=pop.age, strSpp="", yfld="len", fixt0=FALSE,
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
   \emph{locus opus}: Institute of Ocean Sciences (IOS), Sidney BC\cr
-  Last modified \code{Rd: 2020-07-16}
+  Last modified \code{Rd: 2021-06-15}
 }
 \seealso{
   \pkg{PBStools}:
@@ -113,3 +113,5 @@ pbsfun()
 }
 }
 \keyword{hplot}
+\concept{M02_Biology}
+

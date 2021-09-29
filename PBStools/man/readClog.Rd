@@ -30,8 +30,10 @@ readClog(fnam)
   An named list object by version with attributes \code{title} and \code{authors}
 }
 \author{
-  Rowan Haigh, Research Biologist\cr
-  Pacific Biological Station, Fisheries and Oceans Canada, Nanaimo BC
+  \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
+  Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
+  \emph{locus opus}: Institute of Ocean Sciences (IOS), Sidney BC\cr
+  Last modified \code{Rd: 2021-06-15}\cr
 }
 \seealso{
 \code{\link[PBStools]{countLines}},
@@ -45,4 +47,5 @@ readClog(fnam)
 \keyword{character}% use one of  RShowDoc("KEYWORDS")
 \keyword{list}% __ONLY ONE__ keyword per line
 \keyword{file}% __ONLY ONE__ keyword per line
+\concept{M01_Utility}
 

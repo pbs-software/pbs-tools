@@ -13,6 +13,7 @@
 ##  plotConcur......Horizontal barplot of concurrent species in tows.
 ##  plotEO..........Plot Extent of Occurrence for a species using a convex hull.
 ##  plotGMA.........Plot the Groundfish Management Areas.
+##  plotHabitat.....Plot potential habitat using bathymetry output from 'calcHabitat'.
 ##  plotLocal.......Plot DFO fishing localities with the highest catch.
 ##  plotTernary.....Plot a ternary diagram for data amalgamated into 3 groups.
 ##  plotTertiary....Composition plots within a polygonal space.
@@ -91,7 +92,8 @@ calcHabitat <- function(topofile="bctopo", isob=c(150,435),
 			#if (eps|png|wmf) addPolys(habitat,col=col.hab,colHoles="white")
 			#else addPolys(habitat,col=col.hab)
 			addLines(habitat,col=icol)
-			data(nepacLL,envir=penv()); addPolys(nepacLL,col=col.land)
+			data("nepacLL", package="PBSmapping", envir=penv())
+			addPolys(nepacLL,col=col.land)
 			.addAxis(xlim=xlim,ylim=ylim,tckLab=FALSE,tck=0.014,tckMinor=.007)
 			if (isolab) legend("bottomleft",inset=0.06,fill=col.hab,title=labtit,title.adj=0.5,
 				legend=paste(isob[1],"\226",isob[2],"m  (",format(round(area),big.mark=","),"km\262)",sep=""),bty="n",cex=1.5)
@@ -187,11 +189,10 @@ calcSRFA <- function(major, minor=NULL, loc=NULL, subarea=FALSE) {
 #-----------------------------------------calcSRFA
 
 
-#calcStockArea--------------------------2018-02-13
-# Assign a stock area designation based on species
-# HART code and PMFC major and/or minor areas.
-#-----------------------------------------------RH
-#calcStockArea = function (strSpp, major, minor, ...)
+## calcStockArea------------------------2021-02-09
+## Assign a stock area designation based on species
+## HART code and PMFC major and/or minor areas.
+## ---------------------------------------------RH
 calcStockArea = function (strSpp, dat, stockFld="stock", gmu=TRUE)
 {
 	if (missing(strSpp))
@@ -199,14 +200,11 @@ calcStockArea = function (strSpp, dat, stockFld="stock", gmu=TRUE)
 	if (missing(dat))
 		stop("Must specify a data file with location fields to determine stock allocation")
 	flds = names(dat)
-	#if (missing(major) && missing(minor))
-		#stop("Must supply at least one vector of 'major' or 'minor' areas")
 	if (!any(is.element(c("major","minor"),flds)))
 		stop("Data file must supply at least one field of 'major' or 'minor' areas")
-	if (all(is.element(c("major","minor"),flds))) {
+
+	if (all(is.element(c("major","minor"),flds)) && strSpp %in% c("228")) {
 		## Allocations based on combinations of major and minor
-		#if (length(major)!=length(minor))
-		#	stop("Vectors of 'major' and 'minor' must be equal length.")
 		major = dat$major; minor = dat$minor
 		newA = rep("UNK",length(major))
 		if (is.element(strSpp, c("228"))) {
@@ -216,29 +214,51 @@ calcStockArea = function (strSpp, dat, stockFld="stock", gmu=TRUE)
 			newA[is.element(major,1) & !is.element(minor,c(12,20))] = "4B"
 		}
 		else minor=NULL
-	}
-	if (!missing(major) && (missing(minor)||is.null(minor))) {
+	} else if ("major" %in% flds) {
 		## Allocations based on major only (emulates the IFMP TAC areas)
-		newA = rep("UNK",length(major))
+		major = dat$major
+		newA  = rep("UNK",length(major))
 		if (is.element(strSpp,c("059","056","222","228","626"))){
 			newA[is.element(major,7:9)] = "5CDE"
 			newA[is.element(major,5:6)] = "5AB"
 			newA[is.element(major,3:4)] = "3CD"
 			newA[is.element(major,1)]   = "4B"
 		}
-		else if (is.element(strSpp,c("396"))){
-			if (is.element("Y",flds)) {
-				Y = dat$Y
-				newA[is.element(major,9) & Y>52.33333 & !is.na(Y)] = "5DE"
-				newA[is.element(major,9) & Y<=52.33333 & !is.na(Y)] = "5ABC"
-				newA[is.element(major,9) & is.na(Y)] = "5DE"
-			} else
-				newA[is.element(major,9)] = "5DE"
-			newA[is.element(major,8)]   = "5DE"
-			#newA[is.element(major,7)]  = "5C"  ## recent change to IFMP
-			newA[is.element(major,5:7)] = "5ABC"
-			newA[is.element(major,3:4)] = "3CD"
-			newA[is.element(major,1)]   = "4B"
+		else if (is.element(strSpp,c("396","440"))){
+			## Special area adjustment for POP and YMR
+			dat$major_adj = dat$major
+			poly5C = data.frame(PID=rep(1,6),POS=1:6,X=c(-131.5,-132,-131,-130,-130,-131.2), Y=c(52.33333333,52.33333333,51.5,51.8,52.16666667,52.16666667))
+			poly5C = as.PolySet(poly5C, projection="LL", zone=9)
+			hasXY  = dat$X<0 & !is.na(dat$X) & dat$Y>0 & !is.na(dat$Y)
+			if (any(hasXY)) {
+				if (!is.EventData(dat)){
+					if (!"EID"%in%colnames(dat)) dat$EID = 1:nrow(dat)
+					tmpdat = as.EventData(dat[hasXY,],projection="LL",zone=9)  ## RH 210120
+				} else {
+					tmpdat = dat[hasXY,]
+				}
+				e5C = .is.in(tmpdat, poly5C)
+				#e5C = .is.in(dat[hasXY,], poly5C)
+				if (nrow(e5C$e.in)>0) {
+					tmpdat$major_adj[is.element(tmpdat$EID,e5C$e.in$EID)] = 7  ## 5C
+					dat$major_adj[hasXY] = tmpdat$major_adj                    ## RH 210120
+				}
+			}
+			major = dat$major_adj
+			if (strSpp %in% "396"){
+				newA[is.element(major,8:9)] = "5DE"
+				newA[is.element(major,7)]   = "5C"
+				newA[is.element(major,5:6)] = "5AB"
+				newA[is.element(major,3:4)] = "3CD"
+				newA[is.element(major,1)]   = "4B"
+			}
+			if (strSpp %in% "440"){
+				newA[is.element(major,9)]   = "5E"
+				newA[is.element(major,7:8)] = "5CD"
+				newA[is.element(major,4:6)] = "3D5AB"
+				newA[is.element(major,3)]   = "3C"
+				newA[is.element(major,1)]   = "4B"
+			}
 		}
 		else if (is.element(strSpp,c("405","437","621"))){
 			newA[is.element(major,9)]   = "5E"
@@ -247,7 +267,7 @@ calcStockArea = function (strSpp, dat, stockFld="stock", gmu=TRUE)
 			newA[is.element(major,3:4)] = "3CD"
 			newA[is.element(major,1)]   = "4B"
 		}
-		else if (is.element(strSpp,c("439","440"))){
+		else if (is.element(strSpp,c("439"))){
 			if (strSpp=="439" && !gmu){
 				newA[is.element(major,8:9)] = "North"
 				newA[is.element(major,3:7)] = "South"
@@ -285,15 +305,30 @@ calcStockArea = function (strSpp, dat, stockFld="stock", gmu=TRUE)
 		else if (is.element(strSpp,c("394","401","403","435","451","453","454","455","602","607","614"))){
 			newA[is.element(major,c(1,3:9))] = "CST"
 		}
-	}
-	if (missing(major) && !missing(minor)) {
-		## Allocations based on minor only
-		newA = rep("UNK",length(minor))
+		newA[is.element(major,10)]   = "AK"
+		newA[is.element(major,11)]   = "BC"
+		newA[is.element(major,22)]   = "OR"
+		newA[is.element(major,23)]   = "CA"
+		newA[is.element(major,24)]   = "MX"
+		newA[is.element(major,40)]   = "RU"
+		newA[is.element(major,45)]   = "PO" ## guess
+		newA[is.element(major,50)]   = "JP"
+		newA[is.element(major,61)]   = "1A"
+		newA[is.element(major,62)]   = "1B"
+		newA[is.element(major,63)]   = "1C"
+		newA[is.element(major,64)]   = "2A"
+		newA[is.element(major,65)]   = "2B"
+		newA[is.element(major,66)]   = "2C"
+		newA[is.element(major,67)]   = "3A"
+		newA[is.element(major,68)]   = "4A"
+	} else {
+		## Allocations scheme not identified currently
+		newA = rep("UNK", nrow(dat))
 	}
 	dat[,stockFld] = newA
 	return(dat)
 }
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~calcStockArea
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~calcStockArea
 
 
 #calcWAParea----------------------------2016-07-28
@@ -461,7 +496,7 @@ calcSurficial <- function(surf="qcb", hab,
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~calcSurficial
 
 
-## clarify------------------------------2020-02-26
+## clarify------------------------------2020-08-10
 ##  Analyse catch proportions in blocks, then cluster into fisheries groups.
 ##  Initially, done to address the CASSIS proposal and its impact (John Pringle).
 ##  CASSIS = CAScadia SeISmic experiment
@@ -471,7 +506,7 @@ clarify <- function(dat, cell=c(0.1,0.075), nG=8,
    clrs=c("red","orange","yellow","green","forestgreen","deepskyblue",
    "blue","midnightblue"), land="ghostwhite", spp.names=FALSE, 
    png=FALSE, pngres=400, PIN=NULL, isobs=c(200,1000,1800), 
-   wmf=FALSE, eps=FALSE, hpage=10, ioenv=.GlobalEnv)
+   wmf=FALSE, eps=FALSE, hpage=10, ioenv=.GlobalEnv, lang=c("e","f"))
 {
 	tcomp <- function(x,i) {
 		iU <- sort(unique(i))
@@ -571,7 +606,7 @@ clarify <- function(dat, cell=c(0.1,0.075), nG=8,
 	glab = sapply(split(pdata$label,pdata$target),unique)
 	kgrp = glab[gord]
 	if (spp.names) {
-		data(species,envir=penv()) # local
+		data("species", package="PBSdata", envir=penv()) # local
 		kcode=strsplit(kgrp,split="-")
 		kgrp=sapply(kcode,function(x){paste(gsub(" ",".",species[x,"name"]),collapse="+")})
 	}
@@ -592,28 +627,43 @@ clarify <- function(dat, cell=c(0.1,0.075), nG=8,
 		if (ii) {
 			if (is.null(PIN))
 				PIN = par()$pin/max(par()$pin)*hpage
-			fn = paste(fnam,ifelse(is.null(targ),"",paste0("-",targ)),"-Clara-nG",nG,"-(",paste(round(PIN,1),collapse="x"),")",sep="")
-			if (i=="png" && ii)      png(filename=paste0(fn,".png"), units="in", res=pngres, width=PIN[1], height=PIN[2]) 
-			else if (i=="eps" && ii) postscript(paste(fn,".eps",sep=""),width=PIN[1],height=PIN[2],paper="special") 
-			else if (i=="wmf" && ii) do.call("win.metafile",list(filename=paste(fn,".wmf",sep=""),width=PIN[1],height=PIN[2]))
-			else resetGraph()
-			getFile(nepacLL,use.pkg=TRUE,tenv=penv())
 
-			par(parlist)
-			plotMap(nepacLL, xlim=xlim, ylim=ylim, plt=NULL, col="white", cex.axis=1, cex.lab=1.2, mgp=c(1.5,0.2,0))
-			addPolys(agrid, polyProps=pdata, border=FALSE)
-			if (!is.null(isobs)) {
-				icols = colorRampPalette(c("steelblue4","navy","black"))(length(isobs))
-				addLines(isob, col=icols)
-			}
-			addPolys(nepacLL, col=land)
-			xoff=ifelse(wmf,-0.05,0); yoff=ifelse(wmf,-0.01,0)
-			addLegend(0.02, 0.02, fill=kcol, legend=kgrp, bty="n", cex=ifelse(wmf,0.8,0.7), yjust=0)
-			if (!is.null(targ)) 
-				addLegend(0.35, 0.02, legend=floor(as.numeric(names(kgrp))), bty="n", cex=ifelse(wmf,0.8,0.7), adj=1, xjust=1, yjust=0, text.col="blue", title=targ)
-			.addAxis(xlim=xlim, ylim=ylim, tckLab=FALSE, tck=0.014, tckMinor=0.007)
-			box()
-			if (i!="win" && ii) dev.off()
+			createFdir(lang)
+			fn = paste(fnam,ifelse(is.null(targ),"",paste0("-",targ)),"-Clara-nG",nG,"-(",paste(round(PIN,1),collapse="x"),")",sep="")
+			fout.e = fout = fn
+			for (l in lang) {
+				changeLangOpts(L=l)
+				fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
+				if (i=="png" && ii) {
+					clearFiles(paste0(fout,".png"))
+					png(filename=paste0(fout,".png"), units="in", res=pngres, width=PIN[1], height=PIN[2])
+				} else if (i=="eps" && ii) {
+					clearFiles(paste0(fout,".eps"))
+					postscript(paste(fout,".eps",sep=""),width=PIN[1],height=PIN[2],paper="special")
+				} else if (i=="wmf" && ii) {
+					clearFiles(paste0(fout,".wmf"))
+					do.call("win.metafile",list(filename=paste(fout,".wmf",sep=""),width=PIN[1],height=PIN[2]))
+				}
+				else resetGraph()
+				getFile(nepacLL,use.pkg=TRUE,tenv=penv())
+
+				par(parlist)
+				plotMap(nepacLL, xlim=xlim, ylim=ylim, plt=NULL, col="white", cex.axis=1, cex.lab=1.2, mgp=c(1.5,0.2,0))
+				addPolys(agrid, polyProps=pdata, border=FALSE)
+				if (!is.null(isobs)) {
+					icols = colorRampPalette(c("steelblue4","navy","black"))(length(isobs))
+					addLines(isob, col=icols)
+				}
+				addPolys(nepacLL, col=land)
+				xoff=ifelse(wmf,-0.05,0); yoff=ifelse(wmf,-0.01,0)
+				addLegend(0.02, 0.02, fill=kcol, legend=linguaFranca(kgrp,l), cex=ifelse(wmf,0.8,0.7), yjust=0, bty="n")
+#browser();return()
+				if (!is.null(targ)) 
+					addLegend(0.35, 0.02, legend=floor(as.numeric(names(kgrp))), bty="n", cex=ifelse(wmf,0.8,0.7), adj=1, xjust=1, yjust=0, text.col="blue", title=linguaFranca(targ,l))
+				.addAxis(xlim=xlim, ylim=ylim, tckLab=FALSE, tck=0.014, tckMinor=0.007)
+				box()
+				if (i!="win" && ii) dev.off()
+			}; eop()
 		}
 	}
 	gc(verbose=FALSE)
@@ -870,9 +920,11 @@ plotConcur = function(strSpp="410", dbName="GFFOS", spath=.getSpath(),
 		changeLangOpts(L=l)
 		fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
 		if (eps) {
+			clearFiles(paste0(fout,".eps"))
 			postscript(file=paste0(fout,".eps"),width=10,height=6,horizontal=FALSE,paper="special")
 			par(mfrow=c(1,1),cex=0.8,mar=c(3,12,0.5,1),oma=c(0,0,0,0),mgp=c(1.5,.5,0))
 		} else if (png) {
+			clearFiles(paste0(fout,".png"))
 			png(filename=paste0(fout,".png"), units="in", res=pngres, width=6.5, height=3.5)
 			par(mfrow=c(1,1), cex=0.7, mar=c(3,switch(l,'e'=10,'f'=12),0.5,1), oma=c(0,0,0,0), mgp=c(1.5,0.5,0))
 		} else if (reset.mf)
@@ -902,9 +954,13 @@ plotConcur = function(strSpp="410", dbName="GFFOS", spath=.getSpath(),
 				barplot(dat$pct, col=barcol, names.arg=NULL, horiz=TRUE, las=1,col.axis="grey20", xaxt="n", yaxt="n", add=TRUE)
 			}
 		}
-		addLabel(0.90,0.20,bquote(Sigma~Catch(kt) == .(round(sum(dat$catKt)))), cex=1.2, adj=1)
-		addLabel(0.90,0.15,bquote(Sigma~Catch('%') == .(round(sum(dat$pct),1))), cex=1.2, adj=1)
-	
+		if (l=="f") {
+			addLabel(0.90,0.20,bquote(Sigma~Prise~(kt) == .(round(sum(dat$catKt)))), cex=1.2, adj=1)
+			addLabel(0.90,0.15,bquote(Sigma~Prise~('%') == .(round(sum(dat$pct),1))), cex=1.2, adj=1)
+		} else {
+			addLabel(0.90,0.20,bquote(Sigma~Catch(kt) == .(round(sum(dat$catKt)))), cex=1.2, adj=1)
+			addLabel(0.90,0.15,bquote(Sigma~Catch('%') == .(round(sum(dat$pct),1))), cex=1.2, adj=1)
+		}
 		if (eps|png) dev.off()
 	}; eop()
 	packList(c("dat","xy","z","sql"),"obj.preferDepth",tenv=.PBStoolEnv)
@@ -938,8 +994,8 @@ plotEO = function (id="lst", strSpp="453", col="red",
 	if (is.null(ttcall("hulk")))
 		hulk = list()
 	else ttget(hulk)
-	data(nepacLL, package="PBSmapping", envir=fenv)
-	data(species, package="PBSdata", envir=fenv)
+	data("nepacLL", package="PBSmapping", envir=fenv)
+	data("species", package="PBSdata", envir=fenv)
 	
 	mapdat = mapDat
 	mapdat = mapdat[mapdat[,strSpp]>0 & !is.na(mapdat[,strSpp]),]
@@ -951,7 +1007,7 @@ plotEO = function (id="lst", strSpp="453", col="red",
 		mapdat = zapSeamounts(mapdat)
 	## Remove coordinates that are located in localities that don't match the reported localities
 	if (rmXY) {
-		data(locality.plus, package="PBSdata", envir=fenv)
+		data("locality.plus", package="PBSdata", envir=fenv)
 		loca = locality.plus
 		mapdat$ID = .createIDs(mapdat, c("major","minor","locality"))
 		inlocs = findPolys(mapdat, loca, maxRows=1e7)
@@ -1008,8 +1064,9 @@ plotEO = function (id="lst", strSpp="453", col="red",
 		sub(","," ",sub("hull on water","coque sur l'eau",waterlab))
 		), collapse="\n")
 #browser(); return()
+	datelab = paste0(gsub("-",".",range(mapdat$date,na.rm=T)),collapse=" to ")
 
-	fout = fout.e = paste0("Hull-",strSpp,"-",stock)
+	fout = fout.e = paste0("plotEO-",strSpp,"-",stock)
 	for (l in lang) {
 		changeLangOpts(L=l)
 		fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
@@ -1021,6 +1078,7 @@ plotEO = function (id="lst", strSpp="453", col="red",
 
 		addLabel(0.8,0.8, linguaFranca("BC",l), cex=5, col="grey80")
 		addLabel(0.05, 0.15, switch(l, 'e'=spplab, 'f'=spplab.f), cex=1.25, col="black", adj=0)
+		addLabel(0.975, 0.975, linguaFranca(datelab,l), cex=0.9, col="black", adj=1)
 		if (png) dev.off()
 	}; eop()
 
@@ -1042,74 +1100,139 @@ plotEO = function (id="lst", strSpp="453", col="red",
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotEO
 
 
-#plotGMA--------------------------------2017-01-20
-# Plot the Groundfish Management Areas
-#-----------------------------------------------RH
+## plotGMA------------------------------2019-06-04
+##  Plot the Groundfish Management Areas
+## ---------------------------------------------RH
 plotGMA = function(gma=gma.popymr, xlim=c(-134,-123), ylim=c(48.05,54.95), 
-   dimfig=c(9,9), eps=FALSE, png=FALSE, extra.labels=NULL, strSpp) {
-
+   dimfig=c(9,9), eps=FALSE, png=FALSE, extra.labels=NULL, isobath,
+   strSpp, lang=c("e","f"))
+{
 	oldpar=par(no.readonly=-TRUE); on.exit(par(oldpar))
+
+	## Create a subdirectory called `french' for French-language figures
+	createFdir(lang)
+
 	if (!is.null(extra.labels) && mode(extra.labels)=="character" && extra.labels[1]=="default") {
 		extra.labels = as.EventData(data.frame(
-			EID = 1:4,
-			X   = c(-132.3628,-130.0393,-129.1727,-126.3594),
-			Y   = c(53.74724,51.48773,51.05771,50.15860),
-			label = c("Haida\nGwaii","QCS","GIG","Vancouver\nIsland") ),
+			EID = 1:6,
+			#X   = c(-132.3628,-130.0393,-129.1727,-126.3594),
+			#Y   = c(53.74724,51.48773,51.05771,50.15860),
+			#label = c("Haida\nGwaii","QCS","GIG","Vancouver\nIsland") ),
+			X   = c(-132.3628,-126.3594,-129.6393,-129.4904,-129.9202,-130.4673),
+			Y   = c(53.74724,50.15860,51.4,51.14122,51.70878,52.00878),
+			label = c("Haida\nGwaii","Vancouver\nIsland","Queen Charlotte Sound","GIG","MIG","MRG") ),
 			projection="LL" )
 		if (!missing(strSpp) && strSpp%in%c("228"))
-			extra.labels = extra.labels[!is.element(extra.labels$label,c("QCS","GIG")),]
+			extra.labels = extra.labels[!is.element(extra.labels$label,c("Queen Charlotte Sound","GIG","MIG","MRG")),]
 	}
 	fnam = as.character(substitute(gma))
-	data(nepacLLhigh,major,minor,envir=penv())
+	if (!missing(strSpp))
+		fnam = paste0(fnam,strSpp)
+	data("nepacLLhigh", package="PBSmapping", envir=penv())
+	data("major", "minor", package="PBSdata", envir=penv())
 	edata = pdata = attributes(gma)$PolyData
 	names(edata)[1]="EID"
-#browser();return()
 	edata=as.EventData(edata,projection="LL")
 
-	if (png) png(filename=paste(fnam,"png",sep="."),width=dimfig[1],height=dimfig[2],units="in",res=300)
-	else if (eps) postscript(file=paste0(fnam,".eps"),width=dimfig[1],height=dimfig[2],paper="special",horizontal=FALSE)
-	else resetGraph()
+	fout = fout.e = fnam
+	for (l in lang) {  ## could switch to other languages if available in 'linguaFranca'.
+		changeLangOpts(L=l)
+		fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
 
-	plotMap(gma, type="n", xlim=xlim, ylim=ylim, polyProps=pdata, border="grey",
-		plt=c(0.08,0.99,0.07,0.99), mgp=c(3.0,.5,0), las=1, cex.axis=1.25, cex.lab=1.75)
+		if (png) png(filename=paste(fout,"png",sep="."),width=dimfig[1],height=dimfig[2],units="in",res=400)
+		else if (eps) postscript(file=paste0(fout,".eps"),width=dimfig[1],height=dimfig[2],paper="special",horizontal=FALSE)
+		else resetGraph()
 
-	if (!missing(strSpp) && strSpp%in%c("228")) {
-		earlgrey = "grey30"
-		maj228 = list()
-		maj228[["m5CDE"]] = joinPolys(major[is.element(major$PID,7:9),],operation="UNION")
-		maj228[["m5AB"]]  = joinPolys(rbind(major[is.element(major$PID,5:6),], minor[is.element(minor$PID,11:12),]), operation="UNION")
-		maj228[["m3CD"]]  = joinPolys(rbind(major[is.element(major$PID,3:4),], minor[is.element(minor$PID,20:21),]), operation="UNION")
-		maj228[["m4B"]]   = joinPolys(minor[is.element(minor$PID,c(13:19,28,29)),], operation="UNION")
-		majnew = data.frame()
-		for (i in 1:length(maj228)) {
-			ii = names(maj228)[i]
-			idat = maj228[[i]]
-			idat$PID = i
-			if (!any(grepl("SID",names(idat))))
-				idat = data.frame(PID=i,SID=1,idat[,-1])
-			majnew = rbind(majnew,idat)
+		plotMap(gma, type="n", xlim=xlim, ylim=ylim, polyProps=pdata, border="grey",
+			plt=c(0.08,0.99,0.07,0.99), mgp=c(3.0,.5,0), las=1, cex.axis=1.25, cex.lab=1.75)
+
+		if (!missing(strSpp) && strSpp%in%c("228")) {
+			earlgrey = "grey30"
+			maj228 = list()
+			maj228[["m5CDE"]] = joinPolys(major[is.element(major$PID,7:9),],operation="UNION")
+			maj228[["m5AB"]]  = joinPolys(rbind(major[is.element(major$PID,5:6),], minor[is.element(minor$PID,11:12),]), operation="UNION")
+			maj228[["m3CD"]]  = joinPolys(rbind(major[is.element(major$PID,3:4),], minor[is.element(minor$PID,20:21),]), operation="UNION")
+			maj228[["m4B"]]   = joinPolys(minor[is.element(minor$PID,c(13:19,28,29)),], operation="UNION")
+			majnew = data.frame()
+			for (i in 1:length(maj228)) {
+				ii = names(maj228)[i]
+				idat = maj228[[i]]
+				idat$PID = i
+				if (!any(grepl("SID",names(idat))))
+					idat = data.frame(PID=i,SID=1,idat[,-1])
+				majnew = rbind(majnew,idat)
+			}
+			major = as.PolySet(majnew, projection="LL")
+			addPolys(major,col=lucent(c("green","orange","blue","red"),0.55),border=earlgrey)
+			addPolys(gma, ,col="transparent", border=earlgrey, lwd=2)
+		} else {
+			earlgrey = "grey"
+			addPolys(gma, polyProps=pdata, border=earlgrey)
+			addPolys(major,col="transparent",border="navyblue",lwd=2)
 		}
-		major = as.PolySet(majnew, projection="LL")
-		addPolys(major,col=lucent(c("green","orange","blue","red"),0.55),border=earlgrey)
-		addPolys(gma, ,col="transparent", border=earlgrey, lwd=2)
+		if (!missing(isobath) && is.PolySet(isobath))
+			addLines(isobath)
+		addPolys(nepacLLhigh,col="white",border=earlgrey)
+		.addAxis(par()$usr[1:2],ylim=par()$usr[3:4],tckLab=FALSE,tck=.015,tckMinor=.015/2)
+		addLabels(edata,cex=2.5,font=2)
+		if (!is.null(extra.labels)) {
+			elabs = extra.labels
+			elab = linguaFranca(gsub("\\\n"," ",elabs$label),l)
+			touche = rep(T,length(elab))
+			if (strSpp%in%c("435","440"))
+				touche = !is.element(elab, "Queen Charlotte Sound")
 #browser();return()
-	} else {
-		earlgrey = "grey"
-		addPolys(gma, polyProps=pdata, border=earlgrey)
-		addPolys(major,col="transparent",border="navyblue",lwd=2)
-	}
-	addPolys(nepacLLhigh,col="white",border=earlgrey)
-	.addAxis(par()$usr[1:2],ylim=par()$usr[3:4],tckLab=FALSE,tck=.015,tckMinor=.015/2)
-	addLabels(edata,cex=2.5,font=2)
-	if (!is.null(extra.labels))
-		addLabels(extra.labels,cex=1.5,col="blue")
-	text(-125.2416,52.70739,"BC",cex=5,col="grey",font=2)
-	box(lwd=2)
-	if (eps|png) dev.off()
+			elab[touche] = gsub("le\\\nde","le de",gsub("\\\nde\\\nla"," de la",gsub(" ","\n",elab[touche])))
+			elabs$label = elab
+			addLabels(elabs,cex=1.5,col="blue")
+		}
+		text(-125.2416,52.70739,linguaFranca("BC",l),cex=5,col="grey",font=2)
+		box(lwd=2)
+	#browser();return()
+		if (eps|png) dev.off()
+	}; eop()
 	gc(verbose=FALSE)
 	invisible(list(pdata=pdata,extra.labels=extra.labels))
 }
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotGMA
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotGMA
+
+
+## plotHabitat--------------------------2021-06-15
+## WAP (bctopo only reaches -124.5, bctopo2 goes to -122.5)
+## hab228=calcHabitat(topofile="bctopo2",isob=c(62,447),digits=2,xlim=c(-134.5,-122.5))
+## save("hab228",file="hab228.rda")
+## ---------------------------------------------RH
+plotHabitat = function(fnam="hab228", isob=c(62,448), col.hab="greenyellow",
+   png=FALSE, pngres=400, PIN = c(9,8.7), fout="daHood", lang=c("e","f"))
+{
+	##PIN = c(9,8.7) ## for bctopo2; PIN = c(7.8,8.8) ## for bctopo
+	data("eez.bc", "major", package="PBSdata")
+	data("nepacLL", package="PBSmapping")
+	eval(parse(text=paste0("load(\"",fnam,".rda\"); habSpp = ",fnam)))
+#browser();return()
+	Harea = sum(calcArea(habSpp)$area)
+	habSpp.eez = joinPolys(eez.bc,habSpp,operation="INT")
+	harea = sum(calcArea(habSpp.eez)$area)
+
+	xlim = range(habSpp$X); ylim = range(habSpp$Y)
+
+	fout.e = fout
+	for (l in lang) {
+		changeLangOpts(L=l)
+		fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
+		if (png) png(paste0(fout,".png"), width=PIN[1], height=PIN[2], units="in", res=pngres) 
+		expandGraph(mar=c(3,3.2,0.5,0.5), mgp=c(3.0,0.5,0))
+		plotMap(eez.bc,xlim=xlim,ylim=ylim,plt=NULL,lwd=2,border=FALSE,col="aliceblue",cex.axis=1.5,cex.lab=2,las=1)
+		addPolys(habSpp,col=col.hab,border="black")
+		addPolys(major, col="transparent",border="red")
+		addPolys(eez.bc, col="transparent", border="blue",lwd=2)
+		addPolys(nepacLL,col="moccasin",border="grey40")
+		addLegend(switch(l, 'e'=0.1, 'f'=0.02), 0.3, fill=col.hab, title.adj=0, title=switch(l, 'e'="Bathymetry habitat in BC EEZ:", 'f'=eval(parse(text=deparse("habitat de bathym\u{00E9}trie dans la ZEE de la C-B")))), legend=paste0(isob[1], "\226", isob[2], " m  (", format(round(harea),big.mark=options()$big.mark), " km\262)"), bty="n", cex=1.25)
+		box(lwd=2)
+		if (png) dev.off()
+	}; eop()
+}
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotHabitat
 
 
 ## plotLocal----------------------------2020-06-18
@@ -1181,7 +1304,7 @@ plotLocal = function(dat, area, aflds=NULL, pcat=0.95, cpue=FALSE, powr=1,
 	dat$catKG = dat$catKG
 
 	if (!missing(strSpp))
-		data(species, package="PBSdata", envir=fenv)
+		data("species", package="PBSdata", envir=fenv)
 	if (strSpp=="394")
 		sppnam = "Rougheye/Blackspotted Rockfish"
 	else
@@ -1563,15 +1686,18 @@ plotTertiary = function(x=c(100,5,25,10,50), pC=c(0.5,0.5), r=0.5,
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotTertiary
 
 
-## preferDepth--------------------------2020-02-14
+## preferDepth--------------------------2021-04-08
 ## Histogram showing depth-of-capture
 ## ---------------------------------------------RH
 preferDepth = function(strSpp="410", fqtName="pht_fdep.sql", dbName="PacHarvest",
-   spath=NULL, type="SQL", hnam=NULL, get.effort=FALSE, lang=c("e"))
+   spath=NULL, type="SQL", hnam=NULL, get.effort=FALSE, lang=c("f","e"))
 {
-	warn <- options()$warn; options(warn=-1)
+	warn   = options()$warn; options(warn=-1)
+	fenv   = lenv()  ## function's environment
 	effort = ttcall(PBStool)$effort  ## recover effort, if it exists, to save time
-	assign("PBStool", list(module="M05_Spatial", call=match.call(), args=args(preferDepth), plotname="Rplot"), envir=.PBStoolEnv)
+	if (is.null(effort) && exists("effort",envir=.GlobalEnv))  ## (RH 210408)
+		assign("effort", get("effort",envir=.GlobalEnv), envir=fenv)
+	assign("PBStool", list(module="M05_Spatial", call=match.call(), args=args(preferDepth), plotname="Rplot", effort=effort), envir=.PBStoolEnv)
 
 	wpath <- .getWpath()
 	if (is.null(spath) || spath=="") spath <- .getSpath()
@@ -1600,7 +1726,7 @@ preferDepth = function(strSpp="410", fqtName="pht_fdep.sql", dbName="PacHarvest"
 	ttput(lang)
 	invisible()
 }
-##.preferDepth.getEffort----------------2010-10-19
+##.preferDepth.getEffort----------------2021-04-08
 .preferDepth.getEffort=function(strSpp="ALL") {
 	resetGraph()
 	par(mar=c(0,0,0,0),oma=c(0,0,0,0))
@@ -1611,15 +1737,16 @@ preferDepth = function(strSpp="410", fqtName="pht_fdep.sql", dbName="PacHarvest"
 	ttget(PBStool)
 	PBStool$effort <- effort
 	ttput(PBStool)
+	save("effort",file=paste0("effort.",substring(gsub("-","",Sys.Date()),3),".rda")) ## (RH 210408)
 	frame(); addLabel(.5,.5,"Effort loaded",col="darkgreen",cex=1.2)
 }
 
-##.preferDepth.getDepth-----------------2020-07-28
+##.preferDepth.getDepth-----------------2021-04-08
 .preferDepth.getDepth <- function()
 {
 	opar <- par(lwd=2); on.exit(par(opar))
 	env.getDepth = lenv()
-	data("species",package="PBSdata",envir=env.getDepth)
+	data("species", package="PBSdata", envir=env.getDepth)
 	getWinVal(scope="L",winName="window")
 	act <- getWinAct()[1]
 	if (!is.null(act) && act=="getdata")
@@ -1660,7 +1787,9 @@ preferDepth = function(strSpp="410", fqtName="pht_fdep.sql", dbName="PacHarvest"
 			setWinVal(list(strSpp=spp),winName="window")
 		}
 		ttput(PBSdat)
-		depth=PBSdat; save("depth",file=paste0("depth",spp,".",substring(gsub("-","",Sys.Date()),3),".rda"))
+		depth=PBSdat
+		if (type=="SQL") ## (RH 210408)
+			save("depth",file=paste0("depth",spp,".",substring(gsub("-","",Sys.Date()),3),".rda"))
 	}
 	assign("dat",PBSdat)
 	if (nrow(dat)==0)
@@ -1782,7 +1911,7 @@ preferDepth = function(strSpp="410", fqtName="pht_fdep.sql", dbName="PacHarvest"
 					packList("xye","PBStool",tenv=.PBStoolEnv) }
 	
 				par(lwd=1.6) ## doesn't seem to take when specified in first line of function
-				plot(xy,freq=FALSE, xlab="", ylab="", main="",cex.lab=1.2, col="white", xlim=XLIM, ylim=YLIM, axes=FALSE)
+				plot(xy,freq=FALSE, xlab="", ylab="", main="",cex.lab=1.2, col="white", border="white", xlim=XLIM, ylim=YLIM, axes=FALSE)
 				if (par()$mfg[1]==par()$mfg[3])
 					axis(1,cex.axis=1.2)
 				if (par()$mfg[2]==1)
@@ -1821,7 +1950,7 @@ preferDepth = function(strSpp="410", fqtName="pht_fdep.sql", dbName="PacHarvest"
 					} else {
 						ylabpos = 0.88; labcex = 1; labinc = 0.05 #diff(par()$usr[3:4])*0.05
 						this.species = switch(l, 'e'=species[strSpp,"code3"], 'f'=eval(parse(text=deparse("cette esp\u{00E8}ce"))) )
-						data(species,package="PBSdata",envir=penv())
+						data("species", package="PBSdata", envir=penv())
 						addLabel(0.98, ylabpos, linguaFranca(paste0( species[strSpp,"name"],"\n",yy),l), adj=c(1,0.5), col="black", cex=labcex)
 						addLabel(0.98, ylabpos-2*labinc, paste0(this.species," = ", format(ntows,big.mark=options()$big.mark), linguaFranca(" events",l)), cex=labcex-0.1, col="grey30", adj=c(1,1)) 
 						addLabel(0.98, ylabpos-3*labinc, paste0(this.species, " = ",format(round(max(cc,na.rm=TRUE)), big.mark=options()$big.mark)," t"), cex=labcex-0.1, col="grey30", adj=c(1,1))
@@ -1830,7 +1959,10 @@ preferDepth = function(strSpp="410", fqtName="pht_fdep.sql", dbName="PacHarvest"
 						}
 					}
 				}
-				plot(xy,freq=FALSE, xlab="", ylab="", main="",cex.lab=1.2, col=barcol[1], xlim=XLIM, ylim=YLIM, axes=FALSE, add=TRUE)
+#browser();return()
+				old.lwd = par()$lwd; par(lwd=0.5)
+				plot(xy, freq=FALSE, xlab="", ylab="", main="",cex.lab=1.2, col=lucent(barcol[1],0.2), border="slategrey", xlim=XLIM, ylim=YLIM, axes=FALSE, add=TRUE)
+				par(lwd=old.lwd)
 				if (showD) lines(xc,yz,col="grey20",lwd=clwd)
 				if (showC) lines(xc,yc,col=ccol,lwd=clwd)
 				box();

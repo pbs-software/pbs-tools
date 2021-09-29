@@ -25,7 +25,8 @@ plotIndex(bootbomb, type="PJS", surv=ttcall(surveyname),
     currently only \code{"e"} (english) and \code{"f"} (french).}
 }
 \details{
-  The plot mimics PJS' style of plotiing index series in STATA.
+  The plot mimics PJS' style of plotting index series in STATA.\cr
+  See \code{'Examples'} for sequence of code calls.
 }
 \value{
   List of bootstrapped replicates by year for user's pleasure.
@@ -37,7 +38,7 @@ plotIndex(bootbomb, type="PJS", surv=ttcall(surveyname),
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
   \emph{locus opus}: Institute of Ocean Sciences (IOS), Sidney BC\cr
-  Last modified \code{Rd: 2019-12-13}
+  Last modified \code{Rd: 2021-06-08}
 }
 \note{
   PJS maintains code in statistical software called \href{https://www.stata.com/}{STATA}.
@@ -53,6 +54,15 @@ In package \pkg{PBStools}:\cr
   \code{\link[PBStools]{prepGFsurv}},
   \code{\link[PBStools]{restratify}},
   \code{\link[PBStools]{uniqtows}}
+}
+\examples{
+\dontrun{
+  qu("gfb_survey_data.sql",dbName="GFBioSQL",strSpp="435",survserid=16)
+  write.csv(PBSdat,"SSID=16&species=435.csv",row.names=FALSE)
+  prepdat = prepGFsurv("SSID=16&species=435.csv", survey=9, strSpp="435")
+  bootbomb = calcBiom(prepdat, reps=1000)
+  plotIndex(bootbomb, lang="e", png=TRUE)
+}
 }
 % Add one or more standard keywords, see file 'KEYWORDS' in the
 % R documentation directory (show via RShowDoc("KEYWORDS")):

@@ -13,9 +13,11 @@ revStr(x)
 \value{
   A vector strings that have been reversed.
 }
-\author{\code{base::strsplit}}
-\seealso{
-  \code{\link{wrapText}} 
+\author{
+  \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
+  Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
+  \emph{locus opus}: Institute of Ocean Sciences (IOS), Sidney BC\cr
+  Last modified \code{Rd: 2021-06-15}\cr
 }
 \examples{
 local(envir=.PBStoolEnv,expr={
@@ -26,3 +28,4 @@ pbsfun()
 })
 }
 \keyword{character}
+\concept{M01_Utility}

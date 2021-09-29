@@ -1,4 +1,6 @@
 -- Get commercial catch from PacHarvest; match trip IDs in GFBioSQL & GFFOS.  (2014-06-04)
+-- Last revised: RH 2021-03-01
+
 SET NOCOUNT ON  -- prevents timeout errors
 
 -- Get GFB Trip ID for selected species from Hail-Vessel-Date combo
@@ -98,6 +100,8 @@ SELECT
   CONVERT(char(7),IsNull(T.OBFL_DEPARTURE_DT,T.OBFL_OFFLOAD_DT),20) AS yrmo,
   IsNull(FE.OBFL_MAJOR_STAT_AREA_CDE,0) AS major,
   IsNull(FE.OBFL_MINOR_STAT_AREA_CDE,0) AS minor,
+  COALESCE(-FE.Mean_Longitude, -FE.OBFL_START_LONGITUDE, -FE.OBFL_END_LONGITUDE, 0) AS X,
+  COALESCE(FE.Mean_Latitude, FE.OBFL_START_LATITUDE, FE.OBFL_END_LATITUDE, 0) AS Y,
   MC.SPECIES_CODE AS spp,
   -- SC.util as \"util\",
   Sum(MC.RETAINED+MC.DISCARDED) AS catKg
@@ -119,6 +123,8 @@ GROUP BY
   CONVERT(char(7),IsNull(T.OBFL_DEPARTURE_DT,T.OBFL_OFFLOAD_DT),20),
   IsNull(FE.OBFL_MAJOR_STAT_AREA_CDE,0),
   IsNull(FE.OBFL_MINOR_STAT_AREA_CDE,0),
+  COALESCE(-FE.Mean_Longitude, -FE.OBFL_START_LONGITUDE, -FE.OBFL_END_LONGITUDE, 0),
+  COALESCE(FE.Mean_Latitude, FE.OBFL_START_LATITUDE, FE.OBFL_END_LATITUDE, 0),
   MC.SPECIES_CODE
 
 SELECT
@@ -128,6 +134,8 @@ SELECT
   CONVERT(smalldatetime,PHT.date) AS [date],
   PHT.major,
   PHT.minor,
+  PHT.X,
+  PHT.Y,
   PHT.spp,
   --Sum(CONVERT(real,PHT.catKg)) AS catKg
   CAST(ROUND(SUM(CONVERT(real,PHT.catKg)),7)  AS NUMERIC(15,7)) AS catKg
@@ -147,9 +155,13 @@ GROUP BY
   CONVERT(smalldatetime,PHT.date),
   PHT.major,
   PHT.minor,
+  PHT.X,
+  PHT.Y,
   PHT.spp
 
 
 -- getData("gfb_pht_catch.sql","GFBioSQL",strSpp="451")
--- qu("gfb_pht_catch.sql",dbName="GFBioSQL",strSpp="439",gear=c(1,6,8))
+-- qu("gfb_pht_catch.sql",dbName="GFBioSQL",strSpp="439",gear=c(1,6,8))  -- there's no gear variable above
+-- qu("gfb_pht_catch.sql",dbName="GFBioSQL",strSpp="396")
+
 

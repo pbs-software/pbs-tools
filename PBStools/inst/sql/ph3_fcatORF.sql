@@ -66,7 +66,7 @@ SELECT * FROM
   Sum(CASE
     WHEN CS.SP_SPECIES_CDE IN ('424','407','431','433','442') AND CS.CU_CATCH_UTLZTN_CDE NOT IN (6,22,23,24,27,28)
     THEN CS.CATSUM_ROUND_LBS_WT
-    ELSE 0 END)/2.20459 AS RFA
+    ELSE 0 END)/2.20459 AS IRF
 
 FROM
   @table.CATCH_SUMMARY CS INNER JOIN
@@ -182,12 +182,15 @@ GROUP BY
   CS.STP_SPER_YR,
   AREA.PMFC,
   AREA.ANTHONY
-  ) CSS
-  WHERE
-    CSS.\"landed\">0 OR CSS.\"discard\">0 OR CSS.POP>0 OR CSS.ORF>0 OR CSS.PAH>0 OR CSS.SBF>0 OR CSS.DOG>0 OR CSS.RFA>0
+) CSS
+WHERE
+  CSS.\"landed\">0 OR CSS.\"discard\">0 OR CSS.POP>0 OR CSS.ORF>0 OR CSS.PAH>0 OR CSS.SBF>0 OR CSS.DOG>0 OR CSS.IRF>0
 ;
 
 -- getData("ph3_fcatORF.sql",dbName="HARVEST_V2_0",strSpp="442",server="ORAPROD",type="ORA",trusted=FALSE,uid="",pwd="")
 -- getData("ph3_fcatORF.sql",dbName="HARVEST_V2_0",strSpp="394",path=.getSpath(),server="ORAPROD",type="ORA",trusted=FALSE,uid="haighr",pwd="haighr")
--- qu("ph3_fcatORF.sql",dbName="HARVEST_V2_0",strSpp="435",server="ORAPROD",type="ORA",trusted=FALSE,uid="haighr",pwd="haighr")
-
+-- qu("ph3_fcatORF.sql",dbName="HARVEST_V2_0",strSpp="442",server="ORAPROD",type="ORA",trusted=FALSE,uid="haighr",pwd="haighr")
+-- qu("ph3_fcatORF.sql",dbName="HARVEST_V2_0",strSpp="394",server="ORAPROD",type="ORA",trusted=FALSE,uid="haighr",pwd="haighr")
+-- qu("ph3_fcatORF.sql",dbName="HARVEST_V2_0",strSpp="440",server="ORAPROD",type="ORA",trusted=FALSE,uid="haighr",pwd="haighr")
+-- As of 2012-01-15, use ORAPROD.WORLD (added to C:\Oracle\12.2.0\cli\network\admin\tnsnames.ora)
+-- qu("ph3_fcatORF.sql",dbName="HARVEST_V2_0",strSpp="424",server="ORAPROD.WORLD",type="ORA",trusted=FALSE,uid="haighr",pwd="haighr")

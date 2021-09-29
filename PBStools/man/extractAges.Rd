@@ -8,6 +8,7 @@
 }
 \usage{
 extractAges(dat, ameth=c(3,17), use.sfc.age=1:3, sex=c(2,1),
+   rmSM=TRUE, only.markSM=FALSE, rmRC=9,
    show.age=FALSE, show.flds=c("ameth","ttype"), show.only=FALSE)
 }
 \arguments{
@@ -15,6 +16,9 @@ extractAges(dat, ameth=c(3,17), use.sfc.age=1:3, sex=c(2,1),
   \item{ameth}{\code{numeric} -- ageing method code used in \code{GFBioSQL}.}
   \item{use.sfc.age}{\code{numeric} -- explicit ages (usually young) at which using surface otolith readings are acceptable.}
   \item{sex}{\code{numeric} -- sex code: 0=not sexed, 1=males, 2=females, 3=observed but uncertain.}
+  \item{rmSM}{\code{logical} -- if \code{TRUE}, remove seamount records from age data.}
+  \item{only.markSM}{\code{logical} -- if \code{TRUE}, only mark the seamount records, do not remove them.}
+  \item{rmRC}{\code{numeric} -- remove records with specified `Reason Codes'.}
   \item{show.age}{\code{logical} -- if \code{TRUE}, show the number of available ages in a pop-up GUI.}
   \item{show.flds}{\code{character} -- two field names in \sQuote{\code{dat}} by which to summarise the number of ages;
     note: the third  dimension is automatically \sQuote{\code{sex}}, so don't choose this field.}
@@ -38,7 +42,7 @@ extractAges(dat, ameth=c(3,17), use.sfc.age=1:3, sex=c(2,1),
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
   \emph{locus opus}: Institute of Ocean Sciences (IOS), Sidney BC\cr
-  Last modified \code{Rd: 2018-10-12}
+  Last modified \code{Rd: 2021-06-15}
 }
 \note{
   The default arguments are set to extract broken and burnt/baked otoliths 
@@ -59,4 +63,5 @@ extractAges(dat, ameth=c(3,17), use.sfc.age=1:3, sex=c(2,1),
 }
 \keyword{manip}% use one of  RShowDoc("KEYWORDS")
 %\keyword{ ~kwd2 }% __ONLY ONE__ keyword per line
+\concept{M02_Biology}
 

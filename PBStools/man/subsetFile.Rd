@@ -44,4 +44,5 @@ subsetFile(fnam, enrow=30, header=TRUE, os=.Platform$OS.type)
 }
 \keyword{sysdata}
 \keyword{character}
+\concept{M01_Utility}
 

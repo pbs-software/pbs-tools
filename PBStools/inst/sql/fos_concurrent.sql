@@ -33,7 +33,9 @@ WHERE
     WHEN C.GEAR IN ('HOOK AND LINE','LONGLINE','LONGLINE OR HOOK AND LINE') THEN 3 -- Hook & Line
     WHEN C.GEAR IN ('TRAP','TRAP OR LONGLINE OR HOOK AND LINE') THEN 4             -- Trap
     ELSE 0 END) IN (@gear) AND
-  C.BEST_DATE >= '1996-02-17'  -- Chose start of observer program to properly compare among all species
+  C.BEST_DATE >= '1996-02-17' -- Chose start of observer program to properly compare among all species
+  --AND C.BEST_DATE <= '2020-02-17' -- To be able to reproduce for RER
+  AND C.BEST_DATE <= '2020-12-31' -- To be able to reproduce for YMR
 
 DECLARE @total AS FLOAT
 SET @total = (SELECT 

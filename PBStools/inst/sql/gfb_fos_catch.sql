@@ -1,4 +1,6 @@
 -- Get commercial catch from GFFOS and try to match TIDs in GFBioSQL. (2014-06-04)
+-- Last revised: RH 2021-03-01
+
 SET NOCOUNT ON  -- prevents timeout errors
 
 @INSERT('meanSppWt.sql')  -- getData now inserts the specified SQL file assuming it's on the path specified in getData
@@ -102,6 +104,8 @@ SELECT
   CONVERT(char(10),ISNULL(T.TRIP_START_DATE,T.TRIP_END_DATE),20) AS \"date\",
   ISNULL(A.MAJOR_STAT_AREA_CODE,0) as \"major\",
   ISNULL(A.MINOR_STAT_AREA_CODE,0) as \"minor\",
+  COALESCE(-FE.START_LONGITUDE, -FE.END_LONGITUDE, 0) AS \"X\",
+  COALESCE(FE.START_LATITUDE, FE.END_LATITUDE, 0) AS \"Y\",
   SC.spp as \"spp\",
   ISNULL(Sum(SC.sppcat),0) as \"catKg\"
 INTO #FOS_CAT
@@ -172,6 +176,8 @@ GROUP BY
   CONVERT(char(10),ISNULL(T.TRIP_START_DATE,T.TRIP_END_DATE),20),
   ISNULL(A.MAJOR_STAT_AREA_CODE,0),
   ISNULL(A.MINOR_STAT_AREA_CODE,0),
+  COALESCE(-FE.START_LONGITUDE, -FE.END_LONGITUDE, 0),
+  COALESCE(FE.START_LATITUDE, FE.END_LATITUDE, 0),
   SC.spp --, SC.util
 ORDER BY
   --TO_CHAR(ISNULL(T.TRIP_START_DATE,T.TRIP_END_DATE),''YYYY-MM-DD''),
@@ -186,6 +192,8 @@ SELECT
   CONVERT(smalldatetime,FCAT.date) as \"date\",
   FCAT.major,
   FCAT.minor,
+  FCAT.X,
+  FCAT.Y,
   FCAT.spp,
   --SUM(CONVERT(real,FCAT.catKg)) AS catKg
   CAST(ROUND(SUM(CONVERT(real,FCAT.catKg)),7) AS NUMERIC(15,7)) AS catKg
@@ -203,10 +211,13 @@ GROUP BY
   CONVERT(smalldatetime,FCAT.date),
   FCAT.major,
   FCAT.minor,
+  FCAT.X,
+  FCAT.Y,
   FCAT.spp
 
 
 --getData("gfb_fos_catch.sql","GFBioSQL",strSpp="451")
 --select * from #FOS_CAT
--- qu("gfb_fos_catch.sql",dbName="GFBioSQL",strSpp="439",gear=c(1,6,8))
+-- qu("gfb_fos_catch.sql",dbName="GFBioSQL",strSpp="439",gear=c(1,6,8))  -- there's no gear variable above
+-- qu("gfb_fos_catch.sql",dbName="GFBioSQL",strSpp="396")
 

@@ -33,16 +33,13 @@ quantBox(x, use.cols = TRUE, ...)
   }
 }
 \references{
-  \href{https://r.789695.n4.nabble.com/Box-plot-with-5th-and-95th-percentiles-instead-of-1-5-IQR-problems-implementing-an-existing-solution-td3456123.html}{R Help on Nabble}
+  \href{https://stat.ethz.ch/pipermail/r-help/2013-July/356953.html}{Box plot with 5th and 95th percentiles instead of 1.5 * IQR}
 }
 \author{
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
   \emph{locus opus}: Institute of Ocean Sciences (IOS), Sidney BC\cr
-  Last modified \code{Rd: 2020-10-13}\cr
-}
-\note{
-  Why would anyone choose a boxplot over a quantile plot?
+  Last modified \code{Rd: 2021-09-28}\cr
 }
 \seealso{
   \code{\link[graphics]{boxplot}},
@@ -59,4 +56,5 @@ local(envir=.PBStoolEnv,expr={
 })
 }
 \keyword{hplot}
+\concept{M01_Utility}
 

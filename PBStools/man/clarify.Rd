@@ -11,7 +11,7 @@ clarify(dat, cell=c(0.1,0.075), nG=8,
    clrs=c("red","orange","yellow","green","forestgreen","deepskyblue",
    "blue","midnightblue"), land="ghostwhite", spp.names=FALSE, 
    png=FALSE, pngres=400, PIN=NULL, isobs=c(200,1000,1800), 
-   wmf=FALSE, eps=FALSE, hpage=10, ioenv=.GlobalEnv)
+   wmf=FALSE, eps=FALSE, hpage=10, ioenv=.GlobalEnv, lang=c("e","f"))
 }
 \arguments{
   \item{dat}{\code{EventData} -- object with fields \code{EID}, \code{X},
@@ -35,6 +35,7 @@ clarify(dat, cell=c(0.1,0.075), nG=8,
   \item{eps}{\code{logical} -- if \code{TRUE}, send plot to an encapsulated postscript \code{.eps} file.}
   \item{hpage}{\code{numeric} -- dimension in inches of the longest side of a plot page sent to an output file.}
   \item{ioenv}{\code{environment} -- input/output environment for function input data and output results.}
+  \item{lang}{\code{character} -- language for image labels, where \code{'e'}=english and \code{'f'}=french.}
 }
 \details{
   The function uses the function \code{clara} in the package 
@@ -55,7 +56,7 @@ clarify(dat, cell=c(0.1,0.075), nG=8,
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
   \emph{locus opus}: Institute of Ocean Sciences (IOS), Sidney BC\cr
-  Last modified \code{Rd: 2019-03-20}
+  Last modified \code{Rd: 2021-06-15}
 }
 \seealso{
 In package \pkg{PBStools}:\cr
@@ -70,6 +71,7 @@ In package \pkg{PBSdata}:\cr
   \code{\link[PBSdata]{claradat}} for an example dataset.
 }
 \examples{
+\dontrun{
 local(envir=.PBStoolEnv,expr={
 pbsfun=function(){
   clarify(claradat,xlim=c(-132,-127.8),ylim=c(50.6,52.1),
@@ -77,5 +79,6 @@ pbsfun=function(){
   invisible() }
 pbsfun()
 })
+}
 }
 \keyword{hplot}
