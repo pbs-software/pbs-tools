@@ -275,7 +275,7 @@ splitTab = function(tab, np=3, row.names=TRUE, row.label="row", row.numeric=FALS
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~splitTab
 
 
-## texArray-----------------------------2021-04-20
+## texArray-----------------------------2021-11-02
 ## Flatten and format an array for latex output.
 ## ---------------------------------------------RH
 texArray =function(x, table.caption="My table", table.label="tab:mytable",
@@ -315,6 +315,7 @@ texArray =function(x, table.caption="My table", table.label="tab:mytable",
 		}
 		poo = fn.select.rows(x,select.rows)
 		goo = poo
+#browser();return()
 	}
 	else {
 		Z = N[3:L]; names(Z) = 3:L
@@ -365,7 +366,7 @@ texArray =function(x, table.caption="My table", table.label="tab:mytable",
 				if (any(x=="PMFC")){
 					z=grep("|",x,fixed=TRUE)
 					if(length(z)>0)
-						p=pmfc[strsplit(x[z],"|",fixed=T)[[1]],"gmu"]
+						p=pmfc[strsplit(x[z],"|",fixed=TRUE)[[1]],"gmu"]
 					else{
 						z=grep("PMFC",x)+1
 						p=pmfc[strsplit(x[z],"")[[1]],"gmu"]
@@ -378,7 +379,6 @@ texArray =function(x, table.caption="My table", table.label="tab:mytable",
 				}
 				else x }
 			)
-#browser();return()
 			c1 = gsub("PMFC ","",c1,fixed=TRUE)
 			c1 = gsub("3CD+5ABCDE","Coast",c1,fixed=TRUE)
 			c1 = gsub("stat:Ntid","Number of trips",gsub("stat:Scat","Sample catch (t)",gsub("stat:Fcat","Fisheries catch (t)",c1)))
@@ -427,13 +427,13 @@ texArray =function(x, table.caption="My table", table.label="tab:mytable",
 		"\\setlength{\\tabcolsep}{0pt}"
 	)
 	writeLines(texmess,texout)
-#browser();return()
 
 	if (!requireNamespace("xtable", quietly=TRUE)) stop("`xtable` package is required")
 	if (is.null(collab)) collab = colnames(goo)
 	else if (length(collab)==ncol(goo)) colnames(goo) = collab
 	else stop("Length of `collab` does not match number of columns")
 	#goonum = sapply(goo,function(x){grepl("numeric",class(x))}) 
+#browser();return()
 	goonum = sapply(goo, is.numeric)
 	if (any(goonum)) {
 		if (all(goonum)) X=0
@@ -487,13 +487,15 @@ texArray =function(x, table.caption="My table", table.label="tab:mytable",
 	#tabalign = paste0("c",ifelse(add.header.column, alignHRC[1], ""), ifelse(use.row.names, alignHRC[2], ""), paste(rep(alignHRC[3], ncol), collapse=""))
 	tabalign = paste0(alignHRC[1], ifelse(add.header.column, alignHRC[1], ""), ifelse(use.row.names, alignHRC[2], ""), paste(rep(alignHRC[3], ncol), collapse=""))
 	fldsize  = newsize = c(0,apply(goo,2,function(x){if (all(is.na(x))) 1 else max(nchar(x),na.rm=TRUE)})) # due to extra column nonsense
-	hdrsize  = sapply(strsplit(colnames(goo),split="[[:space:][:punct:]]"),function(x){xx = nchar(x); if (length(xx)==0) 0 else(max(xx))})
+	heads    = gsub("\\\\newline(_)?"," ",gsub("\\s+","_",colnames(goo)))
+	hdrsize  = sapply(strsplit(heads,split="[[:space:]]"),function(x){xx = nchar(x); if (length(xx)==0) 0 else(max(xx))})
+	#hdrsize  = sapply(strsplit(heads,split="[[:space:][:punct:]]"),function(x){xx = nchar(x); if (length(xx)==0) 0 else(max(xx))})
 	#fldsize  = newsize = c(0,apply(goo,2,function(x){if (all(is.na(x))) 0.1 else max(strwidth(x,font=1,units="in"),na.rm=TRUE)})) # due to extra column nonsense
 	#hdrsize  = strwidth(colnames(goo),font=1,units="in")
 
-#browser();return()
-	colnames(goo) = gsub("\\_",uscore,colnames(goo)) ## (RH 210420)
+	colnames(goo) = gsub("\\s+"," ",gsub("\\_",uscore,colnames(goo))) ## (RH 210420)
 	goo = as.data.frame(sapply(goo,function(x){gsub("\\_",uscore,x)}))
+#browser();return()
 
 	## Italicise words from italics.file, if supplied
 	if (!is.null(italics.file) && file.exists(italics.file)){
@@ -572,10 +574,12 @@ texArray =function(x, table.caption="My table", table.label="tab:mytable",
 
 	#bigmess  = paste0(sapply(1:length(fldwidth), function(N, a, w) { LCR(align=fldalign[N], width=fldwidth[N]) } ),collapse="")
 	bigmess  = paste0(sapply(1:length(fldwidth), function(N) { LCR(align=fldalign[N], width=fldwidth[N]) } ),collapse="")
+#browser();return()
 
 	texfile[ltdelim[1]] = gsub(substring(tabalign,2,nchar(tabalign)),bigmess,texfile[ltdelim[1]])
 	writeLines(texfile,sub("\\.tex","+.tex",texout))
-	tabfile=texfile[ltdelim[1]:ltdelim[2]]
+	## set column separator to 0 because code has already optimized spacing for textwidth (RH 211102)
+	tabfile=c("\\setlength{\\tabcolsep}{0pt}",texfile[ltdelim[1]:ltdelim[2]])
 	invisible(list(goo=goo,texfile=texfile,tabfile=tabfile))
 }
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~texArray

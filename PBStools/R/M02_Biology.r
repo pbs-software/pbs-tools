@@ -916,7 +916,7 @@ calcVB <- function(dat=pop.age, strSpp="", yfld="len", fixt0=FALSE,
 	} 
 	if (!all(z==TRUE)){
 		dat=dat[z,] # keep good, remove outliers
-		msd(dat,"remove bad data")
+		msg(dat,"remove bad data")
 	}
 
 	aflds=c("major","minor","locality","srfa","srfs","popa","stock")
@@ -1160,14 +1160,17 @@ calcVB <- function(dat=pop.age, strSpp="", yfld="len", fixt0=FALSE,
 									n1   = nrow(idat)
 									ipVec = make.parVec(idat,pVec)
 									## Temporary calcs to get length sdevs by age (RH 210304)
-									tempdat=idat
-									tempdat$age[tempdat$age>60]=60
-									len.age = split(tempdat$len,tempdat$age)
-									lcv = t(sapply(len.age,function(x){mn=mean(x,na.rm=T); sd=sd(x,na.rm=T); cv=sd/mn; return(c(mn,sd,cv))}))
-									colnames(lcv) = c("mn","sd","cv")
-#browser();return()
-									write.csv(lcv,file=paste0("lcv.",tolower(iii),".csv"))
-#print(c(i,n1))						
+									if (tables && l=="e") {
+										tempdat=idat
+										tempdat$age[tempdat$age>60]=60
+										len.age = split(tempdat$len,tempdat$age)
+										lcv = t(sapply(len.age,function(x){mn=mean(x,na.rm=T); sd=sd(x,na.rm=T); cv=sd/mn; return(c(mn,sd,cv))}))
+										colnames(lcv) = c("mn","sd","cv")
+										lcv.prefix = paste0("lcv.",substring(tolower(iii),1,1))
+										lcv.suffix = sub("calcVB","",outnam)
+										lcv.out    = paste(lcv.prefix,lcv.suffix,sep=ifelse(grepl("^\\(|^\\.", lcv.suffix), "","."))
+										write.csv(lcv,file=paste0(lcv.out,".csv"))
+									}
 									calcMin(pvec=ipVec,func=VBfun)
 								} ## end if fit1 bad
 							} ## end if enough points
@@ -1578,10 +1581,13 @@ estOgive <- function(dat=pop.age, strSpp="", method=c("DN"),
 		})
 		return(liteclrs)
 	}
-	amendLeg = function(legtxt, muval, mulab){
+	amendLeg = function(legtxt, muval, mulab, vLval=NULL){
 		revleg  = rev(legtxt)
 		lastleg = revleg[1]
+#if (mulab=="DN") {browser();return()}
 		lastleg = gsub(")$",paste0(", \\\265.",mulab,"=",round(muval,1),")"),lastleg)
+		if (!is.null(vLval))
+			lastleg = gsub(")$",paste0("\\\273vL=",round(vLval,1),")"),lastleg)
 		revleg[1] = lastleg
 		legtxt  = rev(revleg)
 		return(legtxt)
@@ -1834,7 +1840,9 @@ estOgive <- function(dat=pop.age, strSpp="", method=c("DN"),
 				dlist  = calcMin(pvec=parVec,func=fitDN,method="nlm",repN=10,steptol=1e-10,reltol=1e-16)
 				Pend   = dlist$Pend
 				muDN   = round(Pend[1],1)
+				vLDN   = round(Pend[2],1)
 				mdDN   = page(0.5,Pend[[1]],Pend[[2]])
+#browser();return()
 				CALCS[[ss]][[sss]][["p50"]][["DN"]] = mdDN
 				CALCS[[ss]][[sss]][["mu"]][["DN"]]  = muDN
 				CALCS[[ss]][[sss]][["par"]][["DN"]] = Pend
@@ -1894,7 +1902,7 @@ estOgive <- function(dat=pop.age, strSpp="", method=c("DN"),
 				}
 				if (any(method=="DN")) {
 					nmeth  = nmeth + 1
-					legtxt = amendLeg(legtxt, muval=muDN, mulab="DN")
+					legtxt = amendLeg(legtxt, muval=muDN, mulab="DN",vLval=vLDN)
 					Xdbl   = seq(xlim[1],xlim[2],len=1000)
 					Ydbl   = calcDN(Pend,a=Xdbl)
 
@@ -1934,7 +1942,7 @@ estOgive <- function(dat=pop.age, strSpp="", method=c("DN"),
 	#if (i==5) {browser();return()}
 					if (plines)
 						doLab(Xdbl, Ydbl, mdDN, n=nmeth, lab="DN", ...)
-					MDX = max(MDX, approx(Ydbl,Xdbl,xout=.5,rule=2,ties="ordered")$y)  ## used to place the legend
+					MDX = max(MDX, approx(Ydbl,Xdbl,xout=.4,rule=2,ties="ordered")$y)  ## used to place the legend
 				}
 			}
 		}
@@ -1945,6 +1953,7 @@ estOgive <- function(dat=pop.age, strSpp="", method=c("DN"),
 			else legtxt = ""
 			legtxt = paste0(legtxt,rep(names(subsets),nsex))
 		}
+#browser();return()
 		#if (length(SSID)==1)
 		#	legtxt=sub(names(SSID),paste0(names(SSID),"\n     ",paste(surveys,collapse="\n     "),"\n"),legtxt)
 		if (plines)
@@ -1998,11 +2007,11 @@ estOgive <- function(dat=pop.age, strSpp="", method=c("DN"),
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~estOgive
 
 
-## extractAges -------------------------2020-10-21
+## extractAges -------------------------2023-02-09
 ## Extract records with positive age and qualify
-## by the selected ageing method.
+##  by the selected ageing method.
 ## If show.age=T, a GUI reports # ages by
-## specified field pair for each sex.
+##  specified field pair for each sex.
 ## ---------------------------------------------RH
 extractAges = function(dat, ameth=c(3,17), use.sfc.age=1:3, sex=c(2,1),
    rmSM=TRUE, only.markSM=FALSE, rmRC=9,
@@ -2012,7 +2021,8 @@ extractAges = function(dat, ameth=c(3,17), use.sfc.age=1:3, sex=c(2,1),
 	dat = dat[dat$age>0 & !is.na(dat$age),]
 	if (rmSM)
 		dat = zapSeamounts(dat, only.mark=only.markSM)
-	if ("RC" %in% colnames(dat) && !is.null(rmRC) && class(rmRC)=="numeric")
+	#if ("RC" %in% colnames(dat) && !is.null(rmRC) && class(rmRC)=="numeric")
+	if ("RC" %in% colnames(dat) && !is.null(rmRC) && inherits(rmRC,"numeric"))
 		dat = dat[!is.element(dat$RC, rmRC),]
 
 	if (show.age) {
@@ -2064,6 +2074,12 @@ extractAges = function(dat, ameth=c(3,17), use.sfc.age=1:3, sex=c(2,1),
 		## Select ages based on logical vectors for ameth
 		dat = dat[(z.sf|z.ua|z.am),]  ## RH 201021
 	}
+	## Check for years that only have ages 1-3 surface-read otoliths ## RH 230201
+	ages.year = split(dat$age,dat$year)
+	z.yr      = sapply(ages.year,function(x){!all(x<=3)})
+	ok.yr     = names(z.yr)[z.yr]
+	dat = dat[is.element(dat$year,ok.yr),]
+
 	## Logical vector for sex
 	if ( !is.null(sex) && !all(is.na(sex)) )
 		z.sx = is.element(dat$sex, sex)
@@ -2276,7 +2292,7 @@ histMetric <- function(dat=pop.age, xfld="age", xint=1, minN=50,
 #---------------------------------------histMetric
 
 
-## histTail-----------------------------2020-09-14
+## histTail-----------------------------2022-03-10
 ## Create a histogram showing tail details
 ## ---------------------------------------------RH
 histTail <-function(dat=pop.age, xfld="age", tailmin=NULL, 
@@ -2302,16 +2318,20 @@ histTail <-function(dat=pop.age, xfld="age", tailmin=NULL,
 	xlab = paste(toupper(substring(xfld,1,1)),substring(xfld,2),sep="",collapse=" ")
 	spp  = attributes(dat)$spp
 	if (missing(outnam))
-		outnam = paste0(spp,"-Hist-",xlab)
-	clearFiles(paste0(outnam,".png"))
+		#outnam = paste0(spp,"-Hist-",xlab)
+#browser();return()
+		outnam = paste0("histTail-",strSpp,"-",gsub("\\s+","_",stock),"-",toUpper(xfld))
 
-	fout = fout.e = outnam
+	fout.e = outnam
 	for (l in lang) {
 		changeLangOpts(L=l)
-		if (l=="f") fout = paste0("./french/",fout.e)  ## could repeat for other languages
+		fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
 		if (wmf && .Platform$OS.type=="windows")
 			do.call("win.metafile",list(filename=paste0(fout,".wmf"), width=PIN[1], height=PIN[2]))
-		else if (png) png(paste0(fout,".png"), units="in", res=pngres, width=PIN[1], height=PIN[2])
+		else if (png){
+			clearFiles(paste0(fout,".png"))
+			png(paste0(fout,".png"), units="in", res=pngres, width=PIN[1], height=PIN[2])
+		}
 		else resetGraph(reset.mf=FALSE)
 		expandGraph(mfrow=c(1,1), mar=c(2.75,4,1,1), oma=c(0,0,0,0), las=1, xaxs="i", yaxs="i", cex.axis=0.9, cex.lab=1.1)
 		
@@ -2325,12 +2345,19 @@ histTail <-function(dat=pop.age, xfld="age", tailmin=NULL,
 		axis(1, at=seq(10+xoff,xmax+xoff,10), labels=seq(10,xmax,10), tcl=-0.5)
 		ylab = paste(ifelse(prob,ifelse((wmf|png)&&PIN[2]<3.5,"Rel. Freq.","Relative Frequency"),"Frequency")," ( N = ",format(nx,scientific=FALSE,big.mark=options()$big.mark)," )",sep="")
 		mtext(linguaFranca(ylab,l), side=2, line=2.75, cex=par()$cex.lab, las=0)
+		data("species", package="PBSdata", envir=penv())
+#browser();return()
+		if (xfld=="len") { xpos=0.05; ypos=0.95; adj=0}
+		else             { xpos=0.95; ypos=0.25; adj=1}
+		if (strSpp=="REBS")
+			addLabel(xpos,ypos, linguaFranca(paste0(strSpp," ",switch(stock, 'BSR'="North", 'RER'="South", "Coast")),l), col="black", cex=1.2, adj=adj)
+		else
+			addLabel(xpos,ypos, linguaFranca(paste0(toUpper(species[strsplit(outnam,"-")[[1]][2],"name"])," - ",gsub("_"," ",strsplit(outnam,"-")[[1]][3])),l), col="black", cex=1.2, adj=adj)
 		if (!is.null(tailmin)){
 			if (tailmin<=0) {
 				qstart  = 0.975
 				tailmin = floor(quantile(x, qstart))
 			} else qstart = signif(ecdf(x)(tailmin),3)
-#browser();return()
 			z = x>=tailmin & !is.na(x); nz=sum(z)
 			brks = ((tailmin-1):ceiling(max(x[z])))+0.5
 			par(new=TRUE, plt=c(0.7,0.975,0.6,0.9))
@@ -2353,9 +2380,9 @@ histTail <-function(dat=pop.age, xfld="age", tailmin=NULL,
 ## Plot maturity chart to see relative occurrence
 ## of maturity stages by month.
 ## Notes:
+##  areas : code does not loop through separate areas but amalgamates them
 ##  type = "map" (tiles), "bubb" (bubbles)
-##  If is.null(mats) then plot proportions by
-##  sex in areas (not maturities in one area)
+##  If is.null(mats) then plot proportions by sex in areas (not maturities in one area)
 ## -----------------------------------------RH/PJS
 mapMaturity <- function (dat=pop.age, strSpp="", type="map", mats=1:7,
    sex=list(Females=2), ttype=1:5, stype=c(1,2,6,7), areas=list(major=3:9), anams,
@@ -2458,9 +2485,10 @@ mapMaturity <- function (dat=pop.age, strSpp="", type="map", mats=1:7,
 		}
 	}
 
+	## Limits for tiles
 	xlim <- c(1,360)
 	ylim <- if(!is.null(mats)) -rev(range(mats))  else c(1, length(mat2))
-	ylim = ylim + c(-1,1)
+	ylim = ylim +  c(-1,1)
 	xpos <- (mcut[1:12]+mcut[2:13])/2
 	yspc <- 0.4
 
@@ -2497,7 +2525,9 @@ mapMaturity <- function (dat=pop.age, strSpp="", type="map", mats=1:7,
 				do.call("win.metafile", list(filename=paste0(fout,".wmf"), width=PIN[1], height=PIN[2]))
 			}
 			else resetGraph()
-			left.margin = ifelse(is.psex,8,6) * ifelse(l=="f" && any(sapply(sex,function(x){any(1%in%x)})), 1.75, 1)  ## male labels are long
+			#left.margin = ifelse(is.psex,8,6) * ifelse(l=="f" && any(sapply(sex,function(x){any(1%in%x)})), 1.75, 1)  ## male labels are long
+			#par(mfrow=c(nsex,1), mar = if(type=="map") c(1,4,0,0) else c(4,left.margin,0,0), oma=c(0,0,ifelse(is.psex,4,2),0))
+			left.margin = ifelse(is.psex,5,6) * ifelse(l=="f" && any(sapply(sex,function(x){any(1%in%x)})), 1.75, 1)  ## male labels are long
 			par(mfrow=c(nsex,1), mar = if(type=="map") c(1,4,0,0) else c(4,left.margin,0,0), oma=c(0,0,ifelse(is.psex,4,2),0))
 
 			for (s0 in 1:nsex) {
@@ -2604,6 +2634,8 @@ mapMaturity <- function (dat=pop.age, strSpp="", type="map", mats=1:7,
 					matdat = crossTab(sdat,c("month","mat","ttype"),"mat",length)
 					CALCS[[sexlab]][[paste0("sex",ss,"matdat")]] = matdat
 					save("matdat", file=paste0("sex",ss,"matdat.rda"))
+
+					## Limits for bubbles
 					xlim=c(1,12) + c(-0.25,0.25)
 					if (is.psex) {
 						yrng=c(length(mnam),1)
@@ -2613,16 +2645,18 @@ mapMaturity <- function (dat=pop.age, strSpp="", type="map", mats=1:7,
 						ylim = yrng - min(mats) + 1 + c(0.25,-0.75)
 					}
 					if (!missing(catch)) {
-						plotBubbles(bubbmat, xlim=xlim, ylim=ylim, xaxt="n", yaxt="n", cpro=FALSE, rpro=FALSE, hide0=TRUE, size=0.3, lwd=2, clrs=rev(CLRS[[s0]])[2])
+						plotBubbles(bubbmat, xlim=xlim, ylim=ylim, xaxt="n", yaxt="n", cpro=FALSE, rpro=FALSE, hide0=TRUE, size=0.3, lwd=2, clrs=rev(CLRS[[s0]])[2], frange=0.02)
 						addLegend(0.425, 1, legend=linguaFranca(lout,l), cex=0.9, horiz=TRUE, bty="n", xjust=0.5, yjust=0.75)
 					} else {
 						if (is.psex) {
-							plotBubbles(bubbmat, xlim=xlim, ylim=ylim, xaxt="n", yaxt="n", cpro=FALSE, rpro=FALSE, hide0=TRUE, size=0.3, lwd=2, clrs=rev(CLRS[[s0]])[2])
+							plotBubbles(bubbmat, xlim=xlim, ylim=ylim, xaxt="n", yaxt="n", cpro=FALSE, rpro=FALSE, hide0=TRUE, size=0.3, lwd=2, clrs=rev(CLRS[[s0]])[2], frange=0.02)
 						} else {
-							plotBubbles(bubbmat, xlim=xlim, ylim=ylim, xaxt="n", yaxt="n", cpro=ifelse(byrow,FALSE,TRUE), rpro=ifelse(byrow,TRUE,FALSE), hide0=TRUE, size=0.3, lwd=2, clrs=rev(CLRS[[s0]])[2])
+							plotBubbles(bubbmat, xlim=xlim, ylim=ylim, xaxt="n", yaxt="n", cpro=ifelse(byrow,FALSE,TRUE), rpro=ifelse(byrow,TRUE,FALSE), hide0=TRUE, size=0.3, lwd=2, clrs=rev(CLRS[[s0]])[2], frange=0.02)
 							addLegend(0.2, 1, legend=linguaFranca(lout,l), cex=0.9, horiz=TRUE, bty="n", yjust=0.75)
 						}
 					}
+#browser();return()
+
 					## Add proportion labels to each bubble
 					if (is.psex) {
 						sapply(1:length(mnam), function(x,pmat){
@@ -2657,78 +2691,141 @@ mapMaturity <- function (dat=pop.age, strSpp="", type="map", mats=1:7,
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~mapMaturity
 
 
-## plotAdens---------------------------2021-09-01
+## plotAdens----------------------------2022-03-17
 ##  Plot density of field (length) by age as waveforms.
 ## ---------------------------------------------RH
-plotAdens = function(dat, xfld="len", yfld="age", 
-	strSpp="417", sd=3, xlim=NULL, yspan=2, yrel=TRUE, dcol, 
-	png=FALSE, pngres=400, PIN=c(8,8), ...)
+plotAdens = function(dat, xfld="len", yfld="age", type="dens", sd=3,
+	strSpp="417", bysex=TRUE, stype=c(1,2,6:8),
+	xlim=NULL, yspan=2, yrel=TRUE, nmin=1,
+	dcol, png=FALSE, pngres=400, PIN=c(8,8), ...)
 {
+	if (yfld %in% c("depth","fdep") && "fdep" %in% colnames(dat)) {
+		dbin = 10
+		dat$depth = ceiling(dat$fdep/dbin) * dbin
+	}
 	dat = dat[dat[,xfld]>0 & !is.na(dat[,xfld]) & dat[,yfld]>0 & !is.na(dat[,yfld]),]
+	dat = dat[is.element(dat$stype,stype),]
+	if (bysex && "sex" %in% colnames(dat)) {
+		sex = c(2,1)
+		dat = dat[is.element(dat$sex,sex),]
+	}
 	if (yfld=="age" && "ameth" %in% colnames(dat)) {
 		zam = is.element(dat$ameth,3)
 		zam = zam | (is.element(dat$ameth,0) & dat$year>=1980)
 		zam = zam | (is.element(dat$ameth,1) & dat$age<=3)  ## SCL uses surface ageing for very young fish
 		dat = dat[zam,]
 	}
-	
-	ydata = split(dat[,xfld], dat[,yfld])
-	ydens = sapply(ydata, function(x){
+	ttput(dat)
+	if (bysex) {
+		sdata = split(dat, dat$sex)
+	} else {
+		sdata = list()
+		sdata[["0123"]] = dat
+	}
+	ydata = lapply(sdata,function(x){split(x[,xfld], x[,yfld])})
+	ndata = lapply(ydata,function(x){sapply(x,countVec)})
+	zuse  = lapply(ndata,function(x){x >= nmin})
+	for (i in 1:length(ydata)){
+		ii = names(ydata)[i]
+		ydata[[ii]] = ydata[[ii]][zuse[[ii]]]
+		ndata[[ii]] = ndata[[ii]][zuse[[ii]]]
+	}
+	ydens = lapply(ydata, function(y){
+		lapply(y, function(x){
 		if (length(x)==1) {
 			return(list(x=x,y=1,n=1))
 		} else {
-			sdr = range(rnorm(1000, mean=median(x), sd=3))
-			z   = x >= sdr[1] & x <= sdr[2]
-			x   = x[z]
-			return(density(x))
-		}
-	})
-	ymax  = sapply(ydens, function(x){max(x$y)})
-	Ymax  = max(ymax[ymax<1])
-	nmax  = sapply(ydens, function(x){return(max(x$y/sum(x$y)*x$n))})
-	Nmax  = max(nmax)
+			if (type=="dens") {
+				if (!is.null(sd)) {
+					sdr = range(rnorm(1000, mean=mean(x), sd=sd))
+					z   = x >= sdr[1] & x <= sdr[2]
+					x   = x[z]
+				}
+				out = density(x,bw="nrd0",kernel="gaussian")
+			} else if (type=="bars") {
+				xrng = range(x,na.rm=T)
+				out = hist(x, breaks=seq(floor(xrng[1]),ceiling(xrng[2]),1), plot=FALSE)
+				out$x = out$mids
+				out$y = out$dens
+				out$n = length(out$mids)
+			}
 #browser();return()
+			return(out)
+		}
+		})
+	})
+	ymax  = lapply(ydens, function(y){ sapply(y, function(x){max(x$y)}) })
+	Ymax  = max( sapply(ymax, function(y){ max(y[y<1]) }) )
+	nmax  = lapply(ydens, function(y){ sapply(y, function(x){return(max(x$y/sum(x$y)*x$n))}) })
+	Nmax  = max( sapply(nmax, function(n) { max(n) }) )
 	
-	yvals = as.numeric(names(ydens))
-	ndens = length(ydens)
+	yvals = lapply(ydens, function(y){ as.numeric(names(y)) })
+	ndens = lapply(ydens, function(y){ length(y) })
 	ylim  = rev(range(yvals)) + c(0, -yspan)
-	if (is.null(xlim))
+	if (is.null(xlim)){
 		xlim  = range(dat[,xfld]); xlim[1]=0
+	}
 	if (missing(dcol)) {
-		ramp = colorRampPalette(c("cyan","blue","navy"))
-		dcol = ramp(max(dat[,yfld]))
+		ramp = list()
+		if (length(ydata)==1){
+			ramp[["0123"]] = colorRampPalette(c("cyan","blue","navy"))
+		} else {
+			#if ("0"%in%names(ydata)) ramp[["0"]] = colorRampPalette(c("cyan","blue","navy"))
+			#if ("1"%in%names(ydata)) ramp[["1"]] = colorRampPalette(c("green","green3","darkgreen"))
+			#if ("2"%in%names(ydata)) ramp[["2"]] = colorRampPalette(c("orchid1","orchid3","darkorchid4"))
+			if ("0"%in%names(ydata)) ramp[["0"]] = colorRampPalette(c("green","green3","darkgreen"))
+			if ("1"%in%names(ydata)) ramp[["1"]] = colorRampPalette(c("cyan","blue","navy"))
+			if ("2"%in%names(ydata)) ramp[["2"]] = colorRampPalette(c("pink","red","darkred"))
+		}
+		dcol = lapply(ramp, function(f){ f(length(.su(dat[,yfld]))) })
 	} else {
-		dcol = rep(dcol,max(dat[,yfld]))
+		dcol.usr = dcol
+		dcol = list()
+		dcol[["0123"]] = rep(dcol.usr,max(dat[,yfld]))
 	}
 
 	fout = paste0("Adens",strSpp)
 	if (png) png(filename=paste0(fout,".png"), units="in", res=pngres, width=PIN[1], height=PIN[2])
-	par(mfrow=c(1,1), mar=c(3.5,3.5,1,1), oma=c(0,0,0,0), mgp=c(2,0.5,0))
+	par(mfrow=c(1,1), mar=c(3.5,4,1,1), oma=c(0,0,0,0), mgp=c(2,0.5,0))
 	plot(NA, xlim=xlim, ylim=ylim, type="n", xlab="", ylab="", yaxt="n")
-	abline(h=yvals, col="gainsboro", lty=3)
-	for (i in 1:ndens) {
-		ii  = yvals[i]
-		iii = as.character(ii)
-		idens = ydens[[i]]
-		i.x = idens$x
-		if (length(i.x)==1) {
-			i.y = ii
-			points(i.x, ii - i.y + ii, pch=3, col="blue")
-		} else {
-			if (yrel)
-				yoff = yspan * ymax[iii] / Ymax
-			else
-				yoff = yspan * nmax[iii] / Nmax
-			i.y = scaleVec(idens$y, ii, ii+yoff) #+ yoff)#  * (ymax[iii] / Ymax)
-#if (ii==11) {browser();return()}
-			lines(i.x, ii - i.y + ii, col=dcol[ii], ...)
+	abline(h=.su(unlist(yvals)), col="gainsboro", lty=3)
+	for (s in 1:length(ydata)) {
+		ss = names(ydata)[s]
+		for (i in 1:ndens[[ss]]) {
+			ii  = yvals[[s]][i]
+			iii = as.character(ii)
+			idens = ydens[[ss]][[i]]
+			i.x = idens$x
+			if (length(i.x)==1){ # && type=="dens") {
+				i.y = ii
+				points(i.x, ii - i.y + ii, pch=3, col=switch(ss, '0'="green3", '1'="blue",'2'="red", '3'="purple"))
+			} else {
+				if (yrel)
+					yoff = yspan * ymax[[s]][iii] / Ymax
+				else
+					yoff = yspan * nmax[[s]][iii] / Nmax
+				if (type=="dens") {
+					i.y = scaleVec(idens$y, ii, ii+yoff) #+ yoff)#  * (ymax[iii] / Ymax)
+					lines(i.x, ii - i.y + ii, col=dcol[[s]][i], ...)
+				}
+				if (type=="bars"){
+					i.y = scaleVec(c(0,idens$counts), ii, ii+yoff)[-1] #+ yoff)#  * (ymax[iii] / Ymax)
+					drawBars(i.x + switch(ss,'0'=0,'1'=-0.25,'2'=0.25), -(i.y-ii)+ii, col=dcol[[s]][i], width=1, base=ii, ...)
+				}
+#print(i)
+#if (ii=="150"){browser();return()}
+			}
+			i.n = idens$n
+			text (xlim[switch(ss,'0'=1,'1'=1,'2'=2)], ii, i.n, col=switch(ss,'0'="green4",'1'="blue",'2'="red"), adj=c(1,0), cex=0.6)
+#if (i==1) {browser();return()}
 		}
-		i.n = idens$n
-		text (xlim[1], ii, i.n, col="green4", adj=c(1,0), cex=0.6)
 	}
 	axis(2, at=seq(5,max(dat[,yfld]),5), mgp=c(2, 0.5,0), las=1)
-	mtext("Age (years)", side=2, line=2, cex=1.5, las=0)
-	mtext("Length (cm)", side=1, line=2, cex=1.5)
+	xlab = switch(xfld, 'len'="Length (cm)", 'Age'="Age (yr)")
+	ylab = switch(yfld, 'Age'="Age (yr)", 'year'="Year", 'depth'="Depth (m)")
+	mtext(xlab, side=1, line=2, cex=1.5)
+#browser();return()
+	mtext(ylab, side=2, line=2.5, cex=1.5, las=0)
 	data (species, package="PBSdata", envir=penv())
 	addLabel(0.95,0.95,toUpper(species[strSpp,"name"]), adj=c(1,0), cex=1.5)
 	box()
@@ -2738,7 +2835,7 @@ plotAdens = function(dat, xfld="len", yfld="age",
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotAdens
 
 
-## plotProp-----------------------------2020-09-30
+## plotProp-----------------------------2022-03-02
 ## Plot proportion-at-age (or length) from GFBio specimen data.
 ## ---------------------------------------------RH
 plotProp <- function(fnam, hnam=NULL, ioenv=.GlobalEnv, ...)
@@ -3040,8 +3137,7 @@ plotProp <- function(fnam, hnam=NULL, ioenv=.GlobalEnv, ...)
 	xlab <- paste(LETTERS[is.element(letters,substring(xy[1],1,1))],substring(xy[1],2),sep="")
 	ylab <- paste(LETTERS[is.element(letters,substring(xy[2],1,1))],substring(xy[2],2),sep="")
 
-	plotBubbles(pa,dnam=TRUE,smo=1/100,size=psize*pin[1],lwd=lwd,powr=powr,
-		clrs=bcol,hide0=hide0,xlim=xl,ylim=yl,xlab="",ylab="",xaxt="n",yaxt="n")
+	plotBubbles(pa, dnam=TRUE, smo=1/100, size=psize*pin[1], lwd=lwd, powr=powr, clrs=bcol, hide0=hide0, xlim=xl, ylim=yl, xlab="", ylab="", xaxt="n", yaxt="n", frange=0.01)
 	usr=par()$usr; dyu=diff(usr[3:4])
 	if (showH) abline(h=ypretty[ypretty>0],lty=3,col="grey30")
 	if (showM) {
@@ -3567,7 +3663,7 @@ reportCatchAge <- function(prefix="pop", path=getwd(), hnam=NULL, ...) {
 #-----------------------------------reportCatchAge
 
 
-## requestAges--------------------------2020-01-23
+## requestAges--------------------------2022-10-24
 ##  Determine which otoliths to sample for ageing requests.
 ##  Note: only have to use run.sql=TRUE once for each species 
 ##  using any year before querying a group of years.
@@ -4236,13 +4332,14 @@ simRER = function(Nfish) {
 	return(SLN) }
 
 
-#sumBioTabs-----------------------------2015-03-06
-# Summarize frequency occurrence of biological samples
-# and specimens and send output to a data table.
-#-----------------------------------------------RH
+## sumBioTabs---------------------------2022-03-15
+## Summarize frequency occurrence of biological samples
+## and specimens and send output to a data table.
+## ---------------------------------------------RH
 sumBioTabs=function(dat, fnam="sumBioTab.csv", samps=TRUE, specs=TRUE,
-     facs=list(c("year","major"), c("year","ttype"), c("year","stype"),
-     c("year","ameth") )){
+   facs=list(c("year","major"), c("year","ttype"), c("year","stype"),
+   c("year","ameth"), c("year","gear") ) )
+{
 	if(samps) {
 		if (!requireNamespace("reshape", quietly=TRUE)) stop("`reshape` package is required")
 	}
@@ -4267,30 +4364,32 @@ sumBioTabs=function(dat, fnam="sumBioTab.csv", samps=TRUE, specs=TRUE,
 		cat(paste(header,collapse=","),"\n",file=fnam,append=TRUE)
 		write.table(out,fnam,sep=",",row.names=FALSE,col.names=FALSE,append=TRUE)
 		cat("\n",file=fnam,append=TRUE)
-	} }
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~sumBioTabs
+	}
+}
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~sumBioTabs
 
 
-## weightBio----------------------------2020-05-11
+## weightBio----------------------------2023-02-01
 ## Weight age|length frequencies|proportions by catch|density.
 ##   adat = age123 from query 'gfb_bio.sql'    -- e.g., getData("gfb_bio.sql","GFBioSQL",strSpp="607",path=.getSpath()); bio607=processBio()
 ##   cdat = cat123gfm -- call 'fos_mcatSPP.sql' to get commercial catches from GFFOS' GF_MERGED_CATCH table. (RH 190807)
 ##        = cat123gfb -- call 'gfb_catch_records.sql' to get survey catches from GFBioSQL. (RH 191016)
 ##   [DEPRECATED] cat123.wB from function 'getCatch' -- e.g., cat607 = getCatch("607",sql=TRUE)
 ## Note: Any modifications to 'gfb_bio.sql' may require similar changes in 'gfb_catch_records.sql'
+## NOAA PDO data: https://www.ncei.noaa.gov/pub/data/cmb/ersst/v5/index/ersst.v5.pdo.dat
 ## ---------------------------------------------RH
 weightBio = function(adat, cdat, sunit="TID", sweight="catch", 
-   ttype=NULL, stype=c(0,1,2,5:8,17), scat=NULL, ameth=c(3,17), sex=2:1, major=NULL,
+   ttype=NULL, stype=c(0,1,2,5:8,17), scat=NULL, ameth=c(2,3,17), sex=2:1, major=NULL,
    wSP=c(TRUE,TRUE), wN=TRUE, plus=60, accum=TRUE, Nmin=0, Amin=NULL, 
    ctype="C", per=90, SSID=NULL, tabs=TRUE, gear=NULL,
    plot=TRUE, ptype="bubb", size=0.05, powr=0.5, zfld="wp", 
    clrs=list( c(.colBlind["blue"],"cyan"),
               c(.colBlind["bluegreen"],"chartreuse")),
    cohorts=NULL, regimes=list(1900:1908, 1912:1915, 1923:1929, 1934:1943,
-   1957:1960, 1976:1988, 1992:1998, 2002:2006, 2014:2017), ## +'ve annual PDO (as of 180328)
+   1957:1960, 1976:1988, 1992:1998, 2002:2006, 2014:2017), ## +'ve annual PDO (as of 211130)
    #list(x=c(1962,1970,1977,1989,1990,1992,1999),y=rep(0,7)),
    #regimes=list(1926:1929,1939:1946,1977:1978,1980:1981,1983:1984,1986:1988,1991:1992,1995:2006), #ALPI
-   layout="portrait", rgr=TRUE, eps=FALSE, pdf=FALSE, png=FALSE, wmf=FALSE,
+   layout="portrait", win=TRUE, eps=FALSE, pdf=FALSE, png=FALSE, wmf=FALSE,
    longside=10, outnam, outres=400, ioenv=.GlobalEnv, lang=c("e","f"), ...)
 {
 	## Create a subdirectory called `french' for French-language figures
@@ -4329,8 +4428,8 @@ weightBio = function(adat, cdat, sunit="TID", sweight="catch",
 	for (i in flds) {
 		ii = paste0(ii,ifelse(i==flds[1],"",":"),i)
 #if (i=="SSID") {browser();return()}
-		expr=paste("ages=biteData(ages,",i,")",sep=""); eval(parse(text=expr))
-#print(paste0(i,": ",nrow(ages)))
+		expr = paste("ages=biteData(ages,",i,")",sep=""); eval(parse(text=expr))
+		.flush.cat(paste0(i,": ",nrow(ages)), "\n")
 		if (nrow(ages)==0) showError(paste0("No data for field selection ",ii))
 	}
 	#if (nrow(ages)==0) showError(paste("No data for '",paste(flds,collapse=', '),"' chosen",sep=""))
@@ -4338,18 +4437,20 @@ weightBio = function(adat, cdat, sunit="TID", sweight="catch",
 	names(ages)[grep("scat",names(ages))] = "spcat" #rename `scat' field to `spcat' to avoid conflict with object`scat' later in code.
 
 	## Specific fiddle to get only 1994 age data for SSID 21 (GIG Historic)
-	if (!is.null(SSID) && SSID==21 && !is.element(strSpp,c("417","440")))
-		ages = ages[is.element(ages$year, 1994),]  ## this does not work for WWR
+	#if (!is.null(SSID) && SSID==21 && !is.element(strSpp,c("417","440")))
+	#	ages = ages[is.element(ages$year, 1994),]  ## this does not work for WWR
 
-	## There is no known (recorded) ameth for NMFS Tiennial survey
+	## There is no known (recorded) ameth for NMFS Triennial survey
 	if (!is.null(SSID) && SSID==79)
 		ameth = .su(c(0,ameth))
 
-	ages = extractAges(ages, ameth)
+	#ages = extractAges(ages, ameth, rmSM=F) ## use seamounts for REBS french fig equivalent
+	ages = extractAges(ages, ameth, rmSM=T)
 	if (accum)
 		ages$age[ages$age>=plus & !is.na(ages$age)] = plus
 	else
 		ages = ages[ages$age<=plus & !is.na(ages$age),]
+#browser();return()
 
 	if (strSpp=="621" && ctype=="C") ages = ages[ages$age>=4 & !is.na(ages$age),]
 	## If weighting by [sweight], you need a positive [sweight] :
@@ -4546,7 +4647,7 @@ weightBio = function(adat, cdat, sunit="TID", sweight="catch",
 			common = intersect(agelev,names(PCAT))
 			Pcat[common] = PCAT[common]            ## add catch from common sampled levels
 			ttput(Pcat)
-.flush.cat(.flush.cat(paste(strwrap(paste0(Pcat,collapse=" "),width=100),collapse="\n")), "\n")
+#.flush.cat(.flush.cat(paste(strwrap(paste0(Pcat,collapse=" "),width=100),collapse="\n")), "\n")
 		} else if  (sweight=="density") {
 			alev = paste(ages$year,pad0(ages$SVID,3),pad0(ages$GC,3),sep=".")
 			Alst = split(ages$area,alev)           ## use area (km^2) from age object
@@ -4819,15 +4920,26 @@ weightBio = function(adat, cdat, sunit="TID", sweight="catch",
 			display[,reject[,k],k,]=0
 		xuse = names(clipVector(apply(reject,1,all),TRUE))
 		display = display[,xuse,,,drop=FALSE]
+
+		ffx = list(...)$fx
+		ffx = if(is.null(ffx))  ffx = c(0.01,0.01)
+			else                 ffx = rep(ffx,length(ffx))[1:length(ffx)]
+		ffy = list(...)$fy
+		ffy = if(is.null(ffy))  ffy = c(0.075,0.01)
+			else                 ffy = rep(ffy,length(ffy))[1:length(ffy)]
+
 		xlim = list(...)$xlim
 		if (is.null(xlim)) 
 			xlim = range(as.numeric(xuse))
 		xsho = xlim[1]:rev(xlim)[1]
-		xlim = extendrange(xlim,f=ifelse(is.null(list(...)$f),0.075,list(...)$f[1]))
+		xlimx = extendrange(xlim, f=ffx)
 		if (length(xuse)==1) xlim = xlim + c(-.5,.5)
+		ylimx = extendrange(c(0,plus), f=ffy)
+#print(c(xlim,xlimx));cat("\n")
+#browser(); return()
+
 		if (is.null(Amin)) 
 			Amin = as.numeric(names(clipVector(apply(display[,,,"n"],1,sum),0,1))[1])
-		ylim = extendrange(c(0,plus),f=ifelse(is.null(list(...)$f),0.05,rev(list(...)$f)[1]))
 		bigBub = max(apply(display[!is.element(rownames(display),plus),,,zfld,drop=FALSE],3,max)) ## smallest maximum bubble across sexes (???)
 		#bigBub = max(apply(display[,,,zfld,drop=FALSE],3,max))   # largest maximum bubble across sexes (including plus class)
 
@@ -4838,13 +4950,11 @@ weightBio = function(adat, cdat, sunit="TID", sweight="catch",
 		shortside=switch(nlay,min(1+1*length(xsho)*0.5,0.80*longside), 0.80*longside, 0.80*longside)
 		longside=switch(nlay, longside, min(2+2*length(xsho)*0.5,longside), longside)
 
-		devs=c(rgr=rgr,eps=eps,pdf=pdf,png=png,wmf=wmf); unpackList(devs)
-		fout = fout.e = plotname
+		devs=c(win=win,eps=eps,pdf=pdf,png=png,wmf=wmf); unpackList(devs)
+		fout.e = plotname
 		for (l in lang) {  ## could switch to other languages if available in 'linguaFranca'.
 			changeLangOpts(L=l)
 			fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
-			clearFiles(paste0(fout,".",c("eps","pdf","png","wmf")))
-#browser();return()
 			for (d in 1:length(devs)) {
 				dev = devs[d]; devnam=names(dev)
 				if (!dev) next
@@ -4853,6 +4963,7 @@ weightBio = function(adat, cdat, sunit="TID", sweight="catch",
 				else if (devnam=="pdf") ## PDF file for convenience
 					pdf(paste(fout,".pdf",sep=""), width=switch(nlay,shortside,longside,longside), height=switch(nlay,longside,shortside,longside), paper="special")
 				else if (devnam=="png") {
+					clearFiles(paste0(fout,".png"))
 					ppi=100; pnt=ppi*10/72; zoom=ppi/72
 					width  = ifelse(layout=="landscape",longside,shortside)
 					height = ifelse(layout=="landscape",shortside,longside)
@@ -4860,9 +4971,9 @@ weightBio = function(adat, cdat, sunit="TID", sweight="catch",
 				} else if (devnam=="wmf")
 					do.call("win.metafile",list(filename=paste0(fout,".wmf"), width=switch(nlay,shortside,longside,longside), height=switch(nlay,longside,shortside,longside)))
 				else resetGraph()
-				expandGraph(mfrow=c(rows,cols),mar=c(2.5,2.75,0.25,0.5),mgp=c(1.5,0.25,0),oma=c(0,0,0,0))
+				expandGraph(mfrow=c(rows,cols), mar=c(2.5,2.75,0.25,0.5), mgp=c(1.5,0.25,0), oma=c(0,0,0,0))
 				##clrs=rep(clrs,length(sex))[1:length(sex)]
-	
+
 				for (k in 1:nsex) {
 					kk  = sex[k]
 					kkk = as.character(kk)
@@ -4871,32 +4982,50 @@ weightBio = function(adat, cdat, sunit="TID", sweight="catch",
 					if (length(xuse)==1)
 						zval=makeCmat(zval,xuse)
 					zval = as.data.frame(zval)
+					plot(0,0, type="n", axes=FALSE, xlim=xlimx, ylim=ylimx, xlab="", ylab="")
+					#plot(0,0, type="n", axes=FALSE, xaxs="i", yaxs="i", xlim=xlimx, ylim=ylimx, xlab="", ylab="") ## (RH 230201)
+#abline(h=ylimx, v=xlimx,lwd=2)
 					if (!is.null(regimes)) {
-						plot(0,0, type="n", axes=FALSE, xlim=xlim, ylim=ylim, xlab="", ylab="")
 						x1 = par()$usr[1]; x2 = par()$usr[2]
-						for (i in 1:length(regimes)) {
-							x = regimes[[i]]; a1=-min(x); a2=-max(x)
-							y1lo=a1+x1; y1hi=a2+x1; y2lo=a1+x2; y2hi=a2+x2
-							xreg=c(x1,x1,x2,x2); yreg=c(y1lo,y1hi,y2hi,y2lo)
-							## polygon(xreg,yreg,border=FALSE, col=lucent("orange",0.2)) #"orange" #"floralwhite") #col="grey92")
-#browser();return()
-							if (is.null(clrs$r)) clrs[["r"]] = lucent("orange",0.2)
-							polygon(xreg,yreg,border=FALSE, col=clrs[["r"]])
+						if (length(xuse)>1) {
+							for (i in 1:length(regimes)) {
+								x = regimes[[i]]; a1=-min(x); a2=-max(x)
+								y1lo=a1+x1; y1hi=a2+x1; y2lo=a1+x2; y2hi=a2+x2
+								xreg=c(x1,x1,x2,x2); yreg=c(y1lo,y1hi,y2hi,y2lo)
+#print(xreg)  ## ***** xregs change by sex! need to fix
+								## polygon(xreg,yreg,border=FALSE, col=lucent("orange",0.2)) #"orange" #"floralwhite") #col="grey92")
+								if (is.null(clrs$r)) clrs[["r"]] = lucent("orange",0.2) 
+								## peach=#FFE5B4, saffron=#F4C430, melon=#FDBCB4, apricot=#FBCEB1, banana=#FCF4A3
+								polygon(xreg, yreg, border=FALSE, col="#FCF4A3") #lucent("blue",0.5)) #"moccasin") #clrs[["r"]])  ##lucent doesn't work in polygons originating on x-axis !?!
+							}
 						}
-						par(new=TRUE)
-					} 
+					}
+					polygon(x=par()$usr[c(1,1,2,2)], y=c(par()$usr[3],0,0,par()$usr[3]), col="ivory", border="ivory")
+					abline(h=0, lty=2, col="grey")
+#abline(v=c(2006,xlim))
+#abline(h=0,v=2014.542); abline(h=0,v=2017.792)
+#if(k==2) {browser();return()}
+					par(new=TRUE)  ## this allows plotBubbles to add to null plot
+
 					if (ptype=="bubb") {
 						inch = size * (sexBub/bigBub)^powr     # standardise across sexes
 						bcol = ifelse(kk==0, 1, clrs[[k]][1])
 						dots = list(...)
-						dots =  dots[!sapply(dots,function(x){any(is.null(x))})]  ## get rid of NULL elements
+						mots = dots[setdiff(names(dots),c("f"))]  ## (RH 211201)
+#browser();return()
+						dots =  mots[!sapply(mots,function(x){any(is.null(x))})]  ## get rid of NULL elements
 						if (!is.null(dots$fill) && dots$fill)
 							dots$bg = lucent(bcol,0.2)
-						unpackList(dots)
-						dotty =  paste0(paste0(names(dots),"=",names(dots)),collapse=", ")
-						mess = paste0("plotBubbles(z=zval, dnam=TRUE, hide0=TRUE, size=inch, xlim=xlim, ylim=ylim, clrs=bcol, las=3, ylab=\"\", tcl=.25, ", dotty, ")")
+						#dots.formal = dots[intersect(names(dots), names(formals(fun=plot.default)))]
+						dots.formal = dots[setdiff(names(dots), c("cex.noto","fx","fy","xlim","ylim"))]
+						unpackList(dots.formal)
+						dotty =  paste0(paste0(names(dots.formal),"=",names(dots.formal)),collapse=", ")
+						#mess = paste0("plotBubbles(z=zval, dnam=TRUE, hide0=TRUE, size=inch, xlim=xlimx, ylim=ylimx, xaxs=\"i\", yaxs=\"i\", frange=0.01, clrs=bcol, las=3, ylab=\"\", tcl=.25, ", dotty, ")")
+						mess = paste0("plotBubbles(z=zval, dnam=TRUE, hide0=TRUE, size=inch, xlim=xlimx, ylim=ylimx, frange=0, clrs=bcol, las=3, ylab=\"\", tcl=.25, ", dotty, ")")
 						eval(parse(text=mess))
+#abline(h=0,col=lucent("red",0.75))
 #browser();return()
+#if(k==2) {browser();return()}
 					}
 					if (ptype=="bars") {
 						zmax = zval[-plus,] ## exclude the plus class
@@ -4924,11 +5053,11 @@ weightBio = function(adat, cdat, sunit="TID", sweight="catch",
 						aclr = ifelse(kk==0,"grey",clrs[[k]][2])
 						#aclr = c(as.vector(col2rgb(sclr)/255),0.5) # transparent alpha colour
 						#aclr = rgb(aclr[1],aclr[2],aclr[3],alpha=aclr[4])
-						plot(0,0, type="n", axes=FALSE, xlim=xlim, ylim=ylim, xlab="", ylab="")
+						plot(0,0, type="n", axes=FALSE, xlim=xlimx, ylim=ylimx, xlab="", ylab="")
 						xpos=intersect(min(xuse):max(xuse),round(pretty(xlim,n=10),5))
-						axis(1,at=xpos,las=3,cex.axis=ifelse(is.null(list(...)$cex.axis),0.8,list(...)$cex.axis),tcl=0.25)
+						axis(1, at=xpos, las=3, cex.axis=ifelse(is.null(list(...)$cex.axis),0.8,list(...)$cex.axis), tcl=0.25)
 						ypos=intersect(0:plus,round(pretty(ylim,n=10),5))
-						axis(2,at=ypos,las=1,cex.axis=ifelse(is.null(list(...)$cex.axis),0.8,list(...)$cex.axis),tcl=0.25)
+						axis(2, at=ypos, las=1, cex.axis=ifelse(is.null(list(...)$cex.axis),0.8,list(...)$cex.axis), tcl=0.25)
 						polygon(poly1$xpol,poly1$ypol,border="gainsboro",col=aclr)
 						polygon(poly2$xpol,poly2$ypol,border="gainsboro",col=sclr)
 					}
@@ -4948,14 +5077,22 @@ weightBio = function(adat, cdat, sunit="TID", sweight="catch",
 					nsam = plt.nsam[,kkk]; names(nsam) = dimnames(plt.nsam)$year #plt.nsam[,"year"]  ## because of old crappy hadley crosstab
 					nsam = nsam[nsam>0 & !is.na(nsam)]
 
-					text(as.numeric(names(noto)), par()$usr[3]+0.02*abs(diff(par()$usr[3:4])), labels=paste0(noto,":",nsam), font=1, adj=0, srt=90,
+					nsep = test=eval(parse(text=deparse("\u{00BB}")))  ## compressed right arrow
+					nsep = test=eval(parse(text=deparse("\u{2022}")))  ## bullet
+					#labs = paste0(nsam,"\225",noto)
+					#labs = as.expression( sapply(1:length(nsam), function(i) { bquote(textstyle(.(nsam[i])%->%.(noto[i]))) }) )
+					#labs = as.expression( sapply(1:length(nsam), function(i) { bquote(textstyle(.(nsam[i])%~%.(noto[i]))) }) )
+					labs = as.expression( sapply(1:length(nsam), function(i) { bquote(.(nsam[i])~.(nsep)~.(noto[i])) }) )
+					text(as.numeric(names(noto)), par()$usr[3]+0.015*abs(diff(par()$usr[3:4])), labels=labs, font=1, adj=0, srt=90,
+					#text(as.numeric(names(noto)), par()$usr[3]+0.02*abs(diff(par()$usr[3:4])), labels=bquote(.(nsam)%->%.(noto)), font=1, adj=0, srt=90,
 						cex=ifelse(is.null(list(...)$cex.noto),0.9,list(...)$cex.noto), col="grey15") #clrs[[k]][1])
+#browser();return()
 					box(lwd=ifelse(devnam=="png",max(1,floor(zoom/2)),1))
 					mtext(linguaFranca(paste("Age (",ifelse(kk==1,"Males",ifelse(kk==2,"Females",ifelse(kk==12,"Males + Females","Unknown"))),")"),l), side=2, line=1.5, las=3, cex=ifelse(is.null(list(...)$cex.lab), 1, list(...)$cex.lab))
 					#addLabel(0.05,0.05,txt=switch(k,"M","F","U"),cex=1.2,col=clrs[k],font=2)
 					par(new=FALSE)
 				}
-				if (devnam!="rgr") dev.off()
+				if (devnam!="win") dev.off()
 			} ## end d (devs) loop
 		}; eop()
 		packList(c("Amin","bigBub","reject", "display","plotname"), "PBStool",tenv=.PBStoolEnv)

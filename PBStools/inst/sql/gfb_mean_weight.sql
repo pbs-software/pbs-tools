@@ -406,3 +406,4 @@ SELECT * FROM #mean_weight
 --qu("gfb_mean_weight.sql",dbName="GFBioSQL",strSpp="435",major=3:9)  -- BOR (180912, 190705)
 --qu("gfb_mean_weight.sql",dbName="GFBioSQL",strSpp="437",major=3:9)  -- CAR (180622, 200720)
 --qu("gfb_mean_weight.sql",dbName="GFBioSQL",strSpp="440",major=3:9)  -- YMR (180925, 200720)
+--qu("gfb_mean_weight.sql",dbName="GFBioSQL",strSpp="453",major=3:4)  -- LST (220309)

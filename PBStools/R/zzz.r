@@ -38,25 +38,25 @@ We may not be big, but we're small.
 # ===================
 if(getRversion() >= "2.15.1") utils::globalVariables(names=c(
 	".onClose",".PBSmod",".runModHelperQuit",
-	"A","acut","adat","Afile","age","agg","AID","amax","aModel","areas","assflds","autoA","autoD","aVal",
-	"B","b0","b5","barcol","barf","bathy","bbonly","Bboot","bcol","bdat","Best","bgsamp","bgtab","bh","bio440","Bobs","boot","boot.ci","bootci","booty","boxpars","boxwidth","Bqnt","Bt","bta","Btot","bugsData",
-	"C1","C2","case","cast","cat440rec","catch","Cbar","Cbox","Ccat","ccol","cdata","Ceq","chn1","chn2","clara","clen","Clin","clwd","Cnum","cobs","Cpoi","cpuTime","cthin","ctot","Ctrd","Cval",
-	"dat","DATA","datt","dBars","dbName","ddat","defaultdoorspread","diaDir","disA","DLIM",
+	"A","A.SAR","acut","adat","Afile","age","agg","AID","amax","aModel","areas","assflds","autoA","autoD","avgPA","avgRP","avgTS","aVal",
+	"B","b0","b5","barcol","barf","bathy","bbonly","Bboot","bcol","bdat","Best","bgsamp","bgtab","bh","bio440","Bmpd","Bobs","boot","boot.ci","bootci","booty","boxpars","boxwidth","Bqnt","Bt","bta","Btot","bugsData",
+	"C1","C2","case","cast","cat440rec","catch","Cbar","Cbox","Ccat","ccol","cdata","Ceq","chn1","chn2","clara","clen","Clin","clwd","Cnum","cobs","coefficients","compo","Cpoi","cpuTime","cthin","ctot","Ctrd","currentMCMC","currentProj","currentProj2","Cval",
+	"dat","DATA","datt","dattoRlist","dBars","dbName","ddat","defaultdoorspread","diaDir","disA","dist","DLIM",
 	"edat","eez.bc","elapTime","empinf","eN","eps","evals","extra",
-	"FID","figDir","fillBars","firstSerial","fminE","fminS","fnam","Fout","formalArgs","fqtName","Ft","ftime","func",
-	"g","gear","gfbdat","gigflds","glmfit","globo","gma.popymr","group","Gv2",
-	"habSpp", "hadley","hide0","HSreg","HStrc",
-	"idxD","idxL","idxM","inone","IRRmin","is.pred","isobath","iters",
+	"fdir","FID","figDir","fillBars","firstSerial","fminE","fminS","fnam","Fout","formalArgs","fqtName","Ft","ftime","func",
+	"g","GC","gear","gfbdat","gfbsurvey","gigflds","glmfit","globo","gma.popymr","group","Gv2",
+	"habSpp", "hadley","hclust","hide0","HSreg","HStrc",
+	"idxD","idxL","idxM","importRes","inone","IRRmin","is.pred","isobath","iters",
 	"k","K",
-	"lang","las","lastSerial","lin","lmres","locality.plus","ltype","lwd",
+	"lang","las","lastSerial","lin","lmres","locality.plus","loess.smooth","ltype","lwd",
 	"m","major","mar","mata","maxit","mdbName","MDL","melt.data.frame","method","mfrow","mgp","minor","mmor","modelCheck","modelCompile","modelData","modelGenInits","modelUpdate","modT","mpd","msd","mu",
 	"nage","Nat","Nboot","nc","nC","nd","nepacLL","nepacLLhigh","nper","nRP","nspec","nT","nyr",
 	"obs","oma","orats","orfhistory","out",
 	"pa.obs","pa.raw","parVec","path","pathN","PBSdat","PBStool","PBSmin","Pfig","pfout.e","phi","pi.obs","pix","pjsa","PLIM","pmfc","PMFC","pmon","pnam","poi","pop.age","pop.pmr.qcss","popa","powr","prefix","pset","psize","Pstart","pwd","pyr",
-	"q2","qboxplot","qq","qtName","quants",
-	"rate","rates","reltol","repN","rho","RkB","Roff","RPmax","RPmin","ryrs",
-	"s1","s2","samplesGetFirstChain","samplesGetLastChain","samplesHistory","samplesSet","SB","Scat","Sdat","sdate","seepa","seepi","set","sex","SG","SGdat","showC","showD","showE","showH","showL","showM","showQ","SID","sigma","species","speciesname","spn","spp","srfa","srfs","SSB","ssid","SSID","steptol","sthin","storageID","strArea","strat","stratum","stratum2006","strGear","strSpp","strYear","stype","survey","surveyname","surveys","synflds",
-	"t0","tabDir","tau","tcl","tdate","theta","tran","triflds","truehist","trusted","tstar","ttype","type",
+	"q2","qboxplot","qq","qtName","qu","quants",
+	"rate","rates","redo.currentMCMC","reltol","repN","rho","RkB","Roff","RPmax","RPmin","ryrs",
+	"s1","s2","samplesGetFirstChain","samplesGetLastChain","samplesHistory","samplesSet","SB","Scat","Sdat","sdate","seepa","seepi","set","setNames","sex","SG","SGdat","showC","showD","showE","showH","showL","showM","showQ","SID","sigma","so","species","speciesname","spn","spp","srfa","srfs","SSB","ssid","SSID","steptol","sthin","stock","storageID","strArea","strat","stratum","stratum2006","strGear","strSpp","strYear","stype","survey","surveyname","surveys","synflds",
+	"t0","tabDir","tau","tcl","tdate","theta","tran","triflds","truehist","trusted","tstar","ttype","type","type.convert",
 	"Ugear","uid","Umajor","Usex","Usrfa","Usrfs","Ustype","Uttype",
 	"VBdat","Vend","vessel","Vstart",
 	"wgta","wgtat","wmf","wted",
@@ -68,7 +68,8 @@ if(getRversion() >= "2.15.1") utils::globalVariables(names=c(
 
 ##quantBox------------------------------2018-04-03
 ## Redefine boxplot to show quantiles (RH 150910)
-## http://r.789695.n4.nabble.com/Box-plot-with-5th-and-95th-percentiles-instead-of-1-5-IQR-problems-implementing-an-existing-solution-td3456123.html
+## From Jake Bowers, Dept of Political Science, UC-Berkeley
+## https://stat.ethz.ch/pipermail/r-help/2001-November/016817.html
 ##----------------------------------------------RH
 local(envir=.PBStoolEnv,expr={
 	myboxplot.stats <- function (x, coef=NULL, do.conf=TRUE, do.out=TRUE)
@@ -82,11 +83,15 @@ local(envir=.PBStoolEnv,expr={
 		out <- x < stats[1] | x > stats[5]
 		conf <- if (do.conf)
 			stats[3] + c(-1.58, 1.58) * diff(stats[c(2, 4)])/sqrt(n)
-		list(stats = stats, n = n, conf = conf, out = x[out & nna])
+		list(stats=stats, n=n, conf=conf, out=x[out & nna])
 	}
 	boxcode = deparse(boxplot.default)
 	boxcode = gsub("boxplot\\.stats","ttcall(myboxplot.stats)",boxcode)
 	eval(parse(text=c("qboxplot=",boxcode)))
 })
-
+## Shortcuts for RH:
+assign("so", function(x, p="tools", ddir="C:/Users/haighr/Files/Projects/R/Develop/"){
+	source(paste0(ddir, "PBS", p, "/Authors/Rcode/develop/", x)) }, envir=.PBStoolEnv) ## source
+assign("qu", function(x, p="tools", ddir="C:/Users/haighr/Files/Projects/R/Develop/", ...){
+	do.call("getData", args=list(fqtName=x, path=paste0(ddir, "PBS", p, "/Authors/SQLcode"), ...)) }, envir=.PBStoolEnv) ## query
 

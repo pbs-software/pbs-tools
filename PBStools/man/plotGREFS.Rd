@@ -7,8 +7,9 @@ Plot Gamma by Reference Year
 Plot the gamma value in \code{'buildCatch'} (e.g. landed RRF/landed ORF) by year, major area, and fishery ID to visualise its change over time.
 }
 \usage{
-plotGREFS(dat, years=1996:2019, majors=3:9, fid=1, strSpp="394", addRGM=FALSE, 
-   onefig=FALSE, vlines, png=FALSE, pngres=400, PIN=c(12, 9))
+plotGREFS(dat, years=1996:2019, majors=3:9, fid=1,
+   strSpp="394", addRGM=FALSE, onefig=FALSE, vlines,
+   png=FALSE, pngres=400, PIN=c(12,9), lang="e")
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -23,6 +24,8 @@ plotGREFS(dat, years=1996:2019, majors=3:9, fid=1, strSpp="394", addRGM=FALSE,
   \item{png}{\code{logical} -- if \code{TRUE}, send the figure(s) to a \code{'.png'} file.}
   \item{pngres}{\code{numeric} -- resolution of output figure (pixels per inch).}
   \item{PIN}{\code{numeric} -- width and height of output figure (inches).}
+  \item{lang}{\code{character} -- a vector of letters that denote the language for output:
+    currently only \code{"e"} (english) and \code{"f"} (french).}
 }
 \details{
   Provides graphical check on how gamma changes in potential reference years; helps user to choose reference years for each fishery.
@@ -30,8 +33,8 @@ plotGREFS(dat, years=1996:2019, majors=3:9, fid=1, strSpp="394", addRGM=FALSE,
 \author{
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
-  \emph{locus opus}: Institute of Ocean Sciences (IOS), Sidney BC\cr
-  Last modified \code{Rd: 2021-09-28}
+  \emph{locus opus}: Regional Headquarters (RHQ), Vancouver BC\cr
+  Last modified \code{Rd: 2023-02-08}
 }
 \seealso{
 In package \pkg{PBStools}:\cr

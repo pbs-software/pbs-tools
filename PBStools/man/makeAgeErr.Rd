@@ -46,8 +46,8 @@ makeAgeErr(type="simple", strSpp, sql=FALSE,
 \author{
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
-  \emph{locus opus}: Institute of Ocean Sciences (IOS), Sidney BC\cr
-  Last modified \code{Rd: 2021-06-14}
+  \emph{locus opus}: Regional Headquarters (RHQ), Vancouver BC\cr
+  Last modified \code{Rd: 2023-02-10}
 }
 \note{
   First used for the Yellowmouth Rockfish (YMR) assessment in 2011.
@@ -63,9 +63,10 @@ In package \pkg{PBStools}:\cr
   \code{\link[PBStools]{requestAges}},
   \code{\link[PBStools]{weightBio}}\cr
 In package \pkg{PBSawatea}:\cr
-  \code{\link[PBSawatea]{runADMB}}
+  \code{runADMB}
 }
 % Add one or more standard keywords, see file 'KEYWORDS' in the
 % R documentation directory.
 \keyword{arith}% use one of  RShowDoc("KEYWORDS")
 \keyword{manip}% __ONLY ONE__ keyword per line
+\concept{M06_Assessment}

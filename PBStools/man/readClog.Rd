@@ -4,14 +4,14 @@
 Read Change Log
 }
 \description{
-Read in a ChangeLog file that has been formatted for use with this function.
+  Read a ChangeLog file that has been formatted for use with this function.
 }
 \usage{
 readClog(fnam)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
-  \item{fnam}{character name of a ChangeLog file.}
+  \item{fnam}{\code{character} -- file name of a ChangeLog archive.}
 }
 \details{
   This function will only work if it has been formatted to look like that in PBStools.\cr
@@ -32,15 +32,27 @@ readClog(fnam)
 \author{
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
-  \emph{locus opus}: Institute of Ocean Sciences (IOS), Sidney BC\cr
-  Last modified \code{Rd: 2021-06-15}\cr
+  \emph{locus opus}: Regional Headquarters (RHQ), Vancouver BC\cr
+  Last modified \code{Rd: 2023-02-09}
 }
 \seealso{
-\code{\link[PBStools]{countLines}},
-\code{\link[PBStools]{revStr}},
-\code{\link[PBStools]{subsetFile}},
-\code{\link[PBStools]{toUpper}},
-\code{\link[PBStools]{wrapText}}
+In package \pkg{PBStools}:\cr
+  \code{\link[PBStools]{countLines}},
+  \code{\link[PBStools]{revStr}},
+  \code{\link[PBStools]{subsetFile}},
+  \code{\link[PBStools]{toUpper}},
+  \code{\link[PBStools]{wrapText}}
+}
+\examples{
+\dontrun{
+local(envir=.PBStoolEnv,expr={
+pbsfun=function(){
+  clog = readClog(fnam=system.file("doc/ChangeLog.txt",package="PBStools"))
+  print(clog[[1]])
+  invisible() }
+pbsfun()
+})
+}
 }
 % Add one or more standard keywords, see file 'KEYWORDS' in the
 % R documentation directory.

@@ -275,7 +275,6 @@ ORDER BY EC.TRIP_ID, EC.FISHING_EVENT_ID
 -- qu("fos_mcatORF.sql",dbName="GFFOS",strSpp="228")
 -- qu("fos_mcatORF.sql",dbName="GFFOS",strSpp="602")
 -- SME (subject matter expert)
--- qu("fos_mcatORF.sql",dbName="GFFOS",strSpp="453")
 -- qu("fos_mcatORF.sql",dbName="GFFOS",strSpp="396")
 -- qu("fos_mcatORF.sql",dbName="GFFOS",strSpp="401")
 -- qu("fos_mcatORF.sql",dbName="GFFOS",strSpp="394")
@@ -289,6 +288,8 @@ ORDER BY EC.TRIP_ID, EC.FISHING_EVENT_ID
 -- qu("fos_mcatORF.sql",dbName="GFFOS",strSpp="394")  -- Rougheye Rockfish (181207, 180912, 190722, 191008, 191210)
 -- qu("fos_mcatORF.sql",dbName="GFFOS",strSpp="394")  -- Rougheye Rockfish for habitat (200214)
 -- qu("fos_mcatORF.sql",dbName="GFFOS",strSpp="394")  -- Rougheye Rockfish for CR (200218)
--- qu("fos_mcatORF.sql",dbName="GFFOS",strSpp="440")  -- Yellowmouth Rockfish (200929)
+-- qu("fos_mcatORF.sql",dbName="GFFOS",strSpp="440")  -- Yellowmouth Rockfish (200929, 210125)
+-- qu("fos_mcatORF.sql",dbName="GFFOS",strSpp="453")  -- Longspine Thornyhead (210923)
+-- qu("fos_mcatORF.sql",dbName="GFFOS",strSpp="437")  -- Canary Rockfish (211125)
 
 

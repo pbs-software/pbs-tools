@@ -10,6 +10,40 @@ Authors: RH  = Rowan Haigh
          BK  = Brian Krishka
 ------------------------------
 
+1.42.1 (2023-02-10)  [Rcheck=T, Rbuild=T]
+  * M01_Utility.r
+    + Added new function `.ss3.readdat' which was lifted directly from r4ss' function `SS_readdat_3.30'. (RH 230210)
+      - importFrom r4ss was risky because r4ss involves many package dependencies.
+    + Added new function `extractPost' to extract posterior values from previous stock assessments. (RH 230209)
+    + Updated function `linguaFranca'. (RH 220727)
+  * M02_Biology.r
+    + Modified function `extractAges' to ignore early years with only ages 1-3 (believable surface ages). (RH 230201)
+    + Modified extensively function `plotAdens' to show either waveforms or bars, and to differentiate by sex. (RH 220317)
+    + Updated various functions: `calcVB', `estOgive', `histTail', `mapMaturity', `plotProp', `sumBioTabs', `weightBio'.
+  * M05_Spatial.r
+    + Modified function `clarify' to show hierarchical clustering instead of the default geographic mapping of clusters. (RH 221207)
+      - This addition is likely not very useful and may be deprecated in future.
+    + Updated various functions: `plotConcur', `plotEO', `plotGMA'.
+  * M06_Assessment.r
+    + Modified function `calcCVage' to include a smoother for smoothing standard deviations. (RH 220701, exact date unknown)
+    + Updated function `createMA' to include management actions for Canary Rockfish. (RH 220701, exact date unknown)
+    + Updated function `plotSnail' to better use SS3 model output. (RH 220628)
+    + Updated various functions: `compAF', `compLen', `plotAgeErr', `plotBTMW', `splineCPUE'.
+  * M07_CatchRecon.r
+    + Updated function `buildCatch':
+      - Switched to fixed SQL table PH3_CATCH_SUMMARY rather than use Oracle. (RH 221222)
+      - Changed colour scheme of barplots. (230202)
+    + Updated function `plotRecon':
+      - Changed colour scheme of barplots. (230202)
+    + Updated various functions: `plotGREFS', `zapSeamounts'.
+  * M08_LaTeX.r
+    + Updated function `texArray'. (RH 211102)
+  * M09_PJSsurvey
+    + Updated various functions: `calcBiom', `doSynoptic', `getLabels', `plotIndex', `restratify'.
+      - Mostly to deal with stratum identity and missing values like vessel speed/distance.
+    + Updated the preparation functions:
+      - `prepGFsurv', `prepGIGhis', `prepHSass', `prepHSsyn', `prepQCSsyn', `prepNMFStri', `prepWCHGsyn', `prepWCVIsyn'
+
 1.42.0 (2021-09-27)  [Rcheck=T, Rbuild=T]
   * M01_Utility.r
     + Added standard deviation calculations to function `calcHM' (RH 210712)
@@ -17,7 +51,7 @@ Authors: RH  = Rowan Haigh
   * M02_Biology.r
     + Added new function `plotAdens', which plots density distributions of length (waveforms) by age.
   * M05_Spatial.r
-    + Modified french labelling in `plotGMA` (RH 210809)
+    + Modified french labelling in `plotGMA' (RH 210809)
   * M06_Assessment.r
     + Added three new functions (used for years):
       - calcCVage  -- Calculate CV of ages based on age or length data; (RH 210907)
@@ -1120,7 +1154,7 @@ Authors: RH  = Rowan Haigh
     + Added new SQL query `gfb_bycatch.sql' to get the catch of fish groups from GFBioSQL not reported elsewhere. (RH 110929)
     + Revised SQL query `gfb_iphc.sql' to use regular GFBioSQL tables rather than a custom provisional table. (NO 110928)
   * PBSmapx
-    + Revised legend rendering in `map' to display or hide the `Area (km²)' column. (thanks Jackie King). (RH 110926)
+    + Revised legend rendering in `map' to display or hide the `Area (km^2)' column. (thanks Jackie King). (RH 110926)
   * PBStools
     + Revised `gfb_age_request.sql' to identify broken and burnt samples. (RH 110921)
 

@@ -1,4 +1,5 @@
 @ECHO OFF
+SETLOCAL ENABLEEXTENSIONS ENABLEDELAYEDEXPANSION
 
 if not defined PBS_SETLOCAL (
   SETLOCAL
@@ -9,20 +10,17 @@ if "%1"=="" (
   echo example: %0 PBSmodelling
   goto end )
 
-if "%2"=="" (
-	SET arch=64
-	) else (
-	SET arch=%2
-	)
-
 rem build=binary or build=source
-if "%3"=="" (
-	set build=binary
+if "%2"=="" (
+	set build=source
 	) else (
-	set build=%3)
+	set build=%2)
 
 SET PBS_NO_PAUSE=1
-call RPathCheck.bat %arch%
+call RdevPathCheck.bat
+
+set Path=!pPath!;%SystemRoot%\system32;
+set R_Path=!rPath!
 
 if not defined PBSERROR (
 	rem dir %perlR%\* rem %perlR% defined in Rpaths.bat

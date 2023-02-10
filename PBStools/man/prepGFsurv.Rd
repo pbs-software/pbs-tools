@@ -16,36 +16,36 @@
 \usage{
 prepGFsurv(file, survey, strSpp, datemask, doorspread=61.6,
    shrimpyear=1975, savefile=TRUE, usevar=FALSE, attended=FALSE,
-   spath = "C:/Users/haighr/Files/Projects/R/Develop/PBStools/Authors/SQLcode")
+   spath="C:/Users/haighr/Files/Projects/R/Develop/PBStools/Authors/SQLcode")
 
-prepGIGhis (file, survey=8)
-prepHSass  (file, survey=1)
-prepHSsyn  (file, survey=10)
-prepNMFStri(file, survey=5)
+prepGIGhis (file, survey="GIGhis")
+prepHSass  (file, survey="HSass")
+prepHSsyn  (file, survey="HSsyn")
+prepNMFStri(file, survey="NMFStri")
 prepQCSsyn (file, survey)
-prepWCHGsyn(file, survey=9)
-prepWCVIsyn(file, survey=3)
+prepWCHGsyn(file, survey="WCHGsyn")
+prepWCVIsyn(file, survey="WCVIsyn")
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{file}{\code{character} -- string name of input file, e.g, \code{"SSID=2&species=435.csv"}.}
-  \item{survey}{\code{numeric} -- PJS survey codes:\cr
-    \code{ 1} = HS (Hecate Strait) Assemblage survey;\cr
-    \code{ 2} = QCS (Queen Charlotte Sound) Synoptic survey;\cr
-    \code{ 3} = WCVI (west coast Vancouver Island) Synoptic survey;\cr
-    \code{ 4} = WCVI Shrimp survey;\cr
-    \code{ 5} = NMFS (US National Marine Fisheries Service) Triennial survey;\cr
-    \code{ 6} = Pacific Cod Monitoring survey;\cr
-    \code{ 7} = QCS Shrimp survey;\cr
-    \code{ 8} = GIG (Goose Island Gully) Historical survey (originally GF Reed);\cr
-    \code{ 9} = WCHG (west cosat Haida Gwaii) Synoptic survey (originally WCQCI);\cr
-    \code{10} = HS Synoptic survey;\cr
-    \code{11} = GIG Retrospective survey (not for biomass);\cr
-    \code{12} = 1995 GIG Retrospective (Ocean Selector and Frosti). }
+  \item{survey}{\code{character} -- survey abbreviations corresponding to original PJS survey numbers in parentheses (use only abbreviations):\cr
+    \code{HSass   (= 1)} -- HS (Hecate Strait) Assemblage survey;\cr
+    \code{QCSsyn  (= 2)} -- QCS (Queen Charlotte Sound) Synoptic survey;\cr
+    \code{WCVIsyn (= 3)} -- WCVI (west coast Vancouver Island) Synoptic survey;\cr
+    \code{WCVIshr (= 4)} -- WCVI Shrimp survey;\cr
+    \code{NMFStri (= 5)} -- NMFS (US National Marine Fisheries Service) Triennial survey;\cr
+    \code{HSpac   (= 6)} -- Pacific Cod Monitoring survey;\cr
+    \code{QCSshr  (= 7)} -- QCS Shrimp survey;\cr
+    \code{GBRhis  (= 8)} -- GIG (Goose Island Gully) Historical survey (originally GF Reed);\cr
+    \code{WCHGsyn (= 9)} -- WCHG (west cosat Haida Gwaii) Synoptic survey (originally WCQCI: west coast Queen Charlotte Islands);\cr
+    \code{HSsyn   (=10)} -- HS Synoptic survey;\cr
+    \code{GIGhis  (=11)} -- GIG Retrospective survey (not for biomass);\cr
+    \code{GIG1995 (=12)} -- 1995 GIG Retrospective (charter vessels \emph{Ocean Selector} and \emph{Frosti}). }
   \item{strSpp}{\code{character} -- optional if the species code appears in the \code{file} name.}
-  \item{datemask}{\code{wtf?}}
+  \item{datemask}{\code{unknown} -- not used (probably deprecated).}
   \item{doorspread}{\code{numeric} -- default doorspread value (metres).}
-  \item{shrimpyear}{\code{numeric} -- shrimp year (wtf?).}
+  \item{shrimpyear}{\code{numeric} -- shrimp year (unknown usage).}
   \item{savefile}{\code{logical} -- if \code{TRUE}, save the processed results to a binary \code{'.rda'} file.}
   \item{usevar}{\code{logical} -- if \code{TRUE}, sets variable \code{useflag=1}, which does nothing.}
   \item{attended}{\code{logical} -- if \code{TRUE}, sets variable \code{attendflag=""}, which does nothing.}
@@ -67,8 +67,8 @@ prepWCVIsyn(file, survey=3)
 
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
-  \emph{locus opus}: Institute of Ocean Sciences (IOS), Sidney BC\cr
-  Last modified \code{Rd: 2019-12-13}
+  \emph{locus opus}: Regional Headquarters (RHQ), Vancouver BC\cr
+  Last modified \code{Rd: 2023-02-10}
 }
 \note{
   PJS maintains code in statistical software called \href{https://www.stata.com/}{STATA}.
@@ -92,5 +92,5 @@ In package \pkg{PBStools}:\cr
 % Use only one keyword per line.
 % For non-standard keywords, use \concept instead of \keyword:
 \concept{indices}
-\concept{PJS}
+\concept{M09_PJSsurvey}
 % Use only one concept per line.

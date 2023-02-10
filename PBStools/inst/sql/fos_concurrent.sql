@@ -35,7 +35,8 @@ WHERE
     ELSE 0 END) IN (@gear) AND
   C.BEST_DATE >= '1996-02-17' -- Chose start of observer program to properly compare among all species
   --AND C.BEST_DATE <= '2020-02-17' -- To be able to reproduce for RER
-  AND C.BEST_DATE <= '2020-12-31' -- To be able to reproduce for YMR
+  --AND C.BEST_DATE <= '2020-12-31' -- To be able to reproduce for YMR
+  AND C.BEST_DATE <= '2021-12-31' -- To be able to reproduce for CAR
 
 DECLARE @total AS FLOAT
 SET @total = (SELECT 

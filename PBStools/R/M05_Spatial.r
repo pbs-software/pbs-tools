@@ -23,7 +23,7 @@
 ## ==============================================================================
 
 
-## calcHabitat--------------------------2019-01-31
+## calcHabitat--------------------------2021-12-07
 ## Calculate potential habitat using bathymetry.
 ## Can be a slow process -- set 'use.sp.pkg=TRUE' for faster execution
 ##   Passing 'use.sp.pkg' to 'findHoles':
@@ -496,7 +496,7 @@ calcSurficial <- function(surf="qcb", hab,
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~calcSurficial
 
 
-## clarify------------------------------2020-08-10
+## clarify------------------------------2022-12-07
 ##  Analyse catch proportions in blocks, then cluster into fisheries groups.
 ##  Initially, done to address the CASSIS proposal and its impact (John Pringle).
 ##  CASSIS = CAScadia SeISmic experiment
@@ -504,7 +504,7 @@ calcSurficial <- function(surf="qcb", hab,
 clarify <- function(dat, cell=c(0.1,0.075), nG=8,
    xlim=c(-134.2,-127), ylim=c(49.6,54.8), zlim=NULL, targ="YMR", 
    clrs=c("red","orange","yellow","green","forestgreen","deepskyblue",
-   "blue","midnightblue"), land="ghostwhite", spp.names=FALSE, 
+   "blue","midnightblue"), land="ghostwhite", spp.names=FALSE, outnam,
    png=FALSE, pngres=400, PIN=NULL, isobs=c(200,1000,1800), 
    wmf=FALSE, eps=FALSE, hpage=10, ioenv=.GlobalEnv, lang=c("e","f"))
 {
@@ -523,149 +523,191 @@ clarify <- function(dat, cell=c(0.1,0.075), nG=8,
 
 	if (!requireNamespace("cluster", quietly=TRUE)) stop("`cluster` package is required")
 	assign("PBStool",list(module="M05_Spatial",call=match.call(),args=args(clarify),ioenv=ioenv,plotname="Rplot"),envir=.PBStoolEnv)
-	fnam=as.character(substitute(dat))
-	expr=paste("getFile(",fnam,",senv=ioenv,use.pkg=TRUE,try.all.frames=TRUE,tenv=penv()); dat=",fnam,sep="") # input file made global cause it's big
-	eval(parse(text=expr))
+	if (missing(outnam))
+		fnam = as.character(substitute(dat))
+	else
+		fnam = outnam
+	#expr=paste("getFile(",fnam,",senv=ioenv,use.pkg=TRUE,try.all.frames=TRUE,tenv=penv()); dat=",fnam,sep="") # input file made global cause it's big
+	#eval(parse(text=expr))
 	#clrs <- c("blue","magenta","orange","green","cyan","forestgreen","yellow","black","purple4","red") #PNCIMA
 	#clrs <- c("red","orange","yellow","green","forestgreen","deepskyblue","blue","midnightblue")
-	flds=names(dat); spp=setdiff(flds,c("EID","X","Y","Z","tcat"))
 
+	flds = colnames(dat)
+	if ("EID" %in% flds) {
+		is.map = TRUE
+		spp = setdiff(flds,c("EID","X","Y","Z","tcat","date","major","minor","locality"))
+	} else {
+		is.map = FALSE
+		spp = flds[-c(1:5)]
+	}
 	nr <- nrow(dat); nc <- ncol(dat[,spp])
 	dat$tcat <- apply(dat[,spp],1,sum,na.rm=TRUE)
 	dat <- dat[dat$tcat>0 & !is.na(dat$tcat),]
-	dat=dat[dat$X>=xlim[1] & dat$X<=xlim[2] & !is.na(dat$X),]
-	dat=dat[dat$Y>=ylim[1] & dat$Y<=ylim[2] & !is.na(dat$Y),]
-	if (!is.null(zlim))
-		dat = dat[dat$Z>=zlim[1] & dat$Z<=zlim[2] & !is.na(dat$Z),]
-	if (!is.element("EID", colnames(dat)))
-		dat$EID = 1:nrow(dat)
 
-	gx <- seq(xlim[1],xlim[2],cell[1]); gy <- seq(ylim[1],ylim[2],cell[length(cell)])
-	agrid <- makeGrid(x=gx,y=gy,projection="LL",zone=9,byrow=TRUE,addSID=FALSE)
+	if (is.map) {
+		dat=dat[dat$X>=xlim[1] & dat$X<=xlim[2] & !is.na(dat$X),]
+		dat=dat[dat$Y>=ylim[1] & dat$Y<=ylim[2] & !is.na(dat$Y),]
+		if (!is.null(zlim))
+			dat = dat[dat$Z>=zlim[1] & dat$Z<=zlim[2] & !is.na(dat$Z),]
+		if (!is.element("EID", colnames(dat)))
+			dat$EID = 1:nrow(dat)
+		gx <- seq(xlim[1],xlim[2],cell[1]); gy <- seq(ylim[1],ylim[2],cell[length(cell)])
+		agrid <- makeGrid(x=gx,y=gy,projection="LL",zone=9,byrow=TRUE,addSID=FALSE)
+		events <- data.frame(EID=dat$EID,X=dat$X,Y=dat$Y,Z=dat$tcat)
+		events <- na.omit(events)
+		attr(events,"class") <- c("EventData","data.frame")
+		attr(events,"projection") <- "LL"
+		locData <- findCells(events,agrid)
+		z <- !duplicated(locData$EID)
+		locData <- locData[z,]
+		dat <- dat[is.element(dat$EID,locData$EID),]
+		dat$PID <- rep(NA,nrow(dat))
+		dat$PID[match(dat$EID,locData$EID)] <- locData$PID
 
+		#PID <- sort(unique(events$PID)); nPID <- length(PID)
+		nspp <- length(spp)
+		tcat <- apply(dat[,spp], 2, tcomp, i=dat$PID) # offload_port does not work here
+		pcat <- t(apply(tcat,1,pcomp))
+		ppos <- apply(pcat,2,function(x){length(x[x>0])/length(x)})
+		z    <- ppos >= .10
+		spp  <- names(ppos[z])
+		psub <- pcat[,spp]
 #browser();return()
-	events <- data.frame(EID=dat$EID,X=dat$X,Y=dat$Y,Z=dat$tcat)
-	events <- na.omit(events)
-	attr(events,"class") <- c("EventData","data.frame")
-	attr(events,"projection") <- "LL"
-	locData <- findCells(events,agrid)
-	z <- !duplicated(locData$EID)
-	locData <- locData[z,]
-	dat <- dat[is.element(dat$EID,locData$EID),]
-	dat$PID <- rep(NA,nrow(dat))
-	dat$PID[match(dat$EID,locData$EID)] <- locData$PID
 
-	#PID <- sort(unique(events$PID)); nPID <- length(PID)
-	nspp <- length(spp)
-
-	tcat <- apply(dat[,spp],2,tcomp,i=dat$PID)
-	pcat <- t(apply(tcat,1,pcomp))
-
-	ppos <- apply(pcat,2,function(x){length(x[x>0])/length(x)})
-	z    <- ppos >= .10
-	spp  <- names(ppos[z])
-	psub <- pcat[,spp]
-
-	ptree  <- cluster::clara(psub, k=nG, pamLike=TRUE, metric="euclidean")
-	clus   <- ptree$clustering
-	groups <- split(as.numeric(names(clus)),clus)
-
-	pout = as.data.frame(psub); k = dimnames(pout)[[1]]
-	pout$group = clus[k]
-	grps = sort(unique(pout$group))
-	pdata = array(NA,dim=c(length(k),5),
-		dimnames=list(k,c("PID","col","label","group","target")))
-	pdata = as.data.frame(pdata)
-	smat <- NULL; skey <- NULL
-
-	for (i in grps) {
-		gout <- pout[is.element(pout$group,i),]
-		sord <- rev(sort(apply(gout[,spp],2,mean,na.rm=TRUE)))
-		tpos <- match(targ,names(sord),nomatch=99)+i/100; #print(tpos)
-		smat <- c(smat,list(sord))
-		j    <- dimnames(gout)[[1]]
-		col  <- clrs[gout$group]
-		lab  <- paste(names(sord[1:3]),collapse="-")
-		skey <- c(skey,lab)
-		pdata[j,"PID"]   <- as.numeric(j)
-		pdata[j,"col"]   <- col
-		pdata[j,"label"] <- rep(lab,length(j))
-		pdata[j,"group"] <- rep(i,length(j))
-		if (is.null(targ)) pdata[j,"target"] = pdata[j,"group"]
-		else               pdata[j,"target"]  = rep(tpos,length(j))
-	}
-	names(smat) <- grps
-	gnum = sapply(split(pdata$PID,pdata$group),length)
-	gtar = sapply(split(pdata$PID,pdata$target),length)
-	if (is.null(targ)) gord = rev(order(gnum))
-	else               gord = order(as.numeric(names(gtar))) # order by placement of target in clara group
-	names(clrs)[1:length(gtar)]=names(gtar[gord])            # enforce colour order
-	pdata$col = clrs[as.character(pdata$target)]             # repopulate pdata's col field
-
-	kcol = clrs[1:nG]
-	glab = sapply(split(pdata$label,pdata$target),unique)
-	kgrp = glab[gord]
-	if (spp.names) {
-		data("species", package="PBSdata", envir=penv()) # local
-		kcode=strsplit(kgrp,split="-")
-		kgrp=sapply(kcode,function(x){paste(gsub(" ",".",species[x,"name"]),collapse="+")})
-	}
-#browser()
-
-	if (!is.null(isobs)) {
-		getFile(isobath, use.pkg=TRUE, tenv=penv())
-		isob <- isobath[is.element(isobath$PID,isobs),]
-	}
-	stuff=c("tcat","pcat","ptree","pout","pdata","clrs","glab","kgrp")
-	packList(stuff,"PBStool",tenv=.PBStoolEnv)
-
-	##--Plot-results---------------------------------------------
-	## Try to automate based on par()$pid - plot must be ready on-screen first
-	win = TRUE; plop = list(win=win, png=png, eps=eps, wmf=wmf)
-	for (i in c("win","png","eps","wmf")) {
-		ii = plop[[i]]
-		if (ii) {
-			if (is.null(PIN))
-				PIN = par()$pin/max(par()$pin)*hpage
-
-			createFdir(lang)
-			fn = paste(fnam,ifelse(is.null(targ),"",paste0("-",targ)),"-Clara-nG",nG,"-(",paste(round(PIN,1),collapse="x"),")",sep="")
-			fout.e = fout = fn
-			for (l in lang) {
-				changeLangOpts(L=l)
-				fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
-				if (i=="png" && ii) {
-					clearFiles(paste0(fout,".png"))
-					png(filename=paste0(fout,".png"), units="in", res=pngres, width=PIN[1], height=PIN[2])
-				} else if (i=="eps" && ii) {
-					clearFiles(paste0(fout,".eps"))
-					postscript(paste(fout,".eps",sep=""),width=PIN[1],height=PIN[2],paper="special")
-				} else if (i=="wmf" && ii) {
-					clearFiles(paste0(fout,".wmf"))
-					do.call("win.metafile",list(filename=paste(fout,".wmf",sep=""),width=PIN[1],height=PIN[2]))
-				}
-				else resetGraph()
-				getFile(nepacLL,use.pkg=TRUE,tenv=penv())
-
-				par(parlist)
-				plotMap(nepacLL, xlim=xlim, ylim=ylim, plt=NULL, col="white", cex.axis=1, cex.lab=1.2, mgp=c(1.5,0.2,0))
-				addPolys(agrid, polyProps=pdata, border=FALSE)
-				if (!is.null(isobs)) {
-					icols = colorRampPalette(c("steelblue4","navy","black"))(length(isobs))
-					addLines(isob, col=icols)
-				}
-				addPolys(nepacLL, col=land)
-				xoff=ifelse(wmf,-0.05,0); yoff=ifelse(wmf,-0.01,0)
-				addLegend(0.02, 0.02, fill=kcol, legend=linguaFranca(kgrp,l), cex=ifelse(wmf,0.8,0.7), yjust=0, bty="n")
-#browser();return()
-				if (!is.null(targ)) 
-					addLegend(0.35, 0.02, legend=floor(as.numeric(names(kgrp))), bty="n", cex=ifelse(wmf,0.8,0.7), adj=1, xjust=1, yjust=0, text.col="blue", title=linguaFranca(targ,l))
-				.addAxis(xlim=xlim, ylim=ylim, tckLab=FALSE, tck=0.014, tckMinor=0.007)
-				box()
-				if (i!="win" && ii) dev.off()
-			}; eop()
+		ptree  <- cluster::clara(psub, k=nG, pamLike=TRUE, metric="euclidean")
+		clus   <- ptree$clustering
+		groups <- split(as.numeric(names(clus)),clus)
+   	
+		pout = as.data.frame(psub); k = dimnames(pout)[[1]]
+		pout$group = clus[k]
+		grps = sort(unique(pout$group))
+		pdata = array(NA,dim=c(length(k),5),
+			dimnames=list(k,c("PID","col","label","group","target")))
+		pdata = as.data.frame(pdata)
+		smat <- NULL; skey <- NULL
+   	
+		for (i in grps) {
+			gout <- pout[is.element(pout$group,i),]
+			sord <- rev(sort(apply(gout[,spp],2,mean,na.rm=TRUE)))
+			tpos <- match(targ,names(sord),nomatch=99)+i/100; #print(tpos)
+			smat <- c(smat,list(sord))
+			j    <- dimnames(gout)[[1]]
+			col  <- clrs[gout$group]
+			lab  <- paste(names(sord[1:10]),collapse="-")
+			skey <- c(skey,lab)
+			pdata[j,"PID"]   <- as.numeric(j)
+			pdata[j,"col"]   <- col
+			pdata[j,"label"] <- rep(lab,length(j))
+			pdata[j,"group"] <- rep(i,length(j))
+			if (is.null(targ)) pdata[j,"target"] = pdata[j,"group"]
+			else               pdata[j,"target"]  = rep(tpos,length(j))
 		}
+		names(smat) <- grps
+		gnum = sapply(split(pdata$PID,pdata$group),length)
+		gtar = sapply(split(pdata$PID,pdata$target),length)
+		if (is.null(targ)) gord = rev(order(gnum))
+		else               gord = order(as.numeric(names(gtar))) # order by placement of target in clara group
+		names(clrs)[1:length(gtar)]=names(gtar[gord])            # enforce colour order
+		pdata$col = clrs[as.character(pdata$target)]             # repopulate pdata's col field
+#browser();return()
+
+		kcol = clrs[1:nG]
+		glab = sapply(split(pdata$label,pdata$target),unique)
+		kgrp = glab[gord]
+		if (spp.names) {
+			data("species", package="PBSdata", envir=penv()) # local
+			kcode=strsplit(kgrp,split="-")
+			kgrp=sapply(kcode,function(x){paste(gsub(" ",".",species[x,"name"]),collapse="+")})
+		}
+#browser();return()
+
+		if (is.map && !is.null(isobs)) {
+			getFile(isobath, use.pkg=TRUE, tenv=penv())
+			isob <- isobath[is.element(isobath$PID,isobs),]
+		}
+		stuff=c("tcat","pcat","ptree","pout","pdata","clrs","glab","kgrp")
+		packList(stuff,"PBStool",tenv=.PBStoolEnv)
+   	
+		##--Plot-results---------------------------------------------
+		## Try to automate based on par()$pid - plot must be ready on-screen first
+		win = TRUE; plop = list(win=win, png=png, eps=eps, wmf=wmf)
+		for (i in c("win","png","eps","wmf")) {
+			ii = plop[[i]]
+			if (ii) {
+				if (is.null(PIN))
+					PIN = par()$pin/max(par()$pin)*hpage
+   	
+				createFdir(lang)
+				fn = paste(fnam,ifelse(is.null(targ),"",paste0("-",targ)),"-Clara-nG",nG,"-(",paste(round(PIN,1),collapse="x"),")",sep="")
+				fout.e = fn
+				for (l in lang) {
+					changeLangOpts(L=l)
+					fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
+					if (i=="png" && ii) {
+						clearFiles(paste0(fout,".png"))
+						png(filename=paste0(fout,".png"), units="in", res=pngres, width=PIN[1], height=PIN[2])
+					} else if (i=="eps" && ii) {
+						clearFiles(paste0(fout,".eps"))
+						postscript(paste(fout,".eps",sep=""),width=PIN[1],height=PIN[2],paper="special")
+					} else if (i=="wmf" && ii) {
+						clearFiles(paste0(fout,".wmf"))
+						do.call("win.metafile",list(filename=paste(fout,".wmf",sep=""),width=PIN[1],height=PIN[2]))
+					}
+					else resetGraph()
+					getFile(nepacLL,use.pkg=TRUE,tenv=penv())
+   	
+					par(parlist)
+					plotMap(nepacLL, xlim=xlim, ylim=ylim, plt=NULL, col="white", cex.axis=1, cex.lab=1.2, mgp=c(1.5,0.2,0))
+					addPolys(agrid, polyProps=pdata, border=FALSE)
+					if (!is.null(isobs)) {
+						icols = colorRampPalette(c("steelblue4","navy","black"))(length(isobs))
+						addLines(isob, col=icols)
+					}
+					addPolys(nepacLL, col=land)
+					xoff=ifelse(wmf,-0.05,0); yoff=ifelse(wmf,-0.01,0)
+					addLegend(0.02, 0.02, fill=kcol, legend=linguaFranca(kgrp,l), cex=ifelse(wmf,0.8,0.7), yjust=0, bty="n")
+#browser();return()
+					if (!is.null(targ)) 
+						addLegend(0.35, 0.02, legend=floor(as.numeric(names(kgrp))), bty="n", cex=ifelse(wmf,0.8,0.7), adj=1, xjust=1, yjust=0, text.col="blue", title=linguaFranca(targ,l))
+					.addAxis(xlim=xlim, ylim=ylim, tckLab=FALSE, tck=0.014, tckMinor=0.007)
+					box()
+					if (i!="win" && ii) dev.off()
+				}; eop()
+			}
+		}
+	} else {
+		## Hierarchical Clustering
+		dmeth = "canberra"
+		createFdir(lang)
+		fn = paste0("offload-cluster-distance(", dmeth, ")")
+		fout.e = fn
+		for (l in lang) {
+			changeLangOpts(L=l)
+			fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
+			if (png) {
+				clearFiles(paste0(fout,".png"))
+				png(filename=paste0(fout,".png"), units="in", res=pngres, width=12, height=4)
+			}
+			expandGraph(mfrow=c(1,4), mar=c(1,3.5,2,1), mgp=c(2,0.5,0))
+			for (i in c("5E","5CD","5AB","3CD")) {
+				idat <- dat[dat$pmfc_area %in% i,]
+				nspp <- length(spp)
+				tcat <- apply(idat[,spp], 2, tcomp, i=idat$OID) # offload_port does not work here
+				pcat <- t(apply(tcat,1,pcomp))
+				ppos <- apply(pcat,2,function(x){length(x[x>0])/length(x)})
+				z    <- ppos >= 0.05
+				spp  <- names(ppos[z])
+				psub <- pcat[,spp]
+
+				## options:"euclidean", "maximum", "manhattan", "canberra", "binary", "minkowski"
+				d  = dist(t(psub), method=dmeth)
+				hd = hclust(d)
+				plot(hd, main=paste0(i, " -- distance method=", dmeth), cex.axis=1.25)
+			}
+			if (png) dev.off()
+		}; eop()
 	}
+#browser();return()
 	gc(verbose=FALSE)
 	invisible()
 }
@@ -846,35 +888,42 @@ findHoles = function(polyset, minVerts=25, nlevs=1, use.sp.pkg=TRUE)
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~findHoles
 
 
-## plotConcur---------------------------2020-07-28
+## plotConcur---------------------------2022-01-25
 ## Horizontal barplot of concurrent species in tows.
 ## ---------------------------------------------RH
 plotConcur = function(strSpp="410", dbName="GFFOS", spath=.getSpath(),
    mindep=150, maxdep=435, major=NULL, minor=NULL, top=NULL, gear=1,
    saraSpp=c("027","034","394","410","424","435","437","440","442","453"),
    reset.mf=TRUE, eps=FALSE, png=FALSE, pngres=300, colour="topo", 
-   outnam, lang=c("e","f"))
+   print.tab=TRUE, run.sql=TRUE, outnam, lang=c("e","f"))
 {
 	assign("PBStool",list(module="M03_Fishery",call=match.call(),args=args(plotConcur),outnam="Concur"),envir=.PBStoolEnv)
 	data("species", package="PBSdata", envir=penv())
 	zspp=species$name!=species$latin
 	species$name[zspp] = toUpper(species$name[zspp])
-	print.tab = TRUE
 
 	## If dummy is not specified it defaults to '' which is tranlsated as minor=0 and unwanted records are collected
 	if (is.null(minor)) minor = 999 ## doesn't exist -- used to fool SQL
 
-	if (dbName=="GFFOS")
+	if (missing(outnam)) {
+		outnam <- paste("Concur",strSpp,dbName,paste0(c("Btrawl","Mtrawl","HookLine","Trap")[gear],collapse="+"),sep="-")
+		outnam <- paste0(outnam, "-d(", mindep, "-", maxdep, ")")
+		if (!is.null(minor) && !all(minor==999)) outnam = sub(strSpp,paste(strSpp,"-minor(",paste(minor,collapse=""),")",sep=""),outnam)
+		if (!is.null(major)) outnam = sub(strSpp,paste(strSpp,"-major(",paste(major,collapse=""),")",sep=""),outnam)
+	}
+
+	if (run.sql && dbName=="GFFOS")
 		getData("fos_concurrent.sql", "GFFOS", strSpp, path=spath,
 			mindep=mindep, maxdep=maxdep, major=major, dummy=minor, top=top, gear=gear, tenv=penv())
-	else if (dbName=="PacHarvest")
+	else if (run.sql && dbName=="PacHarvest")
 		getData("pht_concurrent.sql","PacHarvest", strSpp, path=spath,
 			mindep=mindep,maxdep=maxdep,major=major,dummy=minor,top=top,gear=gear,tenv=penv())
-	else if (dbName=="PacHarvHL")
+	else if (run.sql && dbName=="PacHarvHL")
 		getData("phhl_concurrent.sql","PacHarvHL",strSpp,path=spath,
 			mindep=mindep,maxdep=maxdep,major=major,dummy=minor,top=top,tenv=penv())
 	else {
 		## Assume CSV file exists from previous query
+		if (!run.sql) dbName =outnam
 		if (file.exists(paste0(dbName,".csv"))) {
 			PBSdat = read.csv(paste0(dbName,".csv"), check.names=FALSE)
 			print.tab = FALSE
@@ -883,7 +932,6 @@ plotConcur = function(strSpp="410", dbName="GFFOS", spath=.getSpath(),
 	}
 	dat = PBSdat
 	sql = attributes(PBSdat)$sql
-#browser();return()
 
 	dat$spp   = as.character(dat$spp)
 	dat$code  = pad0(dat$code,3)
@@ -892,16 +940,9 @@ plotConcur = function(strSpp="410", dbName="GFFOS", spath=.getSpath(),
 	dat  = dat[rev(order(dat$pct)),]
 	dat$spp = toUpper(dat$spp)
 
-	if (missing(outnam)) {
-		outnam <- paste("Concur",strSpp,dbName,paste0(c("Btrawl","Mtrawl","HookLine","Trap")[gear],collapse="+"),sep="-")
-		outnam <- paste0(outnam, "-d(", mindep, "-", maxdep, ")")
-		if (!is.null(minor) && !all(minor==999)) outnam = sub(strSpp,paste(strSpp,"-minor(",paste(minor,collapse=""),")",sep=""),outnam)
-		if (!is.null(major)) outnam = sub(strSpp,paste(strSpp,"-major(",paste(major,collapse=""),")",sep=""),outnam)
-	}
-	write.csv(dat,paste(outnam,".csv",sep=""),row.names=FALSE)
-
 	## Re-format the same table so that it's latex-ready
 	if (print.tab) {
+		write.csv(dat,paste(outnam,".csv",sep=""),row.names=FALSE)
 		textab = dat
 		textab$code  = pad0(textab$code,3)
 		#textab$spp   = toUpper(textab$spp)
@@ -915,7 +956,7 @@ plotConcur = function(strSpp="410", dbName="GFFOS", spath=.getSpath(),
 
 	##----- Plotting -----
 	dat  = dat[order(dat$pct),] # for plotting as horizontal bars w/ largest at top
-	fout.e = fout = outnam
+	fout.e = outnam
 	for (l in lang) {
 		changeLangOpts(L=l)
 		fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
@@ -964,11 +1005,12 @@ plotConcur = function(strSpp="410", dbName="GFFOS", spath=.getSpath(),
 		if (eps|png) dev.off()
 	}; eop()
 	packList(c("dat","xy","z","sql"),"obj.preferDepth",tenv=.PBStoolEnv)
-	invisible(dat) }
+	invisible(dat)
+}
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotConcur
 
 
-## plotEO-------------------------------2019-10-22
+## plotEO-------------------------------2022-01-24
 ## Plot the Extent of Occurrence for a species 
 ## using a convex hull to surround events.
 ## ---------------------------------------------RH
@@ -996,7 +1038,7 @@ plotEO = function (id="lst", strSpp="453", col="red",
 	else ttget(hulk)
 	data("nepacLL", package="PBSmapping", envir=fenv)
 	data("species", package="PBSdata", envir=fenv)
-	
+
 	mapdat = mapDat
 	mapdat = mapdat[mapdat[,strSpp]>0 & !is.na(mapdat[,strSpp]),]
 	mapdat  = mapdat[mapdat$X >= xlim[1] & mapdat$X <= xlim[2] & !is.na(mapdat$X) &
@@ -1007,7 +1049,7 @@ plotEO = function (id="lst", strSpp="453", col="red",
 		mapdat = zapSeamounts(mapdat)
 	## Remove coordinates that are located in localities that don't match the reported localities
 	if (rmXY) {
-		data("locality.plus", package="PBSdata", envir=fenv)
+		data(locality.plus, package="PBSdata", envir=fenv)
 		loca = locality.plus
 		mapdat$ID = .createIDs(mapdat, c("major","minor","locality"))
 		inlocs = findPolys(mapdat, loca, maxRows=1e7)
@@ -1063,14 +1105,16 @@ plotEO = function (id="lst", strSpp="453", col="red",
 		sub(","," ",sub("Convex hull area","zone de coque convexe",arealab)),
 		sub(","," ",sub("hull on water","coque sur l'eau",waterlab))
 		), collapse="\n")
-#browser(); return()
 	datelab = paste0(gsub("-",".",range(mapdat$date,na.rm=T)),collapse=" to ")
 
-	fout = fout.e = paste0("plotEO-",strSpp,"-",stock)
+	fout.e = paste0("plotEO-",strSpp,"-",stock)
 	for (l in lang) {
 		changeLangOpts(L=l)
 		fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
-		if(png) png(paste0(fout,".png"), units="in", res=pngres, width=PIN[1], height=PIN[2])
+		if (png) {
+			clearFiles(paste0(fout,".png"))
+			png(paste0(fout,".png"), units="in", res=pngres, width=PIN[1], height=PIN[2])
+		}
 		plotMap(nepacLL, xlim=xlim, ylim=ylim, plt=c(0.07,0.99,0.08,0.99), cex.axis=1.5, cex.lab=1.75, las=1)
 		addPoints(mapdat, pch=20, col=col, cex=1)
 		addPolys(nepacLL, col="grey95", border="slategray")
@@ -1100,7 +1144,7 @@ plotEO = function (id="lst", strSpp="453", col="red",
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotEO
 
 
-## plotGMA------------------------------2019-06-04
+## plotGMA------------------------------2022-01-21
 ##  Plot the Groundfish Management Areas
 ## ---------------------------------------------RH
 plotGMA = function(gma=gma.popymr, xlim=c(-134,-123), ylim=c(48.05,54.95), 
@@ -1179,16 +1223,14 @@ plotGMA = function(gma=gma.popymr, xlim=c(-134,-123), ylim=c(48.05,54.95),
 			elabs = extra.labels
 			elab = linguaFranca(gsub("\\\n"," ",elabs$label),l)
 			touche = rep(T,length(elab))
-			if (strSpp%in%c("435","440"))
+			if (strSpp%in%c("435","440","REBS"))
 				touche = !is.element(elab, "Queen Charlotte Sound")
-#browser();return()
 			elab[touche] = gsub("le\\\nde","le de",gsub("\\\nde\\\nla"," de la",gsub(" ","\n",elab[touche])))
 			elabs$label = elab
 			addLabels(elabs,cex=1.5,col="blue")
 		}
 		text(-125.2416,52.70739,linguaFranca("BC",l),cex=5,col="grey",font=2)
 		box(lwd=2)
-	#browser();return()
 		if (eps|png) dev.off()
 	}; eop()
 	gc(verbose=FALSE)
@@ -1197,7 +1239,7 @@ plotGMA = function(gma=gma.popymr, xlim=c(-134,-123), ylim=c(48.05,54.95),
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotGMA
 
 
-## plotHabitat--------------------------2021-06-15
+## plotHabitat--------------------------2021-12-07
 ## WAP (bctopo only reaches -124.5, bctopo2 goes to -122.5)
 ## hab228=calcHabitat(topofile="bctopo2",isob=c(62,447),digits=2,xlim=c(-134.5,-122.5))
 ## save("hab228",file="hab228.rda")
@@ -1235,7 +1277,7 @@ plotHabitat = function(fnam="hab228", isob=c(62,448), col.hab="greenyellow",
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotHabitat
 
 
-## plotLocal----------------------------2020-06-18
+## plotLocal----------------------------2021-12-07
 ## Plot DFO fishing localities with the highest catch.
 ## ---------------------------------------------RH
 plotLocal = function(dat, area, aflds=NULL, pcat=0.95, cpue=FALSE, powr=1,

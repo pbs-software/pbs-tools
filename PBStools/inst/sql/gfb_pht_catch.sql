@@ -162,6 +162,6 @@ GROUP BY
 
 -- getData("gfb_pht_catch.sql","GFBioSQL",strSpp="451")
 -- qu("gfb_pht_catch.sql",dbName="GFBioSQL",strSpp="439",gear=c(1,6,8))  -- there's no gear variable above
--- qu("gfb_pht_catch.sql",dbName="GFBioSQL",strSpp="396")
+-- qu("gfb_pht_catch.sql",dbName="GFBioSQL",strSpp="396")  -- POP queried 221024
 
 

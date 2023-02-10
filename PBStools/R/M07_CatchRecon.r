@@ -11,7 +11,7 @@
 ##==============================================================================
 
 
-## buildCatch---------------------------2020-10-15
+## buildCatch---------------------------2023-02-02
 ## Catch reconstruction algorithm for BC rockfish.
 ## Use ratios of RRF (reconstructed rockfish) to ORF 
 ## (rockfish other than POP) landings for multiple fisheries.
@@ -359,7 +359,8 @@ buildCatch=function(
 
 		MAJ = dimnames(orfmax)$major
 		clrs.major=rep("gainsboro",length(MAJ)); names(clrs.major)=MAJ
-		clrs.major[as.character(c(1,3:9))]=c("moccasin","blue","lightblue","yellow","orange","red","seagreen","lightgreen")
+		#clrs.major[as.character(c(1,3:9))]=c("moccasin","blue","lightblue","yellow","orange","red","seagreen","lightgreen")
+		clrs.major[as.character(c(1,3:9))]=c("moccasin","seagreen","lightgreen","yellow","orange","red","lightblue1","dodgerblue")  ## RH 230202 -- switch colours for 3CD and 5DE (North=blues, Central=ambers, South=greens)
 
 		if (saveinfo)
 			packList(c("htab","htabmax","htabadd","orfmax","orfadd"),"CR",tenv=.PBStoolEnv)
@@ -409,14 +410,19 @@ buildCatch=function(
 		## Start querying the databases
 		## PacHarv3 catch summary for fids 1:5 and 0 (unknown)
 		## Note: only used for h&l fisheries (2,4,5) as GFCATCH contains trawl and trap.
+		## May need to refresh 'tnsnames.ora' in C:\Oracle\12.2.0\cli\network\admin
+		## Switched to fixed SQL table PH3_CATCH_SUMMARY rather than use Oracle (RH 221222)
 		## -----------------------------------------------------------------------------
 
-		if (file.exists(paste0(dpath,"/ph3dat.rda")) && !sql.force)
+		if (file.exists(paste0(dpath,"/ph3dat.rda")) ) ##&& !sql.force)  ## Once should be enough unless sql query is altered
 			load(paste0(dpath,"/ph3dat.rda"))
 		else {
-			.flush.cat("   Oracle -- PacHarv3 (table CATCH_SUMMARY);\n")
-			getData("ph3_fcatORF.sql",dbName="HARVEST_V2_0",strSpp=strSpp,path=spath,
-				server="ORAPROD.WORLD",type="ORA",trusted=FALSE,uid=uid[1],pwd=pwd[1],tenv=penv())
+			.flush.cat("   SQL Server -- GFFOS (table PH3_CATCH_SUMMARY);\n")  ## RH 221222
+			getData("ph3_fcatORF.sql", dbName="GFFOS", strSpp=strSpp, path=spath, tenv=penv())
+			#.flush.cat("   Oracle -- PacHarv3 (table CATCH_SUMMARY);\n")
+			#getData("ph3_fcatORF.sql",dbName="HARVEST_V2_0",strSpp=strSpp,path=spath,
+			#	server="FOS_V1_1.WORLD",type="ORA",trusted=FALSE,uid=uid[1],pwd=pwd[1],tenv=penv())
+			#	server="ORAPROD.WORLD",type="ORA",trusted=FALSE,uid=uid[1],pwd=pwd[1],tenv=penv())
 			assign("ph3dat",PBSdat);  rm(PBSdat) ## just to be safe
 			dimnames(ph3dat)[[1]]=1:nrow(ph3dat)
 			save("ph3dat",file="ph3dat.rda")
@@ -627,7 +633,7 @@ buildCatch=function(
 	## ---------------------------------------------
 	if (useAI && any(strSpp==c("396","440"))){
 		.flush.cat("Changing Anthony Is. catch (PMFC 5E south of 52.3333) to PMFC 5C catch...\n")
-		if ("gfmdat"%in%fnam) {
+		if ("gfmdat" %in% fnam) {
 			i = "gfmdat"
 			eval(parse(text=paste0("idat = ",i)))
 			## Maybe try a points in polygon routine (see bio.fields.xls for 5C polygon)
@@ -2239,7 +2245,7 @@ buildCatch=function(
 		## --------------------------------------------------------
 		## Special conditions for YYR (feedback from 2015 workshop)
 		## --------------------------------------------------------
-		if (strSpp %in% c("442")){
+		if (strSpp %in% c("424","442")){
 			## ---------------------------------------------------------
 			## Trawl -- assume no calculated discards (Brian Mose, 2015)
 			## ---------------------------------------------------------
@@ -2403,7 +2409,6 @@ buildCatch=function(
 	attr(sppnewRRF,"yrs.rec") = yrs.rec # years of reconstructed and reported catch
 	sppnewRRF[,,"10"] = apply(sppnewRRF[,,as.character(fid)],1:2,sum)  ## sum across fisheries
 	
-	#data("pmfc", "species", package="PBSdata", envir=penv())
 	pmfc.major = pmfc$major; names(pmfc.major) = pmfc$gmu
 
 	## -------------------------------------------------------------------
@@ -2553,82 +2558,94 @@ plotDiag =function(x, description="something",
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotDiag
 
 
-## plotGREFS----------------------------2021-09-28
+## plotGREFS----------------------------2022-01-21
 ## Plot gamma for reference years by fishery.
 ## ---------------------------------------------RH
 plotGREFS = function(dat, years=1996:2019, majors=3:9, fid=1,
    strSpp="394", addRGM=FALSE, onefig=FALSE, vlines,
-   png=FALSE, pngres=400, PIN=c(12,9))
+   png=FALSE, pngres=400, PIN=c(12,9), lang="e")
 {
 	calcRGM = function(x) { ## running geometric mean
 		mess = paste0("calcGM(x[1:",1:length(x),"])")
 		RGM  = sapply(mess,function(y){eval(parse(text=y))})
 		return(as.vector(RGM))
 	}
-	mcols = c("grey","blue","skyblue","gold","orange","red","green2","green4")
+	mcols = c("grey","mediumblue","dodgerblue","goldenrod1","sienna1","red","green2","green4")
 	names(mcols) = c(1,3:9)
 	fidnams = c("Trawl","Halibut","Sablefish","Dog/Ling","H&L Rock")
 	cyears  = dimnames(dat)[[1]]
 	years   = intersect(years,as.numeric(cyears))
 	cyears  = as.character(years)
 	onam    = paste0("grefs",strSpp)
+#browser();return()
 	if (addRGM)
 		onam = paste0(onam,".rgm")
 	if (onefig) {
 		onam = paste0(onam,".fid",paste0(fid,collapse=""))
+		fout.e = onam
+		changeLangOpts(L=lang)
+		fout = switch(lang, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
 		if (png){
-			clearFiles(paste0(onam,".png"))
-			png(paste0(onam,".png"), units="in", res=pngres, width=PIN[1], height=PIN[2])
+			clearFiles(paste0(fout,".png"))
+			png(paste0(fout,".png"), units="in", res=pngres, width=PIN[1], height=PIN[2])
 		}
 		par(mfrow=c(1,length(fid)), mar=c(3,0,1,0), oma=c(0,3,0,1), mgp=c(1.6,0.5,0))
 	}
 #browser(); return()
 	for (k in fid) {
 		if (!onefig) {
-			fout = paste0(onam,".fid",k)
+			fout.e = paste0(onam,".fid",k)
+			changeLangOpts(L=lang)
+			fout = switch(lang, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
 			if (png){ 
 				clearFiles(paste0(fout,".png"))
 				png(paste0(fout,".png"), units="in", res=pngres, width=PIN[1], height=PIN[2])
 			}
-			par(mfrow=c(1,1), mar=c(3,3,0.5,0.5), oma=c(0,0,0,0), mgp=c(1.6,0.5,0))
+			par(mfrow=c(1,1), mar=c(3,3,1,1), oma=c(0,0,0,0), mgp=c(1.6,0.5,0))
 		}
 		kdat = dat[cyears,,k]
 		yting = !onefig || k == fid[1]
-		ylim = c(0,ifelse(onefig,max(dat[cyears,,as.character(fid)]),max(kdat)))
-#browser();return()
+		ylim = c(0,ifelse(onefig, max(dat[cyears,as.character(majors),as.character(fid)]), max(kdat[cyears,as.character(majors)])))
 
 		test = apply(kdat,2,function(x){ ## just in case we want to remove values >2 or 3 SDs
 			ss=2*sd(x); mean(x)>=(x-ss) & mean(x)<=(x+ss)})
-		plot(0,0,xlim=c(years[1],rev(years)[1]),ylim=ylim, type="n", xaxt="n", xlab="Year", yaxt=ifelse(yting,"s","n"), ylab=ifelse(yting,"gamma",""), cex.axis=1.2, cex.lab=1.5)
+		plot(0,0, xlim=c(years[1],rev(years)[1]), ylim=ylim, type="n", xaxt="n", xlab=linguaFranca("Year",lang), yaxt=ifelse(yting,"s","n"), ylab=ifelse(yting,"gamma",""), cex.axis=1.2, cex.lab=1.5)
+		if (onefig) mtext("gamma",side=2, outer=T, line=2, cex.lab=1.5)
 		if (!missing(vlines))
 			abline(v=vlines, col="dimgrey", lty=5)
+		#lines(years, kdat[cyears,"3"], col=lucent(mcols["3"],0.5), lwd=2)
+#browser();return()
 		sapply(as.list(majors),function(j){
 			jj=as.character(j)
 			lines(years, kdat[cyears,jj], col=lucent(mcols[jj],0.5), lwd=2)
-			if (addRGM)
-				lines(years, calcRGM(kdat[cyears,jj]), lty=3, col=lucent(mcols[jj],0.5), lwd=2)
+			if (addRGM) {
+				lines(years, calcRGM(kdat[cyears,jj]), lty=1, col="gainsboro", lwd=2)
+				lines(years, calcRGM(kdat[cyears,jj]), lty=3, col=lucent(mcols[jj],1), lwd=2)
+			}
 		})
 		axis(1, at=years[1]:rev(years)[1], tck=-0.01, labels=F)
 #browser();return()
-		axis(1, at=intersect(seq(1950,2050,ifelse(onefig,5,2)),years), tck=-0.02, labels=T)
+		axis(1, at=intersect(seq(1950,2050,ifelse(onefig,5,2)),years[1]:years[length(years)]), tck=-0.02, labels=T)
+		if (length(years)!=length(years[1]:years[length(years)]))
+			points(years, rep(par()$usr[3],length(years)), pch=21, col="black", bg="ghostwhite", xpd=NA)
 		if (yting)
 			axis(2, at=seq(0,1,0.1), tck=-0.01, labels=F)
 		if (!yting){
 			axis(2, at=seq(0,1,0.1), tck=-0.005, labels=F)
 			axis(2, at=seq(0,1,0.1), tck=0.005, labels=F)
 		}
-		LL = length(fid)==1 && k%in%c(1,2,3,5)
+		LL = !onefig && k%in%c(1,2,3,4,5)
 		if (yting || length(fid)==1) 
-			addLegend(ifelse(LL,0.025,0.95),ifelse(LL,0.99,0.92), lty=1, lwd=2, col=rev(lucent(mcols[as.character(majors)],0.5)), legend=rev(c("3C","3D",paste0("5",LETTERS[1:5]))), bty="n", seg.len=3, xjust=ifelse(LL,0,1), cex=ifelse(png,0.7,1), y.intersp=ifelse(png,0.8,1))
-		addLabel(0.95, 0.95, fidnams[k], cex=1.2, adj=c(1,0))
+			addLegend(ifelse(LL,0.025,0.975), ifelse(LL,0.95,0.92), lty=1, lwd=2, col=rev(lucent(mcols[as.character(majors)],0.5)), legend=rev(c("3C","3D",paste0("5",LETTERS[1:5]))), bty="n", seg.len=3, xjust=ifelse(LL,0,1), cex=ifelse(png,0.7,1), y.intersp=ifelse(png,0.8,1))
+		addLabel(0.05, 0.95, linguaFranca(fidnams[k],lang), cex=1.2, adj=c(0,0))
 		if (png && !onefig) dev.off()
-	}
+	} ; eop()
 	if (png && onefig) dev.off()
 }
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotGREFS
 
 
-## plotRecon----------------------------2019-03-05
+## plotRecon----------------------------2023-02-02
 ## Plot reconstructed catch using barplots
 ## stacked by PMFC area.
 ## ---------------------------------------------RH
@@ -2641,22 +2658,25 @@ plotRecon = function(dat=cat440rec, strSpp="440", major=c(1,3:9), fidout=10,
 	## Create a subdirectory called `french' for French-language figures
 	createFdir(lang,figDir)
 
-	fshnam=c("trawl", "h&l", "trap", rep("h&l",6), "combined") ## general category vector
-	fidnam=c("trawl", "halibut", "sablefish", "sched2", "zn", "sabzn", "sabhal", "dogfish", "lingcod", "combined")
+	fshnam=c("trawl", "h&l", "trap", rep("h&l",6), "combined","other") ## general category vector
+	fidnam=c("trawl", "halibut", "sablefish", "sched2", "zn", "sabzn", "sabhal", "dogfish", "lingcod", "combined","other")
 	fidlab=c(paste0("Fishery -- ",c("Trawl", "Halibut", "Sablefish", "Dogfish / Lingcod", "H&L Rockfish", "Sablefish + ZN",
-		"Sablefish + Halibut", "Dogfish", "Lingcod")), "All Groundfish Fisheries") #, "All Commercial Groundfish Fisheries")
+		"Sablefish + Halibut", "Dogfish", "Lingcod")), "All Groundfish Fisheries", "Other Fisheries") #, "All Commercial Groundfish Fisheries")
 	yy  = as.character(years)
 	if (length(dim(dat))==2) ydat = dat[yy,,drop=FALSE]
 	else                     ydat = dat[yy,,,drop=FALSE]
 	MAJ = as.character(1:10); mm=as.character(major)
 	clrs = rep("gainsboro",length(MAJ)); names(clrs)=MAJ
-	clrs[as.character(c(1,3:9))]=c("moccasin","blue","lightblue","yellow","orange","red","seagreen","lightgreen")
+	#clrs[as.character(c(1,3:9))]=c("moccasin","blue","lightblue","yellow","orange","red","seagreen","lightgreen")
+	clrs[as.character(c(1,3:9))]=c("moccasin","seagreen","lightgreen","yellow","orange","red","dodgerblue","lightblue1")  ## RH 230202 -- switch colours for 3CD and 5DE (North=blues, Central=ambers, South=greens)
+	clrs[as.character(c(1,3:9))]=c("moccasin","seagreen","lightgreen","yellow","orange","red","lightblue1","dodgerblue")  ## RH 230202 -- switch colours for 3CD and 5DE (North=blues, Central=ambers, South=greens)
 	mclrs=clrs[mm]
 	data("pmfc", "species", package="PBSdata", envir=penv())
 	XLAB = dimnames(ydat)[[1]];  xpos=(1:length(XLAB))-.5; zlab=is.element(XLAB,xlab)
+
 	for (i in fidout){
 		ii=as.character(i)
-		if (length(dim(ydat))==2) idat = t(ydat)
+		if (length(dim(ydat))==2) idat = t(ydat[,mm])
 		else idat = t(ydat[,mm,ii])
 		if (is.null(ymax))
 			ylim = c(0,max(apply(idat,2,sum)))
@@ -2735,6 +2755,7 @@ plotRecon = function(dat=cat440rec, strSpp="440", major=c(1,3:9), fidout=10,
 			hlin = seq(yint,yaxp[2],yint)
 			segments(rep(0,length(hlin)), hlin, rep(par()$usr[2], length(hlin)), hlin,col="gainsboro")
 			barplot(idat, col=mclrs, space=0, cex.names=0.8, mgp=c(1.5,0.5,0), xaxt="n", xaxs="i", border="grey30", add=TRUE, lwd=0.3)
+#browser();return()
 			axis(1,at=xpos[zlab],labels=XLAB[zlab],tick=FALSE,las=3,mgp=c(0,.2,0),cex.axis=.8,hadj=1)
 			addLabel(0.05,0.975, species[strSpp,"latin"], font=3, cex=1, col="#400080", adj=0)
 			addLabel(0.05,0.925, linguaFranca(fidlab[i],l), cex=1.2, col="#400080", adj=0)
@@ -2896,7 +2917,7 @@ surveyCatch = function(strSpp="396", spath=.getSpath(), gfbdat=NULL,
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~surveyCatch
 
 
-## zapSeamounts-------------------------2020-02-18
+## zapSeamounts-------------------------2021-12-09
 ## Remove seamount records use combinations of 
 ## major, minor, and locality codes.
 ## ---------------------------------------------RH
@@ -2908,8 +2929,12 @@ zapSeamounts = function(dat, only.mark=FALSE) {
 		row.names=c("major","minor","locality"), stringsAsFactors=FALSE))
 	fnam = as.character(substitute(dat))
 	ii = fnam; idat = dat
-	if (!is.element("year",colnames(idat)))
-		idat$year = as.numeric(substring(idat$date,1,4))
+	if (!is.element("year",colnames(idat))){
+		if (!is.element("date",colnames(idat)))
+			idat$year = rep(as.numeric(substring(Sys.time(),1,4)), nrow(idat))
+		else
+			idat$year = as.numeric(substring(idat$date,1,4))
+	}
 	yrs = .su(idat$year); nyrs = length(yrs)
 	SMrem = array(0, dim=c(nyrs,nrow(seamounts),2), dimnames=list(year=yrs, seamount=rownames(seamounts), value=c("nrec","tcat")))
 	nSMrec = tSMcat = list()
@@ -2926,7 +2951,6 @@ zapSeamounts = function(dat, only.mark=FALSE) {
 			seamo = is.element(idat$major,jj[1]) & is.element(idat$minor,jj[2]) & is.element(idat$locality,jj[3])
 			if (sum(seamo)==0) next
 			if (only.mark) {
-#browser();return()
 				idat$seamount[seamo] = jjj
 			} else {
 				ij = paste0(jjj, "(", paste0(jj,collapse="."), ")")
@@ -2947,7 +2971,7 @@ zapSeamounts = function(dat, only.mark=FALSE) {
 			idat = idat[,setdiff(colnames(idat),"seamount")]
 		return(idat)
 	}
-	keep = apply(SMrem[,,"nrec"],1,sum)>0 ## only keep the years when seamount catches occurred
+	keep = apply(SMrem[,,"nrec",drop=FALSE],1,sum)>0 ## only keep the years when seamount catches occurred
 	attr(idat,"seamounts") = seamounts
 	attr(idat,"SMrem") = if(sum(keep)>0) SMrem[keep,,,drop=FALSE] else NULL
 	return(idat)

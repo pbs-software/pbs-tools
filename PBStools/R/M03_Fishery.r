@@ -122,7 +122,7 @@ calcRatio <- function(dat, nfld, dfld, nzero=TRUE, dzero=TRUE, sumF=mean,
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~calcRatio
 
 
-#dumpMod--------------------------------2011-06-15
+#dumpMod--------------------------------2023-02-09
 # Dump catch from modern sources used in catch reconstruction.
 #-----------------------------------------------RH
 dumpMod = function(dat,catch=c("landed","discard"),fid=1:5,strSpp="396",dbs=TRUE) {
@@ -143,11 +143,11 @@ dumpMod = function(dat,catch=c("landed","discard"),fid=1:5,strSpp="396",dbs=TRUE
 			if (dbs) k = dimnames(dat)$dbs
 			else k = "merged"
 			for (kk in k) {
-				if (class(dat)=="array") {
+				if (inherits(dat,"array")) {
 					if (dbs) ktab = dat[,,jj,ii,kk] # catmod1
 					else     ktab = dat[,,jj,ii]    # catmod
 					if (i=="total") ktab = apply(ktab,1:2,sum) }
-				if (class(dat)=="list") {
+				if (inherits(dat,"list")) {
 					jdat = dat[[jj]]                # ologs
 					jtab = crossTab(jdat,c("year","major"),"discard")
 					cnam = as.character(intersect(dimnames(jtab)[[2]],c(1,3:9)))
@@ -168,14 +168,14 @@ dumpMod = function(dat,catch=c("landed","discard"),fid=1:5,strSpp="396",dbs=TRUE
 			}
 		}
 	}
-	if (class(dat)=="array" && !dbs)
+	if (inherits(dat,"array") && !dbs)
 		write.csv(apply(dat[,,,c("landed","discard")],c(1,3),sum),
 		paste(as.character(substitute(dat)),"-summary-",strSpp,".csv",sep=""))
 }
 #------------------------------------------dumpMod
 
 
-#dumpRat--------------------------------2013-01-28
+#dumpRat--------------------------------2023-02-09
 # Dump catch ratios calculated by a catch reconstruction.
 #-----------------------------------------------RH
 dumpRat = function(strSpp="396", rats=c("alpha","beta","gamma","delta","lambda"), ioenv=.GlobalEnv){
@@ -195,7 +195,7 @@ dumpRat = function(strSpp="396", rats=c("alpha","beta","gamma","delta","lambda")
 	cat(paste("Ratio calculations for ",spp,"\n",sep=""),file=fnam)
 	for (i in rats) {
 		idat = dat[[i]]
-		if (class(idat)=="matrix") jdim=1 else jdim=dim(idat)[3]
+		if (inherits(idat,"matrix")) jdim=1 else jdim=dim(idat)[3]
 		cat(paste("\n",i,": ",RATS[i],"\n",sep=""),file=fnam,append=TRUE)
 		if (jdim>1) cat(paste(names(dimnames(idat)),collapse="-"),"\n",file=fnam,append=TRUE)
 		for (j in 1:jdim) {

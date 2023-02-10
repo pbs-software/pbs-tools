@@ -1,6 +1,6 @@
 \name{reportCatchAge}
 \alias{reportCatchAge}
-\title{GUI to Display Results from Catch-Age Analysis}
+\title{GUI -- Display Results from Catch-Age Analysis}
 \description{
   Display various results plots for catch-age analysis from 
   ADMB using an interactive GUI. 
@@ -9,14 +9,15 @@
 reportCatchAge(prefix="pop", path=getwd(), hnam=NULL, ...)
 }
 \arguments{
-  \item{prefix}{string specifying the name of an ADMB project.}
-  \item{path}{string specifying the path to the ADMB files 
-    \code{(*.tpl, *.dat, *.pin, *.rep)}; default is current working directory.}
-  \item{hnam}{string specifying the name of a history file.}
-  \item{...}{additional arguments for \code{reportCatchAge()}.}
+  \item{prefix}{\code{character} -- name of an ADMB project.}
+  \item{path}{\code{character} -- path to the ADMB files:\cr
+    (\code{'.tpl'}, \code{'.dat'}, \code{'.pin'}, \code{'.rep'});\cr
+    default is current working directory.}
+  \item{hnam}{\code{character} -- name of a history file.}
+  \item{...}{\code{dots} -- additional arguments for function \code{reportCatchAge}.}
 }
 \details{
-  The function \code{reportCatchAge()} creates an interactive GUI 
+  The function \code{'reportCatchAge'} creates an interactive GUI 
   that can be used to display the ADMB results from catch-age analysis.
   
   Original graphs designed by Jon Schnute in Schnute \emph{et al.} (2001).
@@ -66,20 +67,22 @@ reportCatchAge(prefix="pop", path=getwd(), hnam=NULL, ...)
   }
 }
 \references{
-  Schnute, J.T., Haigh, R., Krishka, B.A., and Starr, P. (2001) Pacific
-  ocean perch assessment for the west coast of Canada in 2001. \emph{Canadian
-  Science Advisory Secretariat, Research Document} \bold{2001/138}. 90 pp.\cr
-  \url{http://www.dfo-mpo.gc.ca/csas-sccs/Publications/ResDocs-DocRech/2001/2001_138-eng.htm}
+  Schnute, J.T., Haigh, R., Krishka, B.A., and Starr, P. (2001)
+  \href{https://www.dfo-mpo.gc.ca/csas-sccs/Publications/ResDocs-DocRech/2001/2001_138-eng.htm}{Pacific ocean perch assessment for the west coast of Canada in 2001}.
+  \emph{Canadian Science Advisory Secretariat, Research Document} \bold{2001/138}. 90 pp.\cr
 }
 \author{
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
-  \emph{locus opus}: Institute of Ocean Sciences (IOS), Sidney BC\cr
-  Last modified \code{Rd: 2021-06-15}\cr
+  \emph{locus opus}: Regional Headquarters (RHQ), Vancouver BC\cr
+  Last modified \code{Rd: 2023-02-10}
 }
 \seealso{
-  \code{\link{plotProp}}, \code{\link{pop.age}} \cr
-  \pkg{PBSadmb}: \code{\link[PBSadmb]{admb}}
+In package \pkg{PBStools}:\cr
+  \code{\link{plotProp}},
+  \code{\link{pop.age}} \cr
+In package \pkg{PBSadmb}:\cr
+  \code{admb}
 }
 \keyword{hplot}
 \concept{M02_Biology}

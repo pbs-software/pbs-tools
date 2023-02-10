@@ -60,7 +60,7 @@
     \code{gfb_iphc_hook_data.sql}       \tab IPHC longline hook data (for AME's IPHC index calculation).\cr
     \code{gfb_iphc_set_data.sql}        \tab IPHC longline set data (for AME's IPHC index calculation).\cr
     \code{gfb_iphc_skate_data.sql}      \tab IPHC longline skate data (for AME's IPHC index calculation).\cr
-    \code{gfb_jcatORF.sql}              \tab Joint-venture hake fishery catch up to \& including 2006 only,\cr
+    \code{gfb_jcatORF.sql}              \tab Joint-venture hake fishery catch up to and including 2006 only,\cr
                                         \tab (GFFOS captures J-V hake catch thereafter).\cr
     \code{gfb_mean_weight.sql}          \tab Calculate mean weight of a fish species for converting\cr
                                         \tab discarded pieces to kg in GFFOS.\cr
@@ -203,8 +203,8 @@
 \author{
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
-  \emph{locus opus}: Institute of Ocean Sciences (IOS), Sidney BC\cr
-  Last modified \code{Rd: 2019-03-22}
+  \emph{locus opus}: Regional Headquarters (RHQ), Vancouver BC\cr
+  Last modified \code{Rd: 2023-02-09}
 }
 \references{
   Haigh, R., and Richards, L.J. (1997) 

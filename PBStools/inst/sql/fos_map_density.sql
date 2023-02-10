@@ -192,9 +192,13 @@ FROM #FOSMAP FM
 -- qu("fos_map_density.sql",dbName="GFFOS",strSpp="453") -- SST
 -- qu("fos_map_density.sql",dbName="GFFOS",strSpp="228") -- WAP
 -- qu("fos_map_density.sql",dbName="GFFOS",strSpp="439") -- RSR
--- qu("fos_map_density.sql",dbName="GFFOS",strSpp="437") -- CAR (180622)
 -- qu("fos_map_density.sql",dbName="GFFOS",strSpp="439") -- RSR (180925)
--- qu("fos_map_density.sql",dbName="GFFOS",strSpp="440") -- YMR (180925)
 -- qu("fos_map_density.sql",dbName="GFFOS",strSpp="417") -- WWR (180803, 190114, 190530)
 -- qu("fos_map_density.sql",dbName="GFFOS",strSpp="435") -- BOR (190710, 190904, 191022)
+-- qu("fos_map_density.sql",dbName="GFFOS",strSpp="425") -- BSR (200213) -- No catch records!
+-- qu("fos_map_density.sql",dbName="GFFOS",strSpp="394") -- RER (200213)
+-- qu("fos_map_density.sql",dbName="GFFOS",strSpp="440") -- YMR (180925, 201014, 210125)
+-- qu("fos_map_density.sql",dbName="GFFOS",strSpp="602") -- ARF (210830)
+-- qu("fos_map_density.sql",dbName="GFFOS",strSpp="437") -- CAR (180622, 211125)
+-- qu("fos_map_density.sql",dbName="GFFOS",strSpp="453") -- LST (220307)
 

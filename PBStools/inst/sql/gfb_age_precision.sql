@@ -53,7 +53,7 @@ SELECT
 	'REX SOLE',
 	'SOUTHERN ROCK SOLE',
 	'DOVER SOLE',
-	'ENGLISH SOLE') AND SA.AGEING_METHOD_CODE IN (1,3,17) THEN SA.AGEING_METHOD_CODE END AS ameth
+	'ENGLISH SOLE') AND SA.AGEING_METHOD_CODE IN (1,2,3,4,17) THEN SA.AGEING_METHOD_CODE END AS ameth
 FROM
   AGEING_METHOD AM 
   INNER JOIN SPECIMEN_AGE SA ON
@@ -72,3 +72,5 @@ WHERE
 ORDER BY SA.AGEING_METHOD_CODE
 
 -- qu("gfb_age_precision.sql", dbName="GFBioSQL", strSpp="439")
+-- qu("gfb_age_precision.sql", dbName="GFBioSQL", strSpp=c("394","425"))
+-- qu("gfb_age_precision.sql", dbName="GFBioSQL", strSpp="437")

@@ -149,7 +149,7 @@
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~PJS Notes
 
 
-## calcBiom-----------------------------2021-06-09
+## calcBiom-----------------------------2022-05-19
 ##  Calculate swept-area biomass estimate and 
 ##  bootstrap within strata depending on 'meth':
 ##  If meth==0, strata comprise 'xvar' (usually 'year') only.
@@ -166,6 +166,19 @@ calcBiom = function(dat, reps=0, seed=42, meth=1, fix125flag, xvar="year",
 	label = attributes(dat)$label
 	## Use records with identifiable strata
 	dat = dat[!is.na(dat[,stratumvar]),]
+	
+	## Check for missing areas (RH 220519)
+	if (any(is.na(dat[,areavar]))){
+		gcarea = GC$area; names(gcarea) = GC$group
+		gcarea = gcarea[!is.na(gcarea)]
+		noarea = is.na(dat[,areavar])
+		dat[noarea,areavar] = gcarea[as.character(dat$group)][noarea]
+		if (any(is.na(dat[,areavar]))) {  ## just remove them
+			.flush.cat(paste0("Removing ", sum(is.na(dat[,areavar])), " record(s) with no group-area information.\n\n"))
+			dat = dat[!noarea,]
+			#stop (paste0("There are still missing areas (km^2) from '", substitute(dat), "'"))
+		}
+	}
 
 	## Check for surveys with no catch data at all (it does happen!) 
 	##   want to exit gracefully because we may be working on a batch situation
@@ -192,14 +205,9 @@ calcBiom = function(dat, reps=0, seed=42, meth=1, fix125flag, xvar="year",
 	tvec = apply(stab,1,sum)
 	smat[names(tvec),"T"] = tvec
 
-#		if `fix125flag'~=0 {
-#			fix125 `density' `stratumvar' `areavar' 
-#		}
-
 	dat.need = dat[,c(xvar, stratumvar, areavar, "density")]
 	ntows = table(dat.need[,xvar])
 	ptows = crossTab(dat.need, xvar, "density", countVec)
-#browser();return()
 
 	## from IPHC routines
 	## When sim!="parametric", 'statistic' must take at least two arguments.
@@ -217,8 +225,7 @@ calcBiom = function(dat, reps=0, seed=42, meth=1, fix125flag, xvar="year",
 			vari = (sdev^2 * area^2) / nobs
 			vari[is.na(vari) | !is.finite(vari)] = 0
 			biom = dens * area
-#if (all(s$density==0)) { browser();return() }
-
+			## summary stats
 			bio = sum(biom)/1000.
 			var = sum(vari)
 			nn  = sum(nobs)
@@ -233,11 +240,9 @@ calcBiom = function(dat, reps=0, seed=42, meth=1, fix125flag, xvar="year",
 			SE  = sqrt(BVN["V"])/1000.
 			CV  = SE/BVN["B"]
 			CV[is.na(CV) | !is.finite(CV)] = 0
-#browser();return()
 			return(c(B=as.vector(BVN["B"]), V=as.vector(BVN["V"]), SE=as.vector(SE), CV=as.vector(CV), N=as.vector(BVN["N"])))
 		}
 	}
-
 	## Need to bootstrap annual indices separately when using boot::boot because strata assumes one population (as far as I can tell)
 	booty = bootci = list()
 	.flush.cat(paste0("Bootstrapping (", reps, " replicates):\n"))
@@ -256,14 +261,12 @@ calcBiom = function(dat, reps=0, seed=42, meth=1, fix125flag, xvar="year",
 			booty[[ii]] = t(as.matrix(sweptArea(idat)))
 		} else {
 			## https://stats.stackexchange.com/questions/242404/how-does-the-boot-package-in-r-handle-collecting-bootstrap-samples-if-strata-are
-			# #with strata specified
+			## with strata specified
 			booty[[ii]]  <- boot::boot(idat, sweptArea, R=reps, strata=idat$index)
-#if(i==2005) {browser();return()}
 			bootci[[ii]] <- boot::boot.ci(booty[[ii]], type = "bca")
 		}
 	}
 	if (reps==0) {
-#browser();return()
 		analytic = do.call("rbind", lapply(booty, data.frame, stringsAsFactors=FALSE))
 		return(list(analytic=analytic, extra=list(ntows=ntows, ptows=ptows)))
 	} else {
@@ -273,11 +276,12 @@ calcBiom = function(dat, reps=0, seed=42, meth=1, fix125flag, xvar="year",
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~calcBiom
 
 
-## doSynoptic --------------------------2021-06-08
-##  Get the synoptic file for specified survey and
+## doSynoptic --------------------------2023-01-26
+##  Get the synoptic data for specified survey and
 ##  go through PJS machinations.
+##  Can be applied to non-synoptic surveys.
 ## -----------------------------------------PJS|RH
-doSynoptic = function(file, survey, logappendflag=TRUE)
+doSynoptic = function(dat, survey, logappendflag=TRUE)
 {
 	logfile = "surveyprepmessages.log"
 	if (logappendflag) append=TRUE else FALSE
@@ -287,14 +291,7 @@ doSynoptic = function(file, survey, logappendflag=TRUE)
 	uppdistance  = 2.4
 	lowdistance  = 0.9
 
-	if (survey!=9) {
-			dat = getLabels(file)
-			ttget(stratum)
-			attr(stratum,"labelends") = getLabelends(labelname=names(stratum))
-	} else {
-		ttget(stratum)
-		dat = file
-	}
+	ttget(stratum)
 	vessels = getVessel(dat)
 
 	## Subsetting in R loses attributes (very insane) so need to preserve and add back (sheesh)
@@ -307,75 +304,100 @@ doSynoptic = function(file, survey, logappendflag=TRUE)
 	minyear = min(year)
 	maxyear = max(year)
 
-	ustrat   = .su(dat$grouping_code)
-	nstrat  = length(ustrat)
-	if (nstrat==5 && all(.su(dat$trip)==62066)){ ## 2006 WCHG survey
-		ttget(stratum2006)
-		stratum = stratum2006
-	}
-	expr    = expression(dat[ustrat-min(ustrat)+1])  ## need to express 'stratum' as 'dat'
-#browser();return()
-	stratum = keepAtts(dat=stratum, expr, extras=list(ustrat=ustrat))
-	attr(stratum,"grouping_code") = ustrat
-	ttput(stratum)
+	ugroup  = .su(dat$grouping_code)
+	ustrat  = attributes(stratum)$lstrat[as.character(ugroup)]
+	Nstrat   = length(ustrat)
 	colnames(dat)[grep("grouping_code", colnames(dat))] = "group"
 
 	##Define 'group' based on 'stratum', which was originally 'grouping_code'
-	sgroup = as.vector(stratum)
-	names(sgroup) = attributes(stratum)$grouping_code
-	dat$stratum   = rep(NA, nrow(dat))
-	dat$stratum[!is.na(dat$group)] = sgroup[as.character(dat$group[!is.na(dat$group)])]
+	dat$best_depth = coalesce(dat$sdepth, dat$edepth, dat$modal_depth, dat$seabird_depth)
+	sgroup = stratum[ustrat]; names(sgroup) = names(ustrat)
+	dat$stratum_group = rep(NA, nrow(dat))
+	dat$stratum_group[!is.na(dat$group)] = sgroup[as.character(dat$group[!is.na(dat$group)])]
 
-	if (survey %in% c(12, 13, 16)) {
+	dat$stratum_depth = rep(NA, nrow(dat))
+	zdep = is.element(attributes(stratum)$gstrat,ugroup)
+	for (i in 1:sum(zdep)) {
+		z = dat$best_depth > as.numeric(attributes(stratum)$labelends$low[zdep][i]) & dat$best_depth <= as.numeric(attributes(stratum)$labelends$upp[zdep][i])
+		dat$stratum_depth[z] = stratum[zdep][i]
+	}
+	dat$stratum = coalesce(dat$stratum_group, dat$stratum_depth)
+
+	if (all(is.na(dat$door))) {
 		.flush.cat(paste0(ttcall(surveyname), " has no doorspread values:\n\tusing ", ttcall(defaultdoorspread), " m as default value for all tows."), "\n")
 		dat$door = ttcall(defaultdoorspread)
 	}
 
 	## Populate missing values of 'distance', 'door', and 'speed' with means
 	## May eventually become a primary function if it's useful on a broader scale.
+	## Added in loop to factor in vessels over the years (RH 220524)
 	fixmiss = function(dat, flds) {
-		for (i in flds) {
-			## If missing values, use mean by year and group #stratum (formerly 'grouping_code')
-			ibad = dat[,i]<=0 | is.na(dat[,i])
-			if (all(ibad)) next
-			if (any(ibad)) {
-				itab = crossTab(dat, c("year","group"), i, function(x){if (all(is.na(x))) NA else mean(x,na.rm=TRUE)})
-				dat[,i][ibad] = diag(itab[as.character(dat$year[ibad]), as.character(dat$group[ibad]), drop=FALSE])
-			} else next
-			## If still missing values, use mean by year
-			jbad = dat[,i]<=0 | is.na(dat[,i])
-			if (all(jbad)) next
-			if (any(jbad)) {
-				jtab = crossTab(dat, c("year"), i, function(x){if (all(is.na(x))) NA else mean(x,na.rm=TRUE)})
-				dat[,i][jbad] = jtab[as.character(dat$year[jbad])]
-			} else next
-			## If still missing values, use overall mean
-			kbad = dat[,i]<=0 | is.na(dat[,i])
-			if (all(kbad)) next
-			if (any(kbad)) {
-				ktab =  mean(dat[,i],na.rm=TRUE)
-				dat[,i][kbad] = ktab
+		uvess = .su(dat$vessel)
+		for (v in uvess) {
+			zv = is.element(dat$vessel,v)
+			vdat = dat[zv,]
+			for (i in flds) {
+				## If missing values, use mean by year and group #stratum (formerly 'grouping_code')
+				ibad = vdat[,i]<=0 | is.na(vdat[,i])
+				if (all(ibad)) next
+				if (any(ibad)) {
+					itab = crossTab(vdat, c("year","group"), i, function(x){if (all(is.na(x))) NA else mean(x,na.rm=TRUE)})
+					if (all(is.na(itab))) next
+					barf = try(diag(itab[as.character(vdat$year[ibad]), as.character(vdat$group[ibad]), drop=FALSE]), silent=T)  ## (debug RH 230126)
+					if(inherits( barf, "try-error" )) {
+						imean = try(mean(itab, na.rm=TRUE))
+						if (inherits(imean, "try-error")){
+							browser(); return()
+						}
+					} else {
+						imean = diag(itab[as.character(vdat$year[ibad]), as.character(vdat$group[ibad]), drop=FALSE])
+					}
+					vdat[,i][ibad] = imean
+				} else next
+				## If still missing values, use mean by year
+				jbad = vdat[,i]<=0 | is.na(vdat[,i])
+				if (all(jbad)) next
+				if (any(jbad)) {
+					jtab = crossTab(vdat, c("year"), i, function(x){if (all(is.na(x))) NA else mean(x,na.rm=TRUE)})
+					vdat[,i][jbad] = jtab[as.character(vdat$year[jbad])]
+				} else next
+				## If still missing values, use overall mean
+				kbad = vdat[,i]<=0 | is.na(vdat[,i])
+				if (all(kbad)) next
+				if (any(kbad)) {
+					ktab =  mean(vdat[,i],na.rm=TRUE)
+					vdat[,i][kbad] = ktab
+				}
+				dat[zv,i] = vdat[,i]  ## upload machinations for field i
 			}
 		}
 		return(dat)
 	}
-	dat = fixmiss(dat, c("door","distance","speed"))
+
+	## Does not make sense to avergae distance and effort for non-standardised (synoptic) surveys
+	if (survey %in% c("QCSsyn","WCVIsyn","WCHGsyn","HSsyn")) {  ## i.e. synoptic surveys
+		dat = fixmiss(dat, c("door","distance","speed","effort"))
+	} else {
+		dat = fixmiss(dat, c("door","speed"))
+	}
 
 	## Check for inconsistencies in depth information
 	## (only do this if the strata limits are consistent with what is in the file)
-	if (survey %in% c(2,3,9,10)) {  ## i.e. synoptic surveys
-		lodep = as.numeric(attributes(stratum)$labelends$low)
-		updep = as.numeric(attributes(stratum)$labelends$upp)
-#browser();return()
+	#if (survey %in% c(2,3,9,10)) {  ## i.e. synoptic surveys
+	#if (survey %in% c("QCSsyn","WCVIsyn","WCHGsyn","HSsyn")) {  ## i.e. synoptic surveys
+	## Apply to all surveys:
+		lodep = as.numeric(attributes(stratum)$labelends$low[zdep])
+		updep = as.numeric(attributes(stratum)$labelends$upp[zdep])
 		if (length(lodep)!=0 && length(updep)!=0) {
-			names(lodep) = names(updep) = ustrat
+			names(lodep) = names(updep) = ugroup #stratum[zdep] #ustrat[!is.na(stratum)]
 			dat$lodep    = lodep[as.character(dat$group)]
 			dat$updep    = updep[as.character(dat$group)]
-			bad.depth    = (dat$seabird_depth < dat$lodep | dat$seabird_depth > dat$updep) & !is.na(dat$seabird_depth)
+			seabird.dat  = dat[!is.na(dat$seabird_depth),]
+			bad.depth    = seabird.dat$seabird_depth < seabird.dat$lodep | seabird.dat$seabird_depth > seabird.dat$updep
 			if (any(bad.depth))
 				write.csv(dat[bad.depth,c("fe_id", "year", "set", "stratum", "lodep", "updep", "sdepth", "edepth", "seabird_depth")], file=paste0(gsub(" ",".",ttcall(surveyname)),".depth.problems.csv"), row.names=FALSE)
 		}
-	}
+	#}
 
 	## Calculate distance travelled
 	dat$distance_calc = dat$speed * dat$effort2
@@ -392,14 +414,35 @@ doSynoptic = function(file, survey, logappendflag=TRUE)
 	miss.dist = dat$distance<=0 | is.na(dat$distance)
 	if (any(miss.dist)) {
 		.flush.cat("Replacing missing distance travelled cells with calculated distance travelled","\n")
-		dat$distance[miss.dist] = dat$distance_calc[miss.dist]
-		## should we replace bad distances?
+		pos.eff = dat$effort>0 & !is.na(dat$effort)
+		pos.eff = rep(FALSE,length(pos.eff))  ## disable lm routine for now
+		if (any(pos.eff)) {
+			pdat    = dat[pos.eff,]
+			lm.dist = lm(pdat$distance_calc ~ pdat$effort)  ## a bit tautological if lots of distances calculated as speed * effort above
+			lm.dist = lm(pdat$distance ~ pdat$effort) 
+			lm.coef = coefficients(lm.dist)
+			zpred   = miss.dist & pos.eff
+			dat$distance[zpred] = lm.coef[1] + lm.coef[2] * dat$effort[zpred]
+		} else {
+			dat$distance[miss.dist] = dat$distance_calc[miss.dist]
+		}
 	}
-
+	## PJS averages speed over all fleets to calculate distance
+	miss.speed = dat$speed<=0 | is.na(dat$speed)
+	miss.dist  = dat$distance<=0 | is.na(dat$distance)
+	if (any(miss.speed) && !all(miss.speed) && any(miss.dist)) {
+		.flush.cat("Replacing missing speed with fleetwide average and populate missing distance (speed*effort)","\n")
+		mean.speed  = mean(dat$speed[!miss.speed], na.rm=TRUE)
+		dat$speed[miss.speed] = mean.speed
+		best.effort = coalesce(dat$effort, dat$effort2)
+		miss.effort = best.effort<=0 | is.na(best.effort)
+		dist.effort   = miss.dist & !miss.effort
+		dat$distance[dist.effort] = dat$speed[dist.effort] * dat$effort[dist.effort]
+	}
 	## Call this routine to ensure that there is only one observation per tow
-	if (survey %in% c(2,3,9,10))  ## i.e. synoptic surveys
+	#if (survey %in% c(2,3,9,10))  ## i.e. synoptic surveys
+	if (survey %in% c("QCSsyn","WCVIsyn","WCHGsyn","HSsyn"))  ## i.e. synoptic surveys
 		dat = uniqtows(dat)
-#browser(); return()
 
 	dat$density = dat$weight / (dat$distance * dat$door/1000.)
 	dat$density[is.na(dat$density)] = 0
@@ -411,19 +454,50 @@ doSynoptic = function(file, survey, logappendflag=TRUE)
 	colnames(dat)[grep("dfo_stat",colnames(dat))]       = "dfo"
 	colnames(dat)[grep("seabird_depth",colnames(dat))]  = "seabird"
 
-	## getweight = getweight(dat) ## deprecated
-	#	getnotes 0 ## ignore for now
+	ttput(dat)
 	return(dat)
 }
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~doSynoptic
 
 
-## getLabels----------------------------2019-07-18
+## getLabels----------------------------2022-05-19
 ##  Read in data file and get labels.
 ## -----------------------------------------PJS|RH
 getLabels = function(file)
 {
 	dat = read.csv(file) ## insheet using `file'
+	## Process strata for GIG historical (because data have no grouping codes)
+	if (grepl("SSID=21",file)) {
+		dat = dat[dat$year<=1995 & !is.na(dat$year),]
+		gcode = c(185, 186, 187) ## in GFBioSQL's GROUPING table
+		lodep = c(120,183,218)
+		updep = c(183,218,300)
+		areas = c(2122,1199,1746)
+		ndeps = length(lodep)
+		GCloc = GC
+		dat$GROUPING_CODE = dat$area = rep(NA, nrow(dat))  ## restratify all surveys
+		for (i in 1:ndeps) {
+			z = is.na(dat$GROUPING_CODE) & dat$begin_depth > lodep[i] & dat$begin_depth <= updep[i]
+			dat$GROUPING_CODE[z] = gcode[i]
+			dat$area[z] = areas[i]
+			#GCloc = rbind(GCloc, c(gcode[i], paste0("H",i), round(lodep[i]), round(updep[i]), areas[i]))
+		}
+		#assign("GC", GCloc, envir=.GlobalEnv)
+		dat = dat[!is.na(dat$GROUPING_CODE),]
+	}
+	
+	## Get the strata and grouping codes directly without having to be specific in various other functions (RH 220518)
+	ugroup = .su(dat$GROUPING_CODE)
+	udeps  = GC[is.element(GC$group,ugroup),c("stratum","mindep","maxdep"),drop=F]; rownames(udeps) = ugroup
+	lstrat = apply(udeps,1,function(x){paste0(x[1],":",as.numeric(x[2]),"-",as.numeric(x[3]),"m")})
+	ustrat = GC[is.element(GC$group,ugroup),"stratum"]; names(ustrat) = lstrat
+	nstrat = length(ustrat)
+	gstrat = as.numeric(names(lstrat)); names(gstrat) = lstrat
+	stratum = ustrat
+	attr(stratum,"gstrat") = gstrat
+	attr(stratum,"lstrat") = lstrat
+	attr(stratum,"labelends") = getLabelends(labelname=names(stratum))
+	ttput(stratum)
 
 	flds = colnames(dat)
 	flds[grep("distance_travelled", flds)] = "distance" ## ren distance_travelled distance
@@ -440,9 +514,9 @@ getLabels = function(file)
 	if (mean(dat$longitude,na.rm=TRUE) > 0)
 		dat$longitude = -dat$longitude
 
-#browser();return()
 	## Initialize the label list
-	label = list(survey=list(number=ttcall(survey), name=ttcall(surveyname), file=file))
+	#label = list(survey=list(number=ttcall(survey), name=ttcall(surveyname), file=file))
+	label = list(survey=list(code=ttcall(survey), name=ttcall(surveyname), file=file))
 
 	label[["fields"]] = list()
 	label[["fields"]][["effort"]]   = "[Begin_retrieval]-[End_deployment] (hrs)"
@@ -661,7 +735,7 @@ keepAtts =function(dat, expr, batts=c("names","row.names","class"), extras=list(
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~keepAtts
 
 
-## plotIndex----------------------------2019-07-22
+## plotIndex----------------------------2023-02-09
 ##  Plot survey index series after bootstrapping.
 ##  If type=="PJS", plot the series as mean with
 ##   bias-corrected percentile limits.
@@ -669,16 +743,19 @@ keepAtts =function(dat, expr, batts=c("names","row.names","class"), extras=list(
 ##   0.05, 0.25, 0.5, 0.75, and 0.95 quantiles.
 ## Now using results from 'boot::boot' & 'boot::boot.ci' (RH 190821)
 ## -----------------------------------------PJS|RH
-plotIndex = function(bootbomb, type="PJS", surv=ttcall(surveyname),
+plotIndex = function(bootbomb, analytic, type="PJS", surv=ttcall(surveyname),
    png=FALSE, pngres=400, PIN=c(8,7), lang=c("e","f"))
 {
 	createFdir(lang)
 	unpackList(bootbomb)
-	reps  = booty[[1]]$R
-	years = as.numeric(names(booty)); nyrs = length(years)
-	Bboot = array(NA, dim=c(reps, nyrs), dimnames=list(rep=1:reps, year=years))
-	index = rep(NA,nyrs); names(index)=years
-	yCL   = array(NA, dim=c(2, nyrs), dimnames=list(c("lower","upper"), year=years))
+	reps     = booty[[1]]$R
+	years    = as.numeric(names(booty)); 
+	nyrs     = length(years)
+	yrs.surv = as.numeric(names(extra$ntows))
+	nyrs.surv= length(yrs.surv)
+	Bboot    = array(NA, dim=c(reps, nyrs), dimnames=list(rep=1:reps, year=years))
+	index    = rep(NA,nyrs); names(index)=years
+	yCL      = array(NA, dim=c(2, nyrs), dimnames=list(c("lower","upper"), year=years))
 	for (i in names(booty)) {
 		Bboot[,i] = booty[[i]]$t[,1]
 		index[i]  = booty[[i]]$t0
@@ -687,19 +764,27 @@ plotIndex = function(bootbomb, type="PJS", surv=ttcall(surveyname),
 	Qboot = as.list(rep(NA,length(min(years):max(years)))); names(Qboot)=min(years):max(years)
 	qboot = lapply(as.data.frame(Bboot),function(x){x})
 	Qboot[names(qboot)] = qboot
-
-	flab = paste0(c(surv, 
-		paste0("Mean +ve tows: ", round(mean(extra$ptows)), "/", round(mean(extra$ntows))) ),
-		collapse="\n")
+	
+	## Make a table for output
+	bbtab = data.frame(year=years, B_anal=index, B_boot=sapply(qboot,mean), B_lower=yCL["lower",], B_upper=yCL["upper",], CV_boot=sapply(qboot,function(x){sd(x)/mean(x)}))
+	if (!missing(analytic))
+		bbtab = data.frame(bbtab, CV_anal=analytic$analytic[,"CV"])
+	write.csv(bbtab, file=paste0("bio.est.tab.", ttcall(survey),".csv"), row.names=FALSE)
 
 	ylim  = c(0,max(yCL))
-	ayrs  = years[1]:rev(years)[1]; nayrs = length(ayrs)
+	ylim[1] = ylim[1]-(diff(ylim)*ifelse(png,0.02,0.01))
+#browser();return()
+	ayrs  = yrs.surv[1]:rev(yrs.surv)[1]; nayrs = length(ayrs)
 	fout = fout.e = paste0(gsub(" ","_",surv),"-",type)
 	for (l in lang) {  ## could switch to other languages if available in 'linguaFranca'.
 		changeLangOpts(L=l)
 		fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
 		if (png) png(filename=paste0(fout,".png"), units="in", res=pngres, width=PIN[1], height=PIN[2])
 		expandGraph(mar=c(3,3,0.5,0.5), oma=c(0,0,0,0))
+
+		flab = paste0(c(surv, paste0(
+			switch(l, 'e'="Mean +ve events: ", 'f'=eval(parse(text=deparse("moyen \u{00E9}v\u{00E9}nements positifs : "))) ),
+			round(mean(extra$ptows)), "/", round(mean(extra$ntows))) ), collapse="\n")
 
 		if (type=="PJS") {
 			## estimate bias in std. norm deviates
@@ -714,25 +799,32 @@ plotIndex = function(bootbomb, type="PJS", surv=ttcall(surveyname),
 			#	return(iCL)
 			#}, B=Bboot)
 			#colnames(yCL) = colnames(Bboot)
-	#browser();return()
 			#yCL  = apply(Bboot[-1,],2,quantile,c(0.025,0.975))  ## 95% confidence interval
 			xseg = as.vector(sapply(split(years,years),function(x){c(x,x,NA)}))
 			yseg = as.vector(rbind(yCL,rep(NA,length(years))))
 			staple.width = 0.2
 			xstp = as.vector(sapply(split(years,years),function(x,s){c(x-s,x+s,NA,x-s,x+s,NA)}, s=staple.width/2))
 			ystp = as.vector(rbind(yCL[c(1,1),], rep(NA,length(years)), yCL[c(2,2),], rep(NA,length(years)) ))
-			plot(years, index, type="n", xlim=extendrange(years), ylim=ylim, xlab="Year", ylab="Relative biomass (t)", cex.axis=1.2, cex.lab=1.5)
-			axis(1, at=seq(years[1], rev(years)[1], ifelse(nayrs>20, 5, 1)), tcl=-0.2, labels=FALSE)
+			plot(years, index, type="n", xlim=extendrange(ayrs), ylim=ylim, xlab=linguaFranca("Year",l), ylab=linguaFranca("Relative biomass (t)",l), cex.axis=1.2, cex.lab=1.5)
+			axis(1, at=seq(1900, 2100, ifelse(nayrs>30, 5, 1)), tcl=-0.2, labels=FALSE)
 			axis(2, at=pretty(ylim, n=15), tcl=-0.2, labels=FALSE)
-	#browser();return()
 			lines(xseg,yseg,lwd=3,col="black")
 			lines(xstp,ystp,lwd=3,col="black")
 			points(years, index, pch=15, col="red", cex=1.2)
-			text(years, rep(par()$usr[3],nyrs), extra$ptows, cex=0.8, col="blue", pos=3)
+			if (length(setdiff(yrs.surv,years))>0){
+				yrs.zero = setdiff(yrs.surv,years)
+				points(yrs.zero, rep(0,length(yrs.zero)), pch="\327", col="red", cex=1.5)
+			}
+			text(yrs.surv, rep(par()$usr[3],nyrs.surv), paste0(extra$ptows,"/",extra$ntows), cex=0.8, col="blue", pos=3)
+#browser();return()
+			#text(years, rep(par()$usr[3],nyrs), extra$ptows, cex=0.8, col="blue", pos=3)
 			#text(years, rep(par()$usr[3],nyrs), extra$ptows, cex=0.8, col="blue", adj=c(0.5,-0.2))
-			addLabel(0.95,0.95, txt=linguaFranca(flab,l), adj=c(1,1), cex=1.2, col="grey30")
+			if (sum(index[1:2]) > sum(rev(index)[1:2]))
+				addLabel(0.95,0.95, txt=linguaFranca(flab,l), adj=c(1,1), cex=1.2, col="grey30")
+			else
+				addLabel(0.05,0.95, txt=linguaFranca(flab,l), adj=c(0,1), cex=1.2, col="grey30")
 		} else {
-			quantBox(Qboot, ylim=ylim, xlab="Year", ylab="Relative biomass (t)", boxwex=0.6, boxfill="aliceblue", whisklty=1, outpch=43, outcex=0.8, outcol="grey60", cex.lab=1.5)
+			quantBox(Qboot, ylim=ylim, xlab=linguaFranca("Year",l), ylab=linguaFranca("Relative biomass (t)",l), boxwex=0.6, boxfill="aliceblue", whisklty=1, outpch=43, outcex=0.8, outcol="grey60", cex.lab=1.5)
 			xpos  = 1:length(Qboot); names(xpos)=names(Qboot)
 			Bmean = sapply(Qboot, mean, na.rm=TRUE)
 			points(xpos, Bmean, pch=22, col=lucent("blue",1), bg=lucent("cyan",1), cex=1.5)
@@ -740,47 +832,55 @@ plotIndex = function(bootbomb, type="PJS", surv=ttcall(surveyname),
 		}
 		if (png) dev.off()
 	}; eop()
-	return(Qboot)
+	invisible(return(Qboot))
 }
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotIndex
 
 
-## prepGFsurv---------------------------2021-06-08
+## prepGFsurv---------------------------2022-05-19
 ##  Prepare GF surveys using PJS codes.
 ## -----------------------------------------PJS|RH
 prepGFsurv = function(file, survey, strSpp, datemask, doorspread=61.6,
    shrimpyear=1975, savefile=TRUE, usevar=FALSE, attended=FALSE,
    spath="C:/Users/haighr/Files/Projects/R/Develop/PBStools/Authors/SQLcode")
 {
+	if (!file.exists("GC.rda")) {
+		getData("SELECT G.GROUPING_CODE AS 'group', ISNULL(G.GROUPING_SPATIAL_ID,'') + ISNULL(G.GROUPING_DEPTH_ID,'') AS 'stratum', G.MIN_DEPTH_M AS 'mindep', G.MAX_DEPTH_M AS 'maxdep', G.AREA_KM2 AS 'area' FROM GROUPING G WHERE G.MIN_DEPTH_M IS NOT NULL AND G.MAX_DEPTH_M IS NOT NULL", dbName="GFBioSQL", type="SQLX")
+		GC = PBSdat
+		save("GC", file="GC.rda")
+	} else {
+		load("GC.rda", envir=.GlobalEnv)
+	}
 	ici = lenv() ## RH 200716
 	#syntax, File(string) SUrvey(int) [DAtemask(string) DOorspread(real 61.6) SHrimpyear(int 1975)] /*
-	#	*/ [noSAvefile noUSevar noATtended]
 
 	if (missing(file))
 		stop("Supply a CSV file name (e.g. 'SSID=16&species=435.csv') saved form a call to 'gfb_survey_data.sql'")
 	if (missing(survey))
-		stop(paste0("Supply a PJS survey number from:\n",
-	"   1: old Hecate St Survey\n",
-	"      (note: this program does not prepare the recruited biomass estimate as done for ENL in 2006)\n",
-	"   2: QC Sound Synoptic\n",
-	"   3: WCVI Synoptic\n",
-	"   4: WCVI Shrimp\n",
-	"   5: NMFS Triennial\n",
-	"   6: Pcod Monitoring\n",
-	"   7: QCSound Shrimp\n",
-	"   8: historical GB Reed survey, now called GIG Historical\n", 
-	"      (includes 1984 Eastward Ho and 1990s Ocean Selector and Frosti -- use this for biomass ests)\n",
-	"   9: WCQCI Synoptic (added Nov 2008), now call WCHG (west coast Haida Gwaii)\n",
-	"  10: Hecate St synoptic survey (added July 2010)\n",
-	"  11: retrospective GIG (includes GB Reed and misc GIG surveys)\n",
-	"      (added Nov 2009 -- not for biomass)\n",
-	"  12: retrospective GIG\n",
-	"      (1995 Ocean Selector and Frosti only -- QC Snd synoptic stratification) (added Dec 2009)"
-	))
-	maxsurvey = 16
-	if (survey < 1 || survey > maxsurvey) {
-		stop("You have selected an invalid survey code\nProgram ended")
-	}
+		stop("Supply a survey code.\n")
+	#if (missing(survey))
+	#	stop(paste0("Supply a PJS survey number from:\n",
+	#"   1: old Hecate St Survey\n",
+	#"      (note: this program does not prepare the recruited biomass estimate as done for ENL in 2006)\n",
+	#"   2: QC Sound Synoptic\n",
+	#"   3: WCVI Synoptic\n",
+	#"   4: WCVI Shrimp\n",
+	#"   5: NMFS Triennial\n",
+	#"   6: Pcod Monitoring\n",
+	#"   7: QCSound Shrimp\n",
+	#"   8: historical GB Reed survey, now called GIG Historical\n", 
+	#"      (includes 1984 Eastward Ho and 1990s Ocean Selector and Frosti -- use this for biomass ests)\n",
+	#"   9: WCQCI Synoptic (added Nov 2008), now call WCHG (west coast Haida Gwaii)\n",
+	#"  10: Hecate St synoptic survey (added July 2010)\n",
+	#"  11: retrospective GIG (includes GB Reed and misc GIG surveys)\n",
+	#"      (added Nov 2009 -- not for biomass)\n",
+	#"  12: retrospective GIG\n",
+	#"      (1995 Ocean Selector and Frosti only -- QC Snd synoptic stratification) (added Dec 2009)"
+	#))
+	#maxsurvey = 16
+	#if (survey < 1 || survey > maxsurvey) {
+	#	stop("You have selected an invalid survey code\nProgram ended")
+	#}
 	if (!missing(strSpp) && !grepl(strSpp,file))
 		.flush.cat(paste0("WARNING -- string supplied by strSpp='", strSpp, "' does not appear in file name: '", file, "'."), "\n")
 	if ( grepl("species=",file) ) {  ## overide strSpp if this condition is true
@@ -789,13 +889,14 @@ prepGFsurv = function(file, survey, strSpp, datemask, doorspread=61.6,
 	}
 	if (missing(strSpp))
 		stop("\n\n!!!!! String species neither supplied by user nor identified in file name.\n\tSupply species HART code to 'strSpp'\n\n")
-#browser();return()
 
-	data("spn", package="PBSdata", envir=ici) ## RH 200716
+	data(spn, package="PBSdata", envir=ici) ## RH 200716
 	speciesname = spn[strSpp]
 	ttput(speciesname)
 
-	gfbsurvey = c(2, 1, 4, 7, 79, 5, 6, 32, 16, 3, 21, 33); names(gfbsurvey) = 1:12
+	#gfbsurvey = c(2, 1, 4, 7, 79, 5, 6, 32, 16, 3, 21, 33); names(gfbsurvey) = 1:12
+	gfbsurvey = list('QCSsyn'=1, 'HSass'=2, 'HSsyn'=3, 'WCVIsyn'=c(4,9), 'HSpac'=5, 'QCSshr'=6, 'WCVIshr'=7, 'WCHGsyn'=c(8,16),
+		'WCVIlst'=11, 'IPHCll'=14, 'GIGhis'=21, 'HBLLn'=22, 'HBLLs'=36, 'SBFtrap'=42, 'SOGsyn'=45, 'NMFStri'=79)
 	ttput(gfbsurvey)
 
 	synflds = c("year", "month", "date", "vessel", "set", "fe_id", "group", "stratum", "major", "dfo", "area", "speed", "effort", "effort2", "distance", "distance_calc", "latitude", "longitude", "sdepth", "edepth", "seabird", "best_depth", "door", "reason", "use", "weight", "number", "density")
@@ -822,10 +923,9 @@ prepGFsurv = function(file, survey, strSpp, datemask, doorspread=61.6,
 
 	#filename = as.character(substitute(file))
 	if (!file.exists(file)) {
-		getData("gfb_survey_data.sql",dbName="GFBioSQL",strSpp=strSpp, survserid=gfbsurvey[survey], path=spath)
+		getData("gfb_survey_data.sql",dbName="GFBioSQL",strSpp=strSpp, survserid=gfbsurvey[[survey]], path=spath)
 		write.csv(PBSdat, file=file, row.names=FALSE)
 	}
-#browser();return()
 
 	if (missing(datemask)) datemask = "dmy"
 	#else global datemask "`datemask'"
@@ -837,22 +937,20 @@ prepGFsurv = function(file, survey, strSpp, datemask, doorspread=61.6,
 	#*di in ye "attended: `attended' global attendflag: $attendflag"  ## display?
 	.flush.cat(paste0("attended: ", attended, "  attendflag: ", attendflag),"\n")
 	
-	fnsurv = switch(survey,
-		"HSass",  "QCSsyn", "WCVIsyn", "WCVIshr", "NMFStri",
-		"PACmon", "QCSshr", "GIGhis",  "WCHGsyn", "HSsyn",
-		"GIGhis", "QCSsyn", "1996caledonian", "gbreedcvi", "WQCIhis",
-		"oceanselector")
+	fnsurv = survey #switch(survey,
+		#"HSass",  "QCSsyn", "WCVIsyn", "WCVIshr", "NMFStri",
+		#"PACmon", "QCSshr", "GIGhis",  "WCHGsyn", "HSsyn",
+		#"GIGhis", "QCSsyn", "1996caledonian", "gbreedcvi", "WQCIhis",
+		#"oceanselector")
 
 	#mess = paste0("source(\"prep", fnsurv, ".r\"); dat = prep", fnsurv, "(file=\"", file, "\", survey=", survey, ")")
-	mess = paste0("dat = prep", fnsurv, "(file=\"", file, "\", survey=", survey, ")")
+	mess = paste0("dat = prep", fnsurv, "(file=\"", file, "\", survey=\"", survey, "\")")
 	eval(parse(text=mess))
-#browser();return()
 
 	#qui compress ## qui = quietly
 	if (savefile) {
 		.flush.cat("Saving survey data file\n")
 		mess = paste0(fnsurv, "=dat; save(\"", fnsurv, "\", file=\"", fnsurv, ".rda\")")
-#browser();return()
 		eval(parse(text=mess))
 	}
 	else .flush.cat("Saving survey data file suppressed\n")
@@ -861,91 +959,79 @@ prepGFsurv = function(file, survey, strSpp, datemask, doorspread=61.6,
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~prepGFsurv
 
 
-## prepGIGhis---------------------------2019-08-02
+## prepGIGhis---------------------------2022-05-19
 ##  Prepare GIG Historical survey data.
 ##  survey==8  -- using Norm Olsen's grouping codes
 ##  survey==11 -- using Paul Starr's strata
 ## -----------------------------------------PJS|RH
-prepGIGhis = function(file, survey=8)
+prepGIGhis = function(file, survey="GIGhis")
 {
 	surveyname = "GIG Historical"
 	ttput(surveyname)
 	ttput(survey)
+	ttget(gfbsurvey)
 
-	stratum = 1:3
-	names(stratum) = c("120-183m", "184-218m", "219-300m")
-	attr(stratum,"labelends") = getLabelends(labelname=names(stratum))
-	ttput(stratum)
-
-	depstrat = 1:5
-	names(depstrat) =c("20-80 fm", "80-100 fm", "100-120 fm", "120-140 fm", "140-300 fm")
-	attr(depstrat,"labelends") = getLabelends(labelname=names(depstrat))
-	ttput(depstrat)
-
-	depint = c(146, 183, 219, 256, 292, 329, 366, 402, 439, 549)
-	names(depint) = c("66-146 m", "147-183 m", "184-219 m", "220-256 m", "257-292 m", "293-329 m", "330-366 m", "367-402 m", "403-439 m", "440-549 m")
-	attr(depint,"labelends") = getLabelends(labelname=names(depint))
-	ttput(depint)
-
-	dat   = doSynoptic(file, survey) ## even though it's not synoptic, function has some standardising routines
+	dat    = getLabels(file)
 	ttget(stratum)
-	label = attributes(dat)$label    ## add later as there is a lot of fiddly manipulation that follows
-	note = list()
+	label  = attributes(dat)$label ## keep temporarily just to be safe
 
-#		drop species trip wing effort2 open
+	dat   = doSynoptic(dat, survey) ## even though it's not synoptic, function has some standardising routines
 
-	if (survey==8) { ## use Norm Olsen grouping codes when $survey==8 
-		dat$stratum[is.element(dat$reason,9)] = NA  ## drop 19 tows in 1994 specified as target strength acoustic tows
-	}
-	else if (survey==11) {  ## define PJS strata for $survey==11: GIG lies within this latitude range
-		dat$stratum[dat$latitude>=50.9 & dat$latitude<=51.6 & !is.na(dat$latitude)] = 1
-		dat$stratum[is.element(dat$year, c(1965,1966,1979))] = NA
-		dat$stratum[is.element(dat$reason,9)] = NA                ## drop 19 tows in 1994 specified as target strength acoustic tows
-		expr = expression(dat[dat$year>2002 & !is.na(dat$year),]) ## drop recent QC Snd synoptic survey Viking Storm tows
+	#if (survey==8) { ## use Norm Olsen grouping codes when $survey==8 
+	if (all(gfbsurvey[[survey]]==8)) { ## use Norm Olsen grouping codes when $survey==8 
+		expr = expression(dat[!is.element(dat$reason,9),]) ## drop 19 tows in 1994 specified as target strength acoustic tows
 		dat  = keepAtts(dat, expr)
-		dat$stratum2 = rep(0,nrow(dat))
-		dat$stratum2[dat$latitude>=50.9 & dat$latitude<=51.6  & !is.na(dat$latitude)] =1
+		#dat$stratum[is.element(dat$reason,9)] = NA  ## drop 19 tows in 1994 specified as target strength acoustic tows
+	}
+	#else if (survey==11) {  ## define PJS strata for $survey==11: GIG lies within this latitude range
+	else if (all(gfbsurvey[[survey]]==21)) {  ## define PJS strata for $survey==11: GIG lies within this latitude range
+		#dat$stratum[dat$latitude>=50.9 & dat$latitude<=51.6 & !is.na(dat$latitude)] = 1
+		expr = expression(dat[dat$latitude>=50.9 & dat$latitude<=51.6 & !is.na(dat$latitude),])
+		dat  = keepAtts(dat, expr)
+		#dat$stratum[is.element(dat$year, c(1965,1966,1979))] = NA
+		## 1965 & 1966: wide-ranging exploratory; 1979: different design spatially; 1995: random instead of fixed stations
+		expr = expression(dat[!is.element(dat$year, c(1965,1966,1979,1995)),])
+		dat  = keepAtts(dat, expr)
+		#dat$stratum[is.element(dat$reason,9)] = NA                ## drop 19 tows in 1994 specified as target strength acoustic tows
+		expr = expression(dat[!is.element(dat$reason,9),]) ## drop 19 tows in 1994 specified as target strength acoustic tows
+		dat  = keepAtts(dat, expr)
+		#expr = expression(dat[dat$year>2002 & !is.na(dat$year),]) ## drop recent QC Snd synoptic survey Viking Storm tows
+		#dat  = keepAtts(dat, expr)
+		#dat$stratum2 = rep(0,nrow(dat))
+		#dat$stratum2[dat$latitude>=50.9 & dat$latitude<=51.6  & !is.na(dat$latitude)] =1
 		## lab var stratum2 "GIG flag: all surveys"
 	}
-	ntows = nrow(dat)
-	nvess = length(.su(dat$vessel))
+
 	## The following code has already been dealt with by subfunction 'fixmiss' in 'doSynoptic'
 	## For GIG Historical, effort and distance are better represented than door and speed; therefore, just fix the latter two.
+	note = list()
 	note[["author"]] = "Paul J. Starr"
-	note[["speed_old"]] = c(
-		"This field is the original speed information: only one year with a mean>11 km/h.",
-		"Provisionally not used because seems very high and not credible." )
-	dat$door  = ttcall(defaultdoorspread)  ## 61.6 m  vs. dat's 14.3 m
-	dat$speed = rep(NA, nrow(dat))
-	dat$speed = dat$distance / dat$effort
+	#note[["speed_old"]] = c(
+	#	"This field is the original speed information: only one year with a mean>11 km/h.",
+	#	"Provisionally not used because seems very high and not credible." )
+	#dat$door  = ttcall(defaultdoorspread)  ## 61.6 m  vs. dat's 14.3 m
+	#dat$speed = rep(NA, nrow(dat))
+	#dat$speed = dat$distance / dat$effort
 
-	dat$density = dat$weight / (dat$distance * dat$door/1000.)
-	dat$density[is.na(dat$density)] = 0
-#browser();return()
+	#dat$density = dat$weight / (dat$distance * dat$door/1000.)
+	#dat$density[is.na(dat$density)] = 0
 
 	## Restratify using depint
-	lodep = as.numeric(attributes(depint)$labelends$low)
-	updep = as.numeric(attributes(depint)$labelends$upp)
-	dat$depstrat = sapply(dat$sdepth, function(mm){ zz = mm >= lodep & mm < updep; if(!any(zz)) NA else (1:length(depint))[zz] },simplify=TRUE)
-	dat$depint   = sapply(dat$sdepth, function(mm){ zz = mm >= lodep & mm < updep; if(!any(zz)) NA else depint[zz] },simplify=TRUE)
-	## Get rid of the bad usability codes (e.g.9)  and non-GIG tows
-	badstrat = is.na(dat$stratum)
-	dat$depstrat[badstrat] = dat$depint[badstrat] = NA
+	#lodep = as.numeric(attributes(depint)$labelends$low)
+	#updep = as.numeric(attributes(depint)$labelends$upp)
+	#dat$depstrat = sapply(dat$sdepth, function(mm){ zz = mm >= lodep & mm < updep; if(!any(zz)) NA else (1:length(depint))[zz] },simplify=TRUE)
+	#dat$depint   = sapply(dat$sdepth, function(mm){ zz = mm >= lodep & mm < updep; if(!any(zz)) NA else depint[zz] },simplify=TRUE)
+	### Get rid of the bad usability codes (e.g.9)  and non-GIG tows
+	#badstrat = is.na(dat$stratum)
+	#dat$depstrat[badstrat] = dat$depint[badstrat] = NA
 
-#	lab val depstrat depstratum
-#	lab var depstrat "PJS depth stratum
-#	lab val depint depint
-#	lab var depint "Original 20 fathom GB Reed depth stratification
-	if (survey==11) {
-		names(stratum) = c("Valid GIG tow", "", "")
-		stratum2 = 0:1
-		names(stratum2) = c("Outside GIG", "GIG tow")
-	}
-#	run $stratumlabelfilename
-#	lab val stratum stratum
-#	lab var stratum Stratum
-#
-	if (survey==8) {
+	#if (survey==11) {
+	#if (all(gfbsurvey[[survey]]==21)) {
+	#	names(stratum) = c("Valid GIG tow", "", "")
+	#	stratum2 = 0:1
+	#	names(stratum2) = c("Outside GIG", "GIG tow")
+	#}
+	if (all(gfbsurvey[[survey]]==8)) {
 		note[["GIG survey 8"]] =c(
 			"This is a file of the Historical GIG survey data in Queen Charlotte Sound from 'minyear' to 'maxyear'.",
 			"All 'ntows' tows in this file are deemed GIG tows within the correct latitude and depth range ('nvess' vessels in this file)"
@@ -953,7 +1039,7 @@ prepGIGhis = function(file, survey=8)
 		note[["stratum"]] = "Generated from grouping code (stratum code generated by Norm Olsen for 'ntows' records in Goose Island Gully: 1967-1995 surveys only)"
 		note[["area"]] = "Provided by N Olsen (Dec 2009) for strata 1 to 3, bounded by depth, for the three grouping codes."
 	}
-	else if (survey==11) {
+	else if (all(gfbsurvey[[survey]]==21)) {
 		note[["GIG survey 11"]] =c(
 			"This is a file of the Historical GIG GB Reed survey data in Queen Charlotte Sound from 'minyear' to 'maxyear'.",
 			"Contains all tows from 'nvess' vessels that have surveyed in QC Sound ('ntows' tows).",
@@ -993,18 +1079,17 @@ prepGIGhis = function(file, survey=8)
 
 	attr(dat,"label") = label
 	attr(dat,"note")  = note
-#browser();return()
 	return(dat)
 }
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~prepGIGhis
 
 
-## prepHSass---------------------------2019-07-30
+## prepHSass----------------------------2022-05-17
 ##  Prepare Hecate Strait assemblage survey data.
 ## -----------------------------------------PJS|RH
-prepHSass = function(file, survey=1)
+prepHSass = function(file, survey="HSass")
 {
-	surveyname = "Hecate St Assemblage"
+	surveyname = "Hecate Strait Assemblage"
 	ttput(surveyname)
 	ttput(survey)
 
@@ -1013,7 +1098,7 @@ prepHSass = function(file, survey=1)
 	attr(stratum,"labelends") = getLabelends(labelname=names(stratum))
 	ttput(stratum)
 
-	dat   = doSynoptic(file, survey) ## even though it's not synoptic, function has some standardising routines
+	dat   = doSynoptic(dat, survey) ## even though it's not synoptic, function has some standardising routines
 	label = attributes(dat)$label    ## add later as there is a lot of fiddly manipulation that follows
 
 	## Note: 1984 had two trips operating.  This resets the set numbers and means
@@ -1096,26 +1181,31 @@ prepHSass = function(file, survey=1)
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~prepHSass
 
 
-## prepHSsyn------------------------2019-07-30
+## prepHSsyn----------------------------2022-05-17
 ##  Prepare Hecate Strait synoptic survey data.
 ## -----------------------------------------PJS|RH
-prepHSsyn = function(file, survey=10)
+prepHSsyn = function(file, survey="HSsyn")
 {
-	surveyname = "Hecate St Synoptic"
+	surveyname = "Hecate Strait Synoptic"
 	ttput(surveyname)
 	ttput(survey)
 
-	stratum = 1:4
-	names(stratum) = c("10-70m", "70-130m", "130-220m", "220-500m")
-	attr(stratum,"labelends") = getLabelends(labelname=names(stratum))
-	ttput(stratum)
+	dat    = getLabels(file)
+	ttget(stratum)
+	label  = attributes(dat)$label ## keep temporarily just to be safe
+#browser();return()
 
-	dat = doSynoptic(file, survey)
+	#stratum = 1:4
+	#names(stratum) = c("10-70m", "70-130m", "130-220m", "220-500m")
+	#attr(stratum,"labelends") = getLabelends(labelname=names(stratum))
+	#ttput(stratum)
 
-	for (i in stratum) {
-		z = !is.na(dat$stratum) & is.element(dat$stratum,i)
-		dat$area[z] = switch(i, 5958, 3011, 2432, 1858)
-	}
+	dat = doSynoptic(dat, survey)
+
+	#for (i in stratum) {  ## why?
+	#	z = !is.na(dat$stratum) & is.element(dat$stratum,i)
+	#	dat$area[z] = switch(as.numeric(i), 5958, 3011, 2432, 1858)
+	#}
 
 	## Choose fields for data return
 	if (!is.null(ttcall(synflds))){
@@ -1133,29 +1223,35 @@ prepHSsyn = function(file, survey=10)
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~prepHSsyn
 
 
-## prepQCSsyn----------------------------2019-07-30
+## prepQCSsyn---------------------------2022-05-17
 ##  Prepare QCS synoptic survey data
 ## -----------------------------------------PJS|RH
 prepQCSsyn = function(file, survey)
 {
-	if (survey==2)
+	ttget(gfbsurvey)
+	if (all(gfbsurvey[[survey]]==1))
 		surveyname = "QC Sound Synoptic"
-	else if (survey==12)
+	else if (all(gfbsurvey[[survey]]==21))
 		surveyname = "GIG Historical"
 	ttput(surveyname)
 	ttput(survey)
 
-	stratum = 1:8
-	names(stratum) = c("South:50-125m", "South:125-200m", "South:200-330m", "South:330-500m", "North:50-125m", "North:125-200m", "North:200-330m", "North:330-500m")
-	ttput(stratum)
+	dat    = getLabels(file)
+	ttget(stratum)
+	label  = attributes(dat)$label ## keep temporarily just to be safe
+#browser();return()
+
+	#stratum = 1:8
+	#names(stratum) = c("South:50-125m", "South:125-200m", "South:200-330m", "South:330-500m", "North:50-125m", "North:125-200m", "North:200-330m", "North:330-500m")
+	#ttput(stratum)
 
 	#delimit cr
 	#lab save stratum using $stratumlabelfilename, replace
 
-	dat = doSynoptic(file, survey)
+	dat = doSynoptic(dat, survey)
 
-	if (survey==12) {
-		dat$stratum = dat$stratum + 1
+	if (all(gfbsurvey[[survey]]==21)) {
+		dat$stratum = dat$stratum + 1  ## this won't work because strata are now characters
 		if (dat$species=="396") {
 			dat$area[dat$stratum==2] = 4148
 			dat$area[dat$stratum==3] = 2200
@@ -1165,26 +1261,26 @@ prepQCSsyn = function(file, survey)
 	}
 
 	## Define depth strata
-	depstrat = 1:4
-	names(depstrat) = c("50-125m", "125-200m", "200-330m", "330-500m")
-	attr(depstrat,"labelends") = getLabelends(labelname=names(depstrat))
-	ttput(depstrat)
+	#depstrat = 1:4
+	#names(depstrat) = c("50-125m", "125-200m", "200-330m", "330-500m")
+	#attr(depstrat,"labelends") = getLabelends(labelname=names(depstrat))
+	#ttput(depstrat)
 
-	label = attributes(dat)$label
-	label[["depstrat"]] = list(decribe="Depth intervals")
-	label[["depstrat"]][["interval"]] = names(depstrat)
-	attr(dat,"label") = label
+	#label = attributes(dat)$label
+	#label[["depstrat"]] = list(decribe="Depth intervals")
+	#label[["depstrat"]][["interval"]] = names(depstrat)
+	#attr(dat,"label") = label
 
 	## Populate dat with 'depstrat' -- note not terribly consistent with depth manipulation in 'doSynoptic'
-	lodep = as.numeric(attributes(depstrat)$labelends$low)
-	updep = as.numeric(attributes(depstrat)$labelends$upp)
+	#lodep = as.numeric(attributes(depstrat)$labelends$low)
+	#updep = as.numeric(attributes(depstrat)$labelends$upp)
 	#dat$best_depth = coalesce(dat$seabird_depth, dat$sdepth, dat$edepth)  ## now in 'doSynoptic'
-	dat$depstrat = rep(NA, nrow(dat))
-	for (i in 1:length(depstrat)){
-		ii = depstrat[i]
-		zz = dat$best_depth>=lodep[i] & dat$best_depth<updep[i] & !is.na(dat$best_depth)
-		dat$depstrat[zz] = ii
-	}
+	#dat$depstrat = rep(NA, nrow(dat))
+	#for (i in 1:length(depstrat)){
+	#	ii = depstrat[i]
+	#	zz = dat$best_depth>=lodep[i] & dat$best_depth<updep[i] & !is.na(dat$best_depth)
+	#	dat$depstrat[zz] = ii
+	#}
 
 	## Choose fields for data return
 	if (!is.null(ttcall(synflds))){
@@ -1201,11 +1297,11 @@ prepQCSsyn = function(file, survey)
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~prepQCSsyn
 
 
-## prepNMFStri--------------------------2020-07-16
+## prepNMFStri--------------------------2022-05-17
 ##  Prepare US National Marine Fisheries Service
 ##  triennial survey data from WCVI.
 ## -----------------------------------------PJS|RH
-prepNMFStri = function(file, survey=5)
+prepNMFStri = function(file, survey="NMFStri")
 {
 	ici = lenv() ## RH 200716
 	surveyname = "NMFS Triennial"
@@ -1220,7 +1316,7 @@ prepNMFStri = function(file, survey=5)
 	names(stratum) = 475:500 ## name using GFBio grouping codes
 	ttput(stratum)
 
-	dat   = doSynoptic(file, survey) ## even though it's not synoptic, function has some standardising routines
+	dat   = doSynoptic(dat, survey) ## even though it's not synoptic, function has some standardising routines
 	ttget(stratum)                   ## had attributes added in 'doSynoptic'
 	label = attributes(dat)$label    ## add later as there is a lot of fiddly manipulation that follows
 
@@ -1380,47 +1476,51 @@ prepNMFStri = function(file, survey=5)
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~prepNMFStri
 
 
-## prepWCHGsyn-------------------------2021-06-08
+## prepWCHGsyn--------------------------2022-05-18
 ##  Prepare WCHG (formerly WCQCI) synoptic survey data
 ## -----------------------------------------PJS|RH
-prepWCHGsyn = function(file, survey=9)
+prepWCHGsyn = function(file, survey="WCHGsyn")
 {
-	#tempfile hold no2006 2006only
-
 	surveyname = "WCHG Synoptic"
 	ttput(surveyname)
 	ttput(survey)
 
 	dat    = getLabels(file)
+	ttget(stratum)
 	label  = attributes(dat)$label ## keep temporarily just to be safe
 
-	stratum = 1:4
-	names(stratum) = c("180-330m", "330-500m", "500-800m", "800-1300m")
-	attr(stratum,"labelends") = getLabelends(labelname=names(stratum))
-	ttput(stratum)
-
-	stratum2006 = 1:5
-	names(stratum2006) = c("150-200m", "200-330m", "330-500m", "500-800m", "800-1300m")
-	attr(stratum2006,"labelends") = getLabelends(labelname=names(stratum2006))
-	ttput(stratum2006)
+	#stratumWCHG = 1:4
+	#names(stratumWCHG) = c("180-330m", "330-500m", "500-800m", "800-1300m")
+	#attr(stratumWCHG,"labelends") = getLabelends(labelname=names(stratumWCHG))
+	#ttput(stratumWCHG)
+   #
+	#stratum2006 = 1:5
+	#names(stratum2006) = c("150-200m", "200-330m", "330-500m", "500-800m", "800-1300m")
+	#attr(stratum2006,"labelends") = getLabelends(labelname=names(stratum2006))
+	#ttput(stratum2006)
 
 	expr     = expression(dat[is.element(dat$year, 2006),])
 	only2006 = keepAtts(dat, expr)
+	#stratum  = stratum2006; ttput(stratum)
 	only2006 = doSynoptic(only2006, survey)
-	ttget(stratum)
-	nstrat = attributes(stratum)$labelends$nstrat
-#browser();return()
+	#ttget(stratum) ## doSynoptic adds a grouping code
+	#nstrat   = attributes(stratum)$labelends$nstrat
 	only2006 = restratify(only2006, strategy=4, "sdepth", "edepth")
 	label[["usability"]] = attributes(only2006)$label$usability[c("describe","codes")]
 	label[["usability"]][["only2006"]] = attributes(only2006)$label$usability[c("note", "Nrows", "nrows", "use")]
-	only2006$stratum = only2006$stratum - 1 ## top (shallowest) stratum not repeated in subsequent years
+	only2006$stratum = as.numeric(only2006$stratum) - 1
+	only2006 = only2006[only2006$stratum >= 1 & !is.na(only2006$stratum),]  ## shallowest stratum not repeated in subsequent years
+	only2006$stratum = as.character(only2006$stratum)
+#browser();return()
 
-	expr   = expression(dat[!is.element(dat$year, c(2006, 2014)),])
-	no2006 = keepAtts(dat, expr)
-	no2006 = doSynoptic(no2006, survey)
-	ttget(stratum)
-	nstrat = attributes(stratum)$labelends$nstrat
+	expr    = expression(dat[!is.element(dat$year, c(2006, 2014)),])
+	no2006  = keepAtts(dat, expr)
+	#stratum = stratumWCHG; ttput(stratum)
+	no2006  = doSynoptic(no2006, survey)
+	#ttget(stratum) ## doSynoptic adds a grouping code
+	nstrat  = attributes(stratum)$labelends$nstrat
 	label[["usability"]][["no2006"]] = attributes(no2006)$label$usability[c("note", "Nrows", "nrows", "use")]
+#browser();return()
 
 	intflds  = intersect(colnames(only2006),colnames(no2006))
 	dat      = rbind(only2006[,intflds], no2006[,intflds])
@@ -1459,10 +1559,10 @@ prepWCHGsyn = function(file, survey=9)
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~prepWCHGsyn
 
 
-## prepWCVIsyn-------------------------2019-07-30
+## prepWCVIsyn-------------------------2022-05-17
 ##  Prepare west coast Vancouver Island synoptic survey data.
 ## -----------------------------------------PJS|RH
-prepWCVIsyn = function(file, survey=3)
+prepWCVIsyn = function(file, survey="WCVIsyn")
 {
 	surveyname = "WCVI Synoptic"
 	ttput(surveyname)
@@ -1473,6 +1573,7 @@ prepWCVIsyn = function(file, survey=3)
 	attr(stratum,"labelends") = getLabelends(labelname=names(stratum))
 	ttput(stratum)
 
+#browser();return()
 	dat = doSynoptic(file, survey)
 
 	## Choose fields for data return
@@ -1520,20 +1621,26 @@ restratify = function(dat, strategy, dbegin, dend, renamevar)
 
 	## Restratify based on strategy depth
 	ttget(stratum)
-	lodep = as.numeric(attributes(stratum)$labelends$low)
-	updep = as.numeric(attributes(stratum)$labelends$upp)
-	gcode = attributes(stratum)$grouping_code
+	ugroup = .su(dat$group)
+	zdep   = is.element(attributes(stratum)$gstrat,ugroup)
+	ustrat  = attributes(stratum)$lstrat[as.character(ugroup)]
+
+	lodep  = as.numeric(attributes(stratum)$labelends$low[zdep])
+	updep  = as.numeric(attributes(stratum)$labelends$upp[zdep])
+#browser();return()
+	gcode  = ugroup #attributes(stratum)$grouping_code
 	dat$group_old   = dat$group
 	dat$group       = sapply(dat$minmax, function(mm){ zz = mm >= lodep & mm < updep; if(!any(zz)) NA else gcode[zz] },simplify=TRUE)
 	dat$stratum_old = dat$stratum
-	dat$stratum     = sapply(dat$minmax, function(mm){ zz = mm >= lodep & mm < updep; if(!any(zz)) NA else stratum[zz] },simplify=TRUE)
+	dat$stratum     = sapply(dat$minmax, function(mm){ zz = mm >= lodep & mm < updep; if(!any(zz)) NA else stratum[zdep][zz] },simplify=TRUE)
+#browser();return()
 
 	if(!missing(renamevar))
 		colnames(dat)[grep("minmax", colnames(dat))] = renamevar
 
 	no.strat = is.na(dat$stratum)
 	if (any(no.strat))
-		write.csv(dat[no.strat,c(c("fe_id", "year", "set", "major") , dbegin, dend, c("group_old", "group", "stratum_old", "stratum"))], file=paste0(gsub(" ",".",ttcall(surveyname)),".restrat.drops.csv"), row.names=FALSE)
+		write.csv(dat[no.strat,c(c("fe_id", "year", "set", "major") , dbegin, dend, c("group_old", "group", "stratum_old", "stratum")),drop=F], file=paste0(gsub(" ",".",ttcall(surveyname)),".restrat.drops.csv"), row.names=FALSE)
 #browser();return()
 
 #	if "$ifuse"~="" {

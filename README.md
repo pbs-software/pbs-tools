@@ -1,8 +1,8 @@
 ## <font color="#6A5ACD">PBStools: Tools for the efficient execution of onerous tasks</font> ##
 
-<font color="red">&copy; Fisheries and Oceans Canada (2007-2021)</font>
+<font color="red">&copy; Fisheries and Oceans Canada (2007-2023)</font>
 
-**PBStools** provides an R interface for algorithms commonly used in fisheries. The scope of this package is by no means comprehensive, having grown from the need to satisfy tasks specific to British Columbia (BC) ocean fisheries. Many of the functions provide a quick way to visualize data, and in some cases perform preliminary analyses. Though oriented to users at the <a href="http://www.pac.dfo-mpo.gc.ca/science/facilities-installations/index-eng.html#pbs">Pacific Biological Station</a> (PBS), these functions may provide a broad utility to users at other locales. The User Guide is organised into sections that loosely classify the functions by theme -- (1) Utility, (2) Biology, (3) Fishery, (4) Survey, (5) Spatial, (6) Assessment, (7) Catch Reconstruction, and (8) LaTeX tools. Within each section, the functions are described alphabetically. 
+**PBStools** provides an R interface for algorithms commonly used in fisheries. The scope of this package is by no means comprehensive, having grown from the need to satisfy tasks specific to British Columbia (BC) ocean fisheries. Many of the functions provide a quick way to visualize data, and in some cases perform preliminary analyses. Though oriented to users at the <a href="http://www.pac.dfo-mpo.gc.ca/science/facilities-installations/index-eng.html#pbs">Pacific Biological Station</a> (PBS), these functions may provide a broad utility to users at other locales. The R code modules and User Guide and are organised into sections that loosely classify the functions by theme -- (1) Utility, (2) Biology, (3) Fishery, (4) Survey, (5) Spatial, (6) Assessment, (7) Catch Reconstruction, (8) LaTeX tools, and (9) PJS<sup>1</sup> survey index functions. Within each section, the functions are described alphabetically.
 
 **PBStools** depends heavily on two other R packages: **PBSmapping** and **PBSmodelling**. We use the latter to implement several Graphical User Interfaces (GUIs) that facilitate a few select functions. Most functions, however, are designed for use on the command line or in sourced code. Windows users need to be mindful that the R-statistical language is case sensitive. 
 
@@ -19,6 +19,8 @@ Influences by Wizard Wickham pervade the Rverse these days; however, reliance on
 As with any freely available product, there is no warranty or promise that **PBStools** will perform adequately for all circumstances. Additionally, coding errors are possible, and users should contact the package maintainer if bugs are detected.
 
 Maintainer: <a href="mailto:rowan.haigh@dfo-mpo.gc.ca">Rowan Haigh</a>
+
+<sup>1</sup>PJS = Paul J. Starr
 
 <p align="right"><img src="DFOlogo_small.jpg" alt="DFO logo" style="height:30px;"></p> 
 

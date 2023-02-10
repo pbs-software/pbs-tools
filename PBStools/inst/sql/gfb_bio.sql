@@ -1,6 +1,5 @@
--- Get specimen biological data from GFBioSQL (last revised 2019-07-17)
+-- Get specimen biological data from GFBioSQL (last revised 2022-12-01)
 -- Note: Not all users can access the Schnute overlay for table names.
--- Number in brackets = #records for YYR
 
 SET NOCOUNT ON
 
@@ -187,7 +186,7 @@ FROM
 WHERE FEG.RN = 1
 ORDER BY FEG.FISHING_EVENT_ID
 
--- Add in missing Gouping Codes to main skeleton table B01B05 (62990)
+-- Add in missing Gouping Codes to main skeleton table B01B05
 UPDATE #B01B05
 SET GROUPING_CODE = COALESCE( #B01B05.GROUPING_CODE,
    (SELECT #FishEventGroup.GROUPING_CODE 
@@ -210,7 +209,7 @@ FROM
 
 --SELECT * FROM #onlySPID
 
--- Collect fishing event IDs for ONLY strSpp specimens (to speed up some later queries) (3401)
+-- Collect fishing event IDs for ONLY strSpp specimens (to speed up some later queries)
 SELECT --TOP 40
   CC.TRIP_ID,
   CC.FISHING_EVENT_ID
@@ -223,7 +222,7 @@ GROUP BY
 --SELECT * FROM #onlyFEID
 
 
--- Collect trip IDs for ONLY strSpp specimens (to speed up some later queries) (408)
+-- Collect trip IDs for ONLY strSpp specimens (to speed up some later queries)
 SELECT --TOP 40
   DD.TRIP_ID
 INTO #onlyTID
@@ -233,7 +232,7 @@ GROUP BY
 
 --SELECT * FROM #onlyTID
 
--- Get 'collected attribute' of specimens (52530)
+-- Get 'collected attribute' of specimens
 SELECT --TOP 40
   SC.SAMPLE_ID,
   SC.SPECIMEN_ID,
@@ -255,7 +254,7 @@ GROUP BY
 
 --SELECT * FROM #SpecAtts
 
--- Get the appropriate factor to convert lengths to cm and weight to kg (81135)
+-- Get the appropriate factor to convert lengths to cm and weight to kg
 SELECT --TOP 40
   -- Need three key fields
   SM.SAMPLE_ID,
@@ -285,7 +284,7 @@ WHERE
 
 --SELECT * FROM #FactorMorpho
 
--- Deteremine the Best Length and Round Weight for Specimens (causing errors) (57685)
+-- Deteremine the Best Length and Round Weight for Specimens (causing errors)
 SELECT --TOP 40
   SM.SAMPLE_ID,
   SM.SPECIMEN_ID,
@@ -309,7 +308,7 @@ GROUP BY
 
 --SELECT * FROM #BestMorpho
 
--- Trawl Specs (returns same # records as B02_FISHING_EVENT) (3401)
+-- Trawl Specs (returns same # records as B02_FISHING_EVENT)
 SELECT
   B01.TRIP_ID,
   B02.FISHING_EVENT_ID,
@@ -420,7 +419,11 @@ SELECT
   'ssset'   = ISNULL(AA.FE_MINOR_LEVEL_ID,0),                 -- B02_Fishing_Event (tertiary  set, e.g. hooks,  in FEID)
   'ttype'   = IsNull(AA.TRIP_SUB_TYPE_CODE,0),                -- B01_Trip
   'stype'   = IsNull(AA.SAMPLE_TYPE_CODE,0),                  -- B04_Sample
-  'ftype'   = CASE WHEN AA.VESSEL_ID IN (568,569,592,595) THEN 1 ELSE 0 END,  -- B01_Trip (freezer trawl vessels)
+  'ftype'   = CASE WHEN AA.VESSEL_ID IN (568,569,592,595,608,609,1727) THEN 1 ELSE 0 END,  -- B01_Trip (freezer trawl vessels)
+  -- From Scott Buchanan (221201)
+  --Vessel Name =c('VIKING ENTERPRISE', 'OSPREY NO 1', 'NORTHERN ALLIANCE', 'RAW SPIRIT', 'PACIFIC LEGACY NO. 1', 'SUNDEROEY', 'VIKING ALLIANCE')
+  --VRN = c(310913, 310988, 312275, 312405, 313334, 313464, 313224)
+  --VESSEL_ID = c(568, 569, 592, 595, 608, 609, 1727)
   'date'    = CASE 
     WHEN AA.SAMPLE_DATE Is Null Or 
          AA.TRIP_END_DATE-AA.SAMPLE_DATE < 0 Or 
@@ -613,6 +616,12 @@ SELECT * FROM #GFBBIO
 -- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp=c("394","425")) -- Rougheye/Blackspotted (REBS: 200107, 200228, 200316 for PJS|RH)
 -- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="437") -- Canary Rockfish (CAR: 200720, 200903)
 -- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="418") -- Yellowtail Rockfish (180531, 200910)
--- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="440") -- Yellowmouth Rockfish (YMR: 200720, 200903, 200928)
--- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="602") -- Arrowtooth Flounder (180619, 180829, 180911, 200908, 200914, 201007)
+-- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="440") -- Yellowmouth Rockfish (YMR: 200720, 200903, 200928, 210120, 210208)
+-- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="225") -- Pacific Hake (PAK: 211210)
+-- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="453") -- Longspine Thornyhead (LST: 220309)
+-- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="437") -- Canary Rockfish (CAR: 200720, 200903, 211013, 211123, 220502)
+-- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="602") -- Arrowtooth Flounder (180619, 180829, 180911, 200908, 200914, 201007, 230112)
+-- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="396") -- Pacific Ocean Perch (POP: 210217, 211021, 221021, 230117)
+-- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="435") -- Bocaccio (BOR: 190107, 190620, 190709, 190812, 190822, 190903, 191003, 211014, 230117
+)
 

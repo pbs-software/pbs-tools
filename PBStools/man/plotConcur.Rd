@@ -13,7 +13,7 @@ plotConcur(strSpp="410", dbName="GFFOS", spath=.getSpath(),
    mindep=150, maxdep=435, major=NULL, minor=NULL, top=NULL, gear=1,
    saraSpp=c("027","034","394","410","424","435","437","440","442","453"),
    reset.mf=TRUE, eps=FALSE, png=FALSE, pngres=300, colour="topo", 
-   outnam, lang=c("e","f"))
+   print.tab=TRUE, run.sql=TRUE, outnam, lang=c("e","f"))
 }
 \arguments{
   \item{strSpp}{\code{character} -- string specifying species of interest (often a Hart code for fish).}
@@ -39,6 +39,11 @@ plotConcur(strSpp="410", dbName="GFFOS", spath=.getSpath(),
   \item{colour}{\code{character} -- two colour choices for horizontal bars:\cr
     \code{"topo"} -- gradations from yellow through green to blue, top to bottom;\cr
     \code{"sombre"} -- grey for all species, pink for COSEWIC species, and light blue for \code{strSpp}.}
+  \item{print.tab}{\code{logical} -- if \code{TRUE}, print table of concurrent species.}
+  \item{run.sql}{\code{logical} -- if \code{TRUE}, run SQL code on the specified database name (\code{dbName}):\cr
+    \code{GFFOS} -- \code{fos_concurrent.sql}\cr
+    \code{PacHarvest} -- \code{pht_concurrent.sql}\cr
+    \code{PacHarvHL} -- \code{phhl_concurrent.sql} }
   \item{outnam}{\code{character} -- explicit output name to override an internally generated one.}
   \item{lang}{\code{character} -- a vector of letters that denote the language for output: \code{"e"} (english) and \code{"f"} (french).}
 }
@@ -61,8 +66,8 @@ plotConcur(strSpp="410", dbName="GFFOS", spath=.getSpath(),
 
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
-  \emph{locus opus}: Institute of Ocean Sciences (IOS), Sidney BC\cr
-  Last modified \code{Rd: 2020-10-13}
+  \emph{locus opus}: Regional Headquarters (RHQ), Vancouver BC\cr
+  Last modified \code{Rd: 2023-02-08}
 }
 \seealso{
 In package \pkg{PBStools}:\cr

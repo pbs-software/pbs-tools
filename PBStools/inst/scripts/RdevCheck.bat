@@ -1,4 +1,6 @@
 @ECHO OFF
+SETLOCAL ENABLEEXTENSIONS ENABLEDELAYEDEXPANSION
+
 if not defined PBS_SETLOCAL (
   SETLOCAL
   SET PBS_SETLOCAL=1 )
@@ -24,7 +26,11 @@ if "%package%"=="PBStools" (
 )
 
 SET PBS_NO_PAUSE=1
-call RPathCheck.bat %arch%
+call RdevPathCheck.bat %arch%
+
+set Path=!pPath!;%SystemRoot%\system32;
+set R_Path=!rPath!
+
 
 if not defined PBSERROR (
   if "%cran%"=="true" (

@@ -27,7 +27,8 @@ import(
 importFrom("graphics", "abline", "arrows", "axis", "barplot", "box", "boxplot", "frame", "hist", "legend", "lines", "mtext", "pairs", "par", "plot", "points", "polygon", "rect", "segments", "text")
 importFrom("grDevices", "col2rgb", "colorRamp", "colorRampPalette", "colors", "contourLines", "dev.cur", "dev.off", "extendrange", "jpeg", "pdf", "png", "postscript", "rgb", "savePlot", "tiff", "topo.colors", "win.metafile")
 importFrom("methods", "as", "formalArgs")
-importFrom("stats", "AIC", "approx", "contr.sum", "density", "dnorm", "ecdf", "fitted", "hat", "lm", "lowess", "median", "na.omit", "nls", "predict.lm", "qnorm", "qqnorm", "quantile", "rbinom", "residuals", "rgamma", "rnorm", "rstudent", "runif", "sd", "smooth.spline", "start", "var")
-importFrom("utils", "available.packages", "capture.output", "data", "flush.console", "install.packages", "installed.packages", "packageVersion", "read.csv", "read.table", "write.csv", "write.table")
+importFrom("stats", "AIC", "approx", "coefficients", "contr.sum", "density", "dist", "dnorm", "ecdf", "fitted", "hat", "hclust", "lm", "loess.smooth", "lowess", "median", "na.omit", "nls", "predict.lm", "qnorm", "qqnorm", "quantile", "rbinom", "residuals", "rgamma", "rnorm", "rstudent", "runif", "sd", "setNames", "smooth.spline", "start", "var")
+importFrom("utils", "available.packages", "capture.output", "data", "flush.console", "head", "install.packages", "installed.packages", "packageVersion", "read.csv", "read.table", "tail", "type.convert", "write.csv", "write.table")
 importFrom("colorspace", "hex", "readhex")
+#importFrom("r4ss", "SS_readdat") ## package r4ss has too many package dependencies
 

@@ -7,17 +7,20 @@ Spline Curve Through CPUE Series
 Fit a series of spline curves through a CPUE index series using various degrees of freedom.
 }
 \usage{
-splineCPUE(dat, ndf=50, strSpp="ZZZ", png=FALSE, pngres=400, PIN=c(8, 8), lang=c("e","f"))
+splineCPUE(dat, ndf=50, strSpp="ZZZ", ufld="cpue",
+   png=FALSE, pngres=400, PIN=c(8,8), lang=c("e","f"), ...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{dat}{\code{data.frame} -- simple two-column data object of \code{'year'} and \code{'cpue'}, usually read in from a \code{'.csv'} file.}
   \item{ndf}{\code{numeric} -- number of degrees of freedom to apply iteratively (internally) to the function \code{'smooth.spline'}.}
-  \item{strSpp}{\code{character} -- string species code, usually Hart code (page number as a string).}
+  \item{strSpp}{\code{character} -- species code, usually Hart code (page number as a string).}
+  \item{ufld}{\code{character} -- name of CPUE field in data.frame \code{'dat'}.}
   \item{png}{\code{logical} -- if \code{TRUE}, send the figure to a \code{'.png'} file.}
   \item{pngres}{\code{numeric} -- resolution of output figure (pixels per inch).}
   \item{PIN}{\code{numeric} -- width and height of output figure (inches).}
   \item{lang}{\code{character} -- a letter that denotes the language for output: currently only \code{'e'} (english) or \code{'f'} (french).}
+  \item{\dots}{\code{dots} -- additional arguments that may or may not be recognised by the code.}
 }
 \details{
 A procedure for estimating process error \eqn{c_\mathrm{p}}{c[p]} to 
@@ -48,19 +51,19 @@ List of \code{'DF'} = optimal degrees of freedom, \code{'RSS'} = minimum residua
 }
 \references{
 Clark, W.G. and Hare, S.R. 2006.
-\href{http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.170.6113&rep=rep1&type=pdf}{%
+\href{https://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.170.6113&rep=rep1&type=pdf}{%
 Assessment and management of Pacific halibut: data, methods, and policy}.
 Sci. Rep. 83, International Pacific Halibut Commission, Seattle, WA.
 
 Francis, R.I.C.C. 2011.
-\href{https://doi.org/10.1139/f2011-025}{Data weighting in statistical fisheries stock assessment models}.
+\href{https://cdnsciencepub.com/doi/10.1139/f2011-025}{Data weighting in statistical fisheries stock assessment models}.
 Can. J. Fish. Aquat. Sci. 68(6). 1124-1138.
 }
 \author{
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
-  \emph{locus opus}: Institute of Ocean Sciences (IOS), Sidney BC\cr
-  Last modified \code{Rd: 2021-09-28}
+  \emph{locus opus}: Regional Headquarters (RHQ), Vancouver BC\cr
+  Last modified \code{Rd: 2023-02-09}
 }
 \seealso{
 In package \pkg{PBStools}:\cr

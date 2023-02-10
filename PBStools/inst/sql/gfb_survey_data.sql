@@ -162,8 +162,9 @@ ORDER BY
 -- qu("gfb_survey_data.sql",dbName="GFBioSQL",strSpp="439", survserid=1)  -- RSR QCS syn  (190710)
 -- qu("gfb_survey_data.sql",dbName="GFBioSQL",strSpp="439", survserid=2)  -- RSR HS ass   (190729)
 -- qu("gfb_survey_data.sql",dbName="GFBioSQL",strSpp="439", survserid=16) -- RSR WCHG syn (190729)
--- qu("gfb_survey_data.sql",dbName="GFBioSQL",strSpp="435", survserid=16) -- BOR WCHG syn (190729)
 -- qu("gfb_survey_data.sql",dbName="GFBioSQL",strSpp="435", survserid=4)  -- BOR WCVI syn (190730)
 -- qu("gfb_survey_data.sql",dbName="GFBioSQL",strSpp="435", survserid=1)  -- BOR QCS syn  (190710)
 -- qu("gfb_survey_data.sql",dbName="GFBioSQL",strSpp="435", survserid=3)  -- BOR HS syn   (190729, 190829)
+-- qu("gfb_survey_data.sql",dbName="GFBioSQL",strSpp="435", survserid=16) -- BOR WCHG syn (190729, 210608) write.csv(PBSdat,"SSID=16&species=435.csv",row.names=F)
+-- qu("gfb_survey_data.sql", dbName="GFBioSQL", strSpp="437", survserid=21) -- includes 2003-05
 

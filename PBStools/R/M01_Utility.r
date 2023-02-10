@@ -18,6 +18,7 @@
 ##  createFdir......Create a subdirectory called `french' for storing figures with French text and labels.
 ##  crossTab........Use package 'reshape' to summarize z using crosstab values y.
 ##  darkenRGB.......Programmatically darken the colour of given RGB values.
+##  extractPost.....Extract model posteriors from three model platforms (Awatea, SS3, iSCAM) for clients.
 ##  findPV..........Find nearest position in vector choice using a target point.
 ##  findRC..........Return no. (rows, columns) for multi-panel figures given no. figures to fit on one page.
 ##  fitLogit........Fit binomial data using logit link function.
@@ -53,6 +54,7 @@
 ##  .flush.cat......Flush the cat down the console.
 ##  .grabPath.......Return the specified directory in the package tree.
 ##  .getApath.......Return the path for admb/examples/sql/win directories in PBStools.
+##  .ss3.readdat....Read Stock Synthesis (version 3.30) data file into list object in R.
 ##  .setApath.......Set the path for admb/examples/sql/win directories in PBStools.
 ##  .plotDev........Save plot on current devise using values from a GUI, if available.
 ##  .setCWD.........Return the current working directory and if win=TRUE, set the path variable in the active window.
@@ -312,15 +314,16 @@ convCT = function(CT, fn=as.matrix, colAsRowName=TRUE)
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~convCT
 
 
-## convFY-------------------------------2011-12-05
+## convFY-------------------------------2023-02-09
 ## Convert dates into fishing years.
 ## ---------------------------------------------RH
 convFY = function(x,startM=4)
 {
-	if (class(x)[1]=="character" && class(try(as.Date(x),silent=TRUE))=="Date" ) 
-		x=as.Date(x)
+	#if (class(x)[1]=="character" && class(try(as.Date(x),silent=TRUE))=="Date" ) 
+	if (inherits(x, "character") && inherits(try(as.Date(x),silent=TRUE), "Date") )
+		x = as.Date(x)
 	if (any(class(x)%in%c("POSIXct","POSIXt","Date")))
-		cdate=format(x) # 10-character date "yyyy-mm-dd"
+		cdate = format(x) # 10-character date "yyyy-mm-dd"
 	else  return(rep("",length(x)))
 	yrmo=substring(x,1,7) # year-month "yyyy-mm"
 	yr=as.numeric(substring(yrmo,1,4)); mo=as.numeric(substring(yrmo,6,7))
@@ -330,15 +333,16 @@ convFY = function(x,startM=4)
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~convFY
 
 
-## convYM-------------------------------2011-12-05
+## convYM-------------------------------2023-02-09
 ## Convert date limits into a vector of year-months (YYY-MM).
 ## ---------------------------------------------RH
 convYM = function(x)
 {
-	if (class(x)[1]=="character" && class(try(as.Date(x),silent=TRUE))=="Date" ) 
-		x=as.Date(x)
+	#if (class(x)[1]=="character" && class(try(as.Date(x),silent=TRUE))=="Date" ) 
+	if (inherits(x, "character") && inherits(try(as.Date(x),silent=TRUE), "Date") )
+		x = as.Date(x)
 	if (any(class(x)%in%c("POSIXct","POSIXt","Date")))
-		cdate=format(x) # 10-character date "yyyy-mm-dd"
+		cdate = format(x) # 10-character date "yyyy-mm-dd"
 	else  return(rep("",length(x)))
 	yrmo=substring(x,1,7) # year-month "yyyy-mm"
 	yr=as.numeric(substring(yrmo,1,4)); mo=as.numeric(substring(yrmo,6,7))
@@ -351,12 +355,12 @@ convYM = function(x)
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~convYM
 
 
-## convYP-------------------------------2011-12-05
+## convYP-------------------------------2023-02-09
 ## Convert dates into year periods.
 ## ---------------------------------------------RH
 convYP = function(x, ndays=90)
 {
-	yearperiod=function(dchar, ndays){ # date as character string
+	yearperiod=function(dchar, ndays) { # date as character string
 		yr=substring(dchar,1,4); YR=as.numeric(yr)
 		ddate = as.numeric(as.Date(dchar))
 		odate = as.numeric(as.Date(paste(yr,"-01-01",sep="")))
@@ -369,11 +373,13 @@ convYP = function(x, ndays=90)
 		names(out)=paste(yr,pad0(nper,nchar(ndays)),sep="-")
 		attr(out,"Ndays")=Ndays; attr(out,"Nper")=366/Ndays
 		attr(out,"Ylim")=range(YR,na.rm=TRUE)
-		return(out) }
-	if (class(x)[1]=="character" && class(try(as.Date(x),silent=TRUE))=="Date" ) 
-		x=as.Date(x)
+		return(out)
+	}
+	#if (class(x)[1]=="character" && class(try(as.Date(x),silent=TRUE))=="Date" ) 
+	if (inherits(x, "character") && inherits(try(as.Date(x),silent=TRUE), "Date") )
+		x = as.Date(x)
 	if (any(class(x)%in%c("POSIXct","POSIXt","Date")))
-		cdate=format(x) # 10-character date "yyyy-mm-dd"
+		cdate = format(x) # 10-character date "yyyy-mm-dd"
 	else  return(rep("",length(x)))
 	return(yearperiod(cdate,ndays))
 }
@@ -535,6 +541,358 @@ darkenRGB = function(cols, pct, add)
 	return(hexcols)
 }
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~darkenRGB
+
+
+## extractPost--------------------------2023-02-10
+##  Extract model posteriors from three model
+##  platforms (Awatea, SS3, iSCAM) for clients.
+## ---------------------------------------------RH
+extractPost = function(spc="BOR", stock="CST", assYr=2021, path=getwd(),
+   values="R", runs=1:3, rwts=rep(1,3), burnin=200, nmcmc=1200,
+   model="Awatea", fleets="trawl", extra="forSomeone",
+   proj=F, projY1=2022, projY2=2023, catpol=1500)
+{
+	## Subfunctions ===============================
+	##
+	## qtab------------------------------2021-04-19
+	## Quantile tabulation summary using decimal places
+	## -----------------------------------------AME
+	qtab = function(xx.MCMC, dig=0, quants3=tcall(quants3)) {  ## dig is number of dec places
+		out = paste0( c( 
+			prettyNum(round(quantile(xx.MCMC, quants3[2]), digits=dig), big.mark=options()$big.mark),
+			" (", prettyNum(round(quantile(xx.MCMC, quants3[1]), digits=dig), big.mark=options()$big.mark),
+			", ", prettyNum(round(quantile(xx.MCMC, quants3[3]), digits=dig), big.mark=options()$big.mark), ")"
+		), collapse="")
+		return(out)
+	}
+	##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~qtab
+	
+	## getRdev---------------------------2023-01-19
+	## Adapted from Arni Magnusson's scape::importCol, specifically subfunction 'getR'
+	## ---------------------------------------AM|RH
+	getRdev <- function(dir, burnin=200) {
+		R <- read.table(paste(dir, "resids.pst", sep = "/"), header=TRUE, fill=TRUE)
+		R <- R[,grepl("^Rec",colnames(R))]
+		R <- R[, -ncol(R)]
+		colnames(R) = gsub("^Rec_","",colnames(R))
+		#colnames(R) <- as.integer(colnames(R)) - 1  ## no apparent need for this adjustment
+		R <- R[(burnin + 1):nrow(R),]
+		type.convert(R, as.is = TRUE)
+	}
+	##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~getRdev
+	##
+	## End subfunctions ===========================
+
+	## Main function ==============================
+	if (model %in% c("Awatea")) {
+	## Awatea -- variant of Coleraine
+		for (v in values) {
+			kdf = kdf2 = kdf3 = NULL
+			is.mpd = is.mcmc = FALSE
+			for (i in 1:length(runs)){
+				ii   = runs[i]
+				iii  = pad0(ii,2)
+				jj   = rwts[i]
+				jjj  = pad0(jj,2)
+				run  = paste0(iii,".",jjj)
+				ijmc = paste0(spc,"run",iii,"/MCMC.",iii,".",jjj)
+				mcdir = paste0(path,"/",ijmc)
+				mpdir = sub("/MCMC\\.","/MPD.",mcdir)
+				if (proj) {
+					## Specific to Dee's request for BOR
+					pyr1 = as.character(projY1); pyr2 = as.character(projY2)
+					load (paste0(mcdir,"/currentProj.rda"))
+					catpols = as.numeric(names(currentProj$U))
+					cpol    = findPV(catpol, catpols)
+					uproj   = currentProj$U[[cpol]]
+					umed    = median(uproj[,pyr1])
+					load (paste0(mcdir,"/currentProj2.rda"))
+					ratpols = as.numeric(names(currentProj2$U))
+					rpol    = findPV(umed, ratpols)
+					.flush.cat(paste0("Harvest rate for ", pyr1, " catch projections in Run ", iii, ".", jjj, "= ", ratpols[rpol]), "\n")
+					yproj   = currentProj2$Y[[rpol]]
+					yproj3   = currentProj2$Y[["0.06"]]  ## will have to run code before determining this number from object 'kdf'
+					udat = uproj; cdat = yproj; cdat3 = yproj3
+					run.sample = paste(iii, jjj, rownames(udat), sep=".")
+					ijdat = data.frame('Run.Sample'=run.sample, udat)
+					ijdat2 = data.frame('Run.Sample'=run.sample, cdat)
+					ijdat3 = data.frame('Run.Sample'=run.sample, cdat3)
+					colnames(ijdat) = colnames(ijdat2) = colnames(ijdat3) = sub("^X","",colnames(ijdat))
+					kdf = rbind(kdf,ijdat)    ## projected harvest rates at catch policy 'catpol'
+					kdf2 = rbind(kdf2,ijdat2) ## projected catches at harvest rate for run i rwt j
+					kdf3 = rbind(kdf3,ijdat3) ## projected catches at median composite 'kdf' harvest rate (manual iteration)
+				} else {
+					if (v %in% c("B","R","U","VB","P","Rdev")){ ## MCMC
+						is.mcmc = TRUE
+						if (v %in% "Rdev"){
+							kdat = getRdev(dir=paste0(path,"/",spc,"run",iii,"/MCMC.",iii,".",jjj), burnin=burnin)
+						} else {
+							if (!file.exists (paste0(mcdir,"/currentMCMC.rda"))) {
+								## Need to re-run data collection and create .rda files
+								.flush.cat(paste0("Collecting MCMC binaries for ", strSpp, " in ", assYr, "..."), "\n")
+								so("redo.currentMCMC.r","awatea")
+								redo.currentMCMC(strSpp=strSpp, assYr=assYr, stock=stock, mpdir=mpdir, mcdir=mcdir, mcsub=(burnin+1):nmcmc)
+							}
+							load (paste0(mcdir,"/currentMCMC.rda"))
+							kdat = currentMCMC[[v]]
+						}
+						rnams = rownames(kdat)
+						rnams = pad0(rnams,max(nchar(rnams))-1)
+						run.sample = paste(iii, jjj, rnams, sep=".")
+						ijdat = data.frame('Run.Sample'=run.sample, kdat)
+						colnames(ijdat) = sub("^X","",colnames(ijdat))
+						if (v %in% "P") {
+							if (i==1) kdf = list()
+							kdf[[run]] = ijdat
+						} else { 
+							if (i>1 && ncol(ijdat)!=ncol(kdf)) {  ## usually for parameters
+								browser();return()
+							}
+							kdf = rbind(kdf,ijdat)
+						}
+					} else if (v %in% c("C")){
+						is.mpd = TRUE
+						mpd.file = list.files(mpdir,pattern="^Bmpd.+rda$")
+						if (length(mpd.file)==0) {
+							recon = TRUE
+							run.dir = dirname(mpdir)
+							mpd.res = list.files(run.dir, pattern=paste0("+.",iii,"\\.",jjj,"\\.res"))
+							currentRes = importRes(paste0(run.dir,"/",mpd.res), Dev=TRUE, CPUE=TRUE, Survey=TRUE, CLc=TRUE, CLs=TRUE, CAs=TRUE, CAc=TRUE, extra=TRUE)
+							save("currentRes",file=paste0(mpdir,"/currentRes.rda"))  ## useful to have when compiling the final results appendix
+						} else {
+							recon = FALSE
+							load (paste0(mpdir,"/",mpd.file))
+						}
+						if (v %in% "C") {
+							if (recon) {
+								years = currentRes$B[,"Year"]
+								Ct = currentRes$B[,-1][,grep("Y",names(currentRes$B[,-1])),drop=FALSE] ## needed in case Ngear > 1
+								Ct = Ct[-nrow(Ct),,drop=FALSE]
+								row.names(Ct) = years[-length(years)]
+								kdat = Ct
+							} else {
+								kdat = Bmpd[[1]][[1]]$Ct
+								if (is.vector(kdat)) {
+									rnams = as.character(Bmpd[[1]][[1]]$years)
+									rnams = rnams[-length(rnams)]
+									kdat = as.data.frame(matrix(kdat, ncol=1, dimnames=list(rnams,"fishery")))
+								}
+							}
+							if (is.null(dim(kdat)) || dim(kdat)[2]!=length(fleets)) {
+								message("Fleet names do not match dimensions of catch")
+								browser();return()
+							}
+							kdf  = kdat
+							colnames(kdf) = fleets
+							next
+						} else if (v %in% "Rdev") {
+							kdat = Bmpd[[1]][[1]]$logRecDev.mpd
+							ijdat = cbind(NULL,kdat)
+							colnames(ijdat) = paste0("R",iii,".",jjj)
+							kdf  = cbind(kdf, ijdat)
+						}
+					}
+				}
+			}
+			if (v %in% "P") {
+				allnams = colnames(kdf[[which.max(sapply(kdf,ncol))]])
+				if (all(sapply(kdf, function(x){all(colnames(x) %in% allnams)})) ) {
+					ii = 0
+					kls = kdf ## kdf is a list at this point
+					#kdf = setNames(data.frame(matrix(ncol=length(allnams), nrow=0)), allnams)
+					kdf = setNames(data.frame(matrix(NA, ncol=length(allnams), nrow=sum(sapply(kls,nrow)) )), allnams)
+					for (i in 1:length(kls)) {
+						idf = kls[[i]]
+						ii  = 1:nrow(idf) + max(ii)
+						kdf[ii, names(idf)] = idf
+#if	(i==2){browser();return()}
+					}
+#br	owser();return()
+				} else {
+					browser();return()
+				}
+			}
+			write.csv(kdf, paste0(spc,"-", stock,"-", assYr,"-", ifelse(is.mpd,"MPD","MCMC"),"(", paste0(v,collapse="."), ")-", extra, ".csv"), row.names=ifelse(is.mpd,TRUE,FALSE))
+			out = list(kdf=kdf)
+			if (proj) {
+				## Harvest rates at constant catch policy (CCP) given by argument 'catpol'
+				u2022   = quantile(kdf[,pyr1], c(0.05,0.5,0.95))
+				q2022   = qtab(kdf[,pyr1], dig=2, quants3=c(0.05,0.5,0.95))
+				.flush.cat(paste0("\nMedian (quantiles 0.05,0.95)  harvest rate in ", pyr1, " using the composite harvest rate object: \n", q2022), "\n\n")
+		
+				## Catches using multiple constant harvest rate policies (CHRPs); each specific to the component run of a composite
+				c2023   = quantile(kdf2[,pyr2], c(0.05,0.5,0.95))
+				q2023   = qtab(kdf2[,pyr2], dig=0, quants3=c(0.05,0.5,0.95))
+				.flush.cat(paste0("Median (quantiles 0.05,0.95) catch in ", pyr2, " using the composite catch object from ", length(runs)," CHRPs:\n", q2023), "\n\n")
+		
+				rpol2    = findPV(median(kdf[,pyr1]), ratpols)
+				.flush.cat(paste0("Harvest rate for ", pyr1, " catch projections using the median of the composite harvest rate object, CHRP=", ratpols[rpol2]), "\n")
+				## Catches using one CHRP dtermined from median of HR composite; each specific to the component run of a composite
+				c2023a  = quantile(kdf3[,pyr2], c(0.05,0.5,0.95))
+				q2023a  = qtab(kdf3[,pyr2], dig=0, quants3=c(0.05,0.5,0.95))
+				.flush.cat(paste0("Median (quantiles 0.05,0.95) catch in ", pyr2, " using the ", pyr1," CHRP=", ratpols[rpol2], ":\n", q2023a), "\n\n")
+		
+				## Write various kdf objects to CSV files
+				row.names(kdf2) = 1:nrow(kdf2)
+				write.csv(kdf2, paste0(spc,"-", stock,"-", assYr,"-", "MCMC(CHR3)-", extra, ".csv"), row.names=FALSE)
+				row.names(kdf3) = 1:nrow(kdf3)
+				write.csv(kdf3, paste0(spc,"-", stock,"-", assYr,"-", "MCMC(CHR1)-", extra, ".csv"), row.names=FALSE)
+				out = c(out, list(kdf2=kdf2, kdf3=kdf3))
+			}
+		}
+	} ## end Awatea
+	else if (model %in% c("SS3")) {
+		## Stock Synthesis 3 after using 'gatherMCMCs' function
+		mcfile = max(list.files(path=path, pattern="^compo\\.[[:digit:]]+\\.rda"))
+		load(paste0(path, "/", mcfile))  ## loads list object 'compo'
+		unpackList(compo, scope="L")
+		for (v in values) {
+			if (v %in% "C") {
+				crun = as.numeric(substr(path, nchar(path)-1, nchar(path)))
+				crwt = rwts[which(runs==crun)]
+				crfile = paste0(path, "/MPD.", pad0(crun,2), ".", pad0(crwt,2), "/data.", pad0(crun,2), ".", pad0(crwt,2), ".ss")
+				#crdat = r4ss::SS_readdat(crfile)
+				#crdat = SS_readdat(crfile) ## function not imported from r4ss in NAMESPACE because r4ss has a sh!tload of dependencies
+				crdat = .ss3.readdat(crfile)
+				crcat = crdat$catch
+				crcat = crcat[crcat$year>0,]
+				flcat = split(crcat$catch,crcat$fleet)
+				catch = do.call("cbind", lapply(flcat, data.frame, stringsAsFactors=FALSE))
+				rownames(catch) = .su(crcat$year)
+				colnames(catch) = fleets
+				write.csv(catch, paste0(spc,"-", stock,"-", assYr,"-MPD(", v, ")-", extra, ".csv"), row.names=TRUE)
+				out = crdat
+			} else {
+				if (v %in% c("B")) {
+					write.csv(avgTS[,,"Bt"], paste0(spc,"-", stock,"-", assYr,"-MCMC(", v, ")-", extra, ".csv"), row.names=TRUE)
+				}
+				if (v %in% c("R")) {
+					write.csv(avgTS[,,"Rt"], paste0(spc,"-", stock,"-", assYr,"-MCMC(", v, ")-", extra, ".csv"), row.names=TRUE)
+				}
+				if (v %in% c("U")) {
+					write.csv(avgTS[,,"ut"], paste0(spc,"-", stock,"-", assYr,"-MCMC(", v, ")-", extra, ".csv"), row.names=TRUE)
+				}
+				if (v %in% c("P")) {
+					write.csv(avgPA, paste0(spc,"-", stock,"-", assYr,"-MCMC(PA)-", extra, ".csv"), row.names=TRUE)
+					write.csv(avgRP, paste0(spc,"-", stock,"-", assYr,"-MCMC(RP)-", extra, ".csv"), row.names=TRUE)
+				}
+				if (v %in% c("Rdev")) {
+					write.csv(avgTS[,,"Rtdev"], paste0(spc,"-", stock,"-", assYr,"-MCMC(", v, ")-", extra, ".csv"), row.names=TRUE)
+				}
+				if (v %in% c("Bmsy")) {
+					Bmsy = as.data.frame(matrix(avgRP[,"Bmsy"], ncol=1, dimnames=list(rownames(avgRP), "Bmsy")))
+					write.csv(Bmsy, paste0(spc,"-", stock,"-", assYr,"-MCMC(", v, ")-", extra, ".csv"), row.names=TRUE)
+				}
+				out = compo
+			}
+		}
+	} ## end SS3
+	else if (model %in% c("iSCAM")) {
+		## iSCAM -- integrated Statistical Catch-age Model (Steve Martell)
+		if (strSpp %in% c("SST")){
+			rpath = "C:/Users/haighr/Files/GFish/PSARC/PSARC_2010s/PSARC15/SST/DDiff/rscripts-pbs"
+			source(paste0(rpath,"/reptolist.r"), local=TRUE)
+			spath = "assess"  ## stock path
+			cpath = paste0(path,"/assess05")  ## central run (example run)
+			inputs = dattoRlist(paste0(cpath,"/sstassess05dd.dat"))
+		}
+		if (strSpp %in% c("WAP")){
+			rpath = "C:/Users/haighr/Files/GFish/PSARC/PSARC_2010s/PSARC17/WAP/DDiff/rscripts-pbs"
+			source(paste0(rpath,"/reptolist.r"), local=TRUE)
+			hrp = FALSE  ## assume no historical reference points unless otherwise detected
+			## Need to get composites for Bavg and Bmin (not captured in iSCAM report files)
+			if (any(grepl("Bavg|Bmin", values))) {
+				fpath = "C:/Users/haighr/Files/GFish/PSARC/PSARC_2010s/PSARC17/WAP/Docs/RD/AppF_Results"
+				load(paste0(fdir,"/A.SAR.rda"))
+				hrp = TRUE  ## historical reference points
+			}
+			if (stock %in% c("North")) {
+				spath = "Nassess"  ## stock path
+				cpath = paste0(path,"/Nassess01")  ## central run (example run)
+				inputs = dattoRlist(paste0(cpath,"/wapNassess01dd.dat"))
+				if (hrp) {
+					Bavg = A.SAR$WAPN$Bavg$modAvg
+					Bmin = A.SAR$WAPN$Bmin$modAvg
+					hrp.runs = gsub(spath,"",setdiff(names(A.SAR$WAPN$Bavg),"modAvg"))
+				}
+			}
+			if (stock %in% c("South")) {
+				spath = "Sassess"  ## stock path
+				cpath = paste0(path,"/Sassess04")  ## central run (example run)
+				inputs = dattoRlist(paste0(cpath,"/WAPSassess04dd.dat"))
+				if (hrp) {
+					Bavg = A.SAR$WAPS$Bavg$modAvg
+					Bmin = A.SAR$WAPS$Bmin$modAvg
+					hrp.runs = gsub(spath,"",setdiff(names(A.SAR$WAPS$Bavg),"modAvg"))
+				}
+			}
+			if (hrp) {
+				#z = match(runs,as.numeric(hrp.runs))
+				#hrp.runs[order(runs[zz])]  ## too much hassle
+				if (!all(runs==as.numeric(hrp.runs))) {
+					mess = paste0("Your order choice of runs (", paste0(runs,collapse=", "), ")\n   does not match the model average order (", paste0(as.numeric(hrp.runs),collapse=", "), ")")
+					stop(mess)
+					browser();return()
+				}
+				hrp.samp = (burnin+1):nmcmc
+				hrp.rnam = paste0("R", rep(hrp.runs, each=length(hrp.samp)), ".", rep(pad0(hrp.samp,4), length(hrp.runs)))
+				HRP = data.frame(Bavg=Bavg, Bmin=Bmin)
+				rownames(HRP) = hrp.rnam
+				write.csv(HRP, paste0(spc,"-", stock,"-", assYr,"-MCMC(HRP)-", extra, ".csv"), row.names=TRUE)
+				values = setdiff(values, c("Bavg","Bmin"))
+			}
+		}
+		out    = inputs
+		years  = inputs$`#first year of data`:inputs$`#last year of data`
+		nyrs   = length(years)
+		for (v in values) {
+			if (v %in% "C"){
+				catch = inputs[[grep("yr commercial",names(inputs))]]
+				catch = catch[,apply(catch,2,sum)>0]
+				kdat  = as.data.frame(matrix(catch[,-1], ncol=ncol(catch)-1, dimnames=list(catch[,1], fleets)))
+				write.csv(kdat, paste0(spc,"-", stock,"-", assYr,"-MPD(", v, ")-", extra, ".csv"), row.names=TRUE)
+#browser();return()
+			} else {
+				kdat = NULL
+				for (i in runs) {
+					ii = pad0(i,2)
+					.flush.cat(paste0("Species=", strSpp, " Stock=", stock, " Value=", v, " Run", ii),"\n")
+					ipath = paste0(path,"/", spath, ii)
+					iprefix = switch (v, 'B'="sbt", 'R'="rt", 'Rdev'="recDevs", 'U'='ft', 'P'="iscamdelaydiff")
+					idat = read.table(paste0(ipath,"/",iprefix,".mcmc"), header=ifelse(v %in% "P",T,F))
+					if (v=="U") idat = 1 - exp(-idat)  ## convert instantaneous F to exploitation rate U
+					if (v=="P") {
+						idat = idat[(burnin+1):nmcmc, grep("Age\\.|Poor|Average|Good",colnames(idat),invert=T,value=T)]
+					} else {
+						iyrs = if (v %in% c("R")) years[ifelse(strSpp %in% "SST",-c(1:2),-1)] else years  ## why are recruits missing the first 2 years for SST?
+						idat = idat[(burnin+1):nmcmc,1:length(iyrs)]
+						colnames(idat) = iyrs
+					}
+					rownames(idat) = paste0("R",ii,".",pad0(rownames(idat),4))
+#if(i==8) {browser();return()}
+					if (!is.null(kdat) && (ncol(idat)!=ncol(kdat) || !all(colnames(idat)==colnames(kdat)))){
+						if (ncol(idat)>ncol(kdat))
+							inams = unique(colnames(idat), colnames(kdat))
+						else
+							inams = unique(colnames(kdat), colnames(idat))
+						kdat.keep = kdat
+						#kdat = setNames(data.frame(matrix(ncol=length(inams), nrow=0)), inams)  ## interesting but won't work
+#browser();return()
+						kdat = as.data.frame(array(NA, dim=c(nrow(kdat.keep)+nrow(idat),length(inams)), dimnames=list(c(rownames(kdat.keep),rownames(idat)),inams)))
+						kdat[rownames(kdat.keep),colnames(kdat.keep)] = kdat.keep
+						kdat[rownames(idat),colnames(idat)] = idat
+					} else {
+						kdat = rbind(kdat, idat)
+					}
+				}
+				write.csv(kdat, paste0(spc,"-", stock,"-", assYr,"-MCMC(", v, ")-", extra, ".csv"), row.names=TRUE)
+#browser();return()
+			} ## end MCMC collection
+		} ## end value loop
+	} ## end iSCAM
+	invisible(return(out))
+}
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~extractPost
 
 
 ## findPV-------------------------------2018-11-09
@@ -1289,7 +1647,7 @@ isThere = function(x, envir=parent.frame()) {
 	genv = function(){ .GlobalEnv }                # global environment
 
 
-## linguaFranca-------------------------2021-04-26
+## linguaFranca-------------------------2022-07-27
 ## Translate English phrases to French (other languages possible)
 ## for use in plotting figures with French labels.
 ## Note that 'gsub' has a limit to its nesting depth.
@@ -1299,6 +1657,8 @@ isThere = function(x, envir=parent.frame()) {
 ## ---------------------------------------------RH
 linguaFranca = function(x, lang="e", little=4, strip=FALSE, localnames=FALSE)
 {
+	if (!is.element(lang, c("e","f")))
+		stop("Only 'e' or 'f' supported for argument 'lang'")
 	if (length(x)==1 && is.expression(x)) {
 		if (lang=="e") return(x)
 		else {
@@ -1320,16 +1680,16 @@ linguaFranca = function(x, lang="e", little=4, strip=FALSE, localnames=FALSE)
 			locowords = sapply(locawords,function(xx){
 				locoset = sapply (xx, function(xxx){
 					## Shift words to the front
-					pattern = "[Ii]sland|[Cc]anyon|[Ss]ound|[Ss]pit|[Bb]ay|[Pp]oint|[Ss]pot|[Ii]nlet|[Dd]oughnut|[Bb]ank|[Ll]ake"
+					pattern = "[Oo]ff|[Ii]sland|[Cc]anyon|[Ss]ound|[Ss]pit|[Bb]ay|[Pp]oint|[Ss]pot|[Ii]nlet|[Dd]oughnut|[Bb]ank|[Ll]ake|[Ee]ntrance"
 #browser();return()
 					if (any(grepl(pattern,xxx))) {
-						xrev = c(xxx[grep(pattern,xxx)],xxx[grep(pattern,xxx,invert=T)])
+						xrev = c(xxx[grep(pattern,xxx)],xxx[grep(pattern,xxx,invert=TRUE)])
 						return(paste0(xrev,collapse=" "))
 					}
 					## Shift words to the back
 					pattern = "[Nn]orth|[Ss]outh|[Ee]ast|[Ww]est|[S][E]|[S][W]|[Dd]eep|[Oo]utside"
 					if (any(grepl(pattern,xxx))) {
-						xrev = c(xxx[grep(pattern,xxx,invert=T)],xxx[grep(pattern,xxx)])
+						xrev = c(xxx[grep(pattern,xxx,invert=TRUE)],xxx[grep(pattern,xxx)])
 						return(paste0(xrev,collapse=" "))
 					}
 					else return(paste0(xxx,collapse=" "))
@@ -1338,8 +1698,9 @@ linguaFranca = function(x, lang="e", little=4, strip=FALSE, localnames=FALSE)
 			})
 			## Locality names
 			xloco = sapply(locowords, function(xx){
-				gsub(" and ", " et ",
 				gsub("fm", "br",
+				gsub(" and ", " et ",
+				gsub(" to ", eval(parse(text=deparse(" \u{00E0} "))),
 				gsub("[Bb]ay", "Baie",
 				gsub("[Bb]ig", "Grande",
 				gsub("[S][W]", "S-o",
@@ -1365,8 +1726,10 @@ linguaFranca = function(x, lang="e", little=4, strip=FALSE, localnames=FALSE)
 				gsub("[Oo]utside", "Dehors",
 				gsub("[Dd]oughnut", "Beignet",
 				gsub("\\(shallow)", "(peu profonde)",
+				gsub("[Ee]ntrance", eval(parse(text=deparse("Entr\u{00E9}e"))),
 				gsub("[Oo]ffshore", eval(parse(text=deparse("Extrac\u{00F4}tier"))),
-				xx))))))))))))))))))))))))))))
+				gsub("(\\s+)?[Oo]ff(\\s+)?", "\\1au large\\2",
+				xx)))))))))))))))))))))))))))))))
 			})
 #browser();return()
 			return(xloco)
@@ -1379,7 +1742,6 @@ linguaFranca = function(x, lang="e", little=4, strip=FALSE, localnames=FALSE)
 		nchars  = sapply(x,function(x0) { nchar(gsub("^([[:punct:]]+) |s$| ([[:digit:]]+)","",x0)) } )  ## remove 's' and digits to catch small-word plurals
 		zlil    = nchars<=little; lilword = x[zlil]; xLpos=(1:length(x))[zlil]
 		zbig    = nchars>little;  bigword = x[zbig]; xBpos=(1:length(x))[zbig]
-#browser();return()
 		##---------START LITTLE SINGLE WORDS---------
 		if (any(zlil)) {
 			## les petits mots de bouche (stand-alone words)
@@ -1389,7 +1751,8 @@ linguaFranca = function(x, lang="e", little=4, strip=FALSE, localnames=FALSE)
 				gsub("[Aa]ge", eval(parse(text=deparse("\u{00E2}ge"))),
 				gsub("[Aa]ll", "tous",
 				gsub("[Ll]ag", eval(parse(text=deparse("d\u{00E9}calage"))),
-				gsub("[Rr]un", eval(parse(text=deparse("Ex\u{00E9}"))),
+				#gsub("[Rr]un", eval(parse(text=deparse("Ex\u{00E9}"))),
+				gsub("[Rr]un", "Sim", ## Paul Marchal
 				gsub("[Ss]ex", "sexe",
 				gsub("[Yy]ear", eval(parse(text=deparse("ann\u{00E9}e"))),
 				gsub("[Mm]ale", eval(parse(text=deparse("m\u{00E2}le"))),
@@ -1422,7 +1785,9 @@ linguaFranca = function(x, lang="e", little=4, strip=FALSE, localnames=FALSE)
 			xlil = sapply(xlil, function(xx){
 				gsub("[A][R][F]", "PGB",  ## Arrowtooth Flounder
 				gsub("[B][O][R]", "SBO",  ## Bocaccio
+				gsub("[B][S][R]", "STN",  ## Blackspotted
 				gsub("[C][A][R]", "SCA",  ## Canary
+				gsub("[C][P][R]", "SCU",  ## Copper
 				gsub("[L][S][T]", eval(parse(text=deparse("SL\u{00C9}"))),  ## Longspine
 				gsub("[P][O][P]", "SLM",  ## Pacific Ocean Perch
 				gsub("[Q][B][R]", eval(parse(text=deparse("SD\u{00C9}"))),  ## Quillback
@@ -1430,17 +1795,19 @@ linguaFranca = function(x, lang="e", little=4, strip=FALSE, localnames=FALSE)
 				gsub("[R][E][R]", eval(parse(text=deparse("SO\u{00C9}"))),  ## Rougheye
 				gsub("[R][S][R]", "SRR",  ## Redstripe
 				gsub("[S][G][R]", "SAR",  ## Silvergray
+				gsub("[S][K][R]", "SBL",  ## Shortraker
 				gsub("[S][S][T]", eval(parse(text=deparse("SC\u{00C9}"))),  ## Shortspine
 				gsub("[W][A][P]", "GLA",  ## Walleye Pollock
 				gsub("[W][W][R]", "SVV",  ## Widow
 				gsub("[Y][M][R]", "SBJ",  ## Yellowmouth
 				gsub("[Y][T][R]", "SQJ",  ## Yellowtail
 				gsub("[Y][Y][R]", "SYJ",  ## Yelloweye
-				xx))))))))))))))))
+				gsub("[R][E][B][S]", eval(parse(text=deparse("SO\u{00C9}TN"))),  ## Rougheye/Blackspotted
+				xx))))))))))))))))))))
 			})
 			## Area acronyms
 			xlil = sapply(xlil, function(xx){
-				gsub("[B][C]", "C-B",
+				gsub("^[B][C]$", "C-B",
 				gsub("[H][S]", "DH",
 				gsub("[B][C][C]", "CBc",
 				gsub("[B][C][N]", "CBn",
@@ -1449,49 +1816,82 @@ linguaFranca = function(x, lang="e", little=4, strip=FALSE, localnames=FALSE)
 				gsub("[D][F][O]", "MPO",
 				gsub("[P][B][S]", "SBP",
 				gsub("[Q][C][S]", "BRC",
+				gsub("[H][B][L][L]", "PFD", ## palangre \`{a} fond dur
+				gsub("[N][M][F][S]", "SNPM", ## Service national des p\^{e}ches maritimes
 				gsub("[W][C][H][G]", "COHG",
 				gsub("[W][C][V][I]", "COIV",
-				xx)))))))))))
+				xx)))))))))))))
 			})
 			## ridiculous acronyms
 			xlil = sapply(xlil, function(xx){
 #browser();return()
 				gsub("[B][T]", "CF",             ## bottom trawl   = chalut de fond
+				gsub("[C][C]", "PC",             ## constant catch   = prise constante
 				gsub("[M][W]", "CP",             ## midwater trawl = chalut p\'{e}lagique
-				gsub("[H][R]", "TE",             ## harvest rate   = taux d'exploitation
+				gsub("[H][R]", "TR",             ## harvest rate   = taux de r\'{e}colte (not taux d'exploitation)
 				gsub("[D][F]", "DL",             ## degrees of freedom = degr\'{e}s de libert\'{e}
 				gsub("[d][f]", "dl",             ## degrees of freedom = degr\'{e}s de libert\'{e}
+				gsub("[S][A]", eval(parse(text=deparse("\u{00C9}S"))),  ## stock assessment  = \'{e}valuation des stocks
 				gsub("[A][C][F]", "FAC",         ## fonction d'autocorr\'{e}lation
 				gsub("[G][M][A]", "ZGPF",        ## les zones de gestion des poissons de fond 
 				gsub("[G][M][U]", "GGPF",        ## le groupe de gestion du poisson de fond
 				gsub("[L][R][P]", "PRL",         ## point de r\'{e}f\'{e}rence limite
 				gsub("[M][P][D]", "MDP",         ## mode de distribution post\'{e}rieure
-				gsub("[M][S][Y]", "RMS",         ## rendement maximal soutenu
-				gsub("[m][s][y]", "rms",         ## rendement maximal soutenu
+				gsub("[M][S][Y]", "RMD",         ## rendement maximal durable (no longer soutenu)
+				gsub("[m][s][y]", "rmd",         ## rendement maximal durable (no longer soutenu)
 				gsub("[R][S][S]", "SRC",         ## somme r\'{e}siduelle de carr\'{e}s
+				gsub("[T][R][P]", "PRC",         ## point de r\'{e}f\'{e}rence cible
 				gsub("[U][S][R]", "RSS",         ## r\'{e}f\'{e}rence de stock sup\'{e}rieure
+				gsub("[I][P][H][C]", "CIFP",     ## Commission internationale du fl\'{e}tan du Pacifique
+				gsub("[H][B][L][L]", eval(parse(text=deparse("P\u{00E0}FD"))), ## palangre \`{a} fond dur
 				gsub("[M][C][M][C]", "MCCM",     ## Monte Carlo \`{a} cha\^{i}ne de Markov
-				xx)))))))))))))))
+				xx))))))))))))))))))))
 			})
 			xout[xLpos] = xlil
 		}
+#browser();return()
 		##---------END LITTLE SINGLE WORDS----------
 
 		##---------START BIG/MULTIPLE WORDS---------
 		## words or phrases that appear in strings
 		if (any(zbig)) {
+			## Sensitivity run labels
+			xsen = sapply(bigword, function(xx){
+				gsub("split M ages\\(([0-9]+),([0-9]+)\\)", "diviser M entre \\1 et \\2 ans",
+				gsub("AE([0-9]) no age error", "EV\\1 pas d'erreur de vieillissement",
+				gsub("AE([0-9]) age reader CV", eval(parse(text=deparse("EV\\1 CV des lecteurs d'\u{00E2}ge"))),
+				gsub("AE([0-9]) CASAL CV=0.1", "EV\\1 CASAL CV=0,1",
+				gsub("reduce catch ([0-9]+)\\%", eval(parse(text=deparse("r\u{00E9}duire les prises de \\1%"))),
+				gsub("increase catch ([0-9]+)\\%", "augmenter les prises de \\1%",
+				gsub("sigmaR=([0-9])\\.([0-9]+)", "sigmaR=\\1,\\2",
+				gsub("female dome select", eval(parse(text=deparse("s\u{00E9}lectivit\u{00E9} du d\u{00F4}me femelle"))),
+				gsub("use AF HS WCHG", "utiliser les FA de DH et COHG",
+				gsub("add HBLL survey(s)", eval(parse(text=deparse("ajouter relev\u{00E9}\\1 de P\u{00E0}FD"))),
+				gsub("use Tweedie CPUE", "utiliser CPUE de Tweedie",
+				gsub("remove comm CPUE", "supprimer la CPUE commerciale",
+				gsub("use Francis reweight", eval(parse(text=deparse("utiliser la repond\u{00E9}ration de Francis"))),
+				xx)))))))))))))
+			})
 			## rockfish species names
-			xspp1 = sapply(bigword, function(xx){
+			xspp1 = sapply(xsen, function(xx){
 				gsub("[Bb]ocaccio", eval(parse(text=deparse("s\u{00E9}baste bocace"))),
+				gsub("[Tt]iger [Rr]ockfish", eval(parse(text=deparse("s\u{00E9}baste-tigre"))),
 				gsub("[Ww]idow [Rr]ockfish", "veuve",
 				gsub("[Cc]anary [Rr]ockfish", eval(parse(text=deparse("s\u{00E9}baste canari"))),
-				gsub("[Rr]ougheye [Rr]ockfish", eval(parse(text=deparse("s\u{00E9}baste \u{00E0} oeil \u{00E9}pineux"))),
+				gsub("[Cc]opper [Rr]ockfish", eval(parse(text=deparse("s\u{00E9}baste cuivr\u{00E9}"))),
+				gsub("[Rr]ockfish [Ii]nside", eval(parse(text=deparse("s\u{00E9}baste \u{00E0} l'int\u{00E9}rieur"))),
+				gsub("[Ii]nshore [Rr]ockfish", eval(parse(text=deparse("s\u{00E9}baste c\u{00F4}tier"))),
+				gsub("[Rr]ockfish [Oo]utside", eval(parse(text=deparse("s\u{00E9}baste \u{00E0} l'ext\u{00E9}rieur"))),
+				gsub("[Oo]ffshore [Rr]ockfish", eval(parse(text=deparse("s\u{00E9}baste extrac\u{00F4}tier"))),
+				gsub("[Rr]ougheye [Rr]ockfish", eval(parse(text=deparse("s\u{00E9}baste \u{00E0} \u{0153}il \u{00E9}pineux"))),
 				gsub("[Qq]uillback [Rr]ockfish", eval(parse(text=deparse("s\u{00E9}baste \u{00E0} dos \u{00E9}pineux"))),
 				gsub("[Rr]edbanded [Rr]ockfish", eval(parse(text=deparse("s\u{00E9}baste \u{00E0} bandes rouges"))),
 				gsub("[Rr]edstripe [Rr]ockfish", eval(parse(text=deparse("s\u{00E9}baste \u{00E0} raie rouge"))),
+				gsub("[Rr]osethorn [Rr]ockfish", eval(parse(text=deparse("s\u{00E9}baste \u{00E0} l'\u{00E9}pine de rose"))),
 				gsub("[Ss]harpchin [Rr]ockfish", eval(parse(text=deparse("s\u{00E9}baste \u{00E0} menton pointu"))),
 				gsub("[Ss]plitnose [Rr]ockfish", eval(parse(text=deparse("s\u{00E9}baste \u{00E0} bec-de-li\u{00E8}vre"))),
 				gsub("[Yy]elloweye [Rr]ockfish", eval(parse(text=deparse("s\u{00E9}baste aux yeux jaunes"))),
+				gsub("[Ss]hortraker [Rr]ockfish", eval(parse(text=deparse("s\u{00E9}baste bor\u{00E9}al"))),
 				gsub("[Yy]ellowtail [Rr]ockfish", eval(parse(text=deparse("s\u{00E9}baste \u{00E0} queue jaune"))),
 				gsub("[Ll]ongspine [Tt]hornyhead", eval(parse(text=deparse("s\u{00E9}bastolobe \u{00E0} longues \u{00E9}pines"))),
 				gsub("[Yy]ellowmouth [Rr]ockfish", eval(parse(text=deparse("s\u{00E9}baste \u{00E0} bouche jaune"))),
@@ -1499,73 +1899,88 @@ linguaFranca = function(x, lang="e", little=4, strip=FALSE, localnames=FALSE)
 				gsub("[Ss]hortspine [Tt]hornyhead", eval(parse(text=deparse("s\u{00E9}bastolobe \u{00E0} courtes \u{00E9}pines"))),
 				gsub("[Pp]acific [Oo]cean [Pp]erch", eval(parse(text=deparse("s\u{00E9}baste \u{00E0} longue m\u{00E2}choire"))),
 				gsub("[Ss]ilvergr[ae]y [Rr]ockfish", eval(parse(text=deparse("s\u{00E9}baste argent\u{00E9}"))),
-				gsub("[Rr]ougheye/[Bb]lackspotted [Rr]ockfish", eval(parse(text=deparse("s\u{00E9}baste \u{00E0} oeil \u{00E9}pineux/\u{00E0} taches noires"))),
-				xx))))))))))))))))))
+				gsub("[Rr]ougheye/[Bb]lackspotted [Rr]ockfish", eval(parse(text=deparse("s\u{00E9}baste \u{00E0} \u{0153}il \u{00E9}pineux/\u{00E0} taches noires"))),
+				xx))))))))))))))))))))))))))
 			})
-			## non-rockfish species names
+			## non-rockfish fish names
 			xspp2 = sapply(xspp1, function(xx){
-				gsub("[Ss]quid", "calmar",
+				gsub("[Ss]kates", "les raies",
 				gsub("[Ll]ingcod", "morue-lingue",
 				gsub("[Ss]ablefish", eval(parse(text=deparse("morue charbonni\u{00E8}re"))),
+				gsub("[Hh]erring(s)?", "des harengs",
 				gsub("[Rr]ex [Ss]ole", "plie royale",
 				gsub("[Bb]ig [Ss]kate", eval(parse(text=deparse("raie biocell\u{00E9}e"))),
 				gsub("[Rr]ock [Ss]ole", "fausse limande",
 				gsub("[Dd]over [Ss]ole", "limande-sole",
+				gsub("[Ff]latfish(es)?", "les poissons plats",
 				gsub("[Pp]acific [Cc]od", "morue du Pacifique",
 				gsub("[Ee]nglish [Ss]ole", "carlottin anglais",
 				gsub("[Pp]etrale [Ss]ole", "plie de Californie",
 				gsub("[Pp]acific [Hh]ake", "merlu du Pacifique",
+				gsub("[Aa]merican [Ss]had", "alose savoureuse",
 				gsub("[Ff]lathead [Ss]ole", eval(parse(text=deparse("plie \u{00E0} t\u{00EA}te plate"))),
+				gsub("[Ss]ixgill [Ss]hark", "requin griset",
 				gsub("[Ss]piny [Dd]ogfish", "aiguillat commun",
+				gsub("[Bb]lue [Ss]hark(s)?", "requin\\1 bleu\\1",
+				gsub("[Cc]hinook [Ss]almon", "saumon quinnat",
 				gsub("[Ll]ongnose [Ss]kate", "pocheteau long-nez",
 				gsub("[Pp]acific [Hh]alibut", eval(parse(text=deparse("fl\u{00E9}tan du Pacifique"))),
 				gsub("[Pp]acific [Hh]erring", "hareng du Pacifique",
+				gsub("[Ss]andpaper [Ss]kate", "raie rugueuse",
 				gsub("[Ss]potted [Rr]atfish", eval(parse(text=deparse("chim\u{00E8}re d'Am\u{00E9}rique"))),
 				gsub("[Ww]alleye [Pp]ollock", "goberge de l'Alaska",
+				gsub("[Uu]nknown [Ff]ish(es)?", "des poissons inconnus",
 				gsub("[Aa]rrowtooth [Ff]lounder", eval(parse(text=deparse("plie \u{00E0} grande bouche"))),
-				xx)))))))))))))))))))
+				gsub("[Pp]acific [Ss]leeper [Ss]hark", "requin dormeur du Pacifique",
+				xx))))))))))))))))))))))))))))
+			})
+			## non-fish names
+			xspp3 = sapply(xspp2, function(xx){
+				gsub("[Ss]quid(s)?", "des calmars",
+				gsub("[Oo]ctopus(es)?", "des poulpes",
+				gsub("[Jj]ellyfish(es)?", eval(parse(text=deparse("des m\u{00E9}duses"))),
+				gsub("[Gg]astropod(s)?", eval(parse(text=deparse("gast\u{00E9}ropode\\1"))),
+				gsub("[Bb]ox [Cc]rab(s)?", eval(parse(text=deparse("crabe \u{00E0} pattes trou\u{00E9}es"))),
+				gsub("[Tt]rue [Cc]rab(s)?", "vrais crabe\\1",
+				gsub("[Bb]asket [Ss]tar(s)?", "des ophiures",
+				gsub("[Gg]orgonian [Cc]oral(s)?", "les gorgones",
+				gsub("[Tt]anner [Cc]rab(s)?", "crabe des neiges du Pacifique",
+				gsub("[Bb]lack-[Ff]ooted [Aa]lbatross", eval(parse(text=deparse("albatros \u{00E0} pied noir"))),
+				gsub("[Kk]ing [Cc]rab(s)?|[L]ithodes", "les crabes royaux",
+				gsub("[Aa]laskan [Kk]ing [Cc]rab(s)?", "crabe royal de l'Alaska",
+				gsub("[Ss]carlet [Kk]ing [Cc]rab(s)?|[L]ithodes [Cc]ouesi", eval(parse(text=deparse("crabe royal \u{00E9}carlate"))),
+				xx)))))))))))))
 			})
 #browser();return()
-			## geographic words
-			xgeo = sapply(xspp2, function(xx){
-				##gsub("[B][C]", eval(parse(text=deparse("C-B\u{2000}"))),
-				gsub("^[B][C]([[:space:]]+)?", eval(parse(text=deparse("C-B\u{2000}"))),
-				gsub("[H][S]", "DH",
-				gsub("[Cc]oast", eval(parse(text=deparse("c\u{00F4}te"))),
-				gsub("[G][I][G]", "CIG",
-				gsub("[Q][C][S]", "BRC",
-				gsub("[P][B][S]", "SBP",
-				gsub("[W][C][H][G]", "COHG",
-				gsub("[W][C][V][I]", "COIV",
-				gsub("[Aa]rea\\(km", "superficie(km",
-				gsub("[Hh]ecate [Ss]trait", eval(parse(text=deparse("d\u{00E9}troit d'Hecate"))),
-				gsub("[Mm]oresby [Gg]ully", "canyon de Moresby",
-				gsub("[P][M][F][C] [Aa]rea", "zone CPMP",
-				gsub("[Bb]ritish [Cc]olumbia", "Colombie-Britannique",
-				gsub("[Vv]ancouver [Ii]sland", eval(parse(text=deparse("\u{00CE}le de Vancouver"))),
-				gsub("[Mm]itchell's [Gg]ully", "canyon de Mitchell",
-				gsub("[Ee]ncountered [Aa]rea", "zone de rencontre",
-				gsub("[Gg]oose [Ii]sland [Gg]ully", eval(parse(text=deparse("canyon de l'\u{00EE}le Goose"))),
-				gsub("[Qq]ueen [Cc]harlotte [Ss]ound", "bassin de la Reine-Charlotte",
-				gsub("[Qq]ueen [Cc]harlotte [Ss]trait", eval(parse(text=deparse("d\u{00E9}troit de la Reine-Charlotte"))),
-				xx)))))))))))))))))))
-			})
-			## Stock Synthesis (SS) favourites
-			xss = sapply(xgeo, function(xx){
+			## Stock Synthesis (SS3) favourites
+			xss = sapply(xspp3, function(xx){
+				gsub("[Ff]leet", "flotte",
 				gsub("[Pp]rior", "prieur",
+				gsub("[Tt]otal", "totale",  ## vraisemblance totale
 				gsub("[Aa]ge[Ss]el", eval(parse(text=deparse("s\u{00E9}l.d'\u{00E2}ge"))),
+				gsub("[Aa]ge [Dd]ata", eval(parse(text=deparse("donn\u{00E9}es d'\u{00E2}ge"))),
+				gsub("[Ii]ndex [Dd]ata", eval(parse(text=deparse("donn\u{00E9}es d'indice"))),
 				gsub("[N] (samp|adj)", eval(parse(text=deparse("N \u{00E9}ch"))),
 				gsub("[Dd]bl[Nn] peak", "Ndbl de pointe",
+				gsub("[Hh]armonic [Mm]ean", "moyenne harmonique",
 				gsub("[Ii]nitial [Vv]alue", "valeur initiale",
 				gsub("[Aa]bundance [Ii]ndex", "indice d'abondance",
+				gsub("[Aa]rithmetic [Mm]ean", eval(parse(text=deparse("moyenne arithm\u{00E9}tique"))),
 				gsub("[Pp]osterior [Mm]edian", eval(parse(text=deparse("m\u{00E9}diane post\u{00E9}rieure"))),
-				gsub("[Aa]ge\\-([0-9]) recruits", "recrues de \\1 ans",
+				gsub("[Aa]ge\\-([0-9]) fish", eval(parse(text=deparse("poisson d'\u{00E2}ge \\1"))),
+				gsub("[Aa]ge\\-([0-9]) recruits", eval(parse(text=deparse("recrues d'\u{00E2}ge \\1 ans"))),
 				gsub("[Dd]bl[Nn] ascend [Ss][Ee]", "Ndbl ascendante ES",
 				gsub("([[:digit:]])[Mm]ale [Pp]eak", eval(parse(text=deparse("de pointe \\1m\u{00E2}le"))),  ## \\1 = first capture group in parentheses
+				gsub("[Cc]hange in -log-likelihood", eval(parse(text=deparse("changement de log-vraisemblance n\u{00E9}gatif"))),
+				gsub("[Oo]bserved [Ss]ample [Ss]ize", eval(parse(text=deparse("taille de l'\u{00E9}chantillon observ\u{00E9}"))),
+				gsub("[Ee]ffective [Ss]ample [Ss]ize", eval(parse(text=deparse("taille effective de l'\u{00E9}chantillon"))),
 				gsub("[Mm]ax(\\.|imum)? [Ll]ikelihood", "vraisemblance maximale",
+				gsub("[Ss]tandard [Dd]eviation of [Aa]ge", eval(parse(text=deparse("\u{00E9}cart type de l'\u{00E2}ge"))),
 				gsub("[Rr]ecruitment [Dd]eviation [Vv]ariance", eval(parse(text=deparse("variance de l'\u{00E9}cart de recrutement"))),
+				gsub("[Mm]ale [Nn]atural [Mm]ortality(\\s+\\(M\\))?", eval(parse(text=deparse("mortalit\u{00E9} naturelle des m\u{00E2}les\\1"))),
+				gsub("[Ff]emale [Nn]atural [Mm]ortality(\\s+\\(M\\))?", eval(parse(text=deparse("mortalit\u{00E9} naturelle des femelles\\1"))),
 				gsub("[Aa]symptotic [Ss]tandard [Ee]rror [Ee]stimate", "estimation d'erreur standard asymptotique",
-				xx)))))))))))))
+				xx))))))))))))))))))))))))))
 			})
 			## large unwieldy phrases (poo)
 			xpoo = sapply(xss, function(xx){
@@ -1607,35 +2022,41 @@ linguaFranca = function(x, lang="e", little=4, strip=FALSE, localnames=FALSE)
 				gsub("[Aa]nnual [Mm]ean [Ww]eight", "poids moyen annuel",
 				gsub("[Dd]egrees [Oo]f [Ff]reedom", eval(parse(text=deparse("degr\u{00E9}s de libert\u{00E9}"))),
 				gsub("[Cc][Vv] [Pp]rocess [Ee]rror", "erreur de processus de CV",
-				gsub("[Nn]o [G][I][G]/[Tt]riennial", "pas GIG/triennal",
+				gsub("[Nn]o [G][I][G]/[Tt]riennial", "pas GIG/triennale",
 				gsub("([Tt]op|[Hh]ighest) [Cc]atch", eval(parse(text=deparse("prise la plus \u{00E9}lev\u{00E9}e"))),
-				gsub("[Mm]ax [Ee]xploitation [Rr]ate", "taux d'exploitation max",
+				gsub("[Mm]ax [Ee]xploitation [Rr]ate", eval(parse(text=deparse("taux de r\u{00E9}colte maximal"))),
 				gsub("[Ff]emale [Ss]pawning [Bb]iomass", "biomasse reproductrice femelles",
-				gsub("[Ss]pawner(s)? [Pp]er [Rr]ecruit(s)?", "biomasse reproductrice par recrue",
 				gsub("[R][E][B][S] [Nn]orth [Cc]omposite", "composite du REBS nord",
 				gsub("[R][E][B][S] [Ss]outh [Cc]omposite", "composite du REBS sud",
-				xx))))))))))))))
+				gsub("[Hh]ake [Aa]coustic( [Ss]urvey)?(s)?", eval(parse(text=deparse("relev\u{00E9}\\2 acoustique du merlu"))),
+				gsub("[Ss]pawner(s)? [Pp]er [Rr]ecruit(s)?", "biomasse reproductrice par recrue",
+				xx)))))))))))))))
 			})
 #browser();return()
 			## bigger double words
 			xtwo.big = sapply(xthree, function(xx){
 				gsub("[Bb]ottom [Tt]rawl", "chalut de fond",
+				gsub("[Hh]arvest [Rr]ate", eval(parse(text=deparse("taux de r\u{00E9}colte"))),
 				gsub("[Rr]educe [Cc]atch", eval(parse(text=deparse("r\u{00E9}duire les prises"))),
-				gsub("[Uu]nknown [Tt]rawl", "chalut inconnu",
 				gsub("[Ss]hrimp [Tt]rawl",  eval(parse(text=deparse("chalut \u{00E0} crevettes"))),
+				gsub("[Uu]nknown [Tt]rawl", "chalut inconnu",
 				gsub("[Mm]idwater [Tt]rawl", eval(parse(text=deparse("chalut p\u{00E9}lagique"))),
-				gsub("[Rr]elative [Vv]alue", "valeur relative",
 				gsub("[Cc]atch [Ss]trategy", eval(parse(text=deparse("strat\u{00E9}gie de prises"))),
+				gsub("[Rr]elative [Vv]alue", "valeur relative",
 				gsub("[Pp]rimary [Rr]eader", "technicien principal",
 				gsub("[Ii]ncrease [Cc]atch", "augmenter les prises",
 				gsub("[Dd]ecrease [Cc]atch", "diminuer les prises",
+				gsub("[Rr]etained [Cc]atch", "prises retenues",
+				gsub("[Oo]ther [Ff]isheries", eval(parse(text=deparse("autres p\u{00EA}cheries"))),
 				gsub("[Pp]arameter [Vv]alue", eval(parse(text=deparse("valeur du param\u{00E8}tre"))),
+				gsub("[Gg]roundfish [Tt]rawl",  eval(parse(text=deparse("chalut \u{00E0} poissons de fond"))),
 				gsub("[Ss]econdary [Rr]eader", "technicien secondaire",
 				gsub("[Cc]ommercial [Tt]rawl", eval(parse(text=deparse("p\u{00EA}che commerciale au chalut"))),
 				gsub("[Rr]elative [Bb]iomass", "biomasse relative",
 				gsub("[Ss]pawning [Bb]iomass", "biomasse reproductrice",
-				gsub("[Ss]ensitivity [Rr]uns", eval(parse(text=deparse("ex\u{00E9}cutions de sensibilit\u{00E9}"))),
-				gsub("[Ee]xploitation [Rr]ate", "taux d'exploitation",
+				#gsub("[Ss]ensitivity [Rr]uns", eval(parse(text=deparse("ex\u{00E9}cutions de sensibilit\u{00E9}"))),
+				gsub("[Ss]ensitivity [Rr]un(s)", eval(parse(text=deparse("simulation\\1 de sensibilit\u{00E9}"))), ## Paul Marchal
+				gsub("[Ee]xploitation [Rr]ate", eval(parse(text=deparse("taux de r\u{00E9}colte"))),
 				gsub("[Ff]ishing [Mm]ortality", eval(parse(text=deparse("mortalit\u{00E9} par p\u{00EA}che"))),
 				gsub("[Dd]erived [Qq]uantities", eval(parse(text=deparse("quantit\u{00E9}s d\u{00E9}riv\u{00E9}es"))),
 				gsub("[Ss]pawning [Dd]epletion", eval(parse(text=deparse("\u{00E9}puisement des femelles reproductrices"))),
@@ -1645,8 +2066,8 @@ linguaFranca = function(x, lang="e", little=4, strip=FALSE, localnames=FALSE)
 				gsub("[Cc]umulative [Ff]requency", eval(parse(text=deparse("fr\u{00E9}quence cumulative"))),
 				gsub("[Tt]heoretical [Qq]uantiles", eval(parse(text=deparse("quantiles th\u{00E9}oriques"))),
 				gsub("[Pp]osterior [Dd]istribution", eval(parse(text=deparse("distribution post\u{00E9}rieure"))),
-				gsub("[Rr]ecruitment [Dd]eviations", eval(parse(text=deparse("\u{00E9}carts de recrutement"))),
-				xx)))))))))))))))))))))))))))
+				gsub("[Rr]ecruitment [Dd]eviation(s)?", eval(parse(text=deparse("\u{00E9}cart\\1 de recrutement"))),
+				xx)))))))))))))))))))))))))))))))
 			})
 			## smaller double words
 #browser();return()
@@ -1662,8 +2083,10 @@ linguaFranca = function(x, lang="e", little=4, strip=FALSE, localnames=FALSE)
 				gsub("[Bb]ased [Oo]n", eval(parse(text=deparse("bas\u{00E9} sur"))),
 				gsub("[Aa]ge(\\s+)?\\(y(?:ear|r)", eval(parse(text=deparse("\u{00E2}ge (ann\u{00E9}e"))),
 				gsub("[Ee]nd [Yy]ear", eval(parse(text=deparse("ann\u{00E9}e de fin"))),
-				gsub("[Bb]ase [Cc]ase", eval(parse(text=deparse("sc\u{00E9}nario de r\u{00E9}f\u{00E9}rence"))),
-				gsub("[Bb]ase [Rr]uns", eval(parse(text=deparse("ex\u{00E9}cutions des sc\u{00E9}narios de r\u{00E9}f\u{00E9}rence"))),
+				gsub("[Bb]ase [Cc]ase|[Bb]ase [Rr]un", eval(parse(text=deparse("sc\u{00E9}nario de r\u{00E9}f\u{00E9}rence"))),
+				#gsub("[Bb]ase [Rr]uns", eval(parse(text=deparse("ex\u{00E9}cutions des sc\u{00E9}narios de r\u{00E9}f\u{00E9}rence"))),
+				gsub("[Bb]ase [Rr]un(s)?", eval(parse(text=deparse("simulation\\1 de r\u{00E9}f\u{00E9}rence"))),  ## Paul Marchal
+				#gsub("[Bb]ase [Rr]un(s)?", eval(parse(text=deparse("sim\\1 de r\u{00E9}f"))),  ## Paul Marchal (shorten it for compo)
 				gsub("[Bb]ut [Ff]ixed", "mais fixe",
 				gsub("[Aa]ge [Cc]lass", eval(parse(text=deparse("classe d'\u{00E2}ge"))),
 				gsub("min [B] [Yy]ear", eval(parse(text=deparse("ann\u{00E9}e de min B"))),
@@ -1677,11 +2100,13 @@ linguaFranca = function(x, lang="e", little=4, strip=FALSE, localnames=FALSE)
 				gsub("[Tt]otal [Bb]iomass", "biomasse totale",
 				gsub("[Pp]redicted [Aa]ge", eval(parse(text=deparse("\u{00E2}ge pr\u{00E9}dit"))),
 				gsub("[Ff]ishing [Ee]ffort", eval(parse(text=deparse("effort de p\u{00EA}che"))),
-				gsub("[Aa]g(e)?ing [Ee]rror", "erreur de vieillissement",
+				gsub("[Aa]g(e)?(ing)? [Ee]rror", "erreur de vieillissement",
+				gsub("[Tt]ow [Ll]ocation(s)?", "emplacement\\1 des traits de chalut",
 				gsub("[Mm]ean [Aa]ge \\(year", eval(parse(text=deparse("\u{00E2}ge moyen (ann\u{00E9}e"))),
+				gsub("[Pp]rojected [Cc]atch", eval(parse(text=deparse("prise projet\u{00E9}e"))),
 				gsub("[Hh]al[fv](e)? [Cc]atch", eval(parse(text=deparse("moiti\u{00E9} prise"))),
 				gsub("[Mm]ean\\([Cc][Pp][Uu][Ee])", "moyenne(cpue)",
-				xx))))))))))))))))))))))))))))))
+				xx))))))))))))))))))))))))))))))))
 			})
 			## single words 10 or more characters
 			xone.big = sapply(xtwo.med, function(xx){
@@ -1718,7 +2143,7 @@ linguaFranca = function(x, lang="e", little=4, strip=FALSE, localnames=FALSE)
 				gsub("[Pp]osterior", eval(parse(text=deparse("post\u{00E9}rieure"))),
 				gsub("[Pp]redicted", eval(parse(text=deparse("pr\u{00E9}dit"))),
 				gsub("[Rr]esiduals", eval(parse(text=deparse("r\u{00E9}sidus"))),
-				gsub("[Tt]riennial", "triennal",
+				gsub("[Tt]riennial", "triennale",  ## survey is feminine: enqu\^{e}te triennale
 				gsub("[Ff]requency", eval(parse(text=deparse("la fr\u{00E9}quence"))),
 				gsub("[Bb]iomass(e)?", "biomasse",
 				gsub("[Ss][Yy][Nn][Oo][Pp][Tt][Ii][Cc]", "synoptique",
@@ -1729,15 +2154,16 @@ linguaFranca = function(x, lang="e", little=4, strip=FALSE, localnames=FALSE)
 			xone.small = sapply(xone.med, function(xx){
 				gsub(" \\(y)", " (an.)",
 				gsub("[Aa]dd", "ajouter",
-				gsub("[Rr]un", eval(parse(text=deparse("Ex\u{00E9}"))),
-				gsub("[Dd]rop", "enlever",
+				#gsub("[Rr]un", eval(parse(text=deparse("Ex\u{00E9}"))),
+				gsub("[Rr]un", "Sim",  ## Paul Marchal
+				gsub("[Dd]rop(ped)?",  eval(parse(text=deparse("enlev\u{00E9}"))),
 				gsub("[N]orth", "Nord",
 				gsub("[S]outh", "Sud",
 				gsub("^[Aa]ge ", eval(parse(text=deparse("\u{00E2}ge "))),
 				gsub("^[Yy]ear ", eval(parse(text=deparse("ann\u{00E9}e "))),
 				gsub("/[Cc]ell", "/cellule", ## need qualifier for Big Skate (raie biocell\'{e}e)?
 				#gsub("^[.]?[Mm]ale", eval(parse(text=deparse("m\u{00E2}le"))),
-				gsub("([^[:digit:]])[Mm]ale", eval(parse(text=deparse("\\1m\u{00E2}le"))),
+				gsub("([^[:digit:]])?[Mm]ale", eval(parse(text=deparse("\\1m\u{00E2}le"))),
 				gsub("[Cc]atch", "prises",
 				gsub("[Dd]epth", "profondeur",
 				gsub("[Ii]ndex", "indice",
@@ -1770,6 +2196,7 @@ linguaFranca = function(x, lang="e", little=4, strip=FALSE, localnames=FALSE)
 				gsub("[Mm]inor", "secondaire",
 				gsub("[Ss]able", "morue",
 				gsub("[Tt][Rr][Aa][Ww][Ll]", "chalut",
+				gsub("[H][B][L][L]", eval(parse(text=deparse("P\u{00E0}FD"))),
 				gsub("[Aa]ssess", eval(parse(text=deparse("\u{00E9}val"))),
 				gsub("[Ss]almon", "saumon",
 				gsub("[Ss]orted", eval(parse(text=deparse("tri\u{00E9}es"))),
@@ -1788,12 +2215,11 @@ linguaFranca = function(x, lang="e", little=4, strip=FALSE, localnames=FALSE)
 				gsub("[R][E][B][S] [Nn]orth", "REBS nord",
 				gsub("[R][E][B][S] [Ss]outh", "REBS sud",
 				gsub("[Hh]ook [\\&|Aa](nd)? [Ll]ine", eval(parse(text=deparse("hame\u{00E7}on et lignes"))),
-				gsub("[Hh][Ll](\\_|\\.| )[Rr]ockfish", eval(parse(text=deparse("HL.s\u{00E9}baste"))),
+				gsub("[Hh][Ll](\\_|\\.| )[Rr]ock(fish)?", eval(parse(text=deparse("HL.s\u{00E9}baste"))),
 				gsub("[Ff][Ii][Ss][Hh]([Ee][Rr][Yy]|ing)", eval(parse(text=deparse("p\u{00EA}che"))),
-				gsub("[Hh](\\&|\\.)[Ll](\\_|\\.| )[Rr]ockfish", eval(parse(text=deparse("H&L s\u{00E9}baste"))),
-				xx)))))))))))))))))))))))))
+				gsub("[Hh](\\&|\\.)[Ll](\\_|\\.| )[Rr]ock(fish)?", eval(parse(text=deparse("H&L s\u{00E9}baste"))),
+				xx))))))))))))))))))))))))))
 			})
-#browser();return()
 			## single words describing biology
 			xbio = sapply(xfish, function(xx){
 				gsub("[Ss]pent", eval(parse(text=deparse("us\u{00E9}"))),
@@ -1808,26 +2234,64 @@ linguaFranca = function(x, lang="e", little=4, strip=FALSE, localnames=FALSE)
 				gsub("[Ff]ertili[sz]ed", eval(parse(text=deparse("fertilis\u{00E9}"))),
 				xx))))))))))
 			})
+			## geographic words
+			xgeo = sapply(xbio, function(xx){
+				##gsub("[B][C]", eval(parse(text=deparse("C-B\u{2000}"))),
+				#gsub("^[B][C]([[:space:]]+)?", eval(parse(text=deparse("C-B\u{2000}"))),
+				gsub("([[:space:]]+)?[B][C]([[:space:]]+)?", eval(parse(text=deparse("\\1C-B\\2"))),
+				gsub("[H][S]", "DH",
+				gsub("[Cc]oast", eval(parse(text=deparse("c\u{00F4}te"))),
+				gsub("[G][I][G]", "CIG",
+				gsub("[Q][C][S]", "BRC",
+				gsub("[P][B][S]", "SBP",
+				gsub("[H][B][L][L]", "PFD", ## palangre \`{a} fond dur
+				gsub("[I][P][H][C]", "CIFP",     ## Commission internationale du fl\'{e}tan du Pacifique
+				gsub("[N][M][F][S]", "SNPM",     ## Service national des p\^{e}ches maritimes
+				gsub("[W][C][H][G]", "COHG",
+				gsub("[W][C][V][I]", "COIV",
+				gsub("[Aa]rea\\(km", "superficie(km",
+				gsub("(\\s+)?[Ii]nside", eval(parse(text=deparse(" \u{00E0} l'int\u{00E9}rieur"))),
+				gsub("(\\s+)?[Oo]utside", eval(parse(text=deparse(" \u{00E0} l'ext\u{00E9}rieur"))),
+				gsub("[Hh]ecate [Ss]trait", eval(parse(text=deparse("d\u{00E9}troit d'Hecate"))),
+				gsub("[Mm]oresby [Gg]ully", "canyon de Moresby",
+				gsub("[P][M][F][C] [Aa]rea", "zone CPMP",
+				gsub("[Bb]ritish [Cc]olumbia", "Colombie-Britannique",
+				gsub("[Vv]ancouver [Ii]sland", eval(parse(text=deparse("\u{00CE}le de Vancouver"))),
+				gsub("[Mm]itchell's [Gg]ully", "canyon de Mitchell",
+				gsub("[Ee]ncountered [Aa]rea", "zone de rencontre",
+				gsub("[Gg]oose [Ii]sland [Gg]ully", eval(parse(text=deparse("canyon de l'\u{00EE}le Goose"))),
+				gsub("[Qq]ueen [Cc]harlotte [Ss]ound", "bassin de la Reine-Charlotte",
+				gsub("[Qq]ueen [Cc]harlotte [Ss]trait", eval(parse(text=deparse("d\u{00E9}troit de la Reine-Charlotte"))),
+				xx))))))))))))))))))))))))
+			})
 			## DFO acronyms
-			xacro = sapply(xbio, function(xx){
+			xacro = sapply(xgeo, function(xx){
 				gsub("[A][E]", "EV",             ## ageing error = erreur de vieillissement
 				gsub("[A][F]", "FA",             ## age frequency = fr\'{e}quence d'ages
 				gsub("[B][T]", "CF",             ## bottom trawl   = chalut de fond
+				gsub("[C][C]", "PC",             ## constant catch   = prise constante
 				gsub("[M][W]", "CP",             ## midwater trawl = chalut p\'{e}lagique
-				gsub("[H][R]", "TE",             ## harvest rate   = taux d'exploitation
+				gsub("[H][R]", "TR",             ## harvest rate   = taux de r\'{e}colte (not taux d'exploitation)
+				#gsub("[S][A]", eval(parse(text=deparse("\u{00C9}S"))),  ## stock assessment  = \'{e}valuation des stocks
 				gsub("[G][M][A]", "ZGPF",        ## les zones de gestion des poissons de fond 
 				gsub("[G][M][U]", "GGPF",        ## le groupe de gestion du poisson de fond
+				gsub("[L][R][P]", "PRL",         ## point de r\'{e}f\'{e}rence limite
 				gsub("[M][P][D]", "MDP",         ## mode de distribution post\'{e}rieure
-				gsub("[M][S][Y]", "RMS",         ## rendement maximal soutenu
-				gsub("[m][s][y]", "rms",         ## rendement maximal soutenu (be careful of words ending in 'msy')
+				gsub("[M][S][Y]", "RMD",         ## rendement maximal durable (no longer soutenu)
+				gsub("[m][s][y]", "rmd",         ## rendement maximal durable (no longer soutenu) (be careful of words ending in 'msy')
+				gsub("[U][S][R]", "RSS",         ## r\'{e}f\'{e}rence de stock sup\'{e}rieure
+				gsub("[T][R][P]", "PRC",         ## point de r\'{e}f\'{e}rence cible
 				gsub("[M][C][M][C]", "MCCM",     ## Monte Carlo \`{a} cha\^{i}ne de Markov
-				xx)))))))))))
+				gsub("[P][M][F][C]", "CPMP",     ## Monte Carlo \`{a} cha\^{i}ne de Markov
+				xx))))))))))))))))
 			})
 			## species code3 acronyms
 			xcode = sapply(xacro, function(xx){
 				gsub("[A][R][F]", "PGB",  ## Arrowtooth Flounder
 				gsub("[B][O][R]", "SBO",  ## Bocaccio
+				gsub("[B][S][R]", "STN",  ## Blackspotted
 				gsub("[C][A][R]", "SCA",  ## Canary
+				gsub("[C][P][R]", "SCU",  ## Copper
 				gsub("[L][S][T]", eval(parse(text=deparse("SL\u{00C9}"))),  ## Longspine
 				gsub("[P][O][P]", "SLM",  ## Pacific Ocean Perch
 				gsub("[Q][B][R]", eval(parse(text=deparse("SD\u{00C9}"))),  ## Quillback
@@ -1835,16 +2299,19 @@ linguaFranca = function(x, lang="e", little=4, strip=FALSE, localnames=FALSE)
 				gsub("[R][E][R]", eval(parse(text=deparse("SO\u{00C9}"))),  ## Rougheye
 				gsub("[R][S][R]", "SRR",  ## Redstripe
 				gsub("[S][G][R]", "SAR",  ## Silvergray
+				gsub("[S][K][R]", "SBL",  ## Shortraker
 				gsub("[S][S][T]", eval(parse(text=deparse("SC\u{00C9}"))),  ## Shortspine
 				gsub("[W][A][P]", "GLA",  ## Walleye Pollock
 				gsub("[W][W][R]", "SVV",  ## Widow
 				gsub("[Y][M][R]", "SBJ",  ## Yellowmouth
 				gsub("[Y][T][R]", "SQJ",  ## Yellowtail
 				gsub("[Y][Y][R]", "SYJ",  ## Yelloweye
-				xx))))))))))))))))
+				gsub("[R][E][B][S]", eval(parse(text=deparse("SO\u{00C9}TN"))),  ## Rougheye/Blackspotted
+				xx))))))))))))))))))))
 			})
 			## final swipe through
 			xbig = sapply(xcode, function(xx){
+				gsub("C\\+S","c+r",
 				gsub(" of "," de ",
 				gsub(" or "," ou ",
 				gsub(" [\\&|Aa](nd)? "," et ",
@@ -1856,7 +2323,8 @@ linguaFranca = function(x, lang="e", little=4, strip=FALSE, localnames=FALSE)
 				gsub(" no ", " pas de ",
 				gsub("\\(/y(r?))", "(/an)",
 				gsub("2y(r?)", "2an",
-				gsub("R([[:digit:]]+)","E\\1",  ## Model run numbers, e.g. R75
+				#gsub("R([[:digit:]]+)","E\\1",  ## Model run numbers, e.g. R75
+				#gsub("R(\\d+)","E\\1",  ## Model run numbers, e.g. R75 (but R0 gets converted!)
 				gsub("sigmaR( )?=( )?(0|1)\\.([1-9])","sigmaR\\1=\\2\\3,\\4",
 				xx)))))))))))))
 			})
@@ -1864,6 +2332,7 @@ linguaFranca = function(x, lang="e", little=4, strip=FALSE, localnames=FALSE)
 		}
 		##---------END BIG/MULTIPLE WORDS---------
 	}
+#browser();return()
 	rubbish = gc(verbose=FALSE)
 	if (strip) xout = as.vector(xout)
 	if (is.expr) xout= eval(parse(text=paste0("expression(",substitute(xout),")"))) #{browser();return()} #
@@ -1958,26 +2427,25 @@ quantBox = function (x, use.cols = TRUE, ...) ## taken from boxplot.matrix
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~quantBox
 
 
-#readClog-------------------------------2017-10-25
-# Read a ChangeLog file and convert it to an R list.
-#-----------------------------------------------RH
+## readClog-----------------------------2023-02-10
+## Read a ChangeLog file and convert it to an R list.
+## ---------------------------------------------RH
 readClog = function(fnam)
 {
 	dat  = readLines(fnam)
-	cdat = dat[grep("^$",dat,invert=T)]   ## condense dat by removing balnk lines
-	cdat = cdat[grep("^#",cdat,invert=T)] ## get rid of comments
-	ctit = cdat[1]                        ## title of ChangeLog
+	cdat = dat[grep("^$",dat,invert=TRUE)]    ## condense dat by removing blank lines
+	cdat = cdat[grep("^#",cdat,invert=TRUE)]  ## get rid of comments
+	ctit = cdat[1]                       ## title of ChangeLog
 	laut = grep("^Authors", cdat)
-	lend = grep("^-----", cdat)[1]        ## end of the header section
-	auth = cdat[laut:(lend-1)]            ## authors of package
+	lend = grep("^-----", cdat)[1]       ## end of the header section
+	auth = cdat[laut:(lend-1)]           ## authors of package
 
-	lver = grep("^\\S",cdat)              ## lines starting with non-space	
+	lver = grep("^\\S",cdat)             ## lines starting with non-space
 	lver = lver[lver>lend]
 	#lmod = grep("^\\s\\s[*]",cdat)
 
 	clog = list()
-	tdat = .trimWhiteSpace(cdat)          ## remove whitespace before and after text in each line
-#browser();return()
+	tdat = .trimWhiteSpace(cdat)         ## remove whitespace before and after text in each line
 	tbrk = c(lver,length(tdat)+1)
 	for (i in 1:length(lver)) {
 		ii   = tdat[lver[i]]
@@ -1994,7 +2462,7 @@ readClog = function(fnam)
 			jdat = gsub("^[-]\\s","  - ",jdat)
 			clog[[ii]][[jj]] = c(clog[[ii]][[jj]],jdat)
 
-			## A future update might create a list of lists foor the actions (+) and subactions (-)
+			## A future update might create a list of lists for the actions (+) and subactions (-)
 			#if (any(grepl("^[-]",jdat))) {
 			#	jact = grep("^[+]",jdat)
 			#	jbrk = c(jact,length(jdat)+1)
@@ -2013,13 +2481,12 @@ readClog = function(fnam)
 			#clog[[ii]][[jj]] = c(clog[[ii]][[jj]],jdat)
 			#}
 		}
-#browser();return()
 	}
 	attr(clog,"title") = ctit
 	attr(clog,"authors") = auth
 	return(clog)
 }
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~readClog
+## ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~readClog
 
 
 #revStr---------------------------------2008-11-26
@@ -2328,7 +2795,7 @@ zapDupes = function(dat, index) {
 		stop(paste("\n",pkgDir,"\ndoes not exist",sep=""))
 	pkgList <- list(path=pkgDir)
 	if (win) 
-		try(setWinVal(pkgList, winName=tcall(.PBSmod)$.activeWin),silent=TRUE)
+		try(setWinVal(pkgList, winName=tcall(.PBSmod)$.activeWin), silent=TRUE)
 	invisible(pkgDir) }
 
 # Shortcut functions:
@@ -2379,6 +2846,887 @@ zapDupes = function(dat, index) {
 	}; eop()
 }
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~.plotDev
+
+
+## .ss3.readdat-------------------------2023-02-10
+##  Function 'SS_readdat_3.30' taken from r4ss 
+##  because importing the latter involves many package dependencies.
+## Authors:
+##  Ian G. Taylor, Yukio Takeuchi, Z. Teresa A'mar, 
+## Chris J. Grandin, Kelli F. Johnson, Chantel R. Wetzel
+##-----------------------------------------r4ss
+.ss3.readdat = function (file, verbose = TRUE, echoall = FALSE, section = NULL) 
+{
+	if (verbose) {
+		message("Running SS_readdat_3.30")
+	}
+	if (echoall) {
+		message("Echoing blocks of data as it's being read")
+		if (!verbose) {
+			message("Changing input 'verbose' to TRUE")
+			verbose <- TRUE
+		}
+	}
+	dat <- readLines(file, warn = FALSE)
+	if (length(dat) < 20) {
+		warning(
+			"Data file appears to be empty or incomplete.\n",
+			"  If this is data.ss_new, change starter file to have\n",
+			"  nonzero value for 'Number of datafiles to produce'"
+		)
+		return()
+	}
+
+	get_comments = function (dat, defaultComments=NULL) 
+	{
+		dat <- sapply(dat, "trimws")
+		names(dat) <- NULL
+		if (length(defaultComments) > 0) {
+			delLns <- unlist(sapply(defaultComments, "grep", x = dat))
+			delLns <- unique(delLns)
+			if (length(delLns) > 0) {
+				dat <- dat[-delLns]
+			}
+		}
+		regexpNumeric <- "^[+-]?(?:\\d+\\.?\\d*|\\.\\d+)(?:(?:[eE][+-]?\\d+)|(?:\\*10\\^[+-]?\\d+))?"
+		firstNumericLine <- grep(dat, pattern = regexpNumeric)[1]
+#browser();return()
+		res <- grep(x = dat[seq_len(firstNumericLine - 1)], pattern = "^#C", value = TRUE)
+		if (length(res) == 0)
+			res <- NULL
+		return(res)
+	}
+	Comments <- get_comments(dat)
+	###############################################################################
+	## Divide data file into sections ----
+	sec.end.inds <- grep("^999\\b", dat)
+	## Run some checks to ensure that only the section break 999's are being captured
+	## and not things such as year 999 or a catch of 999mt etc
+	incorr.secs <- NULL
+	for (i in 1:length(sec.end.inds)) {
+		check_section <- dat[sec.end.inds[i]]
+		check_section <- strsplit(check_section, "#")[[1]][1]
+		check_section <- unlist(strsplit(unlist(strsplit(check_section, "\t")), " "))
+		check_section <- check_section[check_section != ""]
+		if (length(check_section) > 1) {
+			incorr.secs <- c(incorr.secs, i)
+		}
+	}
+	if (length(incorr.secs) > 0) {
+		sec.end.inds <- sec.end.inds[-incorr.secs]
+	}
+
+	Nsections <- length(sec.end.inds)
+	if (!Nsections) {
+		stop("Error - There was no EOF marker (999) in the data file.")
+	}
+	if (is.null(section)) {
+		if (Nsections > 1 & verbose) {
+			message("The supplied data file has ", Nsections, ifelse(Nsections == 1, " section. ", " sections. "), " Using section = 1.")
+		}
+		section <- 1
+	}
+	if (!section %in% 1:Nsections) {
+		if (Nsections == 1) {
+			stop("The 'section' input must be 1 for this data file.\n")
+		} else {
+			stop("The 'section' input must be between 1 and ", Nsections, " for this data file.\n")
+		}
+	}
+	if (!is.null(section)) {
+		start <- 1
+		end <- sec.end.inds[section]
+		if (section > 1) {
+			start <- sec.end.inds[section - 1] + 1
+		}
+		dat <- dat[start:end]
+	}
+	###############################################################################
+	## Internally defined functions ----
+	find.index <- function(dat, ind, str) {
+		## Find the first line at position ind or later that
+		## contains the string str and return the index of that
+		## line. If the end of the data is reached, an error will be shown.
+		while (ind < length(dat) & !length(grep(str, dat[ind]))) {
+			ind <- ind + 1
+		}
+		if (ind == length(dat)) {
+		stop(
+			"SS_readdat_3.30-find.index: Error - ",
+			"the value of ", str, " was not found. ",
+			"Check the data file and make sure all ",
+			"data frames are correctly formed.\n"
+		)
+		}
+		ind
+	}
+
+	get.val <- function(dat, ind) {
+		## Returns the next numeric value in the dat vector.
+		## Increments ind in the parent environment.
+		assign("ind", ind + 1, parent.frame())
+		as.numeric(dat[ind])
+	}
+
+	get.vec <- function(dat, ind) {
+		## Returns the next vector of numbers in the dat vector.
+		## Increments ind in the parent environment.
+		assign("ind", ind + 1, parent.frame())
+		## Split by whitespace and collapse (+).
+		vec <- strsplit(dat[ind], "[[:blank:]]+")
+		as.numeric(vec[[1]])
+	}
+
+	get.df <- function(dat, ind, nrow = NULL) {
+		## Returns the next data frame in the dat vector.
+		## If nrow is NULL, the function will:
+		##  1. search for the next line starting with -9999.
+		##  2. ind will be incremented in the parent frame
+		##	 to 1 past the end of the data frame.
+		##  3. if the ind line starts with -9999,
+		##	 the function will return NULL
+		## If nrow is not NULL, the function will:
+		##  1. will return a data frame with rows from
+		##	 ind to ind + nrow - 1.
+		##  2. ind will be incremented in the parent frame
+		##	 to 1 past the end of the data frame.
+		if (is.null(nrow)) {
+			end.ind <- find.index(dat, ind, "-9999")
+			assign("ind", end.ind + 1, parent.frame())
+			if (ind != end.ind) {
+				df <- dat[ind:(end.ind - 1)]
+			} else {
+				return(NULL)
+			}
+		} else {
+			df <- dat[ind:(ind + nrow - 1)]
+			assign("ind", ind + nrow, parent.frame())
+		}
+		df <- strsplit(df, "[[:blank:]]+") ## Split by whitespace and collapse (+)
+		df <- as.list(df) ## Must be a list for the next operation
+		df <- do.call("rbind", df) ## Make it into a dataframe
+		df <- as.data.frame(df, stringsAsFactors = FALSE)
+		df <- utils::type.convert(df, as.is = TRUE)
+		return(df)
+	}
+
+	###############################################################################
+	## Set up the data lines for parsing ----
+	## Remove any preceeding whitespace on all lines.
+	dat <- gsub("^[[:blank:]]+", "", dat)
+	## Remove all comments.
+	dat <- gsub("#.*", "", dat)
+	## Remove trailing whitespace on all lines
+	dat <- gsub("[[:blank:]]+$", "", dat)
+	## Remove blank lines.
+	dat <- dat[dat != ""]
+	datlist <- list()
+	datlist[["sourcefile"]] <- file
+	datlist[["type"]] <- "Stock_Synthesis_data_file"
+	datlist[["ReadVersion"]] <- "3.30"
+	if (verbose) {
+		message("SS_readdat_3.30 - read version = ", datlist[["ReadVersion"]])
+	}
+	datlist[["Comments"]] <- Comments
+	##############################################################################
+	## Get general model information ----
+	ind <- 1
+	datlist[["styr"]] <- get.val(dat, ind)
+	datlist[["endyr"]] <- get.val(dat, ind)
+	datlist[["nseas"]] <- get.val(dat, ind)
+	datlist[["months_per_seas"]] <- get.vec(dat, ind)
+	datlist[["Nsubseasons"]] <- get.val(dat, ind)
+	datlist[["spawn_month"]] <- get.val(dat, ind)
+	datlist[["Ngenders"]] <- get.val(dat, ind)
+	# Keep both Nsexes and Ngenders for now, but get rid of Ngenders in the future.
+	datlist[["Nsexes"]] <- datlist[["Ngenders"]]
+	datlist[["Nages"]] <- get.val(dat, ind)
+	datlist[["N_areas"]] <- get.val(dat, ind)
+	datlist[["Nfleets"]] <- get.val(dat, ind)
+
+	###############################################################################
+	## Fleet data ----
+	datlist[["fleetinfo"]] <- get.df(dat, ind, datlist[["Nfleets"]])
+	colnames(datlist[["fleetinfo"]]) <- c(
+		"type",
+		"surveytiming",
+		"area",
+		"units",
+		"need_catch_mult",
+		"fleetname"
+	)
+	# If need_catch_mult is 1 for fleets other than catch fleets, stop execution as SS do so.
+	if (any(datlist[["fleetinfo"]][["type"]] != 1 & datlist[["fleetinfo"]][["need_catch_mult"]] == 1)) {
+		stop(
+			"Catch multipler can be used only for fleet_type = 1; Check fleet = ",
+			paste0(which(datlist[["fleetinfo"]][["type"]] != 1 &
+				datlist[["fleetinfo"]][["need_catch_mult"]] == 1),
+			collapse = ", "
+			),
+			" in fleet info."
+		)
+	}
+	if (echoall) {
+		message("Fleet information:")
+		print(datlist[["fleetinfo"]])
+	}
+
+	datlist[["fleetnames"]] <- datlist[["fleetinfo"]][["fleetname"]]
+	datlist[["surveytiming"]] <- as.numeric(datlist[["fleetinfo"]][["surveytiming"]])
+	datlist[["units_of_catch"]] <- as.numeric(datlist[["fleetinfo"]][["units"]])
+	datlist[["areas"]] <- as.numeric(datlist[["fleetinfo"]][["area"]])
+
+	##############################################################################
+	### Bycatch Data (only added for fleets with type = 2) ----
+	if (any(datlist[["fleetinfo"]][["type"]] == 2)) {
+		nbycatch <- length(datlist[["fleetinfo"]][["type"]][datlist[["fleetinfo"]][["type"]] == 2])
+		datlist[["bycatch_fleet_info"]] <- get.df(dat, ind, nbycatch)
+
+		colnames(datlist[["bycatch_fleet_info"]]) <- c(
+			"fleetindex",
+			"includeinMSY",
+			"Fmult",
+			"F_or_first_year",
+			"F_or_last_year",
+			"unused"
+		)
+		# add a fleetname column, as in fleet info.
+		datlist[["bycatch_fleet_info"]] <- cbind(
+			datlist[["bycatch_fleet_info"]],
+			datlist[["fleetinfo"]][datlist[["fleetinfo"]][["type"]] == 2, "fleetname", drop = FALSE]
+		)
+	}
+	###############################################################################
+	## Catch data ----
+	datlist[["catch"]] <- get.df(dat, ind)
+	colnames(datlist[["catch"]]) <- c(
+		"year",
+		"seas",
+		"fleet",
+		"catch",
+		"catch_se"
+	)
+
+	###############################################################################
+	## CPUE data  ----
+	datlist[["CPUEinfo"]] <- get.df(dat, ind, datlist[["Nfleets"]])
+	# note SD_Report column wasn't present in early 3.30 versions of SS
+	CPUEinfo_names <- c("Fleet", "Units", "Errtype", "SD_Report")
+	colnames(datlist[["CPUEinfo"]]) <- CPUEinfo_names[1:ncol(datlist[["CPUEinfo"]])]
+	rownames(datlist[["CPUEinfo"]]) <- datlist[["fleetnames"]]
+	if (echoall) {
+		message("CPUE information:")
+		print(datlist[["CPUEinfo"]])
+	}
+
+	## CPUE data matrix
+	CPUE <- get.df(dat, ind)
+	if (!is.null(CPUE)) {
+		datlist[["CPUE"]] <- CPUE
+		colnames(datlist[["CPUE"]]) <- c("year", "seas", "index", "obs", "se_log")
+	} else {
+		datlist[["CPUE"]] <- NULL
+	}
+	if (echoall) {
+		message("CPUE data:")
+		print(datlist[["CPUE"]])
+	}
+
+	###############################################################################
+	## Discard data ----
+	## fleet.nums.with.catch is defined in the catch section above.
+	datlist[["N_discard_fleets"]] <- get.val(dat, ind)
+	if (datlist[["N_discard_fleets"]]) {
+		## Discard info data
+		datlist[["discard_fleet_info"]] <- get.df(dat, ind, datlist[["N_discard_fleets"]])
+		colnames(datlist[["discard_fleet_info"]]) <- c("Fleet", "Units", "Errtype")
+		rownames(datlist[["discard_fleet_info"]]) <-
+		datlist[["fleetnames"]][as.numeric(datlist[["discard_fleet_info"]][["Fleet"]])]
+
+		## Discard data
+		datlist[["discard_data"]] <- get.df(dat, ind)
+		colnames(datlist[["discard_data"]]) <- c("Yr", "Seas", "Flt", "Discard", "Std_in")
+	} else {
+		datlist[["discard_fleet_info"]] <- NULL
+		datlist[["discard_data"]] <- NULL
+	}
+	if (echoall & !is.null(datlist[["discard_fleet_info"]])) {
+		message("Discard fleet information:")
+		print(datlist[["discard_fleet_info"]])
+	}
+	if (echoall & !is.null(datlist[["discard_data"]])) {
+		message("Discard data:")
+		print(datlist[["discard_data"]])
+	}
+
+	###############################################################################
+	## Mean body weight data ----""
+	datlist[["use_meanbodywt"]] <- get.val(dat, ind)
+	if (datlist[["use_meanbodywt"]]) {
+		datlist[["DF_for_meanbodywt"]] <- get.val(dat, ind)
+		datlist[["meanbodywt"]] <- get.df(dat, ind)
+		if (!is.null(datlist[["meanbodywt"]])) {
+			colnames(datlist[["meanbodywt"]]) <- c("Year", "Seas", "Fleet", "Partition", "Type", "Value", "Std_in")
+		}
+	} else {
+		datlist[["DF_for_meanbodywt"]] <- NULL
+		datlist[["meanbodywt"]] <- NULL
+	}
+	if (verbose) {
+		message("use_meanbodywt (0/1): ", datlist[["use_meanbodywt"]])
+	}
+	if (echoall & !is.null(datlist[["meanbodywt"]])) {
+		message("meanbodywt:")
+		print(datlist[["meanbodywt"]])
+	}
+
+	###############################################################################
+	## Population size structure - Length ----
+	datlist[["lbin_method"]] <- get.val(dat, ind)
+	if (datlist[["lbin_method"]] == 2) {
+		bin_info_tmp <- get.val(dat, ind)
+		# if as.numeric doesn't match, probably has 3 values on one line
+		if (is.na(bin_info_tmp)) {
+			ind <- ind - 1 # reset index to allow read of that value again
+			bin_info_tmp <- get.vec(dat, ind)
+			datlist[["binwidth"]] <- bin_info_tmp[1]
+			datlist[["minimum_size"]] <- bin_info_tmp[2]
+			datlist[["maximum_size"]] <- bin_info_tmp[3]
+		} else {
+			# otherwise, more likely separate lines
+			datlist[["binwidth"]] <- bin_info_tmp
+			datlist[["minimum_size"]] <- get.val(dat, ind)
+			datlist[["maximum_size"]] <- get.val(dat, ind)
+		}
+	} else if (datlist[["lbin_method"]] == 3) {
+		datlist[["N_lbinspop"]] <- get.val(dat, ind)
+		datlist[["lbin_vector_pop"]] <- get.vec(dat, ind)
+	} else {
+		datlist[["binwidth"]] <- NULL
+		datlist[["minimum_size"]] <- NULL
+		datlist[["maximum_size"]] <- NULL
+		datlist[["N_lbinspop"]] <- NULL
+		datlist[["lbin_vector_pop"]] <- NULL
+	}
+	if (verbose) {
+		message("N_lbinspop: ", datlist[["N_lbinspop"]])
+	}
+	## Length Comp information matrix (new for 3.30)
+	datlist[["use_lencomp"]] <- get.val(dat, ind)
+	if (verbose) {
+		message("use_lencomp (0/1): ", datlist[["use_lencomp"]])
+	}
+	# only read all the stuff related to length comps if switch above = 1
+	if (datlist[["use_lencomp"]]) {
+		# note: minsamplesize column not present in early 3.30 versions of SS
+		datlist[["len_info"]] <- get.df(dat, ind, datlist[["Nfleets"]])
+		colnames(datlist[["len_info"]]) <- c(
+			"mintailcomp", "addtocomp", "combine_M_F",
+			"CompressBins", "CompError", "ParmSelect", "minsamplesize"
+		)[1:ncol(datlist[["len_info"]])]
+		rownames(datlist[["len_info"]]) <- datlist[["fleetnames"]]
+		if (echoall) {
+			message("\nlen_info:")
+			print(datlist[["len_info"]])
+		}
+		## Length comp data
+		datlist[["N_lbins"]] <- get.val(dat, ind)
+		if (verbose) {
+			message("N_lbins: ", datlist[["N_lbins"]])
+		}
+		datlist[["lbin_vector"]] <- get.vec(dat, ind)
+		datlist[["lencomp"]] <- get.df(dat, ind)
+		if (!is.null(datlist[["lencomp"]])) {
+			colnames(datlist[["lencomp"]]) <-
+			c(
+				"Yr", "Seas", "FltSvy", "Gender", "Part", "Nsamp",
+				if (abs(datlist[["Nsexes"]]) == 1) {
+					paste0("l", datlist[["lbin_vector"]])
+				} else {
+					NULL
+				},
+				if (datlist[["Nsexes"]] > 1) {
+					c(
+						paste0("f", datlist[["lbin_vector"]]),
+						paste0("m", datlist[["lbin_vector"]])
+					)
+				} else {
+					NULL
+				}
+			)
+		}
+		# warn if any 0 values in the lencomp, because SS will exit on error
+		if (!is.null(datlist[["lencomp"]])) {
+			zero_lencomp <- apply(datlist[["lencomp"]][, -(1:6)], MARGIN = 1, FUN = sum) == 0
+			if (any(zero_lencomp == TRUE)) {
+				warning(
+					"Lines of all zero length comp found. SS will exit on error if",
+					" a line of comps is all zeroes and year is positive. Line(s) ",
+					paste0(which(zero_lencomp), collapse = ", ")
+				)
+			}
+		}
+		# echo values
+		if (echoall) {
+			message("\nFirst 2 rows of lencomp:")
+			print(head(datlist[["lencomp"]], 2))
+			message("\nLast 2 rows of lencomp:")
+			print(tail(datlist[["lencomp"]], 2))
+			cat("\n")
+		}
+	}
+
+	###############################################################################
+	## Population size structure - Age ----
+	datlist[["N_agebins"]] <- get.val(dat, ind)
+	if (verbose) {
+		message("N_agebins: ", datlist[["N_agebins"]])
+	}
+	if (datlist[["N_agebins"]]) {
+		datlist[["agebin_vector"]] <- get.vec(dat, ind)
+		if (echoall) {
+			message("agebin_vector:")
+			print(datlist[["agebin_vector"]])
+		}
+	} else {
+		datlist[["agebin_vector"]] <- NULL
+	}
+
+	## Age error data
+	if (datlist[["N_agebins"]]) {
+		datlist[["N_ageerror_definitions"]] <- get.val(dat, ind)
+		if (datlist[["N_ageerror_definitions"]]) {
+			datlist[["ageerror"]] <- get.df(dat, ind, datlist[["N_ageerror_definitions"]] * 2)
+			colnames(datlist[["ageerror"]]) <- paste0("age", 0:datlist[["Nages"]])
+		} else {
+			datlist[["ageerror"]] <- NULL
+		}
+		# echo values
+		if (echoall) {
+			message("\nN_ageerror_definitions:")
+			print(datlist[["N_ageerror_definitions"]])
+			message("\nageerror:")
+			print(datlist[["ageerror"]])
+		}
+	}
+
+	###############################################################################
+	## Age Comp information matrix ----
+	if (datlist[["N_agebins"]]) {
+		datlist[["age_info"]] <- get.df(dat, ind, datlist[["Nfleets"]])
+		# note: minsamplesize column not present in early 3.30 versions of SS
+		colnames(datlist[["age_info"]]) <- c(
+			"mintailcomp",
+			"addtocomp",
+			"combine_M_F",
+			"CompressBins",
+			"CompError",
+			"ParmSelect",
+			"minsamplesize"
+		)[1:ncol(datlist[["age_info"]])]
+		rownames(datlist[["age_info"]]) <- datlist[["fleetnames"]]
+		## Length bin method for age data
+		# note that Lbin_method below is related to the interpretation of
+		# conditional age-at-length data and differs from lbin_method for the length
+		# data read above
+		datlist[["Lbin_method"]] <- get.val(dat, ind)
+		if (echoall) {
+			message("\nage_info:")
+			print(datlist[["age_info"]])
+		}
+	}
+
+	###############################################################################
+	## Age comp matrix ----
+	if (datlist[["N_agebins"]]) {
+		datlist[["agecomp"]] <- get.df(dat, ind)
+		if (!is.null(datlist[["agecomp"]])) {
+			colnames(datlist[["agecomp"]]) <-
+			c(
+				"Yr", "Seas", "FltSvy", "Gender",
+				"Part", "Ageerr", "Lbin_lo", "Lbin_hi", "Nsamp",
+				if (abs(datlist[["Nsexes"]]) == 1) {
+					paste0("a", datlist[["agebin_vector"]])
+				} else {
+					NULL
+				},
+				if (datlist[["Nsexes"]] > 1) {
+					c( paste0("f", datlist[["agebin_vector"]]), paste0("m", datlist[["agebin_vector"]]) )
+				} else {
+					NULL
+				}
+			)
+		}
+		# echo values
+		# warn if any 0 values in the agecomp:
+		if (!is.null(datlist[["agecomp"]])) {
+			zero_agecomp <- apply(datlist[["agecomp"]][, -(1:9)], MARGIN = 1, FUN = sum) == 0
+			if (any(zero_agecomp == TRUE)) {
+				warning(
+					"Lines of all zero age comp found. SS will exit on error if",
+					" a line of comps is all zeros. Line(s) ",
+					paste0(which(zero_agecomp), collapse = ", ")
+				)
+			}
+		}
+		if (echoall) {
+			message("\nFirst 2 rows of agecomp:")
+			print(head(datlist[["agecomp"]], 2))
+			message("\nLast 2 rows of agecomp:")
+			print(tail(datlist[["agecomp"]], 2))
+			cat("\n")
+		}
+	} else {
+		if (verbose) {
+			message("N_agebins = 0, skipping read remaining age-related stuff")
+		}
+	}
+	# check DM pars ----)
+	if (any(datlist[["len_info"]][["CompError"]] == 1) | any(datlist[["age_info"]][["CompError"]] == 1)) {
+		N_dirichlet_parms <- max(c(
+			datlist[["len_info"]][["ParmSelect"]],
+			datlist[["age_info"]][["ParmSelect"]]
+		))
+		# double check this
+		N_dir_labs <- seq_len(N_dirichlet_parms)
+		for (i in N_dir_labs) {
+			if (!i %in% c(
+				datlist[["len_info"]][["ParmSelect"]],
+				datlist[["age_info"]][["ParmSelect"]]
+			)) {
+				warning(
+					"Dirichlet multinomial parameters must be sequential with no ",
+					" missing integers starting from 1. \nMissing DM parameter ",
+					"labeled  ", i, ", so SS will exit on error for this model ",
+					"configuration. \nPlease revise the numbering of the DM ",
+					"parameters in the length/age info ParmSelect column."
+				)
+			}
+		}
+	}
+	###############################################################################
+	## Mean size-at-age data ----
+	datlist[["use_MeanSize_at_Age_obs"]] <- get.val(dat, ind)
+	if (verbose) {
+		message("use_MeanSize_at_Age_obs (0/1): ", datlist[["use_MeanSize_at_Age_obs"]])
+	}
+	if (datlist[["use_MeanSize_at_Age_obs"]]) {
+		ind.tmp <- ind # save current position in case necessary to re-read
+		endmwa <- ind - 2 + grep("-9999", dat[ind:length(dat)])[1]
+		xx <- dat[ind:endmwa]
+		if (length(unique(sapply(strsplit(xx, "\\s+"), length))) > 1) {
+			if (verbose) {
+				message(
+				"Format of MeanSize_at_Age_obs appears to have sample sizes\n",
+				"on separate lines than other inputs."
+				)
+			}
+			xx <- paste(xx[1:length(xx) %% 2 == 1], xx[1:length(xx) %% 2 == 0])
+		}
+		datlist[["MeanSize_at_Age_obs"]] <- data.frame(do.call("rbind", strsplit(xx, "\\s+")), stringsAsFactors = FALSE)
+		ind <- endmwa + 1
+		# check terminator row
+		test <- get.vec(dat, ind)
+		if (test[1] != -9999) {
+			warning("Problem with read of MeanSize_at_Age, terminator value != -9999")
+		}
+		colnames(datlist[["MeanSize_at_Age_obs"]]) <-
+		c(
+			"Yr", "Seas", "FltSvy", "Gender", "Part", "AgeErr", "Ignore",
+			if (abs(datlist[["Nsexes"]]) == 1) {
+				paste0("a", datlist[["agebin_vector"]])
+			} else {
+				NULL
+			},
+			if (datlist[["Nsexes"]] > 1) {
+				c(
+				paste0("f", datlist[["agebin_vector"]]),
+				paste0("m", datlist[["agebin_vector"]])
+				)
+			} else {
+				NULL
+			},
+			if (abs(datlist[["Nsexes"]]) == 1) {
+				paste0("N_a", datlist[["agebin_vector"]])
+			} else {
+				NULL
+			},
+			if (datlist[["Nsexes"]] > 1) {
+				c(
+				paste0("N_f", datlist[["agebin_vector"]]),
+				paste0("N_m", datlist[["agebin_vector"]])
+				)
+			} else {
+				NULL
+			}
+		)
+		# echo values
+		if (echoall) {
+			message("\nFirst 2 rows of MeanSize_at_Age_obs:")
+			print(head(datlist[["MeanSize_at_Age_obs"]], 2))
+			message("\nLast 2 rows of MeanSize_at_Age_obs:")
+			print(tail(datlist[["MeanSize_at_Age_obs"]], 2))
+			cat("\n")
+		}
+		# The formatting of the mean size at age in data.ss_new has sample sizes
+		# on a separate line below the mean size values, and this applies to the
+		# -9999 line as well. The lines below is an attempt to work around this
+		test <- get.vec(dat, ind)
+		# if only 1 value, then this isn't an issue and need to adjust ind
+		if (length(test) == 1) {
+			ind <- ind - 1
+		}
+	} else {
+		datlist[["MeanSize_at_Age_obs"]] <- NULL
+	}
+
+	###############################################################################
+	## Environment variables ----
+	datlist[["N_environ_variables"]] <- get.val(dat, ind)
+	if (verbose) {
+		message("N_environ_variables: ", datlist[["N_environ_variables"]])
+	}
+	if (datlist[["N_environ_variables"]]) {
+		datlist[["envdat"]] <- get.df(dat, ind)
+		colnames(datlist[["envdat"]]) <- c("Yr", "Variable", "Value")
+		# echo values
+		if (echoall) {
+			message("\nFirst 2 rows of envdat:")
+			print(head(datlist[["envdat"]], 2))
+			message("\nLast 2 rows of envdat:")
+			print(tail(datlist[["envdat"]], 2))
+			cat("\n")
+		}
+	} else {
+		datlist[["envdat"]] <- NULL
+	}
+
+	###############################################################################
+	## Size frequency methods ----
+	datlist[["N_sizefreq_methods"]] <- get.val(dat, ind)
+	if (datlist[["N_sizefreq_methods"]]) {
+		## Get details of generalized size frequency methods
+		datlist[["nbins_per_method"]] <- get.vec(dat, ind)
+		datlist[["units_per_method"]] <- get.vec(dat, ind)
+		datlist[["scale_per_method"]] <- get.vec(dat, ind)
+		datlist[["mincomp_per_method"]] <- get.vec(dat, ind)
+		datlist[["Nobs_per_method"]] <- get.vec(dat, ind)
+		if (echoall) {
+			message("Details of generalized size frequency methods:")
+			print(data.frame(
+				method = 1:datlist[["N_sizefreq_methods"]],
+				nbins = datlist[["nbins_per_method"]],
+				units = datlist[["units_per_method"]],
+				scale = datlist[["scale_per_method"]],
+				mincomp = datlist[["mincomp_per_method"]],
+				nobs = datlist[["Nobs_per_method"]]
+			))
+		}
+		## get list of bin vectors
+		datlist[["sizefreq_bins_list"]] <- list()
+		for (imethod in seq_len(datlist[["N_sizefreq_methods"]])) {
+			datlist[["sizefreq_bins_list"]][[imethod]] <- get.vec(dat, ind)
+		}
+		## Read generalized size frequency data
+		datlist[["sizefreq_data_list"]] <- list()
+		for (imethod in seq_len(datlist[["N_sizefreq_methods"]])) {
+			Ncols <- 7 + abs(datlist[["Nsexes"]]) * datlist[["nbins_per_method"]][imethod]
+			Nrows <- datlist[["Nobs_per_method"]][imethod]
+			datlist[["sizefreq_data_list"]][[imethod]] <- get.df(dat, ind, Nrows)
+			colnames(datlist[["sizefreq_data_list"]][[imethod]]) <-
+			c(
+				"Method", "Yr", "Seas", "FltSvy",
+				"Gender", "Part", "Nsamp",
+				if (abs(datlist[["Nsexes"]]) == 1) {
+					paste0("a", datlist[["sizefreq_bins_list"]][[imethod]])
+				} else {
+					NULL
+				},
+				if (datlist[["Nsexes"]] > 1) {
+					c(
+					paste0("f", datlist[["sizefreq_bins_list"]][[imethod]]),
+					paste0("m", datlist[["sizefreq_bins_list"]][[imethod]])
+					)
+				} else {
+					NULL
+				}
+			)
+			if (echoall) {
+				message("Method ", imethod, " (first two rows, ten columns):")
+				print(datlist[["sizefreq_data_list"]][[imethod]][1:min(Nrows, 2), 1:min(Ncols, 10)])
+			}
+			if (any(datlist[["sizefreq_data_list"]][[imethod]][, "Method"] != imethod)) {
+				stop(
+				"Problem with method in size frequency data:\n",
+				"Expecting method: ", imethod, "\n",
+				"Read method(s): ",
+				paste(unique(datlist[["sizefreq_data_list"]][["Method"]]), collapse = ", ")
+				)
+			}
+		}
+	} else {
+		datlist[["nbins_per_method"]] <- NULL
+		datlist[["units_per_method"]] <- NULL
+		datlist[["scale_per_method"]] <- NULL
+		datlist[["mincomp_per_method"]] <- NULL
+		datlist[["Nobs_per_method"]] <- NULL
+		datlist[["sizefreq_bins_list"]] <- NULL
+		datlist[["sizefreq_data_list"]] <- NULL
+	}
+
+	###############################################################################
+	## Tag data ----
+	datlist[["do_tags"]] <- get.val(dat, ind)
+	if (datlist[["do_tags"]]) {
+		datlist[["N_tag_groups"]] <- get.val(dat, ind)
+		datlist[["N_recap_events"]] <- get.val(dat, ind)
+		datlist[["mixing_latency_period"]] <- get.val(dat, ind)
+		datlist[["max_periods"]] <- get.val(dat, ind)
+		## Read tag release data
+		if (datlist[["N_tag_groups"]] > 0) {
+			Ncols <- 8
+			datlist[["tag_releases"]] <- get.df(dat, ind, datlist[["N_tag_groups"]])
+			colnames(datlist[["tag_releases"]]) <- c(
+				"TG", "Area", "Yr", "Season",
+				"tfill", "Gender", "Age", "Nrelease"
+			)
+			if (echoall) {
+				message("Head of tag release data:")
+				print(head(datlist[["tag_releases"]]))
+			}
+		} else {
+			datlist[["tag_releases"]] <- NULL
+		}
+		## Read tag recapture data
+		if (datlist[["N_recap_events"]] > 0) {
+			Ncols <- 5
+			datlist[["tag_recaps"]] <- get.df(dat, ind, datlist[["N_recap_events"]])
+			colnames(datlist[["tag_recaps"]]) <- c("TG", "Yr", "Season", "Fleet", "Nrecap")
+			if (echoall) {
+				message("Head of tag recapture data:")
+				print(head(datlist[["tag_recaps"]]))
+			}
+		} else {
+			datlist[["tag_recaps"]] <- NULL
+		}
+	}
+
+	###############################################################################
+	## Morphometrics composition data ----
+	datlist[["morphcomp_data"]] <- get.val(dat, ind)
+	if (datlist[["morphcomp_data"]]) {
+		warning(
+		"Morph comp data not yet supported by SS_readdat_3.30\n",
+		"  Please post issue to https://github.com/r4ss/r4ss/issues\n",
+		"  or email ian.taylor@noaa.gov",
+		"if you want this functionality added."
+		)
+	}
+
+	###############################################################################
+	## Selectivity priors ----
+	datlist[["use_selectivity_priors"]] <- get.val(dat, ind)
+
+	###############################################################################
+	## End of file ----
+	eof <- get.val(dat, ind)
+	if (verbose) {
+		if (Nsections == 1) {
+			message("Read of data file complete. Final value = ", eof)
+		} else {
+			message(
+			"Read of section ", section,
+			" of data file complete. Final value = ", eof
+			)
+		}
+	}
+	datlist[["eof"]] <- FALSE
+	if (eof == 999) datlist[["eof"]] <- TRUE
+
+	###############################################################################
+	## Fixes pulled in from SS_readdat wrapper
+	##
+	## Note from IGT 27-March-2020:
+	## Many of the list elements created below are related to the format of SSv3.24
+	## data files and should likely be deprecated at some point in the future
+
+	datlist[["spawn_seas"]] <- datlist[["spawn_month"]]
+	# compatibility: get the old number values
+	datlist[["Nfleet"]] <- nrow(subset(datlist[["fleetinfo"]], datlist[["fleetinfo"]][["type"]] <= 2))
+	datlist[["Nsurveys"]] <- datlist[["Nfleets"]] - datlist[["Nfleet"]]
+	totfleets <- datlist[["Nfleet"]] + datlist[["Nsurveys"]]
+	# fleet details
+	if (nrow(datlist[["fleetinfo"]]) > 1) {
+		# if more than 1 fleet in the model, create legacy format tables associated with 3.24
+		datlist[["fleetinfo1"]] <- t(datlist[["fleetinfo"]])
+		colnames(datlist[["fleetinfo1"]]) <- datlist[["fleetinfo"]][["fleetname"]]
+		datlist[["fleetinfo1"]] <- datlist[["fleetinfo1"]][1:5, ]
+		datlist[["fleetinfo2"]] <- datlist[["fleetinfo1"]][4:5, ]
+		datlist[["fleetinfo1"]] <- datlist[["fleetinfo1"]][c(2:3, 1), ]
+		rownames(datlist[["fleetinfo1"]]) <- c("surveytiming", "areas", "type")
+		datlist[["fleetinfo1"]] <- data.frame(datlist[["fleetinfo1"]]) # convert all to numeric
+		datlist[["fleetinfo2"]] <- data.frame(datlist[["fleetinfo2"]]) # convert all to numeric
+	} else {
+		# if only 1 fleet, skip those things rather than revise code to work with vectors
+		# instead of transposed matrices of values
+		datlist[["fleetinfo1"]] <- NULL
+		datlist[["fleetinfo2"]] <- NULL
+	}
+	if (!is.null(datlist[["discard_fleet_info"]])) {
+		colnames(datlist[["discard_fleet_info"]]) <- c("Fleet", "units", "errtype")
+	}
+	# compatibility: create the old format catch matrix
+	datlist[["catch"]] <- datlist[["catch"]][datlist[["catch"]][, 1] >= -999, ]
+	colnames(datlist[["catch"]]) <- c("year", "seas", "fleet", "catch", "catch_se")
+	# mean body weight
+	if (datlist[["use_meanbodywt"]] == 0) {
+		datlist[["N_meanbodywt"]] <- 0
+	}
+	# length info
+	datlist[["comp_tail_compression"]] <- datlist[["len_info"]][["mintailcomp"]]
+	datlist[["add_to_comp"]] <- datlist[["len_info"]][["addtocomp"]]
+	datlist[["max_combined_lbin"]] <- datlist[["len_info"]][["combine_M_F"]]
+	if (is.null(datlist[["lencomp"]])) datlist[["N_lencomp"]] <- 0
+	if (datlist[["use_MeanSize_at_Age_obs"]] == 0) {
+		datlist[["N_MeanSize_at_Age_obs"]] <- 0
+	}
+	## !!! need to add fixes to pop len bins? (see 3.24)
+	# fix some things
+	if (!is.null(datlist[["lbin_method"]])) {
+		if (datlist[["lbin_method"]] == 1) # same as data bins
+		{
+			datlist[["N_lbinspop"]] <- datlist[["N_lbins"]]
+			datlist[["lbin_vector_pop"]] <- datlist[["lbin_vector"]]
+		}
+
+		if (datlist[["lbin_method"]] == 2) # defined wid, min, max
+		{
+			if (!is.null(datlist[["binwidth"]]) &&
+			!is.null(datlist[["minimum_size"]]) &&
+			!is.null(datlist[["maximum_size"]])) {
+				datlist[["N_lbinspop"]] <- (datlist[["maximum_size"]] - datlist[["minimum_size"]]) / datlist[["binwidth"]] + 1
+				datlist[["lbin_vector_pop"]] <- vector()
+				for (j in 0:datlist[["N_lbinspop"]])
+				{
+					datlist[["lbin_vector_pop"]] <- c(
+					datlist[["lbin_vector_pop"]],
+					datlist[["minimum_size"]] + (j * datlist[["binwidth"]])
+					)
+				}
+			}
+		}
+		if (datlist[["lbin_method"]] == 3) # vector
+		{
+			if (!is.null(datlist[["lbin_vector_pop"]])) {
+				datlist[["N_lbinspop"]] <- length(datlist[["lbin_vector_pop"]])
+			}
+		}
+	}
+
+	return(datlist)
+}
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~.ss3.readdat
+
 
 #.setCWD--------------------------------2007-09-20
 # Return the current working directory and if win=TRUE, 

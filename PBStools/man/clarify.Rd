@@ -9,7 +9,7 @@
 clarify(dat, cell=c(0.1,0.075), nG=8,
    xlim=c(-134.2,-127), ylim=c(49.6,54.8), zlim=NULL, targ="YMR", 
    clrs=c("red","orange","yellow","green","forestgreen","deepskyblue",
-   "blue","midnightblue"), land="ghostwhite", spp.names=FALSE, 
+   "blue","midnightblue"), land="ghostwhite", spp.names=FALSE, outnam,
    png=FALSE, pngres=400, PIN=NULL, isobs=c(200,1000,1800), 
    wmf=FALSE, eps=FALSE, hpage=10, ioenv=.GlobalEnv, lang=c("e","f"))
 }
@@ -26,6 +26,7 @@ clarify(dat, cell=c(0.1,0.075), nG=8,
   \item{land}{\code{character} -- colour to shade land masses.}
   \item{spp.names}{\code{logical} -- if \code{TRUE}, replace species codes
     (if they are used in the data) with species names in the legend.}
+  \item{outnam}{\code{character} -- name of output file (without extension).}
   \item{png}{\code{logical} -- if \code{TRUE}, send plot to a portable network graphics \code{'.png'} file.}
   \item{pngres}{\code{numeric} -- resolution in pixels per inch for the png file.}
   \item{PIN}{\code{numeric} -- vector specifying width and height for output graphics file; if \code{NULL}
@@ -55,8 +56,8 @@ clarify(dat, cell=c(0.1,0.075), nG=8,
 \author{ 
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
-  \emph{locus opus}: Institute of Ocean Sciences (IOS), Sidney BC\cr
-  Last modified \code{Rd: 2021-06-15}
+  \emph{locus opus}: Regional Headquarters (RHQ), Vancouver BC\cr
+  Last modified \code{Rd: 2023-02-08}
 }
 \seealso{
 In package \pkg{PBStools}:\cr

@@ -23,22 +23,26 @@
 
 
 ## calcCVage----------------------------2021-03-16
-##  Calculate CV of ages base on age or length data
+##  Calculate CV of ages based on age or length data.
+##  Runs SQL query 'gfb_ages_read.sql' at least once.
 ## ---------------------------------------------RH
-calcCVage = function(dat, read_true=1, cvtype="age", Amax=50,
-   min.ages=1:6, min.cv=0.25,
+calcCVage = function(dat, read_true=1, read_obs=NULL, cvtype="age", Amax=50,
+   min.ages=1:6, min.cv=0.25, smooth=FALSE,
    plot=TRUE, png=FALSE, pngres=400, PIN=c(8,6), outnam, lang=c("e","f"))
 {
 	readT = paste0("read", read_true)
-#browser();return()
 	dat   = dat[dat[,readT] > 0 & !is.na(dat[,readT]),]
-	if (cvtype=="age")
-		readObs = setdiff(colnames(dat)[grep("^read",colnames(dat))], readT)
+	if (cvtype=="age") {
+		if (is.null(read_obs))
+			readObs = setdiff(colnames(dat)[grep("^read",colnames(dat))], .su(c("read0",readT)))  ## exclude 'Unknown' also (RH 220502)
+		else
+			readObs = paste0("read", read_obs)
+	}
 	else
 		readObs = "len"
 	eval(parse(text=paste0("alist = split(dat, dat$read", read_true, ")")))
 	#Amax = max(as.numeric(names(alist)))
-	Atab = array(NA,dim=c(Amax,4), dimnames=list(age=1:Amax, stat=c("N","MU","SD","CV")))
+	Atab = array(0,dim=c(Amax,ifelse(smooth,6,5)), dimnames=list(age=1:Amax, stat=c("N","MU","SD","CV","SDa","CVsm")[1:ifelse(smooth,6,5)]))
 
 	for (i in 1:length(alist)){
 		ii = names(alist)[i]
@@ -50,8 +54,7 @@ calcCVage = function(dat, read_true=1, cvtype="age", Amax=50,
 			for (j in (i+1):length(alist))
 				adat = rbind(adat,alist[[j]])
 		}
-#if (ii=="50") {browser();return()}
-		zpos = adat[,readObs,drop=F]>0
+		zpos = adat[,readObs,drop=FALSE]>0
 		Atab[ii,"N"] = sum(zpos)
 		if (sum(zpos)==0) next
 		Atab[ii,"MU"] = mean(adat[,readObs][zpos])
@@ -62,43 +65,86 @@ calcCVage = function(dat, read_true=1, cvtype="age", Amax=50,
 			Atab[ii,"CV"] = Atab[ii,"SD"] / Atab[ii,"MU"]
 		}
 	}
-#browser();return()
-	cv0 = is.element(Atab[,"CV"],0) | is.na(Atab[,"CV"])
-	while(any(cv0)) {
-	#if (any(cv0)) {
-		cva = (1:nrow(Atab))[cv0]
-		cvb = rbind(Atab[pmax(1,cva-1),"CV"], Atab[pmin(nrow(Atab),cva+1),"CV"])
-		cvc = apply(cvb,2,calcGM)
-		Atab[cv0,"CV"] = cvc
-		cv0 = is.element(Atab[,"CV"],0) | is.na(Atab[,"CV"])
-		#if (any(is.element(Atab[,"CV"],0) | is.na(Atab[,"CV"])))
-		#	stop("Need to deal with multiple missing values")
-	}
 	## Override specific ages with minimum acceptable CVs
 	exCV = is.element(rownames(Atab),min.ages)
 	if (any(exCV))
 		Atab[exCV,"CV"] = pmax(Atab[exCV,"CV"],min.cv)
+
+	cv0 = is.na(Atab[,"CV"]) | (is.element(Atab[,"CV"],0) & Atab[,"N"] <= 1)
+	while(any(cv0)) {
+		cva = (1:nrow(Atab))[cv0]
+		cvb = rbind(Atab[pmax(1,cva-1),"CV"], Atab[pmin(nrow(Atab),cva+1),"CV"])
+		cvc = apply(cvb,2,mean) #calcGM)  ## geometric mean cannot handle 0 values sensibly
+		Atab[cv0,"CV"] = cvc
+		#cv0 = is.element(Atab[,"CV"],0) | is.na(Atab[,"CV"])
+		cv0 = is.na(Atab[,"CV"]) | (is.element(Atab[,"CV"],0) & Atab[,"N"] <= 1) ## believe CV=0 if n>1
+	}
+#browser();return()
+
+	xsmoo = as.numeric(rownames(Atab))
+	xoff  = mean(diff(xsmoo))/2
+	sd0   = is.element(Atab[,"SD"],0)
+	Atab[,"SDa"] = xsmoo * Atab[,"CV"]  ## calculated SD by age from derived CVs
+	if (smooth) {
+		xsmoo = as.numeric(rownames(Atab))
+		ysmoo = GT0(loess.smooth(xsmoo, xsmoo * Atab[,"CV"], evaluation=nrow(Atab), span=1/2)$y)
+		#ysmoo = loess.smooth(xsmoo, log(GT0(xsmoo * Atab[,"CV"])), evaluation=nrow(Atab), span=2/3)$y; ysmoo = exp(ysmoo)
+		Atab[,"CVsm"] = ysmoo
+	}
 #browser();return()
 	names.not = names.arg = rep("",nrow(Atab))
 	names.out = seq(5,Amax,5)
 	names.arg[match(names.out,rownames(Atab))] = names.out
-#browser();return()
+
 	if (plot) {
 		if (missing(outnam))
 			outnam = paste0("CV",cvtype)
-		fout = fout.e = outnam
+		fout.e = outnam
 		for (l in lang) {  ## could switch to other languages if available in 'linguaFranca'.
 			changeLangOpts(L=l)
 			fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
 			if (png){ 
 				createFdir(l)
-				clearFiles(paste0(fout,".png"))
+				clearFiles(paste0(fout,c(".csv",".png")))
 				png(file=paste0(fout,".png"), units="in", res=pngres, width=PIN[1], height=PIN[2])
 			}
-			expandGraph(mfrow=c(1,1), mar=c(3,3,1,1))
-			barplot(Atab[,"CV"], col=switch(cvtype, 'age'="moccasin", 'len'="olivedrab1"), space=0, xlab=linguaFranca("Age (y)",l), ylab=switch(l, 'e'="Coefficient of Variation", 'f'="coefficient de variation"), cex.axis=1.2, cex.lab=1.5, names.arg=names.not)
-			axis(1, at=names.out-0.5, labels=names.out, line=NA, pos=0, tick=F, padj=0, cex=1.2, mgp=c(2,0.2,0))
-			addLegend(0.9,0.9, linguaFranca(paste0("based on ", switch(cvtype, 'age'="age reader observations", 'len'="lengths at age")),l), adj=c(1,0), bty="n")
+			if (smooth) {
+				par(fig=c(0,1,0.4,1), mar=c(3.5,3,1,1), new=FALSE)
+				plot( xsmoo, xsmoo * Atab[,"CV"], type="n", xlab=linguaFranca("Age (y)",l), ylab="", cex.axis=1.2, cex.lab=1.5, mgp=c(2,0.5,0), las=1)
+				## Add shading for ages with no observed SD
+				if (any(sd0)) {
+					x0  = xsmoo[sd0]
+					xvert = data.frame(v1=x0[c(TRUE,diff(x0)>1)], v2=x0[!c(diff(x0)==1,FALSE)])
+					apply(xvert, 1, function(x) {
+						if (diff(x)==0) x = x + c(-xoff/2,xoff/2)
+						y = par()$usr[3:4]
+						polygon(x=x[c(1,1,2,2)], y=y[c(1,2,2,1)], col="gainsboro", border="gainsboro")
+					})	
+					#abline(v=x0, lwd=5, col=lucent(switch(cvtype, 'age'="red", 'len'="blue"),0.5))
+				}
+				axis(1, at=seq(5, max(xsmoo), 5), tick=TRUE, labels=FALSE, tcl=-0.25)
+				mtext(linguaFranca("Standard deviation of age",l), side=2, line=1.5, cex=1.5)
+				lines(xsmoo, xsmoo * Atab[,"CV"], lwd=2, lty=2, col=switch(cvtype, 'age'="brown", 'len'="green4"))
+				lines(xsmoo, ysmoo, lwd=2, col=switch(cvtype, 'age'="red", 'len'="blue"))
+				box()
+#browser();return()
+
+				par(fig=c(0,1,0,0.4), mar=c(3,4,0.5,0), new=TRUE)
+				barplot(Atab[,"CV"], col=switch(cvtype, 'age'="moccasin", 'len'="olivedrab1"), space=0, xaxt="n", xlab="", ylab="", cex.axis=1.2, cex.lab=1.4, names.arg=names.not)
+				axis(1, at=names.out-0.5, labels=names.out, line=NA, pos=0, tick=FALSE, padj=0, cex=1.2, mgp=c(2,0.2,0))
+				mtext(linguaFranca("Age (y)",l), side=1, line=1.5, cex=1.5)
+				mtext(switch(l, 'e'="Coefficient of Variation", 'f'="coefficient de variation"), side=2, line=2.5, cex=1.5)
+				addLegend(0.9,0.9, linguaFranca(paste0("based on ", switch(cvtype, 'age'="age precision checks", 'len'="lengths-at-age")),l), adj=c(1,0), bty="n")
+				if (any(sd0)) {
+					x0  = xsmoo[sd0] - xoff
+					points(x0, rep(0,length(x0)), pch=15, cex=0.8, col=lucent(switch(cvtype, 'age'="red", 'len'="blue"),0.75))
+				}
+			} else {
+				expandGraph(mfrow=c(1,1), mar=c(3,3,1,1))
+				barplot(Atab[,"CV"], col=switch(cvtype, 'age'="moccasin", 'len'="olivedrab1"), space=0, xlab=linguaFranca("Age (y)",l), ylab=switch(l, 'e'="Coefficient of Variation", 'f'="coefficient de variation"), cex.axis=1.2, cex.lab=1.5, names.arg=names.not)
+				axis(1, at=names.out-0.5, labels=names.out, line=NA, pos=0, tick=FALSE, padj=0, cex=1.2, mgp=c(2,0.2,0))
+				addLegend(0.9,0.9, linguaFranca(paste0("based on ", switch(cvtype, 'age'="age precision checks", 'len'="lengths-at-age")),l), adj=c(1,0), bty="n")
+			}
 			if(png) dev.off()
 		}; eop()
 	}
@@ -161,7 +207,6 @@ compAF=function(x, year=2003, sex=2, amax=40, pfld="wp",
 	ncomp = length(x)
 	nsex  = length(sex)
 	ntype = length(type)
-#browser();return()
 	years = sapply(x,function(xx){
 		noto=apply(xx[,,,"n",drop=FALSE],2,sum,na.rm=TRUE)
 		yrs = as.numeric(names(noto[noto>0]))
@@ -173,11 +218,14 @@ compAF=function(x, year=2003, sex=2, amax=40, pfld="wp",
 	lty   = rep(ltys,ncomp)[1:ncomp]
 
 	createFdir(lang)
-	fout = fout.e = outnam
+	fout.e = outnam
 	for (l in lang) {
 		changeLangOpts(L=l)
 		fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
-		if (png) png(file=paste0(fout,".png"), units="in", res=pngres, width=PIN[1], height=PIN[2])
+		if (png) {
+			clearFiles(paste0(fout,".png"))
+			png(file=paste0(fout,".png"), units="in", res=pngres, width=PIN[1], height=PIN[2])
+		}
 		if (ntype==1 && nsex==1) {
 			rc = .findSquare(nyear)
 			np = 0  ## keep track of # plots
@@ -189,7 +237,6 @@ compAF=function(x, year=2003, sex=2, amax=40, pfld="wp",
 	
 		xnam = names(x)
 		ydiff = diff(year); udiff=unique(ydiff); ymode=udiff[which.max(tabulate(match(ydiff, udiff)))]
-#browser();return()
 		for (y in year) {
 			for (s in sex) {
 				yy = as.character(y)
@@ -210,7 +257,8 @@ compAF=function(x, year=2003, sex=2, amax=40, pfld="wp",
 				#legtxt = paste0(names(notos)," ",round(notos), switch(fac, 'age'=" otos", 'len'=" lens"))
 				legtxt = paste0(names(notos)," ",round(notos), " obs")
 				ylim = c(0,max(sapply(xvec,max),na.rm=TRUE))
-				yyy  = if (ymode<=1) yy else paste0(y-ymode+1,"-",y)
+				#yyy  = if (ymode<=1) yy else paste0(y-ymode+1,"-",y)
+				yyy  = if (ymode<=1) yy else paste0(y,"-",y+ymode-1)
 
 				if ("discr" %in% type) {
 					plot(0,0, xlim=c(1,amax), ylim=ylim, type="n", xlab="", ylab="", xaxt="n", yaxt="n")
@@ -244,8 +292,7 @@ compAF=function(x, year=2003, sex=2, amax=40, pfld="wp",
 						axis(1, at=seq(10,amax,10), labels=TRUE, cex.axis=1.1, las=1)
 					}
 				}
-#browser();return()
-				zleg = grep(" 0 ",legtxt,invert=T)
+				zleg = grep(" 0 ",legtxt,invert=TRUE)
 				if (type=="cumul")
 					addLegend(0.025,0.8, bty="n", lty=lty[zleg], seg.len=3, col=col[zleg], legend=linguaFranca(gsub("_"," ",legtxt[zleg]),l), yjust=1, xjust=0, lwd=2, cex=0.9)
 				else
@@ -268,7 +315,7 @@ compBmsy = function(Bspp, spp="POP", Mnams=c("Est M","Fix M"),
    ratios=c(0.4,0.8), oratios=NULL, t.yr=2018,
    quants=c(0.05,0.25,0.5,0.75,0.95),
    zones = c("Critical","Cautious","Healthy"),
-   figgy=list(win=T), pngres=400, width=12, height=9, 
+   figgy=list(win=TRUE), pngres=400, width=12, height=9, 
    rcol=c("red","green4","blue"), rlty=rep(2,3), rlwd=rep(2,3), ## ratio lines: col, lty, lwd
    ocol = c("#D55E00", "#009E73", "#56B4E9", "#F0E442"),   ## dot cols for colour-blind humans (vermillion, bluegreen, skyblue, yellow)
    lcol = c("red","darkorange","green4"),
@@ -444,6 +491,9 @@ compLen = function(dat, strSpp, fld="len", lbin=1, sex=c(2,1),
 		dat = dat[is.element(dat$stype, stype),]
 	if (!missing(scat))
 		dat = dat[is.element(dat$scat, scat),]
+	if (!is.null(sex))
+		dat = dat[is.element(dat$sex, sex),]
+	
 	if (nrow(dat)==0) stop("No records for this species/stock")
 
 	gval = sapply(gval, function(x){xout = intersect(x, .su(dat[,gfld])); if(length(xout)==0) NA else xout}, simplify=FALSE)
@@ -481,10 +531,8 @@ compLen = function(dat, strSpp, fld="len", lbin=1, sex=c(2,1),
 				names(ssnames)[i] = names(bxpcol)[i] = names(gval)[i]
 			#	ssnames = ssnames[grep(gnames[i],names(gval),invert=TRUE)]
 		}
-#browser();return()
 		ssnames[!is.na(names(ssnames))]
 		bxpcol = bxpcol[names(ssnames)]
-
 
 		#ssnames = names(ssid)
 		#names(ssnames) = names(bxpcol) = sapply(ssid,paste0,collapse="|")
@@ -519,10 +567,8 @@ compLen = function(dat, strSpp, fld="len", lbin=1, sex=c(2,1),
 	}
 	gnames  = sapply(gval,paste0,collapse="|")
 	ssnames = names(gval)
-#browser();return()
 	loca    = lenv()
 	data("species", package="PBSdata", envir=loca)
-#browser();return()
 	if (missing(stock.name)) { ## RH 200616
 		if (grepl("BSR|RER|HYB|REBS", strSpp))
 			spp3 = strSpp
@@ -533,19 +579,21 @@ compLen = function(dat, strSpp, fld="len", lbin=1, sex=c(2,1),
 	}
 
 	#spp3    = if(all(strSpp=="REBS")) "REBS" else if(all(strSpp=="HYB")) "HYB" else paste0(species[strSpp, "code3"],collapse="|")
+	createFdir(lang)
 
 	out  = if (gfld=="SSID") "-Surv" else paste0("-tt(",paste0(.su(dat$ttype),collapse=""),")")
 	poo  = if (missing(exlax)) "" else paste0("-(",exlax,")")
 	goo  = if (gfld=="gear")  paste0(paste0(names(gnames),"=",gsub("\\|","+",gnames)),collapse="_") else gfld
 	foo  = paste0(spp3,"-(", datnam, ")", out , poo, "-g(", goo, ")", ifelse(strat,"-(strat_","-(obs_"),fld,")")
-	fout = fout.e = if (missing(outnam)) foo else outnam
-	clearFiles(paste0(fout,".png"))
-#browser();return()
+	fout.e = if (missing(outnam)) foo else outnam
 
 	for (l in lang) {  ## could switch to other languages if available in 'linguaFranca'.
 		changeLangOpts(L=l)
 		fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
-		if (png) png(paste0(fout,".png"), units="in", res=pngres, width=PIN[1], height=PIN[2])
+		if (png){
+			clearFiles(paste0(fout,".png"))
+			png(paste0(fout,".png"), units="in", res=pngres, width=PIN[1], height=PIN[2])
+		}
 		par (mfrow=c(2,1), mar=c(1.5,3.5,0.5,0.5), oma=c(1.5,0,0,0), mgp=c(1.5,0.5,0), las=1)
 		for (s in sex) {
 			#sdat = dat[is.element(dat$sex,s),]
@@ -556,21 +604,18 @@ compLen = function(dat, strSpp, fld="len", lbin=1, sex=c(2,1),
 				sdat = dat[is.element(dat$sex,s),]
 				Idat[[i]] = sdat[is.element(sdat$group,i),]
 			}
-#browser();return()
 			Idat = Idat[intersect(names(gval),names(Idat))]  ## order them as per user input
 			if (strat && !boot) {
 				resetGraph();expandGraph()
-				#plotBubbles(Yprop,dnam=T,hide0=T,prettyAxis=T,siz=0.1,ylim=ylim,cpro=T)
+				#plotBubbles(Yprop,dnam=TRUE,hide0=TRUE,prettyAxis=TRUE,siz=0.1,ylim=ylim,cpro=TRUE)
 				#points(as.numeric(names(Ymean)),Ymean, pch=21,col="red",bg="pink",cex=1.5)
 				#plot(0,0,type="n",xlim=xlim,ylim=ylim,xlab="",ylab="", mgp=c(1.5,0.5,0))
 			} else {
-				quantBox(sapply(Qbox,function(x){NA},simplify=F), type="n", ylim=ylim, xlab="", ylab="")
-				abline(v=seq(0.5,par()$usr[2],1),col="grey90")
+				quantBox(sapply(Qbox,function(x){NA},simplify=FALSE), type="n", ylim=ylim, xlab="", ylab="")
+				abline(v=seq(0.5,par()$usr[2],1),col="grey90"); box()
 			}
 			sapply(1:length(Idat), function(i) {  ## loop through index 
 				ii  = names(Idat)[i]
-#browser();return()
-#if (i==5) {browser();return()}
 				idat = Idat[[i]]
 				ival  = split(idat[,fld],idat$year)
 				if (strat){
@@ -578,45 +623,45 @@ compLen = function(dat, strSpp, fld="len", lbin=1, sex=c(2,1),
 					Ymat = array(0,dim=c(length(Lbin),length(yrs)), dimnames=list(len=Lbin,yr=yrs))
 					idat$lbin = ceiling(idat[,fld]/lbin)*lbin
 					for (y in yrs) {
-	.flush.cat(y,"\n")
+#.flush.cat(y,"\n")
 						yy = as.character(y)
 						ydat = idat[is.element(idat$year,y),]
 						jdat = split(ydat,ydat$GC)  ## split by Grouping Code (stratum)
-	
-						dGC  = sapply(jdat,function(x){sapply(split(x$density,x$SID),mean)},simplify=F)  ## density by SID in each GC
-						pGC  = sapply(dGC,function(x){x/sum(x)},simplify=F)                              ## proportion density by SID in each GC
+
+						dGC  = sapply(jdat,function(x){sapply(split(x$density,x$SID),mean)},simplify=FALSE)  ## density by SID in each GC
+						pGC  = sapply(dGC,function(x){x/sum(x)},simplify=FALSE)                              ## proportion density by SID in each GC
 						vGC  = unlist(pGC)
 						ydat$pGC =rep(0,nrow(ydat))
 						ydat$pGC = vGC[paste(ydat$GC,ydat$SID,sep=".")]
-	
+
 						aGC  = sapply(jdat,function(x){.su(x$area)})     ## area by SID in each GC
 						paGC = aGC/sum(aGC)
 						ydat$paGC =rep(0,nrow(ydat))
 						ydat$paGC = paGC[as.character(ydat$GC)]
-	
+
 						ydat$pbin = apply(ydat[,c("pGC","paGC")],1,prod)
 						ydat$pbin = ydat$pbin/sum(ydat$pbin)
 						ydat$plbin = apply(ydat[,c("pbin","lbin")],1,prod)
 						Lest = sum(ydat$plbin)  ## need to bootstrap this procedure
-						
+
 						Lboot = function(Ydat,R) {
 							Lsamp = numeric()
 							for (r in 1:R) {
 								jdat = split(Ydat,Ydat$GC)  ## split by Grouping Code (stratum)
-								jdat = sapply(jdat,function(x){x[sample(1:nrow(x),nrow(x),replace=T),]},simplify=F)
+								jdat = sapply(jdat,function(x){x[sample(1:nrow(x),nrow(x),replace=TRUE),]},simplify=FALSE)
 								ydat = do.call(rbind, jdat)
-	
-								dGC  = sapply(jdat,function(x){sapply(split(x$density,x$SID),mean)},simplify=F)  ## density by SID in each GC
-								pGC  = sapply(dGC,function(x){x/sum(x)},simplify=F)                              ## proportion density by SID in each GC
+
+								dGC  = sapply(jdat,function(x){sapply(split(x$density,x$SID),mean)},simplify=FALSE)  ## density by SID in each GC
+								pGC  = sapply(dGC,function(x){x/sum(x)},simplify=FALSE)                              ## proportion density by SID in each GC
 								vGC  = unlist(pGC)
 								ydat$pGC =rep(0,nrow(ydat))
 								ydat$pGC = vGC[paste(ydat$GC,ydat$SID,sep=".")]
-	
+
 								aGC  = sapply(jdat,function(x){.su(x$area)})     ## area by SID in each GC
 								paGC = aGC/sum(aGC)
 								ydat$paGC = rep(0,nrow(ydat))
 								ydat$paGC = paGC[as.character(ydat$GC)]
-	
+
 								ydat$pbin = apply(ydat[,c("pGC","paGC")],1,prod)
 								ydat$pbin = ydat$pbin/sum(ydat$pbin)
 								ydat$plbin = apply(ydat[,c("pbin","lbin")],1,prod)
@@ -648,7 +693,7 @@ compLen = function(dat, strSpp, fld="len", lbin=1, sex=c(2,1),
 					Ymean = apply(Yvals,2,function(x){sum(x)})
 				} else {
 					##ival  = split(idat[,fld],idat$year) ## redundant?
-					Ymean = sapply(ival,mean,na.rm=T)
+					Ymean = sapply(ival,mean,na.rm=TRUE)
 				}
 				if (!is.null(ival)) {
 					attr(ival,"Ymean") = Ymean
@@ -665,7 +710,6 @@ compLen = function(dat, strSpp, fld="len", lbin=1, sex=c(2,1),
 					#points(xpos[imean],Ymean,pch=21,col=bxpcol[i],bg="white",cex=0.8)
 				} else {
 				}
-#browser();return()
 			}) ## end i (index) loop
 			mtext(linguaFranca(ifelse(fld %in% c("len"), "Length (cm)", "Age (y)"),l), side=2, line=2.25, cex=1.5, las=0)
 			yleg = ifelse(fld=="age" && gfld=="SSID", 0.9, 0.05)
@@ -673,16 +717,17 @@ compLen = function(dat, strSpp, fld="len", lbin=1, sex=c(2,1),
 			if (par()$mfg[1]==1) {
 				leglab = gsub("_"," ",ssnames)
 				#leglab = gsub("_"," ",ssnames[names(gval)])
-#browser();return()
 				addLegend(legpos[1], legpos[2], bty="n", fill=lucent(bxpcol[names(gval)],0.5), border="gainsboro", legend=linguaFranca(leglab,l), xjust=0, yjust=1)
-				if (gfld %in% c("gear","major"))
-					addLabel(0.975, 0.95, txt=linguaFranca( sub("bioDat","",datnam),l), cex=1.2, adj=c(1,1))
+				if (gfld %in% c("gear","major") && !is.element(strSpp, c("REBS","BSR","RER"))){
+					#addLabel(0.975, 0.95, txt=linguaFranca( sub("bioDat","",datnam),l), cex=1.2, adj=c(1,1))
+					data("species",package="PBSdata")
+					addLabel(0.975, 0.95, txt=linguaFranca(toUpper(species[strSpp,"name"]),l), cex=1.2, adj=c(1,1))
+				}
 			}
 		} ## end s (sex) loop
 		mtext(linguaFranca("Year",l), side=1, outer=TRUE, line=0.5, cex=1.5)
 		if (png) dev.off()
 	}; eop()
-#browser();return()
 }
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~compLen
 
@@ -784,7 +829,6 @@ compVBpars = function(bfiles, prefix="vbstan.barf.",
 			load(bfiles[i])        ## loads as object 'barf'
 			ibarf = barf$p[pnams]  ## p = random effects fit
 			idat  = as.data.frame(ibarf)
-#browser();return()
 			nmcmc = nrow(idat)
 			if (i==1) {
 				QVB = array(NA, dim=c(dim(idat),length(bfiles)), dimnames=list(1:nmcmc, pnams, bnams))
@@ -796,9 +840,8 @@ compVBpars = function(bfiles, prefix="vbstan.barf.",
 	} else {
 		load("QVB.rda")
 	}
-#browser();return()
 	if (!all(bnams %in% dimnames(QVB)[[3]]))
-		stop ("You need to re-create QVB, set 'redo.QVB=T'")
+		stop ("You need to re-create QVB, set 'redo.QVB=TRUE'")
 	QVB = QVB[,,bnams,drop=FALSE]
 	pvb.med = apply(QVB[,1,],2,median)
 	pvb.ord = order(pvb.med)
@@ -824,14 +867,12 @@ compVBpars = function(bfiles, prefix="vbstan.barf.",
 			pp  = p[1]
 			pvb = QVB[,pp,]
 			pvb.med = apply(pvb,2,median)
-#browser();return()
-	
+
 			ppp = c(expression(italic(L)[infinity]),expression(italic(K)),expression(italic(t)[0]),expression(italic(sigma)))[p]
 			pvb.plot = pvb[,pvb.ord]; attr(pvb.plot,"class")="matrix"    ## some weird new shit with subsetting and quantBox (RH 210202)
 
-			quantBox(pvb.plot, horizontal=T, outline=F, pars=bpars, yaxt="n", cex.axis=1.2)
+			quantBox(pvb.plot, horizontal=TRUE, outline=FALSE, pars=bpars, yaxt="n", cex.axis=1.2)
 			mtext(ppp, side=1, line=2.25, cex=1.5)
-browser();return()
 			if (par()$mfg[2]==1) {
 				ylab = gsub("\\."," ", gsub("surv\\.","", gsub("bsr","BSR",gsub("rer","RER",gsub("len\\.","",colnames(pvb)[pvb.ord])))))
 				## Modify the names of the stocks and genetic species (probably should make ylab an argument to the function):
@@ -841,7 +882,6 @@ browser();return()
 		}
 		if (png) dev.off()
 	}; eop()
-#browser();return()
 }
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~compVBpars
 
@@ -852,131 +892,571 @@ browser();return()
 ## ---------------------------------------------RH
 createMA =function(yrs=1979:2021, strSpp="POP", addletters=TRUE)
 {
-	dfo.acts = as.list(rep(NA,length(yrs)))
-	names(dfo.acts)=yrs
+	dfo.action = dfo.quota = as.list(rep(NA,length(yrs)))
+	names(dfo.action) = names(dfo.quota) = yrs
 	for (i in yrs) {
 		ii =as.character(i)
-		dfo.acts[[ii]] = list()
+		dfo.action[[ii]] = list()
+		dfo.quota[[ii]]  = list()
 	}
 	##-----1979--------------------------
-	dfo.acts[["1979"]][["PAH"]] = "PAH: Started limited vessel entry for Halibut fleet."
-	##-----1980--------------------------
-	dfo.acts[["1980"]][["POP"]] = "POP: Started experimental over-harvesting of SW Vancouver Island POP stock."
-	##-----1981--------------------------
-	dfo.acts[["1981"]][["SBF"]] = "SBF: Started limited vessel entry for Sablefish fleet."
-	dfo.acts[["1981"]][["WAP"]] = "WAP: Pollock TAC (1981-1994): only 4B=Areas 13-18, 29"
-	##-----1983--------------------------
-	dfo.acts[["1983"]][["POP"]] = "POP: Started experimental unlimited harvesting of Langara Spit POP stock (5EN)."
-	##-----1984--------------------------
-	dfo.acts[["1984"]][["POP"]] = "POP: Ended experimental over-harvesting of SW Vancouver Island POP stock."
-	##-----1986--------------------------
-	dfo.acts[["1986"]][["POP|YMR|RER"]] = "SRF: Slope rockfish (POP, YMR, RER) coastwide quota = 5000t."
-	##-----1988--------------------------
-	dfo.acts[["1988"]][["YMR"]] = "YMR: The quota for Yellowmouth Rockfish only applies to areas 127, 108, 109, 110, 111 and 130-1. Evidence from surveys and from commercial fishery suggests a common stock from the mouth of Queen Charlotte Sound and possibly to Cape Cook."
-	##-----1989--------------------------
-	dfo.acts[["1989"]][["POP|YMR|CAR|SGR"]] = "TWL: In 1989, quota rockfish comprising Pacific Ocean Perch, Yellowmouth Rockfish, Canary Rockfish and Silvergray Rockfish, will be managed on a coastwide basis."
-	##-----1990--------------------------
-	dfo.acts[["1990"]][["PAH|SBF"]] = paste0(strSpp,": Started \\emph{Individual Vessel Quotas} (IVQ) systems for Halibut and Sablefish.")
-	##-----1991--------------------------
-	dfo.acts[["1991"]][["PAH"]] = "PAH: Started \\emph{Dockside Monitoring Program} (DMP) for the Halibut fleet."
-	dfo.acts[["1991"]][["QBR|YYR"]] = "H\\&L: Started limited vessel entry for \\emph{Hook and Line} (H\\&L) fleet inside."
-	##-----1992--------------------------
-	dfo.acts[["1992"]][["QBR|YYR"]] = "H\\&L: Started limited vessel entry for H\\&L fleet outside."
-	##-----1993--------------------------
-	dfo.acts[["1993"]][["POPa"]] = "POP: Stopped experimental fishing of Langara Spit POP stock."
-	dfo.acts[["1993"]][["POPb"]] = "POP: Closed POP fishery in PMFC area 5EN (Langara Spit)."
-	dfo.acts[["1993"]][["RER|REBS"]] = "RER: Trip limits for trawl specified for the first time."
-	##-----1994--------------------------
-	dfo.acts[["1994"]][["@@@"]] = "TWL: Started a dockside monitoring program (DMP) for the Trawl fleet."
-	dfo.acts[["1994"]][["POP|YMR|RER|CAR|SGR|YTR|RSR|WWR|SKR|SST|LST|REBS"]] = "TWL: As a means of both reducing at-sea discarding and simplifying the harvesting regime, rockfish aggregation was implemented. Through consultation with GTAC, the following aggregates were identified: Agg~1=~POP, YMR, RER, CAR, SGR, YTR; Agg~2=~RSR, WWR; Agg~3=~SKR, SST, LST; Agg~4=~ORF."
-	##-----1995--------------------------
-	dfo.acts[["1995"]][["BOR|RBR|RSR|SST"]] = "H\\&L: Implemented catch limits (monthly) on rockfish aggregates for H\\&L."
-	dfo.acts[["1995"]][["WAP"]] = "WAP: Pollock TAC areas: 5CDE=5CD; 5AB=Area 12; 4B=Areas 13-18, 29."
-	dfo.acts[["1995"]][["CAR|SGR|YTR|WWR|RER|POP|YMR|RSR|SKR|SST|LST|REBS"]] = "TWL: Trawl aggregates established in 1994 changed: Agg~1=~CAR, SGR, YTR, WWR, RER; Agg~2=~POP, YMR, RSR; Agg~3=~SKR, SST, LST; Agg~4=~ORF."
-	##-----1996--------------------------
-	dfo.acts[["1996"]][["@@@"]] = "TWL: Started 100\\% onboard observer program for offshore Trawl fleet."
-	dfo.acts[["1996"]][["BOR|RBR|RSR|SST"]] = "H\\&L: Started DMP for H\\&L fleet."
-	dfo.acts[["1996"]][["YTR|WWR|CAR|SGR|POP|YMR|RER|SKR|RSR|SCR|SST|LST|REBS"]] = "H\\&L: Rockfish aggregation will continue on a limited basis in 1996: Agg~1=~YTR, WWR; Agg~2=~CAR, SGR; Agg~3=~POP, YMR; Agg~4=~RER, SKR; Agg~5=~RSR, SCR; Agg~6=~ORF incl. SST, LST"
-	dfo.acts[["1996"]][["WAP"]] = "WAP: Pollock TAC areas: 5CDE=5CD; 5AB=Areas 11,12; 4B=Areas 13-18, 29"
-	##-----1997--------------------------
-	dfo.acts[["1997"]][["@@@"]] = "TWL: Started IVQ system for Trawl \\emph{Total Allowable Catch} (TAC) species (April 1, 1997)"
-	dfo.acts[["1997"]][["BOR|RBR"]] = paste0(strSpp,": Implemented catch limits (15,000 lbs per trip) on combined non-TAC rockfish for the Trawl fleet.")
-	dfo.acts[["1997"]][["POP|YMR"]] = paste0(strSpp,": Permanent boundary adjustment -- Pacific Ocean Perch and Yellowmouth Rockfish caught within Subarea 102-3 and those portions of Subareas 142-1, 130-3 and 130-2 found southerly and easterly of a straight line commencing at 52$^\\circ$20$'$00$''$N 131$^\\circ$36$'$00$''$W thence to 52$^\\circ$20$'$00$''$N 132$^\\circ$00$'$00$''$W thence to 51$^\\circ$30$'$00$''$N 131$^\\circ$00$'$00$''$W and easterly and northerly of a straight line commencing at 51$^\\circ$30$'$00$''$N 131$^\\circ$00$'$00$''$W thence to 51$^\\circ$39$'$20$''$N 130$^\\circ$30$'$30$''$W will be deducted from the vessel's 5CD IVQ for those two species.")
-	dfo.acts[["1997"]][["QBR|CPR|CHR|TIR|CAR|SGR|RER|SKR|SST|LST|POP|YMR|RSR|YTR|BKR|WWR|REBS"]] = "H\\&L: All H\\&L rockfish, with the exception of YYR, shall be managed under the following rockfish aggregates: Agg~1=~QBR, CPR; Agg~2=~CHR, TIR; Agg~3=~CAR, SGR; Agg~4=~RER, SKR, SST, LST; Agg~5=~POP, YMR, RSR; Agg~6=~YTR, BKR, WWR; Agg~7=~ORF excluding YYR."
-	##-----1998--------------------------
-	dfo.acts[["1998"]][["YYR"]] = "H\\&L: Aggregate 4 -- Option A: a quantity of Aggregates 2 to 5 and 7 combined not to exceed 100\\% of the total of Aggregate 1 per landing; an overage of Aggregate 1 and 6 up to a maximum of 10\\% per fishing period which shall be deducted from the vessel's succeeding fishing period limit. Option B: a quantity of Aggregates 2 to 7 combined not to exceed 100\\% of the Yelloweye rockfish per landing. Option C: 20,000 pounds of Aggregate 4 per fishing period; an overage for each of the Aggregates 3 to 5 and, Aggregates 6 and 7 combined, up to a maximum of 20\\% per fishing period which shall be deducted from the vessel's succeeding fishing period limit."
-	##-----2000--------------------------
-	dfo.acts[["2000"]][["PAH|RBR"]] = "PAH: Implemented catch limits (20,000 lbs per trip) on rockfish aggregates for the Halibut option D fleet."
-	dfo.acts[["2000"]][["PAH|RBR|SST|BSR|RER|REBS"]] = "H\\&L: Implemented formal allocation of rockfish species between Halibut and H\\&L sectors."
-	dfo.acts[["2000"]][["@@@"]] = "ALL: Formal discussions between the hook and line rockfish (ZN), halibut and trawl sectors were initiated in 2000 to establish individual rockfish species allocations between the sectors to replace the 92/8 split. Allocation arrangements were agreed to for rockfish species that are not currently under TAC. Splits agreed upon for these rockfish will be implemented in the future when or if TACs are set for those species."
-	dfo.acts[["2000"]][["LST|SST"]] = "TWL: DFO cut LST TAC off WCVI to 404~t and set a conditional TAC of 425~t for an exploratory fishery north of 230$^\\circ$ true from Lookout Island."
-	##-----2001--------------------------
-	dfo.acts[["2001"]][["SGR"]] = "SGR: TAC reduction (3y) for SGR -- DFO has adopted conservative F=M harvest strategy in establishing the Silvergrey Rockfish TAC for all areas except 5AB. In 5AB the TAC will be stepped downward by 60 tonnes annually for each of the 2001/2002, 2003/2004 and 2003/2004 seasons to achieve this harvest strategy."
-	dfo.acts[["2001"]][["POP"]] = "POP: TAC reduction (3y) for POP -- DFO reduced the 5CD POP TAC by 300 tonnes for research use as payment for the Hecate Strait Pacific Cod charter for each of the next three fishing seasons."
-	dfo.acts[["2001"]][["BOR"]] = "BOR: PSARC (now CSAP) concerned that the decline of abundance indices for Bocaccio from the West Coast Vancouver Island (WCVI) Shrimp survey data and, in particular, the U.S. Triennial survey data reflected a serious decline. A detailed review of all survey indices was recommended to assess trends in Bocaccio abundance."
-	dfo.acts[["2001"]][["BSR|RER|REBS"]] = "RER: Set commercial allocations among sectors (ongoing to 2019): Trawl 55.8\\%, H\\&L 41.17\\%, Halibut 3.03\\%."
-	##-----2002--------------------------
-	dfo.acts[["2002"]][["QBR|YYR|CPR|CHR|TIR"]] = "H\\&L: Established the inshore rockfish conservation strategy."
-	dfo.acts[["2002"]][["@@@"]] = "TWL: Closed areas to preserve four hexactinellid (glassy) sponge reefs."
-	dfo.acts[["2002"]][["LST|SST"]] = "TWL: Managers created 5 LST management zones coastwide (WCVI, Triangle, Tidemarks, Flamingo, Rennell); zones north of WCVI were designated ``experimental''."
-	dfo.acts[["2002"]][["BOR"]] = "BOR: Status of Bocaccio was designated as `Threatened' by the Committee on the Status of Endangered Wildlife in Canada (COSEWIC) in November 2002. The designation was based on a new status report that indicated a combination of low recruitment and high fishing mortality had resulted in severe declines and low spawning abundance of this species. As the Species at Risk Act (SARA) was not yet in place, there was no legal designation for Bocaccio. Protection under SARA would only come in the event that this species was listed, by regulation, under the Act."
-	##-----2003--------------------------
-	dfo.acts[["2003"]][["BOR|CAR|LST|YMR|YYR|BSR|RER|REBS"]] = paste0(strSpp,": Species at Risk Act (SARA) came into force in 2003.")
-	##-----2004--------------------------
-	dfo.acts[["2004"]][["BOR"]] = "BOR: DFO reviewed management measures in the groundfish fisheries to assess the impacts on listed species under SARA. Voluntary program for the trawl fleet was developed and implemented in 2004 in which groundfish trawl vessels directed the proceeds of all landed Bocaccio Rockfish for research and management purposes. Ongoing to 2019."
-	##-----2005--------------------------
-	dfo.acts[["2005"]][["BORa"]] = "BOR: DFO consulted with First Nations, stakeholders, and the Canadian public on Bocaccio COSEWIC designation for 1.5 years and planned recommendations for further action to be presented to the Minister of Environment and Governor in Council (Cabinet) in spring 2005. A final listing decision by Governor in Council was expected in October 2005."
-	dfo.acts[["2005"]][["BORb"]] = "BOR: As a proactive measure, industry reduced the harvest of Bocaccio, beginning in 2004, and resulted in a reduction of the Bocaccio catch by over 50\\% percent. Subsequently, measures to avoid Bocaccio were taken in the fishing years 2005/06 through 2019/20."
-	dfo.acts[["2005"]][["BORc"]] = "BOR: The Government of Canada announced in November 2005 that Bocaccio be sent back to COSEWIC for further information or consideration."
-	##-----2006--------------------------
-	dfo.acts[["2006"]][["@@@"]] = "ALL: Introduced an \\emph{Integrated Fisheries Management Plan} (IFMP) for all directed groundfish fisheries."
-	dfo.acts[["2006"]][["@@@a"]] = "H\\&L: Implemented 100\\% at-sea electronic monitoring and 100\\% dockside monitoring for all groundfish H\\&L fisheries."
-	dfo.acts[["2006"]][["POP"]] = "POP: TAC reduction for POP -- DFO reduced the 5CD POP TAC by 700 tonnes for use in possible research programs."
-	dfo.acts[["2006"]][["BOR|RBR|RSR|SST|WWR"]] = "H\\&L: Implemented mandatory retention of rockfish for H\\&L."
-	dfo.acts[["2006"]][["SST"]] = "H\\&L: Annual non-directed species caps by fishery -- Shortspine Thornyhead (Dogfish = 0.05\\% Dogfish IVQ, Outside ZN = 1881 lbs., Halibut = 8000 lbs., Sablefish = 10,512 lbs.)"
-	dfo.acts[["2006"]][["QBR|YYR|CPR|CHR|TIR"]] = "H\\&L: To support rockfish research the Groundfish Hook and Line Sub Committee (GHLSC) agreed to set aside 5\\% of the ZN allocations for research purposes."
-	##-----2007--------------------------
-	dfo.acts[["2007"]][["SST|BSR|RER|REBS"]] = paste0(strSpp,": Amendment to Halibut IVQ cap for SST and RER -- reallocations can only occur in blocks up to 4000 lbs or until the vessel species cap is met. Once the first 4000 lbs has been caught additional IVQ can be reallocated onto the licence up to 4000 lbs. This can continue until the vessel species cap is met.")
-	dfo.acts[["2007"]][["BOR"]] = "BOR: COSEWIC reconfirmed Bocaccio's Threatened designation, and the species re-entered the SARA listing process in 2007."
-	##-----2009--------------------------
-	dfo.acts[["2009"]][["LST|RER|BSR|REBS"]] = paste0(strSpp,": Listed as species of `Special Concern' under SARA; management plan required.")
-	##-----2011--------------------------
-	dfo.acts[["2011"]][["POP"]] = "POP: TAC adjustment (3y) for POP -- combined 5ABCD POP TAC reduction to 3413\\,t will be achieved over a three year period through an annual reduction of 258\\,t. The expected catch level will be 68\\% of TAC."
-	dfo.acts[["2011"]][["RBR"]] = "RBR: TAC implementation for RBR -- 1,300,000 lbs has been set for Redbanded Rockfish coastwide (50\\% allocated to trawl, 37.5\\% allocated to rockfish outside and 12.5\\% allocated to halibut) and harvesters are now responsible for this mortality."
-	##-----2012--------------------------
-	dfo.acts[["2012"]][["@@@"]] = "TWL: Froze the footprint of where groundfish bottom trawl activities can occur (all vessels under the authority of a valid Category T commercial groundfish trawl license selecting Option A as identified in the IFMP)."
-	dfo.acts[["2009"]][["LST|RER|BSR|REBS"]] = paste0(strSpp,": Management plan published, with goal to maintain sustainable populations of LST and REBS within each species' known range in Canadian Pacific waters.")
-	##-----2013--------------------------
-	dfo.acts[["2013"]][["@@@"]] = "TWL: To support groundfish research, the groundfish trawl industry agreed to the trawl TAC offsets to account for unavoidable mortality incurred during the joint DFO-Industry groundfish multi-species surveys in 2013."
-	dfo.acts[["2013"]][["POP"]] = "POP: New species-area groups have been created for Pacific Ocean Perch for 3CD, 5AB, 5C and 5DE."
-	dfo.acts[["2013"]][["POPa"]] = "POP: Combine 5ABCD TACs reduction to 3413~mt is to be achieved over a three year period through an annual reduction of 258 mt. 2013/14 is the third year of this three year period. The expected catch level is to be 68\\% of TAC. TAC is subject to annual review."
-	dfo.acts[["2013"]][["POPb"]] = "POP: Pacific Ocean Perch within Subarea 127-1 and that portion of Subareas 127-2 found northerly and westerly of 50$^\\circ$06$'$00$''$N will be deducted from the vessel's Pacific Ocean Perch rockfish 5A/B IVQ."
-	dfo.acts[["2013"]][["BORa"]] = "BOR: COSEWIC had previously designated Bocaccio as Threatened in November 2002. Its status was re-examined and designated Endangered in November 2013."
-	dfo.acts[["2013"]][["BORb"]] = "BOR: DFO formulated a plan for stepped reductions from current Bocaccio catch levels of approximately 137 tonnes (inclusive of trawl, groundfish hook and line, salmon troll, and recreational sectors) to a target level of 75 tonnes over 3 years (2013/14 to 2015/16). This plan accounted for First Nations' priority access for food, social, and ceremonial purposes. DFO worked with fishing interests to develop measures that would reduce Bocaccio catch and enable stock rebuilding over the long term."
-	dfo.acts[["2013"]][["BORc"]] = "BOR: Annual Trawl \\emph{Mortality Cap} (MC) for Bocaccio was initially set at 150 tonnes. The IVQ carryover/underage limit was set to 15\\% of each vessels' Bocaccio holdings (in effect until 2019/20 fishery year)."
-	dfo.acts[["2013"]][["BORd"]] = "BOR: All H\\&L groundfish fisheries subject to Bocaccio trip limits based on landings of directed species. For example, Halibut directed trips could land up to 200 pounds of Bocaccio when 15,000 pounds or less of Halibut was landed, 300 pounds of Bocaccio when 30,000 pounds of Halibut was landed and 400 pounds of Bocaccio when greater than 30,000 pounds of Halibut was landed. The Dogfish, Lingcod, ZN Rockfish, and Sablefish fisheries were subject to similar trip limits for Bocaccio. These trip limits remained in effect until 2015/16."
-	##-----2015--------------------------
-	dfo.acts[["2015"]][["@@@"]] = "ALL: Research allocations were specified starting in 2015 to account for the mortalities associated with survey catches to be covered by TACs."
-	dfo.acts[["2015"]][["BORa"]] = "BOR: DFO Groundfish Management Unit refined the generalised primary objective for Bocaccio to specify that the aim was to also: \\emph{Achieve rebuilding throughout the species' range and grow out of the critical zone ($B > 0.4 B_{MSY}$) within three generations, with a 65\\% probability of success}. To support and monitor progress towards the objective, milestones were also established: \\emph{Achieve a positive stock trajectory trend in each 5-year interval, such that the biomass at the end of each 5-year period is greater than the biomass at the beginning of the same 5-year period. Between major assessments, progress towards this goal will be monitored by annually reviewing fishery-dependent and fishery-independent indices of stock trajectory}."
-	dfo.acts[["2015"]][["BORb"]] = "BOR: To reduce Bocaccio mortality in the groundfish H\\&L fisheries new trip limits were introduced. For example, Halibut directed trips could land 100 pounds plus 1\\% of the amount of Halibut landed in excess of 10,000 pounds to a maximum of 600 pounds of Bocaccio. The Dogfish, Lingcod, ZN Rockfish, and Sablefish directed fisheries were subject to the same trip limits. These trip limits remained in effect during the 2019/20 fishing year."
-	dfo.acts[["2015"]][["BORc"]] = "BOR: Bocaccio trawl MC reduced to 110~t coastwide."
-	##-----2016--------------------------
-	dfo.acts[["2016"]][["BORc"]] = "BOR: Bocaccio trawl MC reduced to 80~t coastwide. Bocaccio remains a quota species in the trawl fishery, but not in the hook and line fisheries."
-	##-----2019--------------------------
+	dfo.action[["1979"]][["PAH"]] = "PAH: Started limited vessel entry for Halibut fleet."
 
-	## Implementation
-	out = lapply(dfo.acts,function(x,spp){
+	##-----1980--------------------------
+	dfo.action[["1980"]][["POP"]] = "POP: Started experimental over-harvesting of SW Vancouver Island POP stock."
+
+	##-----1981--------------------------
+	dfo.action[["1981"]][["SBF"]] = "SBF: Started limited vessel entry for Sablefish fleet."
+	dfo.action[["1981"]][["WAP"]] = "WAP: Pollock TAC (1981-1994): only 4B=Areas 13-18, 29"
+	dfo.action[["1981"]][["CAR"]] = "SRF: Shelf rockfish aggregate is [CAR] for 3D."
+	##~~~~~Canary Rockfish~~~~~~~~~~~~~~~
+	dfo.quota[["1981"]][["CAR"]][["TRW"]][["3D"]] = 350
+
+	##-----1982--------------------------
+	dfo.action[["1982"]][["CAR"]] = "SRF: Shelf rockfish aggregates are [CAR] for 3D, [CAR+SGR] for 5AB."
+	##~~~~~Canary|Silvergrey~~~~~~~~~~~~~
+	dfo.quota[["1982"]][["CAR"]][["TRW"]][["3D"]] = 350
+	dfo.quota[["1982"]][["CAR|SGR"]][["TRW"]][["5AB"]] = 1100
+
+	##-----1983--------------------------
+	dfo.action[["1983"]][["POP"]] = "POP: Started experimental unlimited harvesting of Langara Spit POP stock (5EN)."
+	dfo.action[["1983"]][["CAR|SGR|YTR"]] = "SRF: Shelf rockfish aggregates are [CAR+SGR+YTR] for 3D; [CAR+SGR] for 5AB; [CAR+YTR] for 5CD."
+	##~~~~~Canary|Silvergrey|Yellowtail~~
+	dfo.quota[["1983"]][["CAR|SGR|YTR"]][["TRW"]][["3D"]] = 600
+	dfo.quota[["1983"]][["CAR|SGR"]][["TRW"]][["5AB"]] = 1100
+	dfo.quota[["1983"]][["CAR|YTR"]][["TRW"]][["5CD"]] = 200
+
+	##-----1984--------------------------
+	dfo.action[["1984"]][["POP"]] = "POP: Ended experimental over-harvesting of SW Vancouver Island POP stock."
+	dfo.action[["1984"]][["CAR|SGR|YTR"]] = "SRF: Shelf rockfish aggregates are [CAR+SGR+YTR] for 3C, 3D, 5E; [CAR+SGR] for 5AB; [CAR+YTR] for 5CD."
+	##~~~~~Canary|Silvergrey|Yellowtail~~
+	dfo.quota[["1984"]][["CAR|SGR|YTR"]][["TRW"]][["3C"]] = 200
+	dfo.quota[["1984"]][["CAR|SGR|YTR"]][["TRW"]][["3D"]] = 500 + 500
+	dfo.quota[["1984"]][["CAR|SGR"]][["TRW"]][["5AB"]] = 1100
+	dfo.quota[["1984"]][["CAR|YTR"]][["TRW"]][["5CD"]] = 450
+	dfo.quota[["1984"]][["CAR|SGR|YTR"]][["TRW"]][["5E"]] = 950
+
+	##-----1985--------------------------
+	dfo.action[["1985"]][["CAR|SGR|YTR"]] = "SRF: Shelf rockfish aggregates are [CAR+SGR+YTR] for 3C, 3D, 5E; [CAR+SGR] for 5AB; [CAR] for 5CD."
+	##~~~~~Canary|Silvergrey|Yellowtail~~
+	dfo.quota[["1985"]][["CAR|SGR|YTR"]][["TRW"]][["3C"]] = 300
+	dfo.quota[["1985"]][["CAR|SGR|YTR"]][["TRW"]][["3D"]] = 500 + 500
+	dfo.quota[["1985"]][["CAR|SGR"]][["TRW"]][["5AB"]] = 1100
+	dfo.quota[["1985"]][["CAR"]][["TRW"]][["5CD"]] = 450
+	dfo.quota[["1985"]][["CAR|SGR|YTR"]][["TRW"]][["5E"]] = 950
+
+	##-----1986--------------------------
+	dfo.action[["1986"]][["POP|YMR|RER"]] = "SRF: Slope rockfish (POP, YMR, RER) coastwide quota = 5000t."
+	dfo.action[["1986"]][["CAR|SGR|YTR"]] = "SRF: Shelf rockfish aggregates are [CAR+SGR+YTR] for 3C, 3D, 5E; [CAR+SGR] for 5AB; [CAR] for 5CD; coastwide quota = 4100t; 1986 quotas revised in 1988 MP to exclude YTR."
+	##~~~~~Canary|Silvergrey~~~~~~~~~~~~~
+	dfo.quota[["1986"]][["CAR|SGR"]][["TRW"]][["3C"]] = 250
+	dfo.quota[["1986"]][["CAR|SGR"]][["TRW"]][["3D"]] = 800
+	dfo.quota[["1986"]][["CAR|SGR"]][["TRW"]][["5AB"]] = 1100
+	dfo.quota[["1986"]][["CAR"]][["TRW"]][["5CD"]] = 300
+	dfo.quota[["1986"]][["CAR|SGR"]][["TRW"]][["5E"]] = 750
+	dfo.quota[["1986"]][["CAR|SGR"]][["TRW"]][["CST"]] = 4100
+	##~~~~~Slope Rockfish~~~~~~~~~~~~~~~~
+	dfo.quota[["1986"]][["POP|YMR|RER"]][["ZNH"]][["CST"]] = 5000
+
+	##-----1987--------------------------
+	dfo.action[["1987"]][["CAR|SGR"]] = "SRF: Shelf rockfish aggregates are [CAR+SGR] for 3C, 3D, 5AB, 5E; [CAR] for 5CD."
+	##~~~~~Canary|Silvergrey~~~~~~~~~~~~~
+	dfo.quota[["1987"]][["CAR|SGR"]][["TRW"]][["3C"]]  = 250
+	dfo.quota[["1987"]][["CAR|SGR"]][["TRW"]][["3D"]]  = 800
+	dfo.quota[["1987"]][["CAR|SGR"]][["TRW"]][["5AB"]] = 1100
+	dfo.quota[["1987"]][["CAR"]][["TRW"]][["5CD"]]     = 300
+	dfo.quota[["1987"]][["CAR|SGR"]][["TRW"]][["5E"]]  = 750
+
+	##-----1988--------------------------
+	dfo.action[["1988"]][["YMR"]] = "YMR: The quota for Yellowmouth Rockfish only applies to areas 127, 108, 109, 110, 111 and 130-1. Evidence from surveys and from commercial fishery suggests a common stock from the mouth of Queen Charlotte Sound and possibly to Cape Cook."
+	dfo.action[["1988"]][["CAR|SGR"]] = "SRF: Shelf rockfish aggregates are [CAR+SGR] for 3C, 3D, 5AB, 5E; [CAR] for 5CD."
+	##~~~~~Canary|Silvergrey~~~~~~~~~~~~~
+	dfo.quota[["1988"]][["CAR|SGR"]][["TRW"]][["3C"]]  = 300
+	dfo.quota[["1988"]][["CAR|SGR"]][["TRW"]][["3D"]]  = 800
+	dfo.quota[["1988"]][["CAR|SGR"]][["TRW"]][["5AB"]] = 1100
+	dfo.quota[["1988"]][["CAR"]][["TRW"]][["5CD"]] = 300
+	dfo.quota[["1988"]][["CAR|SGR"]][["TRW"]][["5E"]]  = 750
+	dfo.quota[["1988"]][["CAR|SGR"]][["TRW"]][["CST"]] = 3850
+	##~~~~~Slope Rockfish~~~~~~~~~~~~~~~~
+	dfo.quota[["1988"]][["POP|YMR"]][["ZNH"]][["CST"]] = 6075
+
+	##-----1989--------------------------
+	dfo.action[["1989"]][["POP|YMR|CAR|SGR"]] = paste0(strSpp,": In 1989, quota rockfish comprising Pacific Ocean Perch, Yellowmouth Rockfish, Canary Rockfish and Silvergray Rockfish, will be managed on a coastwide basis.")
+	##~~~~~Canary Rockfish~~~~~~~~~~~~~~~
+	dfo.quota[["1989"]][["CAR"]][["TRW"]][["3CD"]] = 600
+	dfo.quota[["1989"]][["CAR"]][["TRW"]][["5AB"]] = 425
+	dfo.quota[["1989"]][["CAR"]][["TRW"]][["5CD"]] = 300
+	dfo.quota[["1989"]][["CAR"]][["TRW"]][["5E"]]  = 500
+	dfo.quota[["1989"]][["CAR"]][["TRW"]][["CST"]] = 1575
+	##~~~~~Pacific Ocean Perch~~~~~~~~~~~
+	dfo.quota[["1989"]][["POP"]][["TRW"]][["3C"]]  = 150
+	dfo.quota[["1989"]][["POP"]][["TRW"]][["3D"]]  = 400
+	dfo.quota[["1989"]][["POP"]][["TRW"]][["5AB"]] = 850
+	dfo.quota[["1989"]][["POP"]][["TRW"]][["5CD"]] = 3000
+	dfo.quota[["1989"]][["POP"]][["TRW"]][["5E"]]  = 400
+	dfo.quota[["1989"]][["POP"]][["TRW"]][["CST"]] = 4650
+	##~~~~~Rougheye Rockfish~~~~~~~~~~~~~
+	dfo.quota[["1989"]][["RER"]][["TRW"]][["5E"]]  = 250
+	##~~~~~Silvergray Rockfish~~~~~~~~~~~
+	dfo.quota[["1989"]][["SGR"]][["TRW"]][["3CD"]] = 500
+	dfo.quota[["1989"]][["SGR"]][["TRW"]][["5AB"]] = 850
+	dfo.quota[["1989"]][["SGR"]][["TRW"]][["5CD"]] = 650
+	dfo.quota[["1989"]][["SGR"]][["TRW"]][["5E"]]  = 250
+	dfo.quota[["1989"]][["SGR"]][["TRW"]][["CST"]] = 2125
+	##~~~~~Yellowmouth Rockfish~~~~~~~~~~
+	dfo.quota[["1989"]][["YMR"]][["TRW"]][["5AB"]] = 500
+	dfo.quota[["1989"]][["YMR"]][["TRW"]][["5CD"]] = 350
+	dfo.quota[["1989"]][["YMR"]][["TRW"]][["5E"]]  = 600
+	dfo.quota[["1989"]][["YMR"]][["TRW"]][["CST"]] = 1450
+	##~~~~~Yellowtail Rockfish~~~~~~~~~~
+	dfo.quota[["1989"]][["YTR"]][["TRW"]][["CST"]] = 3500
+
+	##-----1990--------------------------
+	dfo.action[["1990"]][["PAH|SBF"]] = paste0(strSpp,": Started \\emph{Individual Vessel Quotas} (IVQ) systems for Halibut and Sablefish.")
+	dfo.action[["1990"]][["CAR|SGR"]] = paste0(strSpp,": Only one half of the 1990 5E South area quotas (250t of CAR and 125t of SGR) have been included in the overall coastwide quotas, due to past underharvesting. Should the area quotas allocated be attained, additional quotas of 250t for CAR and 125t for SGR may be added to the coastwide quotas at a later date.")
+	##~~~~~Canary Rockfish~~~~~~~~~~~~~~~
+	dfo.quota[["1990"]][["CAR"]][["TRW"]][["5E"]]  = 250
+	dfo.quota[["1990"]][["CAR"]][["TRW"]][["CST"]] = 1475
+	##~~~~~Pacific Ocean Perch~~~~~~~~~~~
+	dfo.quota[["1990"]][["POP"]][["TRW"]][["CST"]] = 4100
+	##~~~~~Silvergray Rockfish~~~~~~~~~~~
+	dfo.quota[["1990"]][["SGR"]][["TRW"]][["5E"]]  = 125
+	dfo.quota[["1990"]][["SGR"]][["TRW"]][["CST"]] = 1900
+	##~~~~~Yellowmouth Rockfish~~~~~~~~~~
+	dfo.quota[["1990"]][["YMR"]][["TRW"]][["CST"]] = 1380
+	##~~~~~Yellowtail Rockfish~~~~~~~~~~
+	dfo.quota[["1990"]][["YTR"]][["TRW"]][["CST"]] = 4800
+
+	##-----1991--------------------------
+	dfo.action[["1991"]][["PAH"]] = "PAH: Started \\emph{Dockside Monitoring Program} (DMP) for the Halibut fleet."
+	dfo.action[["1991"]][["QBR|YYR"]] = paste0(strSpp,": Started limited vessel entry for \\emph{Hook and Line} (H\\&L) fleet inside.")
+	dfo.action[["1991"]][["CAR|SGR"]] = paste0(strSpp,": For 5E South, 125t of CAR and 125t of SGR have been included in the overall coastwide quotas, due to past underharvesting. Should the allocated area quotas be attained, further tonnages may be added to the applicable coastwide quotas at a later date.")
+	##~~~~~Canary Rockfish~~~~~~~~~~~~~~~
+	dfo.quota[["1991"]][["CAR"]][["TRW"]][["5E"]]  = 125
+	dfo.quota[["1991"]][["CAR"]][["TRW"]][["CST"]] = 1350
+	##~~~~~Silvergray Rockfish~~~~~~~~~~~
+	dfo.quota[["1991"]][["SGR"]][["TRW"]][["5E"]]  = 125
+	dfo.quota[["1991"]][["SGR"]][["TRW"]][["CST"]] = 1575
+	##~~~~~Yellowmouth Rockfish~~~~~~~~~~
+	dfo.quota[["1991"]][["YMR"]][["TRW"]][["CST"]] = 1380
+
+	##-----1992--------------------------
+	dfo.action[["1992"]][["QBR|YYR"]] = paste0(strSpp,": Started limited vessel entry for H\\&L fleet outside.")
+	dfo.action[["1992"]][["CAR|SGR"]] = paste0(strSpp,": For 5E South, 50t of CAR and 125t of SGR have been included in the overall coastwide quotas, due to past underharvesting. Should the allocated area quotas be attained, further tonnages may be added to the applicable coastwide quotas at a later date.")
+	##~~~~~Canary Rockfish~~~~~~~~~~~~~~~
+	dfo.quota[["1992"]][["CAR"]][["TRW"]][["5E"]]  = 50
+	dfo.quota[["1992"]][["CAR"]][["TRW"]][["CST"]] = 1275
+	##~~~~~Silvergray Rockfish~~~~~~~~~~~
+	dfo.quota[["1992"]][["SGR"]][["TRW"]][["5E"]]  = 125
+	dfo.quota[["1992"]][["SGR"]][["TRW"]][["CST"]] = 1575
+	##~~~~~Yellowmouth Rockfish~~~~~~~~~~
+	dfo.quota[["1992"]][["YMR"]][["TRW"]][["CST"]] = 1380
+	##~~~~~Yellowtail Rockfish~~~~~~~~~~
+	dfo.quota[["1992"]][["YTR"]][["TRW"]][["CST"]] = 4800
+
+	##-----1993--------------------------
+	dfo.action[["1993"]][["POPa"]] = "POP: Stopped experimental fishing of Langara Spit POP stock."
+	dfo.action[["1993"]][["POPb"]] = "POP: Closed POP fishery in PMFC area 5EN (Langara Spit)."
+	dfo.action[["1993"]][["RER|REBS"]] = "RER: Trip limits for trawl specified for the first time."
+	##~~~~~Canary Rockfish~~~~~~~~~~~~~~~
+	dfo.quota[["1993"]][["CAR"]][["TRW"]][["CST"]] = 850
+	##~~~~~Redstripe Rockfish~~~~~~~~~~~~
+	dfo.quota[["1993"]][["RSR"]][["TRW"]][["CST"]] = 2200
+	##~~~~~Silvergray Rockfish~~~~~~~~~~~
+	dfo.quota[["1993"]][["SGR"]][["TRW"]][["CST"]] = 1255
+	##~~~~~Widow Rockfish~~~~~~~~~~~~~~~~
+	dfo.quota[["1993"]][["WWR"]][["TRW"]][["CST"]] = 1800
+	##~~~~~Yellowmouth Rockfish~~~~~~~~~~
+	dfo.quota[["1993"]][["YMR"]][["TRW"]][["CST"]] = 1380
+	##~~~~~Yellowtail Rockfish~~~~~~~~~~
+	dfo.quota[["1993"]][["YTR"]][["TRW"]][["CST"]] = 4700
+
+	##-----1994--------------------------
+	dfo.action[["1994"]][["@@@"]] = "TWL: Started a dockside monitoring program (DMP) for the Trawl fleet."
+	dfo.action[["1994"]][["POP|YMR|RER|CAR|SGR|YTR|RSR|WWR|SKR|SST|LST|REBS"]] = paste0(strSpp,": As a means of both reducing at-sea discarding and simplifying the harvesting regime, rockfish aggregation was implemented. Through consultation with GTAC, the following aggregates were identified: Agg~1=~POP, YMR, RER, CAR, SGR, YTR; Agg~2=~RSR, WWR; Agg~3=~SKR, SST, LST; Agg~4=~ORF.")
+	##~~~~~Aggregates~~~~~~~~~~~~~~~~~~~~
+	dfo.quota[["1994"]][["POP|YMR|RER|CAR|SGR|YTR"]][["TRW"]][["CST"]] = 12574
+	dfo.quota[["1994"]][["RSR|WWR"]][["TRW"]][["CST"]] = 4000
+
+	##-----1995--------------------------
+	dfo.action[["1995"]][["BOR|RBR|RSR|SST"]] = paste0(strSpp,": Implemented catch limits (monthly) on rockfish aggregates for H\\&L.")
+	dfo.action[["1995"]][["WAP"]] = "WAP: Pollock TAC areas: 5CDE=5CD; 5AB=Area 12; 4B=Areas 13-18, 29."
+	dfo.action[["1995"]][["CAR|SGR|YTR|WWR|RER|POP|YMR|RSR|SKR|SST|LST|REBS"]] = paste0(strSpp,": Trawl aggregates established in 1994 changed: Agg~1=~CAR, SGR, YTR, WWR, RER; Agg~2=~POP, YMR, RSR; Agg~3=~SKR, SST, LST; Agg~4=~ORF.")
+	##~~~~~Aggregates~~~~~~~~~~~~~~~~~~~~
+	dfo.quota[["1995"]][["CAR|SGR|YTR|WWR|RER"]][["TRW"]][["CST"]] = 9716
+	dfo.quota[["1995"]][["POP|YMR|RSR"]][["TRW"]][["CST"]] = 7320
+
+	##-----1996--------------------------
+	dfo.action[["1996"]][["@@@"]] = "TWL: Started 100\\% onboard observer program for offshore Trawl fleet."
+	dfo.action[["1996"]][["BOR|RBR|RSR|SST"]] = paste0(strSpp,": Started DMP for H\\&L fleet.")
+	dfo.action[["1996"]][["YTR|WWR|CAR|SGR|POP|YMR|RER|SKR|RSR|SCR|SST|LST|REBS"]] = paste0(strSpp,": Rockfish aggregation will continue on a limited basis in 1996: Agg~1=~YTR, WWR; Agg~2=~CAR, SGR; Agg~3=~POP, YMR; Agg~4=~RER, SKR; Agg~5=~RSR, SCR; Agg~6=~ORF incl. SST, LST")
+	dfo.action[["1996"]][["WAP"]] = "WAP: Pollock TAC areas: 5CDE=5CD; 5AB=Areas 11,12; 4B=Areas 13-18, 29"
+	##~~~~~Aggregates~~~~~~~~~~~~~~~~~~~~
+	dfo.quota[["1996"]][["YTR|WWR"]][["TRW"]][["CST"]] = 7734
+	dfo.quota[["1996"]][["CAR|SGR"]][["TRW"]][["CST"]] = 2085
+	dfo.quota[["1996"]][["POP|YMR"]][["TRW"]][["CST"]] = 6884
+	dfo.quota[["1996"]][["RER|SKR"]][["TRW"]][["CST"]] = 1311
+	dfo.quota[["1996"]][["LST|SST"]][["TRW"]][["CST"]] = 752
+	dfo.quota[["1997"]][["CAR"]][["ZNH"]][["CST"]]     = 738
+
+	##-----1997--------------------------
+	dfo.action[["1997"]][["@@@"]] = "TWL: Started IVQ system for Trawl \\emph{Total Allowable Catch} (TAC) species (April 1, 1997)"
+	dfo.action[["1997"]][["BOR|RBR"]] = paste0(strSpp,": Implemented catch limits (15,000 lbs per trip) on combined non-TAC rockfish for the Trawl fleet.")
+	dfo.action[["1997"]][["POP|YMR"]] = paste0(strSpp,": Permanent boundary adjustment -- Pacific Ocean Perch and Yellowmouth Rockfish caught within Subarea 102-3 and those portions of Subareas 142-1, 130-3 and 130-2 found southerly and easterly of a straight line commencing at 52$^\\circ$20$'$00$''$N 131$^\\circ$36$'$00$''$W thence to 52$^\\circ$20$'$00$''$N 132$^\\circ$00$'$00$''$W thence to 51$^\\circ$30$'$00$''$N 131$^\\circ$00$'$00$''$W and easterly and northerly of a straight line commencing at 51$^\\circ$30$'$00$''$N 131$^\\circ$00$'$00$''$W thence to 51$^\\circ$39$'$20$''$N 130$^\\circ$30$'$30$''$W will be deducted from the vessel's 5CD IVQ for those two species.")
+	dfo.action[["1997"]][["QBR|CPR|CHR|TIR|CAR|SGR|RER|SKR|SST|LST|POP|YMR|RSR|YTR|BKR|WWR|REBS"]] = "H\\&L: All H\\&L rockfish, with the exception of YYR, shall be managed under the following rockfish aggregates: Agg~1=~QBR, CPR; Agg~2=~CHR, TIR; Agg~3=~CAR, SGR; Agg~4=~RER, SKR, SST, LST; Agg~5=~POP, YMR, RSR; Agg~6=~YTR, BKR, WWR; Agg~7=~ORF excluding YYR."
+	dfo.action[["1996"]][["CAR"]] = "CAR: groundfish equivalent price (GFE) relative to POP = 1.19"
+	##~~~~~Canary Rockfish~~~~~~~~~~~~~~~
+	dfo.quota[["1997"]][["CAR"]][["TRW"]][["3CD"]]  = 503
+	dfo.quota[["1997"]][["CAR"]][["TRW"]][["5AB"]]  = 345
+	dfo.quota[["1997"]][["CAR"]][["TRW"]][["5CDE"]] = 81
+	dfo.quota[["1997"]][["CAR"]][["TRW"]][["CST"]]  = 929
+	dfo.quota[["1997"]][["CAR"]][["ZNH"]][["CST"]]  = 906
+
+	##-----1998--------------------------
+	dfo.action[["1998"]][["YYR"]] = "H\\&L: Aggregate 4 -- Option A: a quantity of Aggregates 2 to 5 and 7 combined not to exceed 100\\% of the total of Aggregate 1 per landing; an overage of Aggregate 1 and 6 up to a maximum of 10\\% per fishing period which shall be deducted from the vessel's succeeding fishing period limit. Option B: a quantity of Aggregates 2 to 7 combined not to exceed 100\\% of the Yelloweye rockfish per landing. Option C: 20,000 pounds of Aggregate 4 per fishing period; an overage for each of the Aggregates 3 to 5 and, Aggregates 6 and 7 combined, up to a maximum of 20\\% per fishing period which shall be deducted from the vessel's succeeding fishing period limit."
+	##~~~~~Canary Rockfish~~~~~~~~~~~~~~~
+	dfo.quota[["1998"]][["CAR"]][["TRW"]][["3CD"]] = 503
+	dfo.quota[["1998"]][["CAR"]][["TRW"]][["5AB"]] = 345
+	dfo.quota[["1998"]][["CAR"]][["TRW"]][["5CDE"]] = 81
+	dfo.quota[["1998"]][["CAR"]][["TRW"]][["CST"]] = 929
+	dfo.quota[["1998"]][["CAR"]][["ZNH"]][["CST"]] = 74
+
+	##-----1999--------------------------
+	##~~~~~Canary Rockfish~~~~~~~~~~~~~~~
+	dfo.quota[["1999"]][["CAR"]][["TRW"]][["3CD"]] = 499
+	dfo.quota[["1999"]][["CAR"]][["TRW"]][["5AB"]] = 342
+	dfo.quota[["1999"]][["CAR"]][["TRW"]][["5CDE"]] = 80
+	dfo.quota[["1999"]][["CAR"]][["TRW"]][["CST"]] = 921
+	dfo.quota[["1999"]][["CAR"]][["ZNH"]][["CST"]] = 76
+
+	##-----2000--------------------------
+	dfo.action[["2000"]][["PAH|RBR"]] = "PAH: Implemented catch limits (20,000 lbs per trip) on rockfish aggregates for the Halibut option D fleet."
+	dfo.action[["2000"]][["PAH|RBR|SST|BSR|RER|REBS"]] = "H\\&L: Implemented formal allocation of rockfish species between Halibut and H\\&L sectors."
+	dfo.action[["2000"]][["@@@"]] = "ALL: Formal discussions between the hook and line rockfish (ZN), halibut and trawl sectors were initiated in 2000 to establish individual rockfish species allocations between the sectors to replace the 92/8 split. Allocation arrangements were agreed to for rockfish species that are not currently under TAC. Splits agreed upon for these rockfish will be implemented in the future when or if TACs are set for those species."
+	dfo.action[["2000"]][["LST|SST"]] = "TWL: DFO cut LST TAC off WCVI to 404~t and set a conditional TAC of 425~t for an exploratory fishery north of 230$^\\circ$ true from Lookout Island."
+	##~~~~~Canary Rockfish~~~~~~~~~~~~~~~
+	dfo.quota[["2000"]][["CAR"]][["TRW"]][["3CD"]] = 555
+	dfo.quota[["2000"]][["CAR"]][["TRW"]][["5AB"]] = 277
+	dfo.quota[["2000"]][["CAR"]][["TRW"]][["5CD"]] = 106
+	dfo.quota[["2000"]][["CAR"]][["TRW"]][["5E"]] =  159
+	dfo.quota[["2000"]][["CAR"]][["TRW"]][["CST"]] = 1097
+	dfo.quota[["2000"]][["CAR"]][["ZNH"]][["CST"]] = 92.5
+
+	##-----2001--------------------------
+	dfo.action[["2001"]][["@@@"]] = "ALL: An agreement reached amongst the commercial groundfish industry has established the allocation of the rockfish species between the commercial Groundfish Trawl and Groundfish Hook and Line sectors."
+	dfo.action[["2001"]][["BOR"]] = "BOR: PSARC (now CSAP) concerned that the decline of abundance indices for Bocaccio from the West Coast Vancouver Island (WCVI) Shrimp survey data and, in particular, the U.S. Triennial survey data reflected a serious decline. A detailed review of all survey indices was recommended to assess trends in Bocaccio abundance."
+	dfo.action[["2001"]][["BSR|RER|REBS"]] = "RER: Set commercial allocations among sectors (ongoing to 2019): Trawl 55.8\\%, H\\&L 41.17\\%, Halibut 3.03\\%."
+	dfo.action[["2001"]][["CAR"]] = "CAR: Sector allocations: T=87.7\\%, HL=12.3\\%"
+	dfo.action[["2001"]][["POP"]] = "POP: TAC reduction (3y) for POP -- DFO reduced the 5CD POP TAC by 300 tonnes for research use as payment for the Hecate Strait Pacific Cod charter for each of the next three fishing seasons."
+	dfo.action[["2001"]][["SGR"]] = "SGR: TAC reduction (3y) for SGR -- DFO has adopted conservative F=M harvest strategy in establishing the Silvergrey Rockfish TAC for all areas except 5AB. In 5AB the TAC will be stepped downward by 60 tonnes annually for each of the 2001/2002, 2003/2004 and 2003/2004 seasons to achieve this harvest strategy."
+	##~~~~~Canary Rockfish~~~~~~~~~~~~~~~
+	dfo.quota[["2001"]][["CAR"]][["TRW"]][["3CD"]] = 529
+	dfo.quota[["2001"]][["CAR"]][["TRW"]][["5AB"]] = 265
+	dfo.quota[["2001"]][["CAR"]][["TRW"]][["5CD"]] = 101
+	dfo.quota[["2001"]][["CAR"]][["TRW"]][["5E"]] =  151
+	dfo.quota[["2001"]][["CAR"]][["TRW"]][["CST"]] = 1046
+	dfo.quota[["2001"]][["CAR"]][["ZNH"]][["CST"]] = 140
+
+	##-----2002--------------------------
+	dfo.action[["2002"]][["QBR|YYR|CPR|CHR|TIR"]] = "H\\&L: Established the inshore rockfish conservation strategy."
+	dfo.action[["2002"]][["@@@"]] = "TWL: Closed areas to preserve four hexactinellid (glassy) sponge reefs."
+	dfo.action[["2002"]][["LST|SST"]] = "TWL: Managers created 5 LST management zones coastwide (WCVI, Triangle, Tidemarks, Flamingo, Rennell); zones north of WCVI were designated ``experimental''."
+	dfo.action[["2002"]][["BOR"]] = "BOR: Status of Bocaccio was designated as `Threatened' by the Committee on the Status of Endangered Wildlife in Canada (COSEWIC) in November 2002. The designation was based on a new status report that indicated a combination of low recruitment and high fishing mortality had resulted in severe declines and low spawning abundance of this species. As the Species at Risk Act (SARA) was not yet in place, there was no legal designation for Bocaccio. Protection under SARA would only come in the event that this species was listed, by regulation, under the Act."
+	##~~~~~Canary Rockfish~~~~~~~~~~~~~~~
+	dfo.quota[["2002"]][["CAR"]][["TRW"]][["3CD"]] = 529
+	dfo.quota[["2002"]][["CAR"]][["TRW"]][["5AB"]] = 265
+	dfo.quota[["2002"]][["CAR"]][["TRW"]][["5CD"]] = 101
+	dfo.quota[["2002"]][["CAR"]][["TRW"]][["5E"]] =  151
+	dfo.quota[["2002"]][["CAR"]][["TRW"]][["CST"]] = 1046
+	dfo.quota[["2002"]][["CAR"]][["ZNH"]][["CST"]] = 140
+
+	##-----2003--------------------------
+	dfo.action[["2003"]][["BOR|CAR|LST|YMR|YYR|BSR|RER|REBS"]] = paste0(strSpp,": Species at Risk Act (SARA) came into force in 2003.")
+	##~~~~~Canary Rockfish~~~~~~~~~~~~~~~
+	dfo.quota[["2003"]][["CAR"]][["TRW"]][["3CD"]] = 529
+	dfo.quota[["2003"]][["CAR"]][["TRW"]][["5AB"]] = 265
+	dfo.quota[["2003"]][["CAR"]][["TRW"]][["5CD"]] = 101
+	dfo.quota[["2003"]][["CAR"]][["TRW"]][["5E"]] =  151
+	dfo.quota[["2003"]][["CAR"]][["TRW"]][["CST"]] = 1046
+	dfo.quota[["2003"]][["CAR"]][["ZNH"]][["CST"]] = 140
+
+	##-----2004--------------------------
+	dfo.action[["2004"]][["BOR"]] = "BOR: DFO reviewed management measures in the groundfish fisheries to assess the impacts on listed species under SARA. Voluntary program for the trawl fleet was developed and implemented in 2004 in which groundfish trawl vessels directed the proceeds of all landed Bocaccio Rockfish for research and management purposes. Ongoing to 2019."
+	##~~~~~Canary Rockfish~~~~~~~~~~~~~~~
+	dfo.quota[["2004"]][["CAR"]][["TRW"]][["3CD"]] = 529
+	dfo.quota[["2004"]][["CAR"]][["TRW"]][["5AB"]] = 265
+	dfo.quota[["2004"]][["CAR"]][["TRW"]][["5CD"]] = 101
+	dfo.quota[["2004"]][["CAR"]][["TRW"]][["5E"]] =  151
+	dfo.quota[["2004"]][["CAR"]][["TRW"]][["CST"]] = 1046
+	dfo.quota[["2004"]][["CAR"]][["ZNH"]][["CST"]] = 140
+
+	##-----2005--------------------------
+	dfo.action[["2005"]][["BORa"]] = "BOR: DFO consulted with First Nations, stakeholders, and the Canadian public on Bocaccio COSEWIC designation for 1.5 years and planned recommendations for further action to be presented to the Minister of Environment and Governor in Council (Cabinet) in spring 2005. A final listing decision by Governor in Council was expected in October 2005."
+	dfo.action[["2005"]][["BORb"]] = "BOR: As a proactive measure, industry reduced the harvest of Bocaccio, beginning in 2004, and resulted in a reduction of the Bocaccio catch by over 50\\% percent. Subsequently, measures to avoid Bocaccio were taken in the fishing years 2005/06 through 2019/20."
+	dfo.action[["2005"]][["BORc"]] = "BOR: The Government of Canada announced in November 2005 that Bocaccio be sent back to COSEWIC for further information or consideration."
+	##~~~~~Canary Rockfish~~~~~~~~~~~~~~~
+	dfo.quota[["2005"]][["CAR"]][["TRW"]][["3CD"]] = 529
+	dfo.quota[["2005"]][["CAR"]][["TRW"]][["5AB"]] = 265
+	dfo.quota[["2005"]][["CAR"]][["TRW"]][["5CD"]] = 101
+	dfo.quota[["2005"]][["CAR"]][["TRW"]][["5E"]] =  151
+	dfo.quota[["2005"]][["CAR"]][["TRW"]][["CST"]] = 1046
+	dfo.quota[["2005"]][["CAR"]][["ZNH"]][["CST"]] = 140
+
+	##-----2006--------------------------
+	dfo.action[["2006"]][["@@@"]] = "ALL: Introduced an Integrated Fisheries Management Plan (IFMP) for all directed groundfish fisheries."
+	dfo.action[["2006"]][["@@@a"]] = "H\\&L: Implemented 100\\% at-sea electronic monitoring and 100\\% dockside monitoring for all groundfish H\\&L fisheries."
+	dfo.action[["2006"]][["BOR|RBR|RSR|SST|WWR"]] = "H\\&L: Implemented mandatory retention of rockfish for H\\&L."
+	dfo.action[["2006"]][["CAR"]] = "CAR: Sector allocations: T=87.7\\%, ZN=11.77\\%, L=0.53\\%"
+	dfo.action[["2006"]][["POP"]] = "POP: TAC reduction for POP -- DFO reduced the 5CD POP TAC by 700 tonnes for use in possible research programs."
+	dfo.action[["2006"]][["QBR|YYR|CPR|CHR|TIR"]] = "H\\&L: To support rockfish research the Groundfish Hook and Line Sub Committee (GHLSC) agreed to set aside 5\\% of the ZN allocations for research purposes."
+	dfo.action[["2006"]][["SST"]] = "H\\&L: Annual non-directed species caps by fishery -- Shortspine Thornyhead (Dogfish = 0.05\\% Dogfish IVQ, Outside ZN = 1881 lbs., Halibut = 8000 lbs., Sablefish = 10,512 lbs.)"
+	##~~~~~Canary Rockfish~~~~~~~~~~~~~~~
+	dfo.quota[["2006"]][["CAR"]][["ALL"]][["3CD"]] = 604
+	dfo.quota[["2006"]][["CAR"]][["ALL"]][["5AB"]] = 302
+	dfo.quota[["2006"]][["CAR"]][["ALL"]][["5CD"]] = 115
+	dfo.quota[["2006"]][["CAR"]][["ALL"]][["5E"]] =  173
+	dfo.quota[["2006"]][["CAR"]][["ALL"]][["CST"]] = 1193
+	dfo.quota[["2006"]][["CAR"]][["TRW"]][["3CD"]] = 529
+	dfo.quota[["2006"]][["CAR"]][["TRW"]][["5AB"]] = 265
+	dfo.quota[["2006"]][["CAR"]][["TRW"]][["5CD"]] = 101
+	dfo.quota[["2006"]][["CAR"]][["TRW"]][["5E"]] =  151
+	dfo.quota[["2006"]][["CAR"]][["TRW"]][["CST"]] = 1046
+	dfo.quota[["2006"]][["CAR"]][["ZNH"]][["3CD"]] = 74
+	dfo.quota[["2006"]][["CAR"]][["ZNH"]][["5AB"]] = 37
+	dfo.quota[["2006"]][["CAR"]][["ZNH"]][["5CD"]] = 14
+	dfo.quota[["2006"]][["CAR"]][["ZNH"]][["5E"]] =  21
+	dfo.quota[["2006"]][["CAR"]][["ZNH"]][["CST"]] = 147
+
+	##-----2007--------------------------
+	dfo.action[["2007"]][["BOR"]] = "BOR: COSEWIC reconfirmed Bocaccio's Threatened designation, and the species re-entered the SARA listing process in 2007."
+	dfo.action[["2007"]][["CAR"]] = "CAR: Research allocation: H\\&L=7.0t"
+	dfo.action[["2007"]][["SST|BSR|RER|REBS"]] = paste0(strSpp,": Amendment to Halibut IVQ cap for SST and RER -- reallocations can only occur in blocks up to 4000 lbs or until the vessel species cap is met. Once the first 4000 lbs has been caught additional IVQ can be reallocated onto the licence up to 4000 lbs. This can continue until the vessel species cap is met.")
+	##~~~~~Canary Rockfish~~~~~~~~~~~~~~~
+	dfo.quota[["2007"]][["CAR"]] = dfo.quota[["2006"]][["CAR"]]
+
+	##-----2008--------------------------
+	dfo.action[["2008"]][["CARa"]] = "CAR: Stock status reviewed in Nov 2007; stock declined from original biomass but decline likely arrested; uncertain if recent catch levels will ensure rebuild; TAC for Canary reduced from 1193t to 912t coastwide."
+	dfo.action[["2008"]][["CARb"]] = "CAR: Research allocation: H\\&L=7.0t"
+	##~~~~~Canary Rockfish~~~~~~~~~~~~~~~
+	dfo.quota[["2008"]][["CAR"]][["ALL"]][["3CD"]] = 507
+	dfo.quota[["2008"]][["CAR"]][["ALL"]][["5AB"]] = 258
+	dfo.quota[["2008"]][["CAR"]][["ALL"]][["5CD"]] = 101
+	dfo.quota[["2008"]][["CAR"]][["ALL"]][["5E"]] =  46
+	dfo.quota[["2008"]][["CAR"]][["ALL"]][["CST"]] = 912
+	dfo.quota[["2008"]][["CAR"]][["TRW"]][["3CD"]] = 450
+	dfo.quota[["2008"]][["CAR"]][["TRW"]][["5AB"]] = 230
+	dfo.quota[["2008"]][["CAR"]][["TRW"]][["5CD"]] = 90
+	dfo.quota[["2008"]][["CAR"]][["TRW"]][["5E"]] =  30
+	dfo.quota[["2008"]][["CAR"]][["TRW"]][["CST"]] = 800
+	dfo.quota[["2008"]][["CAR"]][["ZNH"]][["3CD"]] = 57
+	dfo.quota[["2008"]][["CAR"]][["ZNH"]][["5AB"]] = 28
+	dfo.quota[["2008"]][["CAR"]][["ZNH"]][["5CD"]] = 11
+	dfo.quota[["2008"]][["CAR"]][["ZNH"]][["5E"]] =  16
+	dfo.quota[["2008"]][["CAR"]][["ZNH"]][["CST"]] = 112
+
+	##-----2009--------------------------
+	dfo.action[["2009"]][["CARa"]] = "CAR: TAC for Canary further reduced from 912t to 679t coastwide."
+	dfo.action[["2009"]][["CARb"]] = "CAR: COSEWIC-designated marine species in Pacific region under consideration for listing under Schedule I of SARA: Canary as 'Threatened'."
+	dfo.action[["2009"]][["CARc"]] = "CAR: Research allocation: H\\&L=4.0t"
+	dfo.action[["2009"]][["LST|RER|BSR|REBS"]] = paste0(strSpp,": Listed as species of `Special Concern' under SARA; management plan required.")
+	##~~~~~Canary Rockfish~~~~~~~~~~~~~~~
+	dfo.quota[["2009"]][["CAR"]][["ALL"]][["3CD"]] = 419
+	dfo.quota[["2009"]][["CAR"]][["ALL"]][["5AB"]] = 178
+	dfo.quota[["2009"]][["CAR"]][["ALL"]][["5CD"]] = 55
+	dfo.quota[["2009"]][["CAR"]][["ALL"]][["5E"]] =  26
+	dfo.quota[["2009"]][["CAR"]][["ALL"]][["CST"]] = 679
+	dfo.quota[["2009"]][["CAR"]][["TRW"]][["3CD"]] = 400
+	dfo.quota[["2009"]][["CAR"]][["TRW"]][["5AB"]] = 145
+	dfo.quota[["2009"]][["CAR"]][["TRW"]][["5CD"]] = 40
+	dfo.quota[["2009"]][["CAR"]][["TRW"]][["5E"]] =  10
+	dfo.quota[["2009"]][["CAR"]][["TRW"]][["CST"]] = 595
+	dfo.quota[["2009"]][["CAR"]][["ZNH"]][["3CD"]] = 19
+	dfo.quota[["2009"]][["CAR"]][["ZNH"]][["5AB"]] = 33
+	dfo.quota[["2009"]][["CAR"]][["ZNH"]][["5CD"]] = 15
+	dfo.quota[["2009"]][["CAR"]][["ZNH"]][["5E"]] =  16
+	dfo.quota[["2009"]][["CAR"]][["ZNH"]][["CST"]] = 84
+
+	##-----2010--------------------------
+	dfo.action[["2010"]][["CARa"]] = "CAR: Stock status reviewed in Dec 2009; stock declined from unfished equilibrium biomass but decline likely arrested; TAC for Canary increased to 900t coastwide; stock expected to rebuild and remain at levels consistent with DFO's Precautionary Approach."
+	dfo.action[["2010"]][["CARb"]] = "CAR: Research allocation: H\\&L=6.0t"
+	##~~~~~Canary Rockfish~~~~~~~~~~~~~~~
+	dfo.quota[["2010"]][["CAR"]][["ALL"]][["3CD"]] = 625
+	dfo.quota[["2010"]][["CAR"]][["ALL"]][["5AB"]] = 183
+	dfo.quota[["2010"]][["CAR"]][["ALL"]][["5CD"]] = 66
+	dfo.quota[["2010"]][["CAR"]][["ALL"]][["5E"]] =  26
+	dfo.quota[["2010"]][["CAR"]][["ALL"]][["CST"]] = 900
+	dfo.quota[["2010"]][["CAR"]][["TRW"]][["3CD"]] = 569
+	dfo.quota[["2010"]][["CAR"]][["TRW"]][["5AB"]] = 155
+	dfo.quota[["2010"]][["CAR"]][["TRW"]][["5CD"]] = 55
+	dfo.quota[["2010"]][["CAR"]][["TRW"]][["5E"]] =  10
+	dfo.quota[["2010"]][["CAR"]][["TRW"]][["CST"]] = 789
+	dfo.quota[["2010"]][["CAR"]][["ZNH"]][["3CD"]] = 26
+	dfo.quota[["2010"]][["CAR"]][["ZNH"]][["5AB"]] = 43
+	dfo.quota[["2010"]][["CAR"]][["ZNH"]][["5CD"]] = 21
+	dfo.quota[["2010"]][["CAR"]][["ZNH"]][["5E"]] =  21
+	dfo.quota[["2010"]][["CAR"]][["ZNH"]][["CST"]] = 111
+
+	##-----2011--------------------------
+	dfo.action[["2011"]][["CAR"]] = "CAR: Research allocation: H\\&L=6.0t"
+	dfo.action[["2011"]][["RBR"]] = "RBR: TAC implementation for RBR -- 1,300,000 lbs has been set for Redbanded Rockfish coastwide (50\\% allocated to trawl, 37.5\\% allocated to rockfish outside and 12.5\\% allocated to halibut) and harvesters are now responsible for this mortality."
+	dfo.action[["2011"]][["POP"]] = "POP: TAC adjustment (3y) for POP -- combined 5ABCD POP TAC reduction to 3413\\,t will be achieved over a three year period through an annual reduction of 258\\,t. The expected catch level will be 68\\% of TAC."
+	##~~~~~Canary Rockfish~~~~~~~~~~~~~~~
+	dfo.quota[["2011"]][["CAR"]][["ALL"]][["3CD"]] = 529
+	dfo.quota[["2011"]][["CAR"]][["ALL"]][["5AB"]] = 240
+	dfo.quota[["2011"]][["CAR"]][["ALL"]][["5CD"]] = 100
+	dfo.quota[["2011"]][["CAR"]][["ALL"]][["5E"]] =  31
+	dfo.quota[["2011"]][["CAR"]][["ALL"]][["CST"]] = 900
+	dfo.quota[["2011"]][["CAR"]][["TRW"]][["3CD"]] = 503
+	dfo.quota[["2011"]][["CAR"]][["TRW"]][["5AB"]] = 197
+	dfo.quota[["2011"]][["CAR"]][["TRW"]][["5CD"]] = 79
+	dfo.quota[["2011"]][["CAR"]][["TRW"]][["5E"]] =  10
+	dfo.quota[["2011"]][["CAR"]][["TRW"]][["CST"]] = 789
+	dfo.quota[["2011"]][["CAR"]][["ZNH"]][["3CD"]] = 26
+	dfo.quota[["2011"]][["CAR"]][["ZNH"]][["5AB"]] = 43
+	dfo.quota[["2011"]][["CAR"]][["ZNH"]][["5CD"]] = 21
+	dfo.quota[["2011"]][["CAR"]][["ZNH"]][["5E"]] =  21
+	dfo.quota[["2011"]][["CAR"]][["ZNH"]][["CST"]] = 111
+
+	##-----2012--------------------------
+	dfo.action[["2012"]][["@@@"]] = "TWL: Froze the footprint of where groundfish bottom trawl activities can occur (all vessels under the authority of a valid Category T commercial groundfish trawl license selecting Option A as identified in the IFMP)."
+	dfo.action[["2009"]][["LST|RER|BSR|REBS"]] = paste0(strSpp,": Management plan published, with goal to maintain sustainable populations of LST and REBS within each species' known range in Canadian Pacific waters.")
+	##~~~~~Canary Rockfish~~~~~~~~~~~~~~~
+	dfo.quota[["2012"]][["CAR"]] = dfo.quota[["2011"]][["CAR"]]
+
+	##-----2013--------------------------
+	dfo.action[["2013"]][["@@@"]] = "TWL: To support groundfish research, the groundfish trawl industry agreed to the trawl TAC offsets to account for unavoidable mortality incurred during the joint DFO-Industry groundfish multi-species surveys in 2013."
+	dfo.action[["2013"]][["BORa"]] = "BOR: COSEWIC had previously designated Bocaccio as Threatened in November 2002. Its status was re-examined and designated Endangered in November 2013."
+	dfo.action[["2013"]][["BORb"]] = "BOR: DFO formulated a plan for stepped reductions from current Bocaccio catch levels of approximately 137 tonnes (inclusive of trawl, groundfish hook and line, salmon troll, and recreational sectors) to a target level of 75 tonnes over 3 years (2013/14 to 2015/16). This plan accounted for First Nations' priority access for food, social, and ceremonial purposes. DFO worked with fishing interests to develop measures that would reduce Bocaccio catch and enable stock rebuilding over the long term."
+	dfo.action[["2013"]][["BORc"]] = "BOR: Annual Trawl \\emph{Mortality Cap} (MC) for Bocaccio was initially set at 150 tonnes. The IVQ carryover/underage limit was set to 15\\% of each vessels' Bocaccio holdings (in effect until 2019/20 fishery year)."
+	dfo.action[["2013"]][["BORd"]] = "BOR: All H\\&L groundfish fisheries subject to Bocaccio trip limits based on landings of directed species. For example, Halibut directed trips could land up to 200 pounds of Bocaccio when 15,000 pounds or less of Halibut was landed, 300 pounds of Bocaccio when 30,000 pounds of Halibut was landed and 400 pounds of Bocaccio when greater than 30,000 pounds of Halibut was landed. The Dogfish, Lingcod, ZN Rockfish, and Sablefish fisheries were subject to similar trip limits for Bocaccio. These trip limits remained in effect until 2015/16."
+	dfo.action[["2013"]][["CAR"]] = "CAR: Research allocations: Trawl=2.1t, H\\&L=6.0t"
+	dfo.action[["2013"]][["POP"]] = "POP: New species-area groups have been created for Pacific Ocean Perch for 3CD, 5AB, 5C and 5DE."
+	dfo.action[["2013"]][["POPa"]] = "POP: Combine 5ABCD TACs reduction to 3413~mt is to be achieved over a three year period through an annual reduction of 258 mt. 2013/14 is the third year of this three year period. The expected catch level is to be 68\\% of TAC. TAC is subject to annual review."
+	dfo.action[["2013"]][["POPb"]] = "POP: Pacific Ocean Perch within Subarea 127-1 and that portion of Subareas 127-2 found northerly and westerly of 50$^\\circ$06$'$00$''$N will be deducted from the vessel's Pacific Ocean Perch rockfish 5A/B IVQ."
+	##~~~~~Canary Rockfish~~~~~~~~~~~~~~~
+	dfo.quota[["2013"]][["CAR"]] = dfo.quota[["2011"]][["CAR"]]
+
+	##-----2014--------------------------
+	dfo.action[["2014"]][["CAR"]] = "CAR: Research allocation: H\\&L=6.0t"
+	##~~~~~Canary Rockfish~~~~~~~~~~~~~~~
+	dfo.quota[["2014"]][["CAR"]] = dfo.quota[["2011"]][["CAR"]]
+
+	##-----2015--------------------------
+	dfo.action[["2015"]][["@@@"]] = "ALL: Research allocations were specified starting in 2015 to account for the mortalities associated with survey catches to be covered by TACs."
+	dfo.action[["2015"]][["BORa"]] = "BOR: DFO Groundfish Management Unit refined the generalised primary objective for Bocaccio to specify that the aim was to also: \\emph{Achieve rebuilding throughout the species' range and grow out of the critical zone ($B > 0.4 B_{MSY}$) within three generations, with a 65\\% probability of success}. To support and monitor progress towards the objective, milestones were also established: \\emph{Achieve a positive stock trajectory trend in each 5-year interval, such that the biomass at the end of each 5-year period is greater than the biomass at the beginning of the same 5-year period. Between major assessments, progress towards this goal will be monitored by annually reviewing fishery-dependent and fishery-independent indices of stock trajectory}."
+	dfo.action[["2015"]][["BORb"]] = "BOR: To reduce Bocaccio mortality in the groundfish H\\&L fisheries new trip limits were introduced. For example, Halibut directed trips could land 100 pounds plus 1\\% of the amount of Halibut landed in excess of 10,000 pounds to a maximum of 600 pounds of Bocaccio. The Dogfish, Lingcod, ZN Rockfish, and Sablefish directed fisheries were subject to the same trip limits. These trip limits remained in effect during the 2019/20 fishing year."
+	dfo.action[["2015"]][["BORc"]] = "BOR: Bocaccio trawl MC reduced to 110~t coastwide."
+	dfo.action[["2015"]][["CAR"]] = "CAR: Research allocations: Trawl=2.7t, Longline=6.0t, Total=8.7t"
+	##~~~~~Canary Rockfish~~~~~~~~~~~~~~~
+	dfo.quota[["2015"]][["CAR"]][["TRW"]][["3CD"]] = 503
+	dfo.quota[["2015"]][["CAR"]][["TRW"]][["5AB"]] = 197
+	dfo.quota[["2015"]][["CAR"]][["TRW"]][["5CD"]] = 79
+	dfo.quota[["2015"]][["CAR"]][["TRW"]][["5E"]] =  10
+	dfo.quota[["2015"]][["CAR"]][["TRW"]][["CST"]] = 789
+	dfo.quota[["2015"]][["CAR"]][["ZNH"]][["3CD"]] = 24
+	dfo.quota[["2015"]][["CAR"]][["ZNH"]][["5AB"]] = 42
+	dfo.quota[["2015"]][["CAR"]][["ZNH"]][["5CD"]] = 19
+	dfo.quota[["2015"]][["CAR"]][["ZNH"]][["5E"]] =  20
+	dfo.quota[["2015"]][["CAR"]][["ZNH"]][["CST"]] = 116
+
+	##-----2016--------------------------
+	dfo.action[["2016"]][["BOR"]] = "BOR: Bocaccio trawl MC reduced to 80~t coastwide. Bocaccio remains a quota species in the trawl fishery, but not in the hook and line fisheries."
+	dfo.action[["2016"]][["CAR"]] = "CAR: Research allocations: Trawl=3.3t, Longline=6.0t, Total=9.3t"
+	##~~~~~Canary Rockfish~~~~~~~~~~~~~~~
+	dfo.quota[["2016"]][["CAR"]] = dfo.quota[["2015"]][["CAR"]]
+
+	##-----2017--------------------------
+	dfo.action[["2017"]][["CAR"]] = "CAR: Research allocations: Trawl=2.3t, Longline=6.0t, Total=8.3t"
+	##~~~~~Canary Rockfish~~~~~~~~~~~~~~~
+	dfo.quota[["2017"]][["CAR"]][["TRW"]][["3CD"]] = 615
+	dfo.quota[["2017"]][["CAR"]][["TRW"]][["5AB"]] = 241
+	dfo.quota[["2017"]][["CAR"]][["TRW"]][["5CD"]] = 97
+	dfo.quota[["2017"]][["CAR"]][["TRW"]][["5E"]] =  12
+	dfo.quota[["2017"]][["CAR"]][["TRW"]][["CST"]] = 965
+	dfo.quota[["2017"]][["CAR"]][["ZNH"]][["3CD"]] = 31
+	dfo.quota[["2017"]][["CAR"]][["ZNH"]][["5AB"]] = 53
+	dfo.quota[["2017"]][["CAR"]][["ZNH"]][["5CD"]] = 25
+	dfo.quota[["2017"]][["CAR"]][["ZNH"]][["5E"]] =  26
+	dfo.quota[["2017"]][["CAR"]][["ZNH"]][["CST"]] = 135
+
+	##-----2018--------------------------
+	dfo.action[["2018"]][["CAR"]] = "CAR: Research allocations: Trawl=4.1t, Longline=6.4t, Total=10.5t"
+	##~~~~~Canary Rockfish~~~~~~~~~~~~~~~
+	dfo.quota[["2018"]][["CAR"]] = dfo.quota[["2017"]][["CAR"]]
+
+	##-----2019--------------------------
+	dfo.action[["2019"]][["CAR"]] = "CAR: Research allocations: Trawl=2.0t, Longline=1.2t, Total=3.2t"
+	##~~~~~Canary Rockfish~~~~~~~~~~~~~~~
+	dfo.quota[["2019"]][["CAR"]] = dfo.quota[["2017"]][["CAR"]]
+
+	##-----2020--------------------------
+	dfo.action[["2020"]][["CAR"]] = "CAR: Research allocations: Trawl=6.2t, Longline=6.5t, Total=12.7t"
+	##~~~~~Canary Rockfish~~~~~~~~~~~~~~~
+	dfo.quota[["2020"]][["CAR"]] = dfo.quota[["2017"]][["CAR"]]
+
+	##-----2021--------------------------
+	dfo.action[["2021"]][["CAR"]] = "CAR: Research allocations: Trawl=1.8t, Longline=6.5t, Total=8.3t"
+	##~~~~~Canary Rockfish~~~~~~~~~~~~~~~
+	dfo.quota[["2021"]][["CAR"]] = dfo.quota[["2017"]][["CAR"]]
+
+	ttput(dfo.action); ttput(dfo.quota)
+
+	## Management Quotas ## assume list structure [[year]][[spp]][[gear]][[area]]
+	qout = lapply(dfo.quota,function(x,spp){
+		if (any(grepl(paste0("@@@|",spp),names(x)))) {
+			#print(names(x))
+			poo = x[grep(paste0("@@@|",spp),names(x))]
+			goo = lapply(poo,function(x){lapply(x,function(y){sapply(y,sum,na.rm=TRUE)})})
+			QOO = as.numeric()
+			for (g in c("ALL","TRW","ZNH")){
+				qoo = as.numeric()
+				for (i in 1:length(goo)){
+					igoo = goo[[i]]
+#browser();return()
+					if (!any(g%in%names(igoo))) next
+					qoo = c(qoo, igoo[[g]])
+#browser();return()
+				}
+				if (length(qoo)>0) {
+					#names(qoo) = paste0(names(qoo),".",substring(g,1,1))
+					names(qoo) = paste0(g,".",names(qoo))
+					QOO = c(QOO, qoo)
+				}
+#if(g=="TRW") {browser();return()}
+			}
+			return(QOO)
+		}
+	}, spp=strSpp)
+#browser();return()
+	qout  = qout[!sapply(qout,is.null)]
+	years = .su(names(qout))
+	areas = .su(unlist(lapply(qout,names)))
+
+	quotas = array(NA, dim=c(length(years),length(areas)), dimnames=list(year=years, area=areas))
+	for (i in 1:length(qout)) {
+		ii = names(qout)[i]
+		qval = qout[[ii]]
+		quotas[ii,names(qval)] = qval
+	}
+	write.csv(quotas, file=paste0("dfo.mgmt.quotas.", strSpp, ".csv"))
+
+#browser();return()
+
+
+	## Management Actions
+	aout = lapply(dfo.action,function(x,spp){
 		if (any(grepl(paste0("@@@|",spp),names(x)))) {
 			#print(names(x))
 			poo = as.vector(unlist(x[grep(paste0("@@@|",spp),names(x))]))
 			return(poo)
 		}
 	}, spp=strSpp)
-	out = out[!sapply(out,is.null)]
-	rout = lapply(names(out),function(i){
+
+	aout = aout[!sapply(aout,is.null)]
+	rout = lapply(names(aout),function(i){
 		df = data.frame(
 			year=rep(as.numeric(i),length(i)),
-			comment = as.vector(out[[i]]))
+			comment = as.vector(aout[[i]]))
 	})
 	sout = do.call("rbind", lapply(rout, data.frame, stringsAsFactors=FALSE))
 	if (addletters){
@@ -996,7 +1476,9 @@ createMA =function(yrs=1979:2021, strSpp="POP", addletters=TRUE)
 	comm = gsub("emph\\{","",gsub("}","",comm))
 #browser();retrun()
 	sout$comment = comm
-	write.csv(sout, file=paste0("dfo.mgmt.acts.", strSpp, ".csv"), row.names=F)
+	write.csv(sout, file=paste0("dfo.mgmt.actions.", strSpp, ".csv"), row.names=FALSE)
+
+
 	return(sout)
 }
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~createMA
@@ -1420,10 +1902,10 @@ makeAgeErr = function(type="simple", strSpp, sql=FALSE,
 			}
 			expandGraph(mfrow=c(1,1), mar=c(3,3,1,1), oma=c(0,0,0,0))
 			if (ptype=="bubble") {
-				#plotBubbles(errmat, dnam=T, prettyAxis=T, frange=0.01, size=0.1)
+				#plotBubbles(errmat, dnam=TRUE, prettyAxis=TRUE, frange=0.01, size=0.1)
 				errbat = errmat
 				rownames(errbat) = -(1:Amax)
-				plotBubbles(errbat, dnam=T, xaxt="n", yaxt="n", frange=0.01, size=0.1, hide0=T)
+				plotBubbles(errbat, dnam=TRUE, xaxt="n", yaxt="n", frange=0.01, size=0.1, hide0=TRUE)
 				axis(1, at=seq(5,Amax,5), cex=1.2)
 				axis(2, at=seq(-5,-Amax,-5), labels=seq(5,Amax,5), cex=1.2, las=1)
 				mtext(switch(l, 'e'="True Age", 'f'=eval(parse(text=deparse("le vrai \u{00E2}ge")))), side=1, line=1.75, cex=1.5)
@@ -1597,7 +2079,7 @@ makeAgeErr = function(type="simple", strSpp, sql=FALSE,
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~makeAgeErr
 
 
-## plotAgeErr---------------------------2020-03-23
+## plotAgeErr---------------------------2021-12-02
 ## Plot ageing precision data
 ##   (modified from code by Sean Anderson, PBS)
 ## Arguments:
@@ -1617,14 +2099,13 @@ makeAgeErr = function(type="simple", strSpp, sql=FALSE,
 plotAgeErr = function(dat, nsamp, xlim=NULL, ylim=NULL, jitter=0.25, seed=42, 
    png=FALSE, pngres=400, PIN=c(8,8), lang=c("e","f"))
 {
-	opar = par(no.readonly=T); on.exit(par(opar))
+	opar = par(no.readonly=TRUE); on.exit(par(opar))
 	strSpp = as.character(.su(dat$spp))
 	sppNam = toUpper(tolower(.su(dat$spn)))
 	if (grepl("/", sppNam)) {
 		for (i in 1:26)
 			sppNam = sub(paste0("/",letters[i]), paste0("/",LETTERS[i]), sppNam)
 	}
-#browser();return()
 
 	## Create a subdirectory called `french' for French-language figures
 	createFdir(lang)
@@ -1654,18 +2135,18 @@ plotAgeErr = function(dat, nsamp, xlim=NULL, ylim=NULL, jitter=0.25, seed=42,
 		r2    = .su(df$atype)[2]
 		read1 = df[is.element(df$atype,r1),]
 		read2 = df[is.element(df$atype,r2),]
+
 		for (i in 1:nrow(read1)) {
 			irec = read1[i,,drop=FALSE]
 			for (j in 1:nrow(read2)) {
 				jrec = read2[j,,drop=FALSE]
 				if (irec$EMID==jrec$EMID) next
 				RAGOUT = rbind(RAGOUT, as.vector(cbind(irec[,ofld],irec[,afld],jrec[,afld]), mode="numeric"), make.row.names=FALSE)
-#browser();return()
 			}
 		}
 		ttput(RAGOUT)
 		return(as.matrix(rout))
-	}, ofld=oflds, afld=aflds, simplify=F)
+	}, ofld=oflds, afld=aflds, simplify=FALSE)
 	ttget(RAGOUT)
 	ragout = RAGOUT[-1,]  ## remove artificially initiated first row of zeroes (stoopid R)
 	ttput(ragout)         ## send it to the PBStools environment
@@ -1690,20 +2171,22 @@ plotAgeErr = function(dat, nsamp, xlim=NULL, ylim=NULL, jitter=0.25, seed=42,
 	if (is.null(ylim))
 		ylim = range(dat[,c("r2_amin","r2_amax")])
 	
-	fout = fout.e = paste0("AgeErr",strSpp)
+	fout.e = paste0("AgeErr",strSpp)
 	for (l in lang) {
 		changeLangOpts(L=l)
-		if (l=="f") fout = paste0("./french/",fout.e)  ## could repeat for other languages
-		if (png) png(paste0(fout,".png"), units="in", res=pngres, width=PIN[1], height=PIN[2])
+		fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
+		if (png) {
+			clearFiles(fout,".png")
+			png(paste0(fout,".png"), units="in", res=pngres, width=PIN[1], height=PIN[2])
+		}
 		par(mfrow=c(1,1), mar=c(3.5,3.5,0.5,0.75), oma=c(0,0,0,0), mgp=c(2,0.5,0))
 		plot(dat$r1_age, dat$r2_age, xlim=xlim, ylim=ylim, type="n", xlab="", ylab="", cex.axis=1.2, las=1)
-		axis(1, at=seq(0,xlim[2],ifelse(xlim[2]<60,1,5)), labels=F, tcl=-0.2)
-		axis(2, at=seq(0,ylim[2],ifelse(ylim[2]<60,1,5)), labels=F, tcl=-0.2)
+		axis(1, at=seq(0,xlim[2],ifelse(xlim[2]<60,1,5)), labels=FALSE, tcl=-0.2)
+		axis(2, at=seq(0,ylim[2],ifelse(ylim[2]<60,1,5)), labels=FALSE, tcl=-0.2)
 		abline(0,1,col=lucent("green4",0.5),lwd=2)
 		## Drawing segments takes a long time, especially when sending to PNG device:
 		segments(x0=dat$r1_amin, y0=dat$r2_age, x1=dat$r1_amax, y1=dat$r2_age, col=lucent("grey50",0.5),lwd=2)
 		segments(x0=dat$r1_age, y0=dat$r2_amin, x1=dat$r1_age, y1=dat$r2_amax, col=lucent("grey50",0.5),lwd=2)
-#browser();return()
 		points(dat$r1_age, dat$r2_age, pch=21, cex=0.8, col=lucent("black",0.5), bg=lucent("cyan",0.5))
 		mtext(linguaFranca("Age (y) by Primary Reader",l), side=1, line=2, cex=1.5)
 		mtext(linguaFranca("Age (y) by Secondary Reader",l), side=2, line=2, cex=1.5)
@@ -1716,7 +2199,7 @@ plotAgeErr = function(dat, nsamp, xlim=NULL, ylim=NULL, jitter=0.25, seed=42,
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotAgeErr
 
 
-## plotBTMW-----------------------------2020-08-07
+## plotBTMW-----------------------------2022-07-11
 ##  Plot for bottom (BT) vs. midwater (MW) trawl catch
 ##  WHEN MC.GEAR IN ('BOTTOM TRAWL','UNKNOWN TRAWL') THEN 1
 ##  WHEN MC.GEAR IN ('TRAP') THEN 2
@@ -1730,17 +2213,23 @@ plotBTMW = function(dat, strSpp="417", years=1996:2018, major=3:9,
    png=FALSE, pngres=400, PIN=c(8,6) , lang=c("e","f"))
 {
 	flds = colnames(dat)
-	if (removeSM) ## seamounts
-		dat    = zapSeamounts(dat)
-	else if (!is.element("seamount",flds))
-		dat = zapSeamounts(dat, only.mark=TRUE)
-	if (!is.element("year",flds))
-		dat$year = as.numeric(substring(dat$date,1,4))
-	dat = dat[is.element(dat$year, years),]
-	dat = dat[is.element(dat$major, major),]  ## use major_adj when summamrising YMR catdat for scaling
-	if (!is.element("catKg",flds))
-		dat$catKg = dat$landed + dat$discard
-	dat = dat[dat$catKg > 0,]
+	if (!is.null(ttcall(dat.btmw)))
+		dat = ttcall(dat.btmw)
+	else {
+		if (removeSM) ## seamounts
+			dat    = zapSeamounts(dat)
+		else if (!is.element("seamount",flds))
+			dat = zapSeamounts(dat, only.mark=TRUE)
+		if (!is.element("year",flds))
+			dat$year = as.numeric(substring(dat$date,1,4))
+		dat = dat[is.element(dat$year, years),]
+		dat = dat[is.element(dat$major, major),]  ## use major_adj when summamrising YMR catdat for scaling
+		if (!is.element("catKg",flds))
+			dat$catKg = dat$landed + dat$discard
+		dat = dat[dat$catKg > 0,]
+		dat = calcStockArea(strSpp, dat)
+		dat.btmw=dat; ttput(dat.btmw)
+	}
 #browser();return() ## use to summarise catch by 'major_adj' for YMR's 'Scaling catch to GMU'
 
 	gcodes = list(
@@ -1748,7 +2237,10 @@ plotBTMW = function(dat, strSpp="417", years=1996:2018, major=3:9,
 		fid    = c('0'="Unknown", '1'="Trawl", '2'="Halibut", '3'="Sablefish", '4'="Dogfish/Lingcod", '5'="H&L_Rockfish", '8'="GF_Longline", '9'="Foreign"),
 		sector = c('0'="UNKNOWN", '1'="FOREIGN", '2'="GROUNDFISH LONGLINE", '3'="GROUNDFISH TRAWL", '4'="HALIBUT", '5'="HALIBUT AND SABLEFISH", '6'="K/L", '7'="K/ZN", '8'="LINGCOD", '9'="ROCKFISH INSIDE",'10'="ROCKFISH OUTSIDE", '11'="SABLEFISH", '12'="SCHEDULE II", '13'="SPINY DOGFISH", '14'="ZN"),
 		fishery = c('0'="Unknown", '1'="BSR_trawl", '2'="BSR_other", '3'="RER_trawl", '4'="RER_other", '5'="HYB_trawl", '6'="HYB_other"), ## REBS only
-		stock = c('UNK'="UNKNOWN", '3C'="3C", '3D5AB'="3D5AB", '5CD'="5CD", '5E'="5E") ## YMR
+		stock = switch(strSpp,
+			'440'=c('UNK'="UNKNOWN", '3C'="3C", '3D5AB'="3D5AB", '5CD'="5CD", '5E'="5E"), ## YMR
+			'437'=c('UNK'="UNKNOWN", '3CD'="3CD", '5AB'="5AB", '5CD'="5CD", '5E'="5E") ## CAR
+		)
 	)
 
 	gtabs  = list()
@@ -1758,7 +2250,9 @@ plotBTMW = function(dat, strSpp="417", years=1996:2018, major=3:9,
 		gval  = glist[[g]]
 		gnam  = names(glist)[g]
 		if (!is.element(gnam,flds)) next
-		gcode = gcodes[[gnam]]
+		gcode = gleg = gcodes[[gnam]]
+		if (gnam=="sector")
+			gleg = gsub("/l","/L",gsub("Zn|zn","ZN",gsub("Ii","II",toUpper(tolower(gcode)))))
 		ncode = length(gcode)
 		if (gnam %in% c("sector","fishery")) {  ## convert values in gdat to codes
 			zcode = as.numeric(names(gcode))
@@ -1786,13 +2280,12 @@ plotBTMW = function(dat, strSpp="417", years=1996:2018, major=3:9,
 		#	gtab = gtab[as.character(years),]
 		#}
 		gtab  = crossTab(gdat, c("year",gnam), "catKg")
-#browser();return()
 
-		xlim  = range(years)
-		xval  = as.numeric(rownames(gtab))
-		ylim  = c(0, ifelse(missing(ymax), max(gtab)*1.2, ymax))
-		onam  = paste0("Catch_", strSpp, "_", gnam)
-		fout  = fout.e = onam
+		xlim   = range(years)
+		xval   = as.numeric(rownames(gtab))
+		ylim   = c(0, ifelse(missing(ymax), max(gtab)*1.2, ymax))
+		onam   = paste0("Catch.", strSpp, ".", gnam)
+		fout.e = onam
 
 		for (l in lang) {
 			fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
@@ -1803,17 +2296,19 @@ plotBTMW = function(dat, strSpp="417", years=1996:2018, major=3:9,
 			axis(1, at=years, labels=FALSE, tcl=-0.25)
 			for (i in 1:ncol(gtab)) {
 				ii = colnames(gtab)[i]
+#browser();return()
 				lines(xval, gtab[,ii], lty=glty[ii], col=gcol[ii], lwd=3 )
 				points(xval, gtab[,ii], pch=gpch[ii], col=gcol[ii], bg=gbg[ii],cex=1.5)
 #browser();return()
 			}
 			iii = intersect(as.character(gval),colnames(gtab)) ## use names instead of numeric indices
-#browser(); return()
-			addLegend(0.99, ifelse(strSpp %in% c("417"), 0.50,0.99), lty=glty[iii], seg.len=3, lwd=2, col=gcol[iii], pch=gpch[iii], pt.bg=gbg[iii], pt.cex=1.75, legend=linguaFranca(gsub("_"," ",gcode[iii]),l), cex=1.2, xjust=1, yjust=1, bty="n")
+			ypos = if (strSpp %in% c("417") || (strSpp %in% "437" && gnam %in% c("sector","fid")))  0.50 else 0.99
+			addLegend(0.99, ypos, lty=glty[iii], seg.len=3, lwd=2, col=gcol[iii], pch=gpch[iii], pt.bg=gbg[iii], pt.cex=1.75, legend=linguaFranca(gsub("_"," ",gleg[iii]),l), cex=1.2, xjust=1, yjust=1, bty="n")
 			mtext(linguaFranca("Year",l),side=1,line=1.75,cex=1.5)
 			mtext(linguaFranca("Catch (t)",l),side=2,line=1.75,cex=1.5)
 			if (png) dev.off()
 		}; eop()
+#browser(); return()
 
 		colnames(gtab) = gcode[colnames(gtab)]
 		write.csv(gtab, paste0(onam,".csv"))
@@ -1836,7 +2331,7 @@ plotMW = function(dat, xlim, ylim, outnam="Mean-Weight-Compare",
 	createFdir(lang)
 
 	if (missing(xlim)) xlim=range(dat[,1])
-	if (missing(ylim)) ylim=range(dat[,-1], na.rm=T)
+	if (missing(ylim)) ylim=range(dat[,-1], na.rm=TRUE)
 	x = xlim[1]:xlim[2]
 	#x = x[is.element(x,dat$year)]
 	stocks = names(dat[,-1])
@@ -1879,7 +2374,7 @@ plotMW = function(dat, xlim, ylim, outnam="Mean-Weight-Compare",
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotMW
 
 
-## plotSnail----------------------------2020-06-24
+## plotSnail----------------------------2022-06-28
 ## Plot snail-trail plots for MCMC analysis.
 ##  AME: replacing "2010" with as.character(currYear - 1)
 ##  RH: added assYrs = years past with estimated Bcurr
@@ -1895,33 +2390,51 @@ plotSnail=function (BoverBmsy, UoverUmsy, model="SS", yrs=1935:2022,
 		Cnames  = tcall("PBStools")$Cnames        ## names of commercial gear
 	if (is.null(Cnames))
 		Cnames = "Some fishery"
+	if (model=="SS"){
+		ngear = 1  ## SS does not seem to report separate F for each fishery
+		Cnames = paste0(Cnames, collapse="+")
+	}
+
 	## BU -- B = spawning biomass, U = harvest rate (or exploitation rate)
 	BUlist = as.list(0:ngear); names(BUlist)=c("Spawning Biomass",Cnames[1:ngear])
 	colnames(BoverBmsy) = sub("^.+_","",colnames(BoverBmsy))
 	colnames(UoverUmsy) = sub("^.+_","",colnames(UoverUmsy))
 	## Awatea -- previous conversation with PJS: we both agree that B2021/Bmsy should be paired with u2020/Umsy
-	## SS3    -- currYear = end of current year (cf. AW beginning of currYear) so currYear for B and u do not need to be offset
+	## SS3    -- currYear (e.g. 2023) = beginning of current year for SSB and middle of 'previous' year for mid-year quantities like F.
+	##           B2023 = SSB at end of 2022 or beginning of 2023
+	##           F2023 = fishing mortality for 2022 (e.g. mid-year) after catches for 2022 have been applied.
 	currYear = rev(yrs)[1]
-	BUlist[[1]] = BoverBmsy[,colnames(BoverBmsy) %in% c(yrs,yrs[length(yrs)]+1)]
-	if (model %in% c("AW","Awatea","SS")) ## now SS has right modYrs
-		BUlist[[1]] = BUlist[[1]][,-1]
-	BUlist[[2]] = UoverUmsy[,colnames(UoverUmsy) %in% yrs]
-	## Separate u if multiple gears (designed for Awatea, not sure how SS displays multiple exploitation by gear)
+	if (model=="SS") {
+		is.good.B = apply(BoverBmsy,1,function(x){all(is.finite(x))})
+		is.good.U = apply(UoverUmsy,1,function(x){all(is.finite(x))})
+		is.good   = is.good.B & is.good.U
+		is.bad    = !is.good
+		BoverBmsy = BoverBmsy[is.good,]
+		UoverUmsy = UoverUmsy[is.good,]
 #browser();return()
-	for (g in 1:ngear) {
-		if (any(grepl("_",names(UoverUmsy)))) {
-			gfile = UoverUmsy[,grep(paste0("_",g),names(UoverUmsy))]
-			names(gfile) = substring(names(gfile),1,4)
-		} else if (is.list(UoverUmsy)) {
-			gfile = UoverUmsy[[g]]
-		} else {
-			gfile = UoverUmsy
+		BUlist[[1]] = BoverBmsy[,colnames(BoverBmsy) %in% yrs]
+		BUlist[[2]] = UoverUmsy[,colnames(UoverUmsy) %in% yrs]
+	} else {
+		BUlist[[1]] = BoverBmsy[,colnames(BoverBmsy) %in% c(yrs,yrs[length(yrs)]+1)]
+		BUlist[[1]] = BUlist[[1]][,-1]  ## remove first year
+		## Separate u if multiple gears (designed for Awatea, not sure how SS displays multiple exploitation by gear)
+		## SS does not seem to report multiple exploitation rates
+		for (g in 1:ngear) {
+			if (any(grepl("_",names(UoverUmsy)))) {
+				gfile = UoverUmsy[,grep(paste0("_",g),names(UoverUmsy))]
+				names(gfile) = substring(names(gfile),1,4)
+			} else if (is.list(UoverUmsy)) {
+				gfile = UoverUmsy[[g]]
+			} else {
+				gfile = UoverUmsy
+			}
+			if ( model %in% c("AW","Awatea") || ncol(BUlist[[1]])!=ncol(BUlist[[g+1]]) )
+				BUlist[[g+1]] = gfile[,1:ncol(BUlist[[1]])] ## SS has same lengths of B and u
 		}
-		if ( model %in% c("AW","Awatea") || ncol(BUlist[[1]])!=ncol(BUlist[[g+1]]) )
-			BUlist[[g+1]] = gfile[,1:ncol(BUlist[[1]])] ## SS has same lengths of B and u
 	}
+#browser();return()
 	# Calculate medians to be plotted
-	BUmed    = lapply(BUlist,function(x){apply(x,2,median)})  # median each year
+	BUmed    = lapply(BUlist,function(x){apply(x,2,median,na.rm=TRUE)})  # median each year
 	colPal   = colorRampPalette(c("grey90", "grey30"))
 	colDots  = list( colorRampPalette(c("slategray2", "slategray4")), colorRampPalette(c("thistle2", "thistle4")) )  ## (RH 210727)
 	colSlime = rep(c("slategray3","thistle"),ngear)[1:ngear]  ## RH 200528
@@ -1932,10 +2445,13 @@ plotSnail=function (BoverBmsy, UoverUmsy, model="SS", yrs=1935:2022,
 
 	nB = length(BUmed[[1]])
 	if (is.null(xLim))
-		xLim=c(0, max(c(BUmed[[1]], rev(apply(BUlist[[1]],2,quantile,ifelse(outs,1,p[2])))[1], 1)))
+		xLim=c(0, max(c(BUmed[[1]], rev(apply(BUlist[[1]], 2, quantile, probs=ifelse(outs,1,p[2]), na.rm=TRUE))[1], 1)))
+
 	if (is.null(yLim)) {
-		yUps = sapply(BUlist[(1:ngear)+1],function(x,p){apply(x,2,quantile,p)},p=ifelse(outs,1,p[2]))  ## (RH 200624)
-		yLim=c(0, max(c(sapply(BUmed[(1:ngear)+1],max), max(yUps[nrow(yUps),]), 1)))                   ## (RH 200624)
+		yUps = sapply(BUlist[(1:ngear)+1], function(x,p){
+			#is.good = apply(x,1,function(x){all(is.finite(x))})
+			apply(x, 2, quantile, p=p, na.rm=TRUE)}, p=ifelse(outs,1,p[2]))  ## (RH 200624)
+		yLim=c(0, max(c(sapply(BUmed[(1:ngear)+1], max, na.rm=TRUE), max(yUps[nrow(yUps),],na.rm=TRUE), 1)))    ## (RH 200624)
 #browser();return()
 	}
 	P = list(p=p)
@@ -1961,11 +2477,11 @@ plotSnail=function (BoverBmsy, UoverUmsy, model="SS", yrs=1935:2022,
 		}
 		expandGraph(mfrow=c(1,1), mar= c(3.5,3.5,1,1), mgp=c(2,0.5,0))
 
-		xlab = switch(l, 'e'=expression(paste(italic(B[t])/italic(B)[MSY])),   'f'=expression(paste(italic(B[t])/italic(B)[RMS])) )
+		xlab = switch(l, 'e'=expression(paste(italic(B[t])/italic(B)[MSY])),   'f'=expression(paste(italic(B[t])/italic(B)[RMD])) )
 		ylab = if (model %in% c("AW","Awatea","SS"))
-			switch(l, 'e'=expression(paste(italic(u[t-1])/italic(u)[MSY])), 'f'=expression(paste(italic(u[t-1])/italic(u)[RMS])) )
+			switch(l, 'e'=expression(paste(italic(u[t-1])/italic(u)[MSY])), 'f'=expression(paste(italic(u[t-1])/italic(u)[RMD])) )
 		else
-			switch(l, 'e'=expression(paste(italic(u[t])/italic(u)[MSY])), 'f'=expression(paste(italic(u[t])/italic(u)[RMS])) )
+			switch(l, 'e'=expression(paste(italic(u[t])/italic(u)[MSY])), 'f'=expression(paste(italic(u[t])/italic(u)[RMD])) )
 
 		plot(0,0, xlim=xLim, ylim=yLim, type="n", xlab=xlab, ylab=ylab, cex.lab=1.25, cex.axis=1.0, las=1)
 		abline(h=1, col=c("grey20"), lwd=2, lty=3)
@@ -1987,13 +2503,13 @@ plotSnail=function (BoverBmsy, UoverUmsy, model="SS", yrs=1935:2022,
 				lty = ifelse(j==1 && outs, 3, 1)
 				lwd = ifelse(j==1 && outs, 1, 2)
 				## Plot horizontal (BtB0) quantile range
-				xqlo = quantile(BUlist[[1]][,nB],q[1])
-				xqhi = quantile(BUlist[[1]][,nB], q[2])
+				xqlo = quantile(BUlist[[1]][,nB], q[1], na.rm=TRUE)
+				xqhi = quantile(BUlist[[1]][,nB], q[2], na.rm=TRUE)
 				segments(xqlo, yend, xqhi, yend, col=lucent(colLim[i],0.5), lty=lty, lwd=lwd)
 #browser();return()
 				## Plot vertical (UtU0) quantile range
-				yqlo = quantile(BUlist[[i+1]][,nB], q[1])
-				yqhi = quantile(BUlist[[i+1]][,nB], q[2])
+				yqlo = quantile(BUlist[[i+1]][,nB], q[1], na.rm=TRUE)
+				yqhi = quantile(BUlist[[i+1]][,nB], q[2], na.rm=TRUE)
 				segments(xend+xoff, yqlo, xend+xoff, yqhi, col=lucent(colLim[i],0.5), lty=lty, lwd=lwd)
 			}
 		}
@@ -2005,7 +2521,8 @@ plotSnail=function (BoverBmsy, UoverUmsy, model="SS", yrs=1935:2022,
 				points(BUmed[[1]][as.character(assYrs)], BUmed[[i+1]][as.character(assYrs)], pch=21, col=1, bg=colAss[i], cex=1.2)
 			points(xend+xoff, yend, pch=21, cex=1.2, col=colLim[i], bg=colStop[i])
 		}
-		if (ngear>1)  addLegend(0.95, 0.80, legend=linguaFranca(Cnames,lang), lty=1, lwd=Lwd, col=colSlime, seg.len=4, xjust=1, bty="n", cex=1)
+		if (ngear>1)  addLegend(0.95, 0.80, legend=linguaFranca(Cnames,l), lty=1, lwd=Lwd, col=colSlime, seg.len=4, xjust=1, bty="n", cex=1)
+		if (model=="SS" && sum(is.bad)>0)  addLabel(0.95, 0.90, txt=linguaFranca(paste0("dropped ",sum(is.bad)," samples"),l), adj=c(1,0), cex=1)
 		box()
 		if (any(ptypes %in% c("eps","png","wmf"))) dev.off()
 	}; eop()
@@ -2158,7 +2675,7 @@ processMap = function(dat=PBSdat, strSpp, prefix="map", useSM=FALSE)
 	dat = calcStockArea(strSpp, dat=dat)
 #browser();return()
 	fidpos = match("fid",names(dat))
-	dat  = as.EventData(data.frame(EID=1:nrow(dat),dat[,-fidpos],fid=dat[,fidpos], check.names=F, stringsAsFactors=F), projection="LL")
+	dat  = as.EventData(data.frame(EID=1:nrow(dat),dat[,-fidpos],fid=dat[,fidpos], check.names=FALSE, stringsAsFactors=FALSE), projection="LL")
 	mess = paste0(prefix,strSpp," = dat; save (\"", prefix, strSpp, "\",file=\"", prefix, strSpp, ".rda\")")
 	eval(parse(text=mess))
 	return(dat)
@@ -2231,7 +2748,7 @@ quantAges =function(bioDat, dfld="age", afld="major", tfld="year",
 #browser();return()
 					adat = adat[is.element(adat$ctype,jj),]
 					if (nrow(adat)==0) {
-						quantBox(yearbox, outline=F, ylim=ylim, xaxt="n")
+						quantBox(yearbox, outline=FALSE, ylim=ylim, xaxt="n")
 					}
 					else {
 						males = is.element(adat$sex,1)
@@ -2248,9 +2765,9 @@ quantAges =function(bioDat, dfld="age", afld="major", tfld="year",
 						Fsex[names(fsex[zsex])] = fsex[zsex]
 						Qage[[jj]][[aa]][["F"]] = Fsex
 
-						quantBox(yearbox, outline=F, ylim=ylim, xaxt="n")
-						quantBox(Msex, xaxt="n", yaxt="n", outline=F, boxcol="grey30", boxfill=mcol[1], medlwd=1, medcol=mcol[2], whisklty=1, whiskcol="gainsboro", add=T, boxwex=boxwex, at=(1:nyrs)+(boxwex/2))
-						quantBox(Fsex, xaxt="n", yaxt="n", outline=F, boxcol="grey30", boxfill=fcol[1], medlwd=1, medcol=fcol[2], whisklty=1, whiskcol="gainsboro", add=T, boxwex=boxwex, at=(1:nyrs)-(boxwex/2))
+						quantBox(yearbox, outline=FALSE, ylim=ylim, xaxt="n")
+						quantBox(Msex, xaxt="n", yaxt="n", outline=FALSE, boxcol="grey30", boxfill=mcol[1], medlwd=1, medcol=mcol[2], whisklty=1, whiskcol="gainsboro", add=TRUE, boxwex=boxwex, at=(1:nyrs)+(boxwex/2))
+						quantBox(Fsex, xaxt="n", yaxt="n", outline=FALSE, boxcol="grey30", boxfill=fcol[1], medlwd=1, medcol=fcol[2], whisklty=1, whiskcol="gainsboro", add=TRUE, boxwex=boxwex, at=(1:nyrs)-(boxwex/2))
 
 						#lines((1:nyrs)-(boxwex/2),sapply(Fsex,mean),col=fcol[2],lwd=2)
 						#lines((1:nyrs)+(boxwex/2),sapply(Msex,mean),col=mcol[2],lwd=2)
@@ -2303,14 +2820,14 @@ quantAges =function(bioDat, dfld="age", afld="major", tfld="year",
 				nFsex = sapply(Fsex,countVec)
 
 				if (is.null(ylim))
-					Ylim = c(min(sapply(Qage[[jj]],function(x){sapply(x,function(xx){quantile(xx,0.05,na.rm=T)})}),na.rm=T),
-						max(sapply(Qage[[jj]],function(x){sapply(x,function(xx){quantile(xx,0.95,na.rm=T)})}),na.rm=T))
+					Ylim = c(min(sapply(Qage[[jj]],function(x){sapply(x,function(xx){quantile(xx,0.05,na.rm=TRUE)})}),na.rm=TRUE),
+						max(sapply(Qage[[jj]],function(x){sapply(x,function(xx){quantile(xx,0.95,na.rm=TRUE)})}),na.rm=TRUE))
 				else Ylim = ylim
 
-				quantBox(areabox, outline=F, ylim=Ylim, xaxt="n")
-				quantBox(Msex, xaxt="n", yaxt="n", outline=F, boxcol="grey30", boxfill=mcol[1], medcol=mcol[2], whisklty=1, whiskcol="gainsboro", add=T, boxwex=boxwex, at=(1:nareas)+(boxwex/2), varwidth=T)
+				quantBox(areabox, outline=FALSE, ylim=Ylim, xaxt="n")
+				quantBox(Msex, xaxt="n", yaxt="n", outline=FALSE, boxcol="grey30", boxfill=mcol[1], medcol=mcol[2], whisklty=1, whiskcol="gainsboro", add=TRUE, boxwex=boxwex, at=(1:nareas)+(boxwex/2), varwidth=TRUE)
 				text((1:nareas)+(boxwex/2), 0, nMsex, col=mcol[3], cex=0.8, font=2)
-				quantBox(Fsex, xaxt="n", yaxt="n", outline=F, boxcol="grey30", boxfill=fcol[1], medcol=fcol[2], whisklty=1, whiskcol="gainsboro", add=T, boxwex=boxwex, at=(1:nareas)-(boxwex/2), varwidth=T)
+				quantBox(Fsex, xaxt="n", yaxt="n", outline=FALSE, boxcol="grey30", boxfill=fcol[1], medcol=fcol[2], whisklty=1, whiskcol="gainsboro", add=TRUE, boxwex=boxwex, at=(1:nareas)-(boxwex/2), varwidth=TRUE)
 				text((1:nareas)-(boxwex/2), 0, nFsex, col=fcol[3], cex=0.8, font=2)
 
 				#lines((1:nareas)-(boxwex/2),sapply(Fsex,mean),col=fcol[2],lwd=2)
@@ -2331,33 +2848,43 @@ quantAges =function(bioDat, dfld="age", afld="major", tfld="year",
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~quantAges
 
 
-## splineCPUE---------------------------2020-04-07
+## splineCPUE---------------------------2022-04-28
 ## Fit spline curves through CPUE data to determine 
 ## optimal degrees of freedom (balance between rigorously
 ## fitting indices while not removing the majority of the signal)
 ## and to calculate CV process error from RSS at optimal DF.
 ## ---------------------------------------------RH
-splineCPUE = function(dat, ndf=50, strSpp="ZZZ", 
-   png=FALSE, pngres=400, PIN=c(8,8), lang=c("e","f"))
+splineCPUE = function(dat, ndf=50, strSpp="ZZZ", ufld="cpue",
+   png=FALSE, pngres=400, PIN=c(8,8), lang=c("e","f"), ...)
 {
+	colnames(dat) = sub("[Yy]ear(s)?","year",colnames(dat))
+	colnames(dat) = sub(ufld,"index",colnames(dat))
+	#ndf = max(ndf,nrow(dat))
 	## Collect residual sum of squares by degrees of freedom
-	DF  = seq(2,nrow(dat),length.out=ndf)
+	DF  = seq(2,nrow(dat),length.out=ndf-1)
 	#DF  = seq(0,1,length.out=100)
 	RSS = rep(NA,length(DF))#; names(RSS) = DF
 	for (i in 1:length(DF)){
 		ii = DF[i]
-		RSS[i] = smooth.spline(dat[,"year"], dat[,"cpue"], df=ii, all.knots=TRUE)$pen.crit
+		RSS[i] = smooth.spline(dat[,"year"], dat[,"index"], df=ii, all.knots=TRUE)$pen.crit
 	}
 	dRSS   = c(0,diff(RSS))
 	df.opt = DF[findPV(min(dRSS),dRSS)]
 	rho_k  = RSS[findPV(min(dRSS),dRSS)]
 
 	createFdir(lang)
-	fout = fout.e = paste0("CPUEres-CVpro-",strSpp)
+	fout.e = paste0(toupper(ufld), "res-CVpro-", strSpp)
+	if (!is.null(list(...)$extra))
+		fout.e =  paste0(fout.e,list(...)$extra)
+#browser();return()
+
 	for (l in lang) {
 		changeLangOpts(L=l)
 		fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
-		if (png) png(paste0(fout,".png"), units="in", res=pngres, width=PIN[1], height=PIN[2])
+		if (png) {
+			clearFiles(paste0(fout,".png"))
+			png(paste0(fout,".png"), units="in", res=pngres, width=PIN[1], height=PIN[2])
+		}
 		expandGraph(mfrow=c(2,2), mar=c(2.75,2.75,0.5,0.5), cex=1)
 	
 		plot(DF, RSS, type="n", xlab=linguaFranca("degrees of freedom",l), ylab=linguaFranca("RSS",l))
@@ -2366,30 +2893,48 @@ splineCPUE = function(dat, ndf=50, strSpp="ZZZ",
 		lines(DF, RSS, col="red", lwd=2)
 	
 		plot(DF, dRSS, type="n", xlab=linguaFranca("degrees of freedom",l), ylab=paste0("d",linguaFranca("RSS",l)))
-		addLabel(0.5, 0.95, switch(l, 'e'="Change in RSS (~slope)", 'f'="changement dans SRC (~pente)"), adj=0.5)
+		if (strSpp %in% c('YMR')) {
+			xpos=0.95; ypos=0.5; xadj=1
+		} else {
+			xpos=0.5; ypos=0.95; xadj=0.5
+		}
+		addLabel(xpos, ypos, switch(l, 'e'="Change in RSS (~slope)", 'f'="changement dans SRC (~pente)"), adj=xadj)
 		abline(v=df.opt, col="green4", lty=3)
 		lines(DF, dRSS, col="blue", lwd=2)
 		if (ndf<=50)
 			points(DF,dRSS, pch=21, cex=.8, col="blue", bg="yellow")
-	
-		CVpro = sqrt(RSS[findPV(min(dRSS),dRSS)]/(nrow(dat)-2))/mean(dat$cpue)
+		CVpro = sqrt(RSS[findPV(min(dRSS),dRSS)]/(nrow(dat)-2))/mean(dat[,"index"])
 	
 		##  Plot the data and the 'optimal' fit
-		plot(cpue ~ year, data = dat, pch=21, col="green4", bg="green", cex=1.1, xlab=linguaFranca("Year",l), ylab=linguaFranca("CPUE",l)) #, main = "data(cpue) & smoothing splines")
-		cpue.spl <- with(dat, smooth.spline(year, cpue, all.knots=TRUE))
-		lines(cpue.spl, col="blue", lty=2, lwd=2)
+		
+		#plot(index ~ year, data = dat, pch=21, col="green4", bg="green", cex=1.1, xlab=linguaFranca("Year",l), ylab=linguaFranca(ufld,l)) #, main = "data(index) & smoothing splines")
+		plot(index ~ year, data = dat, type="n", xlab=linguaFranca("Year",l), ylab=linguaFranca(ufld,l)) 
+		lines(index ~ year, data = dat, lty=1, col="slategrey")
+		points(index ~ year, data = dat, pch=21, col="green4", bg="green")
+		index.spl <- with(dat, smooth.spline(year, index, all.knots=TRUE))
+		lines(index.spl, col="blue", lty=2, lwd=2)
 	
-		cpue.df <- smooth.spline(dat[,"year"], dat[,"cpue"], df=df.opt, all.knots=TRUE)
-		lines(cpue.df, col="red", lty=1, lwd=2)
-		addLegend(0.02, ifelse(strSpp %in% c("WWR","BSR"), 0.97, 0.2), legend=c(paste0(switch(l, 'e'="fitted df (nu) = ", 'f'=eval(parse(text=deparse("degr\u{00E9}s de libert\u{00E9} ajuste\u{00E9}s (nu) = ")))), signif(cpue.spl$df,4)), paste0(switch(l, 'e'="with nu=", 'f'="avec nu="), signif(df.opt,4), ", rho=", signif(rho_k,4), ", cp=", signif(CVpro,4))), col = c("blue","red"), lty = 2:1, bty="n", bg="transparent", adj=0, cex=0.9)
-#browser();return()
+		index.df <- smooth.spline(dat[,"year"], dat[,"index"], df=df.opt, all.knots=TRUE)
+
+		df.spl  = index.spl$df
+		rho.spl = RSS[findPV(df.spl,DF)]
+		cp.spl   = sqrt(rho.spl/(nrow(dat)-2))/mean(dat[,"index"])
+
+		lines(index.df, col="red", lty=1, lwd=2)
+		if (strSpp %in% c('BSR','WWR','YMR') || ufld %in% c("PDO")) {
+			xpos=0.95; ypos=0.99; xadj=1
+		} else {
+			xpos=0.02; ypos=0.2; xadj=0
+		}
+		addLegend(xpos, ypos, legend=c(paste0(switch(l, 'e'="fitted df (nu) = ", 'f'=eval(parse(text=deparse("degr\u{00E9}s de libert\u{00E9} ajuste\u{00E9}s (nu) = ")))), signif(index.spl$df,4), ", cp=", signif(cp.spl,4)), paste0(switch(l, 'e'="with nu=", 'f'="avec nu="), signif(df.opt,4), ", rho=", signif(rho_k,4), ", cp=", signif(CVpro,4))), col = c("blue","red"), lty = 2:1, bty="n", bg="transparent", adj=0, xjust=xadj, cex=0.8)
 		## Residual (Tukey Anscombe) plot:
-		plot(residuals(cpue.df) ~ fitted(cpue.df), ylim=c(-0.35,0.45), pch=21, col="red", bg="pink", cex=1.1, xlab=paste0(linguaFranca("Fitted",l)," CPUE"), ylab=paste0("CPUE ", linguaFranca("residuals",l)))
+		ylim = if(ufld=="PDO") NULL else c(-0.35,0.45)
+		plot(residuals(index.df) ~ fitted(index.df), pch=21, col="red", bg="pink", cex=1.1, xlab=linguaFranca("Fitted Index",l), ylab=linguaFranca("Index residuals",l))
 		abline(h = 0, col = "red")
 		## consistency check:
-		stopifnot(all.equal(dat$cpue, fitted(cpue.df) + residuals(cpue.df)))
+		stopifnot(all.equal(dat[,"index"], fitted(index.df) + residuals(index.df)))
 		## The chosen inner knots in original x-scale :
-		with(cpue.df$fit, min + range * knot[-c(1:3, nk+1 +1:3)]) # == unique(cpue$year)
+		with(index.df$fit, min + range * knot[-c(1:3, nk+1 +1:3)]) # == unique(index$year)
 
 		if (png) dev.off()
 	}; eop()

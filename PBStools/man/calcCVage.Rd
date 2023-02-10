@@ -7,16 +7,19 @@ Calculate CVs at Age
 Calculate CVs for each age based on (i) observed lengths-at-age, or (ii) otolith readers' reported precision ranges.
 }
 \usage{
-calcCVage(dat, read_true=1, cvtype="age", Amax=50, min.ages=1:6, min.cv=0.25, 
-   plot=TRUE, png=FALSE, pngres=400, PIN=c(8, 6), outnam, lang=c("e","f"))
+calcCVage(dat, read_true=1, read_obs=NULL, cvtype="age", Amax=50,
+   min.ages=1:6, min.cv=0.25, smooth=FALSE,
+   plot=TRUE, png=FALSE, pngres=400, PIN=c(8,6), outnam, lang=c("e","f"))
 }
 \arguments{
   \item{dat}{\code{data.frame} -- species-specific results from a query to \code{'gfb_vbgf.sql'}.}
   \item{read_true}{\code{numeric} -- otolith reader deemed to provide the true age for the specimen.}
+  \item{read_obs}{\code{character} -- field name(s) containing reader observations.}
   \item{cvtype}{\code{character} -- type of data from which to calculate CVs (\code{'age'} for otolith readers precision estimates; \code{'len'} for observed lengths at-age).}
   \item{Amax}{\code{numeric} -- maximum age for calculating CVs-at-age.}
   \item{min.ages}{\code{numeric} -- minimum ages for disregarding the data and adopting a minimum CV (\code{'min.cv'}).}
   \item{min.cv}{\code{numeric} -- CV used for minimum ages; CVs for missing ages greater than \code{'min.ages'} are interpolated from adjacent CVs.}
+  \item{smooth}{\code{logical} -- if \code{TRUE}, run a loess-smoother through the calculated standard deviations.}
   \item{plot}{\code{logical} -- if \code{TRUE}, plot the results as a histogram.}
   \item{png}{\code{logical} -- if \code{TRUE}, send the figure to a \code{'.png'} file.}
   \item{pngres}{\code{numeric} -- resolution of output figure (pixels per inch).}
@@ -33,8 +36,8 @@ calcCVage(dat, read_true=1, cvtype="age", Amax=50, min.ages=1:6, min.cv=0.25,
 \author{
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
-  \emph{locus opus}: Institute of Ocean Sciences (IOS), Sidney BC\cr
-  Last modified \code{Rd: 2021-09-28}
+  \emph{locus opus}: Regional Headquarters (RHQ), Vancouver BC\cr
+  Last modified \code{Rd: 2023-02-08}
 }
 \seealso{
 In package \pkg{PBStools}:\cr

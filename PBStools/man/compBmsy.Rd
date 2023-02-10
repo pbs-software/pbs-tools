@@ -12,7 +12,7 @@ compBmsy(Bspp, spp="POP", Mnams=c("Est M","Fix M"),
    ratios=c(0.4,0.8), oratios=NULL, t.yr=2018,
    quants=c(0.05,0.25,0.5,0.75,0.95),
    zones = c("Critical","Cautious","Healthy"),
-   figgy=list(win=T), pngres=400, width=12, height=9, 
+   figgy=list(win=TRUE), pngres=400, width=12, height=9, 
    rcol=c("red","green4","blue"), rlty=rep(2,3), rlwd=rep(2,3),
    ocol = c("#D55E00", "#009E73", "#56B4E9", "#F0E442"),
    lcol = c("red","darkorange","green4"),
@@ -87,8 +87,8 @@ compBmsy(Bspp, spp="POP", Mnams=c("Est M","Fix M"),
 \author{
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
-  \emph{locus opus}: Institute of Ocean Sciences (IOS), Sidney BC\cr
-  Last modified \code{Rd: 2021-09-28}
+  \emph{locus opus}: Regional Headquarters (RHQ), Vancouver BC\cr
+  Last modified \code{Rd: 2023-02-10}
 }
 \seealso{
 In package \pkg{PBStools}:\cr

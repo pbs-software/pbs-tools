@@ -1,7 +1,7 @@
 \name{countLines}
 \alias{countLines}
 \title{
-  Count Number of Lines in ASCII File
+  Count Lines in Text File
 }
 \description{
   Count the number of lines in an ASCII file.
@@ -22,13 +22,13 @@ countLines(fnam, os=.Platform$OS.type)
   Returns a numeric value that reports the number of lines in the specified file.
 }
 \references{
-\url{http://brett.batie.com/scripting/count-number-of-lines-in-a-file-using-dos/}
+\href{https://brett.batie.com/scripting/count-number-of-lines-in-a-file-using-dos/}{Count number of lines in a file using DOS}
 }
 \author{
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
-  \emph{locus opus}: Institute of Ocean Sciences (IOS), Sidney BC\cr
-  Last modified \code{Rd: 2021-06-15}\cr
+  \emph{locus opus}: Regional Headquarters (RHQ), Vancouver BC\cr
+  Last modified \code{Rd: 2023-02-09}
 }
 \seealso{
   \code{\link[PBStools]{subsetFile}}, \code{\link[PBStools]{collectFigs}}, 

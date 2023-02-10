@@ -163,7 +163,8 @@ SELECT
       CAST(SUBSTRING(LTRIM(RTRIM(AA.TRIP_COMMENT)),15,6) AS REAL)
     ELSE NULL END AS TID_fos,                     -- B01_TRIP
   AA.FISHING_EVENT_ID AS FEID,                    -- B02_FISHING_EVENT
-  ISNULL(CAST(AA.HAIL_IN_NO AS INT),0) AS hail,   -- B01_TRIP
+  CASE WHEN AA.HAIL_IN_NO IS NULL THEN 0 WHEN CHARINDEX('/', AA.HAIL_IN_NO)=0 THEN AA.HAIL_IN_NO ELSE SUBSTRING(AA.HAIL_IN_NO, 1, CHARINDEX('/', AA.HAIL_IN_NO)-1) END AS hail, -- B01_TRIP
+  --ISNULL(CAST(AA.HAIL_IN_NO AS INT),0) AS hail,   -- B01_TRIP
   AA.VESSEL_NAME AS vessel,                        -- VESSEL
   AA.CFV_NUM AS cfv,                               -- VESSEL
   CONVERT(char(10),ISNULL(AA.TRIP_START_DATE, AA.TRIP_END_DATE),20) AS gfb_date,     -- B01_TRIP
@@ -230,7 +231,9 @@ GROUP BY
       CAST(SUBSTRING(LTRIM(RTRIM(AA.TRIP_COMMENT)),15,6) AS REAL)
     ELSE NULL END,                     -- B01_TRIP
   AA.FISHING_EVENT_ID,
-  ISNULL(CAST(AA.HAIL_IN_NO AS INT),0),
+
+  CASE WHEN AA.HAIL_IN_NO IS NULL THEN 0 WHEN CHARINDEX('/', AA.HAIL_IN_NO)=0 THEN AA.HAIL_IN_NO ELSE SUBSTRING(AA.HAIL_IN_NO, 1, CHARINDEX('/', AA.HAIL_IN_NO)-1) END,
+  --ISNULL(CAST(AA.HAIL_IN_NO AS INT),0),
   AA.VESSEL_NAME,
   AA.CFV_NUM,
   CONVERT(char(10),ISNULL(AA.TRIP_START_DATE, AA.TRIP_END_DATE),20),
@@ -330,4 +333,6 @@ SELECT
 -- qu("gfb_age_request.sql",dbName="GFBioSQL",strSpp="425",gear=c(1,6,8)) -- queried: 190108
 -- qu("gfb_age_request.sql",dbName="GFBioSQL",strSpp="394",gear=c(1,6,8)) -- queried: 190108
 -- qu("gfb_age_request.sql",dbName="GFBioSQL",strSpp="396",gear=c(1,6,8)) -- POP queried: 210301
+-- qu("gfb_age_request.sql",dbName="GFBioSQL",strSpp="437",gear=c(1,6,8)) -- CAR queried: 211206
+-- qu("gfb_age_request.sql",dbName="GFBioSQL",strSpp="396",gear=c(1,6,8)) -- POP queried: 210301, 221024
 
