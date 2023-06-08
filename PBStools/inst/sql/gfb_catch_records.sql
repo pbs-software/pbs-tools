@@ -216,5 +216,5 @@ ORDER BY
 --qu("gfb_catch_records.sql",dbName="GFBioSQL",strSpp="394",as.is=c(rep(FALSE,15),TRUE,rep(FALSE,3))) -- RER (200228)
 --qu("gfb_catch_records.sql",dbName="GFBioSQL",strSpp="440",as.is=c(rep(FALSE,15),TRUE,rep(FALSE,3))) -- YMR (201020, 210125)
 --qu("gfb_catch_records.sql",dbName="GFBioSQL",strSpp="437",as.is=c(rep(FALSE,17),TRUE,rep(FALSE,3))) -- CAR (211130, 220506)
---qu("gfb_catch_records.sql",dbName="GFBioSQL",strSpp="396",as.is=c(rep(FALSE,17),TRUE,rep(FALSE,3))) -- POP (210301, 221021, 230201)
+--qu("gfb_catch_records.sql",dbName="GFBioSQL",strSpp="396",as.is=c(rep(FALSE,17),TRUE,rep(FALSE,3))) -- POP (210301, 221021, 230201, 230501)
 

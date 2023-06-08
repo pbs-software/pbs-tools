@@ -8,7 +8,7 @@
 }
 \usage{
 surveyCatch(strSpp="396", spath=.getSpath(), gfbdat=NULL,
-   hadley=FALSE, tabDir="./tables")
+   hadley=FALSE, tabDir="./tables", datDir="./data")
 }
 \arguments{
   \item{strSpp}{\code{character} -- string specifying the Hart species code for a species in the \code{GFBioSQL} database.}
@@ -20,6 +20,7 @@ surveyCatch(strSpp="396", spath=.getSpath(), gfbdat=NULL,
     three-character Hart code. }
   \item{hadley}{\code{logical} -- if \code{TRUE}, use Hadley Wickham's wizardry in \code{'crossTab'}.}
   \item{tabDir}{\code{character} -- path string where ascii tables are saved.}
+  \item{datDir}{\code{character} -- path string where binary data files are saved/retrieved.}
 }
 \details{
   Needs the SQL code file \code{gfb_rcatORF.sql}, which is designed to return 
@@ -32,8 +33,8 @@ surveyCatch(strSpp="396", spath=.getSpath(), gfbdat=NULL,
 \author{
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
-  \emph{locus opus}: Institute of Ocean Sciences (IOS), Sidney BC\cr
-  Last modified \code{Rd: 2019-06-05}
+  \emph{locus opus}: Regional Headquarters (RHQ), Vancouver BC\cr
+  Last modified \code{Rd: 2023-06-08}
 }
 \seealso{
 In package \pkg{PBStools}:\cr
@@ -45,4 +46,5 @@ In package \pkg{PBStools}:\cr
   \code{\link[PBStools]{zapSeamounts}}
 }
 \keyword{database}
+\concept{M07_CatchRecon}
 

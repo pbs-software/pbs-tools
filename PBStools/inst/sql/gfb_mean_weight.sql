@@ -381,14 +381,17 @@ GROUP BY
 
 -- PJS Algorithm Step 6 - calculate single mean weight for all years (equal weight for each year)
 SELECT
-  myw.GEAR_CODE,
   myw.SPECIES_CODE,
+  myw.GEAR_CODE,
   AVG(myw.MEAN_YEAR_WEIGHT)/1000. AS MEAN_WEIGHT -- in kg
 INTO #mean_weight
 FROM #mean_year_weight myw
 GROUP BY
-  myw.GEAR_CODE,
-  myw.SPECIES_CODE
+  myw.SPECIES_CODE,
+  myw.GEAR_CODE
+ORDER BY
+  myw.SPECIES_CODE,
+  myw.GEAR_CODE
 
 --SELECT * FROM #calc_table
 --SELECT * FROM #mean_sample_weight

@@ -182,12 +182,6 @@ SELECT *,
     ELSE '00' END
 FROM #FOSMAP FM
 
--- qu("pht_map_density.sql",dbName="PacHarvest",strSpp="228")
--- getData("pht_map_density.sql","PacHarvest",strSpp="396")
--- getData("fos_map_density.sql","GFFOS",strSpp="394",server="GFSH",type="ORA",trusted=F)
--- qu("fos_map_density.sql",dbName="GFFOS",strSpp="439",as.is=T)
--- qu("fos_map_density.sql",dbName="GFFOS",strSpp="228")
-
 -- Subject matter expert
 -- qu("fos_map_density.sql",dbName="GFFOS",strSpp="453") -- SST
 -- qu("fos_map_density.sql",dbName="GFFOS",strSpp="228") -- WAP
@@ -201,4 +195,11 @@ FROM #FOSMAP FM
 -- qu("fos_map_density.sql",dbName="GFFOS",strSpp="602") -- ARF (210830)
 -- qu("fos_map_density.sql",dbName="GFFOS",strSpp="437") -- CAR (180622, 211125)
 -- qu("fos_map_density.sql",dbName="GFFOS",strSpp="453") -- LST (220307)
+
+-- qu("pht_map_density.sql",dbName="PacHarvest",strSpp="228")
+-- getData("pht_map_density.sql","PacHarvest",strSpp="396")
+-- getData("fos_map_density.sql","GFFOS",strSpp="394",server="GFSH",type="ORA",trusted=F)
+-- qu("fos_map_density.sql",dbName="GFFOS",strSpp="439",as.is=T)
+-- qu("fos_map_density.sql",dbName="GFFOS",strSpp="228")
+-- qu("fos_map_density.sql",dbName="GFFOS",strSpp="396")  -- POP (230425)
 

@@ -4,11 +4,12 @@
   Create DFO Management Actions Table
 }
 \description{
-  Create a table of DFO management actions for an Offshore stock
-  assessment Appendix A (catch data) tailored to the specified species.
+  Create a table of DFO management actions and a table of historical
+  TACs for an offshore rockfish stock assessment Appendix A (catch data)
+  tailored to the specified species.
 }
 \usage{
-createMA(yrs=1979:2021, strSpp="POP", addletters=TRUE)
+createMA(yrs=1979:2023, strSpp="POP", addletters=TRUE)
 }
 \arguments{
   \item{yrs}{\code{numeric} -- range of years to select management actions applicable to \code{'strSpp'}.}
@@ -28,13 +29,16 @@ createMA(yrs=1979:2021, strSpp="POP", addletters=TRUE)
   letters \code{'a, b, c, ...'} could be added: \code{'[["2019"]][["BORa"]]'}
 }
 \value{
-  Returns a data frame of the management actions; also writes table to a \code{'.csv'} file.
+  Returns a data frame of the management actions; also writes comma-delimited files:\cr
+  \code{'dfo.mgmt.actions.ABC.csv'} and\cr
+  \code{'dfo.mgmt.quotas.ABC.csv'}\cr
+  where \code{ABC}= three-letter species code (e.g., \code{POP}).
 }
 \author{
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
-  \emph{locus opus}: Institute of Ocean Sciences (IOS), Sidney BC\cr
-  Last modified \code{Rd: 2021-09-28}
+  \emph{locus opus}: Regional Headquarters (RHQ), Vancouver BC\cr
+  Last modified \code{Rd: 2023-06-08}
 }
 \seealso{
 In package \pkg{PBStools}:\cr

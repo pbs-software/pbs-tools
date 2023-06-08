@@ -316,5 +316,5 @@ ORDER BY EC.TRIP_ID, EC.FISHING_EVENT_ID
 -- qu("fos_mcatSPP.sql",dbName="GFFOS",strSpp="394")  -- RER Rougheye (200228)
 -- qu("fos_mcatSPP.sql",dbName="GFFOS",strSpp="440")  -- YMR Yellowmouth (201020, 210125)
 -- qu("fos_mcatSPP.sql",dbName="GFFOS",strSpp="437")  -- CAR Canary (211130, 220506)
--- qu("fos_mcatSPP.sql",dbName="GFFOS",strSpp="396")  -- POP Pacific Ocean Perch (221021, 230201)
+-- qu("fos_mcatSPP.sql",dbName="GFFOS",strSpp="396")  -- POP Pacific Ocean Perch (221021, 230201, 230501)
 

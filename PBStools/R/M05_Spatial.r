@@ -189,7 +189,7 @@ calcSRFA <- function(major, minor=NULL, loc=NULL, subarea=FALSE) {
 #-----------------------------------------calcSRFA
 
 
-## calcStockArea------------------------2021-02-09
+## calcStockArea------------------------2023-05-09
 ## Assign a stock area designation based on species
 ## HART code and PMFC major and/or minor areas.
 ## ---------------------------------------------RH
@@ -225,26 +225,8 @@ calcStockArea = function (strSpp, dat, stockFld="stock", gmu=TRUE)
 			newA[is.element(major,1)]   = "4B"
 		}
 		else if (is.element(strSpp,c("396","440"))){
-			## Special area adjustment for POP and YMR
-			dat$major_adj = dat$major
-			poly5C = data.frame(PID=rep(1,6),POS=1:6,X=c(-131.5,-132,-131,-130,-130,-131.2), Y=c(52.33333333,52.33333333,51.5,51.8,52.16666667,52.16666667))
-			poly5C = as.PolySet(poly5C, projection="LL", zone=9)
-			hasXY  = dat$X<0 & !is.na(dat$X) & dat$Y>0 & !is.na(dat$Y)
-			if (any(hasXY)) {
-				if (!is.EventData(dat)){
-					if (!"EID"%in%colnames(dat)) dat$EID = 1:nrow(dat)
-					tmpdat = as.EventData(dat[hasXY,],projection="LL",zone=9)  ## RH 210120
-				} else {
-					tmpdat = dat[hasXY,]
-				}
-				e5C = .is.in(tmpdat, poly5C)
-				#e5C = .is.in(dat[hasXY,], poly5C)
-				if (nrow(e5C$e.in)>0) {
-					tmpdat$major_adj[is.element(tmpdat$EID,e5C$e.in$EID)] = 7  ## 5C
-					dat$major_adj[hasXY] = tmpdat$major_adj                    ## RH 210120
-				}
-			}
-			major = dat$major_adj
+			if (!all(c("major_adj","major_old") %in% colnames(dat))) ## check to see if the majors have already been adjusted
+				dat = expand5C(dat)  ## Special area adjustment for POP and YMR
 			if (strSpp %in% "396"){
 				newA[is.element(major,8:9)] = "5DE"
 				newA[is.element(major,7)]   = "5C"

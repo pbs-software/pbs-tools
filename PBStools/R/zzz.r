@@ -44,7 +44,7 @@ if(getRversion() >= "2.15.1") utils::globalVariables(names=c(
 	"dat","DATA","datt","dattoRlist","dBars","dbName","ddat","defaultdoorspread","diaDir","disA","dist","DLIM",
 	"edat","eez.bc","elapTime","empinf","eN","eps","evals","extra",
 	"fdir","FID","figDir","fillBars","firstSerial","fminE","fminS","fnam","Fout","formalArgs","fqtName","Ft","ftime","func",
-	"g","GC","gear","gfbdat","gfbsurvey","gigflds","glmfit","globo","gma.popymr","group","Gv2",
+	"g","GC","gear","get_comments","gfbdat","gfbsurvey","gigflds","glmfit","globo","gma.popymr","group","Gv2",
 	"habSpp", "hadley","hclust","hide0","HSreg","HStrc",
 	"idxD","idxL","idxM","importRes","inone","IRRmin","is.pred","isobath","iters",
 	"k","K",

@@ -10,9 +10,9 @@
 }
 \usage{
 weightBio(adat, cdat, sunit="TID", sweight="catch", 
-   ttype=NULL, stype=c(0,1,2,5:8,17), scat=NULL, ameth=c(2,3,17), sex=2:1, major=NULL,
-   wSP=c(TRUE,TRUE), wN=TRUE, plus=60, accum=TRUE, Nmin=0, Amin=NULL, 
-   ctype="C", per=90, SSID=NULL, tabs=TRUE, gear=NULL,
+   ttype=NULL, stype=c(0,1,2,5:8,17), scat=NULL, ameth=c(2:4,17), sex=2:1,
+   major=NULL, wSP=c(TRUE,TRUE), wN=TRUE, plus=60, accum=TRUE, Nmin=0,
+   Amin=NULL, ctype="C", per=90, SSID=NULL, tabs=TRUE, gear=NULL,
    plot=TRUE, ptype="bubb", size=0.05, powr=0.5, zfld="wp", 
    clrs=list( c(.colBlind["blue"],"cyan"),
               c(.colBlind["bluegreen"],"chartreuse")),
@@ -299,7 +299,7 @@ out = weightBio(age396, Scat396, ctype="S", sunit="SID", SSID=1,
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
   \emph{locus opus}: Regional Headquarters (RHQ), Vancouver BC\cr
-  Last modified \code{Rd: 2023-02-08}
+  Last modified \code{Rd: 2023-06-08}
 
   \href{mailto:paul@starrfish.net}{Paul J. Starr}, Stock Assessment Scientist\cr
   Canadian Groundfish Research & Conservation Society (CGRCS), Nanaimo BC

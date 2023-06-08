@@ -9,7 +9,7 @@ Plot the gamma value in \code{'buildCatch'} (e.g. landed RRF/landed ORF) by year
 \usage{
 plotGREFS(dat, years=1996:2019, majors=3:9, fid=1,
    strSpp="394", addRGM=FALSE, onefig=FALSE, vlines,
-   png=FALSE, pngres=400, PIN=c(12,9), lang="e")
+   legpos, png=FALSE, pngres=400, PIN=c(12,9), lang="e")
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -21,6 +21,7 @@ plotGREFS(dat, years=1996:2019, majors=3:9, fid=1,
   \item{addRGM}{\code{logical} -- if \code{TRUE}, add running geometric mean.}
   \item{onefig}{\code{logical} -- if \code{TRUE}, create a separate figure for each FID.}
   \item{vlines}{\code{numeric} -- values (years) along the x-axis to add vertical dashed lines for visial delineation.}
+  \item{legpos}{\code{numeric} -- vector of relative (X,Y) positions used to place the legend.}
   \item{png}{\code{logical} -- if \code{TRUE}, send the figure(s) to a \code{'.png'} file.}
   \item{pngres}{\code{numeric} -- resolution of output figure (pixels per inch).}
   \item{PIN}{\code{numeric} -- width and height of output figure (inches).}
@@ -34,7 +35,7 @@ plotGREFS(dat, years=1996:2019, majors=3:9, fid=1,
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
   \emph{locus opus}: Regional Headquarters (RHQ), Vancouver BC\cr
-  Last modified \code{Rd: 2023-02-08}
+  Last modified \code{Rd: 2023-06-08}
 }
 \seealso{
 In package \pkg{PBStools}:\cr

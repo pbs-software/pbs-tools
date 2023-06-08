@@ -50,7 +50,7 @@ GROUP BY
 ORDER BY
   C.district, C.major
 
--- getData("phhl_districts.sql","PacHarvHL",strSpp="389")
+-- qu("phhl_districts.sql",dbName="PacHarvHL",strSpp="389")
 
 
 

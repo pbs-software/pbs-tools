@@ -3,6 +3,7 @@
 -- Norm transferred records for 1952-1992 to GFFOS as table 'PH3_CATCH_SUMMARY (NO 211215)
 -- PH3_CATCH_SUMMARY emmpty, Norm transferring again (RH 221222)
 -- Converted Oracle SQL code to SQL server code, mostly unpacking two nested queries into temporary tables #PMFC and #TARGET (RH 221222)
+-- Introduced 'locality' field for Anthony Island, even though there are no records in minor area 142. (RH 230510)
 
 SET NOCOUNT ON -- Needed in SQL queries to prevent time-out
 
@@ -57,8 +58,11 @@ SELECT FA.CATSUM_ID,   -- 703,475 unique IDs
       (FA.SFA_MSFA_MIDSIZE_FA_CDE IN (101) AND FA.SFA_SMALL_FA_CDE IN (0,1,2,3))  THEN 9
   ELSE 0 END) AS PMFC,
   (CASE
-  WHEN FA.SFA_MSFA_MIDSIZE_FA_CDE IN (142) AND FA.SFA_SMALL_FA_CDE IN (1) THEN 34  -- for POP in Anthony Island (606 records)
-  ELSE 0 END) AS ANTHONY
+    WHEN FA.SFA_MSFA_MIDSIZE_FA_CDE IN (142) AND FA.SFA_SMALL_FA_CDE IN (1) THEN 34  -- for POP in Anthony Island (606 records, must be after 1995)
+    ELSE 0 END) AS MINOR,
+  (CASE
+    WHEN FA.SFA_MSFA_MIDSIZE_FA_CDE IN (142) AND FA.SFA_SMALL_FA_CDE IN (1) THEN 1  -- for POP in Anthony Island (606 records, must be after 1995)
+    ELSE 0 END) AS LOCALITY
 INTO #PMFC
 FROM PH3_CATCH_SUMMARY FA
 
@@ -112,18 +116,19 @@ SELECT
     WHEN TAR.Target IN ('455') THEN 3
     WHEN TAR.Target IN ('044','467') THEN 4
     WHEN TAR.Target IN ('388','401','407','424','431','433','442') THEN 5
-    ELSE 0 END) AS \"fid\",
-  CS.STP_SPER_YR AS \"year\",
-  AREA.PMFC AS \"major\",
-  AREA.ANTHONY AS \"minor\",
+    ELSE 0 END) AS 'fid',
+  CS.STP_SPER_YR AS 'year',
+  AREA.PMFC AS 'major',
+  AREA.MINOR AS 'minor',
+  AREA.LOCALITY AS 'locality',
   Sum(CASE
     WHEN CS.SP_SPECIES_CDE IN (@sppcode) AND CS.CU_CATCH_UTLZTN_CDE NOT IN (6,22,23,24,27,28)
     THEN CS.CATSUM_ROUND_LBS_WT
-    ELSE 0 END)/2.20459 AS \"landed\",
+    ELSE 0 END)/2.20459 AS 'landed',
   Sum(CASE
     WHEN CS.SP_SPECIES_CDE IN (@sppcode) AND CS.CU_CATCH_UTLZTN_CDE IN (6,22,23,24,27,28)
     THEN CS.CATSUM_ROUND_LBS_WT
-    ELSE 0 END)/2.20459 AS \"discard\",
+    ELSE 0 END)/2.20459 AS 'discard',
   Sum(CASE
     WHEN CS.SP_SPECIES_CDE IN ('396') AND CS.CU_CATCH_UTLZTN_CDE NOT IN (6,22,23,24,27,28)
     THEN CS.CATSUM_ROUND_LBS_WT
@@ -196,11 +201,12 @@ GROUP BY
     ELSE 0 END),
   CS.STP_SPER_YR,
   AREA.PMFC,
-  AREA.ANTHONY
+  AREA.MINOR,
+  AREA.LOCALITY
 
 SELECT * FROM #CATMESS CM
 WHERE
-  --CSS.\"landed\">0 OR CSS.\"discard\">0 OR CSS.POP>0 OR CSS.ORF>0 OR CSS.PAH>0 OR CSS.SBF>0 OR CSS.DOG>0 OR CSS.IRF>0
+  --CSS.'landed'>0 OR CSS.'discard'>0 OR CSS.POP>0 OR CSS.ORF>0 OR CSS.PAH>0 OR CSS.SBF>0 OR CSS.DOG>0 OR CSS.IRF>0
   CM.landed>0 OR CM.discard>0 OR CM.POP>0 OR CM.ORF>0 OR CM.PAH>0 OR CM.SBF>0 OR CM.DOG>0 OR CM.IRF>0
 
 

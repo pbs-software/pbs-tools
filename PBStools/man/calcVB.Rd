@@ -8,7 +8,7 @@
 \usage{
 calcVB(dat=pop.age, strSpp="", yfld="len", fixt0=FALSE, 
    areas=list(major=NULL, minor=NULL, locality=NULL, srfa=NULL,srfs=NULL, popa=NULL),
-   ttype=list(commercial=c(1,4,5),research=c(2,3)), stype=c(1,2,6,7), scat=NULL,
+   ttype=list(commercial=c(1,4,5),research=c(2,3)), stype=c(1,2,6,7,17), scat=NULL,
    sex=list(Females=2,Males=1), rm.studs=NULL, subtitle,
    year=NULL, xlim=NULL, ylim=NULL, ameth=c(2,3,17), jit=c(0,0), 
    eps=FALSE, jpg=FALSE, pdf=FALSE, png=FALSE, tif=FALSE, wmf=FALSE,
@@ -87,8 +87,8 @@ calcVB(dat=pop.age, strSpp="", yfld="len", fixt0=FALSE,
 \author{
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
-  \emph{locus opus}: Institute of Ocean Sciences (IOS), Sidney BC\cr
-  Last modified \code{Rd: 2021-06-15}
+  \emph{locus opus}: Regional Headquarters (RHQ), Vancouver BC\cr
+  Last modified \code{Rd: 2023-06-08}
 }
 \seealso{
   \pkg{PBStools}:

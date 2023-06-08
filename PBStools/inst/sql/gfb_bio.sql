@@ -618,10 +618,11 @@ SELECT * FROM #GFBBIO
 -- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="418") -- Yellowtail Rockfish (180531, 200910)
 -- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="440") -- Yellowmouth Rockfish (YMR: 200720, 200903, 200928, 210120, 210208)
 -- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="225") -- Pacific Hake (PAK: 211210)
+-- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="396") -- Pacific Ocean Perch (POP: 210217, 211021, 221021)
 -- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="453") -- Longspine Thornyhead (LST: 220309)
 -- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="437") -- Canary Rockfish (CAR: 200720, 200903, 211013, 211123, 220502)
 -- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="602") -- Arrowtooth Flounder (180619, 180829, 180911, 200908, 200914, 201007, 230112)
--- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="396") -- Pacific Ocean Perch (POP: 210217, 211021, 221021, 230117)
 -- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="435") -- Bocaccio (BOR: 190107, 190620, 190709, 190812, 190822, 190903, 191003, 211014, 230117
-)
+-- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="401") -- Redbanded Rockfish (RBR: 230411)
+-- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="396") -- Pacific Ocean Perch (POP: 230117, 230428)
 

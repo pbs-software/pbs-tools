@@ -10,6 +10,44 @@ Authors: RH  = Rowan Haigh
          BK  = Brian Krishka
 ------------------------------
 
+1.42.2 (2023-06-08)  [Rcheck=T, Rbuild=T]
+  * M01_Utility.r
+    + Moved function `.ss3.readdat' to separate module `Z01_Borrow.r' for code borrowed from other packages. (RH 230213)
+    + Added new function `expand5C' to transfer events from Moresby Gully in 5B and Flamingo Inlet/Anthony Island in 5E to PMFC 5C. (RH 230511)
+    + Added more french to `linguaFranca'. (RH 230503)
+  * M02_Biology.r
+    + Modified various functions:
+      - `calcLW' to archive and clear figure files;
+      - 'calcVB' made small changes;
+      - `estOgive' to log reductions in records as qualifications are applied;
+      - `weightBio' to calculate number of specimens.
+  * M05_Spatial.r
+    + Modified function `calcStockArea' to use function `expand5C' (RH 230509).
+  * M06_Assessment.r
+    + Add new functions:
+      - `tabAmeth' to tabulate ageing error structures available in bio123 (RH 230504);
+      - `tabOtos' to tabulate otoliths available and aged (RH 230424).
+    + Modified various functions:
+      - `createMA' to add POP management actions and quotas (RH 230420);
+      - `plotBTMW' to colour factors (e.g., gear type) consistently (RH 230426);
+      - `plotSnail' to accept multi-area quantiles from 'load_extra_mcmc.r' (RH 230419).
+  * M07_CatchRecon.r
+    + Modified various functions:
+      - `buildCatch' to re-use data from a previous reconstruction and 
+      -    to use `expand5C' to shift catch from 5B and 5E to 5C for POP/YMR and 
+      -    to calculate CREF/RLAND over longer period than cref/rland and
+      -    overwrite reconstructed landings if user has specified using reported landings (RH 230511);
+      - `plotGREFS' minor modifications;
+      - `quickCat' minor modifications;
+      - `surveyCatch' send to datDir within reconstruction (RH 230511).
+  * M10_Financial.r
+    + Updated function `imputeRate' (230210) and moved from module 6 to new module 10 (230606).
+  * Documentation
+    + Added three Rd files (RH 230608)
+      - `expand5C', `tabAmeth', `tabOtos'
+    + Updated six Rd files (RH 230608)
+      - `calcVB', `createMA', `plotBTMW', `plotGREFS', `surveyCatch, `weightBio'
+
 1.42.1 (2023-02-10)  [Rcheck=T, Rbuild=T]
   * M01_Utility.r
     + Added new function `.ss3.readdat' which was lifted directly from r4ss' function `SS_readdat_3.30'. (RH 230210)
