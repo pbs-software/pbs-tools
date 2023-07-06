@@ -56,7 +56,7 @@ calcCVage = function(dat, read_true=1, read_obs=NULL, cvtype="age", Amax=50,
 			for (j in (i+1):length(alist))
 				adat = rbind(adat,alist[[j]])
 		}
-		zpos = adat[,readObs,drop=F]>0
+		zpos = adat[,readObs,drop=FALSE]>0
 		Atab[ii,"N"] = sum(zpos)
 		if (sum(zpos)==0) next
 		Atab[ii,"MU"] = mean(adat[,readObs][zpos])
@@ -116,7 +116,7 @@ calcCVage = function(dat, read_true=1, read_obs=NULL, cvtype="age", Amax=50,
 				## Add shading for ages with no observed SD
 				if (any(sd0)) {
 					x0  = xsmoo[sd0]
-					xvert = data.frame(v1=x0[c(T,diff(x0)>1)], v2=x0[!c(diff(x0)==1,FALSE)])
+					xvert = data.frame(v1=x0[c(TRUE,diff(x0)>1)], v2=x0[!c(diff(x0)==1,FALSE)])
 					apply(xvert, 1, function(x) {
 						if (diff(x)==0) x = x + c(-xoff/2,xoff/2)
 						y = par()$usr[3:4]
@@ -124,7 +124,7 @@ calcCVage = function(dat, read_true=1, read_obs=NULL, cvtype="age", Amax=50,
 					})	
 					#abline(v=x0, lwd=5, col=lucent(switch(cvtype, 'age'="red", 'len'="blue"),0.5))
 				}
-				axis(1, at=seq(5, max(xsmoo), 5), tick=T, labels=F, tcl=-0.25)
+				axis(1, at=seq(5, max(xsmoo), 5), tick=TRUE, labels=FALSE, tcl=-0.25)
 				mtext(linguaFranca("Standard deviation of age",l), side=2, line=1.5, cex=1.5)
 				lines(xsmoo, xsmoo * Atab[,"CV"], lwd=2, lty=2, col=switch(cvtype, 'age'="brown", 'len'="green4"))
 				lines(xsmoo, ysmoo, lwd=2, col=switch(cvtype, 'age'="red", 'len'="blue"))
@@ -133,7 +133,7 @@ calcCVage = function(dat, read_true=1, read_obs=NULL, cvtype="age", Amax=50,
 
 				par(fig=c(0,1,0,0.4), mar=c(3,4,0.5,0), new=TRUE)
 				barplot(Atab[,"CV"], col=switch(cvtype, 'age'="moccasin", 'len'="olivedrab1"), space=0, xaxt="n", xlab="", ylab="", cex.axis=1.2, cex.lab=1.4, names.arg=names.not)
-				axis(1, at=names.out-0.5, labels=names.out, line=NA, pos=0, tick=F, padj=0, cex=1.2, mgp=c(2,0.2,0))
+				axis(1, at=names.out-0.5, labels=names.out, line=NA, pos=0, tick=FALSE, padj=0, cex=1.2, mgp=c(2,0.2,0))
 				mtext(linguaFranca("Age (y)",l), side=1, line=1.5, cex=1.5)
 				mtext(switch(l, 'e'="Coefficient of Variation", 'f'="coefficient de variation"), side=2, line=2.5, cex=1.5)
 				addLegend(0.9,0.9, linguaFranca(paste0("based on ", switch(cvtype, 'age'="age precision checks", 'len'="lengths-at-age")),l), adj=c(1,0), bty="n")
@@ -144,7 +144,7 @@ calcCVage = function(dat, read_true=1, read_obs=NULL, cvtype="age", Amax=50,
 			} else {
 				expandGraph(mfrow=c(1,1), mar=c(3,3,1,1))
 				barplot(Atab[,"CV"], col=switch(cvtype, 'age'="moccasin", 'len'="olivedrab1"), space=0, xlab=linguaFranca("Age (y)",l), ylab=switch(l, 'e'="Coefficient of Variation", 'f'="coefficient de variation"), cex.axis=1.2, cex.lab=1.5, names.arg=names.not)
-				axis(1, at=names.out-0.5, labels=names.out, line=NA, pos=0, tick=F, padj=0, cex=1.2, mgp=c(2,0.2,0))
+				axis(1, at=names.out-0.5, labels=names.out, line=NA, pos=0, tick=FALSE, padj=0, cex=1.2, mgp=c(2,0.2,0))
 				addLegend(0.9,0.9, linguaFranca(paste0("based on ", switch(cvtype, 'age'="age precision checks", 'len'="lengths-at-age")),l), adj=c(1,0), bty="n")
 			}
 			if(png) dev.off()
@@ -298,7 +298,7 @@ compAF=function(x, year=2003, sex=2, amax=40, pfld="wp",
 					}
 				}
 #browser();return()
-				zleg = grep(" 0 ",legtxt,invert=T)
+				zleg = grep(" 0 ",legtxt,invert=TRUE)
 				if (type=="cumul")
 					addLegend(0.025,0.8, bty="n", lty=lty[zleg], seg.len=3, col=col[zleg], legend=linguaFranca(gsub("_"," ",legtxt[zleg]),l), yjust=1, xjust=0, lwd=2, cex=0.9)
 				else
@@ -613,11 +613,11 @@ compLen = function(dat, strSpp, fld="len", lbin=1, sex=c(2,1),
 			Idat = Idat[intersect(names(gval),names(Idat))]  ## order them as per user input
 			if (strat && !boot) {
 				resetGraph();expandGraph()
-				#plotBubbles(Yprop,dnam=T,hide0=T,prettyAxis=T,siz=0.1,ylim=ylim,cpro=T)
+				#plotBubbles(Yprop,dnam=TRUE,hide0=TRUE,prettyAxis=TRUE,siz=0.1,ylim=ylim,cpro=TRUE)
 				#points(as.numeric(names(Ymean)),Ymean, pch=21,col="red",bg="pink",cex=1.5)
 				#plot(0,0,type="n",xlim=xlim,ylim=ylim,xlab="",ylab="", mgp=c(1.5,0.5,0))
 			} else {
-				quantBox(sapply(Qbox,function(x){NA},simplify=F), type="n", ylim=ylim, xlab="", ylab="")
+				quantBox(sapply(Qbox,function(x){NA},simplify=FALSE), type="n", ylim=ylim, xlab="", ylab="")
 				abline(v=seq(0.5,par()$usr[2],1),col="grey90"); box()
 			}
 			sapply(1:length(Idat), function(i) {  ## loop through index 
@@ -634,8 +634,8 @@ compLen = function(dat, strSpp, fld="len", lbin=1, sex=c(2,1),
 						ydat = idat[is.element(idat$year,y),]
 						jdat = split(ydat,ydat$GC)  ## split by Grouping Code (stratum)
 
-						dGC  = sapply(jdat,function(x){sapply(split(x$density,x$SID),mean)},simplify=F)  ## density by SID in each GC
-						pGC  = sapply(dGC,function(x){x/sum(x)},simplify=F)                              ## proportion density by SID in each GC
+						dGC  = sapply(jdat,function(x){sapply(split(x$density,x$SID),mean)},simplify=FALSE)  ## density by SID in each GC
+						pGC  = sapply(dGC,function(x){x/sum(x)},simplify=FALSE)                              ## proportion density by SID in each GC
 						vGC  = unlist(pGC)
 						ydat$pGC =rep(0,nrow(ydat))
 						ydat$pGC = vGC[paste(ydat$GC,ydat$SID,sep=".")]
@@ -654,11 +654,11 @@ compLen = function(dat, strSpp, fld="len", lbin=1, sex=c(2,1),
 							Lsamp = numeric()
 							for (r in 1:R) {
 								jdat = split(Ydat,Ydat$GC)  ## split by Grouping Code (stratum)
-								jdat = sapply(jdat,function(x){x[sample(1:nrow(x),nrow(x),replace=T),]},simplify=F)
+								jdat = sapply(jdat,function(x){x[sample(1:nrow(x),nrow(x),replace=TRUE),]},simplify=FALSE)
 								ydat = do.call(rbind, jdat)
 
-								dGC  = sapply(jdat,function(x){sapply(split(x$density,x$SID),mean)},simplify=F)  ## density by SID in each GC
-								pGC  = sapply(dGC,function(x){x/sum(x)},simplify=F)                              ## proportion density by SID in each GC
+								dGC  = sapply(jdat,function(x){sapply(split(x$density,x$SID),mean)},simplify=FALSE)  ## density by SID in each GC
+								pGC  = sapply(dGC,function(x){x/sum(x)},simplify=FALSE)                              ## proportion density by SID in each GC
 								vGC  = unlist(pGC)
 								ydat$pGC =rep(0,nrow(ydat))
 								ydat$pGC = vGC[paste(ydat$GC,ydat$SID,sep=".")]
@@ -699,7 +699,7 @@ compLen = function(dat, strSpp, fld="len", lbin=1, sex=c(2,1),
 					Ymean = apply(Yvals,2,function(x){sum(x)})
 				} else {
 					##ival  = split(idat[,fld],idat$year) ## redundant?
-					Ymean = sapply(ival,mean,na.rm=T)
+					Ymean = sapply(ival,mean,na.rm=TRUE)
 				}
 				if (!is.null(ival)) {
 					attr(ival,"Ymean") = Ymean
@@ -1784,7 +1784,7 @@ createMA =function(yrs=1979:2023, strSpp="POP", addletters=TRUE)
 	comm = gsub("\\\\emph\\{","", gsub("}","", comm))
 #browser();retrun()
 	sout$comment = comm
-	write.csv(sout, file=paste0("dfo.mgmt.actions.", strSpp, ".csv"), row.names=F)
+	write.csv(sout, file=paste0("dfo.mgmt.actions.", strSpp, ".csv"), row.names=FALSE)
 
 
 	return(sout)
@@ -2407,7 +2407,7 @@ makeAgeErr = function(type="simple", strSpp, sql=FALSE,
 plotAgeErr = function(dat, nsamp, xlim=NULL, ylim=NULL, jitter=0.25, seed=42, 
    png=FALSE, pngres=400, PIN=c(8,8), lang=c("e","f"))
 {
-	opar = par(no.readonly=T); on.exit(par(opar))
+	opar = par(no.readonly=TRUE); on.exit(par(opar))
 	strSpp = as.character(.su(dat$spp))
 	sppNam = toUpper(tolower(.su(dat$spn)))
 	if (grepl("/", sppNam)) {
@@ -2455,7 +2455,7 @@ plotAgeErr = function(dat, nsamp, xlim=NULL, ylim=NULL, jitter=0.25, seed=42,
 		}
 		ttput(RAGOUT)
 		return(as.matrix(rout))
-	}, ofld=oflds, afld=aflds, simplify=F)
+	}, ofld=oflds, afld=aflds, simplify=FALSE)
 	ttget(RAGOUT)
 	ragout = RAGOUT[-1,]  ## remove artificially initiated first row of zeroes (stoopid R)
 	ttput(ragout)         ## send it to the PBStools environment
@@ -2491,8 +2491,8 @@ plotAgeErr = function(dat, nsamp, xlim=NULL, ylim=NULL, jitter=0.25, seed=42,
 		}
 		par(mfrow=c(1,1), mar=c(3.5,3.5,0.5,0.75), oma=c(0,0,0,0), mgp=c(2,0.5,0))
 		plot(dat$r1_age, dat$r2_age, xlim=xlim, ylim=ylim, type="n", xlab="", ylab="", cex.axis=1.2, las=1)
-		axis(1, at=seq(0,xlim[2],ifelse(xlim[2]<60,1,5)), labels=F, tcl=-0.2)
-		axis(2, at=seq(0,ylim[2],ifelse(ylim[2]<60,1,5)), labels=F, tcl=-0.2)
+		axis(1, at=seq(0,xlim[2],ifelse(xlim[2]<60,1,5)), labels=FALSE, tcl=-0.2)
+		axis(2, at=seq(0,ylim[2],ifelse(ylim[2]<60,1,5)), labels=FALSE, tcl=-0.2)
 		abline(0,1,col=lucent("green4",0.5),lwd=2)
 		## Drawing segments takes a long time, especially when sending to PNG device:
 		segments(x0=dat$r1_amin, y0=dat$r2_age, x1=dat$r1_amax, y1=dat$r2_age, col=lucent("grey50",0.5),lwd=2)
@@ -2636,14 +2636,14 @@ plotBTMW = function(dat, strSpp="417", years=1996:2018, major=list('CST'=3:9),
 
 				## Write the tables to CSV
 				colnames(atab) = gcode[colnames(atab)]
-				abad = paste0(grep(aa,names(major),invert=T,value=T),collapse="|")
+				abad = paste0(grep(aa,names(major),invert=TRUE,value=TRUE),collapse="|")
 				anam = gsub("\\.+",".",gsub(abad,"",onam))
 #browser();return()
 				write.csv(atab, paste0(anam,".csv"))
 				gtabs[[gnam]][[aa]] = atab
 			}
-			mtext(linguaFranca("Year",l), outer=T, side=1, line=0.5, cex=1.5)
-			mtext(linguaFranca("Catch (t)",l), outer=T, side=2, line=0.25, cex=1.5)
+			mtext(linguaFranca("Year",l), outer=TRUE, side=1, line=0.5, cex=1.5)
+			mtext(linguaFranca("Catch (t)",l), outer=TRUE, side=2, line=0.25, cex=1.5)
 			if (png) dev.off()
 		}; eop()
 #browser(); return()
@@ -2797,7 +2797,7 @@ plotSnail=function (BoverBmsy, UoverUmsy, model="SS", yrs=1935:2022,
 	if (isQ) {
 		BUmed = lapply(BUlist, function(x) { x["50%",] })
 	} else {
-		BUmed    = lapply(BUlist,function(x){apply(x,2,median,na.rm=T)})  # median each year
+		BUmed    = lapply(BUlist,function(x){apply(x,2,median,na.rm=TRUE)})  # median each year
 	}
 
 	colPal   = colorRampPalette(c("grey90", "grey30"))
@@ -2823,7 +2823,7 @@ plotSnail=function (BoverBmsy, UoverUmsy, model="SS", yrs=1935:2022,
 		if (isQ)
 			xLim = c(0, max(sapply(BUlist[grep("SSB",names(BUlist))],function(x){max(x[,nB])}), sapply(BUmed[grep("SSB",names(BUmed))],function(x){max(x)}) ))
 		else
-			xLim=c(0, max(c(BUmed[[1]], rev(apply(BUlist[[1]], 2, quantile, probs=ifelse(outs,1,p[2]), na.rm=T))[1], 1)))
+			xLim=c(0, max(c(BUmed[[1]], rev(apply(BUlist[[1]], 2, quantile, probs=ifelse(outs,1,p[2]), na.rm=TRUE))[1], 1)))
 	}
 	if (is.null(yLim)) {
 		if (isQ) {
@@ -2831,8 +2831,8 @@ plotSnail=function (BoverBmsy, UoverUmsy, model="SS", yrs=1935:2022,
 		} else {
 			yUps = sapply(BUlist[(1:ngear)+1], function(x,p){
 				#is.good = apply(x,1,function(x){all(is.finite(x))})
-				apply(x, 2, quantile, p=p, na.rm=T)}, p=ifelse(outs,1,p[2]))  ## (RH 200624)
-			yLim=c(0, max(c(sapply(BUmed[(1:ngear)+1], max, na.rm=T), max(yUps[nrow(yUps),],na.rm=T), 1)))    ## (RH 200624)
+				apply(x, 2, quantile, p=p, na.rm=TRUE)}, p=ifelse(outs,1,p[2]))  ## (RH 200624)
+			yLim=c(0, max(c(sapply(BUmed[(1:ngear)+1], max, na.rm=TRUE), max(yUps[nrow(yUps),],na.rm=TRUE), 1)))    ## (RH 200624)
 		}
 #browser();return()
 	}
@@ -2892,8 +2892,8 @@ plotSnail=function (BoverBmsy, UoverUmsy, model="SS", yrs=1935:2022,
 					xqlo = BUlist[[ii]][qq[1],nB]
 					xqhi = BUlist[[ii]][qq[2],nB]
 				} else {
-					xqlo = quantile(BUlist[[ii]][,nB], q[1], na.rm=T)
-					xqhi = quantile(BUlist[[ii]][,nB], q[2], na.rm=T)
+					xqlo = quantile(BUlist[[ii]][,nB], q[1], na.rm=TRUE)
+					xqhi = quantile(BUlist[[ii]][,nB], q[2], na.rm=TRUE)
 				}
 				#segments(xqlo, yend, xqhi, yend, col=lucent(colLim[i],0.5), lty=lty, lwd=2)
 				segments(xqlo, yend, xqhi, yend, col=colLim[i], lty=lty, lwd=2)
@@ -2903,8 +2903,8 @@ plotSnail=function (BoverBmsy, UoverUmsy, model="SS", yrs=1935:2022,
 					yqlo = BUlist[[iii]][qq[1],nB]
 					yqhi = BUlist[[iii]][qq[2],nB]
 				} else {
-					yqlo = quantile(BUlist[[i+1]][,nB], q[1], na.rm=T)
-					yqhi = quantile(BUlist[[i+1]][,nB], q[2], na.rm=T)
+					yqlo = quantile(BUlist[[i+1]][,nB], q[1], na.rm=TRUE)
+					yqhi = quantile(BUlist[[i+1]][,nB], q[2], na.rm=TRUE)
 				}
 				#segments(xend+xoff, yqlo, xend+xoff, yqhi, col=lucent(colLim[i],0.5), lty=lty, lwd=lwd)
 				segments(xend+xoff, yqlo, xend+xoff, yqhi, col=colLim[i], lty=lty, lwd=lwd)
@@ -3078,7 +3078,7 @@ processMap = function(dat=PBSdat, strSpp, prefix="map", useSM=FALSE)
 	dat = calcStockArea(strSpp, dat=dat)
 #browser();return()
 	fidpos = match("fid",names(dat))
-	dat  = as.EventData(data.frame(EID=1:nrow(dat),dat[,-fidpos],fid=dat[,fidpos], check.names=F, stringsAsFactors=F), projection="LL")
+	dat  = as.EventData(data.frame(EID=1:nrow(dat),dat[,-fidpos],fid=dat[,fidpos], check.names=FALSE, stringsAsFactors=FALSE), projection="LL")
 	mess = paste0(prefix,strSpp," = dat; save (\"", prefix, strSpp, "\",file=\"", prefix, strSpp, ".rda\")")
 	eval(parse(text=mess))
 	return(dat)

@@ -1,7 +1,7 @@
 \name{plotGMA}
 \alias{plotGMA}
 \title{
-  Plot the Groundfish Management Areas
+  Plot Groundfish Management Areas
 }
 \description{
   Plot the groundfish management areas (GMA) used by Pacific 
@@ -10,20 +10,22 @@
   and Walleye Pollock.
 }
 \usage{
-plotGMA(gma=gma.popymr, xlim=c(-134,-123), ylim=c(48.05,54.95), 
-   dimfig=c(9,9), eps=FALSE, png=FALSE, extra.labels=NULL, isobath,
-   strSpp, lang=c("e","f"))
+plotGMA(gma=gma, major=major, xlim=c(-134,-123), ylim=c(48.05,54.95), 
+   eps=FALSE, png=FALSE, extra.labels=NULL, isobath, strSpp,
+   PIN=c(9,9), pngres=400, lang=c("e","f"))
 }
 \arguments{
-  \item{gma}{\code{PolySet} -- Groundfish Management Areas (e.g. \bold{PBSdata}\code{::gma.popymr} GMAs).}
+  \item{gma}{\code{PolySet} -- Groundfish Management Areas (either \code{'gma'} or \code{'gma.popymr'} in the package \pkg{PBSvault}).}
+  \item{major}{\code{PolySet} -- PMFC major areas (either  \code{'major'} or \code{'major.pop'} in the package \pkg{PBSdata}).}
   \item{xlim}{\code{numeric} -- latitude limits of the map region.}
   \item{ylim}{\code{numeric} -- longitude limits of the map region.}
-  \item{dimfig}{\code{numeric} -- dimensions of the figure region (inches).}
   \item{eps}{\code{logical} -- if \code{TRUE}, send the plot to an \code{.eps} file.}
   \item{png}{\code{logical} -- if \code{TRUE}, send the plot to a \code{.png} file.}
   \item{extra.labels}{\code{EventData} -- coordinates and labels for additional map annotation.}
   \item{isobath}{\code{numeric} -- data frame of isobaths.}
   \item{strSpp}{\code{character} -- species code (usually Hart).}
+  \item{PIN}{\code{numeric} -- dimensions of the figure region (inches).}
+  \item{pngres}{\code{numeric} -- resolution (pixels/inch) of the raster (png) file.}
   \item{lang}{\code{character} -- language for image labels, where \code{'e'}=english and \code{'f'}=french.}
 }
 \details{
@@ -38,17 +40,24 @@ plotGMA(gma=gma.popymr, xlim=c(-134,-123), ylim=c(48.05,54.95),
 }
 \value{
   Invisibly returns a list of the \code{PolyData} attribute and the \code{EventData} object called 
-  \code{extra.labels} (see Details section above).
+  \code{extra.labels} (see Details section).
+}
+\note{
+  PolySets \code{'gma'} (and subsequently \code{'gma.popymr'}) may be outdated.
+  The object was delivered 2010-10-26 through the request chain: 
+  Rowan Haigh (Research Biologist) -> Tameezan Karim (Groundfish Regional Manager) -> 
+  Dwight McCullough (GIS Coordinator) -> Martin Huang (GIS Analyst).
 }
 \author{
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
-  \emph{locus opus}: Institute of Ocean Sciences (IOS), Sidney BC\cr
-  Last modified \code{Rd: 2021-06-14}
+  \emph{locus opus}: Regional Headquarters (RHQ), Vancouver BC\cr
+  Last modified \code{Rd: 2023-06-19}
 }
 \seealso{
-The DFO proprietary package \pkg{PBSvault}: \code{gma.popymr}, \code{pfma} \cr
-(contact \code{rowan.haigh@dfo-mpo.gc.ca} for availability)
+Local package \pkg{PBSvault}: \code{gma.popymr}, \code{pfma} \cr
+(contact \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan} for availability)
 }
 \keyword{hplot}
+\concept{M05_Spatial}
 

@@ -10,6 +10,7 @@
 ##  confODBC........Set up an ODBC User Data Source Name (DSN).
 ##  convCT..........Convert a crossTab object to regular matrix or data frame.
 ##  convFY..........Convert dates into fishing years.
+##  convUTF.........Convert UTF-8 strings into Unicode characters.
 ##  convYM..........Convert date limits into a vector of year-months (YYY-MM).
 ##  convYP..........Convert dates into year periods.
 ##  countLines......Count the number of lines in an ASCII file.
@@ -333,6 +334,42 @@ convFY = function(x,startM=4)
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~convFY
 
 
+## convUTF------------------------------2023-06-13
+##  Convert UTF-8 strings into Unicode characters.
+##  https://stackoverflow.com/questions/72591452/replace-double-by-single-backslash
+##  Solution by G. Grothendieck
+## ------------------------------------------GG|RH
+convUTF = function(x, guide=FALSE)
+{
+	out = character()
+	if (!missing(x)) {
+		out = as.character(str2expression(sprintf('"%s"', x)))
+	}
+	## Show guide of unicode characters (\u{xxxx})
+	if (missing(x) || guide) {
+		collection = c(
+			"1/2 one half (\u00BD) : \\u00BD",
+			"a acute      (\u00E1) : \\u00E1",
+			"c cedilla    (\u00E7) : \\u00E7",
+			"e acute      (\u00E9) : \\u00E9",
+			"e circumflex (\u00EA) : \\u00EA",
+			"e umlaut     (\u00EB) : \\u00EB",
+			"i acute      (\u00ED) : \\u00ED",
+			"i circumflex (\u00EE) : \\u00EE",
+			"n tilde      (\u00F1) : \\u00F1",
+			"o acute      (\u00F3) : \\u00F3",
+			"o circumflex (\u00F4) : \\u00F4",
+			"u circumflex (\u00FB) : \\u00FB",
+			"u umlaut     (\u00FC) : \\u00FC"
+		)
+		attr(out,"guide") = collection
+		.flush.cat(paste0(collection, collapse="\n"), "\n")
+	}
+	return(out)
+}
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~convUTF
+
+
 ## convYM-------------------------------2023-02-09
 ## Convert date limits into a vector of year-months (YYY-MM).
 ## ---------------------------------------------RH
@@ -589,7 +626,7 @@ expand5C = function(dat)
 extractPost = function(spc="BOR", stock="CST", assYr=2021, path=getwd(),
    values="R", runs=1:3, rwts=rep(1,3), burnin=200, nmcmc=1200,
    model="Awatea", fleets="trawl", extra="forSomeone",
-   proj=F, projY1=2022, projY2=2023, catpol=1500)
+   proj=FALSE, projY1=2022, projY2=2023, catpol=1500)
 {
 	## Subfunctions ===============================
 	##
@@ -898,10 +935,10 @@ extractPost = function(spc="BOR", stock="CST", assYr=2021, path=getwd(),
 					.flush.cat(paste0("Species=", strSpp, " Stock=", stock, " Value=", v, " Run", ii),"\n")
 					ipath = paste0(path,"/", spath, ii)
 					iprefix = switch (v, 'B'="sbt", 'R'="rt", 'Rdev'="recDevs", 'U'='ft', 'P'="iscamdelaydiff")
-					idat = read.table(paste0(ipath,"/",iprefix,".mcmc"), header=ifelse(v %in% "P",T,F))
+					idat = read.table(paste0(ipath,"/",iprefix,".mcmc"), header=ifelse(v %in% "P",TRUE,FALSE))
 					if (v=="U") idat = 1 - exp(-idat)  ## convert instantaneous F to exploitation rate U
 					if (v=="P") {
-						idat = idat[(burnin+1):nmcmc, grep("Age\\.|Poor|Average|Good",colnames(idat),invert=T,value=T)]
+						idat = idat[(burnin+1):nmcmc, grep("Age\\.|Poor|Average|Good",colnames(idat),invert=TRUE,value=TRUE)]
 					} else {
 						iyrs = if (v %in% c("R")) years[ifelse(strSpp %in% "SST",-c(1:2),-1)] else years  ## why are recruits missing the first 2 years for SST?
 						idat = idat[(burnin+1):nmcmc,1:length(iyrs)]
@@ -1686,7 +1723,7 @@ isThere = function(x, envir=parent.frame()) {
 	genv = function(){ .GlobalEnv }                # global environment
 
 
-## linguaFranca-------------------------2023-05-03
+## linguaFranca-------------------------2023-06-16
 ## Translate English phrases to French (other languages possible)
 ## for use in plotting figures with French labels.
 ## Note that 'gsub' has a limit to its nesting depth.
@@ -1722,13 +1759,13 @@ linguaFranca = function(x, lang="e", little=4, strip=FALSE, localnames=FALSE)
 					pattern = "[Oo]ff|[Ii]sland|[Cc]anyon|[Ss]ound|[Ss]pit|[Bb]ay|[Pp]oint|[Ss]pot|[Ii]nlet|[Dd]oughnut|[Bb]ank|[Ll]ake|[Ee]ntrance"
 #browser();return()
 					if (any(grepl(pattern,xxx))) {
-						xrev = c(xxx[grep(pattern,xxx)],xxx[grep(pattern,xxx,invert=T)])
+						xrev = c(xxx[grep(pattern,xxx)],xxx[grep(pattern,xxx,invert=TRUE)])
 						return(paste0(xrev,collapse=" "))
 					}
 					## Shift words to the back
 					pattern = "[Nn]orth|[Ss]outh|[Ee]ast|[Ww]est|[S][E]|[S][W]|[Dd]eep|[Oo]utside"
 					if (any(grepl(pattern,xxx))) {
-						xrev = c(xxx[grep(pattern,xxx,invert=T)],xxx[grep(pattern,xxx)])
+						xrev = c(xxx[grep(pattern,xxx,invert=TRUE)],xxx[grep(pattern,xxx)])
 						return(paste0(xrev,collapse=" "))
 					}
 					else return(paste0(xxx,collapse=" "))
@@ -2279,7 +2316,8 @@ linguaFranca = function(x, lang="e", little=4, strip=FALSE, localnames=FALSE)
 			xgeo = sapply(xbio, function(xx){
 				##gsub("[B][C]", eval(parse(text=deparse("C-B\u{2000}"))),
 				#gsub("^[B][C]([[:space:]]+)?", eval(parse(text=deparse("C-B\u{2000}"))),
-				gsub("([[:space:]]+)?[B][C]([[:space:]]+)?", eval(parse(text=deparse("\\1C-B\\2"))),
+				#gsub("([[:space:]]+)?[B][C]([[:space:]]+)?", eval(parse(text=deparse("\\1C-B\\2"))),
+				gsub("([[:space:]]+)[B][C]([[:space:]]+)", eval(parse(text=deparse("\\1C-B\\2"))),
 				gsub("[H][S]", "DH",
 				gsub("[Cc]oast", eval(parse(text=deparse("c\u{00F4}te"))),
 				gsub("[G][I][G]", "CIG",

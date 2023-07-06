@@ -275,7 +275,7 @@ splitTab = function(tab, np=3, row.names=TRUE, row.label="row", row.numeric=FALS
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~splitTab
 
 
-## texArray-----------------------------2021-11-02
+## texArray-----------------------------2023-06-19
 ## Flatten and format an array for latex output.
 ## ---------------------------------------------RH
 texArray =function(x, table.caption="My table", table.label="tab:mytable",
@@ -316,7 +316,7 @@ texArray =function(x, table.caption="My table", table.label="tab:mytable",
 		poo = fn.select.rows(x,select.rows)
 		goo = poo
 #browser();return()
-	}
+	} ## end 2D table
 	else {
 		Z = N[3:L]; names(Z) = 3:L
 		Zsort = sort(Z)
@@ -401,7 +401,8 @@ texArray =function(x, table.caption="My table", table.label="tab:mytable",
 			if (k==1) goo=poo
 			else      goo = rbind(goo,poo)
 		}
-	}
+	} ## end 3D+ table
+
 	#----START making Latex crap-----------------------------
 	#texout = paste("LenWt-",strSpp,".tex",sep="")
 	texout = paste(outnam,ifelse(is.null(strSpp),"","-"),strSpp,".tex",sep="")

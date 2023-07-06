@@ -1171,7 +1171,7 @@ calcVB <- function(dat=pop.age, strSpp="", yfld="len", fixt0=FALSE,
 										tempdat=idat
 										tempdat$age[tempdat$age>60]=60
 										len.age = split(tempdat$len,tempdat$age)
-										lcv = t(sapply(len.age,function(x){mn=mean(x,na.rm=T); sd=sd(x,na.rm=T); cv=sd/mn; return(c(mn,sd,cv))}))
+										lcv = t(sapply(len.age,function(x){mn=mean(x,na.rm=TRUE); sd=sd(x,na.rm=TRUE); cv=sd/mn; return(c(mn,sd,cv))}))
 										colnames(lcv) = c("mn","sd","cv")
 										lcv.prefix = paste0("lcv.",substring(tolower(iii),1,1))
 										lcv.suffix = sub("calcVB","",outnam)
@@ -2024,7 +2024,7 @@ estOgive <- function(dat=pop.age, strSpp="", method=c("DN"),
 ## extractAges -------------------------2023-02-09
 ## Extract records with positive age and qualify
 ##  by the selected ageing method.
-## If show.age=T, a GUI reports # ages by
+## If show.age=TRUE, a GUI reports # ages by
 ##  specified field pair for each sex.
 ## ---------------------------------------------RH
 extractAges = function(dat, ameth=c(3,17), use.sfc.age=1:3, sex=c(2,1),
@@ -2046,10 +2046,10 @@ extractAges = function(dat, ameth=c(3,17), use.sfc.age=1:3, sex=c(2,1),
 		ats = crossTab(dat, c(show.flds, "sex"), "age", length)
 		winStr = c(
 			"window name=\"sAges\" title=\"Ages Available\" bg=\"gainsboro\"",
-			"grid 1 2 byrow=T sticky=W relief=flat",
+			"grid 1 2 byrow=TRUE sticky=W relief=flat",
 			paste0("label text=\"Number of ages by:\\n", show.flds[1], " (row)  \\&  ", show.flds[2], " (col)\" font=12"),
 			"button text=\"Codes\" bg=moccasin font=10 sticky=E padx=\"15 0\" function=doAction action=\"openFile(paste0(system.file(package=`PBStools`),`/win/GFBtcodes.txt`))\"",
-			paste0("grid ", dim(ats)[3], " 2 byrow=T sticky=W")
+			paste0("grid ", dim(ats)[3], " 2 byrow=TRUE sticky=W")
 		)
 		sexlab = c("Not sexed", "Male", "Female", "Uncertain")
 		sexcol = c("red", "green4", "dodgerblue", "purple")
@@ -2600,7 +2600,7 @@ mapMaturity <- function (dat=pop.age, strSpp="", type="map", mats=1:7,
 					} else {
 						crossbubb = list(mats=crossTab(sdat,c("mat","month"),"mat",length))  ## artificially make into a list
 					}
-					## next line only needed if hadley=T in crossTab
+					## next line only needed if hadley=TRUE in crossTab
 					#bubbdat   = data.frame(crossbubb[,-1],row.names=crossbubb[,1],check.names=FALSE,stringsAsFactors=FALSE)
 					for (i in 1:length(crossbubb)) {
 						ibubb = crossbubb[[i]]
@@ -2691,9 +2691,9 @@ mapMaturity <- function (dat=pop.age, strSpp="", type="map", mats=1:7,
 				#box() ## to help debug margins
 			}
 			if (is.psex)
-				mtext(linguaFranca("Proportions by Sex",l), side=3, line=2, col=1, cex=1.5, adj=0.5, font=2, outer=T)
+				mtext(linguaFranca("Proportions by Sex",l), side=3, line=2, col=1, cex=1.5, adj=0.5, font=2, outer=TRUE)
 			else
-				mtext(linguaFranca(paste0("Relative Frequency ",ifelse(!missing(catch),"Weighted by Catch",ifelse(byrow,"by Maturity","by Month"))),l), side=3, line=0.5, col=1, cex=1.5, adj=0.5, font=2, outer=T)
+				mtext(linguaFranca(paste0("Relative Frequency ",ifelse(!missing(catch),"Weighted by Catch",ifelse(byrow,"by Maturity","by Month"))),l), side=3, line=0.5, col=1, cex=1.5, adj=0.5, font=2, outer=TRUE)
 			if (devnam!="win") dev.off()
 #browser();return()
 		} ## end d (devs) loop
@@ -2757,7 +2757,7 @@ plotAdens = function(dat, xfld="len", yfld="age", type="dens", sd=3,
 				}
 				out = density(x,bw="nrd0",kernel="gaussian")
 			} else if (type=="bars") {
-				xrng = range(x,na.rm=T)
+				xrng = range(x,na.rm=TRUE)
 				out = hist(x, breaks=seq(floor(xrng[1]),ceiling(xrng[2]),1), plot=FALSE)
 				out$x = out$mids
 				out$y = out$dens
@@ -3257,7 +3257,7 @@ plotProp <- function(fnam, hnam=NULL, ioenv=.GlobalEnv, ...)
 			winStr = c( winStr,
 			"grid 1 2 sticky=W",
 			paste0("label text=\"",a0,"\" font=bold"),
-			paste0("vector mode=logical length=", na, " names=",sub("^M","U",a)," sticky=NW values=\"", paste0(rep(F,na),collapse=" "), "\" labels=\"", paste0(aa,collapse=" "), "\" vertical=F stick=W")
+			paste0("vector mode=logical length=", na, " names=",sub("^M","U",a)," sticky=NW values=\"", paste0(rep(FALSE,na),collapse=" "), "\" labels=\"", paste0(aa,collapse=" "), "\" vertical=FALSE stick=W")
 			)
 		}
 		winStr = c( winStr,
@@ -3274,7 +3274,7 @@ plotProp <- function(fnam, hnam=NULL, ioenv=.GlobalEnv, ...)
 			winStr[1] = paste0("grid ", nrows, " 2 toptitle=\"Choose Areas:\" topfont=\"10 bold\"")
 			if (Nagrid%%2==1) winStr=c(winStr,"null")
 			vLins = grep("vector",winStr)
-			vVals = sapply(strsplit(winStr[vLins],"[[:space:]]"),function(x){sub("names=","",grep("names",x,value=T))})
+			vVals = sapply(strsplit(winStr[vLins],"[[:space:]]"),function(x){sub("names=","",grep("names",x,value=TRUE))})
 			#vFuns = paste0(" function=doAction action=\"setWinVal(vars=getWinVal(win=`window`)[`",vVals,"`],win=`pPareas`)\"") 
 #browser();return()
 			vFuns = paste0(" function=doAction action=\"setPBSoptions(option=`Uareas`,value=getWinVal(win=`window`)[`",vVals,"`],sublist=TRUE)\"") 
@@ -3311,7 +3311,7 @@ plotProp <- function(fnam, hnam=NULL, ioenv=.GlobalEnv, ...)
 			winStr = c( winStr,
 			"grid 1 2 sticky=W",
 			paste0("label text=\"",a0,"\" font=bold"),
-			paste0("vector mode=logical length=", na, " names=",sub("^M","U",a)," sticky=NW values=\"", paste0(rep(F,na),collapse=" "), "\" labels=\"", paste0(aa,collapse=" "), "\" vertical=F stick=W")
+			paste0("vector mode=logical length=", na, " names=",sub("^M","U",a)," sticky=NW values=\"", paste0(rep(FALSE,na),collapse=" "), "\" labels=\"", paste0(aa,collapse=" "), "\" vertical=FALSE stick=W")
 			)
 		}
 		winStr = c( winStr,
@@ -3327,7 +3327,7 @@ plotProp <- function(fnam, hnam=NULL, ioenv=.GlobalEnv, ...)
 			winStr[1] = paste0("grid ", nrows, " 2 toptitle=\"Choose Types:\" topfont=\"10 bold\"")
 			if (Ntgrid%%2==1) winStr=c(winStr,"null")
 			vLins = grep("vector",winStr)
-			vVals = sapply(strsplit(winStr[vLins],"[[:space:]]"),function(x){sub("names=","",grep("names",x,value=T))})
+			vVals = sapply(strsplit(winStr[vLins],"[[:space:]]"),function(x){sub("names=","",grep("names",x,value=TRUE))})
 			vFuns = paste0(" function=doAction action=\"setPBSoptions(option=`Utypes`,value=getWinVal(win=`window`)[`",vVals,"`],sublist=TRUE)\"") 
 			winStr[vLins] = paste0(winStr[vLins],vFuns)
 			writeLines(winStr, con=paste0(tempdir(),"/choose.types.txt"))
@@ -3821,7 +3821,7 @@ requestAges=function(strSpp, nage=500, year=2016,
 					for (i in mooname) {
 						ii  = is.element(moosamp$SID,i)
 						iii = is.element(oldsamp$SID,i)
-						moosamp[ii,addCols] = apply(oldsamp[iii, addCols], 2, sum, na.rm=T)
+						moosamp[ii,addCols] = apply(oldsamp[iii, addCols], 2, sum, na.rm=TRUE)
 						moosamp[ii,mrgCols] = apply(oldsamp[iii, mrgCols], 2, function(x){paste0(gsub("[[:space:]]", "",x), collapse="|")})
 					}
 					samp = rbind(onesamp,moosamp)
@@ -4222,7 +4222,7 @@ requestAges=function(strSpp, nage=500, year=2016,
 ## ---------------------------------------------RH
 residVB = function(P, L1="surv", L2="Females", yval="len", 
    area="major_3|4", ttype="surv_2|3", Amax, ylim,
-   png=F, pngres=400, PIN=c(8,8), lang=c("e","f"))
+   png=FALSE, pngres=400, PIN=c(8,8), lang=c("e","f"))
 {
 	ttget(DATA)
 	if (is.null(DATA)) stop("Run function 'calcVB' first.")
@@ -4276,7 +4276,7 @@ residVB = function(P, L1="surv", L2="Females", yval="len",
 					if (missing(ylim)) srlim = range(res.stud, na.rm=TRUE)
 					else               srlim = ylim
 	
-					quantBox(Abox, type="n", xaxt="n", las=1, outline=T, pars=boxpars, ylim=srlim)
+					quantBox(Abox, type="n", xaxt="n", las=1, outline=TRUE, pars=boxpars, ylim=srlim)
 					abline(h=0, col=lucent("blue",0.5), lty=5)
 					axis(1, at=seq(0,Amax,5))
 					if (length(L2)>1) {
@@ -4458,8 +4458,8 @@ weightBio = function(adat, cdat, sunit="TID", sweight="catch",
 	if (!is.null(SSID) && SSID==79)
 		ameth = .su(c(0,ameth))
 
-	#ages = extractAges(ages, ameth, rmSM=F) ## use seamounts for REBS french fig equivalent
-	ages = extractAges(ages, ameth, rmSM=T)
+	#ages = extractAges(ages, ameth, rmSM=FALSE) ## use seamounts for REBS french fig equivalent
+	ages = extractAges(ages, ameth, rmSM=TRUE)
 	if (accum)
 		ages$age[ages$age>=plus & !is.na(ages$age)] = plus
 	else
@@ -4858,7 +4858,7 @@ weightBio = function(adat, cdat, sunit="TID", sweight="catch",
 		}
 		wsunit = paste0("n",tolower(sunit))        ## choose the right sample unit
 		bsunit = setdiff(c("ntid","nsid"),wsunit)  ## identify the bad (unwanted) sample unit.
-		wpatxt = wpatab[wpatab[,wsunit]>0 & !is.na(wpatab[,wsunit]),grep(bsunit,dimnames(wpatab)[[2]],invert=T),drop=FALSE]
+		wpatxt = wpatab[wpatab[,wsunit]>0 & !is.na(wpatab[,wsunit]),grep(bsunit,dimnames(wpatab)[[2]],invert=TRUE),drop=FALSE]
 		if (nrow(wpatxt)==0) showError("No records with # SIDs > 0")
 		sernam = if (ctype=="S") paste0(SSID,collapse=".") else if (!is.null(FID)) paste0(FID,collapse="") else 1
 		wpatxt = cbind(series=rep(sernam,nrow(wpatxt)),wpatxt)

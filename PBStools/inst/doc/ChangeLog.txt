@@ -10,6 +10,15 @@ Authors: RH  = Rowan Haigh
          BK  = Brian Krishka
 ------------------------------
 
+1.42.3 (2023-06-14)  [Rcheck=T, Rbuild=T]
+  * M01_Utility.r
+    + Added new function `convUTF' to convert UTF-8 code to Unicode symbols. (RH 230613)
+    + Made minor adjustment to `linguaFranca' to avoid converting `BC' in text values like `5ABC'.
+  * M05_Spatial.r
+    + Modified function `plotGMA' (RH 230612)
+      - use the `gma' data object as default GMU area (not `gma.popymr');
+      - new argument `major' to input the major PolySet used for an assessment (`major' vs. `major.pop').
+
 1.42.2 (2023-06-08)  [Rcheck=T, Rbuild=T]
   * M01_Utility.r
     + Moved function `.ss3.readdat' to separate module `Z01_Borrow.r' for code borrowed from other packages. (RH 230213)

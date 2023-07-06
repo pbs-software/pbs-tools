@@ -364,7 +364,7 @@ calcWAParea = function (major, minor, strat, wts)
 			true.targ  = sapply(names(true.strat),function(i){
 				if (rec.targ[i]>0) {
 					ttget(TRUE.good)
-					pos1 = match(F,TRUE.good[match(true.strat[[i]],names(TRUE.good))])
+					pos1 = match(FALSE,TRUE.good[match(true.strat[[i]],names(TRUE.good))])
 					out  = true.strat[[i]][pos1:(rec.targ[i]+pos1-1)]
 					TRUE.good[as.character(out)] = TRUE
 					ttput(TRUE.good)
@@ -795,7 +795,7 @@ findHoles = function(polyset, minVerts=25, nlevs=1, use.sp.pkg=TRUE)
 	polyG = poly0[!bad]
 	npoly = length(polyG)
 
-	#cents = sapply(polyG,function(x){calcCentroid(x,rollup=1)[c("X","Y")]},simplify=F)
+	#cents = sapply(polyG,function(x){calcCentroid(x,rollup=1)[c("X","Y")]},simplify=FALSE)
 	HinP = findHope(X=1:npoly, Y=1:npoly, Z=polyG, use.sp=use.sp.pkg)
 
 	## Cols = solids, Rows = holes
@@ -1087,7 +1087,7 @@ plotEO = function (id="lst", strSpp="453", col="red",
 		sub(","," ",sub("Convex hull area","zone de coque convexe",arealab)),
 		sub(","," ",sub("hull on water","coque sur l'eau",waterlab))
 		), collapse="\n")
-	datelab = paste0(gsub("-",".",range(mapdat$date,na.rm=T)),collapse=" to ")
+	datelab = paste0(gsub("-",".",range(mapdat$date,na.rm=TRUE)),collapse=" to ")
 
 	fout.e = paste0("plotEO-",strSpp,"-",stock)
 	for (l in lang) {
@@ -1120,18 +1120,18 @@ plotEO = function (id="lst", strSpp="453", col="red",
 		if (i==1) hulltab = hulk[[i]][["out"]]
 		else hulltab = rbind(hulltab,hulk[[i]][["out"]])
 	}
-	write.csv(hulltab,"hulltab.csv", row.names=F)
+	write.csv(hulltab,"hulltab.csv", row.names=FALSE)
 	return(out)
 }
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotEO
 
 
-## plotGMA------------------------------2022-01-21
+## plotGMA------------------------------2023-06-19
 ##  Plot the Groundfish Management Areas
 ## ---------------------------------------------RH
-plotGMA = function(gma=gma.popymr, xlim=c(-134,-123), ylim=c(48.05,54.95), 
-   dimfig=c(9,9), eps=FALSE, png=FALSE, extra.labels=NULL, isobath,
-   strSpp, lang=c("e","f"))
+plotGMA = function(gma=gma, major=major, xlim=c(-134,-123), ylim=c(48.05,54.95), 
+   eps=FALSE, png=FALSE, extra.labels=NULL, isobath, strSpp,
+   PIN=c(9,9), pngres=400, lang=c("e","f"))
 {
 	oldpar=par(no.readonly=-TRUE); on.exit(par(oldpar))
 
@@ -1155,18 +1155,19 @@ plotGMA = function(gma=gma.popymr, xlim=c(-134,-123), ylim=c(48.05,54.95),
 	if (!missing(strSpp))
 		fnam = paste0(fnam,strSpp)
 	data("nepacLLhigh", package="PBSmapping", envir=penv())
-	data("major", "minor", package="PBSdata", envir=penv())
+	#data("major", "minor", package="PBSdata", envir=penv())
+	data("minor", package="PBSdata", envir=penv())
 	edata = pdata = attributes(gma)$PolyData
 	names(edata)[1]="EID"
 	edata=as.EventData(edata,projection="LL")
 
-	fout = fout.e = fnam
+	fout.e = fnam
 	for (l in lang) {  ## could switch to other languages if available in 'linguaFranca'.
 		changeLangOpts(L=l)
 		fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
 
-		if (png) png(filename=paste(fout,"png",sep="."),width=dimfig[1],height=dimfig[2],units="in",res=400)
-		else if (eps) postscript(file=paste0(fout,".eps"),width=dimfig[1],height=dimfig[2],paper="special",horizontal=FALSE)
+		if (png) png(filename=paste(fout,"png",sep="."), width=PIN[1], height=PIN[2], units="in", res=pngres)
+		else if (eps) postscript(file=paste0(fout,".eps"), width=PIN[1], height=PIN[2], paper="special", horizontal=FALSE)
 		else resetGraph()
 
 		plotMap(gma, type="n", xlim=xlim, ylim=ylim, polyProps=pdata, border="grey",
@@ -1204,15 +1205,17 @@ plotGMA = function(gma=gma.popymr, xlim=c(-134,-123), ylim=c(48.05,54.95),
 		if (!is.null(extra.labels)) {
 			elabs = extra.labels
 			elab = linguaFranca(gsub("\\\n"," ",elabs$label),l)
-			touche = rep(T,length(elab))
-			if (strSpp%in%c("435","440","REBS"))
+			touche = rep(TRUE,length(elab))
+			if (!strSpp%in%c("sumting"))
 				touche = !is.element(elab, "Queen Charlotte Sound")
 			elab[touche] = gsub("le\\\nde","le de",gsub("\\\nde\\\nla"," de la",gsub(" ","\n",elab[touche])))
 			elabs$label = elab
 			addLabels(elabs,cex=1.5,col="blue")
+#browser();return()
 		}
 		text(-125.2416,52.70739,linguaFranca("BC",l),cex=5,col="grey",font=2)
 		box(lwd=2)
+	#browser();return()
 		if (eps|png) dev.off()
 	}; eop()
 	gc(verbose=FALSE)
@@ -1408,7 +1411,7 @@ plotLocal = function(dat, area, aflds=NULL, pcat=0.95, cpue=FALSE, powr=1,
 				changeLangOpts(L=l)
 				fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
 				topcat = unlist(formatC(topN$catT,3,format="fg",big.mark=options()$big.mark))
-				legtxt = paste0(topcat, " - ", 1:nrow(topN), switch(l,'e'=". ",'f'=", "), linguaFranca(topN$name,l,localnames=T))
+				legtxt = paste0(topcat, " - ", 1:nrow(topN), switch(l,'e'=". ",'f'=", "), linguaFranca(topN$name,l,localnames=TRUE))
 ##legtest<<-topN$name
 				if (png) png(filename=paste0(fout,".png"), width=PIN[1], height=PIN[2], units="in", res=pngres)
 				plotMap(area, type="n", plt=c(0.06,0.99,0.06,0.99), 
@@ -1424,7 +1427,7 @@ plotLocal = function(dat, area, aflds=NULL, pcat=0.95, cpue=FALSE, powr=1,
 				addLegend(0.99, 0.95, fill=topN$col, legend=legtxt, bty="n", title=linguaFranca(paste0("Fishery: ",ff, " - ", ifelse(cpue, "CPUE (kg/h)", "catch (t)")),l), xjust=1, title.adj=0, cex=0.9)
 #browser();return()
 				if (!missing(strSpp)) {
-					derange = paste0(gsub("-",".",range(fdat$date,na.rm=T)),collapse=" to ")
+					derange = paste0(gsub("-",".",range(fdat$date,na.rm=TRUE)),collapse=" to ")
 #browser();return()
 					addLabel(0.3755, 0.96, linguaFranca(sppnam,l), cex=1.2, adj=c(0,0))
 					addLabel(0.975, 0.96, linguaFranca(paste0("(", derange, ")"),l), cex=0.8, adj=c(1,0))
