@@ -11,6 +11,7 @@
 ##  plotFOScatch....Plot catch as monthly barplots from 'fos_catch.sql' query to GFFOS.
 ##  runCCA..........Catch-curve model based on Schnute and Haigh (2006).
 ##  sumCatTabs......Summarize catch by year & PMFC from modern catch data used in catch reconstruction.
+##  tabSFW..........Make tables of commercial catch using target groups and regions for Seafood Watch.
 ##  trackBycat......Track annual fish group catches between depth limits.
 ## =============================================================================
 
@@ -25,8 +26,8 @@
 ##  startM - Month of year to start the year
 ## ---------------------------------------------RH
 calcRatio <- function(dat, nfld, dfld, nzero=TRUE, dzero=TRUE, sumF=mean, 
-     major=NULL, startM=1, plot=FALSE, ylim=NULL, wmf=FALSE, quiet=FALSE, ioenv=.GlobalEnv) {
-
+     major=NULL, startM=1, plot=FALSE, ylim=NULL, wmf=FALSE, quiet=FALSE, ioenv=.GlobalEnv)
+{
 	assign("PBStool",list(module="M03_Fishery",call=match.call(),args=args(calcRatio),ioenv=ioenv),envir=.PBStoolEnv)
 	fnam=as.character(substitute(dat))
 	expr = paste("getFile(\"",fnam,"\",senv=ioenv,try.all.frames=TRUE,tenv=penv()); dat=",fnam,sep="")
@@ -118,14 +119,16 @@ calcRatio <- function(dat, nfld, dfld, nzero=TRUE, dzero=TRUE, sumF=mean,
 		mtext(paste("Ratio",nfld,"/",dfld),side=2,outer=TRUE,line=3.25,cex=1.2,las=0) }
 	packList(c("pmfc","psum","stored"),"PBStool",tenv=.PBStoolEnv)
 	if(plot&&wmf) dev.off()
-	invisible(psum) }
+	invisible(psum)
+}
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~calcRatio
 
 
-#dumpMod--------------------------------2023-02-09
-# Dump catch from modern sources used in catch reconstruction.
-#-----------------------------------------------RH
-dumpMod = function(dat,catch=c("landed","discard"),fid=1:5,strSpp="396",dbs=TRUE) {
+## dumpMod------------------------------2023-02-09
+##  Dump catch from modern sources used in catch reconstruction.
+## ---------------------------------------------RH
+dumpMod = function(dat,catch=c("landed","discard"),fid=1:5,strSpp="396",dbs=TRUE)
+{
 	data("pmfc", package="PBSdata", envir=penv())
 	gmu=pmfc$gmu; names(gmu)=pmfc$major
 	data("species", package="PBSdata", envir=penv())
@@ -172,13 +175,14 @@ dumpMod = function(dat,catch=c("landed","discard"),fid=1:5,strSpp="396",dbs=TRUE
 		write.csv(apply(dat[,,,c("landed","discard")],c(1,3),sum),
 		paste(as.character(substitute(dat)),"-summary-",strSpp,".csv",sep=""))
 }
-#------------------------------------------dumpMod
+##-----------------------------------------dumpMod
 
 
-#dumpRat--------------------------------2023-02-09
-# Dump catch ratios calculated by a catch reconstruction.
-#-----------------------------------------------RH
-dumpRat = function(strSpp="396", rats=c("alpha","beta","gamma","delta","lambda"), ioenv=.GlobalEnv){
+## dumpRat------------------------------2023-02-09
+##  Dump catch ratios calculated by a catch reconstruction.
+## ---------------------------------------------RH
+dumpRat = function(strSpp="396", rats=c("alpha","beta","gamma","delta","lambda"), ioenv=.GlobalEnv)
+{
 	expr = paste("getFile(PBStool",strSpp,",senv=ioenv,reload=TRUE,tenv=penv()); dat=PBStool",sep="")
 	eval(parse(text=expr))
 	#data("pmfc", package="PBSdata"); gmu=pmfc$gmu; names(gmu)=pmfc$major
@@ -212,7 +216,7 @@ dumpRat = function(strSpp="396", rats=c("alpha","beta","gamma","delta","lambda")
 		}
 	}
 }
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~dumpRat
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~dumpRat
 
 
 ## getCatch-----------------------------2018-12-31
@@ -316,41 +320,41 @@ getCatch = function(strSpp="396", dbs=c("gfb","gfc","pht","fos"),
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~getCatch
 
 
-#glimmer--------------------------------2014-05-06
-# Performs an lm/aov on a predefined dataset
-# Arguments:
-#   file   = name of file or data object containing fields for GLM analysis:
-#            (year, month, depth, latitude, vessel, effort, catch). 
-#   facs   = string vector: factors (fields) other than those that describe area.
-#   afld   = string scalar: factor describing spatial area, choose one of:
-#            c("latitude","major","minor","locality","pfma","pfms","srfa","srfs","popa").
-#   yrs    = numeric vector of years.
-#   mos    = numeric vector of months.
-#   mo1    = first month in year (e.g., 1=calendar year, 4=fishing year).
-#   dbrks  = either a numeric vector of two or more cut points or a single number 
-#           (greater than or equal to 2) giving the number of intervals into which depth is to be cut.
-#   gear   = gear codes for trawl fishery (1=bottom, 3=midwater)
-#   catch  = string scalar: field containing catch numbers.
-#   areas  = vecor: specific area names/codes within 'afld'.
-#   Vpro   = numeric scalar: minimum vessel's proportion of catch to total catch.
-#   Uplot  = logical: if TRUE, calculate and plot CPUE index and effects on the CPUE index.
-#                     if FALSE, plot the parameter coefficients.
-#   Upanel = numeric scalar: proportion of space to plot index panel if Uplot=TRUE.
-#   Ionly  = logical: if TRUE, plot only the first panel (index).
-#   Imax   = numeric scalar: maximum index value for annual index plot.
-#   crange = numeric vector: y-limits (min,max) for coefficient plots.
-#   erange = numeric vector: y-limits (min,max) for factor effect plots.
-#   facmin = numeric vector: minimum number of values before a category is used in the factor.
-#            Separate minima can be specified for each factor.
-#   effmax = Effort maximum; all records with effort greater than this are discarded.
-#   vline  = numeric vector: x-values wherever user wants to draw a vertical line in the Index only plot.
-#   wmf    = logical: if TRUE, send the plot to a WMF file.
-#-----------------------------------------------RH
+## glimmer------------------------------2014-05-06
+##  Performs an lm/aov on a predefined dataset
+##  Arguments:
+##   file   = name of file or data object containing fields for GLM analysis:
+##            (year, month, depth, latitude, vessel, effort, catch). 
+##   facs   = string vector: factors (fields) other than those that describe area.
+##   afld   = string scalar: factor describing spatial area, choose one of:
+##            c("latitude","major","minor","locality","pfma","pfms","srfa","srfs","popa").
+##   yrs    = numeric vector of years.
+##   mos    = numeric vector of months.
+##   mo1    = first month in year (e.g., 1=calendar year, 4=fishing year).
+##   dbrks  = either a numeric vector of two or more cut points or a single number 
+##           (greater than or equal to 2) giving the number of intervals into which depth is to be cut.
+##   gear   = gear codes for trawl fishery (1=bottom, 3=midwater)
+##   catch  = string scalar: field containing catch numbers.
+##   areas  = vecor: specific area names/codes within 'afld'.
+##   Vpro   = numeric scalar: minimum vessel's proportion of catch to total catch.
+##   Uplot  = logical: if TRUE, calculate and plot CPUE index and effects on the CPUE index.
+##                     if FALSE, plot the parameter coefficients.
+##   Upanel = numeric scalar: proportion of space to plot index panel if Uplot=TRUE.
+##   Ionly  = logical: if TRUE, plot only the first panel (index).
+##   Imax   = numeric scalar: maximum index value for annual index plot.
+##   crange = numeric vector: y-limits (min,max) for coefficient plots.
+##   erange = numeric vector: y-limits (min,max) for factor effect plots.
+##   facmin = numeric vector: minimum number of values before a category is used in the factor.
+##            Separate minima can be specified for each factor.
+##   effmax = Effort maximum; all records with effort greater than this are discarded.
+##   vline  = numeric vector: x-values wherever user wants to draw a vertical line in the Index only plot.
+##   wmf    = logical: if TRUE, send the plot to a WMF file.
+## ---------------------------------------------RH
 glimmer <- function(file, facs=c("year","month","depth","vessel"),
      afld="latitude", yrs=1996:2014, mos=1:12, mo1=1, dbrks=seq(100,500,100), gear=c(0,1,3), 
      catch="catch", areas=NULL, Vpro=0.03, Uplot=TRUE, Upanel=0.4, Ionly=FALSE, Imax=NULL,
-     crange=c(-2,2), erange=c(0,5), facmin=10, effmax=1440, vline=NULL, wmf=FALSE, ioenv=.GlobalEnv) {
-
+     crange=c(-2,2), erange=c(0,5), facmin=10, effmax=1440, vline=NULL, wmf=FALSE, ioenv=.GlobalEnv)
+{
 	### Set factor and order contrasts to sum
 	csum = c("contr.sum","contr.sum"); names(csum)=c("factor","ordered")
 	ocon = options()$contrasts ### save original contrasts
@@ -658,12 +662,13 @@ glimmer <- function(file, facs=c("year","month","depth","vessel"),
 	box()
 	if (wmf) dev.off()
 }
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~glimmer
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~glimmer
 
-#makeCATtables--------------------------2010-06-02
-# Make CSV files containing catch from commercial fisheries
-#-----------------------------------------------RH
-makeCATtables <- function(strSpp, comm=1:7, path=.getSpath(), pout=FALSE) {
+## makeCATtables------------------------2010-06-02
+##  Make CSV files containing catch from commercial fisheries
+## ---------------------------------------------RH
+makeCATtables <- function(strSpp, comm=1:7, path=.getSpath(), pout=FALSE)
+{
 	fn <- paste("cattab-",strSpp,".csv",sep="")
 	cat(paste("Catch Tables - ",strSpp,"\n",sep="",collapse=""),file=fn)
 	oldOpt <- options("warn","windowsBuffered")
@@ -693,15 +698,17 @@ makeCATtables <- function(strSpp, comm=1:7, path=.getSpath(), pout=FALSE) {
 		write.table(temp,file=fn,sep=",", append=TRUE,row.names=FALSE,col.names=TRUE)
 		} 
 	cat(paste("Results in '",fn,"'\n",sep=""))
-	options(oldOpt) }
-#------------------------------------makeCATtables
+	options(oldOpt)
+}
+##-----------------------------------makeCATtables
 
 
-#plotCatch------------------------------2013-01-28
-# Plot catch history as annual barplot using specified catch fields
-#-----------------------------------------------RH
+## plotCatch----------------------------2013-01-28
+##  Plot catch history as annual barplot using specified catch fields
+## ---------------------------------------------RH
 plotCatch=function(dat="dbr.rem", flds=c("CAtrawl","UStrawl","TotalHL"),
-   yrlim=NULL, wmf=FALSE, ioenv=.GlobalEnv, ...){
+   yrlim=NULL, wmf=FALSE, ioenv=.GlobalEnv, ...)
+{
 	assign("PBStool",list(module="M03_Fishery",call=match.call(),args=args(plotCatch),ioenv=ioenv),envir=.PBStoolEnv)
 	fnam=as.character(substitute(dat))
 	expr=paste("getFile(",fnam,",senv=ioenv,use.pkg=TRUE,try.all.frames=TRUE,tenv=penv()); dat=",fnam,sep="")
@@ -758,17 +765,18 @@ plotCatch=function(dat="dbr.rem", flds=c("CAtrawl","UStrawl","TotalHL"),
 	if (wmf) dev.off()
 	stuff=c("height","tcat","dcat")
 	packList(stuff,"PBStool",tenv=.PBStoolEnv)
-	invisible() }
-#----------------------------------------plotCatch
+	invisible()
+}
+##---------------------------------------plotCatch
 
 
-#plotFOScatch---------------------------2010-06-02
-# Plot catch as monthly barplots from 'fos_catch.sql' query to GFFOS
-#-----------------------------------------------RH
+## plotFOScatch-------------------------2010-06-02
+##  Plot catch as monthly barplots from 'fos_catch.sql' query to GFFOS
+## ---------------------------------------------RH
 plotFOScatch <- function(strSpp="453", majors=c(1,3:9), space=0.5,
    fplot="Groundfish Trawl", xlim=c("2007-04","2011-06"),
-   fyrM1=4, uid=Sys.info()["user"], pwd=uid, wmf=FALSE, ...) {
-
+   fyrM1=4, uid=Sys.info()["user"], pwd=uid, wmf=FALSE, ...)
+{
 	fyear=function(yrmo,startM=4) { # deprecated (see 'convFY')
 		# local function to get fishing years
 		yr=as.numeric(substring(yrmo,1,4)); mo=as.numeric(substring(yrmo,6,7))
@@ -902,15 +910,17 @@ plotFOScatch <- function(strSpp="453", majors=c(1,3:9), space=0.5,
 	}
 	mtext(spn[strSpp],outer=TRUE,side=3,line=0.25,col="midnightblue",cex=1,adj=0.05)
 	if(wmf) dev.off()
-	invisible(dat) }
-#-------------------------------------plotFOScatch
+	invisible(dat)
+}
+##------------------------------------plotFOScatch
 
-#runCCA---------------------------------2015-03-06
-# Catch-curve model based on Schnute, J.T., and Haigh, R. 2006.
-# Compositional analysis of catch curve data with an application to Sebastes maliger.
-# ICES Journal of Marine Science.
-# Code allows user to perform frequentist (NLM) and Bayesian (BRugs) analyses.
-#-----------------------------------------------RH
+
+## runCCA-------------------------------2015-03-06
+##  Catch-curve model based on Schnute, J.T., and Haigh, R. 2006.
+##  Compositional analysis of catch curve data with an application to Sebastes maliger.
+##  ICES Journal of Marine Science.
+##  Code allows user to perform frequentist (NLM) and Bayesian (BRugs) analyses.
+## ---------------------------------------------RH
 runCCA = function(fnam="nage394", hnam=NULL, ioenv=.GlobalEnv, ...)
 {
 	assign("PBStool",list(module="M03_Fishery",call=match.call(),args=args(runCCA),ioenv=ioenv,plotname="CCAplot",dots=list(...)),envir=.PBStoolEnv)
@@ -930,9 +940,11 @@ runCCA = function(fnam="nage394", hnam=NULL, ioenv=.GlobalEnv, ...)
 	writeLines(temp,con=wtmp)
 	createWin(wtmp)
 	.runCCA.getData()
-	invisible() }
+	invisible()
+}
 
-.runCCA.model  = function(P) {
+.runCCA.model  = function(P)
+{
 	Z=P[1]; alpha=P[2]; betak=P[3]; tau=P[4]; rho=P[5:9]
 	unpackList(ttcall(PBStool)$FP,scope="L")
 	a = k:B; Sa = exp(-Z*(a-k)); beta = rep(1,length(a)); Ra = rep(1,length(a))
@@ -948,9 +960,11 @@ runCCA = function(fnam="nage394", hnam=NULL, ioenv=.GlobalEnv, ...)
 	SBR = Sa * beta * Ra
 	pa = SBR / sum(SBR); zA = a >= A; pA = sum(pa[zA]); names(pA) = A; paA  = c(pa[!zA],pA)
 	if (round(sum(paA),5)!=1) stop("paA srcewy")
-	return(paA) }
+	return(paA)
+}
 
-.runCCA.objFun = function(P) { # User's objective function
+.runCCA.objFun = function(P)
+{ ## User's objective function
 	Z=P[1]; alpha=P[2]; betak=P[3]; tau=P[4]; sigma=P[5]; n=P[6]
 	rho1=P[7]; rho2=P[8]; rho3=P[9]; rho4=P[10]; rho5=P[11]; 
 	unpackList(ttcall(PBStool)$FP,scope="L")
@@ -971,9 +985,11 @@ runCCA = function(fnam="nage394", hnam=NULL, ioenv=.GlobalEnv, ...)
 			g = length(pi.obs); ytil = calcGM(pi.obs); ptil = calcGM(pi)
 			out = (g-1) * log(sigma) + (1/(2*sigma^2)) * sum((log(pi.obs/ytil)-log(pi/ptil))^2)
 			pi3=pi; packList("pi3", "PBStool",tenv=.PBStoolEnv) } }
-	return(out) }
+	return(out) 
+}
 
-.runCCA.getData = function() {# Get user's data
+.runCCA.getData = function()
+{ ## Get user's data
 	getWinVal(scope="L")
 	ioenv = ttcall(PBStool)$ioenv
 	expr=paste("getFile(",fnam,",senv=ioenv,try.all.frames=TRUE,use.pkg=TRUE,tenv=penv()); assign(\"Afile\",",fnam,")",sep="")
@@ -1007,9 +1023,11 @@ runCCA = function(fnam="nage394", hnam=NULL, ioenv=.GlobalEnv, ...)
 	updateGUI()
 	.runCCA.plotData()
 	packList("B5","PBStool",tenv=.PBStoolEnv)
-	invisible() }
+	invisible()
+}
 	
-.runCCA.plotData = function() {# Plot user's data
+.runCCA.plotData = function()
+{ ## Plot user's data
 	afile = ttcall(PBStool)$afile
 	if (is.null(afile)) .runCCA.getData()
 	getWinVal(scope="L")
@@ -1030,9 +1048,11 @@ runCCA = function(fnam="nage394", hnam=NULL, ioenv=.GlobalEnv, ...)
 	addLabel(.95,.85,paste("n =",round(ysum,ifelse(ysum<1,3,0))),cex=1.2,col="blue",adj=1)
 	mtext("Age",side=1,line=1.75,cex=1.5)
 	mtext("Frequency",side=2,line=1.75,cex=1.5)
-	invisible() }
+	invisible()
+}
 
-.runCCA.setVals = function() { #Set user's settings
+.runCCA.setVals = function()
+{ ## Set user's settings
 	getWinVal(scope="L")
 	active = theta$active; names(active) = rownames(theta)
 	b5s  = paste("b",1:5,sep=""); r5s = paste("rho",1:5,sep="")
@@ -1094,9 +1114,11 @@ runCCA = function(fnam="nage394", hnam=NULL, ioenv=.GlobalEnv, ...)
 	FP  = c(FP,list(pmon=pmon))
 	updateGUI()
 	packList("FP","PBStool",tenv=.PBStoolEnv)
-	invisible() }
+	invisible()
+}
 
-.runCCA.evalMod = function() { # Evaluate user's model
+.runCCA.evalMod = function()
+{ ## Evaluate user's model
 	FP = ttcall(PBStool)$FP
 	if (is.null(FP)) .runCCA.setVals()
 	getWinVal(scope="L")
@@ -1113,9 +1135,11 @@ runCCA = function(fnam="nage394", hnam=NULL, ioenv=.GlobalEnv, ...)
 			i,",sep=\"\"),\"",suff,"\",sep=\".\")),\"PBStool\",tenv=.PBStoolEnv)",sep="")
 		eval(parse(text=expr)) # save results in PBStool
 	}
-	invisible() }
+	invisible()
+}
 
-.runCCA.plotNLM = function() { # User's plot of NLM results
+.runCCA.plotNLM = function()
+{ ## User's plot of NLM results
 	FP = ttcall(PBStool)$FP
 	if (is.null(FP)) { .runCCA.setVals(); .runCCA.evalMod() }
 	getWinVal(scope="L")
@@ -1229,11 +1253,13 @@ runCCA = function(fnam="nage394", hnam=NULL, ioenv=.GlobalEnv, ...)
 		addLabel(.65,y0f,paste(flab,collapse="\n"),adj=c(1,1),col="red",cex=sz1)
 		addLabel(.70,y0f,paste(fval,collapse="\n"),adj=c(0,1),col="red",cex=sz1) }
 	mtext("Age",outer=TRUE,side=1,line=2,cex=sz2)
-	if(wmf) dev.off() }
+	if(wmf) dev.off()
+}
 
 #-----WinBUGS-Model-------------------------------------------------------------
 
-.runCCA.checkMon = function() { # Check user's monitor choices
+.runCCA.checkMon = function()
+{ ## Check user's monitor choices
 	FP = ttcall(PBStool)$FP
 	if (is.null(FP)) .runCCA.setVals()
 	getWinVal(scope="L")
@@ -1258,9 +1284,10 @@ runCCA = function(fnam="nage394", hnam=NULL, ioenv=.GlobalEnv, ...)
 		FP$Pmon = Pmon; FP$pmon = pmon
 		packList("FP","PBStool",tenv=.PBStoolEnv)
 		return(TRUE) }
-	}
+}
 
-.runCCA.compileMod = function() { # Initialize and compile the WinBUGS model
+.runCCA.compileMod = function()
+{ ## Initialize and compile the WinBUGS model
 	isOK = .runCCA.checkMon(); if (!isOK) stop("Reset monitors")
 	getWinVal(scope="L")
 	unpackList(ttcall(PBStool)$FP,scope="L")
@@ -1283,9 +1310,11 @@ runCCA = function(fnam="nage394", hnam=NULL, ioenv=.GlobalEnv, ...)
 	BRugs::samplesSet(pmon)           # parameters to monitor
 	setWinVal(list(clen=100,cthin=1,ctot=0,s1=1,s2=100,sthin=1,chn2=nc))
 	par(ask=FALSE)
-	invisible() }
+	invisible()
+}
 
-.runCCA.updateMod = function() { # Update the model and save complete history in "CCAhist" (in "PBStool")
+.runCCA.updateMod = function()
+{ ## Update the model and save complete history in "CCAhist" (in "PBStool")
 	isOK = .runCCA.checkMon(); if (!isOK) stop("Reset monitors")
 	getWinVal(scope="L")
 	Pmon=ttcall(PBStool)$FP$Pmon
@@ -1308,9 +1337,11 @@ runCCA = function(fnam="nage394", hnam=NULL, ioenv=.GlobalEnv, ...)
 	setWinVal(list(ctot=ctot,s1=ctot-clen+1,s2=ctot))
 	par(ask=FALSE)
 	packList(c("Bhist","CCAhist"), "PBStool",tenv=.PBStoolEnv)
-	invisible() }
+	invisible()
+}
 
-.runCCA.plotTrace = function(file=ttcall(PBStool)$CCAhist,clrs=c("blue","red","green","magenta","navy")) {
+.runCCA.plotTrace = function(file=ttcall(PBStool)$CCAhist,clrs=c("blue","red","green","magenta","navy"))
+{
 	isOK = .runCCA.checkMon(); if (!isOK) stop("Reset monitors")
 	getWinVal(scope="L")
 	unpackList(ttcall(PBStool)$FP,scope="L")
@@ -1326,9 +1357,11 @@ runCCA = function(fnam="nage394", hnam=NULL, ioenv=.GlobalEnv, ...)
 		dot = regexpr("\\.",ii); j = as.numeric(substring(ii,dot+1))
 		plotTrace(file[,c(1,iii)],clrs=clrs[j])
 		addLabel(.97,.95,i,cex=1.2,col="#400080",adj=c(1,1),font=2) } 
-	invisible() }
+	invisible()
+}
 
-.runCCA.plotDens = function(file=ttcall(PBStool)$CCAhist,clrs=c("blue","red","green","magenta","navy")) {
+.runCCA.plotDens = function(file=ttcall(PBStool)$CCAhist,clrs=c("blue","red","green","magenta","navy"))
+{
 	isOK = .runCCA.checkMon(); if (!isOK) stop("Reset monitors")
 	getWinVal(scope="L")
 	unpackList(ttcall(PBStool)$FP,scope="L")
@@ -1344,9 +1377,11 @@ runCCA = function(fnam="nage394", hnam=NULL, ioenv=.GlobalEnv, ...)
 		dot = regexpr("\\.",ii); j = as.numeric(substring(ii,dot+1))
 		plotDens(file[,c(iii)],clrs=clrs[j])
 		addLabel(.97,.95,i,cex=1.2,col="#400080",adj=c(1,1),font=2) }
-	invisible() }
+	invisible()
+}
 
-.runCCA.plotACF = function(file=ttcall(PBStool)$CCAhist,clrs=c("blue","red","green","magenta","navy")) {
+.runCCA.plotACF = function(file=ttcall(PBStool)$CCAhist,clrs=c("blue","red","green","magenta","navy"))
+{
 	isOK = .runCCA.checkMon(); if (!isOK) stop("Reset monitors")
 	getWinVal(scope="L")
 	unpackList(ttcall(PBStool)$FP,scope="L")
@@ -1362,18 +1397,22 @@ runCCA = function(fnam="nage394", hnam=NULL, ioenv=.GlobalEnv, ...)
 		dot = regexpr("\\.",ii); j = as.numeric(substring(ii,dot+1))
 		plotACF(file[,c(iii)],clrs=clrs[j],lwd=2)
 		addLabel(.97,.95,i,cex=1.2,col="#400080",adj=c(1,1),font=2) }
-	invisible() }
+	invisible()
+}
 
-.runCCA.diag.panel = function(x, ...) { # Histograms for diagonal of pairs plor
+.runCCA.diag.panel = function(x, ...)
+{ ## Histograms for diagonal of pairs plor
 	usr = par("usr"); on.exit(par(usr))
 	h = hist(x, breaks="Sturges", plot=FALSE)
 	breaks = h$breaks; nB = length(breaks)
 	y = h$counts; y = y/sum(y)
 	par(usr = c(usr[1:2], 0, max(y)*1.5) )
 	rect(breaks[-nB], 0, breaks[-1], y, col="#FFD18F") 
-	box(); invisible() }
+	box(); invisible()
+}
 
-.runCCA.plotPairs = function() { # Pairs plot
+.runCCA.plotPairs = function()
+{ ## Pairs plot
 	isOK = .runCCA.checkMon(); if (!isOK) stop("Reset monitors")
 	getWinVal(scope="L")
 	unpackList(ttcall(PBStool)$FP,scope="L")
@@ -1410,9 +1449,11 @@ runCCA = function(fnam="nage394", hnam=NULL, ioenv=.GlobalEnv, ...)
 				xmd = z[par()$mfg[2]]; ymd = z[par()$mfg[1]]
 				points(xmd,ymd,col="red",pch=17,cex=1.2)
 				points(xmd,ymd,col="black",pch=2,cex=1.2) } } )
-	invisible() }
+	invisible()
+}
 
-.runCCA.getChains = function(chains=BRugs::samplesGetFirstChain():BRugs::samplesGetLastChain()) { # amalgamates chains
+.runCCA.getChains = function(chains=BRugs::samplesGetFirstChain():BRugs::samplesGetLastChain())
+{ ## amalgamates chains
 	if (is.null(ttcall(PBStool)$CCAhist)) return(FALSE)
 	getWinVal(scope="L")
 	unpackList(ttcall(PBStool)$FP,scope="L")
@@ -1427,9 +1468,11 @@ runCCA = function(fnam="nage394", hnam=NULL, ioenv=.GlobalEnv, ...)
 		temp = rbind(temp,junk) }
 	CCAsub = temp
 	packList("CCAsub","PBStool",tenv=.PBStoolEnv)
-	return(TRUE) }
+	return(TRUE)
+}
 
-.runCCA.plotHist = function() { # Histograms of parameter posterior distributions
+.runCCA.plotHist = function()
+{ ## Histograms of parameter posterior distributions
 	isOK = .runCCA.checkMon(); if (!isOK) stop("Reset monitors")
 	getWinVal(scope="L")
 	unpackList(ttcall(PBStool)$FP,scope="L")
@@ -1474,23 +1517,27 @@ runCCA = function(fnam="nage394", hnam=NULL, ioenv=.GlobalEnv, ...)
 		polygon(xxx,yyy,col=as.vector(iclr[i]))
 		addLabel(.97,.99,i,cex=1.2,col="#400080",adj=c(1,1),font=2)
 	} 
-	invisible() }
+	invisible()
+}
 
-.runCCA.getLayout = function(nc) {
+.runCCA.getLayout = function(nc)
+{
 	if (nc <= 3) return(c(nc,1))
 	else if (nc <=8) return(c(ceiling(nc/2),2))
 	else {
 		sqn = sqrt(nc); m = ceiling(sqn); n = ceiling(nc/m)
 		return(c(m, n)) }
-	}
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~runCCA
+}
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~runCCA
 
-#sumCatTabs-----------------------------2010-06-21
-# Summarize catch by year and PMFC area from modern 
-# catch input data used in catch reconstruction.
-#-----------------------------------------------RH
+
+## sumCatTabs---------------------------2010-06-21
+##  Summarize catch by year and PMFC area from modern 
+##  catch input data used in catch reconstruction.
+## ---------------------------------------------RH
 sumCatTabs=function(dat, facs=list(c("year","major")), 
-     cflds=c("landed","discard"), fnam ){
+   cflds=c("landed","discard"), fnam )
+{
 	if (missing(dat) || !is.array(dat)) {
 		showAlert("Supply a 4-dimensional array\n( year x major x fid x catch )")
 		stop("\nSupply a 4-dimensional array\n( year x major x fid x catch )") }
@@ -1511,16 +1558,141 @@ sumCatTabs=function(dat, facs=list(c("year","major")),
 		apply(cbind(year=rownames(catch),catch),1,function(x){cat(paste(x,collapse=","),"\n",sep="",file=fnam,append=TRUE)})
 		cat("\n\n",file=fnam,append=TRUE)
 	}
-	invisible() }
-#---------------------------------------sumCatTabs
+	invisible()
+}
+##--------------------------------------sumCatTabs
 
-#trackBycat-----------------------------2013-01-28
-# Track annual fish group catches between depth limits.
-#-----------------------------------------------RH
+
+## tabSFW-------------------------------2024-02-29
+##  Make tables of commercial catch using target groups and 
+##  regions for Seafood Watch (Gabe Andrews)
+##  qu("fos_gabe_andrews.sql",dbName="GFFOS",strSpp="123", as.is=c(F,F,T,rep(F,8),T))
+##  gear: 1=BT, 2=TR, 3=MW, 4=HL, 5=LL
+## ---------------------------------------------RH
+tabSFW = function(dat, gear=1, shallow=300, nspp=10, year, major)
+{
+	## Get records for specified gear type(s) and years
+	dat = dat[is.element(dat$gear, gear),]
+	## Remove records with no depth component (depth=0)
+	dat = dat[dat$depth>0 & !is.na(dat$depth),]
+	## Use only certain years, if specified
+	if (!missing(year))
+		dat = dat[is.element(dat$year, year),]
+	else year = .su(dat$year)
+	## Use only records in majors 3 to 9
+	if (!missing(major)) {
+		use.major = TRUE
+		dat = dat[is.element(dat$major, major),]
+		## Group majors into regions
+		dat$region = rep("UNK", nrow(dat))
+		dat$region[is.element(dat$major, 3:4)] = "3CD"
+		dat$region[is.element(dat$major, 5:7)] = "5ABC"
+		dat$region[is.element(dat$major, 8:9)] = "5DE"
+		dat$region[is.element(dat$major, 1)]   = "4B"
+	} else {
+		use.major=FALSE
+	}
+#browser();return()
+
+	## Create a species key
+	data("species", package="PBSdata", envir=penv())
+	load("fosspp.rda", envir=penv())
+	spc = .su(dat$spp)
+	spn = species[spc,"name"]
+	names(spn) = spc
+	spn["402"] = "Rockfishes"
+	spn["456"] = "Thornyheads"
+	spn["4TO"] = "Solaster (sea stars)"
+	spn["4UO"] = "Pteraster (slime stars)"
+	spn["5CZ"] = "Glass-spined Brittle Star"
+	spn["66Z"] = "Scallops"
+	spn["6OD"] = "Parastichopus (sea cucumbers)"
+
+	## Create groups of species
+	flatfish = c(species[is.element(species$ff,1) | grepl("skate|ray(s?)$",species$name), "code"], "051")  ## group 1
+	rockfish = c(species[is.element(species$rf,1), "code"], "402","456")  ## 402=Rockfishes, 456=Thornyheads ## group 2 and 3
+	inverts  = species[is.element(species$invert,1), "code"]
+	others   = setdiff(.su(dat$spp), c(flatfish, rockfish, inverts))
+	inverts  = c(inverts, grep("[A-Z]",others,value=TRUE) )
+	others   = setdiff(.su(dat$spp), c(flatfish, rockfish, inverts))
+
+	## Deal with the bazillion invertebrates
+	overts = fosspp[is.element(fosspp$SPECIES_CODE,setdiff(inverts,names(spn))),]
+	ovnams = toUpper(tolower(coalesce(overts[[3]],overts[[2]])))
+	names(ovnams) = overts[[1]]
+	spn[names(ovnams)] = ovnams
+
+	## Specify pelagics (anything left after removing mammals
+	pelagics = others[!is.element(others, c("001","004",as.character(800:999)))]
+	#pelagics  = grep("fish|[Ss]hark|[Cc]od|[Hh]erring|[Ss]almon|[Ss]melt|[Ee]ulachon|[Ss]ardine", spn[others])
+
+	## Construct groups
+	dat = dat[is.element(dat$spp, c(flatfish, rockfish, pelagics, inverts)),]
+	dat$group = rep(0,nrow(dat))
+	g1 = dat$depth <= shallow & is.element(dat$target,flatfish)
+	g2 = dat$depth >  shallow & is.element(dat$target,flatfish)
+	g3 = is.element(dat$target,rockfish)
+	g4 = is.element(dat$target,pelagics)
+	g5 = is.element(dat$target,inverts)  ## Apparently no invert targets in bottom trawl
+	dat$group[g1] = 1
+	dat$group[g2] = 2
+	dat$group[g3] = 3
+	dat$group[g4] = 4
+	dat$group[g5] = 5
+	groups = c("Shallow flatfish", "Deep flatfish", "Rockfish", "Pelagic fish", "Invertebrates")
+
+	## Split into groups
+	if (use.major)
+		gdat = split(dat, paste0(dat$group,"-",dat$region))
+	else 
+		gdat = split(dat, dat$group)
+	out = lapply(gdat, function(x) {
+		xtot = sapply(split(x$catch,x$spp),sum)/1000.
+		xlan = sapply(split(x$landed,x$spp),sum)/1000.
+		xdis = sapply(split(x$discard,x$spp),sum)/1000.
+		xeid = sapply(split(x$FEID,x$spp),countVec)
+		xout = cbind(neid=xeid, ctot=xtot, cland=xlan, cdisc=xdis)
+		xout = xout[rev(order(xout[,"ctot"])),]
+		xout = xout[xout[,"neid"]>=3,]
+		return(xout)
+	} )
+	index = 0; tput(index)
+	sfwlist = lapply(out, function(x,nspp) {
+		tget(index); index=index+1; tput(index)
+		if (nspp==0) xtop = x
+		else         xtop = x[1:nspp,]
+		xtop = data.frame(code=rownames(xtop), species=spn[rownames(xtop)], xtop)
+		if (use.major) {
+			gtemp   = strsplit(names(out)[index], split="-")[[1]]
+			gname   = groups[as.numeric(gtemp[1])]
+			gregion = gtemp[2]
+		} else {
+			gname   = groups[index]
+			gregion = ""
+		}
+		geartypes = c("BT","TR","MW","HL","LL")
+		fout = paste0(gname, " (", gregion, ifelse(use.major," ",""), paste0(geartypes[gear], collapse="+"), ")")
+		sink(file = paste0(fout, ".csv"))
+		cat(fout, "  years: ", paste0(range(year,na.rm=TRUE),collapse="-"), "\n", sep="")
+		#cat("code,species,num_events,catch_tonnes", "\n")
+		cat("code,species,num_events,catch_tonnes,landed_tonnes,released_tonnes", "\n")
+		apply(xtop, 1, function(x) { xx=paste0(x, collapse=","); cat(xx, "\n") } )
+		sink()
+		return(xtop)
+	}, nspp=nspp )
+	save("sfwlist", file=paste0("sfwlist-", ifelse(use.major,"regional-",""), "y(", paste0(range(year,na.rm=TRUE), collapse="-"), ")-g(", paste0(gear, collapse="-"), ").rda"))
+	return(sfwlist)
+}
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~tabSFW
+
+
+## trackBycat---------------------------2013-01-28
+##  Track annual fish group catches between depth limits.
+## ---------------------------------------------RH
 trackBycat = function(strSpp="396", major=5:7, mindep=70, maxdep=441, 
      dbs=c("gfb","pht","fos"), trawl="bottom", spath=.getSpath(), 
-     pyrs=1996:2010, rda=NULL, ioenv=.GlobalEnv) {
-
+     pyrs=1996:2010, rda=NULL, ioenv=.GlobalEnv)
+{
 	par0 = par(no.readonly=TRUE); on.exit(par(par0))
 	assign("PBStool",list(module="M03_Fishery",call=match.call(),ioenv=ioenv,plotname="Comp"),envir=.PBStoolEnv)
 	fish=c("POP","rockfish","turbot","flatfish","hake","sharks","other"); nfish=length(fish)
@@ -1591,5 +1763,5 @@ trackBycat = function(strSpp="396", major=5:7, mindep=70, maxdep=441,
 	invisible(bycatch)
 #browser();return()
 }
-#---------------------------------------trackBycat
+##--------------------------------------trackBycat
 

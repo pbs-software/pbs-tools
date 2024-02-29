@@ -41,11 +41,14 @@ prepClara(ssid=7, gfld=c("X","Y"), sfld="spp", mfld="catKg",
   Returns the data frame \code{claradat} for use in \code{clarify}.
 }
 \author{
-  Rowan Haigh, Pacific Biological Station, Fisheries and Oceans Canada, Nanaimo BC
+  \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
+  Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
+  \emph{locus opus}: Remote office, Vancouver BC\cr
+  Last modified \code{Rd: 2024-02-27}
 }
 \seealso{
   \code{\link[PBStools]{clarify}}, \code{\link[PBStools]{crossTab}},
   \code{\link[PBStools]{getData}}, \code{\link[PBStools]{getFile}}
 }
 \keyword{manip}
-
+\concept{M05_Spatial}

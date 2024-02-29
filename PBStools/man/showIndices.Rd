@@ -57,9 +57,10 @@ showIndices(strSpp= "396", serID=1, survID=NULL, bootID,
 \author{ 
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
-  \emph{locus opus}: Institute of Ocean Sciences (IOS), Sidney BC\cr
-  Last modified \code{Rd: 2020-10-08}\cr
-  Bootstraps by \href{mailto:norm.olsen@dfo-mpo.gc.ca}{Norm Olsen} (PBS, Nanaimo).
+  \emph{locus opus}: Remote office, Vancouver BC\cr
+  Last modified \code{Rd: 2024-02-27}
+
+  Bootstraps by \href{mailto:norm.olsen@dfo-mpo.gc.ca}{Norm Olsen} (PBS, Nanaimo)
 }
 \seealso{
   \code{\link{getBootRuns}}, \code{\link{calcMoments}}, 
@@ -85,3 +86,4 @@ pbsfun()
 })
 }
 \keyword{hplot}
+\concept{M04_Survey}

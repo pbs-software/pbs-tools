@@ -10,51 +10,53 @@
 \usage{
 plotEO(id="lst", strSpp="453", col="red", 
    xlim=c(-136,-122.5), ylim=c(48,54.8), prefix="map", 
-   inarea=NULL, exarea=NULL, exland=FALSE, rmXY=FALSE, rmSM=TRUE,
+   inarea=NULL, exarea=NULL, areafld="PMFC",
+   exland=FALSE, rmXY=FALSE, rmSM=TRUE,
    png=FALSE, pngres=400, PIN =c(9,7.3), lang=c("e","f"))
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{id}{\code{character} -- a unique, user-specified code that identifies
-    a stock during a series of calls to the function.}
+    a stock during a series of calls to the function}
   \item{strSpp}{\code{character} -- species Hart code (alpha-numeric) that is
-    used in the DFO Groundfish databases (see Details).}
-  \item{col}{\code{character} -- colour name, usually one of the set in \code{colors()}.}
-  \item{xlim}{\code{numeric} -- two-element vector that specifies the longitudinal range.}
-  \item{ylim}{\code{numeric} -- two-element vector that specifies the latitudinal range.}
-  \item{prefix}{\code{character} -- prefix for name of map objects (usually \code{'map'} or \code{'hab'}).}
+    used in the DFO Groundfish databases (see Details)}
+  \item{col}{\code{character} -- colour name, usually one of the set in \code{colors()}}
+  \item{xlim}{\code{numeric} -- two-element vector that specifies the longitudinal range}
+  \item{ylim}{\code{numeric} -- two-element vector that specifies the latitudinal range}
+  \item{prefix}{\code{character} -- prefix for name of map objects (usually \code{'map'} or \code{'hab'})}
   \item{inarea}{\code{character} -- if specified, PMFC areas from the set:\cr
     \{"3C", "3D", "4B", "5A", "5B", "5C", "5D", 5E"\}\cr
-    are used to include fishing events that only occur in the specified set.}
+    are used to include fishing events that only occur in the specified set}
   \item{exarea}{\code{character} -- if specified, PMFC areas from the set:\cr
     \{"3C", "3D", "4B", "5A", "5B", "5C", "5D", 5E"\}\cr
-    are used to exclude fishing events that occur in the specified set.}
+    are used to exclude fishing events that occur in the specified set}
+  \item{areafld}{\code{character} -- name of field in \code{'map123'} containing area information (e.g., \code{'major'})}
   \item{exland}{\code{logical} -- if \code{TRUE}, exclude fishing events that
-     occur on land (coordinates mis-specified).}
+     occur on land (coordinates mis-specified)}
   \item{rmXY}{\code{logical} -- if \code{TRUE}, remove any fishing event with 
     geographic coordinates that, when located in a \code{locality.plus}
     object's area (identifier = \code{"major minor locality"}), results in an
-    area that does not match the area identified in the \code{mapXXX} object (see Details).}
-  \item{rmSM}{\code{logical} -- if \code{TRUE}, remove fishing events over seamounts using function \code{'zapSeamounts'}.}
-  \item{png}{\code{logical} -- if \code{TRUE}, send the figure to a \code{.png} file.}
-  \item{pngres}{\code{numeric} -- resolution (pixels per inch) of the \code{.png} file.}
+    area that does not match the area identified in the \code{'map123'} object (see Details)}
+  \item{rmSM}{\code{logical} -- if \code{TRUE}, remove fishing events over seamounts using function \code{'zapSeamounts'}}
+  \item{png}{\code{logical} -- if \code{TRUE}, send the figure to a \code{.png} file}
+  \item{pngres}{\code{numeric} -- resolution (pixels per inch) of the \code{.png} file}
   \item{PIN}{\code{numeric} -- two-element vector specifying the dimensions
-    (width, height) in inches of the \code{.png} file.}
+    (width, height) in inches of the \code{.png} file}
   \item{lang}{\code{character} -- a vector of letters that denote the language for output:
-    currently only \code{"e"} (english) and \code{"f"} (french).}
+    currently only \code{"e"} (english) and \code{"f"} (french)}
 }
 \details{
   The function calls the SQL code \code{'fos_map_density.sql'}, which queries the
   table \code{'GF_MERGED_CATCH'} in the \code{GFFOS} database and creates an object
-  called \code{'mapXXX'} (or \code{'habXXX'}), where \code{'XXX'=strSpp}. 
-  Additionally, \code{'mapXXX'} is saved to the user's working directory as a binary file
-  called \code{'mapXXX.rda'} and loaded into the package's \code{.PBStoolEnv} environment.
+  called \code{'map123'} (or \code{'hab123'}), where \code{'123'=strSpp}. 
+  Additionally, \code{'map123'} is saved to the user's working directory as a binary file
+  called \code{'map123.rda'} and loaded into the package's \code{.PBStoolEnv} environment.
 
-  The SQL query is only run if the binary file \code{'mapXXX.rda'} does not exist in the user's
+  The SQL query is only run if the binary file \code{'map123.rda'} does not exist in the user's
   working directory. 
   If it does, the function loads this file into the \code{.PBStoolEnv} environment.
 
-  If \code{'mapXXX'} exists in the \code{.PBStoolEnv} environment, the actions above are not necessary.
+  If \code{'map123'} exists in the \code{.PBStoolEnv} environment, the actions above are not necessary.
 
   The plot is generated by the \code{PBSmapping} function \code{'plotMap'} and 
   shows the coastline, the fishing events, and the convex hull that surrounds
@@ -94,21 +96,20 @@ See \href{https://www.canada.ca/en/environment-climate-change/services/committee
 \author{
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
-  \emph{locus opus}: Institute of Ocean Sciences (IOS), Sidney BC\cr
-  Last modified \code{Rd: 2019-12-12}
+  \emph{locus opus}: Remote office, Vancouver BC\cr
+  Last modified \code{Rd: 2024-02-29}
 }
 \note{
-  Function will only work for DFO employees with network access to the Groundfish databases,\cr
-  (\emph{Contact Norm Olsen for access.})
+  The SQL code will only work for DFO employees with network access to the Groundfish databases.
 }
 \seealso{
 In package \pkg{PBStools}:\cr
   \code{\link[PBStools]{getData}},
   \code{\link[PBStools]{plotLocal}},
-  \code{\link[PBStools]{ttget}}
-
-In \pkg{PBSdata}:\cr
-  \code{locality.plus} (in \code{\link[PBSdata]{locality}})
+  \code{\link[PBStools]{ttget}}\cr
+In package \pkg{PBSdata}:\cr
+ \code{\link[PBSdata]{locality.plus}}
 }
 % Add one or more standard keywords, see file 'KEYWORDS' in the R documentation directory.
 \keyword{hplot}% use one of  RShowDoc("KEYWORDS")
+\concept{M05_Spatial}

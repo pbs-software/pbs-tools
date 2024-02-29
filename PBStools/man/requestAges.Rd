@@ -15,16 +15,16 @@ requestAges(strSpp, nage=500, year=2016,
    spath=.getSpath(), uid=Sys.info()["user"], pwd=uid, ...)
 }
 \arguments{
-  \item{strSpp}{string HART code of a species with sampled otoliths.}
-  \item{nage}{number of otoliths allocated for this species given the years and areas specified.}
-  \item{year}{numeric vector of years.}
-  \item{areas}{list of area vectors: those specified first in the list take precedence over those
+  \item{strSpp}{\code{character} -- HART code of a species with sampled otoliths.}
+  \item{nage}{\code{numeric} -- number of otoliths allocated for this species given the years and areas specified.}
+  \item{year}{\code{numeric} -- vector of years.}
+  \item{areas}{\code{numeric} -- list of area vectors: those specified first in the list take precedence over those
      specified later, if overlap occurs.}
-  \item{ttype}{numeric vector specifying trip type: \cr 
+  \item{ttype}{\code{numeric} -- vector specifying trip type: \cr 
     1=non-observed commercial, 2=research, 3=charter, 4=observed commercial. \cr 
     Note that you can either choose purely 
     commercial samples (\code{ttype=c(1,4)}) OR survey samples (\code{ttype=c(2,3)}), not a mixture.}
-  \item{gear}{numeric gear code used by \code{GFBioSQL}:\cr
+  \item{gear}{\code{numeric} -- gear code used by \code{GFBioSQL}:\cr
     \preformatted{
     0 = unknown
     1 = bottom trawl     8 = unknown trawl
@@ -34,24 +34,24 @@ requestAges(strSpp, nage=500, year=2016,
     5 = longline        12 = recreational rod & reel
     6 = midwater trawl  13 = prawn trap
     7 = troll           14 = tucker trawl}}
-  \item{sex}{numeric sex code where 1=males, 2=females, c(1,2)=males + females.}
-  \item{nfld}{string specifying field with number of otoliths to sample: \cr
-    \code{"nfree"...}{number of otoliths available (not aged)}; \cr
-    \code{"ncalc"...}{number of otoliths calculated after weighting by species catch,} \cr
-    \code{..........}{less the number of otoliths already aged by break & burn;} \cr
-    \code{"nallo"...}{default: essentially \code{ncalc} scaled to the user-specified \code{nage}.} \cr
+  \item{sex}{\code{numeric} -- sex code where 1=males, 2=females, c(1,2)=males + females.}
+  \item{nfld}{\code{character} -- string specifying field with number of otoliths to sample:\cr
+    \code{"nfree"...}number of otoliths available (not aged);\cr
+    \code{"ncalc"...}number of otoliths calculated after weighting by species catch,\cr
+    \code{..........}less the number of otoliths already aged by break & burn;\cr
+    \code{"nallo"...}default: essentially \code{ncalc} scaled to the user-specified \code{nage}.\cr
     Both \code{ncalc} and \code{nallo} are constrained by \code{nfree}. }
-  \item{run.sql}{logical: if \code{TRUE} query the databases for all otolith and catch information,
+  \item{run.sql}{\code{logical} -- if \code{TRUE} query the databases for all otolith and catch information,
     otherwise grab the information from stored binaries (e.g., \code{Sdat396.rda} for POP
     otolith data, and \code{Ccat396.rda} for POP catch from \code{PacHarvest} and \code{GFFOS}.}
-  \item{only.sql}{logical: if \code{TRUE} only query the databases for otolith and catch information;
+  \item{only.sql}{\code{logical} -- if \code{TRUE} only query the databases for otolith and catch information;
     do not process the request for otoliths.}
-  \item{bySID}{logical: if \code{TRUE} group the chosen otoliths by sample ID (SID) for presentation 
+  \item{bySID}{\code{logical} -- if \code{TRUE} group the chosen otoliths by sample ID (SID) for presentation 
     in the CSV file (assumes that one tray houses one sample); otherwise assume that many small samples occur in one tray.}
-  \item{spath}{string specifying system path to the SQL queries; default points to the SQL directory in \pkg{PBStools}.}
-  \item{uid, pwd}{user ID and password for Oracle DB account authentication (no longer need as 
+  \item{spath}{\code{character} -- system path to the SQL queries; default points to the SQL directory in \pkg{PBStools}.}
+  \item{uid, pwd}{\code{character} -- user ID and password for Oracle DB account authentication (no longer need as 
     queries are coded in SQL with embedded Oracle queries that use the SQL server's  credentials).}
-  \item{...}{allows users to request specific trip IDs (either \code{TID_gfb} or \code{TID_fos}); \cr
+  \item{...}{\code{dots} -- allows users to request specific trip IDs (either \code{TID_gfb} or \code{TID_fos}); \cr
     also user can specify a minimum number of free otoliths per sample (e.g., \code{nfree=32}) when selecting.}
 }
 \value{
@@ -92,8 +92,8 @@ requestAges(strSpp, nage=500, year=2016,
 \author{
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
-  \emph{locus opus}: Institute of Ocean Sciences (IOS), Sidney BC\cr
-  Last modified \code{Rd: 2021-06-15}\cr
+  \emph{locus opus}: Remote office, Vancouver BC\cr
+  Last modified \code{Rd: 2024-02-29}
 }
 \seealso{
   \code{\link[PBStools]{calcVB}}, \code{\link[PBStools]{estOgive}}, 

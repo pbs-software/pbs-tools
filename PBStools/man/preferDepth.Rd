@@ -1,6 +1,8 @@
 \name{preferDepth}
 \alias{preferDepth}
-\title{Display Depth Distribution for a Species}
+\alias{.preferDepth.getDepth}
+\alias{.preferDepth.getEffort}
+\title{GUI: Display Depth Distribution for a Species}
 \description{
   Display depth distribution for a selected species using an interactive 
   GUI. The SQL code grabs the depth table from a remote SQL Server database.
@@ -9,6 +11,9 @@
 \usage{
 preferDepth(strSpp="410", fqtName="pht_fdep.sql", dbName="PacHarvest",
    spath=NULL, type="SQL", hnam=NULL, get.effort=FALSE, lang=c("f","e"))
+
+.preferDepth.getDepth()
+.preferDepth.getEffort(strSpp="ALL")
 }
 \arguments{
   \item{strSpp}{\code{character} -- string specifying the code for a species that appears in the target database }
@@ -85,8 +90,8 @@ preferDepth(strSpp="410", fqtName="pht_fdep.sql", dbName="PacHarvest",
 \author{
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
-  \emph{locus opus}: Institute of Ocean Sciences (IOS), Sidney BC\cr
-  Last modified \code{Rd: 2021-06-15}
+  \emph{locus opus}: Remote office, Vancouver BC\cr
+  Last modified \code{Rd: 2024-02-27}
 }
 \seealso{
   \code{\link[PBStools]{getData}}, \code{\link[PBStools]{calcHabitat}}, \code{\link[PBStools]{histMetric}} \cr

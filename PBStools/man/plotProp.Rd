@@ -1,6 +1,13 @@
 \name{plotProp}
 \alias{plotProp}
-\title{Display Proportions as Bubbles}
+\alias{.plotProp.calcP}
+\alias{.plotProp.chooseAreas}
+\alias{.plotProp.chooseTypes}
+\alias{.plotProp.plotP}
+\alias{.plotProp.resetP}
+\alias{.plotProp.resetT}
+
+\title{GUI: Display Proportions as Bubbles}
 \description{
   Display proportions-at-age (or proportions-at-length or proportions-at-weight)
   \emph{vs}. year using the \bold{PBSmodelling} function \code{plotBubbles}
@@ -8,12 +15,24 @@
 }
 \usage{
 plotProp(fnam, hnam=NULL, ioenv=.GlobalEnv, ...) 
+
+.plotProp.calcP(reload=FALSE)
+.plotProp.chooseAreas(gui=TRUE,tab=FALSE)
+.plotProp.chooseTypes(gui=TRUE,tab=FALSE)
+.plotProp.plotP(wmf=FALSE,png=FALSE)
+.plotProp.resetP()
+.plotProp.resetT()
 }
 \arguments{
   \item{fnam}{\code{character} -- string specifying file name}
   \item{hnam}{\code{character} -- string name of a history file}
   \item{ioenv}{\code{environment} -- input/output environment for function input data and output results}
   \item{...}{\code{dots} -- additional arguments for \code{plotProp}}
+  \item{reload}{\code{logical} -- if \code{TRUE}, reload data from source (e.g., binary file, package data object)}
+  \item{gui}{\code{logical} -- if \code{TRUE}, choose values from GUI}
+  \item{tab}{\code{logical} -- if \code{TRUE}, write values to a text file}
+  \item{wmf}{\code{logical} -- if \code{TRUE}, create a Windows meta file image}
+  \item{png}{\code{logical} -- if \code{TRUE}, create a portable network graphics image}
 }
 \details{
   This function creates an interactive GUI that can be used to display 
@@ -83,8 +102,8 @@ plotProp(fnam, hnam=NULL, ioenv=.GlobalEnv, ...)
 \author{
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
-  \emph{locus opus}: Institute of Ocean Sciences (IOS), Sidney BC\cr
-  Last modified \code{Rd: 2021-06-15}
+  \emph{locus opus}: Remote office, Vancouver BC\cr
+  Last modified \code{Rd: 2024-02-27}
 }
 \seealso{
 In package \pkg{PBStools}:\cr

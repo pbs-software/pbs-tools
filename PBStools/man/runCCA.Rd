@@ -1,5 +1,23 @@
 \name{runCCA}
 \alias{runCCA}
+\alias{.runCCA.checkMon}
+\alias{.runCCA.compileMod}
+\alias{.runCCA.diag.panel}
+\alias{.runCCA.evalMod}
+\alias{.runCCA.getChains}
+\alias{.runCCA.getData"}
+\alias{.runCCA.getLayout}
+\alias{.runCCA.model}
+\alias{.runCCA.objFun}
+\alias{.runCCA.plotACF}
+\alias{.runCCA.plotData}
+\alias{.runCCA.plotDens}
+\alias{.runCCA.plotHist}
+\alias{.runCCA.plotNLM}
+\alias{.runCCA.plotPairs}
+\alias{.runCCA.plotTrace}
+\alias{.runCCA.setVals}
+\alias{.runCCA.updateMod}
 \title{
   Run Catch-Curve Analysis on Age Frequency Data
 }
@@ -10,12 +28,39 @@
 }
 \usage{
 runCCA(fnam="nage394", hnam=NULL, ioenv=.GlobalEnv, ...)
+.runCCA.checkMon()
+.runCCA.compileMod()
+.runCCA.diag.panel(x, ...)
+.runCCA.evalMod()
+.runCCA.getChains(chains=BRugs::samplesGetFirstChain():BRugs::samplesGetLastChain())
+.runCCA.getData()
+.runCCA.getLayout(nc)
+.runCCA.model(P)
+.runCCA.objFun(P)
+.runCCA.plotACF(file=ttcall(PBStool)$CCAhist,
+   clrs=c("blue","red","green","magenta","navy"))
+.runCCA.plotData()
+.runCCA.plotDens(file=ttcall(PBStool)$CCAhist,
+   clrs=c("blue","red","green","magenta","navy"))
+.runCCA.plotHist()
+.runCCA.plotNLM()
+.runCCA.plotPairs()
+.runCCA.plotTrace(file=ttcall(PBStool)$CCAhist,
+   clrs=c("blue","red","green","magenta","navy"))
+.runCCA.setVals()
+.runCCA.updateMod()
 }
 \arguments{
-  \item{fnam}{string specifying file name}
-  \item{hnam}{string name of a history file}
-  \item{ioenv}{input/output environment for function input data and output results.}
-  \item{...}{additional arguments (not currently used).}
+  \item{fnam}{\code{character} -- string specifying file name}
+  \item{hnam}{\code{character} -- string name of a history file}
+  \item{ioenv}{\code{environment} -- input/output environment for function input data and output results.}
+  \item{...}{\code{dots} -- additional arguments (not currently used).}
+  \item{x}{\code{numeric} -- matrix of parameter estimates}
+  \item{chains}{\code{numeric} -- index of chain samples}
+  \item{nc}{\code{numeric} -- number of chains}
+  \item{P}{\code{numeric} -- vector of parameter estimates (Z, alpha, betak, tau, rho)}
+  \item{file}{\code{numeric} -- matrix of sample history}
+  \item{clrs}{\code{character} -- colour names for the chains}
 }
 \details{
   The function opens up a notebook GUI with two tabs named
@@ -47,12 +92,19 @@ runCCA(fnam="nage394", hnam=NULL, ioenv=.GlobalEnv, ...)
   \emph{ICES Journal of Marine Science} \bold{64}: 218--233.
 }
 \author{
-  Rowan Haigh, Pacific Biological Station, Nanaimo BC
+  \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
+  Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
+  \emph{locus opus}: Remote office, Vancouver BC\cr
+  Last modified \code{Rd: 2024-02-29}
 }
 \seealso{
-  \code{\link[PBStools]{plotProp}}, \code{\link[PBSdata]{nage394}}
+In package \pkg{PBStools}:\cr
+  \code{\link[PBStools]{plotProp}}\cr
+In package \pkg{PBSdata}:\cr
+  \code{\link[PBSdata]{nage394}}
 }
 \keyword{hplot}
 \keyword{optimize}
 \keyword{iteration}
+\concept{M03_Fishery}
 

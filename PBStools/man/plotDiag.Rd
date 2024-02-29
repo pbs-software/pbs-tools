@@ -22,8 +22,10 @@ plotDiag(x, description="something", col=c("red","coral","gold",
   bars for each \code{y} grouped by \code{x}.
 }
 \author{
-  Rowan Haigh, Research Biologist\cr
-  Pacific Biological Station, Fisheries and Oceans, Nanaimo BC
+  \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
+  Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
+  \emph{locus opus}: Remote office, Vancouver BC\cr
+  Last modified \code{Rd: 2024-02-27}
 }
 \note{
   This plot is used by the catch reconstruction algorithm which automatically increments
@@ -36,4 +38,4 @@ plotDiag(x, description="something", col=c("red","coral","gold",
   The catch reconstruction function \code{\link[PBStools]{buildCatch}} and \code{\link[PBStools]{plotRecon}}
 }
 \keyword{hplot}
-
+\concept{M07_CatchRecon}

@@ -538,7 +538,7 @@ showIndices =  function(strSpp="396", serID=1, survID=NULL, bootID,
 	}
 #browser();return()
 	if (nrow(sppBoot)==0) {
-		if (quiet) {plot(0,0,type="n",axes=F,xlab="",ylab=""); return("nada") }
+		if (quiet) {plot(0,0,type="n",axes=FALSE,xlab="",ylab=""); return("nada") }
 		else {showMessage(paste("No index for species '",strSpp,"'",sep="")); return(NULL)}
 	}
 	noDesc = is.na(sppBoot$runDesc)

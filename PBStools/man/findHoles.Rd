@@ -46,8 +46,8 @@ findHoles(polyset, minVerts=25, nlevs=1, use.sp.pkg=TRUE)
 \author{
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
-  \emph{locus opus}: Institute of Ocean Sciences (IOS), Sidney BC\cr
-  Last modified \code{Rd: 2019-03-22}
+  \emph{locus opus}: Remote office, Vancouver BC\cr
+  Last modified \code{Rd: 2024-02-27}
 }
 \seealso{
 In package \pkg{PBStools}:\cr
@@ -60,5 +60,4 @@ In package \pkg{sp}:\cr
   \code{\link[sp]{point.in.polygon}}
 }
 \keyword{manip}
-
-
+\concept{M05_Spatial}

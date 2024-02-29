@@ -50,7 +50,7 @@ zapSeamounts(dat, only.mark=FALSE)
 \author{
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
-  \emph{locus opus}: Institute of Ocean Sciences (IOS), Sidney BC\cr
+  \emph{locus opus}: Remote office, Vancouver BC\cr
   Last modified \code{Rd: 2020-07-16}
 }
 \note{

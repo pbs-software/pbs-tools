@@ -4,7 +4,6 @@
 \description{
   Bootstrap stratified biomass estimates using random draws from the 
   binomial-gamma distribution using strata population parameters supplied.
-
 }
 \usage{
 bootBG(dat=pop.pmr.qcss, K=100, S=100, R=500, 
@@ -61,12 +60,19 @@ bootBG(dat=pop.pmr.qcss, K=100, S=100, R=500,
   Aquatic Sciences} \bold{60}, 640--656.
 }
 \author{ 
-  Rowan Haigh, Pacific Biological Station, Nanaimo BC
+  \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
+  Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
+  \emph{locus opus}: Remote office, Vancouver BC\cr
+  Last modified \code{Rd: 2024-02-27}\cr
 }
-\seealso{ 
-  \code{\link{getPMR}}, \code{\link{calcPMR}}, 
-  \code{\link{sampBG}}, \code{\link{showAlpha}} \cr
-  \pkg{boot}: \code{\link[boot]{boot.ci}}
+\seealso{
+  In package \pkg{PBStools}:\cr
+    \code{\link[PBStools]{getPMR}},
+    \code{\link[PBStools]{calcPMR}}, 
+    \code{\link[PBStools]{sampBG}},
+    \code{\link[PBStools]{showAlpha}}\cr
+  In package \pkg{boot}:\cr
+    \code{\link[boot]{boot.ci}}
 }
 \examples{
 local(envir=.PBStoolEnv,expr={
@@ -77,5 +83,6 @@ pbsfun=function(SID=1,S=50){
 pbsfun()
 })
 }
-\keyword{ data }
-\keyword{ utilities }
+\keyword{data}
+\keyword{utilities}
+\concept{M04_Survey}

@@ -99,7 +99,10 @@ getCatch(strSpp="396", dbs=c("gfb","gfc","pht","fos"),
   \code{weightBio}.
 }
 \author{
-  Rowan Haigh, Pacific Biological Station, Fisheries and Oceans Canada, Nanaimo BC
+  \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
+  Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
+  \emph{locus opus}: Remote office, Vancouver BC\cr
+  Last modified \code{Rd: 2024-02-27}
 }
 \seealso{
   \code{\link[PBStools]{weightBio}}, \code{\link[PBStools]{getData}},
@@ -109,4 +112,4 @@ getCatch(strSpp="396", dbs=c("gfb","gfc","pht","fos"),
 \keyword{manip}
 \keyword{database}
 \keyword{datagen}
-
+\concept{M03_Fishery}

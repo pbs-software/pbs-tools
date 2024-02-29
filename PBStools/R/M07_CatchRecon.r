@@ -11,7 +11,7 @@
 ##==============================================================================
 
 
-## buildCatch---------------------------2023-05-11
+## buildCatch---------------------------2024-02-29
 ## Catch reconstruction algorithm for BC rockfish.
 ## Use ratios of RRF (reconstructed rockfish) to ORF 
 ## (rockfish other than POP) landings for multiple fisheries.
@@ -24,8 +24,7 @@ buildCatch=function(
    orfSpp="TRF",         ## Field name of the denominator in the ratio of RRF to other rockfish (usually ORF but can be TRF or POP if these are more appropriate)
    major=c(1,3:9),       ## Major PMFC area codes to see in plots; catch is always reconstructed for majors c(1,3:9)
    fidout=c(1:5,10),     ## Fishery IDs for which an annual series barplot stacked by PMFC area is produced
-                         ## First year to start using reported landings (i.e. not estimated from gamma), one for each fishery:
-   useYR1=c(1996,2000,2007,2007,1986),
+   useYR1=c(1996,2000,2007,2007,1986), ## First year to start using reported landings (i.e. not estimated from gamma), one for each fishery:
    useGFM=TRUE,          ## Use the latest official GF_MERGED_CATCH table (compiled by Norm and Kate)
    useCA=TRUE,           ## Use ORF catch from the CA fleet
    useUS=TRUE,           ## Use ORF catch from the US fleet
@@ -36,14 +35,14 @@ buildCatch=function(
    useGM=FALSE,          ## Use geometric mean to average annual ratios for gamma and delta (not used if strat.gamma, strat.delta, or useBG)
    useBG=FALSE,          ## Sample from the binomial-gamma to estimate ratios RRF/ORF or RRF/TRF.
    #refyrs=1997:2005,    ## Reference years to use for calculating gamma (e.g., RRF/ORF).
-	refyrs = list(1997:2005, 1997:2005, 1997:2005, 1997:2005, 1997:2005),  ## Reference years to use for calculating gamma (e.g., RRF/ORF). Now a list (RH 190917)
+	refyrs = c(list(1996:2023), rep(list(2007:2011),4)),  ## Reference years to use for calculating gamma (e.g., RRF/ORF). Now a list (RH 190917)
    refarea=NULL,         ## Name of file containing reference areas to use when calculating gamma
    refgear=NULL,         ## Reference gear types years to use for calculating gamma (1=bottom trawl, 2=trap, 3=midwater trawl, 4=h&l, 5=longline, 8=h&l/longline/trap)
    strat.gamma=FALSE,    ## Stratify the RRF numerator and ORF denominator by depth zone and weight by frequency of RRF landed > 0
    strat.delta=FALSE,    ## Stratify the discard numerator and denominator by depth zone and weight by frequency of RRF discards > 0
    depbin=100,           ## Depth (m) bin to use for strat.gamma and strat.delta
-                         ## Discard years (on set for each fishery (trawl, halibut, sable, dogling, hlrock):
-   disyrs = list(1954:1995, 1986:2005, 1986:2005, 1986:2005, 1986:2005), 
+   defyrs = c(list(1997:2006), rep(list(2000:2004),4)), ## Reference years to use for calculating delta (discard rate)
+   disyrs = list(1954:1995, 1986:2005, 1986:2005, 1986:2005, 1986:2005), ## Discard years (on set for each fishery (trawl, halibut, sable, dogling, hlrock)
    sensitivity=NULL,     ## Sensitivity name for tweaking decisions
    reconstruct=TRUE,     ## Complete the reconstruction to its end, otherwise terminate the code once the modern catch array has been compiled and saved
    run.name=NULL,        ## Run name to keep track of various run configurations with gamma, delta, refarea, and refgear
@@ -62,8 +61,9 @@ buildCatch=function(
    ...)                  ## Additional ad hoc arguments to deal with PJS issues
 {
 	## Reset to current working directory in case of code malfunction
-	cwd = getwd()
+	cwd= getwd()
 	on.exit(setwd(cwd), add=TRUE)
+	catDir = dpath ## (RH: 240216) assume this was the intent of 'dpath' (may need to go through code)
 	## R's default of treating strings as factors screws up so many things.
 	sAF  = options()$stringsAsFactors
 	scip = options()$scipen
@@ -97,7 +97,7 @@ buildCatch=function(
 	if (any(c(strat.gamma,strat.delta))) ## depth-stratified gamma and/or delta
 		run.details = paste0(run.details,"_sGD(", substring(strat.gamma,1,1), substring(strat.delta,1,1), ")")
 
-	if (is.null(run.name)) run.name = run.details
+	if (!sql.only && is.null(run.name)) run.name = run.details
 
 	## Report inputs to a text file called 'run.details.txt' (RH 1901924)
 	## -----------------------------------------------------
@@ -119,36 +119,39 @@ buildCatch=function(
 			run.details = c(run.details, mess)
 		}
 	}
-
 	if (!sql.only && !file.exists(run.name))
 		dir.create(run.name)
-	writeLines(run.details, con=paste0(ifelse(sql.only,".",run.name),"/run.details.txt"))
-	datDir = paste0(run.name,"/data")
+	writeLines(run.details, con=paste0(ifelse(sql.only,catDir,run.name),"/run.details.txt"))
+
+	datDir = paste0(ifelse(is.null(run.name),catDir,run.name),"/data")
 	if (!sql.only && !file.exists(datDir)){
 		dir.create(datDir)
 		datPrev = list(...)$datPrev  ## if transferring data from a previous reconstruction
 		if (!is.null(datPrev)) {
-			datPrev = paste0(dpath,"/",datPrev)
+			datPrev = paste0(catDir,"/",datPrev)
 			if (dir.exists(datPrev)) {
-				rda.files = list.files(datPrev, pattern="\\.rda$", full.names=T)
-				file.copy(from=rda.files, to=paste0(dpath,"/",datDir), copy.date=TRUE)
+				rda.files = list.files(datPrev, pattern="\\.rda$", full.names=TRUE)
+				file.copy(from=rda.files, to=paste0(catDir,"/",datDir), copy.date=TRUE)
 			} else {
 				mess = paste0("!!! Previous data directory:\n",datPrev,"\ndoes not exist.")
 				message(mess); return(mess)
 			}
-#browser();return()
 		}
 	}
-	figDir = paste0(run.name,"/figs")
-	if (!sql.only && !file.exists(figDir)) dir.create(figDir)
-	tabDir = paste0(run.name,"/tables")
+	figDir = paste0(ifelse(is.null(run.name),catDir,run.name),"/figs")
+	if (!sql.only && !file.exists(figDir))
+		dir.create(figDir)
+	tabDir = paste0(ifelse(is.null(run.name),catDir,run.name),"/tables")
 	if (ascii.tables){
-		if (!sql.only && !file.exists(tabDir)) dir.create(tabDir)
+		if (!sql.only && !file.exists(tabDir))
+			dir.create(tabDir)
 	}
-	diaDir = paste0(run.name,"/diags")
+	diaDir = paste0(ifelse(is.null(run.name),catDir,run.name),"/diags")
 	if (diagnostics){
-		if (!sql.only && !file.exists(diaDir)) dir.create(diaDir)
+		if (!sql.only && !file.exists(diaDir))
+			dir.create(diaDir)
 	}
+#browser();return()
 
 	if (!sql.only) {
 		## -------------------------------------------------------------
@@ -180,7 +183,7 @@ buildCatch=function(
 			## Use following line for times when objects are not registered in PBSdata (i.e. package has not beeen rebuilt)
 			#  expr = paste0("getFile(",h,"history,use.pkg=TRUE,tenv=penv()); dat=",h,"history")
 			## ------------------------------------------------------------------------------------------------------------
-			expr = paste0("getFile(",h,"history,path=paste0(system.file(package=\"PBSdata\"),\"/data\"),tenv=penv(),reload=T); hdat=",h,"history")
+			expr = paste0("getFile(",h,"history,path=paste0(system.file(package=\"PBSdata\"),\"/data\"),tenv=penv(),reload=TRUE); hdat=",h,"history")
 			eval(parse(text=expr))
 
 			if (useAI && any(strSpp==c("396","440"))){
@@ -381,8 +384,10 @@ buildCatch=function(
 
 		MAJ = dimnames(orfmax)$major
 		clrs.major=rep("gainsboro",length(MAJ)); names(clrs.major)=MAJ
-		#clrs.major[as.character(c(1,3:9))]=c("moccasin","blue","lightblue","yellow","orange","red","seagreen","lightgreen")
-		clrs.major[as.character(c(1,3:9))]=c("moccasin","seagreen","lightgreen","yellow","orange","red","lightblue1","dodgerblue")  ## RH 230202 -- switch colours for 3CD and 5DE (North=blues, Central=ambers, South=greens)
+		#clrs.major[as.character(c(1,3:9))]=c("moccasin","blue","lightblue","yellow","orange","red","seagreen","lightgreen")  ## original colour scheme
+		#clrs.major[as.character(c(1,3:9))]=c("moccasin","seagreen","lightgreen","yellow","orange","red","dodgerblue","lightblue1")  ## RH 230202 -- switch colours for 3CD and 5DE (North=blues, Central=ambers, South=greens)
+		#clrs.major[as.character(c(1,3:9))]=c("moccasin","seagreen","lightgreen","yellow","orange","red","lightblue1","dodgerblue")  ## RH 230202 -- switch colours for 3CD and 5DE (North=blues, Central=ambers, South=greens)
+		clrs.major[as.character(c(1,3:9))]=c("moccasin","forestgreen","lightgreen","yellow","orange","red","lightblue1","dodgerblue")  ## RH 240222 -- change colour for 3C from 'seagreen' to 'forestgreen' (softer green)
 
 		if (saveinfo)
 			packList(c("htab","htabmax","htabadd","orfmax","orfadd"),"CR",tenv=.PBStoolEnv)
@@ -392,7 +397,6 @@ buildCatch=function(
 		## =====================================================
 		## 2. Gather the modern RRF catches (landed & discarded)
 		## =====================================================
-#browser();return()
 		.flush.cat("Start collecting modern landings:\n")
 
 		if (missing(dbdat) && sql==FALSE) {
@@ -436,8 +440,8 @@ buildCatch=function(
 		## Switched to fixed SQL table PH3_CATCH_SUMMARY rather than use Oracle (RH 221222)
 		## -----------------------------------------------------------------------------
 
-		if (file.exists(paste0(dpath,"/ph3dat.rda")) ) ##&& !sql.force)  ## Once should be enough unless sql query is altered
-			load(paste0(dpath,"/ph3dat.rda"))
+		if (file.exists(paste0(catDir,"/ph3dat.rda")) ) ##&& !sql.force)  ## Once should be enough unless sql query is altered
+			load(paste0(catDir,"/ph3dat.rda"))
 		else {
 			.flush.cat("   SQL Server -- GFFOS (table PH3_CATCH_SUMMARY);\n")  ## RH 221222
 			getData("ph3_fcatORF.sql", dbName="GFFOS", strSpp=strSpp, path=spath, tenv=penv())
@@ -456,10 +460,11 @@ buildCatch=function(
 			## GFFOS merged catch from all fisheries (fid=1:5)
 			## GF_MERGED_CATCH table contains records from GFBio, GFCatch, GFFOS, PacHarvest, PacHarvHL, PacHarvSable
 			## ------------------------------------------------------------------------------------------------------
-			if (file.exists(paste0(dpath,"/gfmdat.rda")) && !sql.force)
-				load(paste0(dpath,"/gfmdat.rda"))
+			if (file.exists(paste0(catDir,"/gfmdat.rda")) && !sql.force)
+				load(paste0(catDir,"/gfmdat.rda"))
 			else {
 				.flush.cat("   SQL Server -- GFFOS (table GF_MERGED_CATCH) [takes ~ 5 minutes];\n")
+				clearFiles("gfmdat.rda") ## backup in case sql.force=TRUE
 				getData("fos_mcatORF.sql","GFFOS",strSpp=strSpp,path=spath,tenv=penv())
 				PBSdat$Y[round(PBSdat$Y,5)==0] = NA
 				PBSdat$X[round(PBSdat$X,5)==0] = NA
@@ -473,8 +478,8 @@ buildCatch=function(
 			## --------------------------------
 			## GFCatch records for fids (1,3,5)
 			## --------------------------------
-			if (file.exists(paste0(dpath,"/gfcdat.rda")) && !sql.force)
-				load(paste0(dpath,"/gfcdat.rda"))
+			if (file.exists(paste0(catDir,"/gfcdat.rda")) && !sql.force)
+				load(paste0(catDir,"/gfcdat.rda"))
 			else {
 				.flush.cat("   SQL Server -- GFCatch;\n")
 				getData("gfc_fcatORF.sql","GFCatch",strSpp=strSpp,path=spath,tenv=penv())
@@ -497,8 +502,8 @@ buildCatch=function(
 			## -------------------------------
 			## PacHarvest records for fids (1)
 			## -------------------------------
-			if (file.exists(paste0(dpath,"/phtdat.rda")) && !sql.force)
-				load(paste0(dpath,"/phtdat.rda"))
+			if (file.exists(paste0(catDir,"/phtdat.rda")) && !sql.force)
+				load(paste0(catDir,"/phtdat.rda"))
 			else {
 				.flush.cat("   SQL Server -- PacHarvest (trawl);\n")
 				getData("pht_tcatORF.sql","PacHarvest",strSpp=strSpp,path=spath,tenv=penv())
@@ -510,8 +515,8 @@ buildCatch=function(
 			## ---------------------------------------------------
 			## PacHarvHL halibut validation records for fids (2,7)
 			## ---------------------------------------------------
-			if (file.exists(paste0(dpath,"/phhdat.rda")) && !sql.force)
-				load(paste0(dpath,"/phhdat.rda"))
+			if (file.exists(paste0(catDir,"/phhdat.rda")) && !sql.force)
+				load(paste0(catDir,"/phhdat.rda"))
 			else {
 				.flush.cat("   SQL Server -- PacHarvHL (halibut DMP);\n")
 				getData("phhl_hcatORF.sql","PacHarvHL",strSpp=strSpp,path=spath,tenv=penv())   ## validated (DMP) catch
@@ -523,8 +528,8 @@ buildCatch=function(
 			## ------------------------------------
 			## PacHarvSable fisherlogs for fids (3)
 			## ------------------------------------
-			if (file.exists(paste0(dpath,"/phsdat.rda")) && !sql.force)
-				load(paste0(dpath,"/phsdat.rda"))
+			if (file.exists(paste0(catDir,"/phsdat.rda")) && !sql.force)
+				load(paste0(catDir,"/phsdat.rda"))
 			else {
 				.flush.cat("   SQL Server -- PacHarvSable (fisherlogs);\n")
 				getData("phs_scatORF.sql","PacHarvSable",strSpp=strSpp,path=spath,fisheryid=3,logtype="FISHERLOG",tenv=penv())
@@ -536,8 +541,8 @@ buildCatch=function(
 			## -------------------------------------------
 			## PacHarvHL validation records for fids (4,5)
 			## -------------------------------------------
-			if (file.exists(paste0(dpath,"/phvdat.rda")) && !sql.force)
-				load(paste0(dpath,"/phvdat.rda"))
+			if (file.exists(paste0(catDir,"/phvdat.rda")) && !sql.force)
+				load(paste0(catDir,"/phvdat.rda"))
 			else {
 				.flush.cat("   SQL Server -- PacHarvHL (rockfish DMP);\n")
 				getData("phhl_vcatORF.sql","PacHarvHL",strSpp=strSpp,path=spath,tenv=penv())   ## validated (DMP) catch
@@ -549,8 +554,8 @@ buildCatch=function(
 			## ------------------------------------------
 			## PacHarvHL fisherlog records for fids (4,5)
 			## ------------------------------------------
-			if (file.exists(paste0(dpath,"/phfdat.rda")) && !sql.force)
-				load(paste0(dpath,"/phfdat.rda"))
+			if (file.exists(paste0(catDir,"/phfdat.rda")) && !sql.force)
+				load(paste0(catDir,"/phfdat.rda"))
 			else {
 				.flush.cat("   SQL Server -- PacHarvHL (rockfish fisherlogs);\n")
 				getData("phhl_fcatORF.sql","PacHarvHL",strSpp=strSpp,path=spath,logtype="FISHERLOG",tenv=penv()) ## fisherlog catch
@@ -570,19 +575,38 @@ buildCatch=function(
 				save("fosdat",file="fosdat.rda")
 				blob[["fosdat"]] = fosdat
 		}
-
 		## -----------------------------------------------------------------------------
 		## Get the survey catches which will be added to the combined catch near the end
 		## -----------------------------------------------------------------------------
-		if (file.exists(paste0(dpath,"/gfbdat.rda")) && file.exists(paste0(datDir,"/gfbcat.rda")) && !sql.force) {
-			load(paste0(dpath,"/gfbdat.rda"))
-			load(paste0(dpath,paste0(datDir,"/gfbcat.rda")))
+		if (file.exists(paste0(catDir,"/gfbdat.rda")) && !sql.force) {
+			load(paste0(catDir,"/gfbdat.rda"))
 		} else {
 			.flush.cat("   SQL Server -- GFBioSQL (surveys).\n")
-			gfbcat = surveyCatch(strSpp=strSpp, hadley=hadley, tabDir=tabDir)
-			getFile(gfbdat, reload=TRUE)
+			surveyCatch(strSpp=strSpp, gfbdat=NULL, hadley=hadley, catDir=catDir, tabDir=tabDir, datDir=datDir, sql=TRUE)
+#			clearFiles(paste0(catDir,"/gfbdat.rda")) ## backup in case sql.force=TRUE
+#			getData("gfb_rcatORF.sql", dbName="GFBioSQL", strSpp=strSpp, path=spath, tenv=penv())
+#			#assign("gfbdat", PBSdat)
+#			zgfb = do.call('order', PBSdat)  ## Try ordering (RH: 240216): calls to SQL seem to return same records in different order.
+#			gfbdat = PBSdat[zgfb,]
+#			save("gfbdat", file=paste0(catDir,"/gfbdat.rda"))
 		}
 		blob[["gfbdat"]] = gfbdat
+## Remove this nonsense eventually:
+#		if (file.exists(paste0(dpath,"/gfbdat.rda")) && !sql.force) {
+#			load(paste0(dpath,"/gfbdat.rda"))
+#		} else {
+#			gfbcat = surveyCatch(strSpp=strSpp, hadley=hadley, tabDir=catDir, datDir=catDir, gfbdat=gfbdat)
+#			.flush.cat("   SQL Server -- GFFOS (table GF_MERGED_CATCH) [takes ~ 5 minutes];\n")
+#			gfbdat = NULL
+#		}
+#		if (file.exists(paste0(datDir,"/gfbcat.rda")) && !sql.force) {
+#			load(paste0(dpath,paste0(datDir,"/gfbcat.rda")))
+#		} else {
+#			.flush.cat("   SQL Server -- GFBioSQL (surveys).\n")
+#			gfbcat = surveyCatch(strSpp=strSpp, hadley=hadley, tabDir=catDir, datDir=catDir, gfbdat=gfbdat)
+#			getFile(gfbdat, reload=TRUE)
+#		}
+#		blob[["gfbdat"]] = gfbdat
 
 		## ------------------------------------------------------------
 		## Wrap up the fisheries and survey landings into a list object
@@ -594,8 +618,9 @@ buildCatch=function(
 	}
 	else {
 		dbdat=as.character(substitute(dbdat)) ## database list object name
-		expr=paste0("getFile(",dbdat,",senv=ioenv,try.all.frames=TRUE,tenv=penv(),path=dpath,reload=T); fnam=names(",dbdat,"); unpackList(",dbdat,")")
+		expr=paste0("getFile(",dbdat,",senv=ioenv,try.all.frames=TRUE,tenv=penv(),path=catDir,reload=TRUE); fnam=names(",dbdat,"); unpackList(",dbdat,")")
 		eval(parse(text=expr)) 
+#browser();return()
 	}
 	if (sql.only) return()
 
@@ -663,11 +688,12 @@ buildCatch=function(
 #if(i=="gfmdat"){browser();return()}
 		}
 	}
-	if (!sql | !useSM){
-		if (file.exists(paste0(datDir,"/gfbcat.rda")))
-			load(paste0(datDir,"/gfbcat.rda"))
-		else
-			gfbcat = surveyCatch(strSpp=strSpp, gfbdat=gfbdat, hadley=hadley, tabDir=tabDir)
+#	if (!sql | !useSM){ ## wtf?
+	if (file.exists(paste0(datDir,"/gfbcat.rda"))) {
+		load(paste0(datDir,"/gfbcat.rda"))
+	} else {
+		gfbcat = surveyCatch(strSpp=strSpp, gfbdat=gfbdat, hadley=hadley, catDir=catDir, tabDir=tabDir, datDir=datDir, sql=FALSE)
+#browser();return()
 	}
 
 	.flush.cat("Start consolidating landings records:\n")
@@ -1097,7 +1123,7 @@ buildCatch=function(
 					rrfcat = rrfcat + rrfadd[ii,jj,kkk,nn]
 				catmod[ii,jj,kk,"landed"] = catmod[ii,jj,kk,"landed"] + rrfcat[ii,jj]
 			}
-		}
+		} ## end k (fid) loop
 	}
 	expr=paste0("cat",strSpp,"mod=catmod; save(\"cat",strSpp,"mod\", file=\"",datDir,"/cat",strSpp,"mod.rda\")")
 	eval(parse(text=expr))
@@ -1212,7 +1238,7 @@ buildCatch=function(
 		##   TRF in GF|JV trawl; PAH in halibut|halibut+sable|K/L; SBF in Sablefish; DOG in Spiny Dogfish
 		##   LIN in Lingcod; DOG+LIN in SchedII; QBR+CPR+CHR+TIR+YYR in Rockfish Inside|RF Outside|ZN|K/ZN
 		rawdat$TAR    = rawdat$IRF
-		rawdat$aindex = .createIDs(rawdat,aflds)
+		rawdat$aindex = PBSmapping:::.createIDs(rawdat,aflds)  ## .createIDs currently not exported from PBSmapping namespace
 		RAWDAT[[kk]]  = refdat = rawdat
 		refdat$year   = as.numeric(substring(refdat$date,1,4))
 		refdat        = refdat[is.element(refdat$year,REFYRS),]  ## use flattened refyrs (can be a mixture of years by FID)
@@ -1244,7 +1270,7 @@ buildCatch=function(
 				kareas = read.csv(refarea[[kk]])
 				if (!all(aflds %in% names(kareas)))
 				showError(paste0("User-specified file `",refarea[[kk]],"' does not have the required fields\n",deparse(aflds)))
-				kareas$aindex = .createIDs(kareas,aflds)
+				kareas$aindex = PBSmapping:::.createIDs(kareas,aflds)  ## .createIDs currently not exported from PBSmapping namespace
 				refdat = REFDAT[[kk]]
 				if (any(is.element(refdat$aindex,kareas$aindex))){  ## otherwise leave unchanged
 					refdat = refdat[is.element(refdat$aindex,kareas$aindex),]
@@ -1271,7 +1297,7 @@ buildCatch=function(
 				kareas = read.csv(refarea[[kk]])
 				if (!all(aflds %in% names(kareas)))
 				showError(paste0("User-specified file `",refarea[[kk]],"' does not have the required fields\n",deparse(aflds)))
-				kareas$aindex = .createIDs(kareas,aflds)
+				kareas$aindex = PBSmapping:::.createIDs(kareas,aflds)  ## .createIDs currently not exported from PBSmapping namespace
 				refdat = REFDAT[[kk]]
 #if (k==2) {browser();return()}
 				if (any(is.element(refdat$aindex,kareas$aindex))){  ## otherwise leave unchanged
@@ -1446,7 +1472,7 @@ buildCatch=function(
 				#refmat = refmat[,reffid,drop=FALSE]
 #print(c(ll,k)); print(refmat)
 				gmat[dimnames(refmat)[[1]],dimnames(refmat)[[2]]] = refmat
-			}
+			} ## end k loop
 		}
 		else if (strat.gamma && !useBG) {  ## use stratified gamma 
 			gmat = array(0,dim=c(length(mm),length(fid)), dimnames=list(major=mm,fid=fid))
@@ -1510,7 +1536,7 @@ buildCatch=function(
 				gamma.strat[[kk]][[ll]][["agamma"]] = agamma
 #if (k==2 && ll=="ORF") {browser();return()}
 #if (k==5 && ll=="POP") {browser();return()}
-			}
+			} ## end k loop
 		} else {  ## use default ratios method
 			## use original method of sums over sums
 			if (ll=="POP") .flush.cat(paste0("   calculating mean of annual ratios (",strSpp,"/",orfSpp,")\n"))
@@ -1566,7 +1592,7 @@ buildCatch=function(
 				}
 				gmat[dimnames(kgmat)[[1]],dimnames(kgmat)[[2]]] = kgmat
 				dmat[dimnames(kdmat)[[1]],dimnames(kdmat)[[2]]] = kdmat
-			}
+			} ## end k loop
 #if (ll=="ORF") {browser();return()}
 		}
 		RATES[["gamma"]][[ll]]   = gmat
@@ -1592,6 +1618,7 @@ buildCatch=function(
 	## -------------------------------------------------------------
 	rfac  = RATES[["gamma"]][[orfSpp]]
 	gamma = rfac[mm,,drop=FALSE]  ## use only specified majors
+#browser();return()
 
 	## ----------------------------------------------------------------------------------
 	## Special trawl calculations by Paul Starr for YTR based on Brian Mose's suggestions
@@ -1661,54 +1688,67 @@ buildCatch=function(
 		if (k==0) next  ## just in case
 		kk=as.character(k); jj=dimnames(dfac)[[1]]; j=as.numeric(jj)
 		if (k==1) {
-			dyrs=1997:2006
-			if (file.exists(paste0(datDir,"/phtOlogs.rda"))) {
+			dyrs=defyrs[[k]] #1997:2006
+			dyrs = intersect(dyrs, 1996:2007) ## phfOlogs dates range from '1996-02-17' to '2007-03-31'
+			if (file.exists(paste0(catDir,"/phtOlogs.rda"))) {
 				.flush.cat("   loading trawl observer logs from `phtOlogs.rda';\n")
-				load(paste0(datDir,"/phtOlogs.rda"))
+				load(paste0(catDir,"/phtOlogs.rda"))
 			} else {
 				## ------------------------------------------
 				## Query observer logs only (can take 30 sec)
+				## Should only need to do this once for any species.
 				## ------------------------------------------
 				.flush.cat("   querying trawl observer logs (~30 sec);\n")
-				getData("pht_obsORF.sql",dbName="PacHarvest",strSpp=strSpp,path=spath,tenv=penv(),dummy=dyrs)
-				phtOlogs = PBSdat; save("phtOlogs",file=paste0(datDir,"/phtOlogs.rda"))
+				getData("pht_obsORF.sql", dbName="PacHarvest", strSpp=strSpp, path=spath, tenv=penv(), dummy=dyrs)
+				#phtOlogs = PBSdat
+				zOpht = do.call('order', PBSdat)  ## Try ordering (RH: 240216): calls to SQL seem to return same records in different order.
+				phtOlogs = PBSdat[zOpht,]
+				save("phtOlogs", file=paste0(catDir,"/phtOlogs.rda"))
 			}
 			discat = phtOlogs
 		}
 		else if (any(k==c(2:5))) {
-			dyrs=2000:2004 #2007:2013
+			dyrs=defyrs[[k]]  ##2000:2004 #2007:2013
 			if (any(k==c(2,4,5))) {
-				if (!file.exists(paste0(datDir,"/phfOlogs.rda"))) {
+				dyrs = intersect(dyrs, 1999:2005) ## phfOlogs dates range from '1999-05-22' to '2005-03-24'
+				if (!file.exists(paste0(catDir,"/phfOlogs.rda"))) {
 					## --------------------------------------------------
 					## Query observer logs only (for halibut, sched2, ZN)
 					## --------------------------------------------------
 					.flush.cat("   querying h&l observer logs;\n")
 					getData("phhl_fcatORF.sql","PacHarvHL",strSpp=strSpp,path=spath,fisheryid=c(2,4,5),logtype="OBSERVRLOG",tenv=penv())
 					#discat=fosdat[is.element(fosdat$fid,k) & is.element(fosdat$log,105),] # fisherlogs (supposed to record all discards, electronic monitoring)
-					phfOlogs = PBSdat; save("phfOlogs",file=paste0(datDir,"/phfOlogs.rda"))
+					#phfOlogs = PBSdat
+					zOphf = do.call('order', PBSdat)  ## Try ordering (RH: 240216): calls to SQL seem to return same records in different order.
+					phfOlogs = PBSdat[zOphf,]
+					save("phfOlogs",file=paste0(catDir,"/phfOlogs.rda"))
 				} else {
 					if (k==2){
 						.flush.cat("   loading h&l observer logs from `phfOlogs.rda';\n")
-						load(paste0(datDir,"/phfOlogs.rda"))
+						load(paste0(catDir,"/phfOlogs.rda"))
 					}
 				}
 				discat = phfOlogs[is.element(phfOlogs$fid,k),]
 			}
 			if (k==3) {
-				if (file.exists(paste0(datDir,"/phsOlogs.rda")) && !isThere("phsOlogs")) {
+				dyrs = intersect(dyrs, 2000:2005) ## phfOlogs dates range from '2000-05-26' to '2005-06-13'
+				if (file.exists(paste0(catDir,"/phsOlogs.rda")) && !isThere("phsOlogs")) {
 					.flush.cat("   loading sablefish observer logs from `phsOlogs.rda';\n")
-					load(paste0(datDir,"/phsOlogs.rda"))
+					load(paste0(catDir,"/phsOlogs.rda"))
 				} else {
 					## ---------------------------------------
 					## Query observer logs only (for sabefish)
 					## ---------------------------------------
 					.flush.cat("   querying sablefish observer logs;\n")
 					getData("phs_scatORF.sql","PacHarvSable",strSpp=strSpp,path=spath,fisheryid=k,logtype="OBSERVRLOG",tenv=penv())
-					phsOlogs = PBSdat; save("phsOlogs",file=paste0(datDir,"/phsOlogs.rda"))
+					#phsOlogs = PBSdat
+					zOphs = do.call('order', PBSdat)  ## Try ordering (RH: 240216): calls to SQL seem to return same records in different order.
+					phsOlogs = PBSdat[zOphs,]
+					save("phsOlogs",file=paste0(catDir,"/phsOlogs.rda"))
 				}
 				discat = phsOlogs
 			}
-		}
+		}  ## end k 2:5
 		if (nrow(discat)==0) next
 		if (!useSM) {
 			discat = zapSeamounts(discat)
@@ -1833,7 +1873,7 @@ buildCatch=function(
 			dfac[jj,kk,"dr"] = dfac[jj,kk,"discard:landed"]
 		if (any(k==c(2,3,4)))
 			dfac[jj,kk,"dr"] = dfac[jj,kk,"discard:TAR"]
-	}
+	} ## end k loop
 #browser();return()
 	dfac[is.na(dfac) | !is.finite(dfac)] = 0
 	delta = dfac
@@ -1905,6 +1945,7 @@ buildCatch=function(
 
 	ancientRRF = ancientORF = array(0,dim=c(length(ancyrs),length(mm),length(fid),length(nat)),
 		dimnames=list(year=ancyrs,major=mm,fid=fid,nat=nat)) ## unknown gear type only
+#browser();return()
 
 	## ---------------------------------------------
 	## Allocate the catch from unkown combined gears
@@ -1979,8 +2020,8 @@ buildCatch=function(
 	## ------------------------------------------------------
 	## Record years that catch was reconstructed and reported
 	## ------------------------------------------------------
-	yrs.rec = list()
-	for (k in fid) {
+	yrs.rec = catmats = list()
+	for (k in fid) { ## big k (fid) loop; ends on L2450
 		.flush.cat(paste0("Fishery ",k,":\n"))
 		kk = as.character(k)
 		jj = dimnames(catmod)$major
@@ -2002,7 +2043,7 @@ buildCatch=function(
 		## ------------------------------------------------------------------
 		reccatRRFall = reccatORFall = array(0,dim=c(dim(allhis)[1:2],length(nat)), dimnames=c(dimnames(allhis)[1:2],list(nat=nat))) ## initialise
 		attr(reccatRRFall,"fid") = k  ## just to keep track when debugging
-		for (nn in nat) {
+		for (nn in nat) { ## nn loop ends L2046
 			## ------------------------------------------------------
 			## All reconstructed RRF landed catch from historical ORF
 			## Exception: POP which is reported as one of the reference
@@ -2010,44 +2051,25 @@ buildCatch=function(
 			## ------------------------------------------------------
 			reccatRRFall[,,nn] = t(apply(orfhis[,,nn,fshnam[k]],1,function(x,bega){x*bega},bega=beta.gamma[,kk]))
 			reccatORFall[,,nn] = t(apply(orfhis[,,nn,fshnam[k]],1,function(x,beta){x*beta},beta=BETA[,kk])) ## all historical ORF|TRF landed catch
-			## Overwrite reconstructed landings if user has specified using reported landings
+			## Overwrite reconstructed landings if user has specified using reported landings (!!! this seems odd !!!)
 			if (!is.null(useYR1) && useYR1[k]>=1950 && useYR1[k]<=1995) {
 				iifug = as.character(useYR1[k]:1995) ## no records later than 1995 in allhis|orfhis
 				if (strSpp=="396")  ## because this species landings are available
 					reccatRRFall[iifug,,nn] = t(apply(allhis[iifug,,nn,fshnam[k],"POP"],1,function(x,beta){x*beta},beta=BETA[,kk]))
 			}
-		}
-#browser();return()
-#		for (nn in nat) {
-#			## ------------------------------------------------------
-#			## All reconstructed RRF landed catch from historical ORF
-#			## Exception: POP which is already reported/estimated
-#			## ------------------------------------------------------
-#			#if (strSpp=="396" && k==1) ## trawl only (important)
-#			if (strSpp=="396" && !is.element(nn,c("CA"))) { ## except domestic catches
-#				reccatRRFall[,,nn] = t(apply(allhis[,,nn,fshnam[k],"POP"],1,function(x,beta){x*beta},beta=BETA[,kk]))
-#				## -------------------------------------------------------------------
-#				## Terrible clunky fudge for early non-domestic POP estimates from ORF (need to review for next POP)
-#				## -------------------------------------------------------------------
-#				if (!is.null(useYR1) && useYR1[k]>=1950) {
-#					iifug = as.character(1950:min(1995,useYR1[k]-1)) ## no records later than 1995 in orfhis
-#					reccatRRFall[iifug,,nn] = t(apply(orfhis[iifug,,nn,fshnam[k]],1,function(x,bega){x*bega},bega=beta.gamma[,kk]))
-#				}
-#			} else {
-#				## Calculate RRF from ORF using beta.gamma = two-step operation: (1) split 'h&l" to FIDs 2,4,5, then apply RRF/ORF ratio to all FIDs
-#				reccatRRFall[,,nn] = t(apply(orfhis[,,nn,fshnam[k]],1,function(x,bega){x*bega},bega=beta.gamma[,kk]))
-#			}
-#			reccatORFall[,,nn] = t(apply(orfhis[,,nn,fshnam[k]],1,function(x,beta){x*beta},beta=BETA[,kk])) ## all historical ORF landed catch
-#		}
+		} ## end nn loop
 		## ---------------------------------------------------
 		## Reconstructed domestic RRF landings from modern ORF (database catch)
 		## ---------------------------------------------------
-		## only place where gamma is applied (but is used in beta.gamma above)
+		## Only place where gamma is applied alone (but is used in beta.gamma above).
+		## Appears to be a subset of reccatRRFall, i.e. reccatRRF.db ~= reccatRRFall[,,"CA"]
+		## but uses gamma on catmod vs. beta.gamma on orfhis
 		reccatRRF.db = t(apply(catmod[,mm,kk,orfSpp], 1, function(x,gamm){x*gamm}, gamm=gamma[,kk]))
 		reccatORF.db = catmod[,mm,kk,orfSpp]
-		icom = intersect(dimnames(reccatRRFall)[[1]],dimnames(reccatRRF.db)[[1]])  ## com = in common
+		icom = intersect(dimnames(reccatRRFall)[[1]],dimnames(reccatRRF.db)[[1]])  ## icom = in common
 #browser();return()
 		if (length(icom)>0) {
+			## Compares the two methods for estimating reconstructed RRF in CA and chooses the largest value
 			reccatRRF.can     = reccatRRFall[,,"CA"]
 			reccatRRF.can.com = reccatRRF.can[icom,,drop=FALSE]
 			reccatRRF.db.com  = reccatRRF.db[icom,,drop=FALSE]
@@ -2173,7 +2195,6 @@ buildCatch=function(
 			irep   = as.character(useYRS)
 			yrs.rec[[kk]][["xrep"]] = irep  ## record reported years
 			estYRend = useYRstart - 1
-#browser();return()
 			## ----------------------------------------------------------------------------------------
 			## only estimate if useYRstart > 1950 and less than first year of believable reported catch
 			## ----------------------------------------------------------------------------------------
@@ -2192,13 +2213,16 @@ buildCatch=function(
 				## If user specifies useYR1>1996, then use RRF calculated from ORF * gamma
 				irec2  = setdiff(irec,rownames(reccatRRF))  ## years > 1995 (when orfhis stops)
 				if (length(irec2)==0) {
+					## row bind reconstructed (medieval) and reported catches (medieval + modern)
 					comcatRRF = rbind(reccatRRF[irec,,drop=FALSE], repcatRRF[irep,,drop=FALSE])
 					comcatORF = rbind(reccatORF[irec,,drop=FALSE], repcatORF[irep,,drop=FALSE])
 				} else {
+					## row bind reconstructed (medieval + modern) and reported catches (modern)
 					comcatRRF = rbind(reccatRRF[setdiff(irec,irec2),,drop=FALSE], reccatRRF.db[irec2,,drop=FALSE], repcatRRF[irep,,drop=FALSE])
 					comcatORF = rbind(reccatORF[setdiff(irec,irec2),,drop=FALSE], reccatORF.db[irec2,,drop=FALSE], repcatORF[irep,,drop=FALSE])
 				}
 			} else {
+				## No reconstructed years in the medieval period; just use reported years
 				yrs.rec[[kk]][["xrec"]] = "none"  ## record reconstructed years
 				comcatRRF = repcatRRF[irep,,drop=FALSE]
 				comcatORF = repcatORF[irep,,drop=FALSE]
@@ -2207,6 +2231,7 @@ buildCatch=function(
 			jjcc = dimnames(comcatRRF)[[2]]
 
 			## Scroll through nationalities and accumulate catch
+			## sppnewRRF/sppnewORF only contains ancient catch at this point
 			for (nn in natUse){
 				if (nn %in% "CA") {
 					## If Canadian, add the comcat matrix generated above
@@ -2221,14 +2246,14 @@ buildCatch=function(
 					## state (Blaine, Bellingham). The fish were still caught in Canada.
 					## ----------------------------------------------------------------------
 					if (nn %in% "US")
-						iimed = as.character(MEDYRS)  ## BUG? This was first active in ver.161115.
+						iimed = as.character(MEDYRS)  ## This was first active in ver.161115.
 #browser();return()
 					sppnewRRF[iimed,jjcc,kk] = sppnewRRF[iimed,jjcc,kk] + reccatRRFall[iimed,jjcc,nn]
 					sppnewORF[iimed,jjcc,kk] = sppnewORF[iimed,jjcc,kk] + reccatORFall[iimed,jjcc,nn]
 				}
 			}
 		}
-		## `sppnewRRF' now contains additional fishery catch from 1951-current year at this stage (previously only 1918-1950 catch)
+		## `sppnewRRF' now contains additional fishery catch from 1951 to current year at this stage (previously only 1918-1950 catch)
 
 #if (k==4) {browser();return()}
 
@@ -2429,7 +2454,6 @@ buildCatch=function(
 				cat(paste0("Calculated,",icalc[1],",",rev(icalc)[1],"\n"),file=recCfile,append=TRUE)
 			cat(paste0("Database,",idata[1],",",rev(idata)[1],"\n"),file=recCfile,append=TRUE)
 		}
-
 		if (diagnostics){
 			plotDiag(reccatRRF, paste0("reccat for ",fidnam[k]," by major"), col=clrs.major[mm])
 			plotDiag(repcatRRF, paste0("repcat for ",fidnam[k]," by major"), col=clrs.major[mm])
@@ -2437,7 +2461,12 @@ buildCatch=function(
 			plotDiag(disD, paste0("disD for ",fidnam[k]," by major"), col=clrs.major[mm])
 			plotDiag(sppnewRRF[,,kk], paste0("sppnew for ",fidnam[k]," by major"), col=clrs.major[mm])
 		}
+		## Save catch matrices for later inspection or debugging (RH 240221)
+		catmats[[fidnam[k]]] = list(reccatORF=reccatORF, reccatRRF=reccatRRF, repcatORF=repcatORF, repcatRRF=repcatRRF, reccatRRFall=reccatRRFall, reccatORFall=reccatORFall)
 	} ## end k (fid) loop
+
+	## Save the various reccat and repcat arrays (RH 240221)
+	save ("catmats", file=paste0(datDir,"/catmats.rda"))
 
 	attr(sppnewRRF,"yrs.rec") = yrs.rec # years of reconstructed and reported catch
 	sppnewRRF[,,"10"] = apply(sppnewRRF[,,as.character(fid)],1:2,sum)  ## sum across fisheries
@@ -2475,7 +2504,7 @@ buildCatch=function(
 	.flush.cat("Plotting and reporting reconstruction results ...\n\n")
 	for (k in fidout) {
 		yrs = as.numeric(dimnames(sppnewRRF)$year)
-		plotRecon(sppnewRRF, strSpp=strSpp, major=major, fidout=k, years=yrs, png=png, eps=eps, wmf=wmf, figDir=figDir, timestamp=numdate) # use user-specified major
+		plotRecon(sppnewRRF, strSpp=strSpp, major=major, fidout=k, years=yrs, png=png, eps=eps, wmf=wmf, figDir=figDir, timestamp=numdate, shadier=TRUE) # use user-specified major
 	}
 	fidlab = c("Trawl","Halibut","Sablefish","Dogfish-Lingcod","H&L Rockfish","Sablefish + ZN",
 		"Sablefish + Halibut","Dogfish","Lingcod",paste0("Combined Fisheries",ifelse(addGFB," + Surveys","")))
@@ -2525,7 +2554,7 @@ buildCatch=function(
 		save("CR",file=paste0(datDir,"/CR",strSpp,".rda"))
 	}
 	if (eps)
-		collectFigs(path=".",ext="eps", fout=paste0("Catch-Recon-Summary-",strSpp), width=6.75, pattern="Catch-History")
+		collectFigs(path=catDir, ext="eps", fout=paste0("Catch-Recon-Summary-",strSpp), width=6.75, pattern="Catch-History")
 	.flush.cat(paste0("-----Finished reconstructing catch for ",species[strSpp,"latin"],"-----\n-----   [ see dir: ",run.name," ]\n\n"))
 #browser();return()
 	invisible(sppnewRRF)
@@ -2643,7 +2672,7 @@ plotGREFS = function(dat, years=1996:2019, majors=3:9, fid=1,
 		test = apply(kdat,2,function(x){ ## just in case we want to remove values >2 or 3 SDs
 			ss=2*sd(x); mean(x)>=(x-ss) & mean(x)<=(x+ss)})
 		plot(0,0, xlim=c(years[1],rev(years)[1]), ylim=ylim, type="n", xaxt="n", xlab=linguaFranca("Year",lang), yaxt=ifelse(yting,"s","n"), ylab=ifelse(yting,"gamma",""), cex.axis=1.2, cex.lab=1.5)
-		if (onefig) mtext("gamma",side=2, outer=T, line=2, cex=1.5)
+		if (onefig) mtext("gamma",side=2, outer=TRUE, line=2, cex=1.5)
 		if (!missing(vlines))
 			abline(v=vlines, col="dimgrey", lty=5)
 		#lines(years, kdat[cyears,"3"], col=lucent(mcols["3"],0.5), lwd=2)
@@ -2656,16 +2685,16 @@ plotGREFS = function(dat, years=1996:2019, majors=3:9, fid=1,
 				lines(years, calcRGM(kdat[cyears,jj]), lty=3, col=lucent(mcols[jj],1), lwd=2)
 			}
 		})
-		axis(1, at=years[1]:rev(years)[1], tck=-0.01, labels=F)
+		axis(1, at=years[1]:rev(years)[1], tck=-0.01, labels=FALSE)
 #browser();return()
-		axis(1, at=intersect(seq(1950,2050,ifelse(onefig,5,2)),years[1]:years[length(years)]), tck=-0.02, labels=T)
+		axis(1, at=intersect(seq(1950,2050,ifelse(onefig,5,2)),years[1]:years[length(years)]), tck=-0.02, labels=TRUE)
 		if (length(years)!=length(years[1]:years[length(years)]))
 			points(years, rep(par()$usr[3],length(years)), pch=21, col="black", bg="ghostwhite", xpd=NA)
 		if (yting)
-			axis(2, at=seq(0,1,0.1), tck=-0.01, labels=F)
+			axis(2, at=seq(0,1,0.1), tck=-0.01, labels=FALSE)
 		if (!yting){
-			axis(2, at=seq(0,1,0.1), tck=-0.005, labels=F)
-			axis(2, at=seq(0,1,0.1), tck=0.005, labels=F)
+			axis(2, at=seq(0,1,0.1), tck=-0.005, labels=FALSE)
+			axis(2, at=seq(0,1,0.1), tck=0.005, labels=FALSE)
 		}
 		if (missing(legpos)) {
 			LL = !onefig && k%in%c(1,2,3,4,5)
@@ -2683,14 +2712,15 @@ plotGREFS = function(dat, years=1996:2019, majors=3:9, fid=1,
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotGREFS
 
 
-## plotRecon----------------------------2023-02-02
+## plotRecon----------------------------2024-02-22
 ## Plot reconstructed catch using barplots
 ## stacked by PMFC area.
 ## ---------------------------------------------RH
 plotRecon = function(dat=cat440rec, strSpp="440", major=c(1,3:9), fidout=10, 
    years=1918:2018, xlab=seq(1920,2050,5), yrs.rec=attributes(dat)$yrs.rec,
    ymax=NULL, shade=FALSE, shadier=FALSE, figDir=getwd(), timestamp="",
-   png=FALSE, pngres=400, eps=FALSE, wmf=FALSE, PIN=c(10,5), lang=c("e","f") )
+   png=FALSE, pngres=400, eps=FALSE, wmf=FALSE, PIN=c(10,5), lang=c("e","f"),
+   outnam=NULL )
 {
 	if (dev.cur()>1) { oldpar=par(no.readonly=TRUE); on.exit(par(oldpar)) }
 	## Create a subdirectory called `french' for French-language figures
@@ -2705,9 +2735,10 @@ plotRecon = function(dat=cat440rec, strSpp="440", major=c(1,3:9), fidout=10,
 	else                     ydat = dat[yy,,,drop=FALSE]
 	MAJ = as.character(1:10); mm=as.character(major)
 	clrs = rep("gainsboro",length(MAJ)); names(clrs)=MAJ
-	#clrs[as.character(c(1,3:9))]=c("moccasin","blue","lightblue","yellow","orange","red","seagreen","lightgreen")
-	clrs[as.character(c(1,3:9))]=c("moccasin","seagreen","lightgreen","yellow","orange","red","dodgerblue","lightblue1")  ## RH 230202 -- switch colours for 3CD and 5DE (North=blues, Central=ambers, South=greens)
-	clrs[as.character(c(1,3:9))]=c("moccasin","seagreen","lightgreen","yellow","orange","red","lightblue1","dodgerblue")  ## RH 230202 -- switch colours for 3CD and 5DE (North=blues, Central=ambers, South=greens)
+	#clrs[as.character(c(1,3:9))]=c("moccasin","blue","lightblue","yellow","orange","red","seagreen","lightgreen")  ## original colour scheme
+	#clrs[as.character(c(1,3:9))]=c("moccasin","seagreen","lightgreen","yellow","orange","red","dodgerblue","lightblue1")  ## RH 230202 -- switch colours for 3CD and 5DE (North=blues, Central=ambers, South=greens)
+	#clrs[as.character(c(1,3:9))]=c("moccasin","seagreen","lightgreen","yellow","orange","red","lightblue1","dodgerblue")  ## RH 230202 -- switch colours for 3CD and 5DE (North=blues, Central=ambers, South=greens)
+	clrs[as.character(c(1,3:9))]=c("moccasin","forestgreen","lightgreen","yellow","orange","red","lightblue1","dodgerblue")  ## RH 240222 -- change colour for 3C from 'seagreen' to 'forestgreen' (softer green)
 	mclrs=clrs[mm]
 	data("pmfc", "species", package="PBSdata", envir=penv())
 	XLAB = dimnames(ydat)[[1]];  xpos=(1:length(XLAB))-.5; zlab=is.element(XLAB,xlab)
@@ -2720,11 +2751,14 @@ plotRecon = function(dat=cat440rec, strSpp="440", major=c(1,3:9), fidout=10,
 			ylim = c(0,max(apply(idat,2,sum)))
 		else
 			ylim = c(0,ymax)
-		plotname = paste0(strSpp, "-Catch-History", ifelse(i==10,0,i), "-", fidnam[i], "-years(", min(years), "-", max(years), ")-major(", paste(major, collapse=""), ")")
+		if (is.null(outnam))
+			plotname = paste0(strSpp, "-Catch-History", ifelse(i==10,0,i), "-", fidnam[i], "-years(", min(years), "-", max(years), ")-major(", paste(major, collapse=""), ")")
+		else
+			plotname = outnam ## (RH 240222) really only good for one plot and/or debugging
 		if (!is.null(timestamp) && !is.na(timestamp) && timestamp!="")
 			plotname = paste0(plotname,"-",timestamp)
 
-		fout = fout.e = plotname
+		fout.e = plotname
 		for (l in lang) {
 			if (l=="f") fout = paste0(figDir,"/french/",fout.e)  ## could repeat for other languages
 			else        fout = paste0(figDir,"/",fout.e)
@@ -2735,6 +2769,9 @@ plotRecon = function(dat=cat440rec, strSpp="440", major=c(1,3:9), fidout=10,
 			else  resetGraph()
 			expandGraph(mar=c(3,3.2,1,0.5),mgp=c(1.6,.5,0))
 			barplot(idat,col=0,space=0,xaxt="n",yaxt="n",xaxs="i",ylim=ylim)
+
+			## Apply shading to delimit ancient, reconstructed, and reported (database) periods
+			if (shadier) shade=TRUE ## (RH 240222)
 			if (shade && !is.null(yrs.rec)) {
 				## shade the ancient years (Dominion Bureau of Stats)
 				xanc = as.character(1918:1950)
@@ -2881,27 +2918,43 @@ quickCat = function(dat, strSpp="000", removeSM=TRUE)  ## incorporated revampCat
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~quickCat
 
 
-## surveyCatch--------------------------2023-05-11
+## surveyCatch--------------------------2024-02-16
 ## Query GFBioSQL for survey catch and summarise
 ## catches by year and PMFC area.
 ## ---------------------------------------------RH
-surveyCatch = function(strSpp="396", spath=.getSpath(), gfbdat=NULL,
-   hadley=FALSE, tabDir="./tables", datDir="./data")
+surveyCatch = function(strSpp="396", spath=.getSpath(), gfbdat=NULL, sql=TRUE,
+   hadley=FALSE, catDir=getwd(), tabDir="./tables", datDir="./data")
 {
 	bigdate = Sys.Date(); numdate = substring(gsub("-","",bigdate),3)
+	## Make sure paths are properly speciffied
+	for (i in c("catDir","tabDir","datDir")) {
+		ii = get(i)
+		if (!grepl("^\\./|^[A-Z]:", ii)) {
+			iii = paste0("./",ii)
+			assign(i, iii)
+		}
+	}
 	if (is.null(gfbdat)) {
+		sql = TRUE
 		if (isThere("PBSdat")) rm(PBSdat) ## remove from current environment
 		## GFBioSQL catch summary for surveys
-		getData("gfb_rcatORF.sql",dbName="GFBioSQL",strSpp=strSpp,path=spath,,tenv=penv())
-		assign("gfbdat",PBSdat)
-		save("gfbdat",file="gfbdat.rda")
-		if (file.exists(tabDir))
+		getData("gfb_rcatORF.sql", dbName="GFBioSQL", strSpp=strSpp, path=spath, tenv=penv())
+		#assign("gfbdat", PBSdat)
+		zgfb = do.call('order', PBSdat)  ## Try ordering (RH: 240216): calls to SQL seem to return same records in different order.
+		gfbdat = PBSdat[zgfb,]
+		save("gfbdat", file=paste0(catDir,"/gfbdat.rda"))
+		#if (file.exists(tabDir) && tabDir!=".")
+		if (file.exists(tabDir) && tabDir!=".")
 			write.csv(gfbdat, paste0(tabDir,"/Survey-Records-",strSpp,"-",numdate,".csv"),row.names=FALSE)
-		#rcat = gfbdat # used for summaries by SSID and SVID down below
 		rm(PBSdat) ## just to be safe
+	} else if (file.exists(paste0(catDir,"/gfbdat.rda"))) {
+		load(paste0(catDir,"/gfbdat.rda"))
+	} else {
+		message("Cannot find 'gfbdat'")
+		browser(); return()
 	}
-#browser();return()
-	gfbtab = crossTab(gfbdat,c("year","major"),"catKg",hadley=hadley) # summarise catch (t)
+
+	gfbtab = crossTab(gfbdat, c("year","major"), "catKg", hadley=hadley) # summarise catch (t)
 	if (hadley){
 		gfbcat = as.data.frame(gfbtab[,-1])
 		row.names(gfbcat) = gfbtab[,1]
@@ -2910,46 +2963,48 @@ surveyCatch = function(strSpp="396", spath=.getSpath(), gfbdat=NULL,
 	}
 	data(pmfc,package="PBSdata",envir=penv())
 	names(gfbcat) = pmfc[names(gfbcat),"gmu"]
-	save("gfbcat", file=paste0(datDir,"/gfbcat.rda"))
-	if (file.exists(tabDir))
+	if (file.exists(datDir))
+		save("gfbcat", file=paste0(datDir,"/gfbcat.rda"))
+	if (file.exists(tabDir) && tabDir!=".")
 		write.csv(gfbcat, file=paste0(tabDir,"/Catch-Survey-",strSpp,"-(Year-PMFC)-",numdate,".csv"))
 
-	#getFile(gfbdat)
-	gfbdat$SVID[is.na(gfbdat$SVID)] = 999
-	gfbdat$SSID[is.na(gfbdat$SSID)] = 999
-
-	spp.svid = crossTab(gfbdat,c("SVID","year"),"catKg",hadley=hadley)
-	getData("SURVEY","GFBioSQL")
-	survey = PBSdat
-	svid = survey[[2]]; names(svid) = survey[[1]]
-	svid = c(svid,`999`="No Survey Identified")
-	if (hadley) {
-		SVID = spp.svid$SVID
-		svidcat = spp.svid[,-1]; attr(svidcat,"class") = "data.frame"
-	} else {
-		SVID =  rownames(spp.svid)
-		svidcat = as.data.frame(spp.svid)
+	## The rest is just here for table output (not critical)
+	if (sql) {
+		gfbdat$SVID[is.na(gfbdat$SVID)] = 999
+		gfbdat$SSID[is.na(gfbdat$SSID)] = 999
+	
+		spp.svid = crossTab(gfbdat, c("SVID","year"), "catKg", hadley=hadley)
+		getData("SURVEY","GFBioSQL")
+		survey = PBSdat
+		svid = survey[[2]]; names(svid) = survey[[1]]
+		svid = c(svid,`999`="No Survey Identified")
+		if (hadley) {
+			SVID = spp.svid$SVID
+			svidcat = spp.svid[,-1]; attr(svidcat,"class") = "data.frame"
+		} else {
+			SVID =  rownames(spp.svid)
+			svidcat = as.data.frame(spp.svid)
+		}
+		dimnames(svidcat)[[1]] = paste0("SVID ",SVID,": ",svid[as.character(SVID)])
+		if (file.exists(tabDir) && tabDir!=".")
+			write.csv(svidcat, file=paste0(tabDir,"/Catch-Survey-",strSpp,"-(SVID-Year)-",numdate,".csv"))
+	
+		spp.ssid = crossTab(gfbdat, c("SSID","year"), "catKg", hadley=hadley)
+		getData("SURVEY_SERIES","GFBioSQL")
+		series = PBSdat
+		ssid = series[[2]]; names(ssid) = series[[1]]
+		ssid = c(ssid,`999`="No Survey Series Identified")
+		if (hadley) {
+			SSID = spp.ssid$SSID
+			ssidcat = spp.ssid[,-1]; attr(ssidcat,"class") = "data.frame"
+		} else {
+			SSID = rownames(spp.ssid)
+			ssidcat = as.data.frame(spp.ssid)
+		}
+		dimnames(ssidcat)[[1]] = paste0("SSID ",SSID,": ",ssid[as.character(SSID)])
+		if (file.exists(tabDir) && tabDir!=".")
+			write.csv(ssidcat, file=paste0(tabDir,"/Catch-Survey-",strSpp,"-(SSID-Year)-",numdate,".csv"))
 	}
-	dimnames(svidcat)[[1]] = paste0("SVID ",SVID,": ",svid[as.character(SVID)])
-	if (file.exists(tabDir))
-		write.csv(svidcat, file=paste0(tabDir,"/Catch-Survey-",strSpp,"-(SVID-Year)-",numdate,".csv"))
-
-	spp.ssid = crossTab(gfbdat,c("SSID","year"),"catKg",hadley=hadley)
-	getData("SURVEY_SERIES","GFBioSQL")
-	series = PBSdat
-	ssid = series[[2]]; names(ssid) = series[[1]]
-	ssid = c(ssid,`999`="No Survey Series Identified")
-	if (hadley) {
-		SSID = spp.ssid$SSID
-		ssidcat = spp.ssid[,-1]; attr(ssidcat,"class") = "data.frame"
-	} else {
-		SSID = rownames(spp.ssid)
-		ssidcat = as.data.frame(spp.ssid)
-	}
-	dimnames(ssidcat)[[1]] = paste0("SSID ",SSID,": ",ssid[as.character(SSID)])
-	if (file.exists(tabDir))
-		write.csv(ssidcat, file=paste0(tabDir,"/Catch-Survey-",strSpp,"-(SSID-Year)-",numdate,".csv"))
-
 	invisible(gfbcat)
 }
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~surveyCatch

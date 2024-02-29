@@ -43,8 +43,10 @@ calcMA(x, y, y2, period = 270, every = 10)
   \code{z} = the numeric cumulative sum of the x-units starting at 0.
 }
 \author{
-  Rowan Haigh, Research Biologist,\cr
-  Fisheries and Oceans Canada, Pacific Biological Station, Nanaimo BC
+  \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
+  Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
+  \emph{locus opus}: Remote office, Vancouver BC\cr
+  Last modified \code{Rd: 2024-02-27}\cr
 }
 \seealso{
   \code{\link[PBStools]{glimmer}}, 
@@ -68,4 +70,5 @@ pbsfun()
 }
 \keyword{manip}
 \keyword{smooth}
+\concept{M06_Assessment}
 

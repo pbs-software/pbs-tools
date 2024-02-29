@@ -9,7 +9,6 @@
 ##  compVB..........Compare fitted von B curves using parameters.
 ##  compVBpars......Compare MCMC derived parameters from von Bertalanffy model.
 ##  createMA........Create table of DFO management actions for Appendix A (catch).
-##  imputeRate......Impute rate of return from an investment with irregular contributions/withdrawals.
 ##  makeAgeErr......Make an ageing error matrix for Awatea.
 ##  plotAgeErr......Plot ageing precision data from primary and secondary readers.
 ##  plotBTMW........Plot bottom (BT) vs. midwater (MW) trawl catch.
@@ -195,7 +194,7 @@ calcMA = function(x,y,y2,period=270,every=10)
 #-------------------------------------------calcMA
 
 
-## compAF-------------------------------2020-04-07
+## compAF-------------------------------2024-02-29
 ## Compare age frequencies using discrete or
 ## cumulative distribution plots.
 ## ---------------------------------------------RH
@@ -231,7 +230,7 @@ compAF=function(x, year=2003, sex=2, amax=40, pfld="wp",
 		}
 #browser();return()
 		if (ntype==1 && nsex==1) {
-			rc = .findSquare(nyear)
+			rc = PBSmodelling:::.findSquare(nyear) ## .findSquare no longer exported from PBSmodelling namespace
 			np = 0  ## keep track of # plots
 			par(mfrow=rc, mar=c(0,0,0,0), oma=c(4,4,0.5,0.5), mgp=c(1.6,0.5,0))
 		} else {
@@ -314,7 +313,7 @@ compAF=function(x, year=2003, sex=2, amax=40, pfld="wp",
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~compAF
 
 
-## compBmsy-----------------------------2021-09-16
+## compBmsy-----------------------------2024-01-23
 ## Compare biomass posteriors relative to Bmsy or Bavg
 ## ---------------------------------------------RH
 compBmsy = function(Bspp, spp="POP", Mnams=c("Est M","Fix M"),
@@ -322,12 +321,12 @@ compBmsy = function(Bspp, spp="POP", Mnams=c("Est M","Fix M"),
    quants=c(0.05,0.25,0.5,0.75,0.95),
    zones = c("Critical","Cautious","Healthy"),
    figgy=list(win=TRUE), pngres=400, width=12, height=9, 
-   rcol=c("red","green4","blue"), rlty=rep(2,3), rlwd=rep(2,3), ## ratio lines: col, lty, lwd
+   rcol=c("red","green4","blue"), rlty=c(4,5,3), rlwd=rep(2,3), ## ratio lines: col, lty, lwd
    ocol = c("#D55E00", "#009E73", "#56B4E9", "#F0E442"),   ## dot cols for colour-blind humans (vermillion, bluegreen, skyblue, yellow)
    lcol = c("red","darkorange","green4"),
    spplabs=TRUE, left.space=NULL, top.space=2, fout=NULL, 
    offset=c(-0.1,0.1), calcRat=TRUE, refpt="MSY", param=NULL, 
-   boxlim=NULL, lang=c("e","f"), ...)
+   boxlim=NULL, add=FALSE, lang=c("e","f"), ...)
 {
 	oldpar = par(no.readonly=TRUE); oldpso = grDevices::ps.options()
 	ciao = function() {
@@ -365,7 +364,7 @@ compBmsy = function(Bspp, spp="POP", Mnams=c("Est M","Fix M"),
 	Bmsy = Bmsy[rev(names(Bmsy))]
 
 	if (is.null(boxlim))
-		ylim = c(ifelse(is.null(param),0,min(sapply(Bmsy,quantile,0.0))), max(sapply(Bmsy,quantile,0.96),1.1))
+		ylim = c(ifelse(is.null(param),0,min(sapply(Bmsy,quantile,0.0,na.rm=TRUE))), max(sapply(Bmsy,quantile,0.96,na.rm=TRUE),1.1))
 	else
 		ylim = boxlim
 
@@ -399,19 +398,34 @@ compBmsy = function(Bspp, spp="POP", Mnams=c("Est M","Fix M"),
 			if (is.null(left.space))
 				left.space = rep((max(nchar(names(Bmsy)))-ifelse(spplabs,nchar(spp),0))^0.9,2) ## just to be consistent with english vs. french
 			len.lab = max(sapply(names(Bmsy),nchar))                      ## RH 200420
-			cex.lab = ifelse(len.lab>20, 0.9, ifelse(len.lab>15, 1, 1.2)) ## RH 200420
-			par(mar=c(4, switch(l,'e'=left.space[1],'f'=left.space[2]), 0.5, 0.5), cex=ifelse(f%in%c("png","eps"),1,1.2), mgp=c(1.6,0.6,0))
-			quantBox(Bmsy, horizontal=TRUE, las=1, xlim=c(0.5,nmods+top.space), ylim=ylim, cex.axis=1.2, yaxs="i", outline=FALSE,
+#browser();return()
+			if (!exists("cex.lab", inherits=FALSE)) {
+				cex.lab = ifelse(len.lab>20, 0.9, ifelse(len.lab>15, 1, 1.2)) ## RH 200420
+			}
+			if (!exists("cex.axis", inherits=FALSE)) {
+				cex.axis = 1.2
+				if (add) {
+					cex.lab=1; cex.axis=1
+				}# else {
+					#par(mar=c(4, switch(l,'e'=left.space[1],'f'=left.space[2]), 0.5, 0.5), cex=ifelse(f%in%c("png","eps"),1,1.2), mgp=c(1.6,0.6,0))
+				#}
+			}
+			par(mar=c(3, switch(l,'e'=left.space[1],'f'=left.space[2]), 0.5, 0.5), cex=ifelse(f%in%c("png","eps"),1,1.2), mgp=c(1.6,0.6,0))
+#browser();return()
+			quantBox(Bmsy, horizontal=TRUE, las=1, xlim=c(0.5,nmods+top.space), ylim=ylim, cex.axis=cex.axis, yaxs="i", outline=FALSE,
 				pars=list(boxwex=boxwidth,medlwd=2,whisklty=1), quants=quants, names=FALSE)
 			if (Nrats>0)
 				abline(v=ratios,col=rep(rcol,Nrats)[1:Nrats],lty=rlty,lwd=rlwd)
 	
 			## segments(v=ratios,col=rep(c("red","green4","blue"),Nrats)[1:Nrats],lty=2,lwd=2)
-			quantBox(Bmsy, horizontal=TRUE, las=1, xlim=c(0.5,nmods+1), ylim=ylim, cex.axis=1.2, yaxs="i", outline=FALSE, names=FALSE, pars=list(boxwex=boxwidth, medlwd=2, whisklty=1, medcol=medcol, boxfill=boxfill, ...), add=TRUE, quants=quants)
+			quantBox(Bmsy, horizontal=TRUE, las=1, xlim=c(0.5,nmods+1), ylim=ylim, cex.axis=cex.axis, yaxs="i", outline=FALSE, names=FALSE, pars=list(boxwex=boxwidth, medlwd=2, whisklty=1, medcol=medcol, boxfill=boxfill, ...), add=TRUE, quants=quants)
 			## if (length(Bmsy)==1)  ## for some reason, a label is not added when there is only 1 boxplot.
 			##	axis(2, at=1, labels=linguaFranca(names(Bmsy),l), las=1, cex.axis=1.2)
+			ylabs = linguaFranca(names(Bmsy),l)
 #browser();return()
-			axis(2, at=1:length(Bmsy), labels=linguaFranca(names(Bmsy),l), las=1, cex.axis=cex.lab) ## RH 200420
+			if(all(grepl("^Subarea",names(Bmsy))) && l=="f")  ## specific to POP 2023 FSAR Fig.4
+				ylabs = sub("-","-\n",ylabs)
+			axis(2, at=1:length(Bmsy), labels=ylabs, las=1, cex.axis=cex.axis) ## RH 200420|231108
 
 			if (Norats>0){
 				orange = attributes(oratios)$range
@@ -441,7 +455,6 @@ compBmsy = function(Bspp, spp="POP", Mnams=c("Est M","Fix M"),
 				#)
 			}
 
-#browser();return()
 			if (!is.null(ratios) && !is.null(zones)) {
 				#y2 = par()$usr[4] - 0.2*diff(par()$usr[3:4])
 				#text(c(0.2,0.6,1.2),rep(y2,3),c("Critical","Cautious","Healthy"),col=c("red","darkorange","green4"),font=2,cex=1.1,srt=90,adj=c(0,0.5))
@@ -454,15 +467,17 @@ compBmsy = function(Bspp, spp="POP", Mnams=c("Est M","Fix M"),
 				}
 			}
 			if (!is.null(ratios)) {
+				ratios = ratios[!is.na(ratios)]
 				#text(c(ratios,oratios),par()$usr[3],labels=show0(round(c(ratios,oratios),2),2),adj=c(1.1,-.5),col=c("red","green4",ocol))
 				text(c(ratios),par()$usr[3],labels=show0(round(ratios,2),2),adj=c(1.1,-.5),col=rcol)
 			}
 			if (is.null(param)) {
-				mess = paste0("mtext(expression(italic(B)[", t.yr, "]/italic(B)[",linguaFranca(refpt,l),"]),side=1,line=2.5,cex=1.5)")
+				mess = paste0("mtext(expression(italic(B)[", t.yr, "]/italic(B)[",linguaFranca(refpt,l),"]),side=1,line=2,cex=", sub(",",".",cex.lab), ")")
 			} else {
 				mess = sapply(strsplit(param,"_"),function(x){if(length(x)==1) x else paste0("italic(",x[1],")[",x[2],"]")})
-				mess = paste0("mtext(expression(",mess,"),side=1,line=2.5,cex=2)")
+				mess = paste0("mtext(expression(",mess,"),side=1,line=2.5,cex=", sub(",",".",cex.lab), ")")
 			}
+#browser();return()
 			eval(parse(text=mess))
 			if (f!="win") dev.off()
 		} ## end f (figout) loop
@@ -472,7 +487,7 @@ compBmsy = function(Bspp, spp="POP", Mnams=c("Est M","Fix M"),
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~compBmsy
 
 
-## compLen------------------------------2020-06-16
+## compLen------------------------------2024-02-29
 ##  Compare lengths (or ages) among groups by sex.
 ##  For example, compare annual length distributions
 ##  among surveys series or commercial gears.
@@ -709,8 +724,9 @@ compLen = function(dat, strSpp, fld="len", lbin=1, sex=c(2,1),
 					wbxp   = ifelse(length(gval)==1, 0.5, 0.90/length(gval))
 					midout = ((wbxp*length(gval)/2)-wbxp/2) * c(-1,1)
 					xoff   = seq(midout[1],midout[2],length.out=length(gval))
-					pars   = list(boxwex=wbxp, whisklty=1, boxcol="gainsboro", boxfill=lucent(bxpcol[ii],0.5), medcol="black", medlwd=2)
+					pars   = list(boxwex=wbxp, whisklty=1, boxcol=ifelse(length(Idat)<5,"gainsboro",bxpcol[ii]), boxfill=lucent(bxpcol[ii],0.5), medcol="black", medlwd=2)
 					xpos   = (1:length(qbox)) + xoff[i]
+#browser();return()
 					qxy    = quantBox(qbox, outline=FALSE, pars=pars, add=TRUE, xaxt="n", at=xpos)
 					imean  = match(names(Ymean),names(Qbox))
 					#points(xpos[imean],Ymean,pch=21,col=bxpcol[i],bg="white",cex=0.8)
@@ -719,14 +735,16 @@ compLen = function(dat, strSpp, fld="len", lbin=1, sex=c(2,1),
 			}) ## end i (index) loop
 			mtext(linguaFranca(ifelse(fld %in% c("len"), "Length (cm)", "Age (y)"),l), side=2, line=2.25, cex=1.5, las=0)
 			yleg = ifelse(fld=="age" && gfld=="SSID", 0.9, 0.05)
-			addLabel(0.025, yleg, linguaFranca(paste0(spp3, " ",switch(s,"Males","Females")),l), cex=1.2, adj=c(0,0))
+			addLabel(0.025, yleg, linguaFranca(paste0(spp3, " ",switch(s,"males","females")),l), cex=1.2, adj=c(0,0))
 			if (par()$mfg[1]==1) {
 				leglab = gsub("_"," ",ssnames)
 				#leglab = gsub("_"," ",ssnames[names(gval)])
-				addLegend(legpos[1], legpos[2], bty="n", fill=lucent(bxpcol[names(gval)],0.5), border="gainsboro", legend=linguaFranca(leglab,l), xjust=0, yjust=1)
+				leg.fill = lucent(bxpcol[names(gval)],0.5)
+				leg.border = if (length(Idat)<5) "gainsboro" else bxpcol[names(gval)]
+				addLegend(legpos[1], legpos[2], bty="n", fill=leg.fill, border=leg.border, legend=linguaFranca(leglab,l), xjust=0, yjust=1)
 				if (gfld %in% c("gear","major") && !is.element(strSpp, c("REBS","BSR","RER"))){
 					#addLabel(0.975, 0.95, txt=linguaFranca( sub("bioDat","",datnam),l), cex=1.2, adj=c(1,1))
-					data("species",package="PBSdata")
+					data("species", package="PBSdata", envir=penv())
 					addLabel(0.975, 0.95, txt=linguaFranca(toUpper(species[strSpp,"name"]),l), cex=1.2, adj=c(1,1))
 				}
 			}
@@ -2509,7 +2527,7 @@ plotAgeErr = function(dat, nsamp, xlim=NULL, ylim=NULL, jitter=0.25, seed=42,
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotAgeErr
 
 
-## plotBTMW-----------------------------2023-04-26
+## plotBTMW-----------------------------2024-02-15
 ##  Plot for bottom (BT) vs. midwater (MW) trawl catch
 ##  WHEN MC.GEAR IN ('BOTTOM TRAWL','UNKNOWN TRAWL') THEN 1
 ##  WHEN MC.GEAR IN ('TRAP') THEN 2
@@ -2518,7 +2536,7 @@ plotAgeErr = function(dat, nsamp, xlim=NULL, ylim=NULL, jitter=0.25, seed=42,
 ##  WHEN MC.GEAR IN ('LONGLINE') THEN 5
 ##  WHEN MC.GEAR IN ('LONGLINE OR HOOK AND LINE','TRAP OR LONGLINE OR HOOK AND LINE') THEN 8
 ## ---------------------------------------------RH
-plotBTMW = function(dat, strSpp="417", years=1996:2018, major=list('CST'=3:9), 
+plotBTMW = function(dat, strSpp="417", years=1996:2018, major=list('BC'=3:9), 
    glist=list(gear=c(1:4)), removeSM=FALSE, ymax,
    png=FALSE, pngres=400, PIN=c(8,6) , lang=c("e","f"))
 {
@@ -2526,27 +2544,27 @@ plotBTMW = function(dat, strSpp="417", years=1996:2018, major=list('CST'=3:9),
 #	if (!is.null(ttcall(dat.btmw)))  ## remove this rrequirement for now (just shortens processing but lessens dynamic refresh)
 #		dat = ttcall(dat.btmw)
 #	else {
-		if (removeSM) ## seamounts
-			dat    = zapSeamounts(dat)
-		else if (!is.element("seamount",flds))
-			dat = zapSeamounts(dat, only.mark=TRUE)
-		if (!is.element("year",flds))
-			dat$year = as.numeric(substring(dat$date,1,4))
-		dat = dat[is.element(dat$year, years),]
-
+	if (removeSM) ## seamounts
+		dat    = zapSeamounts(dat)
+	#else if (!is.element("seamount",flds))
+	#	dat = zapSeamounts(dat, only.mark=TRUE)
+	if (!is.element("year",flds))
+		dat$year = as.numeric(substring(dat$date,1,4))
+	dat = dat[is.element(dat$year, years),]
 		#if (strSpp %in% c("396","POP","440","YMR"))
 		#	dat = dat[is.element(dat$major_adj, unique(unlist(major))),]  ## use major_adj when summamrising YMR catdat for scaling
 		#else
-		dat = dat[is.element(dat$major, unique(unlist(major))),]
-		if (!is.element("catKg",flds))
-			dat$catKg = dat$landed + dat$discard
-		dat = dat[dat$catKg > 0,]
-		dat = calcStockArea(strSpp, dat)  ## uses expand5C but only if it has not been applied previously
-		## Fiddle for POP 2023:
-		if (strSpp %in% c("396","POP"))
-			dat$stock[is.element(dat$stock,c("5AB","5C"))] = "5ABC"
 
-		dat.btmw=dat; ttput(dat.btmw)
+	dat = dat[is.element(dat$major, unique(unlist(major))),]
+	if (!is.element("catKg",flds))
+		dat$catKg = dat$landed + dat$discard
+	dat = dat[dat$catKg > 0,]
+	## Fiddle for POP 2023:
+	if (strSpp %in% c("396","POP")) {
+		dat = calcStockArea(strSpp, dat)  ## uses expand5C but only if it has not been applied previously
+		dat$stock[is.element(dat$stock,c("5AB","5C"))] = "5ABC"
+	}
+	dat.btmw=dat; ttput(dat.btmw)
 #	}
 	gcodes = list(
 		gear   = c('0'="Unknown", '1'="Bottom_Trawl", '2'="Trap", '3'="Midwater_Trawl", '4'="Hook_&_Line", '5'="Longline", '8'="Mixed_H&L"),
@@ -2556,9 +2574,12 @@ plotBTMW = function(dat, strSpp="417", years=1996:2018, major=list('CST'=3:9),
 		stock = switch(strSpp,
 			'440'=c('UNK'="UNKNOWN", '3C'="3C", '3D5AB'="3D5AB", '5CD'="5CD", '5E'="5E"), ## YMR
 			'437'=c('UNK'="UNKNOWN", '3CD'="3CD", '5AB'="5AB", '5CD'="5CD", '5E'="5E"), ## CAR
-			'396'=c('UNK'="UNKNOWN", '5ABC'="5ABC", '3CD'="3CD", '5DE'="5DE") ## POP
-		)
+			'396'=c('UNK'="UNKNOWN", '5ABC'="5ABC", '3CD'="3CD", '5DE'="5DE"), ## POP
+			'435'=c('UNK'="UNKNOWN", 'CST'="Coastwide", '5ABC'="5ABC", '3CD'="3CD", '5DE'="5DE"), ## BOR
+			'418'=c('UNK'="Unknown", 'BC'="BC coast", '3CD'="3CD", '5ABC'="5ABC", '5DE'="5DE") ## YTR
+		) 
 	)
+	if (is.null(gcodes$stock)) {message(paste0("Need to define stocks for ", strSpp)); browser(); return() }
 #browser();return()
 
 	gtabs  = list()
@@ -2582,12 +2603,13 @@ plotBTMW = function(dat, strSpp="417", years=1996:2018, major=list('CST'=3:9),
 		}
 		gdat  = zdat[is.element(zdat[,gnam], gval),]
 
-		if (gnam=="stock")
+		if (gnam=="stock") ## fixed to one area for now
 			gtab  = crossTab(gdat, c("year",gnam), "catKg")
 		else
 			gtab  = crossTab(gdat, c("year",gnam,"stock"), "catKg")
 		narea = dim(gtab)[3]
 		if(is.na(narea)) narea = 1
+#browser(); return()
 
 		#glty  = rep(c(6,1,5,2,3,4,3),ncode)[1:ncode]
 		glty  = rep(1,ncode)
@@ -2597,9 +2619,17 @@ plotBTMW = function(dat, strSpp="417", years=1996:2018, major=list('CST'=3:9),
 		#	glty[[i]] = ilty
 		#}
 		gpch  = rep(c(4,21,22,24,25,8,6,5,3,2,1,7,9:16),ncode)[1:ncode]
-		gcol  = rep(c("black","blue","green4","red","darkgoldenrod1","purple","coral","navy",.colBlind[-1],.colGnuplot[1:5]),ncode)[1:ncode]
-		gbg   = rep(c(NA,"cyan","green","mistyrose1","yellow2",rep(NA,15)),ncode)[1:ncode]
+#		if (strSpp %in% c("396","POP")) {
+			gcol  = rep(c("black","blue","green4","red","darkgoldenrod1","purple","coral","navy",.colBlind[-1],.colGnuplot[1:5]),ncode)[1:ncode]
+			gbg   = rep(c(NA,"cyan","green","mistyrose1","yellow2",rep(NA,15)),ncode)[1:ncode]
+#		} else {
+#			gcol  = rep(c("black","purple","green4","blue","red","darkgoldenrod1","coral","navy",.colBlind[-1],.colGnuplot[1:5]),ncode)[1:ncode]
+#			gbg   = rep(c(NA,"thistle","green","cyan","mistyrose1","yellow2",rep(NA,14)),ncode)[1:ncode]
+#		}
 		names(glty) = names(gcol) = names(gpch) = names(gbg) = names(gcode)
+		acol  = c("green4","blue","red","purple","purple","black")
+		abg   = c("green","cyan","mistyrose1","thistle","lavender","gainsboro")
+		names(acol) = names(abg) = c("3CD","5ABC","5DE","BC","CST","UNK")
 #browser();return()
 
 		xlim   = range(years)
@@ -2618,21 +2648,34 @@ plotBTMW = function(dat, strSpp="417", years=1996:2018, major=list('CST'=3:9),
 			for (a in 1:narea) {
 				aa = names(major)[a]
 				atab = gtab
-				if (narea>1) atab = gtab[,,aa]
+				if (narea>1) atab = gtab[,,aa]#,drop=FALSE]
+
+				if (gnam%in%c("stock")) { icol=acol; ibg=abg }
+				else                    { icol=gcol; ibg=gbg }
 
 				ylim = c(0, ifelse(missing(ymax)||is.null(ymax), max(atab)*1.1, ymax))
 				plot(0,0, xlim=xlim, ylim=ylim, type="n", xlab="", ylab="", cex.axis=1.2)
 				axis(1, at=years, labels=FALSE, tcl=-0.25)
 				for (i in 1:ncol(atab)) {
 					ii = colnames(atab)[i]
-					lines(xval, atab[,ii], lty=glty[ii], col=gcol[ii], lwd=2 )
-					points(xval, atab[,ii], pch=gpch[ii], col=gcol[ii], bg=gbg[ii],cex=1.5)
+					#lines(xval, atab[,ii,aa], lty=glty[ii], col=gcol[ii], lwd=2 )
+					#points(xval, atab[,ii,aa], pch=gpch[ii], col=gcol[ii], bg=gbg[ii],cex=1.5)
+					lines(xval, atab[,ii], lty=glty[ii], col=icol[ii], lwd=2 )
+					points(xval, atab[,ii], pch=gpch[ii], col=icol[ii], bg=ibg[ii],cex=1.5)
 				}
 				iii = intersect(as.character(gval),colnames(gtab)) ## use names instead of numeric indices
-				ypos = if (strSpp %in% c("417") || (strSpp %in% "437" && gnam %in% c("sector","fid")))  0.50 else 0.99
+				xpos = if (strSpp %in% c("418")  && gnam %in% c("sector")) 0.99 else 0.8
+				ypos = if (strSpp %in% c("417","418") || (strSpp %in% "437" && gnam %in% c("sector","fid")))  0.45 else 0.99
 				if (a==1)
-					addLegend(0.99, ypos, lty=glty[iii], seg.len=3, lwd=2, col=gcol[iii], pch=gpch[iii], pt.bg=gbg[iii], pt.cex=1.75, legend=linguaFranca(gsub("_"," ",gleg[iii]),l), cex=1.2, xjust=1, yjust=1, bty="n")
-				addLabel(0.05, 0.95, txt=aa, adj=c(0,1), cex=1.5, col=switch(a,"blue","green4","red","purple"), font=2)
+					addLegend(xpos, ypos, lty=glty[iii], seg.len=3, lwd=2, col=icol[iii], pch=gpch[iii], pt.bg=ibg[iii], pt.cex=1.75, legend=linguaFranca(gsub("_"," ", gleg[iii]),l), cex=1.2, xjust=1, yjust=1, bty="n")
+				if (narea==1 && (.su(gdat$stock)%in%c("BC","CST") || aa%in%c("BC","CST"))) { # && strSpp %in% c('435','BOR'))
+					aaa = "BC coastwide"
+				} else {
+					aaa = aa
+				}
+#browser();return()
+				#addLabel(0.05, 0.95, txt=aaa, adj=c(0,1), cex=1.5, col=switch(aa,'3CD'="green4",'5ABC'="blue",'5DE'="red",'BC'="purple",'CST'="purple","black"), font=2)
+				addLabel(0.05, 0.95, txt=aaa, adj=c(0,1), cex=1.5, col=acol[aa], font=2) #switch(aa,'3CD'="green4",'5ABC'="blue",'5DE'="red",'BC'="purple",'CST'="purple","black"), font=2)
 
 				## Write the tables to CSV
 				colnames(atab) = gcode[colnames(atab)]
@@ -2649,6 +2692,7 @@ plotBTMW = function(dat, strSpp="417", years=1996:2018, major=list('CST'=3:9),
 #browser(); return()
 	}
 	ttput(gtabs)
+#browser();return()
 	invisible(return(gtabs))
 }
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotBTMW
@@ -2708,18 +2752,20 @@ plotMW = function(dat, xlim, ylim, outnam="Mean-Weight-Compare",
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotMW
 
 
-## plotSnail----------------------------2023-04-19
+## plotSnail----------------------------2023-11-08
 ## Plot snail-trail plots for MCMC analysis.
 ##  AME: replacing "2010" with as.character(currYear - 1)
 ##  RH: added assYrs = years past with estimated Bcurr
 ##      from previous assessment(s), e.g., 5ABC QCS c(2011, 2017)
 ##  RH 210727: Moved function to PBStools from PBSawatea
 ##  RH 230418: Modified code to accept multi-area quantiles from 'load_extra_mcmc.r'
+##  RH 230831: Added option to label select years (like Adam Langley)
 ## -----------------------------------------AME/RH
-plotSnail=function (BoverBmsy, UoverUmsy, model="SS", yrs=1935:2022,
+plotSnail=function (BoverBmsy, UoverUmsy, model="SS", yrs=1935:2023,
    p=c(0.05,0.95), xLim=NULL, yLim=NULL, Lwd=1.5, ngear=1,
-   Cnames, assYrs=NULL, outs=FALSE,         ## outs = outliers
-   ptypes="win", pngres=400, PIN=c(8,6), outnam, lang="e")
+   Cnames, assYrs=NULL, outs=FALSE, labYrs=NULL,  ## outs = outliers
+   ptypes="win", pngres=400, PIN=c(8,6), onepanel=TRUE, subarea, add=FALSE,
+   outnam, lang="e")
 {
 	if (missing(Cnames))
 		Cnames  = tcall("PBStools")$Cnames        ## names of commercial gear
@@ -2729,24 +2775,28 @@ plotSnail=function (BoverBmsy, UoverUmsy, model="SS", yrs=1935:2022,
 		else
 			Cnames = "Some fishery"
 	}
-	ngear = length(Cnames)
+	if (ngear!=length(Cnames))
+		stop(paste0("Need ", ngear, " Cnames"))
+	#ngear = length(Cnames)  ## can be co-opted by subareas in place of gear
 	narea = 1
 	areas = "BC coastwide"
 	isQ   = FALSE
+	## Subareas only come into play if they are presented as a list of quantiles
 	if(is.list(BoverBmsy) && length(BoverBmsy)<=5) {
 		narea = length(BoverBmsy)
 		areas = names(BoverBmsy)
-		isQ   = TRUE  ## qantiles supplied insted of raw numbers
+		isQ   = TRUE  ## quantiles supplied insted of raw numbers
 	}
 	if (model=="SS" && narea==1){
 		ngear = 1  ## SS does not seem to report separate F for each fishery (unless create separate Report files in MCMC eval)
 		#Cnames = paste0(Cnames, collapse="+")
 		#Cnames = paste(unique(unlist(strsplit(Cnames, " "))),collapse="")  ## doesn't really matter
 		Cnames = paste0(sapply(strsplit(Cnames,split="\\s+"),function(x){x[1]}),collapse="+")
-	}
-	if (narea==1) {
+	#}
+	#if (narea==1) {
 		## BU -- B = spawning biomass, U = harvest rate (or exploitation rate)
 		BUlist = as.list(0:ngear); names(BUlist)=c("Spawning Biomass",Cnames[1:ngear])
+#browser();return()
 		colnames(BoverBmsy) = sub("^.+_","",colnames(BoverBmsy))
 		colnames(UoverUmsy) = sub("^.+_","",colnames(UoverUmsy))
 		## Awatea -- previous conversation with PJS: we both agree that B2021/Bmsy should be paired with u2020/Umsy
@@ -2793,15 +2843,16 @@ plotSnail=function (BoverBmsy, UoverUmsy, model="SS", yrs=1935:2022,
 				BUlist[[g+1]] = gfile[,1:ncol(BUlist[[1]])] ## SS has same lengths of B and u
 		}
 	}
+#browser();return()
 	# Calculate medians to be plotted
 	if (isQ) {
 		BUmed = lapply(BUlist, function(x) { x["50%",] })
 	} else {
 		BUmed    = lapply(BUlist,function(x){apply(x,2,median,na.rm=TRUE)})  # median each year
 	}
-
 	colPal   = colorRampPalette(c("grey90", "grey30"))
 	if (narea==1) {
+		colAreas = "brown"
 		colDots  = list( colorRampPalette(c("slategray2", "slategray4")), colorRampPalette(c("thistle2", "thistle4")), colorRampPalette(c("rosybrown2", "rosybrown4")) )  ## (RH 210727)
 		colSlime = rep(c("slategray3","thistle","rosybrown"),ngear)[1:ngear]  ## RH 200528|230418
 		colStart = rep(c("green","yellowgreen","limegreen"),ngear)[1:ngear]
@@ -2810,11 +2861,12 @@ plotSnail=function (BoverBmsy, UoverUmsy, model="SS", yrs=1935:2022,
 		colAss   = rep(c("gold","orange","yellow"),ngear)[1:ngear]
 	} else {
 		## Colours chosen for areas 5ABC, 3CD, and 5DE for POP 2023 assessment
-		colDots  = list( colorRampPalette(c("powderblue", "blue")), colorRampPalette(c("palegreen", "green3")), colorRampPalette(c("lightpink", "red")) )  ## (RH 210727)
+		colAreas = c("blue","darkgreen","red")  ## RH 231115
+		colDots  = list( colorRampPalette(c("powderblue", colAreas[1])), colorRampPalette(c("palegreen", colAreas[2])), colorRampPalette(c("lightpink", colAreas[3])) )  ## (RH 210727)
 		colSlime = rep(c("powderblue","palegreen","lightpink"),ngear)[1:ngear]  ## RH 200528|230418
 		colStart = rep(c("aliceblue","honeydew","mistyrose"),ngear)[1:ngear]
-		colStop  = rep(c("cyan","greenyellow","pink"),ngear)[1:ngear]  #,"cyan"
-		colLim   = rep(c("blue","green4","red"),ngear)[1:ngear]
+		colStop  = rep(c("cyan","greenyellow","pink"),ngear)[1:ngear]
+		colLim   = rep(colAreas,ngear)[1:ngear]
 		colAss   = rep(c("gold","orange","yellow"),ngear)[1:ngear]
 	}
 	nB = length(BUmed[[1]])
@@ -2857,7 +2909,10 @@ plotSnail=function (BoverBmsy, UoverUmsy, model="SS", yrs=1935:2022,
 			clearFiles(paste0(fout,".wmf"))
 			do.call("win.metafile", list(filename=paste0(fout,".wmf"), width=PIN[1], height=PIN[2]))
 		}
-		expandGraph(mfrow=c(1,1), mar= c(3.5,3.5,1,1), mgp=c(2,0.5,0))
+
+		rc = if (onepanel || (!missing(subarea) && length(subarea)==1)) c(1,1) else PBSmodelling:::.findSquare(narea)
+		if (!add)
+			expandGraph(mfrow=rc, mar=c(3.5,3.5,1,1), oma=c(0,0,0,0), mgp=c(2,0.5,0))
 
 		xlab = switch(l, 'e'=expression(paste(italic(B[t])/italic(B)[MSY])),   'f'=expression(paste(italic(B[t])/italic(B)[RMD])) )
 		ylab = if (model %in% c("AW","Awatea","SS"))
@@ -2865,24 +2920,27 @@ plotSnail=function (BoverBmsy, UoverUmsy, model="SS", yrs=1935:2022,
 		else
 			switch(l, 'e'=expression(paste(italic(u[t])/italic(u)[MSY])), 'f'=expression(paste(italic(u[t])/italic(u)[RMD])) )
 
-		plot(0,0, xlim=xLim, ylim=yLim, type="n", xlab=xlab, ylab=ylab, cex.lab=1.25, cex.axis=1.0, las=1)
-		abline(h=1, col=c("grey20"), lwd=2, lty=3)
-		abline(v=c(0.4,0.8), col=c("red","green4"), lwd=2, lty=2)
-		for (i in ngear:1) {
+		startPlot <- function () {
+			plot(0,0, xlim=xLim, ylim=yLim, type="n", xlab=xlab, ylab=ylab, cex.lab=1.25, cex.axis=1.0, las=1)
+			axis(1, at=seq(0,20,0.5)[sapply(seq(0,20,0.5),function(x,y){x>y[1]&x<y[2]},y=xLim)], labels=FALSE, tick=TRUE, tcl=-0.3)
+			axis(2, at=seq(0,5,0.1)[sapply(seq(0,5,0.1),function(x,y){x>y[1]&x<y[2]},y=yLim)], labels=FALSE, tick=TRUE, tcl=-0.3)
+			abline(h=1, col=c("grey20"), lwd=2, lty=3)
+			abline(v=c(0.4,0.8), col=c("red","green4"), lwd=2, lty=c(4,2))
+		}
+		if (onepanel) startPlot()
+		ipool = if (!missing(subarea)) subarea else 1:ngear
+		for (i in ipool) {
+			if (!onepanel) startPlot()
 			ii = ifelse(narea==1,1,i)
 			iii = i + narea
+			## Trace lines and points
 			lines(BUmed[[ii]], BUmed[[iii]], col=colSlime[i], lwd=Lwd)
 			points(BUmed[[ii]], BUmed[[iii]], type="p", pch=19, col=colDots[[i]](nB)) ## (RH 210727)
-		}
-#browser();return()
-		## Use three loops to plot the trace, end-year line segments, end-year points (RH 200624)
-		for (i in ngear:1) {
-			ii = ifelse(narea==1,1,i)
-			iii = i + narea
 			xend = rev(BUmed[[ii]])[1]
 			yend = rev(BUmed[[iii]])[1]
 			xoff = ifelse(as.logical(i%%2),-1,1) * diff(par()$usr[1:2])*0.0015 ## shift final xpos +/- some small amount (RH 200624)
 			for (j in 1:length(P)) {
+				## Plot end-year quantile lines
 				q = P[[j]]
 				lty = ifelse(j==1 && outs, 3, 1)
 				lwd = ifelse(j==1 && outs, 1, 2)
@@ -2895,6 +2953,7 @@ plotSnail=function (BoverBmsy, UoverUmsy, model="SS", yrs=1935:2022,
 					xqlo = quantile(BUlist[[ii]][,nB], q[1], na.rm=TRUE)
 					xqhi = quantile(BUlist[[ii]][,nB], q[2], na.rm=TRUE)
 				}
+#browser();return()
 				#segments(xqlo, yend, xqhi, yend, col=lucent(colLim[i],0.5), lty=lty, lwd=2)
 				segments(xqlo, yend, xqhi, yend, col=colLim[i], lty=lty, lwd=2)
 				## Plot vertical (UtU0) quantile range
@@ -2908,27 +2967,40 @@ plotSnail=function (BoverBmsy, UoverUmsy, model="SS", yrs=1935:2022,
 				}
 				#segments(xend+xoff, yqlo, xend+xoff, yqhi, col=lucent(colLim[i],0.5), lty=lty, lwd=lwd)
 				segments(xend+xoff, yqlo, xend+xoff, yqhi, col=colLim[i], lty=lty, lwd=lwd)
-			}
-		}
-		for (i in ngear:1) {
-			ii = ifelse(narea==1,1,i)
-			iii = i + narea
+			} ## j loop
+			## Add start year
 			points(BUmed[[ii]][1], BUmed[[iii]][1], pch=21, col=1, bg=colStart[i], cex=1.2)  ## similar in 1935 for all areas because we use prop B0 to allocate MSY
 			xend = rev(BUmed[[ii]])[1]
 			yend = rev(BUmed[[iii]])[1]
 			xoff = ifelse(as.logical(i%%2),-1,1) * diff(par()$usr[1:2])*0.0015 ## shift final xpos +/- some small amount (RH 200624)
-			if (!is.null(assYrs))
-				points(BUmed[[ii]][as.character(assYrs)], BUmed[[iii]][as.character(assYrs)], pch=21, col=1, bg=colAss[i], cex=1.2)
-			points(xend+xoff, yend, pch=21, col=colLim[i], bg=colStop[i], cex=1.5, lwd=2)
-		}
-		if (ngear>1)
-			addLegend(0.95, 0.95, legend=linguaFranca(Cnames,l), lty=1, lwd=Lwd, col=colLim, seg.len=4, xjust=1, bty="n", cex=1)
-		if (model=="SS" && !isQ && sum(is.bad)>0)
-			addLabel(0.95, 0.90, txt=linguaFranca(paste0("dropped ",sum(is.bad)," samples"),l), adj=c(1,0), cex=1)
-		box()
+			## Add assessment year
+			if (!is.null(assYrs)) { # && !isQ) 
 #browser();return()
+				#points(BUmed[[ii]][as.character(assYrs)], BUmed[[iii]][as.character(assYrs)], pch=21, col=1, bg=colAss[i], cex=1.2)
+				points(BUmed[[ii]][as.character(assYrs)], BUmed[[iii]][as.character(assYrs-ifelse(model=="AW",1,0))], pch=21, col=1, bg=colAss[i], cex=1.2)
+			}
+			points(xend+xoff, yend, pch=21, col=colLim[i], bg=colStop[i], cex=1.5, lwd=2)
+
+			if (ngear>1 && onepanel)
+				addLegend(0.95, 0.975, legend=linguaFranca(Cnames,l), lty=1, lwd=Lwd, col=colLim, seg.len=4, xjust=1, bty="n", cex=1)
+			if (ngear>1 && !onepanel)
+				addLabel(0.5, 0.95, txt=linguaFranca(Cnames[i],l), col=colLim[i], adj=c(0.5,0), cex=1.2)
+			if (model=="SS" && !isQ && sum(is.bad)>0)
+				addLabel(0.95, 0.90, txt=linguaFranca(paste0("dropped ",sum(is.bad)," samples"),l), adj=c(1,0), cex=1)
+			if (!is.null(labYrs)) {
+				ipos = sapply(BUmed, function(x,i) {ii=as.character(i); return(x[ii]) }, i=labYrs)
+				#text(ipos[,1], ipos[,2], rownames(ipos), col="brown", cex=0.8, pos=1, offset=0.2)
+				jpool = if (onepanel) 1:narea else i
+				for (jj in jpool) {
+					jjj = jj + narea
+					text(ipos[,jj], ipos[,jjj], rownames(ipos), col=ifelse(onepanel,colAreas[jj],"grey20"), cex=0.8, pos=1, offset=0.2)
+				} ## end jpool
+			} ## end year labels
+		} ## end ipool
+		box()
 		if (any(ptypes %in% c("eps","png","wmf"))) dev.off()
 	}; eop()
+#browser();return()
 }
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotSnail
 

@@ -80,7 +80,7 @@ collectFigs = function(path=".", ext="eps", is.fnum=FALSE,
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~collectFigs
 
 
-## formatCatch--------------------------2021-04-27
+## formatCatch--------------------------2023-07-24
 ## Format a numeric table so that each cell 
 ## displays N significant figures in character format.
 ## Arguments:
@@ -120,31 +120,50 @@ formatCatch = function(dat, N=3, X=0, zero="0", na="---",
 	}
 	# When user wants to convert all columns
 	if (is.null(X) || all(X==0)) X = -(1:ncol(dat))
+#browser();return()
 	# Check for character columns and exclude
-	strcol=sapply(dat[,-(X)],is.character)
-	if (any(strcol)) X = match(TRUE,strcol)
+	strcol = sapply(dat[,-(X)],is.character)
+	if (any(strcol)) X = grep(TRUE,strcol)  ## (RH 230731)
 	
 	# Detect, remember, and remove negative signs
 	nadat  = is.na(dat[,-(X),drop=FALSE])
 	if(use.round) {
-		zdat = dat[,-(X),drop=FALSE]==0 & !is.na(dat[,-(X),drop=FALSE])
-		cdat = dat
-		cdat[,-(X)][!nadat] = show0(round(cdat[,-(X)][!nadat],N),N,add2int=!exInt)
+		cdat = dat[,-(X),drop=FALSE] 
+		#zdat = dat[,-(X),drop=FALSE]==0 & !is.na(dat[,-(X),drop=FALSE])
+		zdat = cdat==0 & !is.na(cdat)
+		## Attempt to deal with mixtures of catches (>0) and probabilities (<0) in decision tables (RH 230724)
+		z1000 = abs(cdat) >= 1000.
+		if (any(z1000)) {
+			big.mark = ifelse(is.null(options()$big.mark), ",", options()$big.mark)
+			c1000 = formatC(round(cdat[z1000],0), digits=0, format="fg", big.mark=big.mark)  ## converts big numbers to integers
+		}
+		#cdat[,-(X)][!nadat] = show0(round(cdat[,-(X)][!nadat],N), N, add2int=!exInt)
+		cdat[!nadat] = show0(round(cdat[!nadat],N), N, add2int=!exInt)
+#browser();return()
 
 		## Re-label small values that look like 0 when rounded and big (100%) values that look like 1
-		zsmall = dat[,-(X)]>0 & cdat[,-(X)]=="0" & !is.na(dat[,-(X)])
-		zbig   = dat[,-(X)]<1 & cdat[,-(X)]=="1" & !is.na(dat[,-(X)])
-		if (any(zsmall)) cdat[,-(X)][zsmall] = paste0("<",10^(-N))
-		if (any(zbig))   cdat[,-(X)][zbig]   = paste0(">",1-10^(-N))
-		cdat[,-(X)][zdat|nadat] = zero  ## temporarily overwrite NAs as zeroes but next line adjust this.
-		cdat[,-(X)][nadat]      = na
+		zsmall = dat[,-(X)]>0 & round(dat[,-(X)],N)==0 & !is.na(dat[,-(X)])
+		zbig   = dat[,-(X)]<1 & round(dat[,-(X)],N)==1 & !is.na(dat[,-(X)])
+		#if (any(zsmall)) cdat[,-(X)][zsmall] = paste0("<",10^(-N))
+		#if (any(zbig))   cdat[,-(X)][zbig]   = paste0(">",1-10^(-N))
+		#cdat[,-(X)][zdat|nadat] = zero  ## temporarily overwrite NAs as zeroes but next line adjust this.
+		#cdat[,-(X)][nadat]      = na
+		if (any(zsmall)) cdat[zsmall] = paste0("<",10^(-N))
+		if (any(zbig))   cdat[zbig]   = paste0(">",1-10^(-N))
+		cdat[zdat|nadat] = zero  ## temporarily overwrite NAs as zeroes but next line adjust this.
+		cdat[nadat]      = na
 		## final check for NAs (usually in excluded columns X)
 		if (any(is.na(cdat)))
 			cdat[is.na(cdat)] = na
-		return(cdat)
+		if (any(z1000))
+			cdat[z1000] = c1000
+		dat[,-(X)] = cdat
+#browser();return()
+		return(dat)  ## ends 'formatCatch if using 'use.round'
 	}
 	
 	negdat = dat[,-(X),drop=FALSE] < 0 & !nadat
+#browser();return()
 	dat[,-(X)][negdat] = -dat[,-(X)][negdat]
 	if (class(dat)[1]=="cast_df") attr(dat,"class") = "data.frame"
 
@@ -157,7 +176,6 @@ formatCatch = function(dat, N=3, X=0, zero="0", na="---",
 	for (i in dnam[[2]][-(X)]) {
 		idat = cdat[,i]
 		istr = strsplit(as.character(idat),split="\\.")
-#browser();return()
 		inum = sapply(istr, function(x,N,K,zero,na){
 			if (is.na(x[1])) return(na)
 			x1 = format(round(as.numeric(x[1])),big.mark=K,trim=TRUE,scientific=FALSE)
@@ -196,6 +214,7 @@ formatCatch = function(dat, N=3, X=0, zero="0", na="---",
 	}
 	# Resore the negative sign
 	cdat[,-(X)][negdat] = paste("-",cdat[,-(X)][negdat],sep="")
+#browser();return()
 	return(cdat)
 }
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~formatCatch
@@ -275,7 +294,7 @@ splitTab = function(tab, np=3, row.names=TRUE, row.label="row", row.numeric=FALS
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~splitTab
 
 
-## texArray-----------------------------2023-06-19
+## texArray-----------------------------2023-07-24
 ## Flatten and format an array for latex output.
 ## ---------------------------------------------RH
 texArray =function(x, table.caption="My table", table.label="tab:mytable",
@@ -337,53 +356,54 @@ texArray =function(x, table.caption="My table", table.label="tab:mytable",
 			foo = foo[,order(colnames(foo))]
 		}
 		if (add.header.column) {
-			if (!is.null(new.header))
+			if (!is.null(new.header)) {
 				c1 = new.header
-			else{
-			here = lenv()
-			data("pmfc", package="PBSdata", envir=here)
-			dnams = dimnames(x)[as.numeric(names(Zsort))]
-			dlist = sapply(names(dnams),function(d,dd){paste(d,dd[[d]],sep=":")},dd=dnams,simplify=FALSE)
-			names(dlist) = names(Zsort)
-			for (i in names(dlist)){ 
-				dtmp=dlist[[i]][foo[,i]]
-				if (i==names(dlist)[1]) doo=matrix(dtmp,ncol=1) else doo=cbind(doo,dtmp)
-			}
-			c1 = apply(doo,1,paste,collapse=" ")
-			c1 = gsub("ttype:14","Com",c1,fixed=TRUE)
-			c1 = gsub("ttype:1|4","Com",c1,fixed=TRUE)
-			c1 = gsub("ttype:23","R/S",c1,fixed=TRUE)
-			c1 = gsub("ttype:2|3","R/S",c1,fixed=TRUE)
-			c1 = gsub("ttype:1","Com.Unob",c1,fixed=TRUE)
-			c1 = gsub("ttype:2","Surv.Res",c1,fixed=TRUE)
-			c1 = gsub("ttype:3","Surv.Cht",c1,fixed=TRUE)
-			c1 = gsub("ttype:4","Comm.Obs",c1,fixed=TRUE)
 #browser();return()
-			c1 = gsub("area:major_","PMFC ",c1,fixed=TRUE)
-			c1 = gsub("area:major","PMFC ",c1,fixed=TRUE)
-			lablist = strsplit(c1," ")
-			c1 = sapply(lablist,function(x){
-				if (any(x=="PMFC")){
-					z=grep("|",x,fixed=TRUE)
-					if(length(z)>0)
-						p=pmfc[strsplit(x[z],"|",fixed=TRUE)[[1]],"gmu"]
-					else{
-						z=grep("PMFC",x)+1
-						p=pmfc[strsplit(x[z],"")[[1]],"gmu"]
-					}
-#browser();return()
-					labmat=matrix(unlist(strsplit(p,"")),ncol=2,byrow=TRUE)
-					labor=split(labmat[,2],labmat[,1])
-					x[z]=paste(paste(names(labor),sapply(labor,paste,collapse=""),sep=""),collapse="+")
-					paste(x,collapse=" ")
+			} else {
+				here = lenv()
+				data("pmfc", package="PBSdata", envir=here)
+				dnams = dimnames(x)[as.numeric(names(Zsort))]
+				dlist = sapply(names(dnams),function(d,dd){paste(d,dd[[d]],sep=":")},dd=dnams,simplify=FALSE)
+				names(dlist) = names(Zsort)
+				for (i in names(dlist)){ 
+					dtmp=dlist[[i]][foo[,i]]
+					if (i==names(dlist)[1]) doo=matrix(dtmp,ncol=1) else doo=cbind(doo,dtmp)
 				}
-				else x }
-			)
-			c1 = gsub("PMFC ","",c1,fixed=TRUE)
-			c1 = gsub("3CD+5ABCDE","Coast",c1,fixed=TRUE)
-			c1 = gsub("stat:Ntid","Number of trips",gsub("stat:Scat","Sample catch (t)",gsub("stat:Fcat","Fisheries catch (t)",c1)))
+				c1 = apply(doo,1,paste,collapse=" ")
+				c1 = gsub("ttype:14","Com",c1,fixed=TRUE)
+				c1 = gsub("ttype:1|4","Com",c1,fixed=TRUE)
+				c1 = gsub("ttype:23","R/S",c1,fixed=TRUE)
+				c1 = gsub("ttype:2|3","R/S",c1,fixed=TRUE)
+				c1 = gsub("ttype:1","Com.Unob",c1,fixed=TRUE)
+				c1 = gsub("ttype:2","Surv.Res",c1,fixed=TRUE)
+				c1 = gsub("ttype:3","Surv.Cht",c1,fixed=TRUE)
+				c1 = gsub("ttype:4","Comm.Obs",c1,fixed=TRUE)
+				c1 = gsub("area:major_","PMFC ",c1,fixed=TRUE)
+				c1 = gsub("area:major","PMFC ",c1,fixed=TRUE)
+				lablist = strsplit(c1," ")
+				c1 = sapply(lablist,function(x){
+					if (any(x=="PMFC")){
+						z=grep("|",x,fixed=TRUE)
+						if(length(z)>0)
+							p=pmfc[strsplit(x[z],"|",fixed=TRUE)[[1]],"gmu"]
+						else{
+							z=grep("PMFC",x)+1
+							p=pmfc[strsplit(x[z],"")[[1]],"gmu"]
+						}
+#browser(	);return()
+						labmat=matrix(unlist(strsplit(p,"")),ncol=2,byrow=TRUE)
+						labor=split(labmat[,2],labmat[,1])
+						x[z]=paste(paste(names(labor),sapply(labor,paste,collapse=""),sep=""),collapse="+")
+						paste(x,collapse=" ")
+					} else {
+						x
+					}
+				})
+				c1 = gsub("PMFC ","",c1,fixed=TRUE)
+				c1 = gsub("3CD+5ABCDE","Coast",c1,fixed=TRUE)
+				c1 = gsub("stat:Ntid","Number of trips",gsub("stat:Scat","Sample catch (t)",gsub("stat:Fcat","Fisheries catch (t)",c1)))
 			}
-		}
+		}  ## end if loop (add.header.column)
 		for (k in 1:nrow(foo)) {
 			koo = foo[k,]
 			xoo = paste("x[,,",paste(koo,collapse=","),"]",sep="")
@@ -395,13 +415,14 @@ texArray =function(x, table.caption="My table", table.label="tab:mytable",
 			#	else
 			#		poo = poo[is.element(rownames(poo),select.rows),]
 			#}
-			rownames(poo)=paste(k,rownames(poo),sep="-")
+			if (!is.null(dim(poo)))
+				rownames(poo)=paste(k,rownames(poo),sep="-")
 			#bad = apply(poo,1,function(x){all(is.na(x))})
 			#poo = poo[!bad,drop=FALSE,exact=TRUE]
 			if (k==1) goo=poo
 			else      goo = rbind(goo,poo)
-		}
-	} ## end 3D+ table
+		}  ## end k loop (foo)
+	}  ## end 3D+ table
 
 	#----START making Latex crap-----------------------------
 	#texout = paste("LenWt-",strSpp,".tex",sep="")
@@ -434,15 +455,13 @@ texArray =function(x, table.caption="My table", table.label="tab:mytable",
 	else if (length(collab)==ncol(goo)) colnames(goo) = collab
 	else stop("Length of `collab` does not match number of columns")
 	#goonum = sapply(goo,function(x){grepl("numeric",class(x))}) 
-#browser();return()
 	goonum = sapply(goo, is.numeric)
 	if (any(goonum)) {
 		if (all(goonum)) X=0
 		else X = grep(FALSE,goonum)
 		if (!is.null(ignore.col))
 			X = union(X[X!=0],ignore.col)
-		goo = formatCatch(goo,N=sigdig,zero=zero,X=X,use.round=use.round,exInt=exInt)
-#browser();return()
+		goo = formatCatch(goo, N=sigdig, zero=zero, X=X, use.round=use.round, exInt=exInt)
 	}
 	colnames(goo)=collab ## sapply can screw up colnames if they are not unique
 
@@ -457,10 +476,14 @@ texArray =function(x, table.caption="My table", table.label="tab:mytable",
 	}
 	if (add.header.column) {
 		Ngroups = prod(Zsort)
-		Nsexes  = nrow(goo)/Ngroups
-		description = as.vector(matrix(c(c1,rep("",Ngroups*(Nsexes-1))),ncol=Ngroups,byrow=TRUE))
+		NrecsNg = nrow(goo)/Ngroups  ## number records per group
+		NrecsNg  = nrow(goo)/Ngroups
+		description = as.vector(matrix(c(c1,rep("",Ngroups*(NrecsNg-1))),ncol=Ngroups,byrow=TRUE))
 		goo = data.frame(description,goo,check.names=FALSE,stringsAsFactors=FALSE)
-		names(goo)[1] = ""
+		if (!is.null(new.header))
+			colnames(goo)[1] = as.character(substitute(new.header))  ## attempt to avoid blank colnames (RH 230724)
+		else 
+			colnames(goo)[1] = "group"  ## CSAP does not like blank header names
 		if (use.row.names) names(goo)[2] = name.row.names
 	}
 	ncol = dim(goo)[[2]] - as.numeric(use.row.names) - as.numeric(add.header.column)
@@ -470,11 +493,11 @@ texArray =function(x, table.caption="My table", table.label="tab:mytable",
 		keep = apply(goo,2,function(x){any(!x%in%zero & !x%in%"---" & !is.na(x))})
 		goo = goo[,keep,drop=FALSE]  ## remove 'empty' columns
 		if (exists("description")) {
-			new.head.pos = !duplicated(rep(1:Ngroups,each=Nsexes)[keep])
+			new.head.pos = !duplicated(rep(1:Ngroups,each=NrecsNg)[keep])
 			goo[new.head.pos,1] = c1
 		}
 	}
-	if (is.null(dash.delim) && L>2) {
+	if (is.null(dash.delim) && L>2 && all(N>1)) {
 		rowflag = sapply(strsplit(rownames(goo),"-"),function(x){as.numeric(x[1])})
 		rows.line = grep(1,diff(rowflag))
 	} else if (!is.null(dash.delim))
@@ -482,6 +505,7 @@ texArray =function(x, table.caption="My table", table.label="tab:mytable",
 	else
 		rows.line=NULL
 	rows.line = setdiff(rows.line,nrow(goo)) # don't draw a dashed line along the last row
+#browser();return()  ##*****TO HERE
 
 	ncol     = dim(goo)[[2]] - as.numeric(add.header.column) - as.numeric(use.row.names)
 	## Length of align is one greater than ncol(x) if x is a data.frame
@@ -511,7 +535,6 @@ texArray =function(x, table.caption="My table", table.label="tab:mytable",
 					jtmp = gsub(k,paste0("\\\\textit{",k,"}"),jtmp)
 				}
 				goo[,j] = jtmp
-#browser();return()
 			}
 		}
 	}

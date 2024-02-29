@@ -5,7 +5,7 @@
 }
 \description{
   Compare posterior distributions of biomass from MCMCs for species and model runs. 
-  Biomass can be relative to \eqn{B_{\mathrm{MSY}}}{Bmsy} or other \eqn{B} values.
+  Biomass can be relative to \eqn{B_{\text{MSY}}}{Bmsy} or other \eqn{B} values.
 }
 \usage{
 compBmsy(Bspp, spp="POP", Mnams=c("Est M","Fix M"),
@@ -13,20 +13,20 @@ compBmsy(Bspp, spp="POP", Mnams=c("Est M","Fix M"),
    quants=c(0.05,0.25,0.5,0.75,0.95),
    zones = c("Critical","Cautious","Healthy"),
    figgy=list(win=TRUE), pngres=400, width=12, height=9, 
-   rcol=c("red","green4","blue"), rlty=rep(2,3), rlwd=rep(2,3),
+   rcol=c("red","green4","blue"), rlty=c(4,5,3), rlwd=rep(2,3),
    ocol = c("#D55E00", "#009E73", "#56B4E9", "#F0E442"),
    lcol = c("red","darkorange","green4"),
    spplabs=TRUE, left.space=NULL, top.space=2, fout=NULL, 
    offset=c(-0.1,0.1), calcRat=TRUE, refpt="MSY", param=NULL, 
-   boxlim=NULL, lang=c("e","f"), ...)
+   boxlim=NULL, add=FALSE, lang=c("e","f"), ...)
 }
 \arguments{
   \item{Bspp}{\code{numeric}: list of species MCMC results, which are lists of model runs, 
-    each listing data frames of \eqn{B_t}{Bt} and \eqn{B_\mathrm{MSY}}{Bmsy}.}
+    each listing data frames of \eqn{B_t}{Bt} and \eqn{B_\text{MSY}}{Bmsy}.}
   \item{spp}{\code{character}: species code(s) (e.g., 3-letter), which are the first-level names of \code{Bspp}.}
   \item{Mnams}{\code{character}: optional model names for the boxplots.}
-  \item{ratios}{\code{numeric}: reference levels of \eqn{B_\mathrm{MSY}}{Bmsy} (usually 0.4 and 0.8).}
-  \item{oratios}{\code{numeric}: other reference levels (e.g., proportion of \eqn{B_\mathrm{avg}}{Bavg}; \eqn{0.4B_\mathrm{avg}\equiv0.4B_0}{0.4Bvag~0.4B0}).}
+  \item{ratios}{\code{numeric}: reference levels of \eqn{B_\text{MSY}}{Bmsy} (usually 0.4 and 0.8).}
+  \item{oratios}{\code{numeric}: other reference levels (e.g., proportion of \eqn{B_\text{avg}}{Bavg}; \eqn{0.4B_\text{avg}\equiv0.4B_0}{0.4Bvag~0.4B0}).}
   \item{t.yr}{\code{numeric} year that represents the time period for \eqn{B_t}{Bt}.}
   \item{quants}{\code{numeric}: vector of 5 quantiles that define the boxplot --\cr
     low whisker, box bottom, box middle, box top, high whisker.}
@@ -47,6 +47,7 @@ compBmsy(Bspp, spp="POP", Mnams=c("Est M","Fix M"),
   \item{refpt}{\code{character}: reference point subscript to appear in legend (e.g. \code{'MSY'}).}
   \item{param}{\code{character}: parameter name (e.g. \code{'M_2'}) if comparing parameter estimates instead of stock status ratios.}
   \item{boxlim}{\code{numeric}: horizontal boxplot limits to override \code{ylim} (which looks like \code{xlim}), useful for parameter comparisons.}
+  \item{add}{\code{logical} -- if \code{TRUE}, add plot to a previously generated plot}
   \item{lang}{\code{character} -- a vector of letters that denote the language for output:
     currently only \code{'e'} (english) and \code{'f'} (french).}
   \item{\dots}{additional values for \code{\link[PBStools]{quantBox}}'s argument \code{pars}.}
@@ -77,8 +78,8 @@ compBmsy(Bspp, spp="POP", Mnams=c("Est M","Fix M"),
 
   The function creates a set of horizontal boxes delimited by the 
   quantiles (0.05, 0.25, 0.50, 0.75, 0.95) that illustrate the posterior
-  MCMC samples of biomass relative to \eqn{B_\mathrm{MSY}}{Bmsy}. The default 
-  reference points (0.4\eqn{B_\mathrm{MSY}}{Bmsy} and 0.8\eqn{B_\mathrm{MSY}}{Bmsy}) are 
+  MCMC samples of biomass relative to \eqn{B_\text{MSY}}{Bmsy}. The default 
+  reference points (0.4\eqn{B_\text{MSY}}{Bmsy} and 0.8\eqn{B_\text{MSY}}{Bmsy}) are 
   shown by vertical dashed lines.
 }
 \value{
@@ -87,8 +88,8 @@ compBmsy(Bspp, spp="POP", Mnams=c("Est M","Fix M"),
 \author{
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
-  \emph{locus opus}: Regional Headquarters (RHQ), Vancouver BC\cr
-  Last modified \code{Rd: 2023-02-10}
+  \emph{locus opus}: Remote office, Vancouver BC\cr
+  Last modified \code{Rd: 2024-02-29}
 }
 \seealso{
 In package \pkg{PBStools}:\cr

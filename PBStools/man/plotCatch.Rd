@@ -27,7 +27,10 @@ plotCatch(dat="dbr.rem", flds=c("CAtrawl","UStrawl","TotalHL"),
   \code{fill} for the legend.
 }
 \author{ 
-  Rowan Haigh, Pacific Biological Station, Nanaimo BC
+  \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
+  Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
+  \emph{locus opus}: Remote office, Vancouver BC\cr
+  Last modified \code{Rd: 2024-02-27}
 }
 \examples{
 local(envir=.PBStoolEnv,expr={
@@ -42,3 +45,4 @@ pbsfun()
   \code{\link{getData}}, \code{\link{getFile}}, \code{\link{dbr.rem}}
 }
 \keyword{hplot}
+\concept{M03_Fishery}

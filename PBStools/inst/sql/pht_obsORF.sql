@@ -62,3 +62,4 @@ GROUP BY
 
 -- getData("pht_obsORF.sql","PacHarvest",strSpp="442")
 -- qu("pht_obsORF.sql",dbName="PacHarvest",strSpp="442",dummy=1997:2006)
+-- qu("pht_obsORF.sql",dbName="PacHarvest",strSpp="418",dummy=1982:2023)

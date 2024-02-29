@@ -46,8 +46,8 @@ plotAgeErr(dat, nsamp, xlim=NULL, ylim=NULL, jitter=0.25, seed=42,
 \author{
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
-  \emph{locus opus}: Institute of Ocean Sciences (IOS), Sidney BC\cr
-  Last modified \code{Rd: 2020-10-08}
+  \emph{locus opus}: Remote office, Vancouver BC\cr
+  Last modified \code{Rd: 2024-02-27}
 }
 \seealso{
   \code{\link[PBStools]{calcVB}},
@@ -65,3 +65,4 @@ plotAgeErr(dat, nsamp, xlim=NULL, ylim=NULL, jitter=0.25, seed=42,
 % R documentation directory.
 \keyword{hplot}% use one of  RShowDoc("KEYWORDS")
 \keyword{manip}% __ONLY ONE__ keyword per line
+\concept{M06_Assessment}

@@ -28,7 +28,14 @@ calcMoments(strSpp="396", survID=c(1,2,3,121,167))
   \item{moments}{List of moment calculations by strata, listed by \code{survID}.}
 }
 \author{ 
-  Norm Olsen, Pacific Biological Station, Fisheries and Oceans Canada, Nanaimo BC
+  \href{mailto:norm.olsen@dfo-mpo.gc.ca}{Norm Olsen}, Program Head -- Surveys\cr
+  Pacific Biological Station, Fisheries and Oceans Canada, Nanaimo BC
+
+  Maintainer: \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
+  Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
+  \emph{locus opus}: Remote office, Vancouver BC\cr
+  Last modified \code{Rd: 2024-02-27}\cr
+
 }
 \seealso{
   \code{\link[PBStools]{calcPMR}}, \code{\link[PBStools]{showIndices}} \cr
@@ -46,3 +53,4 @@ pbsfun()
 })
 }
 \keyword{hplot}
+\concept{M04_Survey}

@@ -25,8 +25,10 @@ splitTab(tab, np=3, row.names=TRUE, row.label="row", row.numeric=FALSE)
   A new data frame that is shorter and wider than the input table.
 }
 \author{
-  Rowan Haigh, Research Biologist,\cr
-  Pacific Biological Station, Fisheries and Oceans Canada, Nanaimo BC
+  \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
+  Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
+  \emph{locus opus}: Remote office, Vancouver BC\cr
+  Last modified \code{Rd: 2024-02-27}
 }
 \seealso{
   \code{\link[PBStools]{texArray}},
@@ -35,4 +37,4 @@ splitTab(tab, np=3, row.names=TRUE, row.label="row", row.numeric=FALSE)
   \code{\link[PBStools]{crossTab}}
 }
 \keyword{manip}
-
+\concept{M08_LaTeX}

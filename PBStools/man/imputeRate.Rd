@@ -1,6 +1,13 @@
 \name{imputeRate}
 \alias{imputeRate}
-\title{Impute Rate of Return for an Investment}
+\alias{.imputeRate.getIR}
+\alias{.imputeRate.impIR}
+\alias{.imputeRate.plotIR}
+\alias{.imputeRate.resetIR}
+\alias{.imputeRate.simIR}
+\alias{.imputeRate.trajIR}
+
+\title{GUI: Impute Rate of Return for an Investment}
 \description{
   Impute the rate of return for an investment that experiences
   regular or irregular contributions and/or withdrawals.
@@ -8,14 +15,27 @@
 \usage{
 imputeRate(qtName="Ex03_Portfolio", dbName="Examples", 
      AID=1, pathN=2, hnam=NULL) 
+
+.imputeRate.getIR()
+.imputeRate.impIR(method="MWRR")
+.imputeRate.plotIR()
+.imputeRate.resetIR()
+.imputeRate.simIR()
+.imputeRate.trajIR(x,cw,y0,r)
 }
 \arguments{
-  \item{qtName}{Name of query or table in a Microsoft ACCESS file (\code{.mdb}).}
-  \item{dbName}{Name of the Microsoft ACCESS file (\code{.mdb}).}
-  \item{AID}{Numeric specifying account ID.}
-  \item{pathN}{Numeric specifying path: \code{1} = current working directory,
+  \item{qtName}{\code{character} -- name of query or table in a Microsoft ACCESS file (\code{.mdb}).}
+  \item{dbName}{\code{character} -- name of the Microsoft ACCESS file (\code{.mdb}).}
+  \item{AID}{\code{numeric} -- account ID.}
+  \item{pathN}{\code{numeric} -- path option: \code{1} = current working directory,
     \code{2} = SQL directory \cr \code{.../library/PBStools/sql}.}
-  \item{hnam}{Name of a history file.}
+  \item{hnam}{\code{character} -- name of a history file.}
+  \item{method}{\code{character} -- rate of return method (e.g., `MWRR' = money-weighted rate of return,
+    `IRR' = internal rate of return)}
+  \item{x}{\code{numeric} -- vector of time periods (e.g., months}
+  \item{cw}{\code{numeric} -- cash flow per period (contributions, withdrawals}
+  \item{y0}{\code{numeric} -- value of portfolio at start of time period}
+  \item{r}{\code{numeric} -- internal rate of return}
 }
 \details{
   This function creates an interactive GUI that can be used
@@ -72,8 +92,19 @@ imputeRate(qtName="Ex03_Portfolio", dbName="Examples",
   \code{message}      \tab Message box area reporting results of the minimization.\cr
   }
 }
+\author{
+  \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
+  Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
+  \emph{locus opus}: Remote office, Vancouver BC\cr
+  Last modified \code{Rd: 2024-02-26}\cr
+}
 \seealso{
-  \code{\link[PBStools]{calcMA}}, \code{\link[PBStools]{glimmer}}, \code{\link[PBStools]{trend}}
+  In package \pkg{PBStools}:\cr
+    \code{\link[PBStools]{calcMA}},
+    \code{\link[PBStools]{glimmer}},
+    \code{\link[PBStools]{trend}}
 }
 \keyword{hplot}
 \keyword{optimize}
+\concept{M10_Financial}
+

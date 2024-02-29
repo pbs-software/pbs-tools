@@ -10,6 +10,55 @@ Authors: RH  = Rowan Haigh
          BK  = Brian Krishka
 ------------------------------
 
+1.43.0 (2024-02-29)  [Rcheck=T, Rbuild=T]
+  * M01_Utility.r
+    + Added more UTF codes to `convUTF' (RH 230726)
+    + Added more terms to `linguaFranca' to frenchify (RH 240214)
+    + Modified `extractPost' to accommodate POP (e.g, versions, subareas) (RH 240215)
+  * M02_Biology.r
+    + Modified `plotAdens' extensively. (RH 240103)
+    + Made small tweaks to `weightBio' (RH 240212)
+    + Modified `estOgive' -- changed variance parameters to log of variance (like Awatea and SS3) (RH 240213)
+    + Modified `calcLW' to take x- and y-field names as function arguments (RH 240214)
+    + Modified `calcVB' -- added some fixed parameters for Yellowtail Rockfish (RH 240214)
+    + Modified `histTail' -- changed default output name (RH 240214)
+  * M03_Fishery.r
+    + Added new function `tabSFW' to summarise highest-catch species from the BC commercial fishery. (RH 240228)
+  * M05_Spatial.r
+    + Modified `preferDepth' to make use of the map object (RH 230727)
+    + Made minor tweak to `calcSurficial'
+    + Debugged `findHoles' to deal with 1-row matrices. (RH 230727)
+    + Modified `plotHabitat' -- attempt to extract species code from `fnam'. (RH 230726)
+    + Tweaked `calcHabitat' in a few places. (RH 230726)
+    + Modified `plotEO' -- added new code for multiple stocks (RH 230726)
+    + Modified `clarify' to use a transformation function (RH 240124)
+  * M06_Assessment.r
+    + Modified `plotSnail' extensively
+      - added option to label select years (like Adam Langley) (RH 230831)
+      - rendered the plotting routine as a subroutine to deal with multiple areas (RH 231115)
+    + Modified `compBmsy' to deal with subareas (RH 240123)
+    + Made small tweaks to `compLen' (RH 240213)
+    + Modified `plotBTMW' to accommodate Yellowtail (RH 240215)
+  * M07_CatchRecon.r
+    + Modified `surveyCatch' extensively to accommodate changes made in `buildCatch'. (RH 240216)
+    + Introduced new argument `outnam' to `plotRecon'; changed colour for 3C. (RH 240222)
+    + Modified `buildCatch' to understand CR for Yellowtail (RH 240222)
+      - added new argument `defyrs' to specify reference years for discarding
+      - used `catDir' internally to take value from `dpath'
+      - tweaked data objects from queries `xxxdat' to be stored in catDir, and `xxxcat' to be stored in `data' directory (specific to each CR)
+      - save a swack of catch matrices to `catmat.rda' in `data', primarily to check choices in `useYRS'
+  * M08_LaTeX.r
+    + Modified `formatCatch' -- attempt to deal with mixtures of catches (>0) and probabilities (<0) in decision tables. (RH 230724)
+    + Tweaked `texArray' in numerous places. (RH 230724)
+  * M09_PJSsurvey
+    + Made minor tweak to `plotIndex'
+  * Documentation
+    + Revised the main `PBStools-package' Rd file to reflect many new functions since it was last updated. (RH 240226)
+    + Revised RH's locale from `Offsite' to `Remote office'. (RH 240226)
+    + Updated a swack of Rd documentation files. (RH 240226-29)
+      - documented dot functions that used to be hidden and conveniently beyond documentation
+      - added new Rd file for `tabSFW'
+
 1.42.3 (2023-06-14)  [Rcheck=T, Rbuild=T]
   * M01_Utility.r
     + Added new function `convUTF' to convert UTF-8 code to Unicode symbols. (RH 230613)

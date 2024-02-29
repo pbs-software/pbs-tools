@@ -37,8 +37,8 @@ formatCatch(dat, N=3, X=0, zero="0", na="---",
 \author{
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
-  \emph{locus opus}: Institute of Ocean Sciences (IOS), Sidney BC\cr
-  Last modified \code{Rd: 2021-06-14}
+  \emph{locus opus}: Remote office, Vancouver BC\cr
+  Last modified \code{Rd: 2024-02-27}
 }
 \note{
   If the input table has no \code{dimnames}, one will be added with format \cr
@@ -62,4 +62,4 @@ local(envir=.PBStoolEnv,expr={
 }
 \keyword{manip}
 \keyword{character}
-
+\concept{M08_LaTeX}

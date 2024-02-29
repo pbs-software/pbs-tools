@@ -343,7 +343,7 @@ doSynoptic = function(dat, survey, logappendflag=TRUE)
 				if (any(ibad)) {
 					itab = crossTab(vdat, c("year","group"), i, function(x){if (all(is.na(x))) NA else mean(x,na.rm=TRUE)})
 					if (all(is.na(itab))) next
-					barf = try(diag(itab[as.character(vdat$year[ibad]), as.character(vdat$group[ibad]), drop=FALSE]), silent=T)  ## (debug RH 230126)
+					barf = try(diag(itab[as.character(vdat$year[ibad]), as.character(vdat$group[ibad]), drop=FALSE]), silent=TRUE)  ## (debug RH 230126)
 					if(inherits( barf, "try-error" )) {
 						imean = try(mean(itab, na.rm=TRUE))
 						if (inherits(imean, "try-error")){
@@ -488,7 +488,7 @@ getLabels = function(file)
 	
 	## Get the strata and grouping codes directly without having to be specific in various other functions (RH 220518)
 	ugroup = .su(dat$GROUPING_CODE)
-	udeps  = GC[is.element(GC$group,ugroup),c("stratum","mindep","maxdep"),drop=F]; rownames(udeps) = ugroup
+	udeps  = GC[is.element(GC$group,ugroup),c("stratum","mindep","maxdep"),drop=FALSE]; rownames(udeps) = ugroup
 	lstrat = apply(udeps,1,function(x){paste0(x[1],":",as.numeric(x[2]),"-",as.numeric(x[3]),"m")})
 	ustrat = GC[is.element(GC$group,ugroup),"stratum"]; names(ustrat) = lstrat
 	nstrat = length(ustrat)
@@ -735,7 +735,7 @@ keepAtts =function(dat, expr, batts=c("names","row.names","class"), extras=list(
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~keepAtts
 
 
-## plotIndex----------------------------2023-02-09
+## plotIndex----------------------------2023-07-26
 ##  Plot survey index series after bootstrapping.
 ##  If type=="PJS", plot the series as mean with
 ##   bias-corrected percentile limits.
@@ -813,7 +813,8 @@ plotIndex = function(bootbomb, analytic, type="PJS", surv=ttcall(surveyname),
 			points(years, index, pch=15, col="red", cex=1.2)
 			if (length(setdiff(yrs.surv,years))>0){
 				yrs.zero = setdiff(yrs.surv,years)
-				points(yrs.zero, rep(0,length(yrs.zero)), pch="\327", col="red", cex=1.5)
+				#points(yrs.zero, rep(0,length(yrs.zero)), pch="\327", col="red", cex=1.5)
+				points(yrs.zero, rep(0,length(yrs.zero)), pch=convUTF("\\u{00D7}"), col="red", cex=1.5)
 			}
 			text(yrs.surv, rep(par()$usr[3],nyrs.surv), paste0(extra$ptows,"/",extra$ntows), cex=0.8, col="blue", pos=3)
 #browser();return()
@@ -1640,7 +1641,7 @@ restratify = function(dat, strategy, dbegin, dend, renamevar)
 
 	no.strat = is.na(dat$stratum)
 	if (any(no.strat))
-		write.csv(dat[no.strat,c(c("fe_id", "year", "set", "major") , dbegin, dend, c("group_old", "group", "stratum_old", "stratum")),drop=F], file=paste0(gsub(" ",".",ttcall(surveyname)),".restrat.drops.csv"), row.names=FALSE)
+		write.csv(dat[no.strat,c(c("fe_id", "year", "set", "major") , dbegin, dend, c("group_old", "group", "stratum_old", "stratum")),drop=FALSE], file=paste0(gsub(" ",".",ttcall(surveyname)),".restrat.drops.csv"), row.names=FALSE)
 #browser();return()
 
 #	if "$ifuse"~="" {

@@ -1,6 +1,7 @@
 -- Norm Olsen's query (greatly modified) to get top N percentage catch
 -- Modified to access GFFOS' GF_MERGED_CATCH table (RH 170613)
 -- Changed to get four gear types: 1=bottom trawl, 2=midwater trawl, 3=hook&line, 4=trap (RH 200217)
+-- Modified to alter major areas for POP and YMR (RH 230802)
 SET NOCOUNT ON
 
 @INSERT('meanSppWt.sql')  -- getData now inserts the specified SQL file assuming it's on the path specified in getData
@@ -25,7 +26,11 @@ WHERE
   --C.SPECIES_CODE  IN (@sppcode) AND
   C.SPECIES_CODE NOT IN ('004','848','849','999','XXX') AND
   --C.FISHERY_SECTOR IN ('GROUNDFISH TRAWL', 'JOINT VENTURE TRAWL', 'FOREIGN') AND -- want all fishery sectors
-  (COALESCE(C.MAJOR_STAT_AREA_CODE,'00') IN (@major) OR COALESCE(C.MINOR_STAT_AREA_CODE,'00') IN (@dummy)) AND
+  (CASE -- (RH 230802)
+    WHEN C.SPECIES_CODE  IN ('396','440') AND COALESCE(C.MAJOR_STAT_AREA_CODE,'00') IN ('09') AND COALESCE(C.MINOR_STAT_AREA_CODE,'00') IN ('34') AND COALESCE(C.LOCALITY_CODE,0) IN (1,5) THEN '07'
+    WHEN C.SPECIES_CODE  IN ('396','440') AND COALESCE(C.MAJOR_STAT_AREA_CODE,'00') IN ('06') AND COALESCE(C.MINOR_STAT_AREA_CODE,'00') IN ('08') AND COALESCE(C.LOCALITY_CODE,0) IN (6,12) THEN '07'
+    ELSE COALESCE(C.MAJOR_STAT_AREA_CODE,'00') END IN (@major)
+    OR COALESCE(C.MINOR_STAT_AREA_CODE,'00') IN (@dummy)) AND
   COALESCE(C.BEST_DEPTH,0) BETWEEN @mindep AND @maxdep AND
   (CASE
     WHEN C.GEAR IN ('BOTTOM TRAWL','UNKNOWN TRAWL') THEN 1                         -- Bottom Trawl
@@ -36,7 +41,8 @@ WHERE
   C.BEST_DATE >= '1996-02-17' -- Chose start of observer program to properly compare among all species
   --AND C.BEST_DATE <= '2020-02-17' -- To be able to reproduce for RER
   --AND C.BEST_DATE <= '2020-12-31' -- To be able to reproduce for YMR
-  AND C.BEST_DATE <= '2021-12-31' -- To be able to reproduce for CAR
+  --AND C.BEST_DATE <= '2021-12-31' -- To be able to reproduce for CAR
+  AND C.BEST_DATE <= '2023-03-31' -- To be able to reproduce for POP
 
 DECLARE @total AS FLOAT
 SET @total = (SELECT 

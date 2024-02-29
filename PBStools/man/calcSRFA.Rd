@@ -26,6 +26,15 @@ calcSRFA(major, minor=NULL, loc=NULL, subarea=FALSE)
 \value{
   A character vector specifying slope rockfish assessment areas/subreas.
 }
+\author{
+  \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
+  Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
+  \emph{locus opus}: Remote office, Vancouver BC\cr
+  Last modified \code{Rd: 2024-02-27}\cr
+}
+\seealso{ 
+  \code{\link[PBSdata]{srfa}}
+}
 \examples{
 local(envir=.PBStoolEnv,expr={
 pbsfun=function(){
@@ -36,8 +45,6 @@ pbsfun=function(){
 pbsfun()
 })
 }
-\seealso{ 
-  \code{\link[PBSdata]{srfa}}
-}
 \keyword{methods}
 \keyword{utilities}
+\concept{M05_Spatial}

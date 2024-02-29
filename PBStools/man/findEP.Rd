@@ -44,8 +44,8 @@ findEP(events, polys, maxRows=1e+08)
 \author{
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
-  \emph{locus opus}: Institute of Ocean Sciences (IOS), Sidney BC\cr
-  Last modified \code{Rd: 2019-03-22}
+  \emph{locus opus}: Remote office, Vancouver BC\cr
+  Last modified \code{Rd: 2024-02-27}
 }
 \note{
   For an event that cannot be located in any of the PolySet's polygons, the 
@@ -77,3 +77,4 @@ In \pkg{PBSdata}:\cr
 % R documentation directory.
 \keyword{manip}% use one of  RShowDoc("KEYWORDS")
 %\keyword{ ~kwd2 }% __ONLY ONE__ keyword per line
+\concept{M05_Spatial}

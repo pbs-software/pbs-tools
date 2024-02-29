@@ -33,7 +33,10 @@ zapHoles(pset)
   = data frame summarizing the holes removed.
 }
 \author{
-  Rowan Haigh, Pacific Biological Station, Nanaimo BC
+  \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
+  Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
+  \emph{locus opus}: Remote office, Vancouver BC\cr
+  Last modified \code{Rd: 2024-02-27}
 }
 \seealso{
   \code{\link[PBStools]{calcSurficial}} \cr
@@ -58,3 +61,4 @@ pbsfun()
 })
 }}
 \keyword{manip}
+\concept{M05_Spatial}

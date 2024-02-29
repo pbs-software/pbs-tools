@@ -36,10 +36,13 @@ dumpRat(strSpp="396", rats=c("alpha","beta","gamma","delta","lambda"),
   \emph{Canadian Technical Report of Fisheries and Aquatic Sciences} \bold{0000}: xx + 00 p.
 }
 \author{
-  Rowan Haigh, Pacific Biological Station, Fisheries and Oceans Canada, Nanaimo BC.
+  \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
+  Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
+  \emph{locus opus}: Remote office, Vancouver BC\cr
+  Last modified \code{Rd: 2024-02-27}
 }
 \seealso{
   \code{\link{buildCatch}}, \code{\link{dumpMod}}, \code{\link{plotRecon}}
 }
 \keyword{list}
-
+\concept{M03_Fishery}

@@ -34,13 +34,13 @@ coalesce(...)
 \href{https://www.cureffi.org/2013/05/02/r-equivalent-of-sql-coalesce/}{R equivalent of SQL coalesce}
 }
 \author{
-  \href{http://www.cureffi.org/about/}{Eric Vallabh Minikel} is on a lifelong quest to prevent prion disease.
+  \href{https://www.cureffi.org/about/}{Eric Vallabh Minikel} is on a lifelong quest to prevent prion disease.
   He is a scientist based at the Broad Institute of MIT and Harvard.
 
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
-  \emph{locus opus}: Institute of Ocean Sciences (IOS), Sidney BC\cr
-  Last modified \code{Rd: 2019-10-02}
+  \emph{locus opus}: Remote office, Vancouver BC\cr
+  Last modified \code{Rd: 2024-02-28}
 }
 \seealso{
 In package \pkg{PBStools}:\cr

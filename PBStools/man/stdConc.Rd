@@ -11,15 +11,15 @@
 stdConc(dat, nUout="mg", dUout="kg", fac=1)
 }
 \arguments{
-  \item{dat}{vector with 5 elements or a data frame with 1 row and 5 columns (labelled or not): \cr
-    \code{namt....}{numerator amount} \cr
-    \code{nunit...}{numerator unit} \cr
-    \code{damt....}{denominator amount} \cr
-    \code{dunit...}{denominator unit} \cr
-    \code{moist...}{moisture content as a proportion} }
-  \item{nUout}{character: numerator unit desired}
-  \item{dUout}{character: denominator unit desired}
-  \item{fac}{numeric: multiplicative factor (\emph{e.g.}, \code{75} for 75 mg)}
+  \item{dat}{\code{numeric} -- vector with 5 elements or a data frame with 1 row and 5 columns (labelled or not): \cr
+    \code{namt....}numerator amount\cr
+    \code{nunit...}numerator unit\cr
+    \code{damt....}denominator amount\cr
+    \code{dunit...}denominator unit\cr
+    \code{moist...}moisture content as a proportion}
+  \item{nUout}{\code{character} -- numerator unit desired}
+  \item{dUout}{\code{character} -- denominator unit desired}
+  \item{fac}{\code{numeric} --  multiplicative factor (\emph{e.g.}, \code{75} for 75 mg)}
 }
 \details{
   Note that the input object \code{dat} mixes data types (\code{numeric} 
@@ -34,8 +34,8 @@ stdConc(dat, nUout="mg", dUout="kg", fac=1)
 \author{
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
-  \emph{locus opus}: Institute of Ocean Sciences (IOS), Sidney BC\cr
-  Last modified \code{Rd: 2021-06-15}\cr
+  \emph{locus opus}: Remote office, Vancouver BC\cr
+  Last modified \code{Rd: 2024-02-29}
 }
 \note{
   The available units for combinations in the numerator and denominator are: 

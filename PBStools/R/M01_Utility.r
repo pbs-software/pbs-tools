@@ -17,7 +17,7 @@
 ##  countVec........Count number of definite vector elements (non NA) that exclude (or include) zero values.
 ##  createDSN.......Create entire suite of DSNs for the groundfish databases.
 ##  createFdir......Create a subdirectory called `french' for storing figures with French text and labels.
-##  crossTab........Use package 'reshape' to summarize z using crosstab values y.
+##  crossTab........Summarise values from a data table using one or more fields in the table.
 ##  darkenRGB.......Programmatically darken the colour of given RGB values.
 ##  expand5C........Transfer events from Moresby Gully in 5B and Flamingo Inlet/Anthony Island in 5E to PMFC 5C.
 ##  extractPost.....Extract model posteriors from three model platforms (Awatea, SS3, iSCAM) for clients.
@@ -46,6 +46,7 @@
 ##  spooler.........Spools list objects into fields of data frames.
 ##  stdConc.........Standardise a chemical concentration.
 ##  subsetFile......Subset an ASCII file every n rows (enrow).
+##  testPch.........Display plotting symbols or octal strings.
 ##  toUpper.........Capitalise first letter of each word in phrase
 ##  ttget...........Provide wrappers for PBSmodelling functions tget/tcall/tprint/tput/lisp.
 ##  wrapText........Wrap, mark and indent a long text string.
@@ -76,7 +77,7 @@
   oldDFBCV9TWVASP001="199.60.94.30"
 )
 .rgbBlind   = list(black=c(0,0,0),orange=c(230,159,0),skyblue=c(86,180,233),bluegreen=c(0,158,115),
-	yellow=c(240,228,66),blue=c(0,114,178),vermillion=c(213,94,0),redpurple=c(204,121,167))
+	yellow=c(240,228,66),blue=c(0,114,178),vermillion=c(213,94,0),redpurple=c(204,121,167), white=c(255,255,255))
 .colBlind   = sapply(.rgbBlind,function(x){rgb(x[1],x[2],x[3],maxColorValue=255)})
 .colGnuplot = c("#e41a1c","#377eb8","#4daf4a","#984ea3","#ff7f00","#ffff33","#a65628","#f781bf")
 
@@ -334,7 +335,7 @@ convFY = function(x,startM=4)
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~convFY
 
 
-## convUTF------------------------------2023-06-13
+## convUTF------------------------------2023-07-26
 ##  Convert UTF-8 strings into Unicode characters.
 ##  https://stackoverflow.com/questions/72591452/replace-double-by-single-backslash
 ##  Solution by G. Grothendieck
@@ -350,6 +351,7 @@ convUTF = function(x, guide=FALSE)
 		collection = c(
 			"1/2 one half (\u00BD) : \\u00BD",
 			"a acute      (\u00E1) : \\u00E1",
+			"a grave      (\u00E0) : \\u00E0",
 			"c cedilla    (\u00E7) : \\u00E7",
 			"e acute      (\u00E9) : \\u00E9",
 			"e circumflex (\u00EA) : \\u00EA",
@@ -360,7 +362,12 @@ convUTF = function(x, guide=FALSE)
 			"o acute      (\u00F3) : \\u00F3",
 			"o circumflex (\u00F4) : \\u00F4",
 			"u circumflex (\u00FB) : \\u00FB",
-			"u umlaut     (\u00FC) : \\u00FC"
+			"u umlaut     (\u00FC) : \\u00FC",
+			"lower mu     (\u03BC) : \\u03BC (octal \\265)",
+			"squared      (\u00B2) : \\u00B2 (octal \\262)",
+			"endash       (\u2013) : \\u2013 (octal \\226)",
+			"bullet       (\u2022) : \\u2022 (octal \\225)",
+			"multiply     (\u00D7) : \\u00D7 (octal \\327)"
 		)
 		attr(out,"guide") = collection
 		.flush.cat(paste0(collection, collapse="\n"), "\n")
@@ -489,7 +496,7 @@ createFdir = function(lang, dir=".")
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~createFdir
 
 
-## crossTab-----------------------------2019-01-28
+## crossTab-----------------------------2024-02-29
 ## Summarize z using crosstab values y.
 ## Hadley and package 'reshape' deprecated.
 ## ---------------------------------------------RH
@@ -514,8 +521,8 @@ crossTab = function(x=PBSdat, y=c("year","major"),
 		if (any(grepl("character",sapply(x[,y,drop=FALSE],class)))) {
 			i = grep("character",sapply(x[,y,drop=FALSE],class))
 			x[,y[i]] = as.data.frame(apply(x[,y[i],drop=FALSE],2,function(xx){
-				xx = .trimWhiteSpace(xx)
-				xx[is.na(xx) | xx==""] = .trimWhiteSpace(as.character(na.str))
+				xx = PBSmodelling:::.trimWhiteSpace(xx)  ## no longer exported from Namespace
+				xx[is.na(xx) | xx==""] = PBSmodelling:::.trimWhiteSpace(as.character(na.str))
 				return(xx)
 			} ))
 		}
@@ -527,7 +534,7 @@ crossTab = function(x=PBSdat, y=c("year","major"),
 		xdim = sapply(X[,y,drop=FALSE],function(xx){length(.su(xx))})
 		xnam = sapply(X[,y,drop=FALSE],function(xx){.su(xx)},simplify=FALSE)
 		Z    = array(0, dim=xdim, dimnames=xnam )
-		X$ID = apply(X[,y,drop=FALSE],1,function(x){paste0(.trimWhiteSpace(x),collapse="|")}) ## sometimes paste adds whitespace depending on format of y-values.
+		X$ID = apply(X[,y,drop=FALSE],1,function(x){paste0(PBSmodelling:::.trimWhiteSpace(x),collapse="|")}) ## sometimes paste adds whitespace depending on format of y-values.
 
 		## vector summary of x by y using func (unless func returns more than one summary value)
 		Zsum = sapply(split(X[,z],X$ID),func) #,simplify=FALSE)
@@ -619,12 +626,12 @@ expand5C = function(dat)
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~expand5C
 
 
-## extractPost--------------------------2023-02-10
+## extractPost--------------------------2024-02-15
 ##  Extract model posteriors from three model
 ##  platforms (Awatea, SS3, iSCAM) for clients.
 ## ---------------------------------------------RH
 extractPost = function(spc="BOR", stock="CST", assYr=2021, path=getwd(),
-   values="R", runs=1:3, rwts=rep(1,3), burnin=200, nmcmc=1200,
+   values="R", runs=1:3, rwts=rep(1,3), vers="", burnin=200, nmcmc=1200,
    model="Awatea", fleets="trawl", extra="forSomeone",
    proj=FALSE, projY1=2022, projY2=2023, catpol=1500)
 {
@@ -642,7 +649,7 @@ extractPost = function(spc="BOR", stock="CST", assYr=2021, path=getwd(),
 		return(out)
 	}
 	##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~qtab
-	
+
 	## getRdev---------------------------2023-01-19
 	## Adapted from Arni Magnusson's scape::importCol, specifically subfunction 'getR'
 	## ---------------------------------------AM|RH
@@ -817,30 +824,44 @@ extractPost = function(spc="BOR", stock="CST", assYr=2021, path=getwd(),
 			}
 		}
 	} ## end Awatea
+
 	else if (model %in% c("SS3")) {
 		## Stock Synthesis 3 after using 'gatherMCMCs' function
-		mcfile = max(list.files(path=path, pattern="^compo\\.[[:digit:]]+\\.rda"))
-		load(paste0(path, "/", mcfile))  ## loads list object 'compo'
-		unpackList(compo, scope="L")
+		compo.files = list.files(path=path, pattern="^compo\\.[[:digit:]]+\\.rda")
+		if (length(compo.files)>0) {
+			mcfile = max(compo.files)
+			load(paste0(path, "/", mcfile))  ## loads list object 'compo'
+			unpackList(compo, scope="L")
+		}
 		for (v in values) {
 			if (v %in% "C") {
 				crun = as.numeric(substr(path, nchar(path)-1, nchar(path)))
 				crwt = rwts[which(runs==crun)]
-				crfile = paste0(path, "/MPD.", pad0(crun,2), ".", pad0(crwt,2), "/data.", pad0(crun,2), ".", pad0(crwt,2), ".ss")
+				cver = vers[which(runs==crun)]
+				crrv = sub("\\.$","",paste0(c(pad0(crun,2),pad0(crwt,2),cver), collapse="."))
+				crfile = paste0(path, "/MPD.", crrv, "/data.", pad0(crun,2), ".", pad0(crwt,2), ".ss")
 				#crdat = r4ss::SS_readdat(crfile)
 				#crdat = SS_readdat(crfile) ## function not imported from r4ss in NAMESPACE because r4ss has a sh!tload of dependencies
-				crdat = .ss3.readdat(crfile)
+				#crdat = PBStools:::.ss3.readdat(crfile)
+				crdat = .ss3.readdat(crfile)  ## .ss3* exported from Namespace
 				crcat = crdat$catch
 				crcat = crcat[crcat$year>0,]
 				flcat = split(crcat$catch,crcat$fleet)
 				catch = do.call("cbind", lapply(flcat, data.frame, stringsAsFactors=FALSE))
 				rownames(catch) = .su(crcat$year)
 				colnames(catch) = fleets
+#browser();return()
 				write.csv(catch, paste0(spc,"-", stock,"-", assYr,"-MPD(", v, ")-", extra, ".csv"), row.names=TRUE)
 				out = crdat
 			} else {
 				if (v %in% c("B")) {
-					write.csv(avgTS[,,"Bt"], paste0(spc,"-", stock,"-", assYr,"-MCMC(", v, ")-", extra, ".csv"), row.names=TRUE)
+					if ( exists("xavgTS", inherits=FALSE) ) {
+						for (aa in dimnames(xavgTS)$area) {
+							write.csv(xavgTS[,,"B",aa], paste0(spc,"-", aa,"-", assYr,"-MCMC(", v, ")-", extra, ".csv"), row.names=TRUE)
+						}
+					} else {
+						write.csv(avgTS[,,"Bt"], paste0(spc,"-", stock,"-", assYr,"-MCMC(", v, ")-", extra, ".csv"), row.names=TRUE)
+					}
 				}
 				if (v %in% c("R")) {
 					write.csv(avgTS[,,"Rt"], paste0(spc,"-", stock,"-", assYr,"-MCMC(", v, ")-", extra, ".csv"), row.names=TRUE)
@@ -856,8 +877,15 @@ extractPost = function(spc="BOR", stock="CST", assYr=2021, path=getwd(),
 					write.csv(avgTS[,,"Rtdev"], paste0(spc,"-", stock,"-", assYr,"-MCMC(", v, ")-", extra, ".csv"), row.names=TRUE)
 				}
 				if (v %in% c("Bmsy")) {
-					Bmsy = as.data.frame(matrix(avgRP[,"Bmsy"], ncol=1, dimnames=list(rownames(avgRP), "Bmsy")))
-					write.csv(Bmsy, paste0(spc,"-", stock,"-", assYr,"-MCMC(", v, ")-", extra, ".csv"), row.names=TRUE)
+					if ( exists("xavgRP", inherits=FALSE) ) {
+						for (aa in dimnames(xavgRP)$area) {
+							Bmsy = as.data.frame(matrix(xavgRP[,"Bmsy",aa], ncol=1, dimnames=list(rownames(xavgRP), "Bmsy")))
+							write.csv(Bmsy, paste0(spc,"-", aa,"-", assYr,"-MCMC(", v, ")-", extra, ".csv"), row.names=TRUE)
+						}
+					} else {
+						Bmsy = as.data.frame(matrix(avgRP[,"Bmsy"], ncol=1, dimnames=list(rownames(avgRP), "Bmsy")))
+						write.csv(Bmsy, paste0(spc,"-", stock,"-", assYr,"-MCMC(", v, ")-", extra, ".csv"), row.names=TRUE)
+					}
 				}
 				out = compo
 			}
@@ -1227,7 +1255,7 @@ getData <-function(fqtName, dbName="PacHarvest", strSpp=NULL, server=NULL,
 			##------------------------------------------------------------
 			qnam <- paste(path,fqtName,sep="/")
 			strQ <- readLines(qnam)
-			strQ <- PBSmodelling::.trimWhiteSpace(strQ)
+			strQ <- PBSmodelling:::.trimWhiteSpace(strQ)  ## no longer exported from Namespace
 			##+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 			## 2015-10-28 -- RH added code to allow insertion of other SQL files.
 			if(any(grepl("@INSERT",strQ))) {
@@ -1577,13 +1605,14 @@ getFile <- function(..., list=character(0), path=getwd(),
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~getFile
 
 
-#getName--------------------------------2009-05-11
-# Get the names of the input object.
-# If fnam exists as a list, it returns the names of the list.
-# If fnam exists as a string vector, it returns the strings.
-# If fnam does not exist, it simply returns itself.
-#-----------------------------------------------RH
-getName=function(fnam){
+## getName------------------------------2009-05-11
+##  Get the names of the input object.
+##  If fnam exists as a list, it returns the names of the list.
+##  If fnam exists as a string vector, it returns the strings.
+##  If fnam does not exist, it simply returns itself.
+## ---------------------------------------------RH
+getName = function(fnam)
+{
 	snam = as.character(substitute(fnam))
 	penv = parent.frame(1)
 	if (any(snam==ls(envir=penv))) {
@@ -1598,8 +1627,9 @@ getName=function(fnam){
 	} else {
 		fnam = snam; type="literal"; len=1 }
 	attr(fnam,"type")=type; attr(fnam,"len")=len
-	return(fnam) }
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~getName
+	return(fnam)
+}
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~getName
 
 
 #getODBC--------------------------------2016-04-12
@@ -1723,7 +1753,7 @@ isThere = function(x, envir=parent.frame()) {
 	genv = function(){ .GlobalEnv }                # global environment
 
 
-## linguaFranca-------------------------2023-06-16
+## linguaFranca-------------------------2024-02-14
 ## Translate English phrases to French (other languages possible)
 ## for use in plotting figures with French labels.
 ## Note that 'gsub' has a limit to its nesting depth.
@@ -1869,6 +1899,7 @@ linguaFranca = function(x, lang="e", little=4, strip=FALSE, localnames=FALSE)
 				gsub("[Q][B][R]", eval(parse(text=deparse("SD\u{00C9}"))),  ## Quillback
 				gsub("[R][B][R]", "SBR",  ## Redbanded
 				gsub("[R][E][R]", eval(parse(text=deparse("SO\u{00C9}"))),  ## Rougheye
+				gsub("[R][O][L]", "FAL",  ## Rock Sole (fausse limande)
 				gsub("[R][S][R]", "SRR",  ## Redstripe
 				gsub("[S][G][R]", "SAR",  ## Silvergray
 				gsub("[S][K][R]", "SBL",  ## Shortraker
@@ -1879,7 +1910,7 @@ linguaFranca = function(x, lang="e", little=4, strip=FALSE, localnames=FALSE)
 				gsub("[Y][T][R]", "SQJ",  ## Yellowtail
 				gsub("[Y][Y][R]", "SYJ",  ## Yelloweye
 				gsub("[R][E][B][S]", eval(parse(text=deparse("SO\u{00C9}TN"))),  ## Rougheye/Blackspotted
-				xx))))))))))))))))))))
+				xx)))))))))))))))))))))
 			})
 			## Area acronyms
 			xlil = sapply(xlil, function(xx){
@@ -2111,12 +2142,12 @@ linguaFranca = function(x, lang="e", little=4, strip=FALSE, localnames=FALSE)
 #browser();return()
 			## bigger double words
 			xtwo.big = sapply(xthree, function(xx){
-				gsub("[Bb]ottom [Tt]rawl", "chalut de fond",
+				gsub("[Bb][Oo][Tt][Tt][Oo][Mm] [Tt][Rr][Aa][Ww][Ll]", "chalut de fond",
 				gsub("[Hh]arvest [Rr]ate", eval(parse(text=deparse("taux de r\u{00E9}colte"))),
 				gsub("[Rr]educe [Cc]atch", eval(parse(text=deparse("r\u{00E9}duire les prises"))),
 				gsub("[Ss]hrimp [Tt]rawl",  eval(parse(text=deparse("chalut \u{00E0} crevettes"))),
 				gsub("[Uu]nknown [Tt]rawl", "chalut inconnu",
-				gsub("[Mm]idwater [Tt]rawl", eval(parse(text=deparse("chalut p\u{00E9}lagique"))),
+				gsub("[Mm][Ii][Dd][Ww][Aa][Tt][Ee][Rr] [Tt][Rr][Aa][Ww][Ll]", eval(parse(text=deparse("chalut p\u{00E9}lagique"))),
 				gsub("[Cc]atch [Ss]trategy", eval(parse(text=deparse("strat\u{00E9}gie de prises"))),
 				gsub("[Rr]elative [Vv]alue", "valeur relative",
 				gsub("[Pp]rimary [Rr]eader", "technicien principal",
@@ -2140,10 +2171,11 @@ linguaFranca = function(x, lang="e", little=4, strip=FALSE, localnames=FALSE)
 				gsub("[Rr]elative [Ff]requency", eval(parse(text=deparse("fr\u{00E9}quence relative"))),
 				gsub("[Nn][Oo] [Dd][Aa][Tt][Aa]", eval(parse(text=deparse("pas de donn\u{00E9}es"))),
 				gsub("[Cc]umulative [Ff]requency", eval(parse(text=deparse("fr\u{00E9}quence cumulative"))),
+				gsub("[Cc]redibility [Ee]nvelope", eval(parse(text=deparse("enveloppe de cr\u{00E9}dibilit\u{00E9}"))),
 				gsub("[Tt]heoretical [Qq]uantiles", eval(parse(text=deparse("quantiles th\u{00E9}oriques"))),
 				gsub("[Pp]osterior [Dd]istribution", eval(parse(text=deparse("distribution post\u{00E9}rieure"))),
 				gsub("[Rr]ecruitment [Dd]eviation(s)?", eval(parse(text=deparse("\u{00E9}cart\\1 de recrutement"))),
-				xx)))))))))))))))))))))))))))))))
+				xx))))))))))))))))))))))))))))))))
 			})
 			## smaller double words
 #browser();return()
@@ -2159,6 +2191,7 @@ linguaFranca = function(x, lang="e", little=4, strip=FALSE, localnames=FALSE)
 				gsub("[Bb]ased [Oo]n", eval(parse(text=deparse("bas\u{00E9} sur"))),
 				gsub("[Aa]ge(\\s+)?\\(y(?:ear|r)", eval(parse(text=deparse("\u{00E2}ge (ann\u{00E9}e"))),
 				gsub("[Ee]nd [Yy]ear", eval(parse(text=deparse("ann\u{00E9}e de fin"))),
+				gsub("[Pp]er [Yy]ear", eval(parse(text=deparse("par l'ann\u{00E9}e"))),
 				gsub("[Bb]ase [Cc]ase|[Bb]ase [Rr]un", eval(parse(text=deparse("sc\u{00E9}nario de r\u{00E9}f\u{00E9}rence"))),
 				#gsub("[Bb]ase [Rr]uns", eval(parse(text=deparse("ex\u{00E9}cutions des sc\u{00E9}narios de r\u{00E9}f\u{00E9}rence"))),
 				gsub("[Bb]ase [Rr]un(s)?", eval(parse(text=deparse("simulation\\1 de r\u{00E9}f\u{00E9}rence"))),  ## Paul Marchal
@@ -2182,7 +2215,7 @@ linguaFranca = function(x, lang="e", little=4, strip=FALSE, localnames=FALSE)
 				gsub("[Pp]rojected [Cc]atch", eval(parse(text=deparse("prise projet\u{00E9}e"))),
 				gsub("[Hh]al[fv](e)? [Cc]atch", eval(parse(text=deparse("moiti\u{00E9} prise"))),
 				gsub("[Mm]ean\\([Cc][Pp][Uu][Ee])", "moyenne(cpue)",
-				xx))))))))))))))))))))))))))))))))
+				xx)))))))))))))))))))))))))))))))))
 			})
 			## single words 10 or more characters
 			xone.big = sapply(xtwo.med, function(xx){
@@ -2194,7 +2227,8 @@ linguaFranca = function(x, lang="e", little=4, strip=FALSE, localnames=FALSE)
 				gsub("[Vv]ulnerable", eval(parse(text=deparse("vuln\u{00E9}rable"))),
 				gsub("[Rr]ecruitment", "recrutement",
 				gsub("[Ss]electivity", eval(parse(text=deparse("s\u{00E9}lectivit\u{00E9}"))),
-				xx))))))))
+				gsub("[Ee]xploitation", eval(parse(text=deparse("r\u{00E9}colte"))),
+				xx)))))))))
 			})
 			## single words with 7-9 characters
 			xone.med = sapply(xone.big, function(xx){
@@ -2219,10 +2253,10 @@ linguaFranca = function(x, lang="e", little=4, strip=FALSE, localnames=FALSE)
 				gsub("[Pp]osterior", eval(parse(text=deparse("post\u{00E9}rieure"))),
 				gsub("[Pp]redicted", eval(parse(text=deparse("pr\u{00E9}dit"))),
 				gsub("[Rr]esiduals", eval(parse(text=deparse("r\u{00E9}sidus"))),
-				gsub("[Tt]riennial", "triennale",  ## survey is feminine: enqu\^{e}te triennale
 				gsub("[Ff]requency", eval(parse(text=deparse("la fr\u{00E9}quence"))),
 				gsub("[Bb]iomass(e)?", "biomasse",
 				gsub("[Ss][Yy][Nn][Oo][Pp][Tt][Ii][Cc]", "synoptique",
+				gsub("[Tt][Rr][Ii][Ee][Nn][Nn][Ii][Aa][Ll]", "triennale",   ## survey is feminine: enqu\^{e}te triennale
 				gsub("[Hh][Ii][Ss][Tt][Oo][Rr][Ii][Cc]([Aa][Ll])?", "historique",
 				xx))))))))))))))))))))))))))
 			})
@@ -2287,6 +2321,7 @@ linguaFranca = function(x, lang="e", little=4, strip=FALSE, localnames=FALSE)
 				gsub("[Uu]nsorted", eval(parse(text=deparse("non tri\u{00E9}es"))),
 				gsub("[Ss]teepness", "inclinaison de la pente",
 				gsub("[Dd]og/[Ll]in", "aig/lin",
+				gsub("[Tt]rip [Cc]ode", "code de voyage",
 				gsub("from age readers", eval(parse(text=deparse("des lecteurs d'\u{00E2}ge"))),
 				gsub("[S][B][F] [Tt]rap", "MC casier",
 				gsub("[Hh](\\_)?[Ll]rock", eval(parse(text=deparse("HLs\u{00E9}b"))),
@@ -2296,7 +2331,9 @@ linguaFranca = function(x, lang="e", little=4, strip=FALSE, localnames=FALSE)
 				gsub("[Hh][Ll](\\_|\\.| )[Rr]ock(fish)?", eval(parse(text=deparse("HL.s\u{00E9}baste"))),
 				gsub("[Ff][Ii][Ss][Hh]([Ee][Rr][Yy]|ing)", eval(parse(text=deparse("p\u{00EA}che"))),
 				gsub("[Hh](\\&|\\.)[Ll](\\_|\\.| )[Rr]ock(fish)?", eval(parse(text=deparse("H&L s\u{00E9}baste"))),
-				xx))))))))))))))))))))))))))
+				gsub("[Tt][Rr][Aa][Ww][Ll](\\s+|\\_)[Ff][Ii][Ss][Hh][Ee][Rr][Yy]", eval(parse(text=deparse("p\u{00EA}che\\1au\\1chalut"))),
+				gsub("[Mm][Ii][Dd][Ww][Aa][Tt][Ee][Rr](\\s+|\\_)[Ff][Ii][Ss][Hh][Ee][Rr][Yy]", eval(parse(text=deparse("p\u{00EA}che\\1p\u{00E9}lagique"))),
+				xx)))))))))))))))))))))))))))))
 			})
 			## single words describing biology
 			xbio = sapply(xfish, function(xx){
@@ -2329,6 +2366,7 @@ linguaFranca = function(x, lang="e", little=4, strip=FALSE, localnames=FALSE)
 				gsub("[W][C][H][G]", "COHG",
 				gsub("[W][C][V][I]", "COIV",
 				gsub("[Aa]rea\\(km", "superficie(km",
+				gsub("[Ss]ubarea(s)?", "sous-zone\\1",
 				gsub("(\\s+)?[Ii]nside", eval(parse(text=deparse(" \u{00E0} l'int\u{00E9}rieur"))),
 				gsub("(\\s+)?[Oo]utside", eval(parse(text=deparse(" \u{00E0} l'ext\u{00E9}rieur"))),
 				gsub("[Hh]ecate [Ss]trait", eval(parse(text=deparse("d\u{00E9}troit d'Hecate"))),
@@ -2341,7 +2379,7 @@ linguaFranca = function(x, lang="e", little=4, strip=FALSE, localnames=FALSE)
 				gsub("[Gg]oose [Ii]sland [Gg]ully", eval(parse(text=deparse("canyon de l'\u{00EE}le Goose"))),
 				gsub("[Qq]ueen [Cc]harlotte [Ss]ound", "bassin de la Reine-Charlotte",
 				gsub("[Qq]ueen [Cc]harlotte [Ss]trait", eval(parse(text=deparse("d\u{00E9}troit de la Reine-Charlotte"))),
-				xx))))))))))))))))))))))))
+				xx)))))))))))))))))))))))))
 			})
 			## DFO acronyms
 			xacro = sapply(xgeo, function(xx){
@@ -2351,7 +2389,7 @@ linguaFranca = function(x, lang="e", little=4, strip=FALSE, localnames=FALSE)
 				gsub("[C][C]", "PC",             ## constant catch   = prise constante
 				gsub("[M][W]", "CP",             ## midwater trawl = chalut p\'{e}lagique
 				gsub("[H][R]", "TR",             ## harvest rate   = taux de r\'{e}colte (not taux d'exploitation)
-				#gsub("[S][A]", eval(parse(text=deparse("\u{00C9}S"))),  ## stock assessment  = \'{e}valuation des stocks
+				gsub("^[S][A]", eval(parse(text=deparse("\u{00C9}S"))),  ## stock assessment  = \'{e}valuation des stocks
 				gsub("[G][M][A]", "ZGPF",        ## les zones de gestion des poissons de fond 
 				gsub("[G][M][U]", "GGPF",        ## le groupe de gestion du poisson de fond
 				gsub("[L][R][P]", "PRL",         ## point de r\'{e}f\'{e}rence limite
@@ -2362,7 +2400,8 @@ linguaFranca = function(x, lang="e", little=4, strip=FALSE, localnames=FALSE)
 				gsub("[T][R][P]", "PRC",         ## point de r\'{e}f\'{e}rence cible
 				gsub("[M][C][M][C]", "MCCM",     ## Monte Carlo \`{a} cha\^{i}ne de Markov
 				gsub("[P][M][F][C]", "CPMP",     ## Monte Carlo \`{a} cha\^{i}ne de Markov
-				xx))))))))))))))))
+				gsub("[R|S]\\+[S|R]", "R+R",     ## research + survey (relev\'{e})
+				xx))))))))))))))))))
 			})
 			## species code3 acronyms
 			xcode = sapply(xacro, function(xx){
@@ -2396,7 +2435,7 @@ linguaFranca = function(x, lang="e", little=4, strip=FALSE, localnames=FALSE)
 				gsub(" [\\&|Aa](nd)? "," et ",
 				gsub(" by ", " par ",
 				gsub(" in ", " en ",
-				gsub("(.+)? to (.+)?", eval(parse(text=deparse("\\1 \u{00E0} \\2"))),
+				gsub("([.+ ])? to ([.+ ])?", eval(parse(text=deparse("\\1 \u{00E0} \\2"))),  ## (RH 230727)
 				gsub(" but ", " mais ",
 				gsub("^no ", "pas de ",
 				gsub(" no ", " pas de ",
@@ -2407,6 +2446,7 @@ linguaFranca = function(x, lang="e", little=4, strip=FALSE, localnames=FALSE)
 				gsub("sigmaR( )?=( )?(0|1)\\.([1-9])","sigmaR\\1=\\2\\3,\\4",
 				xx)))))))))))))
 			})
+#browser();return()
 			xout[xBpos] = xbig
 		}
 		##---------END BIG/MULTIPLE WORDS---------
@@ -2506,7 +2546,7 @@ quantBox = function (x, use.cols = TRUE, ...) ## taken from boxplot.matrix
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~quantBox
 
 
-## readClog-----------------------------2023-02-10
+## readClog-----------------------------2024-02-29
 ## Read a ChangeLog file and convert it to an R list.
 ## ---------------------------------------------RH
 readClog = function(fnam)
@@ -2524,7 +2564,7 @@ readClog = function(fnam)
 	#lmod = grep("^\\s\\s[*]",cdat)
 
 	clog = list()
-	tdat = .trimWhiteSpace(cdat)         ## remove whitespace before and after text in each line
+	tdat = PBSmodelling:::.trimWhiteSpace(cdat)         ## remove whitespace before and after text in each line
 	tbrk = c(lver,length(tdat)+1)
 	for (i in 1:length(lver)) {
 		ii   = tdat[lver[i]]
@@ -2772,6 +2812,75 @@ subsetFile = function(fnam,enrow=30,header=TRUE,os=.Platform$OS.type)
 	invisible()
 }
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~subsetFile
+
+
+## testPch------------------------------2023-07-25
+## Display plotting symbols or octal strings.
+##  Note (RH 230725):
+##   Starting in R version 4.4.0, support for
+##   pch and octal strings was reduced to poo.
+## Arguments:
+##  pch      - integer specifying symbols/octals
+##  ncol     - number of columns to use
+##  grid     - logical: if TRUE, display in a grid
+##  newframe - if T, use a new graphics frame, if F, overlay
+##  octal    - logical: if T, use octal (backslash) strings
+## Transferred from PBSmodelling, where it was removed at the request of Prof Brian Ripley. (RH 231018)
+## ---------------------------------------------RH
+testPch <- function (pch=1:200, ncol=10, grid=TRUE, newframe=TRUE, octal=FALSE, ...)
+{
+	old.warn=options()$warn
+	on.exit(options(warn=old.warn))
+	options(warn=-1)
+
+	if (!is.element(ncol,c(2,5,10))) stop("Set ncol to 2 or 5 or 10")
+	if (!all(diff(pch)==1)) stop("pch vector must be a continuous increasing integer series")
+	#if (!octal && (all(pch>255) | any(pch<0))) stop("pch must be in the range 0 - 255")
+	#if (octal && (all(pch<41) | all(pch>377))) stop("pch must be in the range 41 - 377")
+	if (newframe) {
+		resetGraph(); frame(); }
+	par0 <- par(no.readonly = TRUE)
+	on.exit(par(par0))
+	npch =length(pch)
+	xlim = c(.5,ncol+.5)
+	rlim = floor((pch[c(1,npch)]-1)/ncol); yval = rlim[1]:rlim[2]
+	ylim = rev(rlim); ylim = ylim + c(.5,-.5)
+	pchy = pch[is.element(pch,seq(0,1000,ncol))]
+	if(length(pchy)<length(yval)) {
+		pchy = c(pchy,floor((pchy[length(pchy)]+ncol)/ncol)*ncol)
+	}
+	ylab = pchy - ncol
+	par(usr=c(xlim,ylim))
+	if (grid) {
+		abline(v=seq(.5,ncol+.5,1),h=seq(rlim[1]-.5,rlim[2]+.5,1),col="gainsboro")
+	}
+	old.warn=options()$warn
+	options(warn=-1)
+	for (i in pch) {
+		y = floor((i - 1)/ncol)
+		x = i - ncol * y
+		if (octal) {
+			#if (i<41 | i>377 | is.element(i,seq(9,379,10)) | is.element(i,c(90:99,190:199,290:299))) next
+			#if (i<41 | i>377 | grepl("[89]",i) | is.element(i,c(177,201,220,235))) next   # Duncan Murdoch suggested grepl("[89]",i)
+			cset = try(eval(parse(text=paste("\"\\", i, "\"", sep = ""))), silent=TRUE)
+			if (inherits(cset,"try-error") || grepl("\\\\", deparse(cset)) ) next
+			if (grepl("\\s|\\!|\\#|\\$|\\%|\\&|\\'|\\(|\\)|\\*|\\+|\\,|\\-|\\.|\\/[89]", deparse(cset)) ) next
+			if (grepl("[0-7][89]", deparse(cset)) ) next
+#.flush.cat(cset," : ", grepl("\\\\",deparse(cset)) , "\n")
+#if(i==126){browser();return()}
+			text(x, y, cset, cex=1.5, ...) 
+		}
+		else {
+			#if (i>255 || is.element(i,c(27:31,128:255)) ) next
+			points(x, y, pch = i, cex=1.5, ...)
+		}
+	}
+	mtext(as.character(1:ncol), side=1, line=.5, at=(1:ncol), cex=1.3, col="blue")
+	mtext(as.character(1:ncol), side=3, line=.4, at=(1:ncol), cex=1.3, col="blue")
+	mtext(ylab, side=2, line=1, at=yval, cex=1.3, col="red",las=1)
+	mtext(paste(ifelse(octal,"OCTAL STRINGS","PCH CHARACTERS"),"(",pch[1],"-",pch[npch],")"), side=3, line=2.2, cex=1.2)
+	invisible(yval) }
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~testPch
 
 
 #toUpper--------------------------------2012-09-19

@@ -54,7 +54,10 @@ trackBycat(strSpp="396", major=5:7, mindep=70, maxdep=441,
   \code{clrs.......} vector of colour names to distinguish the fish groups within any one bar.
 }
 \author{
-  Rowan Haigh, Pacific Biological Station, Fisheries and Oceans Canada, Nanaimo BC.
+  \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
+  Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
+  \emph{locus opus}: Remote office, Vancouver BC\cr
+  Last modified \code{Rd: 2024-02-27}
 }
 \seealso{
   \code{\link[PBStools]{getData}}, \code{\link[PBStools]{getCatch}}, \code{\link[PBStools]{buildCatch}} \cr
@@ -62,4 +65,4 @@ trackBycat(strSpp="396", major=5:7, mindep=70, maxdep=441,
 }
 \keyword{hplot}
 \keyword{array}
-
+\concept{M03_Fishery}

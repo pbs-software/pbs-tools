@@ -41,8 +41,8 @@ quantAges(bioDat, dfld="age", afld="major", tfld="year",
 \author{
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
-  \emph{locus opus}: Institute of Ocean Sciences (IOS), Sidney BC\cr
-  Last modified \code{Rd: 2019-12-11}
+  \emph{locus opus}: Remote office, Vancouver BC\cr
+  Last modified \code{Rd: 2024-02-27}
 }
 \note{
   Suggested by PJS to detect changes in age by area and over time.
@@ -57,4 +57,4 @@ quantAges(bioDat, dfld="age", afld="major", tfld="year",
 }
 % Add one or more standard keywords, see file 'KEYWORDS' in the R documentation directory.
 \keyword{hplot}% use one of  RShowDoc("KEYWORDS")
-
+\concept{M06_Assessment}

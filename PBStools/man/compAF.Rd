@@ -48,8 +48,8 @@ compAF(x, year=2003, sex=2, amax=40, pfld="wp",
 \author{
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
-  \emph{locus opus}: Institute of Ocean Sciences (IOS), Sidney BC\cr
-  Last modified \code{Rd: 2020-07-16}
+  \emph{locus opus}: Remote office, Vancouver BC\cr
+  Last modified \code{Rd: 2024-02-27}
 }
 \seealso{
 In package \pkg{PBStools}:\cr
@@ -63,4 +63,4 @@ In package \pkg{PBStools}:\cr
 % Add one or more standard keywords, see file 'KEYWORDS' in the
 % R documentation directory.
 \keyword{hplot}% use one of  RShowDoc("KEYWORDS")
-
+\concept{M06_Assessment}

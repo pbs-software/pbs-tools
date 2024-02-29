@@ -51,7 +51,7 @@ List of \code{'DF'} = optimal degrees of freedom, \code{'RSS'} = minimum residua
 }
 \references{
 Clark, W.G. and Hare, S.R. 2006.
-\href{https://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.170.6113&rep=rep1&type=pdf}{%
+\href{https://iphc.int/uploads/pdf/sr/IPHC-2006-SR083.pdf}{%
 Assessment and management of Pacific halibut: data, methods, and policy}.
 Sci. Rep. 83, International Pacific Halibut Commission, Seattle, WA.
 
@@ -62,8 +62,8 @@ Can. J. Fish. Aquat. Sci. 68(6). 1124-1138.
 \author{
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
-  \emph{locus opus}: Regional Headquarters (RHQ), Vancouver BC\cr
-  Last modified \code{Rd: 2023-02-09}
+  \emph{locus opus}: Remote office, Vancouver BC\cr
+  Last modified \code{Rd: 2024-02-28}
 }
 \seealso{
 In package \pkg{PBStools}:\cr

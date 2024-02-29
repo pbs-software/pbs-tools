@@ -27,13 +27,14 @@ buildCatch(
    useAI=FALSE,
    useGM=FALSE,
    useBG=FALSE,
-   refyrs = list(1997:2005, 1997:2005, 1997:2005, 1997:2005, 1997:2005),
+   refyrs = c(list(1996:2023), rep(list(2007:2011),4)),
    refarea=NULL,
    refgear=NULL,
    strat.gamma=FALSE,
    strat.delta=FALSE,
    depbin=100,
-   disyrs = list(1954:1995, 1986:2005, 1986:2005, 1986:2005, 1986:2005), 
+   defyrs = c(list(1997:2006), rep(list(2000:2004),4)),
+   disyrs = list(1954:1995, 1986:2005, 1986:2005, 1986:2005, 1986:2005),
    sensitivity=NULL,
    reconstruct=TRUE,
    run.name=NULL,
@@ -90,7 +91,7 @@ buildCatch(
     primarily for POP and YMR. Only works for data from GFFOS merged catch in \code{gfmdat}.}
   \item{useGM}{\code{logical} -- if \code{TRUE}, use geometric mean to average annual ratios for \code{gamma} and 
     \code{delta} only. Not used if \code{strat.gamma}, \code{strat.delta}, or \code{useBG} are \code{TRUE}.}
-  \item{useBG}{\code{logical} -- if \code{TRUE}, sample from the binomial-gamma distribution to estimate ratios \code{RRF/ORF} or code{RRF/TRF}.}
+  \item{useBG}{\code{logical} -- if \code{TRUE}, sample from the binomial-gamma distribution to estimate ratios \code{RRF/ORF} or \code{RRF/TRF}.}
   \item{refyrs}{\code{numeric} -- reference years to use when calculating \code{gamma} (e.g., \code{RRF/ORF}).}
   \item{refarea}{\code{character} -- list (by fishery) of names of files containing reference
     areas to use when calculating \code{gamma}, \code{RRF/ORF|TRF} (e.g., \code{list(`1`="refA439.trawl.csv")}).}
@@ -101,6 +102,7 @@ buildCatch(
   \item{strat.delta}{\code{logical} --if \code{TRUE}, stratify the discard numerator and 
     denominator by depth zone and weight by frequency of \code{RRF} discards > 0.}
   \item{depbin}{\code{integer} -- depth (m) bin to use for \code{strat.gamma} and \code{strat.delta}.}
+  \item{defyrs}{\code{numeric} -- reference years to use when calculating \code{delta} (discard rates).}
   \item{disyrs}{\code{numeric} -- discard years, one set for each fishery (trawl, halibut, sable, dogling, hlrock).}
   \item{sensitivity}{\code{character} -- sensitivity name for tweaking decisions.}
   \item{reconstruct}{\code{logical} -- if \code{TRUE} (default), complete the reconstruction as previously,\cr
@@ -326,8 +328,8 @@ buildCatch(
 \author{
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
-  \emph{locus opus}: Institute of Ocean Sciences (IOS), Sidney BC\cr
-  Last modified \code{Rd: 2020-10-13}
+  \emph{locus opus}: Remote office, Vancouver BC\cr
+  Last modified \code{Rd: 2024-02-29}
 }
 \references{
   Edwards, A.M., Haigh, R. and Starr, P.J. (2014a)

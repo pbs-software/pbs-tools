@@ -11,10 +11,10 @@
 ##  Ian G. Taylor, Yukio Takeuchi, Z. Teresa A'mar, 
 ##  Chris J. Grandin, Kelli F. Johnson, Chantel R. Wetzel
 ##-----------------------------------------r4ss
-.ss3.readdat = function (file, verbose = TRUE, echoall = FALSE, section = NULL) 
+.ss3.readdat = function (file, verbose=TRUE, echoall=FALSE, section=NULL) 
 {
 	if (verbose) {
-		message("Running SS_readdat_3.30")
+		message("Running borrowed version of SS_readdat_3.30")
 	}
 	if (echoall) {
 		message("Echoing blocks of data as it's being read")
@@ -107,12 +107,11 @@
 			ind <- ind + 1
 		}
 		if (ind == length(dat)) {
-		stop(
-			"SS_readdat_3.30-find.index: Error - ",
-			"the value of ", str, " was not found. ",
-			"Check the data file and make sure all ",
-			"data frames are correctly formed.\n"
-		)
+			stop(
+				"Error -- the value of ", str, " was not found. ",
+				"Check the data file and make sure all ",
+				"data frames are correctly formed.\n"
+			)
 		}
 		ind
 	}
@@ -181,7 +180,7 @@
 	datlist[["type"]] <- "Stock_Synthesis_data_file"
 	datlist[["ReadVersion"]] <- "3.30"
 	if (verbose) {
-		message("SS_readdat_3.30 - read version = ", datlist[["ReadVersion"]])
+		message("Borrowed version of SS_readdat_3.30 - read version = ", datlist[["ReadVersion"]])
 	}
 	datlist[["Comments"]] <- Comments
 	##############################################################################
@@ -772,7 +771,7 @@
 	datlist[["morphcomp_data"]] <- get.val(dat, ind)
 	if (datlist[["morphcomp_data"]]) {
 		warning(
-		"Morph comp data not yet supported by SS_readdat_3.30\n",
+		"Morph comp data not yet supported by borrowed version of SS_readdat_3.30\n",
 		"  Please post issue to https://github.com/r4ss/r4ss/issues\n",
 		"  or email ian.taylor@noaa.gov",
 		"if you want this functionality added."

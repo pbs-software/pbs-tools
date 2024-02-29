@@ -8,16 +8,16 @@
 }
 \usage{
 extractPost(spc="BOR", stock="CST", assYr=2021, path=getwd(),
-   values="R", runs=1:3, rwts=rep(1,3), burnin=200, nmcmc=1200,
+   values="R", runs=1:3, rwts=rep(1,3), vers="", burnin=200, nmcmc=1200,
    model="Awatea", fleets="trawl", extra="forSomeone",
-   proj=F, projY1=2022, projY2=2023, catpol=1500)
+   proj=FALSE, projY1=2022, projY2=2023, catpol=1500)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{spc}{\code{character} -- species 3-letter code}
-  \item{stock}{\code{character} -- stock name (e.g., \code{'CST'}, \code{'North'}, \code{'5DE'}).}
-  \item{assYr}{\code{numeric} -- year of stock assessment.}
-  \item{path}{\code{character} -- path/directory to model runs.}
+  \item{stock}{\code{character} -- stock name (e.g., \code{'CST'}, \code{'North'}, \code{'5DE'})}
+  \item{assYr}{\code{numeric} -- year of stock assessment}
+  \item{path}{\code{character} -- path/directory to model runs}
   \item{values}{\code{character} -- acronyms for particular posteriors:\cr
     \code{'B'} = spawning biomass (usually female)\cr
     \code{'R'} = recruitment of age-1 or age-0 fish (depends on model)\cr
@@ -27,6 +27,7 @@ extractPost(spc="BOR", stock="CST", assYr=2021, path=getwd(),
     \code{'HRP'} = historical reference points, usually \code{'Bavg'} and \code{'Bmin'} }
   \item{runs}{\code{numeric} -- vector of run numbers used to make a composite base case.}
   \item{rwts}{\code{numeric} -- vector of reweight numbers used in the respective run numbers.}
+  \item{vers}{\code{character} -- version number for a particular \code{run} (first introduced for POP 2023)}
   \item{burnin}{\code{numeric} -- number of MCMC samples used for burn-in (these are discarded).}
   \item{nmcmc}{\code{numeric} -- total number of MCMC samples, including burn-in.}
   \item{model}{\code{character} -- model platform, one of \code{'Awatea'}, \code{'SS3'}, \code{'iSCAM'}.}
@@ -47,8 +48,8 @@ extractPost(spc="BOR", stock="CST", assYr=2021, path=getwd(),
 \author{
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
-  \emph{locus opus}: Regional Headquarters (RHQ), Vancouver BC\cr
-  Last modified \code{Rd: 2023-02-09}
+  \emph{locus opus}: Remote office, Vancouver BC\cr
+  Last modified \code{Rd: 2024-02-29}
 }
 \seealso{
 In package \pkg{PBStools}:\cr

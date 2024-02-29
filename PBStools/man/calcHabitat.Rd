@@ -13,7 +13,9 @@ calcHabitat(topofile="bctopo", isob=c(150,435),
    PIN=c(7,8), eps=FALSE, png=FALSE, wmf=FALSE, ioenv=.GlobalEnv)
 
 plotHabitat(fnam="hab228", isob=c(62,448), col.hab="greenyellow",
-   png=FALSE, pngres=400, PIN = c(9,8.7), fout="daHood", lang=c("e","f"))
+   major.code, col.maj="orange", lab.maj="0AAA",
+   png=FALSE, pngres=400, PIN = c(9,8.7),
+   fout="daHood", lang=c("e","f"))
 }
 \arguments{
   \item{topofile}{\code{character} -- name of topographical ASCII XYZ file downloaded from the Scripps
@@ -43,6 +45,9 @@ plotHabitat(fnam="hab228", isob=c(62,448), col.hab="greenyellow",
   \item{pngres}{\code{numeric} -- resolution in pixels per inch for the png file.}
   \item{fout}{\code{character} -- image file name output for \code{plotHabitat}.}
   \item{lang}{\code{character} -- language for image labels, where \code{'e'}=english and \code{'f'}=french.}
+  \item{major.code}{\code{numeric} -- vector of PMFC major codes}
+  \item{col.maj}{\code{character} -- colour name for \code{major.code}}
+  \item{lab.maj}{\code{character} -- label for \code{major.code}}
 }
 \details{
   The function uses the dataset \code{bctopo} downloaded from the TOPEX site 
@@ -73,11 +78,14 @@ plotHabitat(fnam="hab228", isob=c(62,448), col.hab="greenyellow",
   bathymetry habitat \code{habitat}, and a variety of \code{PolySet}s 
   created in transforming \code{bathy} to \code{habitat}.
 }
+\note{
+  Functionality to display a subarea in \code{'plotHabitat'} was introduced for POP 2023.
+}
 \author{ 
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
-  \emph{locus opus}: Institute of Ocean Sciences (IOS), Sidney BC\cr
-  Last modified \code{Rd: 2021-06-14}
+  \emph{locus opus}: Remote office, Vancouver BC\cr
+  Last modified \code{Rd: 2024-02-29}
 }
 \seealso{
 In package \pkg{PBStools}:\cr

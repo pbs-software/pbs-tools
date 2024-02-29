@@ -1,6 +1,11 @@
 \name{trend}
 \alias{trend}
-\title{Display Boxplots of CPUE and the Trend Line}
+\alias{.trend.booty}
+\alias{.trend.funky}
+\alias{.trend.getSQLspp}
+\alias{.trend.trendy}
+
+\title{GUI: Display Boxplots of CPUE and the Trend Line}
 \description{
   Display boxplots of catch or CPUE grouped by year. A trend line is fit through 
   the annual index points summarized by a user-specified summary function (e.g., 
@@ -10,18 +15,23 @@
 \usage{
 trend(strSpp="442", fqtName="gfb_iphc.sql", dbName="GFBioSQL",
    spath=NULL, type="SQL", ioenv=.GlobalEnv, hnam=NULL)
+
+.trend.booty()
+.trend.funky()
+.trend.getSQLspp(spp=NULL)
+.trend.trendy()
 }
 \arguments{
-  \item{strSpp}{ string specifying the code for a species that appears in the
+  \item{strSpp, spp}{\code{character} -- string specifying the code for a species that appears in the
     target database }
-  \item{fqtName}{string specifying the name of a local file (f), an SQL query 
+  \item{fqtName}{\code{character} -- string specifying the name of a local file (f), an SQL query 
     file (q), or an MDB table (t)}
-  \item{dbName}{string specifying the name of an SQL DSN for an ODBC call to 
+  \item{dbName}{\code{character} -- string specifying the name of an SQL DSN for an ODBC call to 
     the SQL Server database \code{DFBCV9TWVASP001}, or an MDB database}
-  \item{spath}{string specifying the path to the file \code{fqtName}}
-  \item{type}{string specifying the file type: \code{"SQL"}, \code{"MDB"}, or \code{"FILE"}}
-  \item{ioenv}{input/output environment for function input data and output results.}
-  \item{hnam}{string specifying the name of a history file}
+  \item{spath}{\code{character} -- string specifying the path to the file \code{fqtName}}
+  \item{type}{\code{character} -- string specifying the file type: \code{"SQL"}, \code{"MDB"}, or \code{"FILE"}}
+  \item{ioenv}{\code{environment} -- input/output environment for function input data and output results.}
+  \item{hnam}{\code{character} -- string specifying the name of a history file}
 }
 \details{
   The function \code{trend()} creates an interactive GUI that can be used
@@ -82,12 +92,22 @@ trend(strSpp="442", fqtName="gfb_iphc.sql", dbName="GFBioSQL",
   Research Document} \bold{2004/059}, 75 pp.
 }
 \author{ 
-  Rowan Haigh, Pacific Biological Station, Fisheries and Oceans Canada, Nanaimo BC
+  \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
+  Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
+  \emph{locus opus}: Remote office, Vancouver BC\cr
+  Last modified \code{Rd: 2024-02-26}\cr
 }
 \seealso{
-  \code{\link[PBSdata]{iphc.rbr}}, \code{\link[PBStools]{getData}}, \code{\link[PBStools]{simBGtrend}} \cr
-  Available SQL queries: \code{\link[PBStools]{SQLcode}} \cr
-  \pkg{graphics}: \code{\link[graphics]{boxplot}} \cr
-  \pkg{stats}: \code{\link[stats]{lm}}
+  In package \pkg{PBStools}:\cr
+    \code{\link[PBStools]{getData}},
+    \code{\link[PBStools]{quantBox}},
+    \code{\link[PBStools]{simBGtrend}},
+    \code{\link[PBStools]{SQLcode}}\cr
+  In package \pkg{PBSdata}:\cr
+    \code{\link[PBSdata]{iphc.rbr}}\cr
+  In package \pkg{stats}:\cr
+    \code{\link[stats]{lm}}
 }
 \keyword{hplot}
+\concept{M04_Survey}
+

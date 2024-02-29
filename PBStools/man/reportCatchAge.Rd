@@ -1,12 +1,20 @@
 \name{reportCatchAge}
 \alias{reportCatchAge}
-\title{GUI -- Display Results from Catch-Age Analysis}
+\alias{.reportCatchAge.checkssb}
+\alias{.reportCatchAge.getrep}
+\alias{.reportCatchAge.plotrep}
+
+\title{GUI: Display Results from Catch-Age Analysis}
 \description{
   Display various results plots for catch-age analysis from 
   ADMB using an interactive GUI. 
 }
 \usage{
 reportCatchAge(prefix="pop", path=getwd(), hnam=NULL, ...)
+
+.reportCatchAge.checkssb()
+.reportCatchAge.getrep()
+.reportCatchAge.plotrep(plotcodes,unique.only=TRUE)
 }
 \arguments{
   \item{prefix}{\code{character} -- name of an ADMB project.}
@@ -15,6 +23,8 @@ reportCatchAge(prefix="pop", path=getwd(), hnam=NULL, ...)
     default is current working directory.}
   \item{hnam}{\code{character} -- name of a history file.}
   \item{...}{\code{dots} -- additional arguments for function \code{reportCatchAge}.}
+  \item{plotcodes}{\code{character} -- two-letter plot codes (see GUI controls below)}
+  \item{unique.only}{\code{logical} -- if \code{TRUE}, get unique \code{plotcodes}}
 }
 \details{
   The function \code{'reportCatchAge'} creates an interactive GUI 
@@ -74,8 +84,8 @@ reportCatchAge(prefix="pop", path=getwd(), hnam=NULL, ...)
 \author{
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
-  \emph{locus opus}: Regional Headquarters (RHQ), Vancouver BC\cr
-  Last modified \code{Rd: 2023-02-10}
+  \emph{locus opus}: Remote office, Vancouver BC\cr
+  Last modified \code{Rd: 2024-02-27}
 }
 \seealso{
 In package \pkg{PBStools}:\cr
@@ -86,4 +96,3 @@ In package \pkg{PBSadmb}:\cr
 }
 \keyword{hplot}
 \concept{M02_Biology}
-

@@ -50,7 +50,10 @@ plotTertiary(x=c(100,5,25,10,50), pC=c(0.5,0.5), r=0.5,
   \emph{ICES Journal of Marine Science} \bold{64}: 218--233.
 }
 \author{
-  Rowan Haigh, Pacific Biological Sattion, Fisheries and Oceans Canada, Nanaimo BC
+  \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
+  Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
+  \emph{locus opus}: Remote office, Vancouver BC\cr
+  Last modified \code{Rd: 2024-02-27}
 }
 \seealso{
   \code{\link[PBStools]{plotTernary}}, \code{\link[PBStools]{ttget}}
@@ -64,4 +67,4 @@ local(envir=.PBStoolEnv,expr={
 })
 }
 \keyword{hplot}
-
+\concept{M05_Spatial}

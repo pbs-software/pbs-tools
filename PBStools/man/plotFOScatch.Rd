@@ -40,7 +40,10 @@ plotFOScatch(strSpp="453", majors=c(1,3:9), space=0.5,
   matrices) are save in the global list object \code{PBStool}.
 }
 \author{
-  Rowan Haigh, Pacific Biological Station, Fisheries and Oceans Canada, Nanaimo BC
+  \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
+  Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
+  \emph{locus opus}: Remote office, Vancouver BC\cr
+  Last modified \code{Rd: 2024-02-27}
 }
 \seealso{
   \code{\link[PBStools]{getFile}}, \code{\link[PBSdata]{fos.fid}}, 
@@ -48,3 +51,4 @@ plotFOScatch(strSpp="453", majors=c(1,3:9), space=0.5,
   Available SQL queries: \code{\link[PBStools]{SQLcode}}
 }
 \keyword{hplot}
+\concept{M03_Fishery}

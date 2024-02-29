@@ -46,7 +46,10 @@ plotTernary(x=c(3,2,1), connect=FALSE, show.geometry=TRUE,
   \emph{ICES Journal of Marine Science} \bold{64}: 218--233.
 }
 \author{
-  Rowan Haigh, Pacific Biological Sattion, Fisheries and Oceans Canada, Nanaimo BC
+  \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
+  Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
+  \emph{locus opus}: Remote office, Vancouver BC\cr
+  Last modified \code{Rd: 2024-02-27}
 }
 \seealso{
   \code{\link[PBStools]{runCCA}}
@@ -60,4 +63,4 @@ pbsfun()
 })
 }
 \keyword{hplot}
-
+\concept{M05_Spatial}
