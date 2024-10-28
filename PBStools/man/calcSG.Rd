@@ -92,13 +92,22 @@ calcSG(dat=pop.age, strSpp="", yfld="len", tau=c(5,80), fixt0=FALSE,
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
   \emph{locus opus}: Remote office, Vancouver BC\cr
-  Last modified \code{Rd: 2021-06-15}
+  Last modified \code{Rd: 2024-10-28}
 }
 \seealso{
-  \code{\link{calcVB}}, \code{\link{pop.age}}, \code{\link{parVec}}, \code{\link{getData}}, 
-  \code{\link{biteData}}, \code{\link{pmfc}}, \code{\link{species}} \cr
-  \pkg{PBSmodelling}: \code{\link[PBSmodelling]{calcMin}} \cr
-  \pkg{base}: \code{\link[base]{jitter}}
+In package \pkg{PBStools}:\cr
+  \code{\link[PBStools]{calcVB}},
+  \code{\link[PBStools]{getData}}, 
+  \code{\link[PBStools]{biteData}}\cr
+In package \pkg{PBSdata}:\cr
+  \code{\link[PBSdata]{parVec}}, 
+  \code{\link[PBSdata]{pmfc}},
+  \code{\link[PBSdata]{pop.age}}, 
+  \code{\link[PBSdata]{species}} \cr
+In package \pkg{PBSmodelling}:\cr
+  \code{\link[PBSmodelling]{calcMin}} \cr
+In package \pkg{base}:\cr
+  \code{\link[base]{jitter}}
 }
 \keyword{hplot}
 \concept{M02_Biology}

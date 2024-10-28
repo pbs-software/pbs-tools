@@ -10,6 +10,33 @@ Authors: RH  = Rowan Haigh
          BK  = Brian Krishka
 ------------------------------
 
+1.43.2 (2024-10-28)  [Rcheck=T, Rbuild=T]
+  * Documentation
+    + Fixed a number of problematic Rd files (RH 241028)
+      - missing Rd file: `plotHBLL'
+      - no package anchors: `calcBiom', `calcOccur', `calcRatio', `calcSG', `compCsum', `expand5C', `plotCatch', `plotProp', `reportCatchAge', `showIndices'
+      - mismatched code/doc args: `buildCatch', `compBmsy', `createMA', `mapMaturity', `plotGREFS', `surveyCatch'
+  * R code
+    + Removed `:::' from calls to PBSmapping functions because all objects are now exported from that package (RH 241028)
+      - module M01 : `extractPost'
+      - module M05 : `calcHabitat', `calcSurficial', `clarify', `findEP', `findHoles', `plotEO', `plotGMA', `plotLocal', `zapHoles'
+      - module M07 : `buildCatch'
+
+
+1.43.1 (2024-10-24)  [Rcheck=T, Rbuild=F]
+  * R code
+    + Modified functions to send english figures (default) to subdirectory `english' (RH 241024)
+      - Mirrors behaviour for french figures sent to subdirectory `french':
+      - `calcCVage.r', `calcLW.r', `calcSG.r', `calcVB.r', `calc_iphc_ser.r', `clarify.r', `compAF.r', `compBmsy.r', 
+      - `compLen.r', `compSage.r', `compVB.r', `compVBpars.r', `estOgive.r', `histTail.r', `makeAgeErr.r', `makeUI.r', 
+      - `mapMaturity.r', `oldscript', `plotAgeErr.r', `plotBTMW.r', `plotConcur.r', `plotEO.r', `plotGMA.r', `plotGREFS.r', 
+      - `plotHabitat.r', `plotHBLL.r', `plotIndex.r', `plotLocal.r', `plotMW.r', `plotRecon.r', `plotSnail.r', `preferDepth.r',
+      - `quantAges.r', `residVB.r', `splineCPUE.r', `stepPlot.r', `sumting.txt', `tabAgeErr.r', `weightBio.r'
+    + Added new functions (RH 241025)
+      - `calcHBLL', `adjustMajor'
+    + Updated existing functions (RH 241025)
+      - `surveyCatch', `createMA', `getData', `tabOtos', `buildCatch', `linguaFranca', `createFdir'
+
 1.43.0 (2024-02-29)  [Rcheck=T, Rbuild=T]
   * M01_Utility.r
     + Added more UTF codes to `convUTF' (RH 230726)

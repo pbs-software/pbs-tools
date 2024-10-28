@@ -13,43 +13,44 @@
 \usage{
 buildCatch(
    dbdat,
-   strSpp="396",
-   orfSpp="TRF",
-   major=c(1,3:9),
-   fidout=c(1:5,10),
-   useYR1=c(1996,2000,2007,2007,1986),
-   useGFM=TRUE,
-   useCA=TRUE,
-   useUS=TRUE,
-   useFF=TRUE,
-   useSM=FALSE,
-   useLS=TRUE,
-   useAI=FALSE,
-   useGM=FALSE,
-   useBG=FALSE,
-   refyrs = c(list(1996:2023), rep(list(2007:2011),4)),
-   refarea=NULL,
-   refgear=NULL,
-   strat.gamma=FALSE,
-   strat.delta=FALSE,
-   depbin=100,
-   defyrs = c(list(1997:2006), rep(list(2000:2004),4)),
-   disyrs = list(1954:1995, 1986:2005, 1986:2005, 1986:2005, 1986:2005),
-   sensitivity=NULL,
-   reconstruct=TRUE,
-   run.name=NULL,
-   ascii.tables=TRUE,
-   diagnostics=FALSE,
-   saveinfo=TRUE,
-   sql=FALSE,
-   sql.only=FALSE,
-   sql.force=FALSE,
-   spath=.getSpath(),
-   dpath=getwd(),
-   eps=FALSE, png=FALSE, wmf=FALSE,
-   uid=Sys.info()["user"], pwd=uid,
-   ioenv=.GlobalEnv,
-   hadley=FALSE,
+   strSpp      = "396",
+   orfSpp      = "TRF",
+   major       = c(1,3:9),
+   fidout      = c(1:5,10),
+   useYR1      = c(1996,2000,2007,2007,1986),
+   useGFM      = TRUE,
+   useCA       = TRUE,
+   useUS       = TRUE,
+   useFF       = TRUE,
+   useSM       = FALSE,
+   useLS       = TRUE,
+   useAI       = FALSE,
+   useGM       = FALSE,
+   useBG       = FALSE,
+   refyrs      =  c(list(1996:2023), rep(list(2007:2011),4)),
+   refarea     = NULL,
+   refgear     = NULL,
+   strat.gamma = FALSE,
+   strat.delta = FALSE,
+   depbin      = 100,
+   defyrs      =  c(list(1997:2006), rep(list(2000:2004),4)),
+   disyrs      =  list(1954:1995, 1986:2005, 1986:2005, 1986:2005, 1986:2005),
+   sensitivity = NULL,
+   reconstruct = TRUE,
+   run.name    = NULL,
+   ascii.tables= TRUE,
+   diagnostics = FALSE,
+   saveinfo    = TRUE,
+   sql         = FALSE,
+   sql.only    = FALSE,
+   sql.force   = FALSE,
+   spath       = .getSpath(),
+   dpath       = getwd(),
+   eps         = FALSE, png = FALSE, wmf = FALSE,
+   uid         = Sys.info()["user"], pwd = uid,
+   ioenv       = .GlobalEnv,
+   hadley      = FALSE,
+   debug       = FALSE,
    ...)
 }
 \arguments{
@@ -132,6 +133,7 @@ buildCatch(
   \item{uid, pwd}{\code{character} -- user ID and password for Oracle DB account authentication (only used for PacHarv3 currently).}
   \item{ioenv}{\code{environment} -- input/output environment for function input data and output results.}
   \item{hadley}{\code{logical} -- if \code{TRUE}, use Hadley Wickham's wizardry in \code{'crossTab'}.}
+  \item{debug}{\code{logical} -- if \code{TRUE}, activate select lines that spew nonsense}
   \item{...}{additional \emph{ad hoc} arguments to deal with industry issues.}
 }
 \details{
@@ -329,7 +331,7 @@ buildCatch(
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
   \emph{locus opus}: Remote office, Vancouver BC\cr
-  Last modified \code{Rd: 2024-02-29}
+  Last modified \code{Rd: 2024-10-28}
 }
 \references{
   Edwards, A.M., Haigh, R. and Starr, P.J. (2014a)
@@ -374,10 +376,10 @@ In package \pkg{PBStools}:\cr
     \code{\link[PBStools]{sampBG}},
     \code{\link[PBStools]{surveyCatch}},
     \code{\link[PBStools]{zapSeamounts}}, 
-    \code{\link[PBStools]{SQLcode}}\cr\cr
+    \code{\link[PBStools]{SQLcode}}\cr
 In package \pkg{PBSdata}:\cr
     \code{\link[PBSdata]{orfhistory}},
-    \code{\link[PBSdata]{rrfhistory}}\cr\cr
+    \code{\link[PBSdata]{rrfhistory}}\cr
 In package \pkg{PBSmodelling}:\cr
     \code{\link[PBSmodelling]{calcGM}},
     \code{\link[PBSmodelling]{packList}}

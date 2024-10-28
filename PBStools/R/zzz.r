@@ -42,20 +42,20 @@ if(getRversion() >= "2.15.1") utils::globalVariables(names=c(
 	"B","b0","b5","barcol","barf","bathy","bbonly","Bboot","bcol","bdat","Best","bgsamp","bgtab","bh","bio440","Bmpd","Bobs","boot","boot.ci","bootci","booty","boxpars","boxwidth","Bqnt","Bt","bta","Btot","bugsData",
 	"C1","C2","case","cast","cat440rec","catch","Cbar","Cbox","Ccat","ccol","cdata","Ceq","chn1","chn2","clara","clen","Clin","clwd","Cnum","cobs","coefficients","compo","Cpoi","cpuTime","cthin","ctot","Ctrd","currentMCMC","currentProj","currentProj2","Cval",
 	"dat","DATA","datt","dattoRlist","dBars","dbName","ddat","defaultdoorspread","diaDir","disA","dist","DLIM",
-	"edat","eez.bc","elapTime","empinf","eN","eps","evals","extra",
+	"edat","eez.bc","elapTime","empinf","eN","english","eps","evals","extra",
 	"fdir","FID","figDir","fillBars","firstSerial","fminE","fminS","fnam","Fout","formalArgs","fosspp","fqtName","Ft","ftime","func",
 	"g","GC","gear","get_comments","gfbdat","gfbsurvey","gigflds","glmfit","globo","gma.popymr","group","Gv2",
 	"habSpp", "hadley","hclust","hide0","HSreg","HStrc",
 	"idxD","idxL","idxM","importRes","inone","IRRmin","is.pred","isobath","iters",
 	"k","K",
-	"lang","las","lastSerial","lin","lmres","locality.plus","loess.smooth","ltype","lwd",
+	"l","lang","las","lastSerial","lin","lmres","locality","locality.plus","loess.smooth","ltype","lwd",
 	"m","major","major.pop","mar","mata","maxit","mdbName","MDL","melt.data.frame","method","mfrow","mgp","minor","mmor","modelCheck","modelCompile","modelData","modelGenInits","modelUpdate","modT","mpd","msd","mu",
 	"nage","Nat","Nboot","nc","nC","nd","nepacLL","nepacLLhigh","nper","nRP","nspec","nT","nyr",
 	"obs","oma","orats","orfhistory","out",
 	"pa.obs","pa.raw","parVec","path","pathN","PBSdat","PBStool","PBSmin","Pfig","pfout.e","phi","pi.obs","pix","pjsa","PLIM","pmfc","PMFC","pmon","pnam","poi","pop.age","pop.pmr.qcss","popa","powr","prefix","pset","psize","Pstart","pwd","pyr",
 	"q2","qboxplot","qq","qtName","qu","quants",
 	"rate","rates","redo.currentMCMC","reltol","repN","rho","RkB","Roff","RPmax","RPmin","ryrs",
-	"s1","s2","samplesGetFirstChain","samplesGetLastChain","samplesHistory","samplesSet","SB","Scat","Sdat","sdate","seepa","seepi","set","setNames","sex","SG","SGdat","showC","showD","showE","showH","showL","showM","showQ","SID","sigma","so","species","speciesname","spn","spp","srfa","srfs","SSB","ssid","SSID","steptol","sthin","stock","storageID","strArea","strat","stratum","stratum2006","strGear","strSpp","strYear","stype","survey","surveyname","surveys","synflds",
+	"s1","s2","samplesGetFirstChain","samplesGetLastChain","samplesHistory","samplesSet","SB","Scat","Sdat","sdate","seepa","seepi","set","setNames","sex","SG","SGdat","showC","showD","showE","showH","showL","showM","showQ","SID","sigma","so","species","speciesname","spn","spp","srfa","srfs","SSB","ssid","SSID","ssid.svid","steptol","sthin","stock","storageID","strArea","strat","stratum","stratum2006","strGear","strSpp","strYear","stype","survey","surveyname","surveys","synflds",
 	"t0","tabDir","tau","tcl","tdate","theta","tran","triflds","truehist","trusted","tstar","ttype","type","type.convert",
 	"Ugear","uid","Umajor","Usex","Usrfa","Usrfs","Ustype","Uttype",
 	"VBdat","Vend","vessel","Vstart",
@@ -64,7 +64,6 @@ if(getRversion() >= "2.15.1") utils::globalVariables(names=c(
 	"y","year","years","yfld","yfun","yinf","Yinf","ylim","YLIM","Ymax","Ymin","Ymod","ypos","yr","ystar","ytck",
 	"z","Z","za","zero","zfill","Zlim","zsho","zstar","zstn"
 	), package="PBStools")
-
 
 ##quantBox------------------------------2018-04-03
 ## Redefine boxplot to show quantiles (RH 150910)

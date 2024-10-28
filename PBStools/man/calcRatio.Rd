@@ -51,24 +51,30 @@ calcRatio(dat, nfld, dfld, nzero=TRUE, dzero=TRUE, sumF=mean,
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
   \emph{locus opus}: Remote office, Vancouver BC\cr
-  Last modified \code{Rd: 2024-02-27}\cr
+  Last modified \code{Rd: 2024-10-28}\cr
 }
 \seealso{
-\code{\link{makeCATtables}}, \code{\link{pmfc}}, \code{\link{convFY}}
+In package \pkg{PBStools}:\cr
+  \code{\link[PBStools]{makeCATtables}},
+  \code{\link[PBStools]{convFY}}\cr
+In package \pkg{PBSdata}:\cr
+  \code{\link[PBSdata]{pmfc}}
 }
 \examples{
+\dontrun{
 local(envir=.PBStoolEnv,expr={
 pbsfun=function(dfo=FALSE){
   if (dfo) {
     getData("pht_catORF.sql",strSpp="440",path=.getSpath())
     ymr.pop.orf = PBSdat
-    pmean=calcRatio(dat=ymr.pop.orf, nfld="catch", dfld="ORF",
+    pmean = calcRatio(dat=ymr.pop.orf, nfld="catch", dfld="ORF",
       major=3:9, plot=TRUE, ylim=c(0,.35))
     print(pmean) }
   else cat("If you are logged onto the DFO network,\nrun 'pbsfun(dfo=TRUE)'\n.")
   invisible() }
 pbsfun()
 })
+}
 }
 \keyword{manip}
 \keyword{hplot}

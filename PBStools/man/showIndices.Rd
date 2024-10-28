@@ -58,15 +58,20 @@ showIndices(strSpp= "396", serID=1, survID=NULL, bootID,
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
   \emph{locus opus}: Remote office, Vancouver BC\cr
-  Last modified \code{Rd: 2024-02-27}
+  Last modified \code{Rd: 2024-10-28}
 
   Bootstraps by \href{mailto:norm.olsen@dfo-mpo.gc.ca}{Norm Olsen} (PBS, Nanaimo)
 }
 \seealso{
-  \code{\link{getBootRuns}}, \code{\link{calcMoments}}, 
-  \code{\link{spn}}, \code{\link{species}}
+In package \pkg{PBStools}:\cr
+  \code{\link[PBStools]{getBootRuns}}, 
+  \code{\link[PBStools]{calcMoments}}\cr
+In package \pkg{PBSdata}:\cr
+  \code{\link[PBSdata]{spn}}, 
+  \code{\link[PBSdata]{species}}
 }
 \examples{
+\dontrun{
 local(envir=.PBStoolEnv,expr={
 pbsfun=function(strSpp="602",region="QCS",dfo=FALSE){
   if (dfo) {
@@ -84,6 +89,7 @@ pbsfun=function(strSpp="602",region="QCS",dfo=FALSE){
   invisible() }
 pbsfun()
 })
+}
 }
 \keyword{hplot}
 \concept{M04_Survey}

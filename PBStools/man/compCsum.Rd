@@ -75,11 +75,16 @@ pbsfun()
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
   \emph{locus opus}: Remote office, Vancouver BC\cr
-  Last modified \code{Rd: 2021-06-15}\cr
+  Last modified \code{Rd: 2024-10-28}\cr
 }
 \seealso{
-  \code{\link{pop.age}}, \code{\link{calcVB}}, \code{\link{histMetric}}, 
-  \code{\link{getFile}}, \code{\link{biteData}}
+In package \pkg{PBStools}:\cr
+  \code{\link[PBStools]{calcVB}}, 
+  \code{\link[PBStools]{histMetric}}, 
+  \code{\link[PBStools]{getFile}}, 
+  \code{\link[PBStools]{biteData}}\cr
+In package \pkg{PBSdata}:\cr
+  \code{\link[PBSdata]{pop.age}}
 }
 \keyword{hplot}
 \concept{M02_Biology}

@@ -16,6 +16,10 @@ In July 2018, the package was updated to include a new function called `linguaFr
 
 Influences by Wizard Wickham pervade the Rverse these days; however, reliance on the convoluted machinations of the overlord are avoided in PBS packages wherever possible. While 'ggthis' and 'ggthat' provide code shortcuts, the underlying operations are not transparent. Furthermore, connecting 'ggblobs' using <a href="https://www.fromthebottomoftheheap.net/2015/06/03/my-aversion-to-pipes/">pipes</a> simply makes the mess even more difficult to clean up. Resist assimilation and keep your R code pure. 
 
+<font color="red"><h3>Disclaimer</h3></font>
+
+"Fisheries and Oceans Canada (DFO) GitHub project code is provided on an 'as is' basis and the user assumes responsibility for its use. DFO relinquishes control of the information and assumes no responsibility to protect the integrity, confidentiality, or availability of the information. Any claims against DFO stemming from the use of its GitHub project will be governed by all applicable Canadian Federal law. Any reference to specific commercial products, processes, or services by service mark, trademark, manufacturer, or otherwise, does not constitute or imply their endorsement, recommendation or favouring by DFO. The Fisheries and Oceans Canada seal and logo, or the seal and logo of a DFO bureau, shall not be used in any manner to imply endorsement of any commercial product or activity by DFO or the Canadian Government.”
+
 As with any freely available product, there is no warranty or promise that **PBStools** will perform adequately for all circumstances. Additionally, coding errors are possible, and users should contact the package maintainer if bugs are detected.
 
 Maintainer: <a href="mailto:rowan.haigh@dfo-mpo.gc.ca">Rowan Haigh</a>

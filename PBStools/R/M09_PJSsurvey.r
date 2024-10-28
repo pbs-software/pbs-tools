@@ -735,7 +735,7 @@ keepAtts =function(dat, expr, batts=c("names","row.names","class"), extras=list(
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~keepAtts
 
 
-## plotIndex----------------------------2023-07-26
+## plotIndex----------------------------2024-10-24
 ##  Plot survey index series after bootstrapping.
 ##  If type=="PJS", plot the series as mean with
 ##   bias-corrected percentile limits.
@@ -775,11 +775,15 @@ plotIndex = function(bootbomb, analytic, type="PJS", surv=ttcall(surveyname),
 	ylim[1] = ylim[1]-(diff(ylim)*ifelse(png,0.02,0.01))
 #browser();return()
 	ayrs  = yrs.surv[1]:rev(yrs.surv)[1]; nayrs = length(ayrs)
-	fout = fout.e = paste0(gsub(" ","_",surv),"-",type)
+	fout.e = paste0(gsub(" ","_",surv),"-",type)
 	for (l in lang) {  ## could switch to other languages if available in 'linguaFranca'.
 		changeLangOpts(L=l)
-		fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
-		if (png) png(filename=paste0(fout,".png"), units="in", res=pngres, width=PIN[1], height=PIN[2])
+		#fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
+		fout = switch(l, 'e' = paste0("./english/",fout.e), 'f' = paste0("./french/",fout.e) )
+		if (png) {
+			clearFiles(paste0(fout,".png"))
+			png(filename=paste0(fout,".png"), units="in", res=pngres, width=PIN[1], height=PIN[2])
+		}
 		expandGraph(mar=c(3,3,0.5,0.5), oma=c(0,0,0,0))
 
 		flab = paste0(c(surv, paste0(

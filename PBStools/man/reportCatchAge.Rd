@@ -85,14 +85,15 @@ reportCatchAge(prefix="pop", path=getwd(), hnam=NULL, ...)
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
   \emph{locus opus}: Remote office, Vancouver BC\cr
-  Last modified \code{Rd: 2024-02-27}
+  Last modified \code{Rd: 2024-10-28}
 }
 \seealso{
 In package \pkg{PBStools}:\cr
-  \code{\link{plotProp}},
-  \code{\link{pop.age}} \cr
+  \code{\link[PBStools]{plotProp}}\cr
+In package \pkg{PBSdata}:\cr
+  \code{\link[PBSdata]{pop.age}} \cr
 In package \pkg{PBSadmb}:\cr
-  \code{admb}
+  \code{\link[PBSadmb]{admb}}
 }
 \keyword{hplot}
 \concept{M02_Biology}

@@ -30,7 +30,7 @@ plotCatch(dat="dbr.rem", flds=c("CAtrawl","UStrawl","TotalHL"),
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
   \emph{locus opus}: Remote office, Vancouver BC\cr
-  Last modified \code{Rd: 2024-02-27}
+  Last modified \code{Rd: 2024-10-28}
 }
 \examples{
 local(envir=.PBStoolEnv,expr={
@@ -42,7 +42,11 @@ pbsfun()
 })
 }
 \seealso{
-  \code{\link{getData}}, \code{\link{getFile}}, \code{\link{dbr.rem}}
+In package \pkg{PBStools}:\cr
+  \code{\link[PBStools]{getData}}, 
+  \code{\link[PBStools]{getFile}}\cr
+In package \pkg{PBSdata}:\cr
+  \code{\link[PBSdata]{dbr.rem}}
 }
 \keyword{hplot}
 \concept{M03_Fishery}

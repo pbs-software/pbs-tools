@@ -23,7 +23,7 @@
 ## =============================================================================
 
 
-## calcCVage----------------------------2021-03-16
+## calcCVage----------------------------2024-10-24
 ##  Calculate CV of ages based on age or length data.
 ##  Runs SQL query 'gfb_ages_read.sql' at least once.
 ## ---------------------------------------------RH
@@ -55,7 +55,7 @@ calcCVage = function(dat, read_true=1, read_obs=NULL, cvtype="age", Amax=50,
 			for (j in (i+1):length(alist))
 				adat = rbind(adat,alist[[j]])
 		}
-		zpos = adat[,readObs,drop=FALSE]>0
+		zpos = adat[,readObs,drop=F]>0
 		Atab[ii,"N"] = sum(zpos)
 		if (sum(zpos)==0) next
 		Atab[ii,"MU"] = mean(adat[,readObs][zpos])
@@ -70,17 +70,21 @@ calcCVage = function(dat, read_true=1, read_obs=NULL, cvtype="age", Amax=50,
 	exCV = is.element(rownames(Atab),min.ages)
 	if (any(exCV))
 		Atab[exCV,"CV"] = pmax(Atab[exCV,"CV"],min.cv)
+	## Check that final age has a CV
+	if (is.na(Atab[as.character(Amax),"CV"]) || Atab[as.character(Amax),"CV"]==0)
+		Atab[as.character(Amax),"CV"] = min.cv * 2  ## arbitrary choice
 
-	cv0 = is.na(Atab[,"CV"]) | (is.element(Atab[,"CV"],0) & Atab[,"N"] <= 1)
+	#cv0 = is.na(Atab[,"CV"]) | (is.element(Atab[,"CV"],0) & Atab[,"N"] <= 1)
+	cv0 = is.na(Atab[,"CV"]) | (is.element(Atab[,"CV"],0) & Atab[,"N"] <= 2)
 	while(any(cv0)) {
 		cva = (1:nrow(Atab))[cv0]
 		cvb = rbind(Atab[pmax(1,cva-1),"CV"], Atab[pmin(nrow(Atab),cva+1),"CV"])
 		cvc = apply(cvb,2,mean) #calcGM)  ## geometric mean cannot handle 0 values sensibly
+#browser();return()
 		Atab[cv0,"CV"] = cvc
 		#cv0 = is.element(Atab[,"CV"],0) | is.na(Atab[,"CV"])
-		cv0 = is.na(Atab[,"CV"]) | (is.element(Atab[,"CV"],0) & Atab[,"N"] <= 1) ## believe CV=0 if n>1
+		cv0 = is.na(Atab[,"CV"]) | (is.element(Atab[,"CV"],0) & Atab[,"N"] <= 2) ## believe CV=0 if n>2
 	}
-#browser();return()
 
 	xsmoo = as.numeric(rownames(Atab))
 	xoff  = mean(diff(xsmoo))/2
@@ -103,7 +107,8 @@ calcCVage = function(dat, read_true=1, read_obs=NULL, cvtype="age", Amax=50,
 		fout.e = outnam
 		for (l in lang) {  ## could switch to other languages if available in 'linguaFranca'.
 			changeLangOpts(L=l)
-			fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
+			#fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
+			fout = switch(l, 'e' = paste0("./english/",fout.e), 'f' = paste0("./french/",fout.e) )
 			if (png){ 
 				createFdir(l)
 				clearFiles(paste0(fout,c(".csv",".png")))
@@ -115,7 +120,7 @@ calcCVage = function(dat, read_true=1, read_obs=NULL, cvtype="age", Amax=50,
 				## Add shading for ages with no observed SD
 				if (any(sd0)) {
 					x0  = xsmoo[sd0]
-					xvert = data.frame(v1=x0[c(TRUE,diff(x0)>1)], v2=x0[!c(diff(x0)==1,FALSE)])
+					xvert = data.frame(v1=x0[c(T,diff(x0)>1)], v2=x0[!c(diff(x0)==1,FALSE)])
 					apply(xvert, 1, function(x) {
 						if (diff(x)==0) x = x + c(-xoff/2,xoff/2)
 						y = par()$usr[3:4]
@@ -123,7 +128,7 @@ calcCVage = function(dat, read_true=1, read_obs=NULL, cvtype="age", Amax=50,
 					})	
 					#abline(v=x0, lwd=5, col=lucent(switch(cvtype, 'age'="red", 'len'="blue"),0.5))
 				}
-				axis(1, at=seq(5, max(xsmoo), 5), tick=TRUE, labels=FALSE, tcl=-0.25)
+				axis(1, at=seq(5, max(xsmoo), 5), tick=T, labels=F, tcl=-0.25)
 				mtext(linguaFranca("Standard deviation of age",l), side=2, line=1.5, cex=1.5)
 				lines(xsmoo, xsmoo * Atab[,"CV"], lwd=2, lty=2, col=switch(cvtype, 'age'="brown", 'len'="green4"))
 				lines(xsmoo, ysmoo, lwd=2, col=switch(cvtype, 'age'="red", 'len'="blue"))
@@ -132,7 +137,7 @@ calcCVage = function(dat, read_true=1, read_obs=NULL, cvtype="age", Amax=50,
 
 				par(fig=c(0,1,0,0.4), mar=c(3,4,0.5,0), new=TRUE)
 				barplot(Atab[,"CV"], col=switch(cvtype, 'age'="moccasin", 'len'="olivedrab1"), space=0, xaxt="n", xlab="", ylab="", cex.axis=1.2, cex.lab=1.4, names.arg=names.not)
-				axis(1, at=names.out-0.5, labels=names.out, line=NA, pos=0, tick=FALSE, padj=0, cex=1.2, mgp=c(2,0.2,0))
+				axis(1, at=names.out-0.5, labels=names.out, line=NA, pos=0, tick=F, padj=0, cex=1.2, mgp=c(2,0.2,0))
 				mtext(linguaFranca("Age (y)",l), side=1, line=1.5, cex=1.5)
 				mtext(switch(l, 'e'="Coefficient of Variation", 'f'="coefficient de variation"), side=2, line=2.5, cex=1.5)
 				addLegend(0.9,0.9, linguaFranca(paste0("based on ", switch(cvtype, 'age'="age precision checks", 'len'="lengths-at-age")),l), adj=c(1,0), bty="n")
@@ -143,7 +148,7 @@ calcCVage = function(dat, read_true=1, read_obs=NULL, cvtype="age", Amax=50,
 			} else {
 				expandGraph(mfrow=c(1,1), mar=c(3,3,1,1))
 				barplot(Atab[,"CV"], col=switch(cvtype, 'age'="moccasin", 'len'="olivedrab1"), space=0, xlab=linguaFranca("Age (y)",l), ylab=switch(l, 'e'="Coefficient of Variation", 'f'="coefficient de variation"), cex.axis=1.2, cex.lab=1.5, names.arg=names.not)
-				axis(1, at=names.out-0.5, labels=names.out, line=NA, pos=0, tick=FALSE, padj=0, cex=1.2, mgp=c(2,0.2,0))
+				axis(1, at=names.out-0.5, labels=names.out, line=NA, pos=0, tick=F, padj=0, cex=1.2, mgp=c(2,0.2,0))
 				addLegend(0.9,0.9, linguaFranca(paste0("based on ", switch(cvtype, 'age'="age precision checks", 'len'="lengths-at-age")),l), adj=c(1,0), bty="n")
 			}
 			if(png) dev.off()
@@ -194,7 +199,7 @@ calcMA = function(x,y,y2,period=270,every=10)
 #-------------------------------------------calcMA
 
 
-## compAF-------------------------------2024-02-29
+## compAF-------------------------------2024-10-24
 ## Compare age frequencies using discrete or
 ## cumulative distribution plots.
 ## ---------------------------------------------RH
@@ -216,6 +221,7 @@ compAF=function(x, year=2003, sex=2, amax=40, pfld="wp",
 	} )
 	year  = intersect(year,.su(unlist(years)))
 	nyear = length(year)
+	
 	col   = lucent(rep(clrs,ncomp)[1:ncomp],0.5)
 	lty   = rep(ltys,ncomp)[1:ncomp]
 
@@ -223,7 +229,8 @@ compAF=function(x, year=2003, sex=2, amax=40, pfld="wp",
 	fout.e = outnam
 	for (l in lang) {
 		changeLangOpts(L=l)
-		fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
+		#fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
+		fout = switch(l, 'e' = paste0("./english/",fout.e), 'f' = paste0("./french/",fout.e) )
 		if (png) {
 			clearFiles(paste0(fout,".png"))
 			png(file=paste0(fout,".png"), units="in", res=pngres, width=PIN[1], height=PIN[2])
@@ -232,10 +239,10 @@ compAF=function(x, year=2003, sex=2, amax=40, pfld="wp",
 		if (ntype==1 && nsex==1) {
 			rc = PBSmodelling:::.findSquare(nyear) ## .findSquare no longer exported from PBSmodelling namespace
 			np = 0  ## keep track of # plots
-			par(mfrow=rc, mar=c(0,0,0,0), oma=c(4,4,0.5,0.5), mgp=c(1.6,0.5,0))
+			par(mfrow=rc, mar=c(0,0,0,0), oma=c(4,4.75,3,0.5), mgp=c(1.6,0.5,0))
 		} else {
 			rc = c(ntype,nsex)
-			par(mfcol=rc, mar=c(0,0,0,0), oma=c(3.5,3.5,0.5,0.5), mgp=c(1.6,0.5,0))
+			par(mfcol=rc, mar=c(0,0,0,0), oma=c(3.5,3.5,3,0.5), mgp=c(1.6,0.5,0))
 		}
 	
 		xnam = names(x)
@@ -260,9 +267,11 @@ compAF=function(x, year=2003, sex=2, amax=40, pfld="wp",
 				#legtxt = paste0(names(notos)," ",round(notos), switch(fac, 'age'=" otos", 'len'=" lens"))
 				legtxt = paste0(names(notos)," ",round(notos), " obs")
 				ylim = c(0,max(sapply(xvec,max),na.rm=TRUE))
-#browser();return()
 				#yyy  = if (ymode<=1) yy else paste0(y-ymode+1,"-",y)
-				yyy  = if (ymode<=1) yy else paste0(y,"-",y+ymode-1)
+				#yyy  = if (ymode<=1) yy else paste0(y,"-",y+ymode-1)
+				yyy  = if (ymode<=1 || y==max(unlist(years))) yy else paste0(y,"-",min(y+ymode-1,max(unlist(years))) )
+
+#if(y==2023) {browser();return()}
 
 				if ("discr" %in% type) {
 					plot(0,0, xlim=c(1,amax), ylim=ylim, type="n", xlab="", ylab="", xaxt="n", yaxt="n")
@@ -283,37 +292,40 @@ compAF=function(x, year=2003, sex=2, amax=40, pfld="wp",
 					sapply(nord, function(n){
 						if (!all(is.na(xvec[[n]]))) {
 							#lines(1:length(xvec[[n]]), cumsum(xvec[[n]]), col=col[n], lty=lty[n], lwd=ifelse(n==1,3,2))
-							lines(1:length(xvec[[n]]), cumsum(xvec[[n]]), col=col[n], lty=lty[n], lwd=2)
+							lines(1:length(xvec[[n]]), cumsum(xvec[[n]]), col=col[n], lty=lty[n], lwd=3)
 						}
 					} )
-					addLabel(0.05, 0.95, paste0(yyy, ifelse(np==1, linguaFranca(switch(s," - Male"," - Female"),l), "")), adj=c(0,1), cex=1.2)
+#browser();return()
+					#addLabel(0.05, 0.95, paste0(yyy, ifelse(np==1, linguaFranca(switch(s," - Male"," - Female"),l), "")), adj=c(0,1), cex=1.2)
+					addLabel(0.05, 0.95, yyy, adj=c(0,1), cex=1.2)
 					if (par()$mfg[2]==1) {
 						axis(2, at=seq(0,1,0.1), tcl=-0.25, labels=FALSE)
-						axis(2, at=seq(0.2,1,0.2), labels=TRUE, cex.axis=1.1, las=1)
+						axis(2, at=seq(0.2,1,0.2), labels=TRUE, cex.axis=1.5, las=1)
 					}
 					if (np > nyear-rc[2]) {
 						axis(1, at=seq(0,amax,5), tcl=-0.25, labels=FALSE)
-						axis(1, at=seq(10,amax,10), labels=TRUE, cex.axis=1.1, las=1)
+						axis(1, at=seq(10,amax,10), labels=TRUE, cex.axis=1.5, las=1)
 					}
 				}
 #browser();return()
 				zleg = grep(" 0 ",legtxt,invert=TRUE)
 				if (type=="cumul")
-					addLegend(0.025,0.8, bty="n", lty=lty[zleg], seg.len=3, col=col[zleg], legend=linguaFranca(gsub("_"," ",legtxt[zleg]),l), yjust=1, xjust=0, lwd=2, cex=0.9)
+					addLegend(0.025,0.8, bty="n", lty=lty[zleg], seg.len=3, col=col[zleg], legend=linguaFranca(gsub("_"," ",legtxt[zleg]),l), yjust=1, xjust=0, lwd=3, cex=0.9)
 				else
 					addLegend(0.025,0.975,bty="n", lty=lty, seg.len=1, col=col, legend=linguaFranca(gsub("_"," ",legtxt),l), yjust=1, xjust=0, lwd=2, cex=0.9)
 			} ## end s (sex) loop
 		} ## end y (year) loop
 		#mtext (linguaFranca("Age",l), side=1, outer=TRUE, line=2.5, cex=1.5)
-		mtext (linguaFranca(switch(fac, 'age'="Age", 'len'="Length (cm)"),l), side=1, outer=TRUE, line=2.5, cex=1.5)
-		mtext (linguaFranca(paste0(ifelse(type=="cumul","Cumulative ",""), "Frequency"),l), side=2, outer=TRUE, line=2.5, cex=1.25, las=0)
+		mtext (linguaFranca(switch(fac, 'age'="Age", 'len'="Length (cm)"),l), side=1, outer=TRUE, line=2.5, cex=1.75)
+		mtext (linguaFranca(paste0(ifelse(type=="cumul","Cumulative ",""), "Frequency"),l), side=2, outer=TRUE, line=2.75, cex=1.75, las=0)
+		mtext (linguaFranca(switch(s,"Males","Females"),l), side=3, outer=TRUE, line=0.5, cex=1.75, las=0)
 		if(png) dev.off()
 	}; eop()
 }
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~compAF
 
 
-## compBmsy-----------------------------2024-01-23
+## compBmsy-----------------------------2024-10-24
 ## Compare biomass posteriors relative to Bmsy or Bavg
 ## ---------------------------------------------RH
 compBmsy = function(Bspp, spp="POP", Mnams=c("Est M","Fix M"),
@@ -321,11 +333,12 @@ compBmsy = function(Bspp, spp="POP", Mnams=c("Est M","Fix M"),
    quants=c(0.05,0.25,0.5,0.75,0.95),
    zones = c("Critical","Cautious","Healthy"),
    figgy=list(win=TRUE), pngres=400, width=12, height=9, 
-   rcol=c("red","green4","blue"), rlty=c(4,5,3), rlwd=rep(2,3), ## ratio lines: col, lty, lwd
+   rcol=c(.colBlind[c("redpurple","bluegreen")],"blue"),  #c("red","green4","blue"), 
+   rlty=c(4,5,3), rlwd=rep(2,3), ## ratio lines: col, lty, lwd
    ocol = c("#D55E00", "#009E73", "#56B4E9", "#F0E442"),   ## dot cols for colour-blind humans (vermillion, bluegreen, skyblue, yellow)
    lcol = c("red","darkorange","green4"),
-   spplabs=TRUE, left.space=NULL, top.space=2, fout=NULL, 
-   offset=c(-0.1,0.1), calcRat=TRUE, refpt="MSY", param=NULL, 
+   spplabs=TRUE, left.space=NULL, top.space=2, labwrap=FALSE,
+   fout=NULL, offset=c(-0.1,0.1), calcRat=TRUE, refpt="MSY", param=NULL, 
    boxlim=NULL, add=FALSE, lang=c("e","f"), ...)
 {
 	oldpar = par(no.readonly=TRUE); oldpso = grDevices::ps.options()
@@ -380,19 +393,23 @@ compBmsy = function(Bspp, spp="POP", Mnams=c("Est M","Fix M"),
 #browser();return()
 
 	if (is.null(fout))
-		fout = fout.e = paste("CompBmsy-",paste(spp,collapse="+"),"-(",paste(gsub(" ","",Mnams),collapse=","),")",sep="")
+		fout.e = paste("CompBmsy-",paste(spp,collapse="+"),"-(",paste(gsub(" ","",Mnams),collapse=","),")",sep="")
 	else
 		fout.e = fout
 
 	for (l in lang) {  ## could switch to other languages if available in 'linguaFranca'.
 		changeLangOpts(L=l)
-		fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
+		#fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
+		fout = switch(l, 'e' = paste0("./english/",fout.e), 'f' = paste0("./french/",fout.e) )
 		for (f in figout) {
 			if (f=="eps"){    grDevices::ps.options(horizontal = FALSE)
 			                  postscript(file=paste(fout,".eps",sep=""),width=width*1.25,height=height,fonts="mono",paper="special") }
 			if (f=="pdf"){    grDevices::ps.options(horizontal = TRUE)
 			                  pdf(file=paste(fout,".pdf",sep=""),width=width*1.25,height=height*1.25,fonts="mono") }
-			else if (f=="png") png(paste(fout,".png",sep=""), units="in", res=pngres, width=width, height=height)
+			else if (f=="png") {
+				clearFiles(paste0(fout,".png"))
+				png(paste(fout,".png",sep=""), units="in", res=pngres, width=width, height=height)
+			}
 			else if (.Platform$OS.type=="windows" && f=="wmf") 
 				do.call("win.metafile",list(filename=paste(fout,".wmf",sep=""), width=width*1.25, height=height*1.25))
 			if (is.null(left.space))
@@ -415,16 +432,22 @@ compBmsy = function(Bspp, spp="POP", Mnams=c("Est M","Fix M"),
 			quantBox(Bmsy, horizontal=TRUE, las=1, xlim=c(0.5,nmods+top.space), ylim=ylim, cex.axis=cex.axis, yaxs="i", outline=FALSE,
 				pars=list(boxwex=boxwidth,medlwd=2,whisklty=1), quants=quants, names=FALSE)
 			if (Nrats>0)
-				abline(v=ratios,col=rep(rcol,Nrats)[1:Nrats],lty=rlty,lwd=rlwd)
+				abline(v=ratios, col=rep(rcol,Nrats)[1:Nrats], lty=rlty, lwd=rlwd)
 	
 			## segments(v=ratios,col=rep(c("red","green4","blue"),Nrats)[1:Nrats],lty=2,lwd=2)
 			quantBox(Bmsy, horizontal=TRUE, las=1, xlim=c(0.5,nmods+1), ylim=ylim, cex.axis=cex.axis, yaxs="i", outline=FALSE, names=FALSE, pars=list(boxwex=boxwidth, medlwd=2, whisklty=1, medcol=medcol, boxfill=boxfill, ...), add=TRUE, quants=quants)
 			## if (length(Bmsy)==1)  ## for some reason, a label is not added when there is only 1 boxplot.
 			##	axis(2, at=1, labels=linguaFranca(names(Bmsy),l), las=1, cex.axis=1.2)
 			ylabs = linguaFranca(names(Bmsy),l)
-#browser();return()
 			if(all(grepl("^Subarea",names(Bmsy))) && l=="f")  ## specific to POP 2023 FSAR Fig.4
 				ylabs = sub("-","-\n",ylabs)
+			if (labwrap) {
+				complete = FALSE
+				if (complete)
+					ylabs = sub("\\n(de|du)", " \\1", gsub("\\s+", "\n", ylabs))
+				else
+					ylabs = sub("\\)\\s+(sim|zone)", ")\n\\1",  ylabs)
+			}
 			axis(2, at=1:length(Bmsy), labels=ylabs, las=1, cex.axis=cex.axis) ## RH 200420|231108
 
 			if (Norats>0){
@@ -472,6 +495,7 @@ compBmsy = function(Bspp, spp="POP", Mnams=c("Est M","Fix M"),
 				text(c(ratios),par()$usr[3],labels=show0(round(ratios,2),2),adj=c(1.1,-.5),col=rcol)
 			}
 			if (is.null(param)) {
+				t.yr ="italic(t)"  ## for BOR SRR (RH 240328)
 				mess = paste0("mtext(expression(italic(B)[", t.yr, "]/italic(B)[",linguaFranca(refpt,l),"]),side=1,line=2,cex=", sub(",",".",cex.lab), ")")
 			} else {
 				mess = sapply(strsplit(param,"_"),function(x){if(length(x)==1) x else paste0("italic(",x[1],")[",x[2],"]")})
@@ -487,7 +511,7 @@ compBmsy = function(Bspp, spp="POP", Mnams=c("Est M","Fix M"),
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~compBmsy
 
 
-## compLen------------------------------2024-02-29
+## compLen------------------------------2024-10-24
 ##  Compare lengths (or ages) among groups by sex.
 ##  For example, compare annual length distributions
 ##  among surveys series or commercial gears.
@@ -610,7 +634,8 @@ compLen = function(dat, strSpp, fld="len", lbin=1, sex=c(2,1),
 
 	for (l in lang) {  ## could switch to other languages if available in 'linguaFranca'.
 		changeLangOpts(L=l)
-		fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
+		#fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
+		fout = switch(l, 'e' = paste0("./english/",fout.e), 'f' = paste0("./french/",fout.e) )
 		if (png){
 			clearFiles(paste0(fout,".png"))
 			png(paste0(fout,".png"), units="in", res=pngres, width=PIN[1], height=PIN[2])
@@ -756,7 +781,7 @@ compLen = function(dat, strSpp, fld="len", lbin=1, sex=c(2,1),
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~compLen
 
 
-## compVB-------------------------------2020-03-30
+## compVB-------------------------------2024-10-24
 ## Compare fitted von B curves using parameters.
 ## ---------------------------------------------RH
 compVB = function(dat, index, A=1:40, subset=list(sex=c("Male","Female")), 
@@ -797,11 +822,15 @@ compVB = function(dat, index, A=1:40, subset=list(sex=c("Male","Female")),
 		} else {
 			ylim = c(0,ymax)
 		}
-		fout = fout.e = outnam
+		fout.e = outnam
 		for (l in lang) {
 			changeLangOpts(L=l)
-			fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
-			if (png) png(paste0(fout,".png"), units="in", res=pngres, width=8, height=6)
+			#fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
+			fout = switch(l, 'e' = paste0("./english/",fout.e), 'f' = paste0("./french/",fout.e) )
+			if (png) {
+				clearFiles(paste0(fout,".png"))
+				png(paste0(fout,".png"), units="in", res=pngres, width=8, height=6)
+			}
 			par(mfrow=c(1,1), mar=c(3.25,3.5,0.5,0.5), oma=c(0,0,0,0), mgp=c(2,0.5,0))
 			plot(NA, xlim=xlim, ylim=ylim, xaxs="i", yaxs="i", las=1, cex.axis=1.2, cex.lab=1.5, xlab=linguaFranca("Age (years)",l), ylab=linguaFranca("Predicted Length (cm)",l))
 			axis(1, at=A, tcl=-0.25, labels=FALSE)
@@ -834,7 +863,7 @@ compVB = function(dat, index, A=1:40, subset=list(sex=c("Male","Female")),
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~compVB
 
 
-## compVBpars---------------------------2021-02-02
+## compVBpars---------------------------2024-10-24
 ##  Compare MCMC derived parameters from von Bertalanffy model
 ## ---------------------------------------------RH
 compVBpars = function(bfiles, prefix="vbstan.barf.", 
@@ -853,6 +882,7 @@ compVBpars = function(bfiles, prefix="vbstan.barf.",
 			load(bfiles[i])        ## loads as object 'barf'
 			ibarf = barf$p[pnams]  ## p = random effects fit
 			idat  = as.data.frame(ibarf)
+#browser();return()
 			nmcmc = nrow(idat)
 			if (i==1) {
 				QVB = array(NA, dim=c(dim(idat),length(bfiles)), dimnames=list(1:nmcmc, pnams, bnams))
@@ -864,8 +894,9 @@ compVBpars = function(bfiles, prefix="vbstan.barf.",
 	} else {
 		load("QVB.rda")
 	}
+#browser();return()
 	if (!all(bnams %in% dimnames(QVB)[[3]]))
-		stop ("You need to re-create QVB, set 'redo.QVB=TRUE'")
+		stop ("You need to re-create QVB, set 'redo.QVB=T'")
 	QVB = QVB[,,bnams,drop=FALSE]
 	pvb.med = apply(QVB[,1,],2,median)
 	pvb.ord = order(pvb.med)
@@ -883,20 +914,26 @@ compVBpars = function(bfiles, prefix="vbstan.barf.",
 	fout.e = outnam
 	for (l in lang) {  ## could switch to other languages if available in 'linguaFranca'.
 		changeLangOpts(L=l)
-		fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
-		if (png) png(paste0(fout,".png"), units="in", res=pngres, width=PIN[1], height=PIN[2])
+		#fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
+		fout = switch(l, 'e' = paste0("./english/",fout.e), 'f' = paste0("./french/",fout.e) )
+		if (png) {
+			clearFiles(paste0(fout,".png"))
+			png(paste0(fout,".png"), units="in", res=pngres, width=PIN[1], height=PIN[2])
+		}
 		expandGraph(mfrow=c(3,1),mar=c(3.5,0,1,1), oma=c(0,12,0,0))
 
 		for (p in 1:length(pnams)) {
 			pp  = p[1]
 			pvb = QVB[,pp,]
 			pvb.med = apply(pvb,2,median)
-
+#browser();return()
+	
 			ppp = c(expression(italic(L)[infinity]),expression(italic(K)),expression(italic(t)[0]),expression(italic(sigma)))[p]
 			pvb.plot = pvb[,pvb.ord]; attr(pvb.plot,"class")="matrix"    ## some weird new shit with subsetting and quantBox (RH 210202)
 
-			quantBox(pvb.plot, horizontal=TRUE, outline=FALSE, pars=bpars, yaxt="n", cex.axis=1.2)
+			quantBox(pvb.plot, horizontal=T, outline=F, pars=bpars, yaxt="n", cex.axis=1.2)
 			mtext(ppp, side=1, line=2.25, cex=1.5)
+#browser();return()
 			if (par()$mfg[2]==1) {
 				ylab = gsub("\\."," ", gsub("surv\\.","", gsub("bsr","BSR",gsub("rer","RER",gsub("len\\.","",colnames(pvb)[pvb.ord])))))
 				## Modify the names of the stocks and genetic species (probably should make ylab an argument to the function):
@@ -906,15 +943,20 @@ compVBpars = function(bfiles, prefix="vbstan.barf.",
 		}
 		if (png) dev.off()
 	}; eop()
+#browser();return()
 }
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~compVBpars
 
 
-## createMA-----------------------------2023-04-20
+## createMA-----------------------------2024-06-20
 ##  Create table of DFO management actions and quotas
 ##  for Catch Appendix A.
+##  gears: 
+##    TRW = Trawl
+##    ZNO = ZN Outside
+##    ZNH = ZN + Halibut
 ## ---------------------------------------------RH
-createMA =function(yrs=1979:2023, strSpp="POP", addletters=TRUE)
+createMA =function(yrs=1979:2024, strSpp="POP", addletters=TRUE, gears="TRW")
 {
 	dfo.action = dfo.quota = as.list(rep(NA,length(yrs)))
 	names(dfo.action) = names(dfo.quota) = yrs
@@ -930,6 +972,9 @@ createMA =function(yrs=1979:2023, strSpp="POP", addletters=TRUE)
 	dfo.quota[["1979"]][["POP"]][["TRW"]][["5AB"]] = 2000
 	dfo.quota[["1979"]][["POP"]][["TRW"]][["5E"]]  = 600
 	dfo.quota[["1979"]][["POP"]][["TRW"]][["CST"]] = 2650
+	##~~~~~Yellowtail Rockfish~~~~~~~~~~~
+	dfo.quota[["1979"]][["YTR"]][["TRW"]][["3C"]] = 100    ## in YTR 2014 (Norm Olsen)
+	dfo.quota[["1979"]][["YTR"]][["TRW"]][["5AB"]] = 3000  ## in YTR 2014 (Norm Olsen)
 
 	##-----1980--------------------------
 	dfo.action[["1980"]][["POP"]] = "POP: Started experimental over-harvesting of SW Vancouver Island POP stock."
@@ -938,24 +983,31 @@ createMA =function(yrs=1979:2023, strSpp="POP", addletters=TRUE)
 	dfo.quota[["1980"]][["POP"]][["TRW"]][["5AB"]] = 2200
 	dfo.quota[["1980"]][["POP"]][["TRW"]][["5E"]]  = 800
 	dfo.quota[["1980"]][["POP"]][["TRW"]][["CST"]] = 3600
+	##~~~~~Yellowtail Rockfish~~~~~~~~~~~
+	dfo.quota[["1980"]][["YTR"]][["TRW"]][["3C"]] = 100    ## in YTR 2014 (Norm Olsen)
+	dfo.quota[["1980"]][["YTR"]][["TRW"]][["5AB"]] = 3000  ## in YTR 2014 (Norm Olsen)
 
 	##-----1981--------------------------
 	dfo.action[["1981"]][["SBF"]] = "SBF: Started limited vessel entry for Sablefish fleet."
 	dfo.action[["1981"]][["WAP"]] = "WAP: Pollock TAC (1981-1994): only 4B=Areas 13-18, 29"
-	dfo.action[["1981"]][["CAR"]] = "SRF: Shelf rockfish aggregate is [CAR] for 3D."
-	##~~~~~Canary Rockfish~~~~~~~~~~~~~~~
-	dfo.quota[["1981"]][["CAR"]][["TRW"]][["3D"]] = 350
+	dfo.action[["1981"]][["CAR|SGR|YTR"]] = "SRF: Shelf rockfish aggregates are [CAR+SGR+YTR] for 3D."
+	##~~~~~Aggregates~~~~~~~~~~~~~~~~~~~~
+	dfo.quota[["1981"]][["CAR"]][["TRW"]][["3D"]] = 350  ## in aggregate but quota only on CAR
 	##~~~~~Pacific Ocean Perch~~~~~~~~~~~
 	dfo.quota[["1981"]][["POP"]][["TRW"]][["3C"]]  = 500
 	dfo.quota[["1981"]][["POP"]][["TRW"]][["5AB"]] = 1500
 	dfo.quota[["1981"]][["POP"]][["TRW"]][["5CD"]] = 1800
 	dfo.quota[["1981"]][["POP"]][["TRW"]][["5E"]]  = 800
 	dfo.quota[["1981"]][["POP"]][["TRW"]][["CST"]] = 4600
+	##~~~~~Yellowtail Rockfish~~~~~~~~~~~
+	dfo.quota[["1981"]][["YTR"]][["TRW"]][["3C"]] = 100  ## in YTR 2014 (Norm Olsen)
+	dfo.quota[["1981"]][["YTR"]][["TRW"]][["5AB"]] = 2000
+
 
 	##-----1982--------------------------
-	dfo.action[["1982"]][["CAR"]] = "SRF: Shelf rockfish aggregates are [CAR] for 3D, [CAR+SGR] for 5AB."
-	##~~~~~Canary|Silvergrey~~~~~~~~~~~~~
-	dfo.quota[["1982"]][["CAR"]][["TRW"]][["3D"]] = 350
+	dfo.action[["1982"]][["CAR|SGR|YTR"]] = "SRF: Shelf rockfish aggregates are [CAR+SGR+YTR] for 3D; [CAR+SGR] for 5AB."
+	##~~~~~Aggregates~~~~~~~~~~~~~~~~~~~~
+	dfo.quota[["1982"]][["CAR"]][["TRW"]][["3D"]] = 350  ## in aggregate but quota only on CAR
 	dfo.quota[["1982"]][["CAR|SGR"]][["TRW"]][["5AB"]] = 1100
 	##~~~~~Pacific Ocean Perch~~~~~~~~~~~
 	dfo.quota[["1982"]][["POP"]][["TRW"]][["3C"]]  = 500
@@ -964,11 +1016,13 @@ createMA =function(yrs=1979:2023, strSpp="POP", addletters=TRUE)
 	dfo.quota[["1982"]][["POP"]][["TRW"]][["5CD"]] = 2000
 	dfo.quota[["1982"]][["POP"]][["TRW"]][["5E"]]  = 800
 	dfo.quota[["1982"]][["POP"]][["TRW"]][["CST"]] = 4550
+	##~~~~~Yellowtail Rockfish~~~~~~~~~~~
+	dfo.quota[["1982"]][["YTR"]][["TRW"]][["5AB"]] = 1500
 
 	##-----1983--------------------------
 	dfo.action[["1983"]][["POP"]] = "POP: Started experimental unlimited harvesting of Langara Spit POP stock (5EN)."
 	dfo.action[["1983"]][["CAR|SGR|YTR"]] = "SRF: Shelf rockfish aggregates are [CAR+SGR+YTR] for 3D; [CAR+SGR] for 5AB; [CAR+YTR] for 5CD."
-	##~~~~~Canary|Silvergrey|Yellowtail~~
+	##~~~~~Aggregates~~~~~~~~~~~~~~~~~~~~
 	dfo.quota[["1983"]][["CAR|SGR|YTR"]][["TRW"]][["3D"]] = 600
 	dfo.quota[["1983"]][["CAR|SGR"]][["TRW"]][["5AB"]] = 1100
 	dfo.quota[["1983"]][["CAR|YTR"]][["TRW"]][["5CD"]] = 200
@@ -978,11 +1032,13 @@ createMA =function(yrs=1979:2023, strSpp="POP", addletters=TRUE)
 	dfo.quota[["1983"]][["POP"]][["TRW"]][["5AB"]] = 1000
 	dfo.quota[["1983"]][["POP"]][["TRW"]][["5CD"]] = 2000
 	dfo.quota[["1983"]][["POP"]][["TRW"]][["CST"]] = 3750
+	##~~~~~Yellowtail Rockfish~~~~~~~~~~~
+	dfo.quota[["1983"]][["YTR"]][["TRW"]][["5AB"]] = 1500
 
 	##-----1984--------------------------
 	dfo.action[["1984"]][["POP"]] = "POP: Ended experimental over-harvesting of SW Vancouver Island POP stock."
 	dfo.action[["1984"]][["CAR|SGR|YTR"]] = "SRF: Shelf rockfish aggregates are [CAR+SGR+YTR] for 3C, 3D, 5E; [CAR+SGR] for 5AB; [CAR+YTR] for 5CD."
-	##~~~~~Canary|Silvergrey|Yellowtail~~
+	##~~~~~Aggregates~~~~~~~~~~~~~~~~~~~~
 	dfo.quota[["1984"]][["CAR|SGR|YTR"]][["TRW"]][["3C"]] = 200
 	dfo.quota[["1984"]][["CAR|SGR|YTR"]][["TRW"]][["3D"]] = 500 + 500
 	dfo.quota[["1984"]][["CAR|SGR"]][["TRW"]][["5AB"]] = 1100
@@ -994,44 +1050,53 @@ createMA =function(yrs=1979:2023, strSpp="POP", addletters=TRUE)
 	dfo.quota[["1984"]][["POP"]][["TRW"]][["5AB"]] = 800
 	dfo.quota[["1984"]][["POP"]][["TRW"]][["5CD"]] = 2000
 	dfo.quota[["1984"]][["POP"]][["TRW"]][["CST"]] = 3550
+	##~~~~~Yellowtail Rockfish~~~~~~~~~~~
+	dfo.quota[["1984"]][["YTR"]][["TRW"]][["5AB"]] = 1500
 
 	##-----1985--------------------------
-	dfo.action[["1985"]][["CAR|SGR|YTR"]] = "SRF: Shelf rockfish aggregates are [CAR+SGR+YTR] for 3C, 3D, 5E; [CAR+SGR] for 5AB; [CAR] for 5CD."
-	##~~~~~Canary|Silvergrey|Yellowtail~~
+	dfo.action[["1985"]][["CAR|SGR|YTR"]] = "SRF: Shelf rockfish aggregates are [CAR+SGR+YTR] for 3C, 3D, 5E; [CAR+SGR] for 5AB."
+	##~~~~~Aggregates~~~~~~~~~~~~~~~~~~~~
 	dfo.quota[["1985"]][["CAR|SGR|YTR"]][["TRW"]][["3C"]] = 300
 	dfo.quota[["1985"]][["CAR|SGR|YTR"]][["TRW"]][["3D"]] = 500 + 500
 	dfo.quota[["1985"]][["CAR|SGR"]][["TRW"]][["5AB"]] = 1100
-	dfo.quota[["1985"]][["CAR"]][["TRW"]][["5CD"]] = 450
 	dfo.quota[["1985"]][["CAR|SGR|YTR"]][["TRW"]][["5E"]] = 950
+	##~~~~~Canary Rockfish~~~~~~~~~~~~~~~
+	dfo.quota[["1985"]][["CAR"]][["TRW"]][["5CD"]] = 450
 	##~~~~~Pacific Ocean Perch~~~~~~~~~~~
-	dfo.quota[["1985"]][["POP"]][["TRW"]][["3C"]]  = 300
-	dfo.quota[["1985"]][["POP"]][["TRW"]][["3D"]]  = 350
-	dfo.quota[["1985"]][["POP"]][["TRW"]][["5AB"]] = 850
+	dfo.quota[["1985"]][["POP"]][["TRW"]][["3C"]]  =  300
+	dfo.quota[["1985"]][["POP"]][["TRW"]][["3D"]]  =  350
+	dfo.quota[["1985"]][["POP"]][["TRW"]][["5AB"]] =  850
 	dfo.quota[["1985"]][["POP"]][["TRW"]][["5CD"]] = 2000
 	dfo.quota[["1985"]][["POP"]][["TRW"]][["CST"]] = 3500
+	##~~~~~Yellowtail Rockfish~~~~~~~~~~~
+	dfo.quota[["1985"]][["YTR"]][["TRW"]][["5AB"]] = 1500
+	dfo.quota[["1985"]][["YTR"]][["TRW"]][["5CD"]] =  450
 
 	##-----1986--------------------------
 	dfo.action[["1986"]][["POP|YMR|RER"]] = "SRF: Slope rockfish (POP, YMR, RER) coastwide quota = 5000t."
-	dfo.action[["1986"]][["CAR|SGR|YTR"]] = "SRF: Shelf rockfish aggregates are [CAR+SGR+YTR] for 3C, 3D, 5E; [CAR+SGR] for 5AB; [CAR] for 5CD; coastwide quota = 4100t; 1986 quotas revised in 1988 MP to exclude YTR."
-	##~~~~~Canary|Silvergrey~~~~~~~~~~~~~
+	dfo.action[["1986"]][["CAR|SGR|YTR"]] = "SRF: Shelf rockfish aggregates are [CAR+SGR+YTR] for 3C, 3D, 5E; [CAR+SGR] for 5AB; [CAR] for 5CD; 1986 quotas revised in 1988 MP to exclude YTR."
+	dfo.action[["1986"]][["YTR"]] = "YTR: No quotas for Yellowtail; coastwide monitoring will continue"
+	##~~~~~Aggregates~~~~~~~~~~~~~~~~~~~~
+	dfo.quota[["1986"]][["YMR|RER"]][["TRW"]][["CST"]] = 5000
 	dfo.quota[["1986"]][["CAR|SGR"]][["TRW"]][["3C"]] = 250
 	dfo.quota[["1986"]][["CAR|SGR"]][["TRW"]][["3D"]] = 800
 	dfo.quota[["1986"]][["CAR|SGR"]][["TRW"]][["5AB"]] = 1100
-	dfo.quota[["1986"]][["CAR"]][["TRW"]][["5CD"]] = 300
 	dfo.quota[["1986"]][["CAR|SGR"]][["TRW"]][["5E"]] = 750
 	dfo.quota[["1986"]][["CAR|SGR"]][["TRW"]][["CST"]] = 4100
+	##~~~~~Canary Rockfish~~~~~~~~~~~~~~~
+	dfo.quota[["1986"]][["CAR"]][["TRW"]][["5CD"]] = 300
 	##~~~~~Pacific Ocean Perch~~~~~~~~~~~
 	dfo.quota[["1986"]][["POP"]][["TRW"]][["3C"]]  = 100
 	dfo.quota[["1986"]][["POP"]][["TRW"]][["3D"]]  = 350
 	dfo.quota[["1986"]][["POP"]][["TRW"]][["5AB"]] = 500
 	dfo.quota[["1986"]][["POP"]][["TRW"]][["5CD"]] = 2000
 	dfo.quota[["1986"]][["POP"]][["TRW"]][["CST"]] = 2950
-	##~~~~~Slope Rockfish~~~~~~~~~~~~~~~~
-	#dfo.quota[["1986"]][["POP|YMR|RER"]][["ZNH"]][["CST"]] = 5000
-	dfo.quota[["1986"]][["YMR|RER"]][["TRW"]][["CST"]] = 5000
+	##~~~~~Yellowtail Rockfish~~~~~~~~~~~
+	dfo.quota[["1986"]][["YTR"]][["TRW"]][["CST"]] = 0
 
 	##-----1987--------------------------
 	dfo.action[["1987"]][["CAR|SGR"]] = "SRF: Shelf rockfish aggregates are [CAR+SGR] for 3C, 3D, 5AB, 5E; [CAR] for 5CD."
+	dfo.action[["1987"]][["@@@"]] = "TWL: Submission of logbooks for the trawl fishery becomes mandatory."
 	##~~~~~Canary|Silvergrey~~~~~~~~~~~~~
 	dfo.quota[["1987"]][["CAR|SGR"]][["TRW"]][["3C"]]  = 250
 	dfo.quota[["1987"]][["CAR|SGR"]][["TRW"]][["3D"]]  = 800
@@ -1044,10 +1109,16 @@ createMA =function(yrs=1979:2023, strSpp="POP", addletters=TRUE)
 	dfo.quota[["1987"]][["POP"]][["TRW"]][["5AB"]] = 500
 	dfo.quota[["1987"]][["POP"]][["TRW"]][["5CD"]] = 2000
 	dfo.quota[["1987"]][["POP"]][["TRW"]][["CST"]] = 2950
+	##~~~~~Yellowtail Rockfish~~~~~~~~~~~
+	dfo.quota[["1987"]][["YTR"]][["TRW"]][["3CD5AB"]] = 2000
+	dfo.quota[["1987"]][["YTR"]][["TRW"]][["5CDE"]]   =  700
+	dfo.quota[["1987"]][["YTR"]][["TRW"]][["CST"]]    = 2700
 
 	##-----1988--------------------------
 	dfo.action[["1988"]][["YMR"]] = "YMR: The quota for Yellowmouth Rockfish only applies to areas 127, 108, 109, 110, 111 and 130-1. Evidence from surveys and from commercial fishery suggests a common stock from the mouth of Queen Charlotte Sound and possibly to Cape Cook."
 	dfo.action[["1988"]][["CAR|SGR"]] = "SRF: Shelf rockfish aggregates are [CAR+SGR] for 3C, 3D, 5AB, 5E; [CAR] for 5CD."
+	dfo.action[["1988"]][["POP|YMR|CAR|SGR|YTR"]] = "SRF: Slope and shelf rockfish quotas managed on quarterly basis to provide an orderly harvest (1988-1995)."
+	dfo.action[["1988"]][["YTR"]] = "YTR: A trip limit of 32t (~70,000 lb) per boat trip will be in effect then 66% of the quota (2,300t) has been taken."
 	##~~~~~Canary|Silvergrey~~~~~~~~~~~~~
 	dfo.quota[["1988"]][["CAR|SGR"]][["TRW"]][["3C"]]  = 300
 	dfo.quota[["1988"]][["CAR|SGR"]][["TRW"]][["3D"]]  = 800
@@ -1064,9 +1135,12 @@ createMA =function(yrs=1979:2023, strSpp="POP", addletters=TRUE)
 	##~~~~~Slope Rockfish~~~~~~~~~~~~~~~~
 	#dfo.quota[["1988"]][["POP|YMR"]][["ZNH"]][["CST"]] = 6075
 	dfo.quota[["1988"]][["YMR"]][["TRW"]][["CST"]] = 6075
+	##~~~~~Yellowtail Rockfish~~~~~~~~~~~
+	dfo.quota[["1988"]][["YTR"]][["TRW"]][["CST"]] = 3500
 
 	##-----1989--------------------------
 	dfo.action[["1989"]][["POP|YMR|CAR|SGR"]] = paste0(strSpp,": In 1989, quota rockfish comprising Pacific Ocean Perch, Yellowmouth Rockfish, Canary Rockfish and Silvergray Rockfish, will be managed on a coastwide basis.")
+	dfo.action[["1989"]][["YTR"]] = "YTR: A trip limit of 45.4t (~100,000 lbs) will be in effect until attainment of 60% of the quota, at which time the trip limit will be reduced to 22.7t (~50,000 lbs)"
 	##~~~~~Canary Rockfish~~~~~~~~~~~~~~~
 	dfo.quota[["1989"]][["CAR"]][["TRW"]][["3CD"]] = 600
 	dfo.quota[["1989"]][["CAR"]][["TRW"]][["5AB"]] = 425
@@ -1136,6 +1210,8 @@ createMA =function(yrs=1979:2023, strSpp="POP", addletters=TRUE)
 	dfo.quota[["1991"]][["SGR"]][["TRW"]][["CST"]] = 1575
 	##~~~~~Yellowmouth Rockfish~~~~~~~~~~
 	dfo.quota[["1991"]][["YMR"]][["TRW"]][["CST"]] = 1380
+	##~~~~~Yellowtail Rockfish~~~~~~~~~~
+	dfo.quota[["1991"]][["YTR"]][["TRW"]][["CST"]] = 4800
 
 	##-----1992--------------------------
 	dfo.action[["1992"]][["QBR|YYR"]] = paste0(strSpp,": Started limited vessel entry for H\\&L fleet outside.")
@@ -1184,7 +1260,7 @@ createMA =function(yrs=1979:2023, strSpp="POP", addletters=TRUE)
 
 	##-----1994--------------------------
 	dfo.action[["1994"]][["@@@"]] = "TWL: Started a dockside monitoring program (DMP) for the Trawl fleet."
-	dfo.action[["1994"]][["POP|YMR|RER|CAR|SGR|YTR|RSR|WWR|SKR|SST|LST|REBS"]] = paste0(strSpp,": As a means of both reducing at-sea discarding and simplifying the harvesting regime, rockfish aggregation was implemented. Through consultation with GTAC, the following aggregates were identified: Agg~1=~POP, YMR, RER, CAR, SGR, YTR; Agg~2=~RSR, WWR; Agg~3=~SKR, SST, LST; Agg~4=~ORF.")
+	dfo.action[["1994"]][["POP|YMR|RER|CAR|SGR|YTR|RSR|WWR|SKR|SST|LST|REBS"]] = "TWL: As a means of both reducing at-sea discarding and simplifying the harvesting regime, rockfish aggregation was implemented. Through consultation with GTAC, the following aggregates were identified: Agg~1=~POP, YMR, RER, CAR, SGR, YTR; Agg~2=~RSR, WWR; Agg~3=~SKR, SST, LST; Agg~4=~ORF."
 	##~~~~~Aggregates~~~~~~~~~~~~~~~~~~~~
 	dfo.quota[["1994"]][["POP|YMR|RER|CAR|SGR|YTR"]][["TRW"]][["CST"]] = 12574
 	dfo.quota[["1994"]][["RSR|WWR"]][["TRW"]][["CST"]] = 4000
@@ -1197,9 +1273,9 @@ createMA =function(yrs=1979:2023, strSpp="POP", addletters=TRUE)
 	dfo.quota[["1994"]][["POP"]][["TRW"]][["CST"]] = 4917
 
 	##-----1995--------------------------
-	dfo.action[["1995"]][["BOR|RBR|RSR|SST"]] = paste0(strSpp,": Implemented catch limits (monthly) on rockfish aggregates for H\\&L.")
+	dfo.action[["1995"]][["BOR|RBR|RSR|SST"]] = "H\\&L: Implemented catch limits (monthly) on rockfish aggregates for H\\&L."
 	dfo.action[["1995"]][["WAP"]] = "WAP: Pollock TAC areas: 5CDE=5CD; 5AB=Area 12; 4B=Areas 13-18, 29."
-	dfo.action[["1995"]][["CAR|SGR|YTR|WWR|RER|POP|YMR|RSR|SKR|SST|LST|REBS"]] = paste0(strSpp,": Trawl aggregates established in 1994 changed: Agg~1=~CAR, SGR, YTR, WWR, RER; Agg~2=~POP, YMR, RSR; Agg~3=~SKR, SST, LST; Agg~4=~ORF.")
+	dfo.action[["1995"]][["CAR|SGR|YTR|WWR|RER|POP|YMR|RSR|SKR|SST|LST|REBS"]] = "TWL: Trawl aggregates established in 1994 changed: Agg~1=~CAR, SGR, YTR, WWR, RER; Agg~2=~POP, YMR, RSR; Agg~3=~SKR, SST, LST; Agg~4=~ORF."
 	##~~~~~Aggregates~~~~~~~~~~~~~~~~~~~~
 	dfo.quota[["1995"]][["CAR|SGR|YTR|WWR|RER"]][["TRW"]][["CST"]] = 9716
 	dfo.quota[["1995"]][["POP|YMR|RSR"]][["TRW"]][["CST"]] = 7320
@@ -1212,18 +1288,22 @@ createMA =function(yrs=1979:2023, strSpp="POP", addletters=TRUE)
 	dfo.quota[["1995"]][["POP"]][["TRW"]][["CST"]] = 4234
 
 	##-----1996--------------------------
-	dfo.action[["1996"]][["@@@"]] = "TWL: Started 100\\% onboard observer program for offshore Trawl fleet."
-	dfo.action[["1996"]][["BOR|RBR|RSR|SST"]] = paste0(strSpp,": Started DMP for H\\&L fleet.")
-	dfo.action[["1996"]][["YTR|WWR|CAR|SGR|POP|YMR|RER|SKR|RSR|SCR|SST|LST|REBS"]] = paste0(strSpp,": Rockfish aggregation will continue on a limited basis in 1996: Agg~1=~YTR, WWR; Agg~2=~CAR, SGR; Agg~3=~POP, YMR; Agg~4=~RER, SKR; Agg~5=~RSR, SCR; Agg~6=~ORF incl. SST, LST")
+	dfo.action[["1996"]][["@@@"]] = "TWL: Started 100\\% onboard observer program for offshore Trawl fleet; fishing year commenced Feb 16."
+	dfo.action[["1996"]][["BOR|RBR|RSR|SST"]] = "H\\&L: Started DMP for H\\&L fleet."
+	dfo.action[["1996"]][["YTR|WWR|CAR|SGR|POP|YMR|RER|SKR|RSR|SCR|SST|LST|REBS"]] = "TWL: Rockfish aggregation will continue on a limited basis in 1996: Agg~1=~YTR, WWR; Agg~2=~CAR, SGR; Agg~3=~POP, YMR; Agg~4=~RER, SKR; Agg~5=~RSR, SCR; Agg~6=~ORF incl. SST, LST"
 	dfo.action[["1996"]][["WAP"]] = "WAP: Pollock TAC areas: 5CDE=5CD; 5AB=Areas 11,12; 4B=Areas 13-18, 29"
 	##~~~~~Aggregates~~~~~~~~~~~~~~~~~~~~
-	dfo.quota[["1996"]][["YTR|WWR"]][["TRW"]][["CST"]] = 7734
-	dfo.quota[["1996"]][["CAR|SGR"]][["TRW"]][["CST"]] = 2085
-	dfo.quota[["1996"]][["POP|YMR"]][["TRW"]][["CST"]] = 6884
-	dfo.quota[["1996"]][["RER|SKR"]][["TRW"]][["CST"]] = 1311
+	dfo.quota[["1996"]][["SGR"]][["TRW"]][["CST"]]     = 1075 ## Agg 3
+	dfo.quota[["1996"]][["CAR"]][["TRW"]][["CST"]]     =  738 ## Agg 3
+	dfo.quota[["1996"]][["RER"]][["TRW"]][["CST"]]     =  700 ## Agg 4
+	dfo.quota[["1996"]][["SKR"]][["TRW"]][["CST"]]     =  440 ## Agg 4
+	dfo.quota[["1996"]][["LST|SST"]][["TRW"]][["CST"]] =  654 ## Agg 4 (idiots)
+	#dfo.quota[["1996"]][["POP"]][["TRW"]][["CST"]]     = 3350 ## Agg 5
+	dfo.quota[["1996"]][["RSR"]][["TRW"]][["CST"]]     = 1760 ## Agg 5
+	dfo.quota[["1996"]][["YMR"]][["TRW"]][["CST"]]     = 1475 ## Agg 5
+	dfo.quota[["1996"]][["YTR"]][["TRW"]][["CST"]]     = 4675 ## Agg 6
+	dfo.quota[["1996"]][["WWR"]][["TRW"]][["CST"]]     = 2050 ## Agg 6
 	dfo.quota[["1996"]][["LST|SST"]][["TRW"]][["CST"]] = 752
-	##~~~~~Canary Rockfish~~~~~~~~~~~~~~~
-	dfo.quota[["1996"]][["CAR"]][["ZNH"]][["CST"]] = 738
 	##~~~~~Pacific Ocean Perch~~~~~~~~~~~
 	dfo.quota[["1996"]][["POP"]][["TRW"]][["3C"]]  = 491
 	dfo.quota[["1996"]][["POP"]][["TRW"]][["3D"]]  = 164
@@ -1231,13 +1311,21 @@ createMA =function(yrs=1979:2023, strSpp="POP", addletters=TRUE)
 	dfo.quota[["1996"]][["POP"]][["TRW"]][["5CD"]] = 4003
 	dfo.quota[["1996"]][["POP"]][["TRW"]][["5E"]]  = 726
 	dfo.quota[["1996"]][["POP"]][["TRW"]][["CST"]] = 6884
+	##~~~~~Yellowtail Rockfish~~~~~~~~~~~
+	#dfo.quota[["1997"]][["YTR|WWR"]][["TRW"]][["CST"]] = 2707 + 2320 + 2707  ## three fishing periods
 
 	##-----1997--------------------------
-	dfo.action[["1997"]][["@@@"]] = "TWL: Started IVQ system for Trawl Total Allowable Catch (TAC) species (April 1, 1997)"
+	dfo.action[["1997"]][["@@@"]] = "TWL: Interim fishing year from Jan 1 to Mar 31."
+	dfo.action[["1997"]][["@@@"]] = "TWL: Started IVQ system for Trawl Total Allowable Catch (TAC) species (April 1, 1997); aggregates no longer used"
 	dfo.action[["1997"]][["BOR|RBR"]] = paste0(strSpp,": Implemented catch limits (15,000 lbs per trip) on combined non-TAC rockfish for the Trawl fleet.")
 	dfo.action[["1997"]][["POP|YMR"]] = paste0(strSpp,": Permanent boundary adjustment -- Pacific Ocean Perch and Yellowmouth Rockfish caught within Subarea 102-3 and those portions of Subareas 142-1, 130-3 and 130-2 found southerly and easterly of a straight line commencing at 52$^\\circ$20$'$00$''$N 131$^\\circ$36$'$00$''$W thence to 52$^\\circ$20$'$00$''$N 132$^\\circ$00$'$00$''$W thence to 51$^\\circ$30$'$00$''$N 131$^\\circ$00$'$00$''$W and easterly and northerly of a straight line commencing at 51$^\\circ$30$'$00$''$N 131$^\\circ$00$'$00$''$W thence to 51$^\\circ$39$'$20$''$N 130$^\\circ$30$'$30$''$W will be deducted from the vessel's 5CD IVQ for those two species.")
 	dfo.action[["1997"]][["QBR|CPR|CHR|TIR|CAR|SGR|RER|SKR|SST|LST|POP|YMR|RSR|YTR|BKR|WWR|REBS"]] = "H\\&L: All H\\&L rockfish, with the exception of YYR, shall be managed under the following rockfish aggregates: Agg~1=~QBR, CPR; Agg~2=~CHR, TIR; Agg~3=~CAR, SGR; Agg~4=~RER, SKR, SST, LST; Agg~5=~POP, YMR, RSR; Agg~6=~YTR, BKR, WWR; Agg~7=~ORF excluding YYR."
-	dfo.action[["1996"]][["CAR"]] = "CAR: groundfish equivalent price (GFE) relative to POP = 1.19"
+	dfo.action[["1997"]][["YTR"]] = "YTR: Groundfish Equivalent price (GFE) relative to POP = 1.26"
+	dfo.action[["1997"]][["WWR"]] = "WWR: Groundfish Equivalent price (GFE) relative to POP = 0.96"
+	dfo.action[["1997"]][["CAR"]] = "CAR: Groundfish Equivalent price (GFE) relative to POP = 1.19"
+	dfo.action[["1997"]][["SGR"]] = "SGR: Groundfish Equivalent price (GFE) relative to POP = 1.20"
+	dfo.action[["1997"]][["YMR"]] = "YMR: Groundfish Equivalent price (GFE) relative to POP = 1.19"
+	dfo.action[["1997"]][["RER"]] = "RER: Groundfish Equivalent price (GFE) relative to POP = 1.15"
 	##~~~~~Canary Rockfish~~~~~~~~~~~~~~~
 	dfo.quota[["1997"]][["CAR"]][["TRW"]][["3CD"]]  = 503
 	dfo.quota[["1997"]][["CAR"]][["TRW"]][["5AB"]]  = 345
@@ -1251,8 +1339,13 @@ createMA =function(yrs=1979:2023, strSpp="POP", addletters=TRUE)
 	dfo.quota[["1997"]][["POP"]][["TRW"]][["5CD"]] = 2818
 	dfo.quota[["1997"]][["POP"]][["TRW"]][["5E"]]  = 644
 	dfo.quota[["1997"]][["POP"]][["TRW"]][["CST"]] = 6481
+	##~~~~~Yellowtail Rockfish~~~~~~~~~~~
+	dfo.quota[["1997"]][["YTR"]][["TRW"]][["3C"]] = 719
+	dfo.quota[["1997"]][["YTR"]][["TRW"]][["3D5"]] = 4514
+	dfo.quota[["1997"]][["YTR"]][["TRW"]][["CST"]] = 5233
 
 	##-----1998--------------------------
+	dfo.action[["1998"]][["YTR"]] = "YTR: Yellowtail Rockfish caught in the offshore Pacific Hake fishery can be deducted from IVQ coastwide. The vessel master is responsible for designating the area at the time of the offload. (effective 1998-present)"
 	dfo.action[["1998"]][["YYR"]] = "H\\&L: Aggregate 4 -- Option A: a quantity of Aggregates 2 to 5 and 7 combined not to exceed 100\\% of the total of Aggregate 1 per landing; an overage of Aggregate 1 and 6 up to a maximum of 10\\% per fishing period which shall be deducted from the vessel's succeeding fishing period limit. Option B: a quantity of Aggregates 2 to 7 combined not to exceed 100\\% of the Yelloweye rockfish per landing. Option C: 20,000 pounds of Aggregate 4 per fishing period; an overage for each of the Aggregates 3 to 5 and, Aggregates 6 and 7 combined, up to a maximum of 20\\% per fishing period which shall be deducted from the vessel's succeeding fishing period limit."
 	##~~~~~Canary Rockfish~~~~~~~~~~~~~~~
 	dfo.quota[["1998"]][["CAR"]][["TRW"]][["3CD"]] = 503
@@ -1267,6 +1360,10 @@ createMA =function(yrs=1979:2023, strSpp="POP", addletters=TRUE)
 	dfo.quota[["1998"]][["POP"]][["TRW"]][["5CD"]] = 2817
 	dfo.quota[["1998"]][["POP"]][["TRW"]][["5E"]]  = 730
 	dfo.quota[["1998"]][["POP"]][["TRW"]][["CST"]] = 6147
+	##~~~~~Yellowtail Rockfish~~~~~~~~~~~
+	dfo.quota[["1998"]][["YTR"]][["TRW"]][["3C"]] = 1005
+	dfo.quota[["1998"]][["YTR"]][["TRW"]][["3D5"]] = 3459
+	dfo.quota[["1998"]][["YTR"]][["TRW"]][["CST"]] = 4464
 
 	##-----1999--------------------------
 	##~~~~~Canary Rockfish~~~~~~~~~~~~~~~
@@ -1282,6 +1379,10 @@ createMA =function(yrs=1979:2023, strSpp="POP", addletters=TRUE)
 	dfo.quota[["1999"]][["POP"]][["TRW"]][["5CD"]] = 2817
 	dfo.quota[["1999"]][["POP"]][["TRW"]][["5E"]]  = 730
 	dfo.quota[["1999"]][["POP"]][["TRW"]][["CST"]] = 6147
+	##~~~~~Yellowtail Rockfish~~~~~~~~~~~
+	dfo.quota[["1999"]][["YTR"]][["TRW"]][["3C"]] = 1005
+	dfo.quota[["1999"]][["YTR"]][["TRW"]][["3D5"]] = 3459
+	dfo.quota[["1999"]][["YTR"]][["TRW"]][["CST"]] = 4464
 
 	##-----2000--------------------------
 	dfo.action[["2000"]][["PAH|RBR"]] = "PAH: Implemented catch limits (20,000 lbs per trip) on rockfish aggregates for the Halibut option D fleet."
@@ -1302,6 +1403,10 @@ createMA =function(yrs=1979:2023, strSpp="POP", addletters=TRUE)
 	dfo.quota[["2000"]][["POP"]][["TRW"]][["5CD"]] = 2818
 	dfo.quota[["2000"]][["POP"]][["TRW"]][["5E"]]  = 730
 	dfo.quota[["2000"]][["POP"]][["TRW"]][["CST"]] = 6148
+	##~~~~~Yellowtail Rockfish~~~~~~~~~~~
+	dfo.quota[["2000"]][["YTR"]][["TRW"]][["3C"]] = 1005
+	dfo.quota[["2000"]][["YTR"]][["TRW"]][["3D5"]] = 3459
+	dfo.quota[["2000"]][["YTR"]][["TRW"]][["CST"]] = 4464
 
 	##-----2001--------------------------
 	dfo.action[["2001"]][["@@@"]] = "ALL: An agreement reached amongst the commercial groundfish industry has established the allocation of the rockfish species between the commercial Groundfish Trawl and Groundfish Hook and Line sectors."
@@ -1324,10 +1429,14 @@ createMA =function(yrs=1979:2023, strSpp="POP", addletters=TRUE)
 	dfo.quota[["2001"]][["POP"]][["TRW"]][["5CD"]] = 2818
 	dfo.quota[["2001"]][["POP"]][["TRW"]][["5E"]]  = 730
 	dfo.quota[["2001"]][["POP"]][["TRW"]][["CST"]] = 6148
+	##~~~~~Yellowtail Rockfish~~~~~~~~~~~
+	dfo.quota[["2001"]][["YTR"]][["TRW"]][["3C"]] = 995
+	dfo.quota[["2001"]][["YTR"]][["TRW"]][["3D5"]] = 3427
+	dfo.quota[["2001"]][["YTR"]][["TRW"]][["CST"]] = 4422
 
 	##-----2002--------------------------
 	dfo.action[["2002"]][["QBR|YYR|CPR|CHR|TIR"]] = "H\\&L: Established the inshore rockfish conservation strategy."
-	dfo.action[["2002"]][["@@@"]] = "TWL: Closed areas to preserve four hexactinellid (glassy) sponge reefs."
+	dfo.action[["2002"]][["@@@"]] = "ALL: Closed areas to preserve four hexactinellid (glassy) sponge reefs."
 	dfo.action[["2002"]][["LST|SST"]] = "TWL: Managers created 5 LST management zones coastwide (WCVI, Triangle, Tidemarks, Flamingo, Rennell); zones north of WCVI were designated ``experimental''."
 	dfo.action[["2002"]][["BOR"]] = "BOR: Status of Bocaccio was designated as `Threatened' by the Committee on the Status of Endangered Wildlife in Canada (COSEWIC) in November 2002. The designation was based on a new status report that indicated a combination of low recruitment and high fishing mortality had resulted in severe declines and low spawning abundance of this species. As the Species at Risk Act (SARA) was not yet in place, there was no legal designation for Bocaccio. Protection under SARA would only come in the event that this species was listed, by regulation, under the Act."
 	##~~~~~Canary Rockfish~~~~~~~~~~~~~~~
@@ -1344,6 +1453,10 @@ createMA =function(yrs=1979:2023, strSpp="POP", addletters=TRUE)
 	dfo.quota[["2002"]][["POP"]][["TRW"]][["5CD"]] = 2518
 	dfo.quota[["2002"]][["POP"]][["TRW"]][["5E"]]  = 730
 	dfo.quota[["2002"]][["POP"]][["TRW"]][["CST"]] = 5848
+	##~~~~~Yellowtail Rockfish~~~~~~~~~~~
+	dfo.quota[["2002"]][["YTR"]][["TRW"]][["3C"]] = 995
+	dfo.quota[["2002"]][["YTR"]][["TRW"]][["3D5"]] = 3427
+	dfo.quota[["2002"]][["YTR"]][["TRW"]][["CST"]] = 4422
 
 	##-----2003--------------------------
 	dfo.action[["2003"]][["BOR|CAR|LST|YMR|YYR|BSR|RER|REBS"]] = paste0(strSpp,": Species at Risk Act (SARA) came into force in 2003.")
@@ -1361,6 +1474,10 @@ createMA =function(yrs=1979:2023, strSpp="POP", addletters=TRUE)
 	dfo.quota[["2003"]][["POP"]][["TRW"]][["5CD"]] = 2818
 	dfo.quota[["2003"]][["POP"]][["TRW"]][["5E"]]  = 730
 	dfo.quota[["2003"]][["POP"]][["TRW"]][["CST"]] = 6148
+	##~~~~~Yellowtail Rockfish~~~~~~~~~~~
+	dfo.quota[["2003"]][["YTR"]][["TRW"]][["3C"]] = 995
+	dfo.quota[["2003"]][["YTR"]][["TRW"]][["3D5"]] = 3427
+	dfo.quota[["2003"]][["YTR"]][["TRW"]][["CST"]] = 4422
 
 	##-----2004--------------------------
 	dfo.action[["2004"]][["BOR"]] = "BOR: DFO reviewed management measures in the groundfish fisheries to assess the impacts on listed species under SARA. Voluntary program for the trawl fleet was developed and implemented in 2004 in which groundfish trawl vessels directed the proceeds of all landed Bocaccio Rockfish for research and management purposes. Ongoing to 2019."
@@ -1378,6 +1495,10 @@ createMA =function(yrs=1979:2023, strSpp="POP", addletters=TRUE)
 	dfo.quota[["2004"]][["POP"]][["TRW"]][["5CD"]] = 2818
 	dfo.quota[["2004"]][["POP"]][["TRW"]][["5E"]]  = 730
 	dfo.quota[["2004"]][["POP"]][["TRW"]][["CST"]] = 6148
+	##~~~~~Yellowtail Rockfish~~~~~~~~~~~
+	dfo.quota[["2004"]][["YTR"]][["TRW"]][["3C"]] = 995
+	dfo.quota[["2004"]][["YTR"]][["TRW"]][["3D5"]] = 3427
+	dfo.quota[["2004"]][["YTR"]][["TRW"]][["CST"]] = 4422
 
 	##-----2005--------------------------
 	dfo.action[["2005"]][["BORa"]] = "BOR: DFO consulted with First Nations, stakeholders, and the Canadian public on Bocaccio COSEWIC designation for 1.5 years and planned recommendations for further action to be presented to the Minister of Environment and Governor in Council (Cabinet) in spring 2005. A final listing decision by Governor in Council was expected in October 2005."
@@ -1397,6 +1518,10 @@ createMA =function(yrs=1979:2023, strSpp="POP", addletters=TRUE)
 	dfo.quota[["2005"]][["POP"]][["TRW"]][["5CD"]] = 2818
 	dfo.quota[["2005"]][["POP"]][["TRW"]][["5E"]]  = 730
 	dfo.quota[["2005"]][["POP"]][["TRW"]][["CST"]] = 6148
+	##~~~~~Yellowtail Rockfish~~~~~~~~~~~
+	dfo.quota[["2005"]][["YTR"]][["TRW"]][["3C"]] = 995
+	dfo.quota[["2005"]][["YTR"]][["TRW"]][["3D5"]] = 3427
+	dfo.quota[["2005"]][["YTR"]][["TRW"]][["CST"]] = 4422
 
 	##-----2006--------------------------
 	dfo.action[["2006"]][["@@@"]] = "ALL: Introduced an Integrated Fisheries Management Plan (IFMP) for all directed groundfish fisheries."
@@ -1429,6 +1554,10 @@ createMA =function(yrs=1979:2023, strSpp="POP", addletters=TRUE)
 	dfo.quota[["2006"]][["POP"]][["TRW"]][["5CD"]] = 2118
 	dfo.quota[["2006"]][["POP"]][["TRW"]][["5E"]]  = 730
 	dfo.quota[["2006"]][["POP"]][["TRW"]][["CST"]] = 5448
+	##~~~~~Yellowtail Rockfish~~~~~~~~~~~
+	dfo.quota[["2006"]][["YTR"]][["TRW"]][["3C"]] = 1006
+	dfo.quota[["2006"]][["YTR"]][["TRW"]][["3D5"]] = 3464
+	dfo.quota[["2006"]][["YTR"]][["TRW"]][["CST"]] = 4422
 
 	##-----2007--------------------------
 	dfo.action[["2007"]][["BOR"]] = "BOR: COSEWIC reconfirmed Bocaccio's Threatened designation, and the species re-entered the SARA listing process in 2007."
@@ -1443,8 +1572,16 @@ createMA =function(yrs=1979:2023, strSpp="POP", addletters=TRUE)
 	dfo.quota[["2007"]][["POP"]][["TRW"]][["5CD"]] = 2118
 	dfo.quota[["2007"]][["POP"]][["TRW"]][["5E"]]  = 730
 	dfo.quota[["2007"]][["POP"]][["TRW"]][["CST"]] = 5448
+	##~~~~~Yellowtail Rockfish~~~~~~~~~~~
+	dfo.quota[["2007"]][["YTR"]][["TRW"]][["3C"]] = 995
+	dfo.quota[["2007"]][["YTR"]][["TRW"]][["3D5"]] = 3427
+	dfo.quota[["2007"]][["YTR"]][["TRW"]][["CST"]] = 4422
+	dfo.quota[["2007"]][["YTR"]][["ZNO"]][["3C"]] = 11
+	dfo.quota[["2007"]][["YTR"]][["ZNO"]][["3D5"]] = 38
+	dfo.quota[["2007"]][["YTR"]][["ZNO"]][["CST"]] = 49
 
 	##-----2008--------------------------
+	dfo.action[["2008"]][["@@@"]] = "TWL: Fishing year changed from Apr 1, 2008 to Feb 20, 2009."
 	dfo.action[["2008"]][["CARa"]] = "CAR: Stock status reviewed in Nov 2007; stock declined from original biomass but decline likely arrested; uncertain if recent catch levels will ensure rebuild; TAC for Canary reduced from 1193t to 912t coastwide."
 	dfo.action[["2008"]][["CARb"]] = "CAR: Research allocation: H\\&L=7.0t"
 	##~~~~~Canary Rockfish~~~~~~~~~~~~~~~
@@ -1470,8 +1607,16 @@ createMA =function(yrs=1979:2023, strSpp="POP", addletters=TRUE)
 	dfo.quota[["2008"]][["POP"]][["TRW"]][["5CD"]] = 2118
 	dfo.quota[["2008"]][["POP"]][["TRW"]][["5E"]]  = 730
 	dfo.quota[["2008"]][["POP"]][["TRW"]][["CST"]] = 5448
+	##~~~~~Yellowtail Rockfish~~~~~~~~~~~
+	dfo.quota[["2008"]][["YTR"]][["TRW"]][["3C"]] = 995
+	dfo.quota[["2008"]][["YTR"]][["TRW"]][["3D5"]] = 3427
+	dfo.quota[["2008"]][["YTR"]][["TRW"]][["CST"]] = 4422
+	dfo.quota[["2008"]][["YTR"]][["ZNO"]][["3C"]] = 11
+	dfo.quota[["2008"]][["YTR"]][["ZNO"]][["3D5"]] = 38
+	dfo.quota[["2008"]][["YTR"]][["ZNO"]][["CST"]] = 49
 
 	##-----2009--------------------------
+	dfo.action[["2009"]][["@@@"]] = "TWL: Fishing year changed from Feb 21 to Feb 20."
 	dfo.action[["2009"]][["CARa"]] = "CAR: TAC for Canary further reduced from 912t to 679t coastwide."
 	dfo.action[["2009"]][["CARb"]] = "CAR: COSEWIC-designated marine species in Pacific region under consideration for listing under Schedule I of SARA: Canary as 'Threatened'."
 	dfo.action[["2009"]][["CARc"]] = "CAR: Research allocation: H\\&L=4.0t"
@@ -1499,6 +1644,13 @@ createMA =function(yrs=1979:2023, strSpp="POP", addletters=TRUE)
 	dfo.quota[["2009"]][["POP"]][["TRW"]][["5CD"]] = 2118
 	dfo.quota[["2009"]][["POP"]][["TRW"]][["5E"]]  = 730
 	dfo.quota[["2009"]][["POP"]][["TRW"]][["CST"]] = 5448
+	##~~~~~Yellowtail Rockfish~~~~~~~~~~~
+	dfo.quota[["2009"]][["YTR"]][["TRW"]][["3C"]] = 995
+	dfo.quota[["2009"]][["YTR"]][["TRW"]][["3D5"]] = 3427
+	dfo.quota[["2009"]][["YTR"]][["TRW"]][["CST"]] = 4422
+	dfo.quota[["2009"]][["YTR"]][["ZNO"]][["3C"]] = 11
+	dfo.quota[["2009"]][["YTR"]][["ZNO"]][["3D5"]] = 38
+	dfo.quota[["2009"]][["YTR"]][["ZNO"]][["CST"]] = 49
 
 	##-----2010--------------------------
 	dfo.action[["2010"]][["CARa"]] = "CAR: Stock status reviewed in Dec 2009; stock declined from unfished equilibrium biomass but decline likely arrested; TAC for Canary increased to 900t coastwide; stock expected to rebuild and remain at levels consistent with DFO's Precautionary Approach."
@@ -1526,6 +1678,13 @@ createMA =function(yrs=1979:2023, strSpp="POP", addletters=TRUE)
 	dfo.quota[["2010"]][["POP"]][["TRW"]][["5CD"]] = 2118
 	dfo.quota[["2010"]][["POP"]][["TRW"]][["5E"]]  = 730
 	dfo.quota[["2010"]][["POP"]][["TRW"]][["CST"]] = 5448
+	##~~~~~Yellowtail Rockfish~~~~~~~~~~~
+	dfo.quota[["2010"]][["YTR"]][["TRW"]][["3C"]] = 995
+	dfo.quota[["2010"]][["YTR"]][["TRW"]][["3D5"]] = 3427
+	dfo.quota[["2010"]][["YTR"]][["TRW"]][["CST"]] = 4422
+	dfo.quota[["2010"]][["YTR"]][["ZNO"]][["3C"]] = 11
+	dfo.quota[["2010"]][["YTR"]][["ZNO"]][["3D5"]] = 38
+	dfo.quota[["2010"]][["YTR"]][["ZNO"]][["CST"]] = 49
 
 	##-----2011--------------------------
 	dfo.action[["2011"]][["CAR"]] = "CAR: Research allocation: H\\&L=6.0t"
@@ -1554,6 +1713,13 @@ createMA =function(yrs=1979:2023, strSpp="POP", addletters=TRUE)
 	dfo.quota[["2011"]][["POP"]][["TRW"]][["5CD"]] = 1987
 	dfo.quota[["2011"]][["POP"]][["TRW"]][["5E"]]  = 730
 	dfo.quota[["2011"]][["POP"]][["TRW"]][["CST"]] = 5189
+	##~~~~~Yellowtail Rockfish~~~~~~~~~~~
+	dfo.quota[["2011"]][["YTR"]][["TRW"]][["3C"]] = 995
+	dfo.quota[["2011"]][["YTR"]][["TRW"]][["3D5"]] = 3427
+	dfo.quota[["2011"]][["YTR"]][["TRW"]][["CST"]] = 4422
+	dfo.quota[["2011"]][["YTR"]][["ZNO"]][["3C"]] = 11
+	dfo.quota[["2011"]][["YTR"]][["ZNO"]][["3D5"]] = 38
+	dfo.quota[["2011"]][["YTR"]][["ZNO"]][["CST"]] = 49
 
 	##-----2012--------------------------
 	dfo.action[["2012"]][["@@@"]] = "TWL: Froze the footprint of where groundfish bottom trawl activities can occur (all vessels under the authority of a valid Category T commercial groundfish trawl license selecting Option A as identified in the IFMP)."
@@ -1567,6 +1733,13 @@ createMA =function(yrs=1979:2023, strSpp="POP", addletters=TRUE)
 	dfo.quota[["2012"]][["POP"]][["TRW"]][["5CD"]] = 1856
 	dfo.quota[["2012"]][["POP"]][["TRW"]][["5E"]]  = 730
 	dfo.quota[["2012"]][["POP"]][["TRW"]][["CST"]] = 4930
+	##~~~~~Yellowtail Rockfish~~~~~~~~~~~
+	dfo.quota[["2012"]][["YTR"]][["TRW"]][["3C"]] = 995
+	dfo.quota[["2012"]][["YTR"]][["TRW"]][["3D5"]] = 3427
+	dfo.quota[["2012"]][["YTR"]][["TRW"]][["CST"]] = 4422
+	dfo.quota[["2012"]][["YTR"]][["ZNO"]][["3C"]] = 11
+	dfo.quota[["2012"]][["YTR"]][["ZNO"]][["3D5"]] = 38
+	dfo.quota[["2012"]][["YTR"]][["ZNO"]][["CST"]] = 49
 
 	##-----2013--------------------------
 	dfo.action[["2013"]][["@@@"]] = "TWL: To support groundfish research, the groundfish trawl industry agreed to the trawl TAC offsets to account for unavoidable mortality incurred during the joint DFO-Industry groundfish multi-species surveys in 2013."
@@ -1587,10 +1760,18 @@ createMA =function(yrs=1979:2023, strSpp="POP", addletters=TRUE)
 	dfo.quota[["2013"]][["POP"]][["TRW"]][["5C"]]  = 1555
 	dfo.quota[["2013"]][["POP"]][["TRW"]][["5DE"]] = 1200
 	dfo.quota[["2013"]][["POP"]][["TRW"]][["CST"]] = 5169
+	##~~~~~Yellowtail Rockfish~~~~~~~~~~~
+	dfo.quota[["2013"]][["YTR"]][["TRW"]][["3C"]] = 995
+	dfo.quota[["2013"]][["YTR"]][["TRW"]][["3D5"]] = 3427
+	dfo.quota[["2013"]][["YTR"]][["TRW"]][["CST"]] = 4422
+	dfo.quota[["2013"]][["YTR"]][["ZNO"]][["3C"]] = 11
+	dfo.quota[["2013"]][["YTR"]][["ZNO"]][["3D5"]] = 38
+	dfo.quota[["2013"]][["YTR"]][["ZNO"]][["CST"]] = 49
 
 	##-----2014--------------------------
 	dfo.action[["2014"]][["CAR"]] = "CAR: Research allocation: H\\&L=6.0t"
-	dfo.action[["2014"]][["POP"]] = "POP: Research allocations (trawl): 5DE=49.4t"
+	dfo.action[["2014"]][["POP"]] = "POP: Research allocation (trawl): 5DE=49.4t"
+	dfo.action[["2014"]][["YTR"]] = "YTR: Coastwide population assessed by DFO Science"
 	##~~~~~Canary Rockfish~~~~~~~~~~~~~~~
 	dfo.quota[["2014"]][["CAR"]] = dfo.quota[["2011"]][["CAR"]]
 	##~~~~~Pacific Ocean Perch~~~~~~~~~~~
@@ -1599,6 +1780,13 @@ createMA =function(yrs=1979:2023, strSpp="POP", addletters=TRUE)
 	dfo.quota[["2014"]][["POP"]][["TRW"]][["5C"]]  = 1544
 	dfo.quota[["2014"]][["POP"]][["TRW"]][["5DE"]] = 1200
 	dfo.quota[["2014"]][["POP"]][["TRW"]][["CST"]] = 5192
+	##~~~~~Yellowtail Rockfish~~~~~~~~~~~
+	dfo.quota[["2014"]][["YTR"]][["TRW"]][["3C"]] = 995
+	dfo.quota[["2014"]][["YTR"]][["TRW"]][["3D5"]] = 3427
+	dfo.quota[["2014"]][["YTR"]][["TRW"]][["CST"]] = 4422
+	dfo.quota[["2014"]][["YTR"]][["ZNO"]][["3C"]] = 11
+	dfo.quota[["2014"]][["YTR"]][["ZNO"]][["3D5"]] = 38
+	dfo.quota[["2014"]][["YTR"]][["ZNO"]][["CST"]] = 49
 
 	##-----2015--------------------------
 	dfo.action[["2015"]][["@@@"]] = "ALL: Research allocations were specified starting in 2015 to account for the mortalities associated with survey catches to be covered by TACs."
@@ -1607,6 +1795,7 @@ createMA =function(yrs=1979:2023, strSpp="POP", addletters=TRUE)
 	dfo.action[["2015"]][["BORc"]] = "BOR: Bocaccio trawl MC reduced to 110~t coastwide."
 	dfo.action[["2015"]][["CAR"]] = "CAR: Research allocations: Trawl=2.7t, Longline=6.0t, Total=8.7t"
 	dfo.action[["2015"]][["POP"]] = "POP: Research allocations (trawl): 5AB=16.4t, 5C=0.6t, Total=17t"
+	dfo.action[["2015"]][["YTR"]] = "YTR: Research allocations: T=5t"
 	##~~~~~Canary Rockfish~~~~~~~~~~~~~~~
 	dfo.quota[["2015"]][["CAR"]][["TRW"]][["3CD"]] = 503
 	dfo.quota[["2015"]][["CAR"]][["TRW"]][["5AB"]] = 197
@@ -1624,11 +1813,19 @@ createMA =function(yrs=1979:2023, strSpp="POP", addletters=TRUE)
 	dfo.quota[["2015"]][["POP"]][["TRW"]][["5C"]]  = 1544
 	dfo.quota[["2015"]][["POP"]][["TRW"]][["5DE"]] = 1200
 	dfo.quota[["2015"]][["POP"]][["TRW"]][["CST"]] = 5192
+	##~~~~~Yellowtail Rockfish~~~~~~~~~~~
+	dfo.quota[["2015"]][["YTR"]][["TRW"]][["3C"]] = 1224
+	dfo.quota[["2015"]][["YTR"]][["TRW"]][["3D5"]] = 4216
+	dfo.quota[["2015"]][["YTR"]][["TRW"]][["CST"]] = 5440
+	dfo.quota[["2015"]][["YTR"]][["ZNO"]][["3C"]] = 14
+	dfo.quota[["2015"]][["YTR"]][["ZNO"]][["3D5"]] = 47
+	dfo.quota[["2015"]][["YTR"]][["ZNO"]][["CST"]] = 60
 
 	##-----2016--------------------------
 	dfo.action[["2016"]][["BOR"]] = "BOR: Bocaccio trawl MC reduced to 80~t coastwide. Bocaccio remains a quota species in the trawl fishery, but not in the hook and line fisheries."
 	dfo.action[["2016"]][["CAR"]] = "CAR: Research allocations: Trawl=3.3t, Longline=6.0t, Total=9.3t"
 	dfo.action[["2016"]][["POP"]] = "POP: Research allocations (trawl): 3CD=15.3t, 5DE=41.8t, Total=57.1t"
+	dfo.action[["2016"]][["YTR"]] = "YTR: Research allocations: T=6.2t"
 	##~~~~~Canary Rockfish~~~~~~~~~~~~~~~
 	dfo.quota[["2016"]][["CAR"]] = dfo.quota[["2015"]][["CAR"]]
 	##~~~~~Pacific Ocean Perch~~~~~~~~~~~
@@ -1637,10 +1834,18 @@ createMA =function(yrs=1979:2023, strSpp="POP", addletters=TRUE)
 	dfo.quota[["2016"]][["POP"]][["TRW"]][["5C"]]  = 1544
 	dfo.quota[["2016"]][["POP"]][["TRW"]][["5DE"]] = 1200
 	dfo.quota[["2016"]][["POP"]][["TRW"]][["CST"]] = 5192
+	##~~~~~Yellowtail Rockfish~~~~~~~~~~~
+	dfo.quota[["2016"]][["YTR"]][["TRW"]][["3C"]] = 1224
+	dfo.quota[["2016"]][["YTR"]][["TRW"]][["3D5"]] = 4216
+	dfo.quota[["2016"]][["YTR"]][["TRW"]][["CST"]] = 5440
+	dfo.quota[["2016"]][["YTR"]][["ZNO"]][["3C"]] = 14
+	dfo.quota[["2016"]][["YTR"]][["ZNO"]][["3D5"]] = 47
+	dfo.quota[["2016"]][["YTR"]][["ZNO"]][["CST"]] = 60
 
 	##-----2017--------------------------
 	dfo.action[["2017"]][["CAR"]] = "CAR: Research allocations: Trawl=2.3t, Longline=6.0t, Total=8.3t"
 	dfo.action[["2017"]][["POP"]] = "POP: Research allocations (trawl): 5AB=17.1t, 5C=0.8t, Total=17.9t"
+	dfo.action[["2017"]][["YTR"]] = "YTR: Research allocations: T=4t, LL=2t"
 	##~~~~~Canary Rockfish~~~~~~~~~~~~~~~
 	dfo.quota[["2017"]][["CAR"]][["TRW"]][["3CD"]] = 615
 	dfo.quota[["2017"]][["CAR"]][["TRW"]][["5AB"]] = 241
@@ -1658,10 +1863,18 @@ createMA =function(yrs=1979:2023, strSpp="POP", addletters=TRUE)
 	dfo.quota[["2017"]][["POP"]][["TRW"]][["5C"]]  = 1544
 	dfo.quota[["2017"]][["POP"]][["TRW"]][["5DE"]] = 1200
 	dfo.quota[["2017"]][["POP"]][["TRW"]][["CST"]] = 5192
+	##~~~~~Yellowtail Rockfish~~~~~~~~~~~
+	dfo.quota[["2017"]][["YTR"]][["TRW"]][["3C"]] = 1224
+	dfo.quota[["2017"]][["YTR"]][["TRW"]][["3D5"]] = 4216
+	dfo.quota[["2017"]][["YTR"]][["TRW"]][["CST"]] = 5440
+	dfo.quota[["2017"]][["YTR"]][["ZNO"]][["3C"]] = 14
+	dfo.quota[["2017"]][["YTR"]][["ZNO"]][["3D5"]] = 47
+	dfo.quota[["2017"]][["YTR"]][["ZNO"]][["CST"]] = 60
 
 	##-----2018--------------------------
 	dfo.action[["2018"]][["CAR"]] = "CAR: Research allocations: Trawl=4.1t, Longline=6.4t, Total=10.5t"
 	dfo.action[["2018"]][["POP"]] = "POP: Research allocations (trawl): 3CD=32t, 5DE=41.8t, Total=73.8t"
+	dfo.action[["2018"]][["YTR"]] = "YTR: Research allocations: T=5.5t, LL=2t"
 	##~~~~~Canary Rockfish~~~~~~~~~~~~~~~
 	dfo.quota[["2018"]][["CAR"]] = dfo.quota[["2017"]][["CAR"]]
 	##~~~~~Pacific Ocean Perch~~~~~~~~~~~
@@ -1670,10 +1883,18 @@ createMA =function(yrs=1979:2023, strSpp="POP", addletters=TRUE)
 	dfo.quota[["2018"]][["POP"]][["TRW"]][["5C"]]  = 1544
 	dfo.quota[["2018"]][["POP"]][["TRW"]][["5DE"]] = 1200
 	dfo.quota[["2018"]][["POP"]][["TRW"]][["CST"]] = 5192
+	##~~~~~Yellowtail Rockfish~~~~~~~~~~~
+	dfo.quota[["2018"]][["YTR"]][["TRW"]][["3C"]] = 1224
+	dfo.quota[["2018"]][["YTR"]][["TRW"]][["3D5"]] = 4216
+	dfo.quota[["2018"]][["YTR"]][["TRW"]][["CST"]] = 5440
+	dfo.quota[["2018"]][["YTR"]][["ZNO"]][["3C"]] = 14
+	dfo.quota[["2018"]][["YTR"]][["ZNO"]][["3D5"]] = 47
+	dfo.quota[["2018"]][["YTR"]][["ZNO"]][["CST"]] = 60
 
 	##-----2019--------------------------
 	dfo.action[["2019"]][["CAR"]] = "CAR: Research allocations: Trawl=2.0t, Longline=1.2t, Total=3.2t"
 	dfo.action[["2019"]][["POP"]] = "POP: Research allocations (trawl): 5AB=20.8t, 5C=1.0t, Total=21.8t"
+	dfo.action[["2019"]][["YTR"]] = "YTR: Research allocations: T=3.4t, LL=0.1t"
 	##~~~~~Canary Rockfish~~~~~~~~~~~~~~~
 	dfo.quota[["2019"]][["CAR"]] = dfo.quota[["2017"]][["CAR"]]
 	##~~~~~Pacific Ocean Perch~~~~~~~~~~~
@@ -1682,10 +1903,18 @@ createMA =function(yrs=1979:2023, strSpp="POP", addletters=TRUE)
 	dfo.quota[["2019"]][["POP"]][["TRW"]][["5C"]]  = 1544
 	dfo.quota[["2019"]][["POP"]][["TRW"]][["5DE"]] = 1200
 	dfo.quota[["2019"]][["POP"]][["TRW"]][["CST"]] = 5192
+	##~~~~~Yellowtail Rockfish~~~~~~~~~~~
+	dfo.quota[["2019"]][["YTR"]][["TRW"]][["3C"]] = 1224
+	dfo.quota[["2019"]][["YTR"]][["TRW"]][["3D5"]] = 4216
+	dfo.quota[["2019"]][["YTR"]][["TRW"]][["CST"]] = 5440
+	dfo.quota[["2019"]][["YTR"]][["ZNO"]][["3C"]] = 14
+	dfo.quota[["2019"]][["YTR"]][["ZNO"]][["3D5"]] = 47
+	dfo.quota[["2019"]][["YTR"]][["ZNO"]][["CST"]] = 60
 
 	##-----2020--------------------------
 	dfo.action[["2020"]][["CAR"]] = "CAR: Research allocations: Trawl=6.2t, Longline=6.5t, Total=12.7t"
 	dfo.action[["2020"]][["POP"]] = "POP: Research allocations (trawl): 3CD=12.8t, 5E=87.1t, Total=99.9t"
+	dfo.action[["2020"]][["YTR"]] = "YTR: Research allocations: T=6.5t, LL=2t"
 	##~~~~~Canary Rockfish~~~~~~~~~~~~~~~
 	dfo.quota[["2020"]][["CAR"]] = dfo.quota[["2017"]][["CAR"]]
 	##~~~~~Pacific Ocean Perch~~~~~~~~~~~
@@ -1694,10 +1923,18 @@ createMA =function(yrs=1979:2023, strSpp="POP", addletters=TRUE)
 	dfo.quota[["2020"]][["POP"]][["TRW"]][["5C"]]  = 1555
 	dfo.quota[["2020"]][["POP"]][["TRW"]][["5DE"]] = 1200
 	dfo.quota[["2020"]][["POP"]][["TRW"]][["CST"]] = 5192
+	##~~~~~Yellowtail Rockfish~~~~~~~~~~~
+	dfo.quota[["2020"]][["YTR"]][["TRW"]][["3C"]] = 1224
+	dfo.quota[["2020"]][["YTR"]][["TRW"]][["3D5"]] = 4216
+	dfo.quota[["2020"]][["YTR"]][["TRW"]][["CST"]] = 5440
+	dfo.quota[["2020"]][["YTR"]][["ZNO"]][["3C"]] = 14
+	dfo.quota[["2020"]][["YTR"]][["ZNO"]][["3D5"]] = 47
+	dfo.quota[["2020"]][["YTR"]][["ZNO"]][["CST"]] = 60
 
 	##-----2021--------------------------
 	dfo.action[["2021"]][["CAR"]] = "CAR: Research allocations: Trawl=1.8t, Longline=6.5t, Total=8.3t"
 	dfo.action[["2021"]][["POP"]] = "POP: Research allocations (trawl): 5AB=19.4t, 5CD=1.5t, Total=20.8t"
+	dfo.action[["2021"]][["YTR"]] = "YTR: Research allocations: T=2.3t, LL=2t"
 	##~~~~~Canary Rockfish~~~~~~~~~~~~~~~
 	dfo.quota[["2021"]][["CAR"]] = dfo.quota[["2017"]][["CAR"]]
 	##~~~~~Pacific Ocean Perch~~~~~~~~~~~
@@ -1706,35 +1943,70 @@ createMA =function(yrs=1979:2023, strSpp="POP", addletters=TRUE)
 	dfo.quota[["2021"]][["POP"]][["TRW"]][["5C"]]  = 1555
 	dfo.quota[["2021"]][["POP"]][["TRW"]][["5DE"]] = 1200
 	dfo.quota[["2021"]][["POP"]][["TRW"]][["CST"]] = 5192
+	##~~~~~Yellowtail Rockfish~~~~~~~~~~~
+	dfo.quota[["2021"]][["YTR"]][["TRW"]][["3C"]] = 1224
+	dfo.quota[["2021"]][["YTR"]][["TRW"]][["3D5"]] = 4216
+	dfo.quota[["2021"]][["YTR"]][["TRW"]][["CST"]] = 5440
+	dfo.quota[["2021"]][["YTR"]][["ZNO"]][["3C"]] = 14
+	dfo.quota[["2021"]][["YTR"]][["ZNO"]][["3D5"]] = 47
+	dfo.quota[["2021"]][["YTR"]][["ZNO"]][["CST"]] = 60
 
 	##-----2022--------------------------
 	dfo.action[["2022"]][["POP"]] = "POP: Research allocations (trawl): 3CD=9.8t, 5E=106.5t, Total=116.3t"
+	dfo.action[["2022"]][["YTR"]] = "YTR: Research allocations: T=5.7t, LL=2t"
 	##~~~~~Pacific Ocean Perch~~~~~~~~~~~
 	dfo.quota[["2022"]][["POP"]][["TRW"]][["3CD"]] = 750
 	dfo.quota[["2022"]][["POP"]][["TRW"]][["5AB"]] = 1687
 	dfo.quota[["2022"]][["POP"]][["TRW"]][["5C"]]  = 1555
 	dfo.quota[["2022"]][["POP"]][["TRW"]][["5DE"]] = 1200
 	dfo.quota[["2022"]][["POP"]][["TRW"]][["CST"]] = 5192
+	##~~~~~Yellowtail Rockfish~~~~~~~~~~~
+	dfo.quota[["2022"]][["YTR"]][["TRW"]][["3C"]] = 1224
+	dfo.quota[["2022"]][["YTR"]][["TRW"]][["3D5"]] = 4216
+	dfo.quota[["2022"]][["YTR"]][["TRW"]][["CST"]] = 5440
+	dfo.quota[["2022"]][["YTR"]][["ZNO"]][["3C"]] = 14
+	dfo.quota[["2022"]][["YTR"]][["ZNO"]][["3D5"]] = 47
+	dfo.quota[["2022"]][["YTR"]][["ZNO"]][["CST"]] = 60
 
 	##-----2023--------------------------
 	dfo.action[["2023"]][["POP"]] = "POP: Research allocations (trawl): 5AB=21.8t, 5CD=1.5t, Total=23.3t"
+	dfo.action[["2023"]][["YTR"]] = "YTR: Research allocations: T=3.3t, LL=2t"
 	##~~~~~Pacific Ocean Perch~~~~~~~~~~~
 	dfo.quota[["2023"]][["POP"]][["TRW"]][["3CD"]] = 750
 	dfo.quota[["2023"]][["POP"]][["TRW"]][["5AB"]] = 1687
 	dfo.quota[["2023"]][["POP"]][["TRW"]][["5C"]]  = 1555
 	dfo.quota[["2023"]][["POP"]][["TRW"]][["5DE"]] = 1200
 	dfo.quota[["2023"]][["POP"]][["TRW"]][["CST"]] = 5192
+	##~~~~~Yellowtail Rockfish~~~~~~~~~~~
+	dfo.quota[["2023"]][["YTR"]][["TRW"]][["3C"]] = 1224
+	dfo.quota[["2023"]][["YTR"]][["TRW"]][["3D5"]] = 4216
+	dfo.quota[["2023"]][["YTR"]][["TRW"]][["CST"]] = 5440
+	dfo.quota[["2023"]][["YTR"]][["ZNO"]][["3C"]] = 14
+	dfo.quota[["2023"]][["YTR"]][["ZNO"]][["3D5"]] = 47
+	dfo.quota[["2023"]][["YTR"]][["ZNO"]][["CST"]] = 60
+
+	##-----2024--------------------------
+	dfo.action[["2024"]][["YTR"]] = "YTR: Research allocations: T=4.6t, LL=2t"
+	##~~~~~Yellowtail Rockfish~~~~~~~~~~~
+	dfo.quota[["2024"]][["YTR"]][["TRW"]][["3C"]] = 1224
+	dfo.quota[["2024"]][["YTR"]][["TRW"]][["3D5"]] = 4216
+	dfo.quota[["2024"]][["YTR"]][["TRW"]][["CST"]] = 5440
+	dfo.quota[["2024"]][["YTR"]][["ZNO"]][["3C"]] = 14
+	dfo.quota[["2024"]][["YTR"]][["ZNO"]][["3D5"]] = 47
+	dfo.quota[["2024"]][["YTR"]][["ZNO"]][["CST"]] = 60
+
 
 	ttput(dfo.action); ttput(dfo.quota)
 
 	## Management Quotas ## assume list structure [[year]][[spp]][[gear]][[area]]
+	## -----------------
 	qout = lapply(dfo.quota,function(x,spp){
 		if (any(grepl(paste0("@@@|",spp),names(x)))) {
 			#print(names(x))
 			poo = x[grep(paste0("@@@|",spp),names(x))]
 			goo = lapply(poo,function(x){lapply(x,function(y){sapply(y,sum,na.rm=TRUE)})})
 			QOO = as.numeric()
-			for (g in c("ALL","TRW","ZNH")){
+			for (g in gears){  ## (RH 240620)
 				qoo = as.numeric()
 				for (i in 1:length(goo)){
 					igoo = goo[[i]]
@@ -1764,12 +2036,11 @@ createMA =function(yrs=1979:2023, strSpp="POP", addletters=TRUE)
 		qval = qout[[ii]]
 		quotas[ii,names(qval)] = qval
 	}
-	write.csv(quotas, file=paste0("dfo.mgmt.quotas.", strSpp, ".csv"))
-
 #browser();return()
-
+	write.csv(formatCatch(quotas), file=paste0("dfo.mgmt.quotas.", strSpp, ".csv"))
 
 	## Management Actions
+	## ------------------
 	aout = lapply(dfo.action,function(x,spp){
 		if (any(grepl(paste0("@@@|",spp),names(x)))) {
 			#print(names(x))
@@ -1802,7 +2073,7 @@ createMA =function(yrs=1979:2023, strSpp="POP", addletters=TRUE)
 	comm = gsub("\\\\emph\\{","", gsub("}","", comm))
 #browser();retrun()
 	sout$comment = comm
-	write.csv(sout, file=paste0("dfo.mgmt.actions.", strSpp, ".csv"), row.names=FALSE)
+	write.csv(sout, file=paste0("dfo.mgmt.actions.", strSpp, ".csv"), row.names=F)
 
 
 	return(sout)
@@ -1810,315 +2081,7 @@ createMA =function(yrs=1979:2023, strSpp="POP", addletters=TRUE)
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~createMA
 
 
-#imputeRate-----------------------------2010-10-20
-# Impute the rate of return from an investment 
-# with irregular contributions/withdrawals.
-#-----------------------------------------------RH
-imputeRate <- function(qtName="Ex03_Portfolio", dbName="Examples", AID=1, pathN=2, hnam=NULL)
-{
-	assign("PBStool",list(module="M06_Temporal",call=match.call(),args=args(imputeRate),plotname="impute"),envir=.PBStoolEnv)
-	wdir <- paste(system.file(package="PBStools"),"/win",sep="")
-	sdir <- switch(pathN,getwd(),.getSpath())
-	tdir <- tempdir(); tdir <- gsub("\\\\","/",tdir)
-	wdf  <- paste("imputeRate","Win.txt",sep="") # window description file
-	doc  <- paste("imputeRate","Doc.pdf",sep="") # documentation
-	wnam <- paste(wdir,wdf,sep="/")
-	wtmp <- paste(tdir,wdf,sep="/")
-	dtmp <- paste(wdir,doc,sep="/")
-	temp <- readLines(wnam)
-	temp <- gsub("@wdf",wtmp,temp)
-	temp <- gsub("@doc",dtmp,temp) # not used
-	temp <- gsub("@dbName",dbName,temp)
-	temp <- gsub("@qtName",qtName,temp)
-	temp <- gsub("@AID",AID,temp)
-	temp <- switch(pathN,
-		gsub("cwd value=1","cwd value=1 selected=TRUE",temp),
-		gsub("sql value=2","sql value=2 selected=TRUE",temp) )
-	writeLines(temp,con=wtmp)
-	.onClose=function() { ttget(PBStool); save("PBStool",file="PBStool.rda") }
-	assign(".onClose",.onClose,envir=.PBStoolEnv)
-	createWin(wtmp);  .imputeRate.impIR()
-	invisible() }
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~imputeRate
-
-#.imputeRate.impIR----------------------2017-12-10
-# Impute the rate of return from an investment.
-# Algorithm uses the NFV in the sense that the
-# final value today is the future value as seen
-# from the first time period.
-# This means that the fit is to the final point
-# and the estimated trajectory is more like a 
-# NPV in reverse, i.e., the net present value of
-# the historical asset.
-#-----------------------------------------------RH
-.imputeRate.impIR <- function() {
-	IRRfun <- function(P){
-		## See XIRR function in Excel
-		## NPV -- https://www.investopedia.com/terms/n/npv.asp
-		## NFV -- https://www.investopedia.com/terms/f/futurevalue.asp
-		r=as.numeric(P[1])
-		unpackList(ttcall(PBStool)["ddat"],scope="L")
-		N=nrow(ddat)
-		Ci=c(ddat$value[1],ddat$cont[2:N]) ## initial value (includes 1st contributuon) + additioanl contributions
-		#Clast=Ci[N]; Ci[N]=0
-		Vlast=ddat$value[N]                ## final value
-		#sfac=GT0(mean(abs(Ci)))           ## scale factor for contributions
-		sfac=1
-		Ci=Ci/sfac
-		Di=c(ddat$date)
-		
-		#ri = (1-r)^(as.numeric(Di-Di[1])/365)      ## Discounts
-		#ri = (1+r)^(as.numeric(Di-Di[1])/365)      ## Discounts   ### need to work backwads rev(Di)[1]-Di
-		ri = (1+r)^(as.numeric(rev(Di)[1]-Di)/365)  ## Growth as NPV -- need to work backwads rev(Di)[1]-Di
-		#ri = 1/((1+r)^(as.numeric(Di-Di[1])/365))  ## Discounts
-		#ri[Ci<0] = 1      ## Do not discount removals, BUT with current NLL and fval, need to discount withdrawals also.
-		#DCi=Ci/ri         ## NPV
-		ri[is.na(ri)] = 0  ## in case of ridiculous estimates
-		FCi = Ci * ri      ## NFV (so that today's value is the target)
-		
-		N = nrow(ddat)
-#browser();return()
-		LL1 = -log(sum(sqrt((FCi - ddat$value)^2)))             ## NLL for fit to individual observations
-		LL2 = log(abs(diff(c(sum(FCi),rev(ddat$value)[1]))^2))  ## Penalty for not fitting the final point
-		#LL2 = -log(sum(sqrt((sum(FCi)-rev(ddat$value)[1])^2)))
-		fval = LL1 + LL2
-if(is.na(LL1)) {browser();return()}
-		#return(fval)
-.flush.cat(as.character(c(LL1,LL2,fval)), "\n")
-		Vcont=sum(FCi)
-		Vlast=Vlast/sfac
-		#Vstd = c(Vcont,Vlast)/mean(c(Vcont,Vlast))
-		#fval = diff(Vstd)^2
-
-#browser();return()
-		#Yobs  = scalePar(matrix(c(Vlast,0,1.5*max(Vlast,Vcont),TRUE),nrow=1))
-		#Ypred = scalePar(matrix(c(Vcont,0,1.5*max(Vlast,Vcont),TRUE),nrow=1))
-		#fval = (Yobs-Ypred)^2
-		#fval = (Vlast - Vcont)^2
-#print(round(c(r,fval,Vcont,Vlast),5))
-		IRRmin=c(r,fval,sfac*Vcont,sfac*Vlast); names(IRRmin)=c("r","fval","Vcont","Vlast")
-#print(round(IRRmin,2))
-#browser();return()
-		#packList("IRRmin","PBStool",tenv=.PBStoolEnv)
-		#eval(parse(text="PBStool$IRRmin <<- IRRmin"))  # weird results for SANN
-		ttget(PBStool); PBStool$IRRmin <- IRRmin; ttput(PBStool)  # weird results for SANN
-		return(fval) }
-	#----------------
-	getWinVal(scope="L")
-	ttget(PBStool)
-	unpackList(PBStool,scope="L")
-	act=getWinAct()[1]
-	cenv=environment(); penv=parent.frame(1); genv=.PBStoolEnv
-	if (!isThere("dat",envir=cenv) ) {#|| (act=="impute" && attributes(dat)$fqt!=qtName)) {
-		.imputeRate.getIR()
-		ttget(PBStool)
-		unpackList(PBStool,scope="L") }
-	assign("PBStool",PBStool[c("module","call","args","plotname","dat","DLIM","PLIM")],envir=.PBStoolEnv)
-	adat=dat[is.element(dat$AID,AID),] # account data
-	if (nrow(adat)==0) showError("account ID","nodata")
-	if (autoD) dlim=range(adat$date,na.rm=TRUE) else dlim=c(d0,d1)
-	d0=dlim[1]; d1=dlim[2]
-	ddat=adat[adat$date>=dlim[1] & adat$dat<=dlim[2] & !is.na(adat$date),] # date-delimited account data
-	if (nrow(ddat)==0) showError("date limits","nodata")
-	plim=range(ddat$period,na.rm=TRUE); v0=plim[1]; v1=plim[2]
-	pyr = 365./median(as.vector(diff(ddat$date))) ## divide year by ave. days in month
-	setWinVal(list(d0=d0,d1=d1,v0=v0,v1=v1,pyr=round(pyr,1)))
-
-	x <- ddat$period; y <- ddat$value; names(x)=names(y)=as.character(ddat$date)
-	## Indexing with z redundant since 'ddat' is now a subet of 'adat'
-	z <- is.element(x,v0:v1); zL <-sum(z);
-	z0 <- is.element(x,v0); z1 <- is.element(x,v1);
-	xobs <- x[z]; yobs <-y[z]; 
-	cobs <- ddat$cont[z]; cobs[1]=yobs[1] # initial value already includes 1st contribution
-	names(cobs)=as.character(ddat$date[z])
-	Vstart <- yobs[1]; Vend <- yobs[zL]; Vadj=Vend-cobs[zL]
-	packList(c("adat","ddat","Vstart","Vend","Vadj","x","y","z0","z1","z","zL","xobs","yobs","cobs"),"PBStool",tenv=.PBStoolEnv)
-#browser();return()
-
-	Obag <- calcMin(pvec=parVec,func=IRRfun,method=method,trace=trace,maxit=maxit,reltol=reltol,steptol=steptol,repN=repN)
-	tget(PBSmin)
-	fmin <- PBSmin$fmin; np <- sum(parVec[,4]); ng <- zL;
-	AICc = 2*fmin + 2*np * (ng/(ng-np-1))
-	packList("AICc","PBSmin",tenv=.PBStoolEnv)
-	Pend <- PBSmin$end  # Pend is annualized if IRRfun()
-	ftime <- PBSmin$time;
-	rates=c(Pend/pyr,Pend)  # period and annual rates
-
-	Pfig <- signif(rates*100,3)
-#browser();return()
-	if (sim==2) sim <- 1
-	unpackList(Obag,scope="L");
-	Gbag <- list(Git=iters, Gev=evals, Gct=round(cpuTime,nd), Get=round(elapTime,nd),
-		Gf1=round(fminS,nd), Gf2=round(fminE,nd), Gaic=round(AIC,nd), Gaicc=round(AICc,nd),
-		Gv1=c(Pstart,((1+Pstart)^pyr)-1), Gv2=round(rates,nd), Gmess=message, sim=sim);
-	tput(PBSmin)
-	setWinVal(Gbag)
-	packList(c("Obag","Gbag","Pend","rates","Pfig","ftime"),"PBStool",tenv=.PBStoolEnv)
-	.imputeRate.plotIR()
-	invisible() }
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~.imputeRate.impIR
-
-#.imputeRate.trajIR---------------------2017-12-10
-# Calculate the value trajectory.
-#-----------------------------------------------RH
-.imputeRate.trajIR=function(x,cw,y0,r){ 
-	# x=periods, cw=contributions/withdrawals, y0=starting value, r=period rate
-	cw[1]=y0 # initial value already includes 1st contribution
-	#ri = (1-r)^(as.numeric(x-x[1])/365)
-	#ri = (1+r)^(as.numeric(x-x[1])/365)
-	ri = (1+r)^(as.numeric(rev(x)[1]-x)/365)
-	#ri = 1/((1+r)^(as.numeric(x-x[1])/365))
-	#ri[cw<0] = 1  ## with current NLL and fval, need to discount withdrawals also
-	#ypred=cw/ri   ## NPV
-	ypred=cw*ri    ## NFV
-	y=cumsum(ypred)
-#browser();return()
-	return(y) }
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~.imputeRate.trajIR
-
-#.imputeRate.getIR----------------------2010-10-20
-# Get the master data set to impute rate.
-#-----------------------------------------------RH
-.imputeRate.getIR <- function(){
-	act <- getWinAct()[1]; getWinVal(scope="L")
-	if (!is.null(act) && act=="sim") dat=ttcall(PBStool)$dat 
-	else {getData(qtName,dbName,type="MDB",path=switch(pathN,getwd(),.getSpath()),tenv=penv()); dat <- PBSdat }
-	if (!is.data.frame(dat)) showError("Specify a valid SQL table/query or Simulate data")
-	dat$year=as.numeric(substring(dat$date,1,4)); dat$month=as.numeric(substring(dat$date,6,7))
-	dat$date <- as.Date(dat$date); dat=dat[order(dat$AID,as.numeric(dat$date)),]
-	plist=sapply(split(dat$AID,dat$AID),function(x){1:length(x)},simplify=FALSE)
-	dat$period=as.vector(unlist(plist))
-	if (autoD) {
-		DLIM=range(dat$date,na.rm=TRUE)
-		PLIM=range(dat$period[is.element(dat$AID,AID)],na.rm=TRUE)
-		setWinVal(list(d0=DLIM[1],d1=DLIM[2],v0=PLIM[1],v1=PLIM[2])) }
-	dat$cont[is.na(dat$cont)] <- 0; 
-	packList(c("dat","DLIM","PLIM"),"PBStool",tenv=.PBStoolEnv)
-	invisible() }
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~.imputeRate.getIR
-
-#.imputeRate.plotIR---------------------2017-12-10
-# Plot the results of the imputed rate.
-#-----------------------------------------------RH
-.imputeRate.plotIR=function() {
-	getWinVal(scope="L")
-	unpackList(ttcall(PBStool),scope="L")
-	cenv=environment(); penv=parent.frame(1); genv=.PBStoolEnv
-	if (!isThere("ddat",envir=cenv)) {.imputeRate.impIR(); return()}
-	resetGraph(); expandGraph(mar=c(5,2.5,1.5,1.5))
-	clrs <- c("red","blue","green4","purple4","cornflowerblue","darkorange3","darkolivegreen");
-	clr  <- clrs[match(method,c("nlminb","nlm","Nelder-Mead","BFGS","CG","L-BFGS-B","SANN"))];
-	oclr <- c("grey40","grey90")                 # observed: lines, points
-	mclr <- c("forestgreen","red","darkorange"); # contributions: positive, negative, cumulative
-	ycum <- .imputeRate.trajIR(x=as.Date(names(xobs)),cw=cobs,y0=Vstart,r=rates[2])
-	ccum <- cumsum(cobs)
-	xlim <- range(x) + c(-.5,.5);
-	yglob<- c(ddat$value,ycum,ccum,cobs,0)
-	ylim = extendrange(yglob,f=0.01) #range(yglob,na.rm=TRUE)
-	#print(paste("Vend =",Vend," Vest=",round(Vest,2)," Vit =",round(ycum[zL],2)));
-	print(round(IRRmin,5))
-
-	plot(x,y,cex.axis=1,mgp=c(2.5,0.5,0),xlim=xlim,ylim=ylim,xlab="", ylab="",type="n",xaxt="n",yaxt="n",bty="n")
-	zax=intersect(x,pretty(x,15))
-#browser();return()
-	zay=intersect(floor(ylim[1]):ceiling(ylim[2]),pretty(yglob,10))
-	zpos=cobs>0 & !is.na(cobs); zneg=cobs<0 & !is.na(cobs)
-	#cadd=abs(min(0,min(cobs)))
-	base=0; rcobs=cobs+base
-	zac=pretty(cobs,4)
-
-	abline(h=base,col="gainsboro")
-	axis(1,at=zax,labels=names(x)[is.element(x,zax)],las=3,cex.axis=.8,tck=.005,mgp=c(0,.2,0))
-	axis(2,at=zay,labels=format(zay,big.mark=","),las=0,cex.axis=.8,tck=.005,mgp=c(0,.2,0))
-	axis(4,at=zac+base,labels=zac,las=0,cex.axis=.7,tck=.005,mgp=c(0,0,0))
-	
-	expr = c("dBars =",deparse(drawBars)); expr[length(expr)]= "invisible(xy) }"
-	eval(parse(text=expr))
-	
-	if (any(zpos==TRUE)){
-		xy = dBars(xobs[zpos],rcobs[zpos],width=1,col=mclr[1],base=base,lwd=1)
-		polygon(xy,col="lightgreen",border="grey") }
-	if (any(zneg==TRUE)) {
-		xy = dBars(xobs[zneg],rcobs[zneg],width=1,col=mclr[2],base=base,lwd=1)
-		polygon(xy,col="pink",border="grey") }
-	lines(x,y,col=oclr[1],lwd=1); points(x,y,pch=21,bg=oclr[2],cex=1);
-	lines(xobs,ccum,col=mclr[3],lwd=2); 
-	lines(xobs,ycum,col=clr,lwd=2);  ## this seems offset high (perhaps subtract cobs[1]?)
-
-	mtext("Date",side=1,line=3.75,cex=1.2); mtext("Value",side=2,line=1.5,cex=1.2);
-	ydif=diff(ylim); ypin=par()$pin[2]
-	yyy = ifelse(Vstart < (0.80*ydif+ylim[1]),.98,.50)
-	addLabel(.05,yyy,paste("Method =",method),cex=1.2,adj=0,col=clr);
-	addLabel(.05,yyy-.02*(6/ypin),paste(paste(c("Period rate","Annual rate")," = ",Pfig,"%",sep=""),collapse="\n"),adj=c(0,1),cex=0.8);
-	addLabel(.05,yyy-.08*(6/ypin),paste("Timing =",paste(round(ftime[1],2),collapse=", "),"sec"),adj=0,cex=0.7,col="grey35");
-	addLegend(.04,yyy-.09*(6/ypin),legend=c("Observed","Contributions","NPV"),bty="n",cex=.8,
-		lty=1,lwd=3,col=c(oclr[1],mclr[3],clr));
-	clab=paste("Initial value = ",format(round(Vstart),big.mark=","),
-		"    Contributions = ",format(round(sum(ddat$cont[z][-1])),big.mark=","),
-		"    Final value = ",format(round(Vend),big.mark=","),sep="")
-	addLabel(.99,.01,clab,adj=c(1,0),cex=0.7,col=mclr[3]);
-	packList(c("ycum","ccum","clr"),"PBStool",tenv=.PBStoolEnv)
-	packList(c("xlim","ylim","yyy","zax","zay","zac","rcobs","zpos","zneg","base"),"PBStool",tenv=.PBStoolEnv)
-	box(bty="L"); invisible() }
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~.imputeRate.plotIR
-
-#.imputeRate.resetIR--------------------2010-10-20
-# Reset/reinitialize the GUI.
-#-----------------------------------------------RH
-.imputeRate.resetIR=function(){
-	act <- getWinAct()[1]; if (is.null(act)) return()
-	getWinVal(scope="L")
-	unpackList(ttcall(PBStool),scope="L")
-	basic=list(Git=0,Gev=0,Gct=0,Get=0,Gf1=0,Gf2=0,Gaic=0,Gaicc=0,Gv1=c(0,0),Gv2=c(0,0))
-	if (act=="reSet") {
-		pvec=data.frame(val=0.02,min=-3,max=3,active=TRUE,row.names="rate")
-		reSet=c(basic,list(parVec=pvec,d0=DLIM[1],d1=DLIM[2],v0=PLIM[1],v1=PLIM[2],
-			Gmess="------------\nparVec reset with initial starting values.\n------------"))
-		setWinVal(reSet)
-		packList("reSet","PBStool",tenv=.PBStoolEnv) }
-	else if (act=="reInit") {
-		pvec=parVec; pvec[,1]=Gv2[1]
-		reInit=c(basic,list(parVec=pvec,
-			Gmess="------------\nparVec reset with last set of estimated parameters.\n------------"))
-		setWinVal(reInit)
-		packList("reInit","PBStool",tenv=.PBStoolEnv) }
-	invisible() }
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~.imputeRate.resetIR
-
-#.imputeRate.simIR----------------------2013-02-01
-# Simulate a data set for imputing.
-#-----------------------------------------------RH
-.imputeRate.simIR <- function() {
-	rpareto <- function(n,xm,k) {
-		y = runif(n); x = xm*(1-y)^(-1/k); return(x) }
-	getWinVal(scope="L")
-	ttget(PBStool)
-	assign("PBStool",PBStool[c("module","call","args","plotname")],envir=.PBStoolEnv)
-	if (k!=0 && k<1) { resetGraph();
-		setWinVal(list(k=20,sim=1))
-		showError("Pareto distribution parameter k:  Volatility decreases as k increases;  Choose k>=1  Try k=20") }
-	val <- rep(start,nper); cont <- round(runif(nper,10,100)); cont[1] <- 0;
-	up <- min(max(up,0),1); updown <- rbinom(nper,1,up); updown[is.element(updown,0)] <- -1;
-	cont <- cont * updown;
-	for (i in 2:nper) {
-		#val[i] <- (val[i-1]*(1+rate) + cont[i]) * exp(rnorm(1,mean=-sigma^2/2,sd=sigma))
-		parrot = ifelse(k==0,1,rpareto(1,xm=1,k=k)) # pareto noise
-		val[i] <- max(0, (val[i-1]+cont[i])); val[i]=val[i]*(1+rate)*parrot
-		if (val[i]<=0 && cont[i]<=0) cont[i]=-val[i-1]
-	}
-	dat=data.frame(AID=rep(AID,nper),date=seq(as.Date("2009/1/1"),by="month",length.out=nper),
-		value=val,cont=cont)
-	attr(dat,"fqt") = "Simulation"
-	packList("dat","PBStool",tenv=.PBStoolEnv)
-	.imputeRate.getIR(); .imputeRate.impIR()
-	invisible()
-}
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~.imputeRate.simR
-
-#=======================================imputeRate
-
-
-## makeAgeErr---------------------------2020-05-24
+## makeAgeErr---------------------------2024-10-24
 ## Make an ageing error matrix for Awatea.
 ##  (first used for YMR in 2011)
 ## type = "simple" : symmetric matrix
@@ -2127,8 +2090,9 @@ if(is.na(LL1)) {browser();return()}
 ## type = "observe": frequency of ages observed per age class
 ## ---------------------------------------------RH
 makeAgeErr = function(type="simple", strSpp, sql=FALSE,
-   Amax=45, ondiag=0.8, offdiag=0.1, corner=0.9, Ndiff=5,
-   CV, Noff=1, less=0, more=0, png=FALSE, ptype="bubble", lang=c("e","f"))
+   Amax=45, ondiag=0.8, offdiag=0.1, corner=0.9,
+   Ndiff=5, CV, Noff=1, less=0, more=0,
+   png=FALSE, ptype="bubble", lang=c("e","f"))
 {
 	make.errtab = function(errmat, Ndiff) {
 		Amax = dim(errmat)[1]
@@ -2214,13 +2178,12 @@ makeAgeErr = function(type="simple", strSpp, sql=FALSE,
 			tight4[is.na(tight4)] = 0
 			errmat[1:4,] = as.matrix(tight4[,-1]) ## remove 'age' column and convert to matrix for compatability
 		}
-		fout  = fout.e = onam
+		fout.e = onam
 		if (png) createFdir(lang)
 
 		for (l in lang) {
-			fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
-#browser();return()
-
+			#fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
+			fout = switch(l, 'e' = paste0("./english/",fout.e), 'f' = paste0("./french/",fout.e) )
 			changeLangOpts(L=l)
 			if (png) {
 				clearFiles(fout)
@@ -2228,10 +2191,10 @@ makeAgeErr = function(type="simple", strSpp, sql=FALSE,
 			}
 			expandGraph(mfrow=c(1,1), mar=c(3,3,1,1), oma=c(0,0,0,0))
 			if (ptype=="bubble") {
-				#plotBubbles(errmat, dnam=TRUE, prettyAxis=TRUE, frange=0.01, size=0.1)
+				#plotBubbles(errmat, dnam=T, prettyAxis=T, frange=0.01, size=0.1)
 				errbat = errmat
 				rownames(errbat) = -(1:Amax)
-				plotBubbles(errbat, dnam=TRUE, xaxt="n", yaxt="n", frange=0.01, size=0.1, hide0=TRUE)
+				plotBubbles(errbat, dnam=T, xaxt="n", yaxt="n", frange=0.01, size=0.1, hide0=T)
 				axis(1, at=seq(5,Amax,5), cex=1.2)
 				axis(2, at=seq(-5,-Amax,-5), labels=seq(5,Amax,5), cex=1.2, las=1)
 				mtext(switch(l, 'e'="True Age", 'f'=eval(parse(text=deparse("le vrai \u{00E2}ge")))), side=1, line=1.75, cex=1.5)
@@ -2405,7 +2368,7 @@ makeAgeErr = function(type="simple", strSpp, sql=FALSE,
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~makeAgeErr
 
 
-## plotAgeErr---------------------------2021-12-02
+## plotAgeErr---------------------------2024-10-24
 ## Plot ageing precision data
 ##   (modified from code by Sean Anderson, PBS)
 ## Arguments:
@@ -2421,11 +2384,10 @@ makeAgeErr = function(type="simple", strSpp, sql=FALSE,
 ##   pngres    - resolution (pixels/inch) for PNG figure
 ##   PIN       - output size (inches) specifying width and height for PNG figure.
 ## ------------------------------------------SA/RH
-
 plotAgeErr = function(dat, nsamp, xlim=NULL, ylim=NULL, jitter=0.25, seed=42, 
    png=FALSE, pngres=400, PIN=c(8,8), lang=c("e","f"))
 {
-	opar = par(no.readonly=TRUE); on.exit(par(opar))
+	opar = par(no.readonly=T); on.exit(par(opar))
 	strSpp = as.character(.su(dat$spp))
 	sppNam = toUpper(tolower(.su(dat$spn)))
 	if (grepl("/", sppNam)) {
@@ -2473,7 +2435,7 @@ plotAgeErr = function(dat, nsamp, xlim=NULL, ylim=NULL, jitter=0.25, seed=42,
 		}
 		ttput(RAGOUT)
 		return(as.matrix(rout))
-	}, ofld=oflds, afld=aflds, simplify=FALSE)
+	}, ofld=oflds, afld=aflds, simplify=F)
 	ttget(RAGOUT)
 	ragout = RAGOUT[-1,]  ## remove artificially initiated first row of zeroes (stoopid R)
 	ttput(ragout)         ## send it to the PBStools environment
@@ -2502,15 +2464,16 @@ plotAgeErr = function(dat, nsamp, xlim=NULL, ylim=NULL, jitter=0.25, seed=42,
 	fout.e = paste0("AgeErr",strSpp)
 	for (l in lang) {
 		changeLangOpts(L=l)
-		fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
+		#fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
+		fout = switch(l, 'e' = paste0("./english/",fout.e), 'f' = paste0("./french/",fout.e) )
 		if (png) {
-			clearFiles(fout,".png")
+			clearFiles(paste0(fout,".png"))
 			png(paste0(fout,".png"), units="in", res=pngres, width=PIN[1], height=PIN[2])
 		}
 		par(mfrow=c(1,1), mar=c(3.5,3.5,0.5,0.75), oma=c(0,0,0,0), mgp=c(2,0.5,0))
 		plot(dat$r1_age, dat$r2_age, xlim=xlim, ylim=ylim, type="n", xlab="", ylab="", cex.axis=1.2, las=1)
-		axis(1, at=seq(0,xlim[2],ifelse(xlim[2]<60,1,5)), labels=FALSE, tcl=-0.2)
-		axis(2, at=seq(0,ylim[2],ifelse(ylim[2]<60,1,5)), labels=FALSE, tcl=-0.2)
+		axis(1, at=seq(0,xlim[2],ifelse(xlim[2]<60,1,5)), labels=F, tcl=-0.2)
+		axis(2, at=seq(0,ylim[2],ifelse(ylim[2]<60,1,5)), labels=F, tcl=-0.2)
 		abline(0,1,col=lucent("green4",0.5),lwd=2)
 		## Drawing segments takes a long time, especially when sending to PNG device:
 		segments(x0=dat$r1_amin, y0=dat$r2_age, x1=dat$r1_amax, y1=dat$r2_age, col=lucent("grey50",0.5),lwd=2)
@@ -2527,7 +2490,7 @@ plotAgeErr = function(dat, nsamp, xlim=NULL, ylim=NULL, jitter=0.25, seed=42,
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotAgeErr
 
 
-## plotBTMW-----------------------------2024-02-15
+## plotBTMW-----------------------------2024-10-24
 ##  Plot for bottom (BT) vs. midwater (MW) trawl catch
 ##  WHEN MC.GEAR IN ('BOTTOM TRAWL','UNKNOWN TRAWL') THEN 1
 ##  WHEN MC.GEAR IN ('TRAP') THEN 2
@@ -2607,6 +2570,9 @@ plotBTMW = function(dat, strSpp="417", years=1996:2018, major=list('BC'=3:9),
 			gtab  = crossTab(gdat, c("year",gnam), "catKg")
 		else
 			gtab  = crossTab(gdat, c("year",gnam,"stock"), "catKg")
+
+		if (all(dimnames(gtab)[[3]]=="CST"))
+			dimnames(gtab)[[3]] = "BC"
 		narea = dim(gtab)[3]
 		if(is.na(narea)) narea = 1
 #browser(); return()
@@ -2640,15 +2606,21 @@ plotBTMW = function(dat, strSpp="417", years=1996:2018, major=list('BC'=3:9),
 		fout.e = onam
 
 		for (l in lang) {
-			fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
+			#fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
+			fout = switch(l, 'e' = paste0("./english/",fout.e), 'f' = paste0("./french/",fout.e) )
 			changeLangOpts(L=l)
-			if (png) png (filename=paste0(fout,".png"), width=PIN[1], height=PIN[2], units="in", res=pngres)
+			if (png) {
+				clearFiles(paste0(fout,".png"))
+				png(filename=paste0(fout,".png"), width=PIN[1], height=PIN[2], units="in", res=pngres)
+			}
 			#expandGraph(mfrow=c(1,narea), mar=c(3,3,1.2,0.5), mgp=c(1.6,0.5,0))
 			expandGraph(mfrow=c(1,narea), mar=c(1.5,2,1,1), oma=c(1.5,2,0,0), mgp=c(1.6,0.5,0))
 			for (a in 1:narea) {
 				aa = names(major)[a]
 				atab = gtab
-				if (narea>1) atab = gtab[,,aa]#,drop=FALSE]
+#browser();return()
+				#if (narea>1)   ## remove if statement -- quick fiddle for BOR 2024 (RH 240807)
+				atab = gtab[,,aa]#,drop=FALSE]
 
 				if (gnam%in%c("stock")) { icol=acol; ibg=abg }
 				else                    { icol=gcol; ibg=gbg }
@@ -2665,11 +2637,12 @@ plotBTMW = function(dat, strSpp="417", years=1996:2018, major=list('BC'=3:9),
 				}
 				iii = intersect(as.character(gval),colnames(gtab)) ## use names instead of numeric indices
 				xpos = if (strSpp %in% c("418")  && gnam %in% c("sector")) 0.99 else 0.8
-				ypos = if (strSpp %in% c("417","418") || (strSpp %in% "437" && gnam %in% c("sector","fid")))  0.45 else 0.99
+				#ypos = if (strSpp %in% c("417","418") || (strSpp %in% "437" && gnam %in% c("sector","fid")))  0.45 else 0.99
+				ypos = if (strSpp %in% c("417") || (strSpp %in% c("418","437") && gnam %in% c("sector","fid")))  0.5 else 0.99
 				if (a==1)
 					addLegend(xpos, ypos, lty=glty[iii], seg.len=3, lwd=2, col=icol[iii], pch=gpch[iii], pt.bg=ibg[iii], pt.cex=1.75, legend=linguaFranca(gsub("_"," ", gleg[iii]),l), cex=1.2, xjust=1, yjust=1, bty="n")
 				if (narea==1 && (.su(gdat$stock)%in%c("BC","CST") || aa%in%c("BC","CST"))) { # && strSpp %in% c('435','BOR'))
-					aaa = "BC coastwide"
+					aaa = linguaFranca("BC coastwide", l)  ## quick fiddle for BOR 2024 (RH 240807)
 				} else {
 					aaa = aa
 				}
@@ -2698,7 +2671,7 @@ plotBTMW = function(dat, strSpp="417", years=1996:2018, major=list('BC'=3:9),
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotBTMW
 
 
-## plotMW-------------------------------2019-10-17
+## plotMW-------------------------------2024-10-24
 ## Plot mean weight of stocks and individual areas
 ## that occur in the bigger stock areas.
 ## ---------------------------------------------RH
@@ -2709,7 +2682,7 @@ plotMW = function(dat, xlim, ylim, outnam="Mean-Weight-Compare",
 	createFdir(lang)
 
 	if (missing(xlim)) xlim=range(dat[,1])
-	if (missing(ylim)) ylim=range(dat[,-1], na.rm=TRUE)
+	if (missing(ylim)) ylim=range(dat[,-1], na.rm=T)
 	x = xlim[1]:xlim[2]
 	#x = x[is.element(x,dat$year)]
 	stocks = names(dat[,-1])
@@ -2727,11 +2700,15 @@ plotMW = function(dat, xlim, ylim, outnam="Mean-Weight-Compare",
 	names(scol) = names(spch) = names(slty) = names(slwd) = names(scex) = sord
 #browser();return()
 
-	fout = fout.e = outnam
+	fout.e = outnam
 	for (l in lang) {
 		changeLangOpts(L=l)
-		fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
-		if (png) png(paste0(fout,".png"), units="in", res=400, width=8, height=6)
+		#fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
+		fout = switch(l, 'e' = paste0("./english/",fout.e), 'f' = paste0("./french/",fout.e) )
+		if (png) {
+			clearFiles(paste0(fout,".png"))
+			png(paste0(fout,".png"), units="in", res=400, width=8, height=6)
+		}
 		par(mfrow=c(1,1), mar=c(3.5,3.8,0.5,0.5), oma=c(0,0,0,0), mgp=c(2.25,0.5,0))
 		plot(0, xlim=xlim, ylim=ylim, type="n", xlab=linguaFranca("Year",l), ylab=linguaFranca("Mean Weight (kg)",l), cex.axis=1.2, cex.lab=1.5, las=1)
 		z = is.element(x,dat$year)
@@ -2752,7 +2729,7 @@ plotMW = function(dat, xlim, ylim, outnam="Mean-Weight-Compare",
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotMW
 
 
-## plotSnail----------------------------2023-11-08
+## plotSnail----------------------------2024-10-24
 ## Plot snail-trail plots for MCMC analysis.
 ##  AME: replacing "2010" with as.character(currYear - 1)
 ##  RH: added assYrs = years past with estimated Bcurr
@@ -2898,7 +2875,8 @@ plotSnail=function (BoverBmsy, UoverUmsy, model="SS", yrs=1935:2023,
 	for (l in lang) {  ## could switch to other languages if available in 'linguaFranca'.
 		createFdir(lang, dir=".")
 		changeLangOpts(L=l)
-		fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
+		#fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
+		fout = switch(l, 'e' = paste0("./english/",fout.e), 'f' = paste0("./french/",fout.e) )
 		if ("eps" %in% ptypes){
 			clearFiles(paste0(fout,".eps"))
 			postscript(paste0(fout,".eps"), width=PIN[1], height=PIN[2], horizontal=FALSE, paper="special")
@@ -2925,7 +2903,9 @@ plotSnail=function (BoverBmsy, UoverUmsy, model="SS", yrs=1935:2023,
 			axis(1, at=seq(0,20,0.5)[sapply(seq(0,20,0.5),function(x,y){x>y[1]&x<y[2]},y=xLim)], labels=FALSE, tick=TRUE, tcl=-0.3)
 			axis(2, at=seq(0,5,0.1)[sapply(seq(0,5,0.1),function(x,y){x>y[1]&x<y[2]},y=yLim)], labels=FALSE, tick=TRUE, tcl=-0.3)
 			abline(h=1, col=c("grey20"), lwd=2, lty=3)
-			abline(v=c(0.4,0.8), col=c("red","green4"), lwd=2, lty=c(4,2))
+			#abline(v=c(0.4,0.8), col=c("red","green4"), lwd=2, lty=c(4,2))
+			abline(v=c(0.4,0.8), col=.colBlind[c("redpurple","bluegreen")], lwd=2, lty=c(4,5))  ## switch to colours for the blind
+			text(c(0.4,0.8),par()$usr[3],labels=show0(round(c(0.4,0.8),2),2),adj=c(1.1,-.5),col=.colBlind[c("redpurple","bluegreen")])
 		}
 		if (onepanel) startPlot()
 		ipool = if (!missing(subarea)) subarea else 1:ngear
@@ -3158,7 +3138,7 @@ processMap = function(dat=PBSdat, strSpp, prefix="map", useSM=FALSE)
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~processMap
 
 
-## quantAges----------------------------2019-10-19
+## quantAges----------------------------2024-10-24
 ## Plot quantile boxes of age by year and/or area,
 ## including mean age over time.
 ## Suggested by PJS to detect changes in age.
@@ -3206,11 +3186,15 @@ quantAges =function(bioDat, dfld="age", afld="major", tfld="year",
 		abioDat = split(bioDat, bioDat[,afld])
 		yearbox = as.list(rep(NA,nyrs)); names(yearbox) = years
 
-		fout = fout.e = outnam
+		fout.e = outnam
 		for (l in lang) {  ## could switch to other languages if available in 'linguaFranca'.
 			changeLangOpts(L=l)
-			fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
-			if (png) png(paste0(fout,".png"), width=PIN[1], height=PIN[2], units="in", res=pngres)
+			#fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
+			fout = switch(l, 'e' = paste0("./english/",fout.e), 'f' = paste0("./french/",fout.e) )
+			if (png) {
+				clearFiles(paste0(fout,".png"))
+				png(paste0(fout,".png"), width=PIN[1], height=PIN[2], units="in", res=pngres)
+			}
 			par(mfcol=c(length(abioDat),2), mar=c(0,2,0,0), oma=c(4,2,1,1), mgp=c(2,0.5,0))
 
 			for (j in 1:2){
@@ -3223,7 +3207,7 @@ quantAges =function(bioDat, dfld="age", afld="major", tfld="year",
 #browser();return()
 					adat = adat[is.element(adat$ctype,jj),]
 					if (nrow(adat)==0) {
-						quantBox(yearbox, outline=FALSE, ylim=ylim, xaxt="n")
+						quantBox(yearbox, outline=F, ylim=ylim, xaxt="n")
 					}
 					else {
 						males = is.element(adat$sex,1)
@@ -3240,9 +3224,9 @@ quantAges =function(bioDat, dfld="age", afld="major", tfld="year",
 						Fsex[names(fsex[zsex])] = fsex[zsex]
 						Qage[[jj]][[aa]][["F"]] = Fsex
 
-						quantBox(yearbox, outline=FALSE, ylim=ylim, xaxt="n")
-						quantBox(Msex, xaxt="n", yaxt="n", outline=FALSE, boxcol="grey30", boxfill=mcol[1], medlwd=1, medcol=mcol[2], whisklty=1, whiskcol="gainsboro", add=TRUE, boxwex=boxwex, at=(1:nyrs)+(boxwex/2))
-						quantBox(Fsex, xaxt="n", yaxt="n", outline=FALSE, boxcol="grey30", boxfill=fcol[1], medlwd=1, medcol=fcol[2], whisklty=1, whiskcol="gainsboro", add=TRUE, boxwex=boxwex, at=(1:nyrs)-(boxwex/2))
+						quantBox(yearbox, outline=F, ylim=ylim, xaxt="n")
+						quantBox(Msex, xaxt="n", yaxt="n", outline=F, boxcol="grey30", boxfill=mcol[1], medlwd=1, medcol=mcol[2], whisklty=1, whiskcol="gainsboro", add=T, boxwex=boxwex, at=(1:nyrs)+(boxwex/2))
+						quantBox(Fsex, xaxt="n", yaxt="n", outline=F, boxcol="grey30", boxfill=fcol[1], medlwd=1, medcol=fcol[2], whisklty=1, whiskcol="gainsboro", add=T, boxwex=boxwex, at=(1:nyrs)-(boxwex/2))
 
 						#lines((1:nyrs)-(boxwex/2),sapply(Fsex,mean),col=fcol[2],lwd=2)
 						#lines((1:nyrs)+(boxwex/2),sapply(Msex,mean),col=mcol[2],lwd=2)
@@ -3295,14 +3279,14 @@ quantAges =function(bioDat, dfld="age", afld="major", tfld="year",
 				nFsex = sapply(Fsex,countVec)
 
 				if (is.null(ylim))
-					Ylim = c(min(sapply(Qage[[jj]],function(x){sapply(x,function(xx){quantile(xx,0.05,na.rm=TRUE)})}),na.rm=TRUE),
-						max(sapply(Qage[[jj]],function(x){sapply(x,function(xx){quantile(xx,0.95,na.rm=TRUE)})}),na.rm=TRUE))
+					Ylim = c(min(sapply(Qage[[jj]],function(x){sapply(x,function(xx){quantile(xx,0.05,na.rm=T)})}),na.rm=T),
+						max(sapply(Qage[[jj]],function(x){sapply(x,function(xx){quantile(xx,0.95,na.rm=T)})}),na.rm=T))
 				else Ylim = ylim
 
-				quantBox(areabox, outline=FALSE, ylim=Ylim, xaxt="n")
-				quantBox(Msex, xaxt="n", yaxt="n", outline=FALSE, boxcol="grey30", boxfill=mcol[1], medcol=mcol[2], whisklty=1, whiskcol="gainsboro", add=TRUE, boxwex=boxwex, at=(1:nareas)+(boxwex/2), varwidth=TRUE)
+				quantBox(areabox, outline=F, ylim=Ylim, xaxt="n")
+				quantBox(Msex, xaxt="n", yaxt="n", outline=F, boxcol="grey30", boxfill=mcol[1], medcol=mcol[2], whisklty=1, whiskcol="gainsboro", add=T, boxwex=boxwex, at=(1:nareas)+(boxwex/2), varwidth=T)
 				text((1:nareas)+(boxwex/2), 0, nMsex, col=mcol[3], cex=0.8, font=2)
-				quantBox(Fsex, xaxt="n", yaxt="n", outline=FALSE, boxcol="grey30", boxfill=fcol[1], medcol=fcol[2], whisklty=1, whiskcol="gainsboro", add=TRUE, boxwex=boxwex, at=(1:nareas)-(boxwex/2), varwidth=TRUE)
+				quantBox(Fsex, xaxt="n", yaxt="n", outline=F, boxcol="grey30", boxfill=fcol[1], medcol=fcol[2], whisklty=1, whiskcol="gainsboro", add=T, boxwex=boxwex, at=(1:nareas)-(boxwex/2), varwidth=T)
 				text((1:nareas)-(boxwex/2), 0, nFsex, col=fcol[3], cex=0.8, font=2)
 
 				#lines((1:nareas)-(boxwex/2),sapply(Fsex,mean),col=fcol[2],lwd=2)
@@ -3323,7 +3307,7 @@ quantAges =function(bioDat, dfld="age", afld="major", tfld="year",
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~quantAges
 
 
-## splineCPUE---------------------------2022-04-28
+## splineCPUE---------------------------2024-10-24
 ## Fit spline curves through CPUE data to determine 
 ## optimal degrees of freedom (balance between rigorously
 ## fitting indices while not removing the majority of the signal)
@@ -3355,7 +3339,8 @@ splineCPUE = function(dat, ndf=50, strSpp="ZZZ", ufld="cpue",
 
 	for (l in lang) {
 		changeLangOpts(L=l)
-		fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
+		#fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
+		fout = switch(l, 'e' = paste0("./english/",fout.e), 'f' = paste0("./french/",fout.e) )
 		if (png) {
 			clearFiles(paste0(fout,".png"))
 			png(paste0(fout,".png"), units="in", res=pngres, width=PIN[1], height=PIN[2])
@@ -3418,14 +3403,15 @@ splineCPUE = function(dat, ndf=50, strSpp="ZZZ", ufld="cpue",
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~splineCPUE
 
 
-## tabAmeth-----------------------------2023-05-04
+## tabAmeth-----------------------------2024-05-02
 ##  Tabulate ageing error structures available in bio123.
 ## ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~RH
 tabAmeth = function(dat)
 {
 	dat  = dat[dat$age>0 & !is.na(dat$age),]
 	tdat = split(dat, dat$ttype)
-	names(tdat) = sapply(names(tdat), function(i){switch(as.numeric(i),"Non-obs domestic","Research","Charter","Obs domestic","Obs J-V")})
+	names(tdat) = sapply(names(tdat), function(i){switch(as.numeric(i),"Non-obs domestic","Research","Charter","Obs domestic","Obs J-V",
+		"Non-obs J-V", "Polish Comm Natl", "Russian Comm Natl", "Russian Comm Supp", "Polish Comm Supp", "Recreational", "Japanese Comm Natl", "Japanese Comm", "Unknown Foreign")})
 
 	tlist = lapply (tdat, function(x) {
 		x$sexnam = rep("U",nrow(x))
@@ -3473,15 +3459,14 @@ tabAmeth = function(dat)
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~tabAmeth
 
 
-## tabOtos------------------------------2023-04-24
+## tabOtos------------------------------2024-07-31
 ##  Tabulate otoliths available and aged.
 ## ---------------------------------------------RH
 tabOtos = function(strSpp="123", fpath=getwd())
 {
-	clearFiles( c(paste0(c(rep("otos",4),rep("aged",4)),"-",c("SSID","ttype","gear","major"),".csv"), paste0("oto",strSpp,".rda")) )
+	clearFiles( c(paste0(c(rep("otos",5),rep("aged",5)),"-",c("SSID","ttype","gear","major","major-comm"),".csv"), paste0("oto",strSpp,".rda")) )
 
 	mess = paste0("getFile(bio", strSpp, ", path=\"",fpath,"\"); oto", strSpp, " = bio", strSpp, "[is.element(bio", strSpp, "$oto,1),]; ttput(oto", strSpp, "); save(\"oto", strSpp, "\", file=\"oto", strSpp, ".rda\")")
-
 #browser();return()
 	#eval(parse(text=paste0(mess,collapse="")))
 
@@ -3497,10 +3482,14 @@ tabOtos = function(strSpp="123", fpath=getwd())
 	mess = c(mess, paste0("write.csv(crossTab(oto", strSpp, ", c(\"year\",\"gear\"),  \"age\", countVec), file=\"aged-gear.csv\")"))
 	mess = c(mess, paste0("write.csv(crossTab(oto", strSpp, ", c(\"year\",\"major\"), \"age\", countVec), file=\"aged-major.csv\")"))
 
-	if (strSpp %in% c("396")) {
-		mess = c(mess, paste0("otoComm = oto", strSpp, "[is.element(oto", strSpp, "$ttype, c(1,4)),]"))
+	## get commercial for all species
+	mess = c(mess, paste0("otoComm = oto", strSpp, "[is.element(oto", strSpp, "$ttype, c(1,4:10,12:14)),]"))
+	if (strSpp %in% c("396","440")) {
 		mess = c(mess, paste0("write.csv(crossTab(otoComm, c(\"year\",\"major_adj\"), \"oto\", countVec), file=\"otos-major-comm.csv\")"))
 		mess = c(mess, paste0("write.csv(crossTab(otoComm, c(\"year\",\"major_adj\"), \"age\", countVec), file=\"aged-major-comm.csv\")"))
+	} else {
+		mess = c(mess, paste0("write.csv(crossTab(otoComm, c(\"year\",\"major\"), \"oto\", countVec), file=\"otos-major-comm.csv\")"))
+		mess = c(mess, paste0("write.csv(crossTab(otoComm, c(\"year\",\"major\"), \"age\", countVec), file=\"aged-major-comm.csv\")"))
 	}
 
 #browser();return()

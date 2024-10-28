@@ -9,12 +9,14 @@
   tailored to the specified species.
 }
 \usage{
-createMA(yrs=1979:2023, strSpp="POP", addletters=TRUE)
+createMA(yrs=1979:2024, strSpp="POP", addletters=TRUE, gears="TRW")
 }
 \arguments{
-  \item{yrs}{\code{numeric} -- range of years to select management actions applicable to \code{'strSpp'}.}
-  \item{strSpp}{\code{character} -- species three-letter code used in Groundfish stock assessments.}
-  \item{addletters}{\code{logical} -- if \code{TRUE}, prefix each line with a letter  for notation.}
+  \item{yrs}{\code{numeric} -- range of years to select management actions applicable to \code{'strSpp'}}
+  \item{strSpp}{\code{character} -- species three-letter code used in Groundfish stock assessments}
+  \item{addletters}{\code{logical} -- if \code{TRUE}, prefix each line with a letter for notation}
+  \item{gears}{\code{character} -- three-letter code depicting gear type:
+    \code{'TRW'}= trawl, \code{'ZNO'}= hook & line outside, \code{'ALL'}= all gear types}
 }
 \details{
   Internally, a list object uses key value pairs \code{'[["year"]][["strSpp"]]'} to
@@ -37,8 +39,8 @@ createMA(yrs=1979:2023, strSpp="POP", addletters=TRUE)
 \author{
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
-  \emph{locus opus}: Regional Headquarters (RHQ), Vancouver BC\cr
-  Last modified \code{Rd: 2023-06-08}
+  \emph{locus opus}: Remote office, Vancouver BC\cr
+  Last modified \code{Rd: 2024-10-28}
 }
 \seealso{
 In package \pkg{PBStools}:\cr

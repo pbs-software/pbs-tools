@@ -24,7 +24,7 @@
 ##==============================================================================
 
 
-## calcLW-------------------------------2024-02-29
+## calcLW-------------------------------2024-10-24
 ## Calculate length-weight relationship for a fish.
 ## Formerly called calcLenWt.
 ## A bit clumsy when you want just tables (see calcVB)
@@ -128,6 +128,18 @@ calcLW <- function(dat=pop.age, strSpp="396", xfld="len", yfld="wt",
 			for (t1 in 1:length(ttype)) {
 				tt   = ttype[[t1]]; ttt = names(ttype)[t1]
 				tdat <- adat[is.element(adat$ttype,tt),]
+				## Manually set to get a list of SSIDs for stock assessment table (RH 240617)
+				collect.ssid = FALSE
+				if (collect.ssid) {
+					if ("SSID" %in% colnames(tdat))
+						ssids = texThatVec(.su(tdat$SSID))
+					else {
+						load("ssid.svid.rda")
+						ssids = texThatVec(.su(ssid.svid[names(table(tdat$SVID))]))
+					}
+					.flush.cat("Area=",ar,"; Ttype=",tt,": ", gsub("\\s+|and","",ssids), "\n\n")
+					browser();return()   
+				}
 				if (nrow(tdat)==0) next
 				ylim[2] <- max(tdat[,yfld],na.rm=TRUE)
 				tmat = paste(ttt,paste0(tt,collapse="|"),sep="_")
@@ -141,8 +153,9 @@ calcLW <- function(dat=pop.age, strSpp="396", xfld="len", yfld="wt",
 					plotName <- paste0(plotName,"-data(",inObj,")")
 					plotNames = c(plotNames,plotName)
 				} else plotName = outnam
-				fout = fout.e = plotName
-				fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
+				fout.e = plotName
+				#fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
+				fout = switch(l, 'e' = paste0("./english/",fout.e), 'f' = paste0("./french/",fout.e) )
 	
 				if (length(sex)>3)
 					rc = rev(PBSmodelling:::.findSquare(length(sex)))  ## .findSquare no longer exported from PBSmodelling namespace
@@ -153,15 +166,20 @@ calcLW <- function(dat=pop.age, strSpp="396", xfld="len", yfld="wt",
 				else
 					par(mfrow=rc,cex=2.0,mar=c(3.5,3,1.5,.1),oma=c(0,0,0,0),mgp=c(2,0.5,0),cex=1)
 				#else par(mfrow=c(2,2),cex=2.0,mar=c(3.5,3,1.5,.1),oma=c(0,0,0,0),mgp=c(2,.5,0),cex=1)
-#browser();return()
 
 				for (i in 1:length(sex)) {
 					ii   = sex[[i]]; iii = names(sex)[i]
 					idat = tdat[is.element(tdat$sex,ii),];
 					n1   = nrow(idat); #out[[iii]] <- idat
 					if (n1==0) {
-						if (iii=="Unknown") next else
-						{plot(0,0,type="n",axes=FALSE,xlab="",ylab=""); addLabel(0.5, 0.5, linguaFranca("NO DATA",l)); next }}
+						if (iii=="Unknown") {
+							next
+						} else {
+							plot(0,0,type="n",axes=FALSE,xlab="",ylab="")
+							addLabel(0.5, 0.5, linguaFranca("NO DATA",l))
+							next
+						}
+					}
 					if (n1>1) {
 						#fit1 = lm(log(wt)~log(len), data=idat)
 						fit1 = eval(parse(text=paste0("lm(log(",yfld,")~log(",xfld,"), data=idat)")))
@@ -301,7 +319,7 @@ calcLW <- function(dat=pop.age, strSpp="396", xfld="len", yfld="wt",
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~calcLW
 
 
-## calcSG-------------------------------2020-03-10
+## calcSG-------------------------------2024-10-24
 ## Calculate growth curve using Schnute growth model.
 ## Note: ameth=3 otoliths broken & burnt
 ## ---------------------------------------------RH
@@ -374,36 +392,42 @@ calcSG <- function(dat=pop.age, strSpp="", yfld="len", tau=c(5,80), fixt0=FALSE,
 	## Setup the EPS device for import to word, half page with 2 plots side by side
 	createEPS <- function(plotName,rc=c(2,2), width=3.5, height=3) { ## width & height for each panel
 		plotName <- paste(plotName,"eps",sep=".")
+		clearFiles(plotName)
 		postscript(plotName, width=width*rc[2], height=height*rc[1]+0.75, paper="special", horizontal=FALSE, family="NimbusSan")
 		par(mfrow=rc, mar=c(2.6,2.5,1,0.5), oma=c(0,0,0,0), mgp=c(1.5,0.5,0), cex=1.2) }
 
 	## Setup the JPG device for import to word, half page with 2 plots side by side
 	createJPG <- function(plotName,rc=c(2,2), width=3.5, height=3) { ## width & height for each panel
 		plotName <- paste(plotName,"jpg",sep=".")
+		clearFiles(plotName)
 		jpeg(plotName, quality=100, res=400, width=width*rc[2]*400, height=(height*rc[1]+0.75)*400, pointsize=12)
 		par(mfrow=rc, mar=c(2.6,2.5,1,0.5), oma=c(0,0,0,0), mgp=c(1.5,0.5,0), cex=1.2) }
 
 	## Setup the PDF device for import to word, half page with 2 plots side by side
 	createPDF <- function(plotName,rc=c(2,2), width=3.5, height=3) { ## width & height for each panel
 		plotName <- paste(plotName,"pdf",sep=".")
+		clearFiles(plotName)
 		pdf(plotName, width=width*rc[2], height=height*rc[1]+0.75, paper="special")
 		par(mfrow=rc, mar=c(2.6,2.5,1,0.5), oma=c(0,0,0,0), mgp=c(1.5,0.5,0), cex=1.2) }
 
 	## Setup the PNG device for import to word, half page with 2 plots side by side
 	createPNG <- function(plotName,rc=c(2,2), width=3.5, height=3) { ## width & height for each panel
 		plotName <- paste(plotName,"png",sep=".")
+		clearFiles(plotName)
 		png(plotName, units="in", res=400, width=width*rc[2], height=(height*rc[1]+0.75), pointsize=12)
 		par(mfrow=rc, mar=c(2.6,2.5,1,0.5), oma=c(0,0,0,0), mgp=c(1.5,0.5,0), cex=1.2) }
 
 	## Setup the TIFF device for import to word, half page with 2 plots side by side
 	createTIF <- function(plotName,rc=c(2,2), width=3.5, height=3) { ## width & height for each panel
 		plotName <- paste(plotName,"tif",sep=".")
+		clearFiles(plotName)
 		tiff(plotName, units="in", res=400, width=width*rc[2], height=(height*rc[1]+0.75), pointsize=12)
 		par(mfrow=rc, mar=c(2.6,2.5,1,0.5), oma=c(0,0,0,0), mgp=c(1.5,0.5,0), cex=1.2) }
 
 	## Setup the WMF device for import to word, half page with 2 plots side by side
 	createWMF <- function(plotName,rc=c(1,2), width=3.5, height=3) { ## width & height for each panel
 		plotName <- paste(plotName,"wmf",sep=".")
+		clearFiles(plotName)
 		if(.Platform$OS.type=="windows")
 			do.call("win.metafile",list(filename=plotName, width=width*rc[2], height=height*rc[1]+0.75))
 		par(mfrow=rc, mar=c(2.6,2.5,1,0.5), oma=c(0,0,0,0), mgp=c(1.5,0.5,0), cex=1.2) }
@@ -530,9 +554,10 @@ calcSG <- function(dat=pop.age, strSpp="", yfld="len", tau=c(5,80), fixt0=FALSE,
 	#------------------------------------
 	DATA = list()
 
-	pfout = pfout.e = plotName
+	pfout.e = plotName
 	for (l in lang) {
-		if (l=="f") pfout = paste0("./french/",pfout.e)  ## could repeat for other languages
+		#if (l=="f") pfout = paste0("./french/",pfout.e)  ## could repeat for other languages
+		pfout = switch(l, 'e' = paste0("./english/",pfout.e), 'f' = paste0("./french/",pfout.e) )
 		if (!figgy && figures) { resetGraph()
 			expandGraph(mfrow=c(length(ttype),nsex),mar=c(3,3,2,.1),oma=c(0,0,0,0),mgp=c(1.5,.5,0),cex=1.0) }
 		else if ((!singles&!pages) && figgy && figures) {
@@ -569,8 +594,9 @@ calcSG <- function(dat=pop.age, strSpp="", yfld="len", tau=c(5,80), fixt0=FALSE,
 				aaName = gsub("\\|","",aaName)
 			} else
 				aaName = plotName
-			afout = afout.e = aaName
-			if (l=="f") afout = paste0("./french/",afout.e)  ## could repeat for other languages
+			afout.e = aaName
+			#if (l=="f") afout = paste0("./french/",afout.e)  ## could repeat for other languages
+			afout = switch(l, 'e' = paste0("./english/",afout.e), 'f' = paste0("./french/",afout.e) )
 
 			if (pages && figgy && figures){
 				plotNames = c(plotNames,aaName)
@@ -592,8 +618,9 @@ calcSG <- function(dat=pop.age, strSpp="", yfld="len", tau=c(5,80), fixt0=FALSE,
 					ttName = gsub("\\|","",ttName)
 				} else
 					ttName=plotname
-				tfout = tfout.e = ttName
-				if (l=="f") tfout = paste0("./french/",tfout.e)  ## could repeat for other languages
+				tfout.e = ttName
+				#if (l=="f") tfout = paste0("./french/",tfout.e)  ## could repeat for other languages
+				tfout = switch(l, 'e' = paste0("./english/",tfout.e), 'f' = paste0("./french/",tfout.e) )
 
 				xout[,tmat,amat,"year"] = range(tdat$year,na.rm=TRUE)
 				if ("date" %in% names(tdat))
@@ -794,7 +821,7 @@ calcSG <- function(dat=pop.age, strSpp="", yfld="len", tau=c(5,80), fixt0=FALSE,
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~calcSG
 
 
-## calcVB-------------------------------2024-02-14
+## calcVB-------------------------------2024-10-24
 ## Calculate von Bertalanffy growth curve.
 ## Note: ameth=3 otoliths broken & burnt; ameth=1 surface read only
 ##   areas: list of lists
@@ -1021,10 +1048,11 @@ calcVB <- function(dat=pop.age, strSpp="", yfld="len", fixt0=FALSE,
 
 	DATA = list()
 
-	pfout = pfout.e = plotName
+	pfout.e = plotName
 	for (l in lang) {  ## could switch to other languages if available in 'linguaFranca'.
 		changeLangOpts(L=l)
-		pfout = switch(l, 'e' = pfout.e, 'f' = paste0("./french/",pfout.e) )
+		#pfout = switch(l, 'e' = pfout.e, 'f' = paste0("./french/",pfout.e) )
+		pfout = switch(l, 'e' = paste0("./english/",pfout.e), 'f' = paste0("./french/",pfout.e) )
 		if (!figgy && figures) { resetGraph()
 			expandGraph(mfrow=c(length(ttype),nsex),mar=c(3,3,2,.1),oma=c(0,0,0,0),mgp=c(1.5,.5,0),cex=1.0) }
 		else if ((!singles&!pages) && figgy && figures) {
@@ -1060,8 +1088,9 @@ calcVB <- function(dat=pop.age, strSpp="", yfld="len", fixt0=FALSE,
 				aaName = gsub("\\|","",aaName)
 			} else
 				aaName = plotName
-			afout = afout.e = aaName
-			if (l=="f") afout = paste0("./french/",afout.e)  ## could repeat for other languages
+			afout.e = aaName
+			#if (l=="f") afout = paste0("./french/",afout.e)  ## could repeat for other languages
+			afout = switch(l, 'e' = paste0("./english/",afout.e), 'f' = paste0("./french/",afout.e) )
 
 			if (pages && figgy && figures){
 				plotNames = c(plotNames,aaName)
@@ -1083,8 +1112,9 @@ calcVB <- function(dat=pop.age, strSpp="", yfld="len", fixt0=FALSE,
 					ttName = gsub("\\|","",ttName)
 				} else
 					ttName=outnam
-				tfout = tfout.e = ttName
-				if (l=="f") tfout = paste0("./french/",tfout.e)  ## could repeat for other languages
+				tfout.e = ttName
+				#if (l=="f") tfout = paste0("./french/",tfout.e)  ## could repeat for other languages
+				tfout = switch(l, 'e' = paste0("./english/",tfout.e), 'f' = paste0("./french/",tfout.e) )
 
 				xout[,tmat,amat,"year"] = range(tdat$year,na.rm=TRUE)
 				if ("date" %in% names(tdat))
@@ -1484,7 +1514,7 @@ compCsum <- function(dat=pop.age, pro=TRUE, strSpp="", xfld="age", plus=60,
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~compCsum
 
 
-## estOgive-----------------------------2024-02-13
+## estOgive-----------------------------2024-10-24
 ##  Creates ogives of some metric (e.g., % maturity at age).
 ##  Octals not supported in R.4.4.0+ (RH 230726)
 ##  Changed variance parameters to log of variance (like Awatea and SS3)
@@ -1730,11 +1760,15 @@ estOgive <- function(dat=pop.age, strSpp="", method=c("DN"),
 	fout.e = onam
 	for (l in lang) {  ## could switch to other languages if available in 'linguaFranca'.
 		changeLangOpts(L=l)
-		fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
+		#fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
+		fout = switch(l, 'e' = paste0("./english/",fout.e), 'f' = paste0("./french/",fout.e) )
 		if (eps) postscript(paste0(fout,".eps"), width=PIN[1], height=PIN[2], paper="special")
 		else if (wmf && .Platform$OS.type=="windows")
 			do.call("win.metafile", list(filename=paste0(fout,".wmf"), width=PIN[1], height=PIN[2]))
-		else if (png) png(filename=paste0(fout,".png"), width=PIN[1], height=PIN[2], units="in", res=400)
+		else if (png) {
+			clearFiles(paste0(fout,".png"))
+			png(filename=paste0(fout,".png"), width=PIN[1], height=PIN[2], units="in", res=400)
+		}
 		#else resetGraph()
 		expandGraph(mfrow=c(1,1),mai=c(.6,.7,0.05,0.05),omi=c(0,0,0,0),las=1,lwd=1)
 		MDX = xlim[2]/3
@@ -2325,7 +2359,7 @@ histMetric <- function(dat=pop.age, xfld="age", xint=1, minN=50,
 #---------------------------------------histMetric
 
 
-## histTail-----------------------------2024-02-14
+## histTail-----------------------------2024-10-24
 ## Create a histogram showing tail details
 ## ---------------------------------------------RH
 histTail <-function(dat=pop.age, xfld="age", tailmin=NULL, 
@@ -2358,7 +2392,8 @@ histTail <-function(dat=pop.age, xfld="age", tailmin=NULL,
 	fout.e = outnam
 	for (l in lang) {
 		changeLangOpts(L=l)
-		fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
+		#fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
+		fout = switch(l, 'e' = paste0("./english/",fout.e), 'f' = paste0("./french/",fout.e) )
 		if (wmf && .Platform$OS.type=="windows")
 			do.call("win.metafile",list(filename=paste0(fout,".wmf"), width=PIN[1], height=PIN[2]))
 		else if (png){
@@ -2387,14 +2422,15 @@ histTail <-function(dat=pop.age, xfld="age", tailmin=NULL,
 			gobs = strsplit(outnam,split="\\(|\\)|-")[[1]]
 			gobs = grep("^$|histTail",gobs,invert=TRUE,value=TRUE)
 			glab = paste0(toUpper(species[gobs[1],"name"])," - ", paste0(gobs[2:3], collapse=" ("), ")")
-#browser();return()
 			addLabel(xpos,ypos, linguaFranca(glab,l), col="black", cex=1.2, adj=adj)
 		}
 		if (!is.null(tailmin)){
 			if (tailmin<=0) {
 				qstart  = 0.975
 				tailmin = floor(quantile(x, qstart))
-			} else qstart = signif(ecdf(x)(tailmin),3)
+			} else {
+				qstart = signif(ecdf(x)(tailmin),3)
+			}
 			z = x>=tailmin & !is.na(x); nz=sum(z)
 			brks = ((tailmin-1):ceiling(max(x[z])))+0.5
 			par(new=TRUE, plt=c(0.7,0.975,0.6,0.9))
@@ -2402,8 +2438,9 @@ histTail <-function(dat=pop.age, xfld="age", tailmin=NULL,
 				main=paste0(linguaFranca("Tail details",l)," (q=",qstart,")"), col.main="grey70", mgp=c(1.75,0.5,0),
 				xlab=linguaFranca(xlab,l), ylab=linguaFranca(ifelse(prob,"Relative Frequency","Frequency"),l),
 				las=ifelse(zoomprob,0,1), cex.main=0.9), ..., checkdef=TRUE, checkpar=TRUE)
-			addLabel(0.95,0.7, linguaFranca(paste0("Max ",xfld, " = ",max(x[z]),"\nn = ",nz),l), col="grey60", cex=.8, adj=1)
-		}
+			addLabel(0.95,0.7, linguaFranca(paste0("Min ", xfld, " = ", min(x[z]), "\nMax ",xfld, " = ", max(x[z]), "\nn = ",nz),l), col="grey60", cex=.8, adj=1) ## (RH 240305)
+#browser();return()
+		} ## end if tailmin
 		if (wmf|png) dev.off()
 	}; eop()
 	stuff=c("x","nx","nyr","nz","brks","xlab","ylab")
@@ -2413,16 +2450,19 @@ histTail <-function(dat=pop.age, xfld="age", tailmin=NULL,
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~histTail
 
 
-## mapMaturity--------------------------2020-09-14
+## mapMaturity--------------------------2024-10-24
 ## Plot maturity chart to see relative occurrence
 ## of maturity stages by month.
 ## Notes:
 ##  areas : code does not loop through separate areas but amalgamates them
 ##  type = "map" (tiles), "bubb" (bubbles)
 ##  If is.null(mats) then plot proportions by sex in areas (not maturities in one area)
+##  Added ability to restrict survey data to synoptic surveys only (RH: 240312)
+##  Added ability to display summaries by year instead of by month (RH: 240312)
 ## -----------------------------------------RH/PJS
 mapMaturity <- function (dat=pop.age, strSpp="", type="map", mats=1:7,
-   sex=list(Females=2), ttype=1:5, stype=c(1,2,6,7), areas=list(major=3:9), anams,
+   sex=list(Females=2), ttype=c(1:10,12:14), stype=c(1,2,6,7),
+   areas=list(major=3:9), anams, synoptic.only=FALSE, period="month",
    stock, catch, brks=c(0,0.05,0.1,0.25,0.5,1), byrow=FALSE,
    clrs=list(colorRampPalette(c("honeydew","lightgreen","black"))(5),
    colorRampPalette(c("aliceblue","skyblue2","black"))(5)),
@@ -2461,6 +2501,11 @@ mapMaturity <- function (dat=pop.age, strSpp="", type="map", mats=1:7,
 	} else if (!is.null(mats) && is.element(strSpp, as.character(c(602)))){
 		mat1 <- c("Immature","Maturing","Developing","Ripe","Spawning","Spent","Resting") # males
 		mat2 <- c("Immature","Maturing","Developing","Gravid","Ripe","Spent","Resting") # females
+	} else if (!is.null(mats) && is.element(strSpp, as.character(c(228)))){
+		## Walleye Pollock uses maturity convention 25 
+		mat1 <- c("Immature","Maturing-small","Maturing-large","Mature","Ripe","Spent","Resting") # males
+#browser();return()
+		mat2 <- c("Immature","Maturing-small","Maturing-large","Mature","Ripe","Spent","Resting") # females
 	} else if (is.psex) {
 		## Proportions female or male by area
 		mnam = sapply(areas,paste0,collapse="",simplify=FALSE)
@@ -2499,20 +2544,24 @@ mapMaturity <- function (dat=pop.age, strSpp="", type="map", mats=1:7,
 	z2 = is.element(dat$ttype,ttype)
 	z3 = is.element(dat$stype,stype)
 	if (missing(stock) || is.null(stock)) {
-		#z4 = is.element(dat$major, .su(unlist(areas)))
 		mess =  sapply(1:length(areas),function(x) {
-			nx = names(areas)[x]
-			xx = areas[[x]]
+			nx   = names(areas)[x]
+			xx   = areas[[x]]
 			is.c = is.character(xx)
-			paste0("is.element(dat$", nx, ifelse(is.c, ",\"", ","), areas[x], ifelse(is.c, "\")", ")"))
+			out  = paste0("is.element(dat$", nx, ifelse(is.c, ",\"", ","), areas[x], ifelse(is.c, "\")", ")"))
 		})
 		eval(parse(text=paste0("z4 = ",paste0(mess,collapse=" | "))))
+#browser();return()
 	} else {
 		z4 = is.element(dat$stock, stock)
 	}
+#browser();return()
 	dat = dat[z0&z1&z2&z3&z4,]
 	dat$month <- as.numeric(substring(dat$date,6,7))
 	dat$day   <- as.numeric(substring(dat$date,9,10))
+	## Remove non-synoptic surveys
+	if (synoptic.only)
+		dat = dat[is.element(dat$SSID, c(1,3,4,16)),]
 #browser();return()
 	if (is.psex && !any(names(areas)=="region")) {
 		dat$region = rep(NA,nrow(dat))
@@ -2542,10 +2591,11 @@ mapMaturity <- function (dat=pop.age, strSpp="", type="map", mats=1:7,
 	if (!missing(catch)) fnam = sub("maturity|month", "catch", fnam)
 #browser();return()
 
-	fout = fout.e = fnam
+	fout.e = fnam
 	for (l in lang) {  ## could switch to other languages if available in 'linguaFranca'.
 		changeLangOpts(L=l)
-		fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
+		#fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
+		fout = switch(l, 'e' = paste0("./english/",fout.e), 'f' = paste0("./french/",fout.e) )
 		#devs=c(win=ifelse(missing(outnam) || sum(eps,png,wmf)==0,TRUE,FALSE),eps=eps,png=png,wmf=wmf); unpackList(devs)
 		devs=c(win=ifelse(sum(eps,png,wmf)==0,TRUE,FALSE), eps=eps, png=png, wmf=wmf); unpackList(devs)
 		for (d in 1:length(devs)) {
@@ -2564,7 +2614,9 @@ mapMaturity <- function (dat=pop.age, strSpp="", type="map", mats=1:7,
 			else resetGraph()
 			#left.margin = ifelse(is.psex,8,6) * ifelse(l=="f" && any(sapply(sex,function(x){any(1%in%x)})), 1.75, 1)  ## male labels are long
 			#par(mfrow=c(nsex,1), mar = if(type=="map") c(1,4,0,0) else c(4,left.margin,0,0), oma=c(0,0,ifelse(is.psex,4,2),0))
-			left.margin = ifelse(is.psex,5,6) * ifelse(l=="f" && any(sapply(sex,function(x){any(1%in%x)})), 1.75, 1)  ## male labels are long
+			lm.default  = ifelse(strSpp %in% c("228"), 8, 6)
+			left.margin = ifelse(is.psex,5,lm.default) * ifelse(l=="f" && any(sapply(sex,function(x){any(1%in%x)})), 1.75, 1)  ## male labels are long
+			
 			par(mfrow=c(nsex,1), mar = if(type=="map") c(1,4,0,0) else c(4,left.margin,0,0), oma=c(0,0,ifelse(is.psex,4,2),0))
 
 			for (s0 in 1:nsex) {
@@ -2578,9 +2630,9 @@ mapMaturity <- function (dat=pop.age, strSpp="", type="map", mats=1:7,
 					mcode <- get(paste("mat",ss,sep=""))
 					axis(2, at=-mats, labels=mcode[mats], adj=1, cex=1.2, tick=FALSE, pos=xlim[1], las=1)
 					if (byrow) {
-						ival=mats; ifld="mat"; ffld="month"
+						ival=mats; ifld="mat"; ffld=period
 					} else {
-						ival=mos; ifld="month"; ffld="mat"
+						ival=mos; ifld=period; ffld="mat"
 					}
 					for (i in ival) {
 						idat <- sdat[is.element(sdat[,ifld],i),]
@@ -2603,10 +2655,13 @@ mapMaturity <- function (dat=pop.age, strSpp="", type="map", mats=1:7,
 						}
 					}
 					addLegend(0.2,1, legend=linguaFranca(lout,l), fill=CLRS[[s0]], cex=0.9, horiz=TRUE, bty="n")
-				}
+				} ## end map type
 				if (type=="bubb") {
-					mcode   = get(paste("mat",ss,sep=""))
-					bubbmat   = array(0,dim=c(length(mnam),12),dimnames=list(mnam,1:12)) ## make 0 matrix
+					mcode = get(paste("mat",ss,sep=""))
+					## Note that xfac and yfac are reversed for some odd reason
+					yfac  = if (period=="year")  min(dat$year):max(dat$year) else 1:12 ## default to month (RH 240312)
+#browser();return()
+					bubbmat   = array(0,dim=c(length(mnam),length(yfac)),dimnames=list(mnam,yfac)) ## make 0 matrix
 					if (is.psex) {
 						xnam  = areas
 						names(xnam) = xfac = unlist(mnam)
@@ -2617,13 +2672,13 @@ mapMaturity <- function (dat=pop.age, strSpp="", type="map", mats=1:7,
 							fff = names(xfac)[i]
 							fdat = dat[is.element(dat[,fff],ff),]
 							fdat$xfac = f
-							crossbubb[[f]] = crossTab(fdat, c("xfac","month"),"sex",function(x){sum(is.element(x,ss))/length(x)})
+							crossbubb[[f]] = crossTab(fdat, c("xfac",period),"sex",function(x){sum(is.element(x,ss))/length(x)})
 						}
-						#crossbubb = crossTab(dat,c("region","month"),"sex",function(x){sum(is.element(x,ss))/length(x)})
+						#crossbubb = crossTab(dat,c("region",period),"sex",function(x){sum(is.element(x,ss))/length(x)})
 					} else {
-						crossbubb = list(mats=crossTab(sdat,c("mat","month"),"mat",length))  ## artificially make into a list
+						crossbubb = list(mats=crossTab(sdat,c("mat",period),"mat",length))  ## artificially make into a list
 					}
-					## next line only needed if hadley=TRUE in crossTab
+					## next line only needed if hadley=T in crossTab
 					#bubbdat   = data.frame(crossbubb[,-1],row.names=crossbubb[,1],check.names=FALSE,stringsAsFactors=FALSE)
 					for (i in 1:length(crossbubb)) {
 						ibubb = crossbubb[[i]]
@@ -2633,19 +2688,19 @@ mapMaturity <- function (dat=pop.age, strSpp="", type="map", mats=1:7,
 						bubbmat[rows,cols]=as.matrix(ibubb[rows,cols])
 					}
 					if (is.psex) {
-						fishnum = table(dat$month)
-						fishsum = rep(0,12); names(fishsum) = 1:12
+						fishnum = table(dat[,period])
+						fishsum = rep(0,length(yfac)); names(fishsum) = yfac
 						fishsum[names(fishnum)] = fishnum
-						sampson = crossTab(dat,"month","SID",function(x){length(unique(x))})
+						sampson = crossTab(dat,period,"SID",function(x){length(unique(x))})
 					} else {
 						fishsum = apply(bubbmat,2,sum) # number of specimens by month
-						sampson = crossTab(sdat,"month","SID",function(x){length(unique(x))})
+						sampson = crossTab(sdat,period,"SID",function(x){length(unique(x))})
 					}
-					sampsum = rep(0,12); names(sampsum) = 1:12
+					sampsum = rep(0,length(yfac)); names(sampsum) = yfac
 					sampsum[names(sampson)] = sampson
 					if (!is.psex && !missing(catch)) {
-						crosscat = crossTab(catch, "month", "catKg")
-						monthcat  = rep(0,12); names(monthcat) = 1:12
+						crosscat = crossTab(catch, period, "catKg")
+						monthcat  = rep(0,length(yfac)); names(monthcat) = yfac
 						monthcat[names(crosscat)] = crosscat
 						catprop = monthcat/sum(monthcat)
 						bubbmat.orig = bubbmat
@@ -2658,7 +2713,6 @@ mapMaturity <- function (dat=pop.age, strSpp="", type="map", mats=1:7,
 						cbig = monthcat[apply(zbig,2,any)]
 						mbig = linguaFranca(month.abb[as.numeric(names(cbig))],l)
 						lout = paste0("Bubbles: largest = ", nbig, " specimens weighted by catch in ", mbig, " = ", round(cbig), " t")
-#browser();return()
 					} else {
 						if (is.psex)
 							freqmat = bubbmat
@@ -2668,12 +2722,13 @@ mapMaturity <- function (dat=pop.age, strSpp="", type="map", mats=1:7,
 					}
 					CALCS[[sexlab]][["bubbmat"]] = bubbmat
 
-					matdat = crossTab(sdat,c("month","mat","ttype"),"mat",length)
+					matdat = crossTab(sdat,c(period,"mat","ttype"),"mat",length)
 					CALCS[[sexlab]][[paste0("sex",ss,"matdat")]] = matdat
 					save("matdat", file=paste0("sex",ss,"matdat.rda"))
+#browser();return()
 
 					## Limits for bubbles
-					xlim=c(1,12) + c(-0.25,0.25)
+					xlim = range(yfac) + c(-0.25,0.25)
 					if (is.psex) {
 						yrng=c(length(mnam),1)
 						ylim = yrng + c(0.25,-0.25)
@@ -2686,30 +2741,31 @@ mapMaturity <- function (dat=pop.age, strSpp="", type="map", mats=1:7,
 						addLegend(0.425, 1, legend=linguaFranca(lout,l), cex=0.9, horiz=TRUE, bty="n", xjust=0.5, yjust=0.75)
 					} else {
 						if (is.psex) {
-							plotBubbles(bubbmat, xlim=xlim, ylim=ylim, xaxt="n", yaxt="n", cpro=FALSE, rpro=FALSE, hide0=TRUE, size=0.3, lwd=2, clrs=rev(CLRS[[s0]])[2], frange=0.02)
+							plotBubbles(bubbmat, xlim=xlim, ylim=ylim, xaxt="n", yaxt="n", cpro=FALSE, rpro=FALSE, hide0=TRUE, size=0.3, lwd=2, clrs=rev(CLRS[[s0]])[2], frange=0.02, dnam=ifelse(period=="year",TRUE,FALSE))
+#browser();return()
 						} else {
 							plotBubbles(bubbmat, xlim=xlim, ylim=ylim, xaxt="n", yaxt="n", cpro=ifelse(byrow,FALSE,TRUE), rpro=ifelse(byrow,TRUE,FALSE), hide0=TRUE, size=0.3, lwd=2, clrs=rev(CLRS[[s0]])[2], frange=0.02)
 							addLegend(0.2, 1, legend=linguaFranca(lout,l), cex=0.9, horiz=TRUE, bty="n", yjust=0.75)
 						}
 					}
-#browser();return()
 
 					## Add proportion labels to each bubble
 					if (is.psex) {
 						sapply(1:length(mnam), function(x,pmat){
 							p = pmat[x,]; z=p>0
-							text((1:12)[z], x, round(p[z],2), cex=0.8, col="grey20")
+							text((yfac)[z], x, round(p[z],2), cex=0.8, col="grey20")
 						}, pmat=bubbmat)
 					}
 					box(col="white",lwd=2) ## mask box outline
-					axis(1, at=1:12, labels=paste0(linguaFranca(month.abb,l),"\n{",sampsum,"}\n(",fishsum,")"), padj=0.5, cex.axis=ifelse(devnam=="win",0.9,0.8))
+#browser();return()
+					axis(1, at=yfac, labels=paste0(linguaFranca(if(period=="year") yfac else month.abb,l),"\n{",sampsum,"}\n(",fishsum,")"), padj=0.5, cex.axis=ifelse(devnam=="win",0.9,0.8))
 					if (!missing(anams)){
 						anams = rep(anams,length(mcode))[1:length(mcode)]
 						mcode = anams
 						#mcode = paste0(anams,gsub("\\+","",sub("^.+:\\n","\nm:",mcode)))
 					}
 					axis(2, at=1:length(mnam), labels=linguaFranca(mcode,l), las=1, cex.axis=1.2)
-				}
+				} ## end bubb type
 				mtext(linguaFranca(sexlab,l), side=3, line=ifelse(is.psex,0,-1.25), col=sexcol, cex=1.5, adj=ifelse(devnam=="win",-0.06,-0.10), font=2)
 				#box() ## to help debug margins
 			}
@@ -4260,7 +4316,7 @@ requestAges=function(strSpp, nage=500, year=2016,
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~requestAges
 
 
-## residVB------------------------------2019-07-16
+## residVB------------------------------2024-10-24
 ## Calculate and plot Studentised residuals as 
 ## quantile plots to show how well each age is fit.
 ## Need to run 'calcVB' first to get DATA
@@ -4282,11 +4338,15 @@ residVB = function(P, L1="surv", L2="Females", yval="len",
 		outwex=0.5, whisklty=1, outpch=3, outcex=0.5, outcol=lucent("grey20",0.5)
 		))) #, envir=.PBStoolEnv))
 
-	fout = fout.e = paste0("VBres-",gsub("\\|","+",gsub("_","(",area)),")-",gsub("\\|","+",gsub("_","(",ttype)),")")
+	fout.e = paste0("VBres-",gsub("\\|","+",gsub("_","(",area)),")-",gsub("\\|","+",gsub("_","(",ttype)),")")
 	for (l in lang) {  ## could switch to other languages if available in 'linguaFranca'.
 		changeLangOpts(L=l)
-		fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
-		if (png) png(filename=paste(fout,".png"), unit="in", res=pngres, width=PIN[1], height=PIN[2])
+		#fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
+		fout = switch(l, 'e' = paste0("./english/",fout.e), 'f' = paste0("./french/",fout.e) )
+		if (png) {
+			clearFiles(paste(fout,".png"))
+			png(filename=paste(fout,".png"), unit="in", res=pngres, width=PIN[1], height=PIN[2])
+		}
 		if (length(L2)>1)
 			expandGraph(mfrow=c(length(L2),1), mar = c(1,1,0.5,0.5), oma=c(2,2,0,0))
 		else
@@ -4321,7 +4381,7 @@ residVB = function(P, L1="surv", L2="Females", yval="len",
 					if (missing(ylim)) srlim = range(res.stud, na.rm=TRUE)
 					else               srlim = ylim
 	
-					quantBox(Abox, type="n", xaxt="n", las=1, outline=TRUE, pars=boxpars, ylim=srlim)
+					quantBox(Abox, type="n", xaxt="n", las=1, outline=T, pars=boxpars, ylim=srlim)
 					abline(h=0, col=lucent("blue",0.5), lty=5)
 					axis(1, at=seq(0,Amax,5))
 					if (length(L2)>1) {
@@ -4428,7 +4488,7 @@ sumBioTabs=function(dat, fnam="sumBioTab.csv", samps=TRUE, specs=TRUE,
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~sumBioTabs
 
 
-## weightBio----------------------------2024-02-12
+## weightBio----------------------------2024-10-24
 ## Weight age|length frequencies|proportions by catch|density.
 ##   adat = age123 from query 'gfb_bio.sql'    -- e.g., getData("gfb_bio.sql","GFBioSQL",strSpp="607",path=.getSpath()); bio607=processBio()
 ##   cdat = cat123gfm -- call 'fos_mcatSPP.sql' to get commercial catches from GFFOS' GF_MERGED_CATCH table. (RH 190807)
@@ -5025,7 +5085,8 @@ weightBio = function(adat, cdat, sunit="TID", sweight="catch",
 		fout.e = plotname
 		for (l in lang) {  ## could switch to other languages if available in 'linguaFranca'.
 			changeLangOpts(L=l)
-			fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
+			#fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
+			fout = switch(l, 'e' = paste0("./english/",fout.e), 'f' = paste0("./french/",fout.e) )
 			for (d in 1:length(devs)) {
 				dev = devs[d]; devnam=names(dev)
 				if (!dev) next

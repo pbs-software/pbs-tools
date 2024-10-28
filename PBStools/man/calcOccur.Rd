@@ -36,9 +36,10 @@ calcOccur(polyset="qcb", events, wt=1, mess=FALSE, ioenv=.GlobalEnv)
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
   \emph{locus opus}: Remote office, Vancouver BC\cr
-  Last modified \code{Rd: 2024-02-27}\cr
+  Last modified \code{Rd: 2024-10-28}\cr
 }
 \examples{
+\dontrun{
 local(envir=.PBStoolEnv,expr={
 pbsfun=function(){
   data(testdatC,envir=.PBStoolEnv)
@@ -49,8 +50,9 @@ pbsfun=function(){
 pbsfun()
 })
 }
+}
 \seealso{
-  \code{\link{calcHabitat}}, \code{\link{calcSurficial}}, \code{\link{qcb}} \cr
+  \code{\link{calcHabitat}}, \code{\link{calcSurficial}} \cr
   \pkg{PBSmapping}: \code{\link[PBSmapping]{findPolys}}
 }
 \keyword{hplot}

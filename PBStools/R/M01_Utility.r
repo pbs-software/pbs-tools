@@ -2,6 +2,7 @@
 ## Module 1: Utility
 ## -----------------
 ##  addStrip........Add a vertical colour strip as a legend.
+##  adjustMajor.....Evolution of expand5C() to other species.
 ##  biteData........Subsets a data matrix/frame using input vector.
 ##  calcHM..........Calculate the harmonic mean of a vector of numbers.
 ##  changeLangOpts..Change the options that control the display of numbers based on language.
@@ -117,6 +118,108 @@ addStrip = function (x, y, col, lab, xwidth=0.01, yheight=0.3, ...)
 	invisible()
 }
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~addStrip
+
+
+## adjustMajor-----------------------------2024-10-28
+##  Evolution of expand5C() to other species.
+##  POP/YMR:
+##    Transfer events from Moresby Gully in 5B and 
+##    Flamingo Inlet/Anthony Island in 5E to PMFC 5C.
+##  POP:
+##    Transfer events from upper 3D to 5A
+##  WAP:
+##    TBD
+## ---------------------------------------------RH
+adjustMajor = function(dat, strSpp="POP", plot=FALSE)
+{
+	if (!strSpp %in% c("POP","YMR"))
+		stop (paste0("Function 'adjustMajor' has no rule for '", strSpp, "'"))
+	if (is.element("major_old", colnames(dat)))  ## legacy from 'expand5C'
+		dat$major_gffos = dat$major_old
+	if (!is.element("major_gffos", colnames(dat)))
+		dat$major_gffos = dat$major
+	dat$major_adj = dat$major_gffos
+
+	if (strSpp %in% c("POP","YMR")) {
+		## Expand 5C for both POP and YMR from 5B and 5E
+		## Use a points in polygon routine (see bio.fields.xls for 5C polygon)
+		poly5C = data.frame(PID=rep(1,6),POS=1:6,X=c(-131.5,-132,-131,-130,-130,-131.2), Y=c(52.33333333,52.33333333,51.5,51.8,52.16666667,52.16666667))
+		poly5C = as.PolySet(poly5C, projection="LL", zone=9)
+		hasXY  = dat$X<0 & !is.na(dat$X) & dat$Y>0 & !is.na(dat$Y)
+		if (any(hasXY)) {
+			if (!is.EventData(dat)){
+				if (!"EID"%in%colnames(dat)) dat$EID = 1:nrow(dat)
+				tmpidat = as.EventData(dat[hasXY,],projection="LL",zone=9)    ## RH 210120
+			}
+			e5C = .is.in(tmpidat, poly5C)
+			if (nrow(e5C$e.in)>0) {
+				tmpidat$major_adj[is.element(tmpidat$EID, e5C$e.in$EID)] = 7  ## 5C
+				dat$major_adj[hasXY] = tmpidat$major_adj                      ## RH 210120
+			}
+		}
+		## Capture Anthony Island/Flamingo Inlet data for records without X,Y coordinates
+		zAI = dat$major==9 & dat$minor==34 & dat$locality%in%c(1,5)
+		if (any(zAI))
+			dat$major_adj[zAI] = 7  ## 5C
+		## Capture SE/Outside Cape St. James data for records without X,Y coordinates
+		zCSJ = dat$major==6 & dat$minor==8 & dat$locality%in%c(6,12)
+		if (any(zCSJ))
+			dat$major_adj[zCSJ] = 7  ## 5C
+	}
+	if (strSpp %in% c("POP")) {
+		## Expand 5A for POP from 3D
+		## Use a points in polygon routine
+		## Pacific Ocean Perch within Subarea 127-1 and that portion of Subareas 127-2
+		##   found northerly and westerly of 50deg06'00"N will be deducted from the vessel's Pacific Ocean Perch 5A/B IVQ
+		## Solander Island from Jon Faris: 50deg 06.554'N, 127deg 56.354'W
+		latmin = 50 + 6/60 + 0/3600
+		lonlaw = -127.9827; latlaw = 50.32239                  ## 4. Lawn Point
+		lonsol = -(127 + 56.354/60); latsol = 50 + 06.554/60   ## 5. Solander Is
+		poly5A = data.frame(PID=rep(1,6),POS=1:6,
+			#X=c(-130, -130, -128.1441, -127.8994, -127.4073, -127.1848, -127.8806),
+			#Y=c(latmin, 50.5, 50.5, 50.75110, 50.61483, 50.40187, latmin))
+			X=c(-130.3587, -130.3587, -128.1568, lonlaw, lonsol, lonsol),
+			Y=c(latmin, 50.5, 50.5, latlaw, latsol, latmin),
+			label=c("West|IFMP", "Delwood|3D5A", "Topknot|3D5A", "Lawn_Point", "Solander_Island", "Solander|IFMP"))
+		poly5A = as.PolySet(poly5A, projection="LL", zone=9)
+		hasXY  = dat$X<0 & !is.na(dat$X) & dat$Y>0 & !is.na(dat$Y)
+		if (any(hasXY)) {
+			if (!is.EventData(dat)){
+				if (!"EID"%in%colnames(dat)) dat$EID = 1:nrow(dat)
+				tmpidat = as.EventData(dat[hasXY,],projection="LL",zone=9)    ## RH 210120
+			}
+			e5A = .is.in(tmpidat, poly5A)
+			if (nrow(e5A$e.in)>0) {
+				tmpidat$major_adj[is.element(tmpidat$EID, e5C$e.in$EID)] = 5  ## 5A
+				dat$major_adj[hasXY] = tmpidat$major_adj                      ## RH 210120
+			}
+		}
+		## Capture DFO stat areas 127-1 to 127-4
+		## Could add !hasXY to line below but allow for redundancy
+		z3D = dat$major==4 & dat$minor==27 & dat$locality%in%c(1,2,3,6,8)  ## a smidgeon of locality 6 lies below 50deg 6min
+		if (any(z3D))
+			dat$major_adj[z3D] = 5  ## 5A
+	}
+	if (plot) {
+		expandGraph()
+		data("nepacLL", package="PBSmapping")
+		data("major", "minor", "locality", package="PBSdata")
+		#plotMap(nepacLLhigh,xlim=c(-128.5,-127.7), ylim=c(50.05,50.6), col="palegreen", plt=NULL) ## top of 3D
+		plotMap(nepacLL,xlim=c(-132,-127), ylim=c(49.75,52.5), col="palegreen", plt=NULL, cex.axis=1.2, cex.lab=1.5) ## both 5C and 5A expansions
+		addPolys(major, border="blue", lwd=2)
+		#addPolys(minor, border="red", lwd=1)
+		addPolys(poly5C, col=lucent("yellow",0.5))
+		addPoints(e5C$e.in,col="black",pch=20)
+		addPolys(poly5A, col=lucent("purple",0.25))
+		addPoints(e5A$e.in,col="black",pch=20)
+		addPolys(locality, border="black", lwd=1); addLabels(attributes(locality)$PolyData)
+	}
+#browser();return()
+	## Switch majors
+	dat$major = dat$major_adj
+	return(dat)
+}
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~adjustMajor
 
 
 ## biteData-----------------------------2008-11-10
@@ -479,9 +582,10 @@ createDSN <- function(trusted=TRUE)
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~createDSN
 
 
-## createFdir---------------------------2018-07-23
+## createFdir---------------------------2024-10-22
 ## Create a subdirectory called `french' for
 ## storing figures with French text and labels.
+## Extend this to creating an english subdirectory (RH 241022)
 ## ---------------------------------------------RH
 createFdir = function(lang, dir=".")
 {
@@ -490,6 +594,11 @@ createFdir = function(lang, dir=".")
 		mpd.dir.f = paste0(dir,"/french")
 		if (!file.exists(mpd.dir.f))
 		dir.create(mpd.dir.f)
+	}
+	if (is.element("e",lang)) {
+		mpd.dir.e = paste0(dir,"/english")
+		if (!file.exists(mpd.dir.e))
+		dir.create(mpd.dir.e)
 	}
 	invisible()
 }
@@ -591,6 +700,7 @@ darkenRGB = function(cols, pct, add)
 ##  Transfer events from Moresby Gully in 5B and 
 ##  Flamingo Inlet/Anthony Island in 5E to PMFC 5C.
 ##  Used only for POP and YMR (Yellowmouth)
+##  deprecated -- use adjustMajor
 ## ---------------------------------------------RH
 expand5C = function(dat)
 {
@@ -626,7 +736,7 @@ expand5C = function(dat)
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~expand5C
 
 
-## extractPost--------------------------2024-02-15
+## extractPost--------------------------2024-04-09
 ##  Extract model posteriors from three model
 ##  platforms (Awatea, SS3, iSCAM) for clients.
 ## ---------------------------------------------RH
@@ -649,7 +759,7 @@ extractPost = function(spc="BOR", stock="CST", assYr=2021, path=getwd(),
 		return(out)
 	}
 	##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~qtab
-
+	
 	## getRdev---------------------------2023-01-19
 	## Adapted from Arni Magnusson's scape::importCol, specifically subfunction 'getR'
 	## ---------------------------------------AM|RH
@@ -705,7 +815,7 @@ extractPost = function(spc="BOR", stock="CST", assYr=2021, path=getwd(),
 					kdf2 = rbind(kdf2,ijdat2) ## projected catches at harvest rate for run i rwt j
 					kdf3 = rbind(kdf3,ijdat3) ## projected catches at median composite 'kdf' harvest rate (manual iteration)
 				} else {
-					if (v %in% c("B","R","U","VB","P","Rdev")){ ## MCMC
+					if (v %in% c("B","R","U","VB","P","Rdev","R0")){ ## MCMC
 						is.mcmc = TRUE
 						if (v %in% "Rdev"){
 							kdat = getRdev(dir=paste0(path,"/",spc,"run",iii,"/MCMC.",iii,".",jjj), burnin=burnin)
@@ -717,7 +827,10 @@ extractPost = function(spc="BOR", stock="CST", assYr=2021, path=getwd(),
 								redo.currentMCMC(strSpp=strSpp, assYr=assYr, stock=stock, mpdir=mpdir, mcdir=mcdir, mcsub=(burnin+1):nmcmc)
 							}
 							load (paste0(mcdir,"/currentMCMC.rda"))
-							kdat = currentMCMC[[v]]
+							if (v %in% "R0")
+								kdat = currentMCMC$P[,"R_0",drop=FALSE] ## (RH 240409)
+							else
+								kdat = currentMCMC[[v]]
 						}
 						rnams = rownames(kdat)
 						rnams = pad0(rnams,max(nchar(rnams))-1)
@@ -842,8 +955,7 @@ extractPost = function(spc="BOR", stock="CST", assYr=2021, path=getwd(),
 				crfile = paste0(path, "/MPD.", crrv, "/data.", pad0(crun,2), ".", pad0(crwt,2), ".ss")
 				#crdat = r4ss::SS_readdat(crfile)
 				#crdat = SS_readdat(crfile) ## function not imported from r4ss in NAMESPACE because r4ss has a sh!tload of dependencies
-				#crdat = PBStools:::.ss3.readdat(crfile)
-				crdat = .ss3.readdat(crfile)  ## .ss3* exported from Namespace
+				crdat = .ss3.readdat(crfile)
 				crcat = crdat$catch
 				crcat = crcat[crcat$year>0,]
 				flcat = split(crcat$catch,crcat$fleet)
@@ -864,10 +976,22 @@ extractPost = function(spc="BOR", stock="CST", assYr=2021, path=getwd(),
 					}
 				}
 				if (v %in% c("R")) {
-					write.csv(avgTS[,,"Rt"], paste0(spc,"-", stock,"-", assYr,"-MCMC(", v, ")-", extra, ".csv"), row.names=TRUE)
+					if ( exists("xavgTS", inherits=FALSE) ) {
+						for (aa in dimnames(xavgTS)$area) {
+							write.csv(xavgTS[,,"R",aa], paste0(spc,"-", aa,"-", assYr,"-MCMC(", v, ")-", extra, ".csv"), row.names=TRUE)
+						}
+					} else {
+						write.csv(avgTS[,,"Rt"], paste0(spc,"-", stock,"-", assYr,"-MCMC(", v, ")-", extra, ".csv"), row.names=TRUE)
+					}
 				}
 				if (v %in% c("U")) {
-					write.csv(avgTS[,,"ut"], paste0(spc,"-", stock,"-", assYr,"-MCMC(", v, ")-", extra, ".csv"), row.names=TRUE)
+					if ( exists("xavgTS", inherits=FALSE) ) {
+						for (aa in dimnames(xavgTS)$area) {
+							write.csv(xavgTS[,,"u",aa], paste0(spc,"-", aa,"-", assYr,"-MCMC(", v, ")-", extra, ".csv"), row.names=TRUE)
+						}
+					} else {
+						write.csv(avgTS[,,"ut"], paste0(spc,"-", stock,"-", assYr,"-MCMC(", v, ")-", extra, ".csv"), row.names=TRUE)
+					}
 				}
 				if (v %in% c("P")) {
 					write.csv(avgPA, paste0(spc,"-", stock,"-", assYr,"-MCMC(PA)-", extra, ".csv"), row.names=TRUE)
@@ -875,6 +999,27 @@ extractPost = function(spc="BOR", stock="CST", assYr=2021, path=getwd(),
 				}
 				if (v %in% c("Rdev")) {
 					write.csv(avgTS[,,"Rtdev"], paste0(spc,"-", stock,"-", assYr,"-MCMC(", v, ")-", extra, ".csv"), row.names=TRUE)
+				}
+				if (v %in% c("R0")) {  ## (RH 240409)
+					R0 = avgPA[,"LN(R0)",drop=FALSE]
+					R0 = apply(R0,2,exp)  ## exponentiate to be compatible with Awatea
+					colnames(R0) = "R_0"
+					if (any(grepl("Rdist",colnames(avgPA)))) {
+						Rdist = avgPA[,grep("Rdist",colnames(avgPA)), drop=FALSE]
+						Rdim  = dim(Rdist)
+						Rdist = cbind(Rdist, rep(0, Rdim[1]))
+						areas = if (strSpp=="POP" && assYr==2023 && all(runs==21)) c("5ABC", "3CD","5DE")
+							else paste0("Area", 1:ncol(Rdist))
+						colnames(Rdist) = areas
+						for (a in areas){
+							pa = exp(Rdist[,a]) / apply(Rdist[,areas],1,function(x){ sum(exp(x)) })
+							Rdist = cbind(Rdist, pa)
+						}
+						colnames(Rdist)[4:6] = paste0("p",areas)
+						R0 = cbind(R0, Rdist[,4:6])
+#browser();return()
+					}
+					write.csv(R0, paste0(spc,"-", stock,"-", assYr,"-MCMC(", v, ")-", extra, ".csv"), row.names=TRUE)
 				}
 				if (v %in% c("Bmsy")) {
 					if ( exists("xavgRP", inherits=FALSE) ) {
@@ -1100,7 +1245,7 @@ gatherVals = function(x, columns){
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~gatherVals
 
 
-## getData------------------------------2016-12-01
+## getData------------------------------2024-03-19
 ## Get data from a variety of sources.
 ## subQtrust -- if user has no DFO trusted credentials:
 ##   if (type=="SQL"), c(trusted, uid, pwd) copied to `subQtrust'
@@ -1255,7 +1400,7 @@ getData <-function(fqtName, dbName="PacHarvest", strSpp=NULL, server=NULL,
 			##------------------------------------------------------------
 			qnam <- paste(path,fqtName,sep="/")
 			strQ <- readLines(qnam)
-			strQ <- PBSmodelling:::.trimWhiteSpace(strQ)  ## no longer exported from Namespace
+			strQ <- PBSmodelling:::.trimWhiteSpace(strQ)
 			##+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 			## 2015-10-28 -- RH added code to allow insertion of other SQL files.
 			if(any(grepl("@INSERT",strQ))) {
@@ -1404,7 +1549,7 @@ getData <-function(fqtName, dbName="PacHarvest", strSpp=NULL, server=NULL,
 	if (type %in% c("SQL","ORA"))  FQtime = rbind(timeF,timeQ)
 	else FQtime = timeF
 	assign("FQtime",FQtime,envir=tenv)
-	assign("sql",strQ,envir=tenv)
+	assign("sql.string",strQ,envir=tenv) ## (RH 240319) defing 'sql' can interfere with function arguments 'sql'
 	junk=gc(verbose=FALSE) ### garbage collection (shunt messages to junk also)
 	invisible(strQ)
 }
@@ -1415,7 +1560,8 @@ getData <-function(fqtName, dbName="PacHarvest", strSpp=NULL, server=NULL,
 ## ---------------------------------------------RH
 .getSQLdata <- function(dbName, qtName=NULL, strSQL=NULL,
      server=NULL, type="SQL", trusted=TRUE, uid="", pwd="", 
-     rownum=0,...) {
+     rownum=0,...) 
+{
 	#if (!require(RODBC, quietly=TRUE)) stop("`RODBC` package is required")
 	## Use forward slashes "/" for server otherwise the translation
 	## is too dependent on the number of times "\" is escaped
@@ -1465,6 +1611,7 @@ getData <-function(fqtName, dbName="PacHarvest", strSpp=NULL, server=NULL,
 			showMessage("No records returned. Maybe try again with 'rows_at_time=1'.",col="blue")
 	}
 	odbcClose(cnn)
+#browser();return()
 	return(dat)
 }
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~.getSQLdata
@@ -1753,7 +1900,7 @@ isThere = function(x, envir=parent.frame()) {
 	genv = function(){ .GlobalEnv }                # global environment
 
 
-## linguaFranca-------------------------2024-02-14
+## linguaFranca-------------------------2024-09-12
 ## Translate English phrases to French (other languages possible)
 ## for use in plotting figures with French labels.
 ## Note that 'gsub' has a limit to its nesting depth.
@@ -1761,7 +1908,7 @@ isThere = function(x, envir=parent.frame()) {
 ## strip      -- if TRUE, strip names off the output vector.
 ## localnames -- If TRUE, deal with locality names separately form the main function.
 ## ---------------------------------------------RH
-linguaFranca = function(x, lang="e", little=4, strip=FALSE, localnames=FALSE)
+linguaFranca <- function(x, lang="e", little=4, strip=FALSE, localnames=FALSE)
 {
 	if (!is.element(lang, c("e","f")))
 		stop("Only 'e' or 'f' supported for argument 'lang'")
@@ -1771,7 +1918,8 @@ linguaFranca = function(x, lang="e", little=4, strip=FALSE, localnames=FALSE)
 			is.expr=TRUE; x=as.character(x)}
 		}
 	else is.expr=FALSE # return(x)
-	if (lang=="e" || is.null(x) || is.na(x) || x=="") return(x)
+#browser();return()
+	if (lang=="e" || is.null(x) || all(is.na(x)) || all(x=="")) return(x)  ## (RH 240320)
 	## Need to sort so that longer strings are processed before shorter ones,
 	##   otherwise, partial matching occurs and the translation is not correct.
 	if (lang=="f") {
@@ -1869,7 +2017,11 @@ linguaFranca = function(x, lang="e", little=4, strip=FALSE, localnames=FALSE)
 				gsub("[Cc]om(m?)", "com",
 				gsub("[Rr]es(e?)", "rec",
 				gsub("[Ss]ur(v?)", "rel",
-				xx))))))))))))))))
+				gsub("[Cc]hain", eval(parse(text=deparse("cha\u{00EE}ne"))),
+				gsub("[Rr]ow(s)?", "ligne\\1",
+				gsub("[Cc]olumn(s)?", "colonne\\1",
+				gsub("[Dd]iagonal(s)?", "diagonale\\1",
+				xx))))))))))))))))))))
 			})
 			## dat abbreviations
 			xlil = sapply(xlil, function(xx){
@@ -1915,19 +2067,26 @@ linguaFranca = function(x, lang="e", little=4, strip=FALSE, localnames=FALSE)
 			## Area acronyms
 			xlil = sapply(xlil, function(xx){
 				gsub("^[B][C]$", "C-B",
+				gsub("[A][O]", "OA",             ## oscillation arctique
 				gsub("[H][S]", "DH",
+				gsub("[U][I]", "IRE",            ## indice de remont\'{e}e d'eau
 				gsub("[B][C][C]", "CBc",
 				gsub("[B][C][N]", "CBn",
 				gsub("[B][C][S]", "CBs",
 				gsub("[C][S][T]", eval(parse(text=deparse("C\u{00D4}TE"))),
 				gsub("[D][F][O]", "MPO",
+				gsub("[M][E][I]", "IEM",         ## indice ENSO multivari\'{e}
 				gsub("[P][B][S]", "SBP",
+				gsub("[P][D][O]", "ODP",         ## oscillation d\'{e}cennale du Pacifique
 				gsub("[Q][C][S]", "BRC",
-				gsub("[H][B][L][L]", "PFD", ## palangre \`{a} fond dur
-				gsub("[N][M][F][S]", "SNPM", ## Service national des p\^{e}ches maritimes
+				gsub("[S][O][I]", "IOA",         ## indice d'oscillation australe
+				gsub("[A][L][P][I]", "IBPA",     ## indice de basse pression des Al\'{e}outiennes
+				gsub("[H][B][L][L]", "PFD",      ## palangre \`{a} fond dur
+				gsub("[N][M][F][S]", "SNPM",     ## service national des p\^{e}ches maritimes
+				gsub("[N][P][G][O]", "OGPN",     ## oscillation du gyre du Pacifique Nord
 				gsub("[W][C][H][G]", "COHG",
 				gsub("[W][C][V][I]", "COIV",
-				xx)))))))))))))
+				xx))))))))))))))))))))
 			})
 			## ridiculous acronyms
 			xlil = sapply(xlil, function(xx){
@@ -1938,10 +2097,10 @@ linguaFranca = function(x, lang="e", little=4, strip=FALSE, localnames=FALSE)
 				gsub("[H][R]", "TR",             ## harvest rate   = taux de r\'{e}colte (not taux d'exploitation)
 				gsub("[D][F]", "DL",             ## degrees of freedom = degr\'{e}s de libert\'{e}
 				gsub("[d][f]", "dl",             ## degrees of freedom = degr\'{e}s de libert\'{e}
-				gsub("[S][A]", eval(parse(text=deparse("\u{00C9}S"))),  ## stock assessment  = \'{e}valuation des stocks
+				gsub("^[S][A]$", eval(parse(text=deparse("\u{00C9}S"))),  ## stock assessment  = \'{e}valuation des stocks
 				gsub("[A][C][F]", "FAC",         ## fonction d'autocorr\'{e}lation
 				gsub("[G][M][A]", "ZGPF",        ## les zones de gestion des poissons de fond 
-				gsub("[G][M][U]", "GGPF",        ## le groupe de gestion du poisson de fond
+				gsub("[G][M][U]", "UGPF",        ## unit\'{e} de gestion des poissons de fond
 				gsub("[L][R][P]", "PRL",         ## point de r\'{e}f\'{e}rence limite
 				gsub("[M][P][D]", "MDP",         ## mode de distribution post\'{e}rieure
 				gsub("[M][S][Y]", "RMD",         ## rendement maximal durable (no longer soutenu)
@@ -1964,20 +2123,28 @@ linguaFranca = function(x, lang="e", little=4, strip=FALSE, localnames=FALSE)
 		if (any(zbig)) {
 			## Sensitivity run labels
 			xsen = sapply(bigword, function(xx){
-				gsub("split M ages\\(([0-9]+),([0-9]+)\\)", "diviser M entre \\1 et \\2 ans",
-				gsub("AE([0-9]) no age error", "EV\\1 pas d'erreur de vieillissement",
-				gsub("AE([0-9]) age reader CV", eval(parse(text=deparse("EV\\1 CV des lecteurs d'\u{00E2}ge"))),
-				gsub("AE([0-9]) CASAL CV=0.1", "EV\\1 CASAL CV=0,1",
-				gsub("reduce catch ([0-9]+)\\%", eval(parse(text=deparse("r\u{00E9}duire les prises de \\1%"))),
-				gsub("increase catch ([0-9]+)\\%", "augmenter les prises de \\1%",
-				gsub("sigmaR=([0-9])\\.([0-9]+)", "sigmaR=\\1,\\2",
-				gsub("female dome select", eval(parse(text=deparse("s\u{00E9}lectivit\u{00E9} du d\u{00F4}me femelle"))),
 				gsub("use AF HS WCHG", "utiliser les FA de DH et COHG",
-				gsub("add HBLL survey(s)", eval(parse(text=deparse("ajouter relev\u{00E9}\\1 de P\u{00E0}FD"))),
+				gsub("estimate sigmaR", "estimer sigmaR",
+				gsub("HBLL [Ii]ndices", eval(parse(text=deparse("ajouter des indices P\u{00E0}FD"))),
+				gsub("Rdist_area\\(([0-9])\\)", "Rdist_zone(\\1)",
 				gsub("use Tweedie CPUE", "utiliser CPUE de Tweedie",
 				gsub("remove comm CPUE", "supprimer la CPUE commerciale",
+				gsub("add HBLL survey(s)", eval(parse(text=deparse("ajouter relev\u{00E9}\\1 de P\u{00E0}FD"))),
 				gsub("use Francis reweight", eval(parse(text=deparse("utiliser la repond\u{00E9}ration de Francis"))),
-				xx)))))))))))))
+				gsub("AE([0-9]) no age error", "pas d'erreur de vieillissement",
+				gsub("AE([0-9]) CASAL CV=0.1", "EV\\1 CASAL CV=0,1",
+				gsub("[Nn]atural [Mm]ortality", eval(parse(text=deparse("mortalit\u{00E9} naturelle"))),
+				gsub("D-M parameteri[sz]ation", eval(parse(text=deparse("param\u{00E9}trage de D-M"))),
+				gsub("AE([0-9]) age reader CV", eval(parse(text=deparse("EV\\1 CV des lecteurs d'\u{00E2}ge"))),
+				gsub("reduce catch ([0-9]+)\\%", eval(parse(text=deparse("r\u{00E9}duire les prises de \\1%"))),
+				gsub("[Gg]eospatial [Ii]ndices", eval(parse(text=deparse("utiliser des indices g\u{00E9}ospatiaux"))),
+				gsub("sigmaR=([0-9])\\.([0-9]+)", "sigmaR=\\1,\\2",
+				gsub("Rdist (5ABC|3CD|5DE) fixed", eval(parse(text=deparse("Rdist fix\u{00E9}e pour \\1"))),
+				gsub("increase catch ([0-9]+)\\%", "augmenter les prises de \\1%",
+				gsub("split(-)?M at age ([0-9]+)", eval(parse(text=deparse("diviser M \u{00E0} \\2 ans"))),
+				gsub("fem(ale)? dome(-shape)? sel(ect)?", eval(parse(text=deparse("s\u{00E9}lectivit\u{00E9} du d\u{00F4}me femelle"))),
+				gsub("split M ages\\(([0-9]+),([0-9]+)\\)", "diviser M entre \\1 et \\2 ans",
+				xx)))))))))))))))))))))
 			})
 			## rockfish species names
 			xspp1 = sapply(xsen, function(xx){
@@ -2013,7 +2180,7 @@ linguaFranca = function(x, lang="e", little=4, strip=FALSE, localnames=FALSE)
 			xspp2 = sapply(xspp1, function(xx){
 				gsub("[Ss]kates", "les raies",
 				gsub("[Ll]ingcod", "morue-lingue",
-				gsub("[Ss]ablefish", eval(parse(text=deparse("morue charbonni\u{00E8}re"))),
+				gsub("^[Ss]ablefish$", eval(parse(text=deparse("morue charbonni\u{00E8}re"))),
 				gsub("[Hh]erring(s)?", "des harengs",
 				gsub("[Rr]ex [Ss]ole", "plie royale",
 				gsub("[Bb]ig [Ss]kate", eval(parse(text=deparse("raie biocell\u{00E9}e"))),
@@ -2064,11 +2231,13 @@ linguaFranca = function(x, lang="e", little=4, strip=FALSE, localnames=FALSE)
 				gsub("[Ff]leet", "flotte",
 				gsub("[Pp]rior", "prieur",
 				gsub("[Tt]otal", "totale",  ## vraisemblance totale
+				gsub("[Rr]esidual$", eval(parse(text=deparse("r\u{00E9}siduel"))),
 				gsub("[Aa]ge[Ss]el", eval(parse(text=deparse("s\u{00E9}l.d'\u{00E2}ge"))),
 				gsub("[Aa]ge [Dd]ata", eval(parse(text=deparse("donn\u{00E9}es d'\u{00E2}ge"))),
 				gsub("[Ii]ndex [Dd]ata", eval(parse(text=deparse("donn\u{00E9}es d'indice"))),
 				gsub("[N] (samp|adj)", eval(parse(text=deparse("N \u{00E9}ch"))),
 				gsub("[Dd]bl[Nn] peak", "Ndbl de pointe",
+				gsub("[Ss]tock [Ss]tatus", eval(parse(text=deparse("\u{00E9}tat du stock"))),
 				gsub("[Hh]armonic [Mm]ean", "moyenne harmonique",
 				gsub("[Ii]nitial [Vv]alue", "valeur initiale",
 				gsub("[Aa]bundance [Ii]ndex", "indice d'abondance",
@@ -2087,11 +2256,12 @@ linguaFranca = function(x, lang="e", little=4, strip=FALSE, localnames=FALSE)
 				gsub("[Mm]ale [Nn]atural [Mm]ortality(\\s+\\(M\\))?", eval(parse(text=deparse("mortalit\u{00E9} naturelle des m\u{00E2}les\\1"))),
 				gsub("[Ff]emale [Nn]atural [Mm]ortality(\\s+\\(M\\))?", eval(parse(text=deparse("mortalit\u{00E9} naturelle des femelles\\1"))),
 				gsub("[Aa]symptotic [Ss]tandard [Ee]rror [Ee]stimate", "estimation d'erreur standard asymptotique",
-				xx))))))))))))))))))))))))))
+				xx))))))))))))))))))))))))))))
 			})
 			## large unwieldy phrases (poo)
 			xpoo = sapply(xss, function(xx){
 				gsub("[Uu]nsorted [A][F]", eval(parse(text=deparse("F\u{00C2} non tri\u{00E9}es"))),
+				gsub("OSA [Rr]esidual(s)?", eval(parse(text=deparse("r\u{00E9}sidu\\1 d'U\u{00C9}A"))),  ## r\'{e}sidus d'une \'{e}tape \`{a} l'avance
 				gsub("[Yy]ear of [Bb]irth", eval(parse(text=deparse("ann\u{00E9}e de naissance"))),
 				gsub("CPUE [Nn]ot [Uu]sed", eval(parse(text=deparse("CPUE non utilis\u{00E9}e"))),
 				gsub("[M][P][D] [Ee]stimate", eval(parse(text=deparse("estimation de MDP"))),
@@ -2111,6 +2281,7 @@ linguaFranca = function(x, lang="e", little=4, strip=FALSE, localnames=FALSE)
 				gsub("[Rr]esidual [Ss]um of [Ss]quares", eval(parse(text=deparse("somme r\u{00E9}siduelle des carr\u{00E9}s"))),
 				gsub("[Aa]ll [Gg]roundfish [Ff]isheries", eval(parse(text=deparse("Toutes les p\u{00EA}ches de poisson de fond"))),
 				gsub("[Mm]edian [Ff]ishing [Mm]ortality", eval(parse(text=deparse("mortalit\u{00E9} m\u{00E9}diane par p\u{00EA}che"))),
+				gsub("[Ff]raction( of)? recruits by area", "fraction des recrues par zone",
 				gsub("[Aa]uto-[Cc]orrelation [Ff]unction of", eval(parse(text=deparse("Fonction d'auto-corr\u{00E9}lation de"))),
 				gsub("[Ee]xploitation \\([Hh]arvest) [Rr]ate", "taux d'exploitation (r\u{00E9}colte)",
 				gsub("[Ll]og [Rr]ecruitment [Dd]eviation(s)?", eval(parse(text=deparse("Log \u{00E9}carts de recrutement"))),
@@ -2118,7 +2289,7 @@ linguaFranca = function(x, lang="e", little=4, strip=FALSE, localnames=FALSE)
 				gsub("[Aa]ll [Cc]ommercial [Gg]roundfish [Ff]isheries", eval(parse(text=deparse("Toutes les p\u{00EA}ches commerciales de poisson de fond"))),
 				gsub("[Bb]iomass [Rr]elative to [Aa]verage [Bb]iomass", eval(parse(text=deparse("Biomasse par rapport \u{00E0} la biomasse moyenne"))),
 				gsub("[Bb]iomass [Rr]elative to [Uu]nfished [Ee]quilibrium", eval(parse(text=deparse("Biomasse par rapport \u{00E0} l'\u{00E9}quilibre non exploit\u{00E9}"))),
-				xx)))))))))))))))))))))))))))
+				xx)))))))))))))))))))))))))))))
 			})
 			## three words
 			xthree = sapply(xpoo, function(xx){
@@ -2155,7 +2326,7 @@ linguaFranca = function(x, lang="e", little=4, strip=FALSE, localnames=FALSE)
 				gsub("[Dd]ecrease [Cc]atch", "diminuer les prises",
 				gsub("[Rr]etained [Cc]atch", "prises retenues",
 				gsub("[Oo]ther [Ff]isheries", eval(parse(text=deparse("autres p\u{00EA}cheries"))),
-				gsub("[Pp]arameter [Vv]alue", eval(parse(text=deparse("valeur du param\u{00E8}tre"))),
+				gsub("[Pp]arameter(.+)? [Vv]alue", eval(parse(text=deparse("valeur du param\u{00E8}tre\\1"))),
 				gsub("[Gg]roundfish [Tt]rawl",  eval(parse(text=deparse("chalut \u{00E0} poissons de fond"))),
 				gsub("[Ss]econdary [Rr]eader", "technicien secondaire",
 				gsub("[Cc]ommercial [Tt]rawl", eval(parse(text=deparse("p\u{00EA}che commerciale au chalut"))),
@@ -2163,7 +2334,7 @@ linguaFranca = function(x, lang="e", little=4, strip=FALSE, localnames=FALSE)
 				gsub("[Ss]pawning [Bb]iomass", "biomasse reproductrice",
 				#gsub("[Ss]ensitivity [Rr]uns", eval(parse(text=deparse("ex\u{00E9}cutions de sensibilit\u{00E9}"))),
 				gsub("[Ss]ensitivity [Rr]un(s)", eval(parse(text=deparse("simulation\\1 de sensibilit\u{00E9}"))), ## Paul Marchal
-				gsub("[Ee]xploitation [Rr]ate", eval(parse(text=deparse("taux de r\u{00E9}colte"))),
+				gsub("[Ee]xploitation( |~| ~ )[Rr]ate", eval(parse(text=deparse("taux\\1de\\1r\u{00E9}colte"))),
 				gsub("[Ff]ishing [Mm]ortality", eval(parse(text=deparse("mortalit\u{00E9} par p\u{00EA}che"))),
 				gsub("[Dd]erived [Qq]uantities", eval(parse(text=deparse("quantit\u{00E9}s d\u{00E9}riv\u{00E9}es"))),
 				gsub("[Ss]pawning [Dd]epletion", eval(parse(text=deparse("\u{00E9}puisement des femelles reproductrices"))),
@@ -2172,14 +2343,34 @@ linguaFranca = function(x, lang="e", little=4, strip=FALSE, localnames=FALSE)
 				gsub("[Nn][Oo] [Dd][Aa][Tt][Aa]", eval(parse(text=deparse("pas de donn\u{00E9}es"))),
 				gsub("[Cc]umulative [Ff]requency", eval(parse(text=deparse("fr\u{00E9}quence cumulative"))),
 				gsub("[Cc]redibility [Ee]nvelope", eval(parse(text=deparse("enveloppe de cr\u{00E9}dibilit\u{00E9}"))),
-				gsub("[Tt]heoretical [Qq]uantiles", eval(parse(text=deparse("quantiles th\u{00E9}oriques"))),
+				gsub("[Ss]ample [Qq]uantile(s)?", eval(parse(text=deparse("quantile\\1 de l'\u{00E9}chantillon"))),
+				gsub("[Tt]heoretical [Qq]uantile(s)?", eval(parse(text=deparse("quantile\\1 th\u{00E9}orique\\1"))),
 				gsub("[Pp]osterior [Dd]istribution", eval(parse(text=deparse("distribution post\u{00E9}rieure"))),
 				gsub("[Rr]ecruitment [Dd]eviation(s)?", eval(parse(text=deparse("\u{00E9}cart\\1 de recrutement"))),
-				xx))))))))))))))))))))))))))))))))
+				xx)))))))))))))))))))))))))))))))))
 			})
-			## smaller double words
-#browser();return()
+			## medium double words
 			xtwo.med = sapply(xtwo.big, function(xx){
+				gsub("[Cc]entral [Rr]un", eval(parse(text=deparse("ex\u{00E9}cution centrale"))),
+				gsub("[Mm]ean [Ww]eight", "poids moyen",
+				gsub("[Ss]urvey [Yy]ear", eval(parse(text=deparse("ann\u{00E9}e du relev\u{00E9}"))),
+				gsub("[Ww]hole [Cc]atch", eval(parse(text=deparse("prise enti\u{00E8}re"))),
+				gsub("[Mm]atrix [Ii]ndex", "indice matriciel",
+				gsub("[Tt]ail [Dd]etails", eval(parse(text=deparse("d\u{00E9}tails de la queue"))),
+				gsub("[Oo]riginal von[Bb]", "vonB original",
+				gsub("[Tt]otal [Bb]iomass", "biomasse totale",
+				gsub("[Pp]redicted [Aa]ge", eval(parse(text=deparse("\u{00E2}ge pr\u{00E9}dit"))),
+				gsub("[Ff]ishing [Ee]ffort", eval(parse(text=deparse("effort de p\u{00EA}che"))),
+				gsub("[Aa]g(e)?(ing)? [Ee]rror", "erreur de vieillissement",
+				gsub("[Tt]ow [Ll]ocation(s)?", "emplacement\\1 des traits de chalut",
+				gsub("[Mm]ean [Aa]ge \\(year", eval(parse(text=deparse("\u{00E2}ge moyen (ann\u{00E9}e"))),
+				gsub("[Pp]rojected [Cc]atch", eval(parse(text=deparse("prise projet\u{00E9}e"))),
+				gsub("[Hh]al[fv](e)? [Cc]atch", eval(parse(text=deparse("moiti\u{00E9} prise"))),
+				gsub("[Mm]ean\\([Cc][Pp][Uu][Ee])", "moyenne(cpue)",
+				gsub("[Bb]ase [Cc]ase|[Bb]ase [Rr]un", eval(parse(text=deparse("sc\u{00E9}nario de r\u{00E9}f\u{00E9}rence"))),
+				xx)))))))))))))))))
+			})
+			xtwo.wee = sapply(xtwo.med, function(xx){
 				gsub("[Nn]o CPUE", "pas de CPUE",
 				gsub("[Nn]o CVpro", "pas de CVpro",
 				gsub("[Ii]n [Yy]ear", eval(parse(text=deparse("dans l'ann\u{00E9}e"))),
@@ -2192,33 +2383,16 @@ linguaFranca = function(x, lang="e", little=4, strip=FALSE, localnames=FALSE)
 				gsub("[Aa]ge(\\s+)?\\(y(?:ear|r)", eval(parse(text=deparse("\u{00E2}ge (ann\u{00E9}e"))),
 				gsub("[Ee]nd [Yy]ear", eval(parse(text=deparse("ann\u{00E9}e de fin"))),
 				gsub("[Pp]er [Yy]ear", eval(parse(text=deparse("par l'ann\u{00E9}e"))),
-				gsub("[Bb]ase [Cc]ase|[Bb]ase [Rr]un", eval(parse(text=deparse("sc\u{00E9}nario de r\u{00E9}f\u{00E9}rence"))),
-				#gsub("[Bb]ase [Rr]uns", eval(parse(text=deparse("ex\u{00E9}cutions des sc\u{00E9}narios de r\u{00E9}f\u{00E9}rence"))),
 				gsub("[Bb]ase [Rr]un(s)?", eval(parse(text=deparse("simulation\\1 de r\u{00E9}f\u{00E9}rence"))),  ## Paul Marchal
-				#gsub("[Bb]ase [Rr]un(s)?", eval(parse(text=deparse("sim\\1 de r\u{00E9}f"))),  ## Paul Marchal (shorten it for compo)
 				gsub("[Bb]ut [Ff]ixed", "mais fixe",
 				gsub("[Aa]ge [Cc]lass", eval(parse(text=deparse("classe d'\u{00E2}ge"))),
 				gsub("min [B] [Yy]ear", eval(parse(text=deparse("ann\u{00E9}e de min B"))),
 				gsub("[Ss]tart [Yy]ear", eval(parse(text=deparse("ann\u{00E9}e de d\u{00E9}but"))),
-				gsub("[Cc]entral [Rr]un", eval(parse(text=deparse("ex\u{00E9}cution centrale"))),
-				gsub("[Mm]ean [Ww]eight", "poids moyen",
-				gsub("[Ss]urvey [Yy]ear", eval(parse(text=deparse("ann\u{00E9}e du relev\u{00E9}"))),
-				gsub("[Ww]hole [Cc]atch", eval(parse(text=deparse("prise enti\u{00E8}re"))),
-				gsub("[Tt]ail [Dd]etails", eval(parse(text=deparse("d\u{00E9}tails de la queue"))),
-				gsub("[Oo]riginal von[Bb]", "vonB original",
-				gsub("[Tt]otal [Bb]iomass", "biomasse totale",
-				gsub("[Pp]redicted [Aa]ge", eval(parse(text=deparse("\u{00E2}ge pr\u{00E9}dit"))),
-				gsub("[Ff]ishing [Ee]ffort", eval(parse(text=deparse("effort de p\u{00EA}che"))),
-				gsub("[Aa]g(e)?(ing)? [Ee]rror", "erreur de vieillissement",
-				gsub("[Tt]ow [Ll]ocation(s)?", "emplacement\\1 des traits de chalut",
-				gsub("[Mm]ean [Aa]ge \\(year", eval(parse(text=deparse("\u{00E2}ge moyen (ann\u{00E9}e"))),
-				gsub("[Pp]rojected [Cc]atch", eval(parse(text=deparse("prise projet\u{00E9}e"))),
-				gsub("[Hh]al[fv](e)? [Cc]atch", eval(parse(text=deparse("moiti\u{00E9} prise"))),
-				gsub("[Mm]ean\\([Cc][Pp][Uu][Ee])", "moyenne(cpue)",
-				xx)))))))))))))))))))))))))))))))))
+				gsub("[M][C][M][C] [Rr]un(s)?", eval(parse(text=deparse("simulation\\1 de MCCM"))),
+				xx))))))))))))))))))
 			})
 			## single words 10 or more characters
-			xone.big = sapply(xtwo.med, function(xx){
+			xone.big = sapply(xtwo.wee, function(xx){
 				gsub("[Dd]eveloped", eval(parse(text=deparse("d\u{00E9}velopp\u{00E9}"))),
 				gsub("[Dd]eveloping", eval(parse(text=deparse("en d\u{00E9}veloppement"))),
 				gsub("[Hh]istorical", "historique",
@@ -2260,8 +2434,94 @@ linguaFranca = function(x, lang="e", little=4, strip=FALSE, localnames=FALSE)
 				gsub("[Hh][Ii][Ss][Tt][Oo][Rr][Ii][Cc]([Aa][Ll])?", "historique",
 				xx))))))))))))))))))))))))))
 			})
+			## geographic words
+			xgeo = sapply(xone.med, function(xx){
+				##gsub("[B][C]", eval(parse(text=deparse("C-B\u{2000}"))),
+				#gsub("^[B][C]([[:space:]]+)?", eval(parse(text=deparse("C-B\u{2000}"))),
+				#gsub("([[:space:]]+)?[B][C]([[:space:]]+)?", eval(parse(text=deparse("\\1C-B\\2"))),
+				gsub("([[:space:]]+)[B][C]([[:space:]]+)", eval(parse(text=deparse("\\1C-B\\2"))),
+				gsub("[H][S]", "DH",
+				gsub("[Cc]oast", eval(parse(text=deparse("c\u{00F4}te"))),
+				gsub("[G][I][G]", "GIG",  ## goulet de l'\^{i}le Goose
+				gsub("[Q][C][S]", "BRC",
+				gsub("[P][B][S]", "SBP",
+				gsub("[H][B][L][L]", "PFD", ## palangre \`{a} fond dur
+				gsub("[I][P][H][C]", "CIFP",     ## Commission internationale du fl\'{e}tan du Pacifique
+				gsub("[N][M][F][S]", "SNPM",     ## Service national des p\^{e}ches maritimes
+				gsub("[W][C][H][G]", "COHG",
+				gsub("[W][C][V][I]", "COIV",
+				gsub("[Aa]rea\\(km", "superficie(km",
+				gsub("[Ss]ubarea(s)?", "sous-zone\\1",
+				gsub("(\\s+)?[Ii]nside", eval(parse(text=deparse(" \u{00E0} l'int\u{00E9}rieur"))),
+				gsub("(\\s+)?[Oo]utside", eval(parse(text=deparse(" \u{00E0} l'ext\u{00E9}rieur"))),
+				gsub("[Hh]ecate [Ss]trait", eval(parse(text=deparse("d\u{00E9}troit d'Hecate"))),
+				gsub("[Mm]oresby [Gg]ully", "canyon de Moresby",
+				gsub("[P][M][F][C] [Aa]rea", "zone CPMP",
+				gsub("[Ss]ingle(-| )[Aa]rea", "zone unique",
+				gsub("[Bb]ritish [Cc]olumbia", "Colombie-Britannique",
+				gsub("[Vv]ancouver [Ii]sland", eval(parse(text=deparse("\u{00CE}le de Vancouver"))),
+				gsub("[Mm]itchell's [Gg]ully", "canyon de Mitchell",
+				gsub("[Ee]ncountered [Aa]rea", "zone de rencontre",
+				gsub("[Gg]oose [Ii]sland [Gg]ully", eval(parse(text=deparse("goulet de l'\u{00EE}le Goose"))),
+				gsub("[Qq]ueen [Cc]harlotte [Ss]ound", "bassin de la Reine-Charlotte",
+				gsub("[Qq]ueen [Cc]harlotte [Ss]trait", eval(parse(text=deparse("d\u{00E9}troit de la Reine-Charlotte"))),
+				gsub("[B][C] [Cc]oastwide",  eval(parse(text=deparse("sur toute la c\u{00F4}te de la C-B"))),
+				xx)))))))))))))))))))))))))))
+			})
+#browser();return()
+			## words describing fisheries
+#browser();return()
+			xfish = sapply(xgeo, function(xx){
+				gsub("[Mm]ajor", "principal",
+				gsub("[Mm]inor", "secondaire",
+				gsub("[Ss]able", "morue",
+				gsub("[Tt][Rr][Aa][Ww][Ll]", "chalut",
+				gsub("[H][B][L][L]", eval(parse(text=deparse("P\u{00E0}FD"))),
+				gsub("[Aa]ssess", eval(parse(text=deparse("\u{00E9}val"))),
+				gsub("[Ss]almon", "saumon",
+				gsub("[Ss]orted", eval(parse(text=deparse("tri\u{00E9}es"))),
+				gsub("[Dd]ogfish", "aiguillat",
+				gsub("[Hh]alibut", eval(parse(text=deparse("fl\u{00E9}tan"))),
+				gsub("[Ll]anding", eval(parse(text=deparse("d\u{00E9}barquement"))),
+				gsub("[Ss]urv\\:", "relev:",
+				gsub("[Ss]urv\\_", "relev_",
+				gsub("[Ll]ongline", "palangre",
+				gsub("[Uu]nsorted", eval(parse(text=deparse("non tri\u{00E9}es"))),
+				gsub("[Ss]teepness", "inclinaison de la pente",
+				gsub("[Dd]og/[Ll]in", "aig/lin",
+				gsub("[Tt]rip [Cc]ode", "code de voyage",
+				gsub("from age readers", eval(parse(text=deparse("des lecteurs d'\u{00E2}ge"))),
+				gsub("[S][B][F] [Tt]rap", "MC casier",
+				gsub("[Hh](\\_)?[Ll]rock", eval(parse(text=deparse("HLs\u{00E9}b"))),
+				gsub("[Ss]ablefish [Tt]rap", eval(parse(text=deparse("pi\u{00E8}ge \u{00E0} morue charbonni\u{00E8}re"))),
+				gsub("[R][E][B][S] [Nn]orth", "REBS nord",
+				gsub("[R][E][B][S] [Ss]outh", "REBS sud",
+				gsub("[Jj]ig(ging)? [Ss]urvey(s)?", eval(parse(text=deparse("relev\u{00E9}\\2 \u{00E0} la turlutte"))),
+				gsub("[Hh]ook [\\&|Aa](nd)? [Ll]ine", eval(parse(text=deparse("hame\u{00E7}on et lignes"))),
+				gsub("(SoG|Strait of Georgia) [Hh]ake", eval(parse(text=deparse("merlu du d\u{00E9}troit de G\u{00E9}orgie"))),
+				gsub("[Hh][Ll](\\_|\\.| )[Rr]ock(fish)?", eval(parse(text=deparse("HL.s\u{00E9}baste"))),
+				gsub("[Ff][Ii][Ss][Hh]([Ee][Rr][Yy]|ing)", eval(parse(text=deparse("p\u{00EA}che"))),
+				gsub("[Hh](\\&|\\.)[Ll](\\_|\\.| )[Rr]ock(fish)?", eval(parse(text=deparse("H&L s\u{00E9}baste"))),
+				gsub("[Tt][Rr][Aa][Ww][Ll](\\s+|\\_)[Ff][Ii][Ss][Hh][Ee][Rr][Yy]", eval(parse(text=deparse("p\u{00EA}che\\1au\\1chalut"))),
+				gsub("[Mm][Ii][Dd][Ww][Aa][Tt][Ee][Rr](\\s+|\\_)[Ff][Ii][Ss][Hh][Ee][Rr][Yy]", eval(parse(text=deparse("p\u{00EA}che\\1p\u{00E9}lagique"))),
+				xx))))))))))))))))))))))))))))))))
+			})
+			## single words describing biology
+			xbio = sapply(xfish, function(xx){
+				gsub("[Ss]pent", eval(parse(text=deparse("us\u{00E9}"))),
+				gsub("[Mm]ature", "mature",
+				gsub("[Ee]mbryos", "embryons",
+				gsub("[Oo]tolith", "otolithe",
+				gsub("[Rr]esting", "repos",
+				gsub("[Ii]mmature", "immature",
+				gsub("[Pp]ectoral", "pectorale",
+				gsub("[Mm]aturing", eval(parse(text=deparse("\u{00E0} maturit\u{00E9}"))),
+				gsub("[Ss]pecimen", eval(parse(text=deparse("sp\u{00E9}cimen"))),
+				gsub("[Ff]ertili[sz]ed", eval(parse(text=deparse("fertilis\u{00E9}"))),
+				xx))))))))))
+			})
 			## single words up to 6 characters
-			xone.small = sapply(xone.med, function(xx){
+			xone.small = sapply(xbio, function(xx){
 				gsub(" \\(y)", " (an.)",
 				gsub("[Aa]dd", "ajouter",
 				#gsub("[Rr]un", eval(parse(text=deparse("Ex\u{00E9}"))),
@@ -2300,99 +2560,19 @@ linguaFranca = function(x, lang="e", little=4, strip=FALSE, localnames=FALSE)
 				gsub("[Oo][Tt][Hh][Ee][Rr]", "autre",
 				xx)))))))))))))))))))))))))))))))))))
 			})
-#browser();return()
-			## words describing fisheries
-#browser();return()
-			xfish = sapply(xone.small, function(xx){
-				gsub("[Mm]ajor", "principal",
-				gsub("[Mm]inor", "secondaire",
-				gsub("[Ss]able", "morue",
-				gsub("[Tt][Rr][Aa][Ww][Ll]", "chalut",
-				gsub("[H][B][L][L]", eval(parse(text=deparse("P\u{00E0}FD"))),
-				gsub("[Aa]ssess", eval(parse(text=deparse("\u{00E9}val"))),
-				gsub("[Ss]almon", "saumon",
-				gsub("[Ss]orted", eval(parse(text=deparse("tri\u{00E9}es"))),
-				gsub("[Dd]ogfish", "aiguillat",
-				gsub("[Hh]alibut", eval(parse(text=deparse("fl\u{00E9}tan"))),
-				gsub("[Ll]anding", eval(parse(text=deparse("d\u{00E9}barquement"))),
-				gsub("[Ss]urv\\:", "relev:",
-				gsub("[Ss]urv\\_", "relev_",
-				gsub("[Ll]ongline", "palangre",
-				gsub("[Uu]nsorted", eval(parse(text=deparse("non tri\u{00E9}es"))),
-				gsub("[Ss]teepness", "inclinaison de la pente",
-				gsub("[Dd]og/[Ll]in", "aig/lin",
-				gsub("[Tt]rip [Cc]ode", "code de voyage",
-				gsub("from age readers", eval(parse(text=deparse("des lecteurs d'\u{00E2}ge"))),
-				gsub("[S][B][F] [Tt]rap", "MC casier",
-				gsub("[Hh](\\_)?[Ll]rock", eval(parse(text=deparse("HLs\u{00E9}b"))),
-				gsub("[R][E][B][S] [Nn]orth", "REBS nord",
-				gsub("[R][E][B][S] [Ss]outh", "REBS sud",
-				gsub("[Hh]ook [\\&|Aa](nd)? [Ll]ine", eval(parse(text=deparse("hame\u{00E7}on et lignes"))),
-				gsub("[Hh][Ll](\\_|\\.| )[Rr]ock(fish)?", eval(parse(text=deparse("HL.s\u{00E9}baste"))),
-				gsub("[Ff][Ii][Ss][Hh]([Ee][Rr][Yy]|ing)", eval(parse(text=deparse("p\u{00EA}che"))),
-				gsub("[Hh](\\&|\\.)[Ll](\\_|\\.| )[Rr]ock(fish)?", eval(parse(text=deparse("H&L s\u{00E9}baste"))),
-				gsub("[Tt][Rr][Aa][Ww][Ll](\\s+|\\_)[Ff][Ii][Ss][Hh][Ee][Rr][Yy]", eval(parse(text=deparse("p\u{00EA}che\\1au\\1chalut"))),
-				gsub("[Mm][Ii][Dd][Ww][Aa][Tt][Ee][Rr](\\s+|\\_)[Ff][Ii][Ss][Hh][Ee][Rr][Yy]", eval(parse(text=deparse("p\u{00EA}che\\1p\u{00E9}lagique"))),
-				xx)))))))))))))))))))))))))))))
-			})
-			## single words describing biology
-			xbio = sapply(xfish, function(xx){
-				gsub("[Ss]pent", eval(parse(text=deparse("us\u{00E9}"))),
-				gsub("[Mm]ature", "mature",
-				gsub("[Ee]mbryos", "embryons",
-				gsub("[Oo]tolith", "otolithe",
-				gsub("[Rr]esting", "repos",
-				gsub("[Ii]mmature", "immature",
-				gsub("[Pp]ectoral", "pectorale",
-				gsub("[Mm]aturing", eval(parse(text=deparse("\u{00E0} maturit\u{00E9}"))),
-				gsub("[Ss]pecimen", eval(parse(text=deparse("sp\u{00E9}cimen"))),
-				gsub("[Ff]ertili[sz]ed", eval(parse(text=deparse("fertilis\u{00E9}"))),
-				xx))))))))))
-			})
-			## geographic words
-			xgeo = sapply(xbio, function(xx){
-				##gsub("[B][C]", eval(parse(text=deparse("C-B\u{2000}"))),
-				#gsub("^[B][C]([[:space:]]+)?", eval(parse(text=deparse("C-B\u{2000}"))),
-				#gsub("([[:space:]]+)?[B][C]([[:space:]]+)?", eval(parse(text=deparse("\\1C-B\\2"))),
-				gsub("([[:space:]]+)[B][C]([[:space:]]+)", eval(parse(text=deparse("\\1C-B\\2"))),
-				gsub("[H][S]", "DH",
-				gsub("[Cc]oast", eval(parse(text=deparse("c\u{00F4}te"))),
-				gsub("[G][I][G]", "CIG",
-				gsub("[Q][C][S]", "BRC",
-				gsub("[P][B][S]", "SBP",
-				gsub("[H][B][L][L]", "PFD", ## palangre \`{a} fond dur
-				gsub("[I][P][H][C]", "CIFP",     ## Commission internationale du fl\'{e}tan du Pacifique
-				gsub("[N][M][F][S]", "SNPM",     ## Service national des p\^{e}ches maritimes
-				gsub("[W][C][H][G]", "COHG",
-				gsub("[W][C][V][I]", "COIV",
-				gsub("[Aa]rea\\(km", "superficie(km",
-				gsub("[Ss]ubarea(s)?", "sous-zone\\1",
-				gsub("(\\s+)?[Ii]nside", eval(parse(text=deparse(" \u{00E0} l'int\u{00E9}rieur"))),
-				gsub("(\\s+)?[Oo]utside", eval(parse(text=deparse(" \u{00E0} l'ext\u{00E9}rieur"))),
-				gsub("[Hh]ecate [Ss]trait", eval(parse(text=deparse("d\u{00E9}troit d'Hecate"))),
-				gsub("[Mm]oresby [Gg]ully", "canyon de Moresby",
-				gsub("[P][M][F][C] [Aa]rea", "zone CPMP",
-				gsub("[Bb]ritish [Cc]olumbia", "Colombie-Britannique",
-				gsub("[Vv]ancouver [Ii]sland", eval(parse(text=deparse("\u{00CE}le de Vancouver"))),
-				gsub("[Mm]itchell's [Gg]ully", "canyon de Mitchell",
-				gsub("[Ee]ncountered [Aa]rea", "zone de rencontre",
-				gsub("[Gg]oose [Ii]sland [Gg]ully", eval(parse(text=deparse("canyon de l'\u{00EE}le Goose"))),
-				gsub("[Qq]ueen [Cc]harlotte [Ss]ound", "bassin de la Reine-Charlotte",
-				gsub("[Qq]ueen [Cc]harlotte [Ss]trait", eval(parse(text=deparse("d\u{00E9}troit de la Reine-Charlotte"))),
-				xx)))))))))))))))))))))))))
-			})
 			## DFO acronyms
-			xacro = sapply(xgeo, function(xx){
+			xacro = sapply(xone.small, function(xx){
 				gsub("[A][E]", "EV",             ## ageing error = erreur de vieillissement
 				gsub("[A][F]", "FA",             ## age frequency = fr\'{e}quence d'ages
 				gsub("[B][T]", "CF",             ## bottom trawl   = chalut de fond
-				gsub("[C][C]", "PC",             ## constant catch   = prise constante
+				gsub("^[C][C]", "PC",             ## constant catch   = prise constante
 				gsub("[M][W]", "CP",             ## midwater trawl = chalut p\'{e}lagique
 				gsub("[H][R]", "TR",             ## harvest rate   = taux de r\'{e}colte (not taux d'exploitation)
 				gsub("^[S][A]", eval(parse(text=deparse("\u{00C9}S"))),  ## stock assessment  = \'{e}valuation des stocks
 				gsub("[G][M][A]", "ZGPF",        ## les zones de gestion des poissons de fond 
-				gsub("[G][M][U]", "GGPF",        ## le groupe de gestion du poisson de fond
+				gsub("[G][M][U]", "UGPF",        ## unit\'{e} de gestion des poissons de fond
 				gsub("[L][R][P]", "PRL",         ## point de r\'{e}f\'{e}rence limite
+				gsub("[M][E][I]", "IEM",         ## indice ENSO multivari\'{e}
 				gsub("[M][P][D]", "MDP",         ## mode de distribution post\'{e}rieure
 				gsub("[M][S][Y]", "RMD",         ## rendement maximal durable (no longer soutenu)
 				gsub("[m][s][y]", "rmd",         ## rendement maximal durable (no longer soutenu) (be careful of words ending in 'msy')
@@ -2401,8 +2581,9 @@ linguaFranca = function(x, lang="e", little=4, strip=FALSE, localnames=FALSE)
 				gsub("[M][C][M][C]", "MCCM",     ## Monte Carlo \`{a} cha\^{i}ne de Markov
 				gsub("[P][M][F][C]", "CPMP",     ## Monte Carlo \`{a} cha\^{i}ne de Markov
 				gsub("[R|S]\\+[S|R]", "R+R",     ## research + survey (relev\'{e})
-				xx))))))))))))))))))
+				xx)))))))))))))))))))
 			})
+#browser();return()
 			## species code3 acronyms
 			xcode = sapply(xacro, function(xx){
 				gsub("[A][R][F]", "PGB",  ## Arrowtooth Flounder
@@ -2429,22 +2610,27 @@ linguaFranca = function(x, lang="e", little=4, strip=FALSE, localnames=FALSE)
 			})
 			## final swipe through
 			xbig = sapply(xcode, function(xx){
-				gsub("C\\+S","c+r",
 				gsub(" of "," de ",
 				gsub(" or "," ou ",
-				gsub(" [\\&|Aa](nd)? "," et ",
 				gsub(" by ", " par ",
 				gsub(" in ", " en ",
-				gsub("([.+ ])? to ([.+ ])?", eval(parse(text=deparse("\\1 \u{00E0} \\2"))),  ## (RH 230727)
-				gsub(" but ", " mais ",
 				gsub("^no ", "pas de ",
 				gsub(" no ", " pas de ",
-				gsub("\\(/y(r?))", "(/an)",
+				gsub(" but ", " mais ",
+				gsub("C\\+S","c+r",
 				gsub("2y(r?)", "2an",
+				gsub("^BC\\s+","C-B ",
+				gsub(" north$"," nord",
+				gsub(" south$"," sud",
+				gsub("\\(/y(r?))", "(/an)",
+				gsub(" [\\&|Aa](nd)? "," et ",
+				gsub("([.+ ])? to ([.+ ])?", eval(parse(text=deparse("\\1 \u{00E0} \\2"))),  ## (RH 230727)
+				gsub("\\(bar(s)?)", "(barre\\1)",
+				gsub("\\(line(s)?)", "(ligne\\1)",
 				#gsub("R([[:digit:]]+)","E\\1",  ## Model run numbers, e.g. R75
 				#gsub("R(\\d+)","E\\1",  ## Model run numbers, e.g. R75 (but R0 gets converted!)
 				gsub("sigmaR( )?=( )?(0|1)\\.([1-9])","sigmaR\\1=\\2\\3,\\4",
-				xx)))))))))))))
+				xx))))))))))))))))))
 			})
 #browser();return()
 			xout[xBpos] = xbig

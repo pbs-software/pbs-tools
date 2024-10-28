@@ -94,7 +94,7 @@ calcHabitat <- function(topofile="bctopo", isob=c(150,435),
 			addLines(habitat,col=icol)
 			data("nepacLL", package="PBSmapping", envir=penv())
 			addPolys(nepacLL,col=col.land)
-			PBSmapping:::.addAxis(xlim=xlim,ylim=ylim,tckLab=FALSE,tck=0.014,tckMinor=.007)  ## .addAxis currently not exported from PBSmapping namespace
+			.addAxis(xlim=xlim,ylim=ylim,tckLab=FALSE,tck=0.014,tckMinor=.007)  ## .addAxis currently not exported from PBSmapping namespace
 			if (isolab) legend("bottomleft", inset=0.06, fill=col.hab, title=labtit, title.adj=0.5, bty="n", cex=1.5,
 				#legend=paste(isob[1],"\226",isob[2],"m  (",format(round(area),big.mark=","),"km\262)",sep=""),bty="n",cex=1.5)
 				legend=paste0(isob[1], convUTF("\\u{2013}"), isob[2], "m  (", format(round(area), big.mark=","), "km", convUTF("\\u{00B2}"), ")") )
@@ -473,14 +473,14 @@ calcSurficial <- function(surf="qcb", hab,
 	addLines(hab,col=col.hab[2])
 	addPolys(coast,col=col.cst)
 	addLegend(.025,.025,fill=names(leg),legend=legarea,bty="n",yjust=0,cex=.9)
-	PBSmapping:::.addAxis(xlim=xlim,ylim=ylim,tckLab=FALSE,tck=0.014,tckMinor=.007)  ## .addAxis currently not exported from PBSmapping namespace
+	.addAxis(xlim=xlim,ylim=ylim,tckLab=FALSE,tck=0.014,tckMinor=.007)  ## .addAxis currently not exported from PBSmapping namespace
 	box()
 	if (pix|wmf) dev.off()
 	invisible() }
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~calcSurficial
 
 
-## clarify------------------------------2024-02-29
+## clarify------------------------------2024-10-24
 ##  Analyse catch proportions in blocks, then cluster into fisheries groups.
 ##  Initially, done to address the CASSIS proposal and its impact (John Pringle).
 ##  CASSIS = CAScadia SeISmic experiment
@@ -648,7 +648,8 @@ clarify <- function(dat, cell=c(0.1,0.075), nG=8, dSpp=3, Vmin=3, trfun,
 				fout.e = fn
 				for (l in lang) {
 					changeLangOpts(L=l)
-					fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
+					#fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
+					fout = switch(l, 'e' = paste0("./english/",fout.e), 'f' = paste0("./french/",fout.e) )
 					if (i=="png" && ii) {
 						clearFiles(paste0(fout,".png"))
 						png(filename=paste0(fout,".png"), units="in", res=pngres, width=PIN[1], height=PIN[2])
@@ -675,7 +676,7 @@ clarify <- function(dat, cell=c(0.1,0.075), nG=8, dSpp=3, Vmin=3, trfun,
 #browser();return()
 					if (!is.null(targ)) 
 						addLegend(0.35, 0.02, legend=floor(as.numeric(names(kgrp))), bty="n", cex=ifelse(wmf,0.8,0.7), adj=1, xjust=1, yjust=0, text.col="blue", title=linguaFranca(targ,l))
-					PBSmapping:::.addAxis(xlim=xlim, ylim=ylim, tckLab=FALSE, tck=0.014, tckMinor=0.007)  ## .addAxis currently not exported from PBSmapping namespace
+					.addAxis(xlim=xlim, ylim=ylim, tckLab=FALSE, tck=0.014, tckMinor=0.007)  ## .addAxis currently not exported from PBSmapping namespace
 					box()
 					if (i!="win" && ii) dev.off()
 				}; eop()
@@ -689,7 +690,8 @@ clarify <- function(dat, cell=c(0.1,0.075), nG=8, dSpp=3, Vmin=3, trfun,
 		fout.e = fn
 		for (l in lang) {
 			changeLangOpts(L=l)
-			fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
+			#fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
+			fout = switch(l, 'e' = paste0("./english/",fout.e), 'f' = paste0("./french/",fout.e) )
 			if (png) {
 				clearFiles(paste0(fout,".png"))
 				png(filename=paste0(fout,".png"), units="in", res=pngres, width=12, height=4)
@@ -736,8 +738,8 @@ findEP = function(events, polys, maxRows=1e+08)
 
 	locflds   = intersect(c("major","minor","locality"), colnames(pdata))
 	locflds   = intersect(locflds, colnames(events))
-	events$ID = PBSmapping:::.createIDs(events, locflds)  ## .createIDs currently not exported from PBSmapping namespace
-	pdata$ID  = PBSmapping:::.createIDs(pdata,  locflds)
+	events$ID = .createIDs(events, locflds)  ## .createIDs currently not exported from PBSmapping namespace
+	pdata$ID  = .createIDs(pdata,  locflds)
 
 	ldata = findPolys(events, polys, maxRows=maxRows, includeBdry=1) ## use only the first (lowest PID/SID) polygon boundary
 
@@ -745,9 +747,9 @@ findEP = function(events, polys, maxRows=1e+08)
 	#zbord = ldata$Bdry==1  ## event located on a polygon boundary (often between 2 polygons)
 	#linsi = ldata[zinsi,]
 
-	ldata$ID  = PBSmapping:::.createIDs(ldata,c("PID","SID"))
+	ldata$ID  = .createIDs(ldata,c("PID","SID"))
 	eid = ldata$ID; names(eid) = ldata$EID
-	pid = pdata$ID; names(pid) = PBSmapping:::.createIDs(pdata,c("PID","SID"))
+	pid = pdata$ID; names(pid) = .createIDs(pdata,c("PID","SID"))
 	events$ID2 = pid[as.character(eid[as.character(events$EID)])]
 	naID = is.na(events$ID2)
 	events$ID2[naID] = events$ID[naID]  ## fill in the missing gaps
@@ -813,7 +815,7 @@ findHoles = function(polyset, minVerts=25, nlevs=1, use.sp.pkg=TRUE)
 
 	if (nlevs>2) stop("Set 'nlevs' to 1 or 2")
 
-	polyset$ID = PBSmapping:::.createIDs(polyset,c("PID","SID"))
+	polyset$ID = .createIDs(polyset,c("PID","SID"))
 	poly0 = split( polyset , f = polyset$ID )
 	bad   = sapply(poly0,nrow) < minVerts
 	polyG = poly0[!bad]
@@ -900,7 +902,7 @@ findHoles = function(polyset, minVerts=25, nlevs=1, use.sp.pkg=TRUE)
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~findHoles
 
 
-## plotConcur---------------------------2022-01-25
+## plotConcur---------------------------2024-10-24
 ## Horizontal barplot of concurrent species in tows.
 ## ---------------------------------------------RH
 plotConcur = function(strSpp="410", dbName="GFFOS", spath=.getSpath(),
@@ -923,6 +925,7 @@ plotConcur = function(strSpp="410", dbName="GFFOS", spath=.getSpath(),
 		if (!is.null(minor) && !all(minor==999)) outnam = sub(strSpp,paste(strSpp,"-minor(",paste(minor,collapse=""),")",sep=""),outnam)
 		if (!is.null(major)) outnam = sub(strSpp,paste(strSpp,"-major(",paste(major,collapse=""),")",sep=""),outnam)
 	}
+#browser();return()
 
 	if (run.sql && dbName=="GFFOS")
 		getData("fos_concurrent.sql", "GFFOS", strSpp, path=spath,
@@ -971,7 +974,8 @@ plotConcur = function(strSpp="410", dbName="GFFOS", spath=.getSpath(),
 	fout.e = outnam
 	for (l in lang) {
 		changeLangOpts(L=l)
-		fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
+		#fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
+		fout = switch(l, 'e' = paste0("./english/",fout.e), 'f' = paste0("./french/",fout.e) )
 		if (eps) {
 			clearFiles(paste0(fout,".eps"))
 			postscript(file=paste0(fout,".eps"),width=10,height=6,horizontal=FALSE,paper="special")
@@ -1022,7 +1026,7 @@ plotConcur = function(strSpp="410", dbName="GFFOS", spath=.getSpath(),
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotConcur
 
 
-## plotEO-------------------------------2024-02-29
+## plotEO-------------------------------2024-10-24
 ## Plot the Extent of Occurrence for a species 
 ## using a convex hull to surround events.
 ## ---------------------------------------------RH
@@ -1069,11 +1073,11 @@ plotEO = function (id="lst", strSpp="453", col="red",
 		isPOP = is.element(strSpp,c("396","440"))
 		data(locality.plus, package="PBSdata", envir=fenv)
 		loca = locality.plus
-		mapdat$ID = PBSmapping:::.createIDs(mapdat, c(ifelse(isPOP,"major_old","major"), "minor", "locality"))
+		mapdat$ID = .createIDs(mapdat, c(ifelse(isPOP,"major_old","major"), "minor", "locality"))
 		inlocs = findPolys(mapdat, loca, maxRows=1e7)
 		pdata  = attributes(loca)$PolyData
-		inlocs$PS = PBSmapping:::.createIDs(inlocs, c("PID","SID"))
-		pdata$PS  = PBSmapping:::.createIDs(pdata,  c("PID","SID"))
+		inlocs$PS = .createIDs(inlocs, c("PID","SID"))
+		pdata$PS  = .createIDs(pdata,  c("PID","SID"))
 		pkey = pdata$ID; names(pkey) = pdata$PS
 		inlocs$ID = pkey[as.character(inlocs$PS)]
 		ikey = inlocs$ID; names(ikey) = inlocs$EID
@@ -1143,7 +1147,7 @@ plotEO = function (id="lst", strSpp="453", col="red",
 	waterlab = paste0(format(round(sapply(hulk[id], function(x){ x[["area.hull.water"]] }),0), big.mark=big.mark), collapse=", ")
 	waterlab = paste0("    (hull on water = ", waterlab, " km", convUTF("\\u{00B2}"), ")" )
 	stocklab = ifelse(is.null(inarea),"BC",paste0(names(inarea),collapse=", "))
-	datelab = paste0(paste0(names(stocks), ": ", sapply(hulk[id], function(x){paste0(x[["date.range"]],collapse=" to ")})), collapse="\n")
+	datelab  = paste0(paste0(names(stocks), ": ", sapply(hulk[id], function(x){paste0(x[["date.range"]],collapse=" to ")})), collapse="\n")
 	spplab   = paste0(c(
 		paste0(toUpper(species[strSpp,"name"]), " -- ", stocklab),
 		paste0("    (", species[strSpp,"latin"], ")"),
@@ -1162,7 +1166,8 @@ plotEO = function (id="lst", strSpp="453", col="red",
 #browser();return()
 	for (l in lang) {
 		changeLangOpts(L=l)
-		fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
+		#fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
+		fout = switch(l, 'e' = paste0("./english/",fout.e), 'f' = paste0("./french/",fout.e) )
 		if (png) {
 			clearFiles(paste0(fout,".png"))
 			png(paste0(fout,".png"), units="in", res=pngres, width=PIN[1], height=PIN[2])
@@ -1214,7 +1219,7 @@ plotEO = function (id="lst", strSpp="453", col="red",
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotEO
 
 
-## plotGMA------------------------------2024-02-29
+## plotGMA------------------------------2024-10-24
 ##  Plot the Groundfish Management Areas
 ## ---------------------------------------------RH
 plotGMA = function(gma=gma, major=major, xlim=c(-134,-123), ylim=c(48.05,54.95), 
@@ -1252,9 +1257,13 @@ plotGMA = function(gma=gma, major=major, xlim=c(-134,-123), ylim=c(48.05,54.95),
 	fout.e = fnam
 	for (l in lang) {  ## could switch to other languages if available in 'linguaFranca'.
 		changeLangOpts(L=l)
-		fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
+		#fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
+		fout = switch(l, 'e' = paste0("./english/",fout.e), 'f' = paste0("./french/",fout.e) )
 
-		if (png) png(filename=paste(fout,"png",sep="."), width=PIN[1], height=PIN[2], units="in", res=pngres)
+		if (png) {
+			clearFiles(paste(fout,"png",sep="."))
+			png(filename=paste(fout,"png",sep="."), width=PIN[1], height=PIN[2], units="in", res=pngres)
+		}
 		else if (eps) postscript(file=paste0(fout,".eps"), width=PIN[1], height=PIN[2], paper="special", horizontal=FALSE)
 		else resetGraph()
 
@@ -1288,7 +1297,7 @@ plotGMA = function(gma=gma, major=major, xlim=c(-134,-123), ylim=c(48.05,54.95),
 		if (!missing(isobath) && is.PolySet(isobath))
 			addLines(isobath)
 		addPolys(nepacLLhigh,col="white",border=earlgrey)
-		PBSmapping:::.addAxis(par()$usr[1:2],ylim=par()$usr[3:4],tckLab=FALSE,tck=.015,tckMinor=.015/2)  ## .addAxis currently not exported from PBSmapping namespace
+		.addAxis(par()$usr[1:2],ylim=par()$usr[3:4],tckLab=FALSE,tck=.015,tckMinor=.015/2)  ## .addAxis currently not exported from PBSmapping namespace
 		addLabels(edata,cex=2.5,font=2)
 		if (!is.null(extra.labels)) {
 			elabs = extra.labels
@@ -1312,7 +1321,7 @@ plotGMA = function(gma=gma, major=major, xlim=c(-134,-123), ylim=c(48.05,54.95),
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotGMA
 
 
-## plotHabitat--------------------------2024-02-29
+## plotHabitat--------------------------2024-10-24
 ## WAP (bctopo only reaches -124.5, bctopo2 goes to -122.5)
 ## hab228=calcHabitat(topofile="bctopo2",isob=c(62,447),digits=2,xlim=c(-134.5,-122.5))
 ## save("hab228",file="hab228.rda")
@@ -1345,8 +1354,12 @@ plotHabitat = function(fnam="hab228", isob=c(62,448), col.hab="greenyellow",
 	fout.e = fout
 	for (l in lang) {
 		changeLangOpts(L=l)
-		fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
-		if (png) png(paste0(fout,".png"), width=PIN[1], height=PIN[2], units="in", res=pngres) 
+		#fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
+		fout = switch(l, 'e' = paste0("./english/",fout.e), 'f' = paste0("./french/",fout.e) )
+		if (png) {
+			clearFiles(paste0(fout,".png"))
+			png(paste0(fout,".png"), width=PIN[1], height=PIN[2], units="in", res=pngres) 
+		}
 		expandGraph(mar=c(3,3.2,0.5,0.5), mgp=c(3.0,0.5,0))
 		plotMap(eez.bc, xlim=xlim, ylim=ylim, plt=NULL, lwd=2, border=FALSE, col="aliceblue", cex.axis=1.5, cex.lab=2, las=1)
 		addPolys(habSpp,col=col.hab,border="black")
@@ -1368,7 +1381,7 @@ plotHabitat = function(fnam="hab228", isob=c(62,448), col.hab="greenyellow",
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotHabitat
 
 
-## plotLocal----------------------------2021-12-07
+## plotLocal----------------------------2024-10-24
 ## Plot DFO fishing localities with the highest catch.
 ## ---------------------------------------------RH
 plotLocal = function(dat, area, aflds=NULL, pcat=0.95, cpue=FALSE, powr=1,
@@ -1393,7 +1406,7 @@ plotLocal = function(dat, area, aflds=NULL, pcat=0.95, cpue=FALSE, powr=1,
 	if (is.null(pdata))
 		stop("Object 'polys' must have a 'PolyData' attribute containg fields:\n\t'PID' and 'SID' along with some label identifier.")
 	#if (!is.element("ID",colnames(pdata)))
-	#	pdata$ID = PBSmapping:::.createIDs(pdata,aflds)
+	#	pdata$ID = .createIDs(pdata,aflds)
 
 	## User might prefer to find events in are polygons rather than
 	## rely on combinations of major-minor-locality
@@ -1405,8 +1418,8 @@ plotLocal = function(dat, area, aflds=NULL, pcat=0.95, cpue=FALSE, powr=1,
 		## mirror routine in 'findEP'
 		locflds  = intersect(c("major","minor","locality"), colnames(pdata))
 		locflds  = intersect(locflds, colnames(dat))
-		dat$ID   = PBSmapping:::.createIDs(dat, locflds)
-		pdata$ID = PBSmapping:::.createIDs(pdata,  locflds)
+		dat$ID   = .createIDs(dat, locflds)
+		pdata$ID = .createIDs(pdata,  locflds)
 	}
 
 	if (grepl("ph[[:alnum:]]|gfm", substring(datnam,1,3)))
@@ -1512,14 +1525,18 @@ plotLocal = function(dat, area, aflds=NULL, pcat=0.95, cpue=FALSE, powr=1,
 		#topcat = unlist(formatCatch(topN$catT,3))
 		#legtxt = paste0(topcat," - ",1:nrow(topN),". ",topN$name)
 		if (plot) {
-			fout = fout.e = paste0(outnam,".",ff)
+			fout.e = paste0(outnam,".",ff)
 			for (l in lang) {  ## could switch to other languages if available in 'linguaFranca'.
 				changeLangOpts(L=l)
-				fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
+				#fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
+				fout = switch(l, 'e' = paste0("./english/",fout.e), 'f' = paste0("./french/",fout.e) )
 				topcat = unlist(formatC(topN$catT,3,format="fg",big.mark=options()$big.mark))
 				legtxt = paste0(topcat, " - ", 1:nrow(topN), switch(l,'e'=". ",'f'=", "), linguaFranca(topN$name,l,localnames=TRUE))
 ##legtest<<-topN$name
-				if (png) png(filename=paste0(fout,".png"), width=PIN[1], height=PIN[2], units="in", res=pngres)
+				if (png) {
+					clearFiles(paste0(fout,".png"))
+					png(filename=paste0(fout,".png"), width=PIN[1], height=PIN[2], units="in", res=pngres)
+				}
 				plotMap(area, type="n", plt=c(0.06,0.99,0.06,0.99), 
 					xlim=xlim, ylim=ylim, mgp=c(2.2,0.5,0), cex.axis=1.2, cex.lab=1.5)
 				if (showAll)
@@ -1819,7 +1836,7 @@ plotTertiary = function(x=c(100,5,25,10,50), pC=c(0.5,0.5), r=0.5,
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotTertiary
 
 
-## preferDepth--------------------------2023-07-27
+## preferDepth--------------------------2024-10-24
 ##  Plot histogram showing depth-of-capture
 ##  Modified code to make use of the map object (RH 230727)
 ## ---------------------------------------------RH
@@ -1874,7 +1891,6 @@ preferDepth = function(strSpp="410", fqtName="pht_fdep.sql", dbName="PacHarvest"
 	save("effort",file=paste0("effort.",substring(gsub("-","",Sys.Date()),3),".rda")) ## (RH 210408)
 	frame(); addLabel(.5,.5,"Effort loaded",col="darkgreen",cex=1.2)
 }
-
 ##.preferDepth.getDepth-----------------2024-02-29
 .preferDepth.getDepth <- function()
 {
@@ -1995,10 +2011,17 @@ preferDepth = function(strSpp="410", fqtName="pht_fdep.sql", dbName="PacHarvest"
 	if (is.null(area) || group) area <- 0 else area <- sort(unique(dat$area)); nar <- length(area);
 
 	plotname = paste0("dep", spp, paste0("-d(",paste0(XLIM,collapse="-"),")"),
-		ifelse(year==0 && is.null(YEAR),"",paste0("-y(",paste0(range(YEAR),collapse="-"),")")),
-		ifelse(area==0 && is.null(AREA),"",paste0("-a(",paste0(AREA,collapse="."),")")),
-		ifelse(is.null(gear),"",paste0("-g(",paste0(gear,collapse="."),")")) )
-	if (type=="FILE") plotname = sub(paste0("dep",spp),fqtName,plotname)
+		#ifelse(year==0 && is.null(YEAR),"",paste0("-y(",paste0(range(YEAR),collapse="-"),")")),
+		#ifelse(area==0 && is.null(AREA),"",paste0("-a(",paste0(AREA,collapse="."),")")),
+		#ifelse(is.null(gear),"",paste0("-g(",paste0(gear,collapse="."),")")) )
+		ifelse(year==0 && is.null(YEAR),"",paste0("-y(",texThatVec(YEAR),")")),
+		ifelse(area==0 && is.null(AREA),"",paste0("-a(",texThatVec(AREA),")") ),
+		ifelse(is.null(gear),"",paste0("-g(",texThatVec(gear),")") )
+	)
+	plotname = gsub(" and ", ",", plotname)
+	#if (type=="FILE") plotname = sub(paste0("dep",spp),fqtName,plotname)
+	if (type=="FILE") plotname = paste0(plotname, "-(", fqtName, ")")
+#browser();return()
 	packList("plotname","PBStool",tenv=.PBStoolEnv)
 	nrow <- max(nyr,nar); ncol <- min(nyr,nar);
 	if (nyr>=nar) { ifac <- year; jfac <- area; yba <- TRUE }
@@ -2010,14 +2033,17 @@ preferDepth = function(strSpp="410", fqtName="pht_fdep.sql", dbName="PacHarvest"
 		else if (act=="png") png=TRUE
 		else if (act=="wmf") wmf=TRUE
 	}
-	fout = fout.e = plotname
+	fout.e = plotname
 	for (l in ttcall(lang)) {
 		changeLangOpts(L=l)
-		fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
+		#fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
+		fout = switch(l, 'e' = paste0("./english/",fout.e), 'f' = paste0("./french/",fout.e) )
 		if (eps)
 			postscript(file=paste(fout,"eps",sep="."),width=10,height=6*nrow^0.25,horizontal=FALSE,paper="special")
-		else if (png)
+		else if (png) {
+			clearFiles(paste0(fout,".png"))
 			png(filename=paste(fout,"png",sep="."), width=10, height=6*nrow^0.25, units="in", res=400)
+		}
 		else if (wmf && .Platform$OS.type=="windows")
 			do.call("win.metafile",list(filename=paste(fout,"wmf",sep="."),width=10,height=6*nrow^0.25))
 		else resetGraph()
@@ -2205,12 +2231,12 @@ zapHoles <- function(pset){
 	flds=names(pset); key=c("PID","SID")
 	if (any(match(key,flds,nomatch=0)==0)) return(pset) # no holes to zap (need PID and SID)
 	atts=attributes(pset); atts=atts[!is.element(names(atts),c("names","row.names"))]
-	pset$index=PBSmapping:::.createIDs(pset,key,fastIDdig=3)
+	pset$index=.createIDs(pset,key,fastIDdig=3)
 	cent=calcCentroid(pset,rollup=3)
-	cent$index=PBSmapping:::.createIDs(cent,key,fastIDdig=3)
+	cent$index=.createIDs(cent,key,fastIDdig=3)
 	cent$area=cent$hole=rep(0,nrow(cent)); cent$hole=as.logical(cent$hole)
 	areas=calcArea(pset,rollup=3)
-	areas$index=PBSmapping:::.createIDs(areas,key,fastIDdig=3)
+	areas$index=.createIDs(areas,key,fastIDdig=3)
 	z=match(cent$index,areas$index)
 	cent$area[z]=areas$area[z]
 	cent$hole[z]=(areas$area<0)[z]
@@ -2219,7 +2245,7 @@ zapHoles <- function(pset){
 	xio=match(icent$X,ocent$X,nomatch=0)
 	yio=match(icent$Y,ocent$Y,nomatch=-1)
 	zio=xio==yio
-	zap=icent[zio,]; zap$index=PBSmapping:::.createIDs(zap,key,fastIDdig=3)
+	zap=icent[zio,]; zap$index=.createIDs(zap,key,fastIDdig=3)
 	pset=pset[!is.element(pset$index,zap$index),flds]
 	atts$keep=cent[!is.element(cent$index,zap$index),]
 	atts$zap=zap

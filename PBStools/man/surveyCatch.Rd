@@ -7,7 +7,7 @@
   Query the \code{GFBioSQL} database for survey catches of the specified species.
 }
 \usage{
-surveyCatch(strSpp="396", spath=.getSpath(), gfbdat=NULL, sql=TRUE,
+surveyCatch(strSpp="396", spath=.getSpath(), gfbdat=NULL, sql=FALSE,
    hadley=FALSE, catDir=getwd(), tabDir="./tables", datDir="./data")
 }
 \arguments{
@@ -40,7 +40,7 @@ surveyCatch(strSpp="396", spath=.getSpath(), gfbdat=NULL, sql=TRUE,
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
   \emph{locus opus}: Remote office, Vancouver BC\cr
-  Last modified \code{Rd: 2024-02-29}
+  Last modified \code{Rd: 2024-10-28}
 }
 \seealso{
 In package \pkg{PBStools}:\cr
