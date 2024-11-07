@@ -18,7 +18,7 @@
 ## Matrix indices: i=year, j=major, k=fid, l='spp'
 ## Arguments definitions appear below:
 ## ---------------------------------------------RH
-buildCatch=function(
+buildCatch <- function(
    dbdat,                ## List object of landing records from eight DFO databases
    strSpp="396",         ## Hart species code for the rockfish to be reconstructed (RRF)
    orfSpp="TRF",         ## Field name of the denominator in the ratio of RRF to other rockfish (usually ORF but can be TRF or POP if these are more appropriate)
@@ -160,7 +160,7 @@ buildCatch=function(
 		## pD = Counter for plotDiag diagnostics
 		## Function to convert numbers to proportions
 		## ------------------------------------------
-		pcalc=function(x){if (all(x==0)) rep(0,length(x)) else x/sum(x)}
+		pcalc <- function(x){if (all(x==0)) rep(0,length(x)) else x/sum(x)}
 		sysyr=as.numeric(substring(Sys.time(),1,4)) ## maximum possible year
 
 		if (diagnostics){
@@ -2573,7 +2573,7 @@ buildCatch=function(
 ## plotDiag-----------------------------2017-10-12
 ## Plot diagnostic data for catch reconstructions.
 ## ---------------------------------------------RH
-plotDiag =function(x, description="something",
+plotDiag  <- function(x, description="something",
 	col=c("red","coral","gold","green2","skyblue","blue","blueviolet","purple4"),...)
 {
 	if (dev.cur()>1) { oldpar=par(no.readonly=TRUE); on.exit(par(oldpar)) }
@@ -2624,18 +2624,19 @@ plotDiag =function(x, description="something",
 	#eval(parse(text="PBStool$pD <<- pD +1"))
 	ttget(PBStool); PBStool$pD <- pD + 1; ttput(PBStool)  # increment number of diagnostic plot
 #browser();return()
-	invisible() }
+	invisible()
+}
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotDiag
 
 
 ## plotGREFS----------------------------2024-10-24
 ## Plot gamma for reference years by fishery.
 ## ---------------------------------------------RH
-plotGREFS = function(dat, years=1996:2019, majors=3:9, fid=1,
+plotGREFS <- function(dat, years=1996:2019, majors=3:9, fid=1,
    strSpp="394", addRGM=FALSE, onefig=FALSE, vlines, rlines, legpos, 
    png=FALSE, pngres=400, PIN=c(12,9), lang="e")
 {
-	calcRGM = function(x) { ## running geometric mean
+	calcRGM <- function(x) { ## running geometric mean
 		mess = paste0("calcGM(x[1:",1:length(x),"])")
 		RGM  = sapply(mess,function(y){eval(parse(text=y))})
 		return(as.vector(RGM))
@@ -2729,7 +2730,7 @@ plotGREFS = function(dat, years=1996:2019, majors=3:9, fid=1,
 ## Plot reconstructed catch using barplots
 ## stacked by PMFC area.
 ## ---------------------------------------------RH
-plotRecon = function(dat=cat440rec, strSpp="440", major=c(1,3:9), fidout=10, 
+plotRecon <- function(dat=cat440rec, strSpp="440", major=c(1,3:9), fidout=10, 
    years=1918:2018, xlab=seq(1920,2050,5), yrs.rec=attributes(dat)$yrs.rec,
    ymax=NULL, shade=FALSE, shadier=FALSE, figDir=getwd(), timestamp="",
    png=FALSE, pngres=400, eps=FALSE, wmf=FALSE, PIN=c(10,5), lang=c("e","f"),
@@ -2800,7 +2801,7 @@ plotRecon = function(dat=cat440rec, strSpp="440", major=c(1,3:9), fidout=10,
 					polygon(panc[c(1,1,nanc,nanc)]+c(-1,-1,0,0),c(0,rep(par()$usr[4],2),0),border=FALSE,col=lucent("blue",ifelse(shadier,0.1,0.05)))
 					#polygon(panc[c(1,1,nanc,nanc)]+c(-1,-1,0,0),c(0,rep(par()$usr[4],2),0),border=FALSE,col=ifelse(shadier,"aliceblue","#FAFCFF"))
 
-				getRange = function(xyrs) {
+				getRange <- function(xyrs) {
 					if (is.list(xyrs))
 						xrange = max(sapply(xyrs,function(x){min(x,na.rm=TRUE)})) : min(sapply(xyrs,function(x){max(x,na.rm=TRUE)}))
 					else
@@ -2905,7 +2906,7 @@ plotRecon = function(dat=cat440rec, strSpp="440", major=c(1,3:9), fidout=10,
 ##  to remove non-zero catches of the RRF (landed+discard).
 ##  This facilitates crossTab queries for data summaries.
 ## ---------------------------------------------RH
-quickCat = function(dat, strSpp="000", removeSM=TRUE)  ## incorporated revampCat
+quickCat <- function(dat, strSpp="000", removeSM=TRUE)  ## incorporated revampCat
 {
 	flds = colnames(dat)
 	if (removeSM) ## seamounts
@@ -2978,7 +2979,7 @@ quickCat = function(dat, strSpp="000", removeSM=TRUE)  ## incorporated revampCat
 ## Query GFBioSQL for survey catch and summarise
 ## catches by year and PMFC area.
 ## ---------------------------------------------RH
-surveyCatch = function(strSpp="396", spath=.getSpath(), gfbdat=NULL, sql=FALSE,
+surveyCatch <- function(strSpp="396", spath=.getSpath(), gfbdat=NULL, sql=FALSE,
    hadley=FALSE, catDir=getwd(), tabDir="./tables", datDir="./data")
 {
 	bigdate = Sys.Date(); numdate = substring(gsub("-","",bigdate),3)
@@ -3071,7 +3072,8 @@ surveyCatch = function(strSpp="396", spath=.getSpath(), gfbdat=NULL, sql=FALSE,
 ## Remove seamount records use combinations of 
 ## major, minor, and locality codes.
 ## ---------------------------------------------RH
-zapSeamounts = function(dat, only.mark=FALSE) {
+zapSeamounts <- function(dat, only.mark=FALSE)
+{
 	seamounts = t(data.frame(
 		heck=c(3,24,11), eickelberg=c(3,24,12), union=c(4,27,5), dellwood=c(5,11,8), bowie=c(9,31,10),
 		pratt=c(10,33,6), surveyor=c(10,33,7), durgin=c(10,33,8), murray=c(10,40,4), cowie=c(10,40,5),

@@ -10,6 +10,12 @@ Authors: RH  = Rowan Haigh
          BK  = Brian Krishka
 ------------------------------
 
+1.43.3 (2024-11-07)  [Rcheck=T, Rbuild=T]
+  * R code
+    + Forgot to update function `.plotDev' to use english subdirectory for figure files (RH 241029)
+    + Removed `PBSmodelling:::' from dot function calls as they are now exported from PBSmodelling_2.69.4 namespace (RH 241107)
+    + Changed all function assignments from `=' to `<-' (RH 241107)
+
 1.43.2 (2024-10-28)  [Rcheck=T, Rbuild=T]
   * Documentation
     + Fixed a number of problematic Rd files (RH 241028)

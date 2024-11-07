@@ -1,5 +1,5 @@
 ##==============================================================================
-## Module 1: Borrowed code from other packages
+## Nodule 1: Borrowed code from other packages
 ##-----Rendered as hidden functions-----
 ##  .ss3.readdat....Read Stock Synthesis (version 3.30) data file into list object in R.
 ##===============================================================================
@@ -11,7 +11,7 @@
 ##  Ian G. Taylor, Yukio Takeuchi, Z. Teresa A'mar, 
 ##  Chris J. Grandin, Kelli F. Johnson, Chantel R. Wetzel
 ##-----------------------------------------r4ss
-.ss3.readdat = function (file, verbose=TRUE, echoall=FALSE, section=NULL) 
+.ss3.readdat <- function (file, verbose=TRUE, echoall=FALSE, section=NULL) 
 {
 	if (verbose) {
 		message("Running borrowed version of SS_readdat_3.30")
@@ -33,7 +33,7 @@
 		return()
 	}
 
-	get_comments = function (dat, defaultComments=NULL) 
+	get_comments <- function (dat, defaultComments=NULL) 
 	{
 		dat <- sapply(dat, "trimws")
 		names(dat) <- NULL

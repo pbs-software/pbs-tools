@@ -27,7 +27,7 @@
 ##  Calculate CV of ages based on age or length data.
 ##  Runs SQL query 'gfb_ages_read.sql' at least once.
 ## ---------------------------------------------RH
-calcCVage = function(dat, read_true=1, read_obs=NULL, cvtype="age", Amax=50,
+calcCVage <- function(dat, read_true=1, read_obs=NULL, cvtype="age", Amax=50,
    min.ages=1:6, min.cv=0.25, smooth=FALSE,
    plot=TRUE, png=FALSE, pngres=400, PIN=c(8,6), outnam, lang=c("e","f"))
 {
@@ -164,7 +164,7 @@ calcCVage = function(dat, read_true=1, read_obs=NULL, cvtype="age", Amax=50,
 # Calculate a moving average using a fixed
 # period occurring every x units.
 #-----------------------------------------------RH
-calcMA = function(x,y,y2,period=270,every=10)
+calcMA <- function(x,y,y2,period=270,every=10)
 {
 	xclass = class(x); yclass = class(y)  # get all classes of x & y
 	xallow = c("numeric","integer","ts","POSIXct","POSIXlt","Date")
@@ -203,13 +203,13 @@ calcMA = function(x,y,y2,period=270,every=10)
 ## Compare age frequencies using discrete or
 ## cumulative distribution plots.
 ## ---------------------------------------------RH
-compAF=function(x, year=2003, sex=2, amax=40, pfld="wp",
+compAF <- function(x, year=2003, sex=2, amax=40, pfld="wp",
    png=FALSE, pngres=400, PIN=c(10,7.5),
    outnam, clrs=c("red","black"), ltys=1, 
    type="cumul", fac="len", lang=c("e","f"))
 {
 	if (length(x)==0) stop("Supply a named list for x")
-	std   = function(x){x/sum(x)}
+	std   <- function(x){x/sum(x)}
 	ncomp = length(x)
 	nsex  = length(sex)
 	ntype = length(type)
@@ -237,7 +237,7 @@ compAF=function(x, year=2003, sex=2, amax=40, pfld="wp",
 		}
 #browser();return()
 		if (ntype==1 && nsex==1) {
-			rc = PBSmodelling:::.findSquare(nyear) ## .findSquare no longer exported from PBSmodelling namespace
+			rc = .findSquare(nyear) ## .findSquare no longer exported from PBSmodelling namespace
 			np = 0  ## keep track of # plots
 			par(mfrow=rc, mar=c(0,0,0,0), oma=c(4,4.75,3,0.5), mgp=c(1.6,0.5,0))
 		} else {
@@ -328,7 +328,7 @@ compAF=function(x, year=2003, sex=2, amax=40, pfld="wp",
 ## compBmsy-----------------------------2024-10-24
 ## Compare biomass posteriors relative to Bmsy or Bavg
 ## ---------------------------------------------RH
-compBmsy = function(Bspp, spp="POP", Mnams=c("Est M","Fix M"),
+compBmsy <- function(Bspp, spp="POP", Mnams=c("Est M","Fix M"),
    ratios=c(0.4,0.8), oratios=NULL, t.yr=2018,
    quants=c(0.05,0.25,0.5,0.75,0.95),
    zones = c("Critical","Cautious","Healthy"),
@@ -342,7 +342,7 @@ compBmsy = function(Bspp, spp="POP", Mnams=c("Est M","Fix M"),
    boxlim=NULL, add=FALSE, lang=c("e","f"), ...)
 {
 	oldpar = par(no.readonly=TRUE); oldpso = grDevices::ps.options()
-	ciao = function() {
+	ciao <- function() {
 		par(oldpar)
 		mess = paste("grDevices::ps.options(",paste(paste(names(oldpso),sapply(oldpso,deparse),sep="="),collapse=","),")",sep="")
 		eval(parse(text=mess))
@@ -516,7 +516,7 @@ compBmsy = function(Bspp, spp="POP", Mnams=c("Est M","Fix M"),
 ##  For example, compare annual length distributions
 ##  among surveys series or commercial gears.
 ## -----------------------------------------PJS/RH
-compLen = function(dat, strSpp, fld="len", lbin=1, sex=c(2,1),
+compLen <- function(dat, strSpp, fld="len", lbin=1, sex=c(2,1),
    gfld="SSID", gval=list(16,1,4), yrs, ttype, stype, scat, exlax,
    strat=FALSE, boot=FALSE, R=10, bxpsep=0.2, bxpcol="black", 
    ylim=NULL, legpos=c(0.025,0.4), stock.name, outnam,
@@ -690,7 +690,7 @@ compLen = function(dat, strSpp, fld="len", lbin=1, sex=c(2,1),
 						ydat$plbin = apply(ydat[,c("pbin","lbin")],1,prod)
 						Lest = sum(ydat$plbin)  ## need to bootstrap this procedure
 
-						Lboot = function(Ydat,R) {
+						Lboot <- function(Ydat,R) {
 							Lsamp = numeric()
 							for (r in 1:R) {
 								jdat = split(Ydat,Ydat$GC)  ## split by Grouping Code (stratum)
@@ -784,7 +784,7 @@ compLen = function(dat, strSpp, fld="len", lbin=1, sex=c(2,1),
 ## compVB-------------------------------2024-10-24
 ## Compare fitted von B curves using parameters.
 ## ---------------------------------------------RH
-compVB = function(dat, index, A=1:40, subset=list(sex=c("Male","Female")), 
+compVB <- function(dat, index, A=1:40, subset=list(sex=c("Male","Female")), 
    col=c("blue","green4","red"), lty=c(1,2,3), ymax,
    outnam="compVB-RSR", png=FALSE, pngres=400, lang=c("e","f"), ...)
 {
@@ -866,7 +866,7 @@ compVB = function(dat, index, A=1:40, subset=list(sex=c("Male","Female")),
 ## compVBpars---------------------------2024-10-24
 ##  Compare MCMC derived parameters from von Bertalanffy model
 ## ---------------------------------------------RH
-compVBpars = function(bfiles, prefix="vbstan.barf.", 
+compVBpars <- function(bfiles, prefix="vbstan.barf.", 
    pnams=c("linf","k","t0"), redo.QVB=TRUE, quants=c(0.05,0.25,0.5,0.75,0.95),
    bcol=c("orange", "green4"), bgrp=c("female","male"), 
    outnam, png=FALSE, pngres=400, PIN=c(8,8), lang=c("e","f"))
@@ -956,7 +956,7 @@ compVBpars = function(bfiles, prefix="vbstan.barf.",
 ##    ZNO = ZN Outside
 ##    ZNH = ZN + Halibut
 ## ---------------------------------------------RH
-createMA =function(yrs=1979:2024, strSpp="POP", addletters=TRUE, gears="TRW")
+createMA  <- function(yrs=1979:2024, strSpp="POP", addletters=TRUE, gears="TRW")
 {
 	dfo.action = dfo.quota = as.list(rep(NA,length(yrs)))
 	names(dfo.action) = names(dfo.quota) = yrs
@@ -2089,12 +2089,12 @@ createMA =function(yrs=1979:2024, strSpp="POP", addletters=TRUE, gears="TRW")
 ## type = "cverr"  : use a vector of CV error-at-age
 ## type = "observe": frequency of ages observed per age class
 ## ---------------------------------------------RH
-makeAgeErr = function(type="simple", strSpp, sql=FALSE,
+makeAgeErr <- function(type="simple", strSpp, sql=FALSE,
    Amax=45, ondiag=0.8, offdiag=0.1, corner=0.9,
    Ndiff=5, CV, Noff=1, less=0, more=0,
    png=FALSE, ptype="bubble", lang=c("e","f"))
 {
-	make.errtab = function(errmat, Ndiff) {
+	make.errtab <- function(errmat, Ndiff) {
 		Amax = dim(errmat)[1]
 		errtab = array(0,dim=c(Amax,1+Ndiff*2),dimnames=list(obs=1:Amax, diff=-Ndiff:Ndiff))
 		for (i in 1:Amax) {
@@ -2268,11 +2268,11 @@ makeAgeErr = function(type="simple", strSpp, sql=FALSE,
 #if(i==15){browser();return()}
 			ages[[ii]] = as.vector(unlist(agelst[iii])) }
 		}
-		f = function(x, n){ x / 2^(1:n)} ## halving function (https://stackoverflow.com/questions/53872440/divide-a-number-and-each-successive-answer-x-times-in-r)
+		f <- function(x, n){ x / 2^(1:n)} ## halving function (https://stackoverflow.com/questions/53872440/divide-a-number-and-each-successive-answer-x-times-in-r)
 
 #par(mfcol=c(10,5),mar=c(0,0,0,0),oma=c(1,1,1,1))
 
-		expand.alen=function(x, alen, less=2, more=10)
+		expand.alen <- function(x, alen, less=2, more=10)
 		{
 			amore = c(max(1,(min(x)-less)):(max(x)+more))
 			pmore = rep(1,length(amore))
@@ -2384,7 +2384,7 @@ makeAgeErr = function(type="simple", strSpp, sql=FALSE,
 ##   pngres    - resolution (pixels/inch) for PNG figure
 ##   PIN       - output size (inches) specifying width and height for PNG figure.
 ## ------------------------------------------SA/RH
-plotAgeErr = function(dat, nsamp, xlim=NULL, ylim=NULL, jitter=0.25, seed=42, 
+plotAgeErr <- function(dat, nsamp, xlim=NULL, ylim=NULL, jitter=0.25, seed=42, 
    png=FALSE, pngres=400, PIN=c(8,8), lang=c("e","f"))
 {
 	opar = par(no.readonly=T); on.exit(par(opar))
@@ -2499,7 +2499,7 @@ plotAgeErr = function(dat, nsamp, xlim=NULL, ylim=NULL, jitter=0.25, seed=42,
 ##  WHEN MC.GEAR IN ('LONGLINE') THEN 5
 ##  WHEN MC.GEAR IN ('LONGLINE OR HOOK AND LINE','TRAP OR LONGLINE OR HOOK AND LINE') THEN 8
 ## ---------------------------------------------RH
-plotBTMW = function(dat, strSpp="417", years=1996:2018, major=list('BC'=3:9), 
+plotBTMW <- function(dat, strSpp="417", years=1996:2018, major=list('BC'=3:9), 
    glist=list(gear=c(1:4)), removeSM=FALSE, ymax,
    png=FALSE, pngres=400, PIN=c(8,6) , lang=c("e","f"))
 {
@@ -2675,7 +2675,7 @@ plotBTMW = function(dat, strSpp="417", years=1996:2018, major=list('BC'=3:9),
 ## Plot mean weight of stocks and individual areas
 ## that occur in the bigger stock areas.
 ## ---------------------------------------------RH
-plotMW = function(dat, xlim, ylim, outnam="Mean-Weight-Compare",
+plotMW <- function(dat, xlim, ylim, outnam="Mean-Weight-Compare",
    outcast, png=FALSE, lang=c("e","f"))
 {
 	## Create a subdirectory called `french' for French-language figures
@@ -2738,7 +2738,7 @@ plotMW = function(dat, xlim, ylim, outnam="Mean-Weight-Compare",
 ##  RH 230418: Modified code to accept multi-area quantiles from 'load_extra_mcmc.r'
 ##  RH 230831: Added option to label select years (like Adam Langley)
 ## -----------------------------------------AME/RH
-plotSnail=function (BoverBmsy, UoverUmsy, model="SS", yrs=1935:2023,
+plotSnail <- function (BoverBmsy, UoverUmsy, model="SS", yrs=1935:2023,
    p=c(0.05,0.95), xLim=NULL, yLim=NULL, Lwd=1.5, ngear=1,
    Cnames, assYrs=NULL, outs=FALSE, labYrs=NULL,  ## outs = outliers
    ptypes="win", pngres=400, PIN=c(8,6), onepanel=TRUE, subarea, add=FALSE,
@@ -2888,7 +2888,7 @@ plotSnail=function (BoverBmsy, UoverUmsy, model="SS", yrs=1935:2023,
 			do.call("win.metafile", list(filename=paste0(fout,".wmf"), width=PIN[1], height=PIN[2]))
 		}
 
-		rc = if (onepanel || (!missing(subarea) && length(subarea)==1)) c(1,1) else PBSmodelling:::.findSquare(narea)
+		rc = if (onepanel || (!missing(subarea) && length(subarea)==1)) c(1,1) else .findSquare(narea)
 		if (!add)
 			expandGraph(mfrow=rc, mar=c(3.5,3.5,1,1), oma=c(0,0,0,0), mgp=c(2,0.5,0))
 
@@ -2990,11 +2990,11 @@ plotSnail=function (BoverBmsy, UoverUmsy, model="SS", yrs=1935:2023,
 ##  zflds = new fields to move to end of file to save PJS 
 ##          having to reorder his database all the time
 ## ---------------------------------------------RH
-processBio = function(dat=PBSdat, strSpp, addsrfa=TRUE, 
+processBio <- function(dat=PBSdat, strSpp, addsrfa=TRUE, 
    addsrfs=TRUE, addpopa=TRUE, addstock=TRUE, addsort=TRUE,
    useSM=FALSE, maxrows=5e4, zflds=c("ssrc","AC","FOSTID"))
 {
-	f=function(x){format(x,scientific=FALSE,big.mark=",")}
+	f <- function(x){format(x,scientific=FALSE,big.mark=",")}
 	if (!useSM)
 		dat = zapSeamounts(dat)  ## remove seamount data
 	atts=attributes(dat)[setdiff(names(attributes(dat)),c("names","row.names","class"))] # extra attributes to retain
@@ -3091,7 +3091,7 @@ processBio = function(dat=PBSdat, strSpp, addsrfa=TRUE,
 ## Process PBSdat created by call to `fos_map_density.sql'
 ## to create a map object for stock assessment.
 ## ---------------------------------------------RH
-processMap = function(dat=PBSdat, strSpp, prefix="map", useSM=FALSE)
+processMap <- function(dat=PBSdat, strSpp, prefix="map", useSM=FALSE)
 {
 	if (!useSM)
 		dat = zapSeamounts(dat)  ## remove seamount data
@@ -3143,7 +3143,7 @@ processMap = function(dat=PBSdat, strSpp, prefix="map", useSM=FALSE)
 ## including mean age over time.
 ## Suggested by PJS to detect changes in age.
 ## -----------------------------------------PJS/RH
-quantAges =function(bioDat, dfld="age", afld="major", tfld="year", 
+quantAges  <- function(bioDat, dfld="age", afld="major", tfld="year", 
    type="time", major=3:9, years=1990:2018, ylim=c(0,35), strSpp="RSR",
    outnam="Quant-Age", png=FALSE, pngres=400, PIN=c(8,8),
    scat, lang=c("e","f"))  # types: time, area
@@ -3313,7 +3313,7 @@ quantAges =function(bioDat, dfld="age", afld="major", tfld="year",
 ## fitting indices while not removing the majority of the signal)
 ## and to calculate CV process error from RSS at optimal DF.
 ## ---------------------------------------------RH
-splineCPUE = function(dat, ndf=50, strSpp="ZZZ", ufld="cpue",
+splineCPUE <- function(dat, ndf=50, strSpp="ZZZ", ufld="cpue",
    png=FALSE, pngres=400, PIN=c(8,8), lang=c("e","f"), ...)
 {
 	colnames(dat) = sub("[Yy]ear(s)?","year",colnames(dat))
@@ -3406,7 +3406,7 @@ splineCPUE = function(dat, ndf=50, strSpp="ZZZ", ufld="cpue",
 ## tabAmeth-----------------------------2024-05-02
 ##  Tabulate ageing error structures available in bio123.
 ## ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~RH
-tabAmeth = function(dat)
+tabAmeth <- function(dat)
 {
 	dat  = dat[dat$age>0 & !is.na(dat$age),]
 	tdat = split(dat, dat$ttype)
@@ -3462,7 +3462,7 @@ tabAmeth = function(dat)
 ## tabOtos------------------------------2024-07-31
 ##  Tabulate otoliths available and aged.
 ## ---------------------------------------------RH
-tabOtos = function(strSpp="123", fpath=getwd())
+tabOtos <- function(strSpp="123", fpath=getwd())
 {
 	clearFiles( c(paste0(c(rep("otos",5),rep("aged",5)),"-",c("SSID","ttype","gear","major","major-comm"),".csv"), paste0("oto",strSpp,".rda")) )
 

@@ -68,7 +68,7 @@
 ##                   Current GF server assigned a new IP address on the network to move it to the new subnet.
 ## RH: 2016-11-28 -- DFO phased out Windows 2003 servers; new server supports SQL Server 2008 and 2016
 ## RH: 2015-11-30 -- Virtualization of SVBCPBSGFIIS
-.PBSserver = c(
+.PBSserver <- c(
   GFDB="10.114.52.8",
   DFBCV9TWVASP001="10.114.52.8",
   SVBCPBSGFIIS="199.60.94.98",
@@ -77,16 +77,16 @@
   oldSVBCPBSGFIIS="199.60.95.134",
   oldDFBCV9TWVASP001="199.60.94.30"
 )
-.rgbBlind   = list(black=c(0,0,0),orange=c(230,159,0),skyblue=c(86,180,233),bluegreen=c(0,158,115),
+.rgbBlind   <- list(black=c(0,0,0),orange=c(230,159,0),skyblue=c(86,180,233),bluegreen=c(0,158,115),
 	yellow=c(240,228,66),blue=c(0,114,178),vermillion=c(213,94,0),redpurple=c(204,121,167), white=c(255,255,255))
-.colBlind   = sapply(.rgbBlind,function(x){rgb(x[1],x[2],x[3],maxColorValue=255)})
-.colGnuplot = c("#e41a1c","#377eb8","#4daf4a","#984ea3","#ff7f00","#ffff33","#a65628","#f781bf")
+.colBlind   <- sapply(.rgbBlind,function(x){rgb(x[1],x[2],x[3],maxColorValue=255)})
+.colGnuplot <- c("#e41a1c","#377eb8","#4daf4a","#984ea3","#ff7f00","#ffff33","#a65628","#f781bf")
 
 
 ## addStrip-----------------------------2020-10-06
 ## Add a vertical colour strip as a legend.
 ## ---------------------------------------------RH
-addStrip = function (x, y, col, lab, xwidth=0.01, yheight=0.3, ...) 
+addStrip <- function (x, y, col, lab, xwidth=0.01, yheight=0.3, ...) 
 {
 	#if (dev.cur()>1) { oldpar=par(no.readonly=TRUE); on.exit(par(oldpar)) }  ## screws up par()$mfg
 	if (dev.cur()>1) { usr=par()$usr; on.exit(par(usr=usr)) }
@@ -130,7 +130,7 @@ addStrip = function (x, y, col, lab, xwidth=0.01, yheight=0.3, ...)
 ##  WAP:
 ##    TBD
 ## ---------------------------------------------RH
-adjustMajor = function(dat, strSpp="POP", plot=FALSE)
+adjustMajor <- function(dat, strSpp="POP", plot=FALSE)
 {
 	if (!strSpp %in% c("POP","YMR"))
 		stop (paste0("Function 'adjustMajor' has no rule for '", strSpp, "'"))
@@ -225,7 +225,8 @@ adjustMajor = function(dat, strSpp="POP", plot=FALSE)
 ## biteData-----------------------------2008-11-10
 ## Subsets a data matrix/frame using input vector.
 ## ---------------------------------------------RH
-biteData = function(dat,vec) {
+biteData <- function(dat,vec) 
+{
 	if (nrow(dat)==0 || is.null(vec)) return(dat)
 	fld=as.character(substitute(vec))
 	if (!any(fld==dimnames(dat)[[2]])) return(dat)
@@ -244,7 +245,8 @@ biteData = function(dat,vec) {
 ##   offset -- Added value to validate zeroes
 ##   exzero -- If TRUE, exclude zeroes
 ## ---------------------------------------------RH
-calcHM <- function (x, offset=0, exzero=TRUE) {
+calcHM <- function (x, offset=0, exzero=TRUE) 
+{
 	x <- x[!is.na(x)]
 	if (exzero) 
 		x <- x[x > 0 & !is.na(x)]
@@ -270,7 +272,7 @@ calcHM <- function (x, offset=0, exzero=TRUE) {
 ##  Change the options that control the display of
 ##  numbers based on language.
 ## ---------------------------------------------RH
-changeLangOpts = function(L="e", stringsAsFactors=FALSE)
+changeLangOpts <- function(L="e", stringsAsFactors=FALSE)
 {
 	## Assume defaults are english
 	Eopts = list(OutDec=".", big.mark=",", stringsAsFactors=stringsAsFactors)
@@ -280,14 +282,15 @@ changeLangOpts = function(L="e", stringsAsFactors=FALSE)
 #browser();return()
 }
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~changeLangOpts
-eop = function(){changeLangOpts(L="e")}  ## create short command for switching to english options
-fop = function(){changeLangOpts(L="f")}  ## create short command for switching to french  options
+eop <- function(){changeLangOpts(L="e")}  ## create short command for switching to english options
+fop <- function(){changeLangOpts(L="f")}  ## create short command for switching to french  options
 
 
 ## chewData-----------------------------2009-01-13
 ## Remove records that contribute little information to factor categories.
 ## ---------------------------------------------RH
-chewData=function(dat,fac,nmin=3,na.rm=TRUE) {
+chewData <- function(dat,fac,nmin=3,na.rm=TRUE) 
+{
 	if (nrow(dat) == 0 || is.null(fac)) return(dat)
 	fld = as.character(substitute(fac))
 	if (!any(fld == dimnames(dat)[[2]])) return(dat)
@@ -304,7 +307,8 @@ chewData=function(dat,fac,nmin=3,na.rm=TRUE) {
 ## clearFiles---------------------------2021-03-03
 ##  Check to see if file exists and keep a copy if it does before removing it.
 ## ---------------------------------------------RH
-clearFiles = function(x, archive=TRUE, archdir="./archive", short=TRUE) {
+clearFiles <- function(x, archive=TRUE, archdir="./archive", short=TRUE)
+{
 	rubbish = 0
 	for (i in x) {
 		ii = basename(i)
@@ -352,7 +356,7 @@ clearFiles = function(x, archive=TRUE, archdir="./archive", short=TRUE) {
 ## Author: Eric Vallabh Minikel (May 2, 2013)
 ## Source: https://www.cureffi.org/2013/05/02/r-equivalent-of-sql-coalesce/
 ## --------------------------------------------EVM
-coalesce = function(...)
+coalesce <- function(...)
 {
 	## convert input arguments into a list of vectors
 	input_list = list(...)
@@ -406,7 +410,7 @@ confODBC <- function(dsn="PacHarvest",server="GFDB",db="PacHarvest",
 ## Convert a crossTab object to regular matrix or data frame.
 ## Note: No longer necessary as crossTab does not use reshape.
 ## ---------------------------------------------RH
-convCT = function(CT, fn=as.matrix, colAsRowName=TRUE)
+convCT <- function(CT, fn=as.matrix, colAsRowName=TRUE)
 {
 	fnam = as.character(substitute(fn))
 	if (!is.element(fnam,c("as.matrix","as.data.frame"))) return(CT)
@@ -422,7 +426,7 @@ convCT = function(CT, fn=as.matrix, colAsRowName=TRUE)
 ## convFY-------------------------------2023-02-09
 ## Convert dates into fishing years.
 ## ---------------------------------------------RH
-convFY = function(x,startM=4)
+convFY <- function(x,startM=4)
 {
 	#if (class(x)[1]=="character" && class(try(as.Date(x),silent=TRUE))=="Date" ) 
 	if (inherits(x, "character") && inherits(try(as.Date(x),silent=TRUE), "Date") )
@@ -443,7 +447,7 @@ convFY = function(x,startM=4)
 ##  https://stackoverflow.com/questions/72591452/replace-double-by-single-backslash
 ##  Solution by G. Grothendieck
 ## ------------------------------------------GG|RH
-convUTF = function(x, guide=FALSE)
+convUTF <- function(x, guide=FALSE)
 {
 	out = character()
 	if (!missing(x)) {
@@ -483,7 +487,7 @@ convUTF = function(x, guide=FALSE)
 ## convYM-------------------------------2023-02-09
 ## Convert date limits into a vector of year-months (YYY-MM).
 ## ---------------------------------------------RH
-convYM = function(x)
+convYM <- function(x)
 {
 	#if (class(x)[1]=="character" && class(try(as.Date(x),silent=TRUE))=="Date" ) 
 	if (inherits(x, "character") && inherits(try(as.Date(x),silent=TRUE), "Date") )
@@ -505,9 +509,9 @@ convYM = function(x)
 ## convYP-------------------------------2023-02-09
 ## Convert dates into year periods.
 ## ---------------------------------------------RH
-convYP = function(x, ndays=90)
+convYP <- function(x, ndays=90)
 {
-	yearperiod=function(dchar, ndays) { # date as character string
+	yearperiod <- function(dchar, ndays) { # date as character string
 		yr=substring(dchar,1,4); YR=as.numeric(yr)
 		ddate = as.numeric(as.Date(dchar))
 		odate = as.numeric(as.Date(paste(yr,"-01-01",sep="")))
@@ -536,7 +540,7 @@ convYP = function(x, ndays=90)
 #countLines-----------------------------2013-05-07
 # Count the number of lines in an ASCII file.
 #-----------------------------------------------RH
-countLines = function(fnam,os=.Platform$OS.type)
+countLines <- function(fnam,os=.Platform$OS.type)
 {
 	if (os!="windows") stop("You're sh1t out of luck")
 	if (!file.exists(fnam)) stop("File name specified does not exist.")
@@ -551,7 +555,7 @@ countLines = function(fnam,os=.Platform$OS.type)
 ## Count number of definite vector elements (non NA)
 ## that exclude (or include) zero values.
 ## ----------------------------------------------RH
-countVec = function(x, exzero=TRUE)
+countVec <- function(x, exzero=TRUE)
 {
 	zNA = is.na(x)
 	if (!exzero)  xx = x[!zNA]
@@ -587,7 +591,7 @@ createDSN <- function(trusted=TRUE)
 ## storing figures with French text and labels.
 ## Extend this to creating an english subdirectory (RH 241022)
 ## ---------------------------------------------RH
-createFdir = function(lang, dir=".")
+createFdir <- function(lang, dir=".")
 {
 	## Create a subdirectory called `french' for French-language figures
 	if (is.element("f",lang)) {
@@ -609,7 +613,7 @@ createFdir = function(lang, dir=".")
 ## Summarize z using crosstab values y.
 ## Hadley and package 'reshape' deprecated.
 ## ---------------------------------------------RH
-crossTab = function(x=PBSdat, y=c("year","major"), 
+crossTab <- function(x=PBSdat, y=c("year","major"), 
    z="landed", func=function(x){sum(x)/1000.}, 
    na.val=999, na.str="NA", hadley=FALSE, ...)
 {
@@ -630,8 +634,8 @@ crossTab = function(x=PBSdat, y=c("year","major"),
 		if (any(grepl("character",sapply(x[,y,drop=FALSE],class)))) {
 			i = grep("character",sapply(x[,y,drop=FALSE],class))
 			x[,y[i]] = as.data.frame(apply(x[,y[i],drop=FALSE],2,function(xx){
-				xx = PBSmodelling:::.trimWhiteSpace(xx)  ## no longer exported from Namespace
-				xx[is.na(xx) | xx==""] = PBSmodelling:::.trimWhiteSpace(as.character(na.str))
+				xx = .trimWhiteSpace(xx)
+				xx[is.na(xx) | xx==""] = .trimWhiteSpace(as.character(na.str))
 				return(xx)
 			} ))
 		}
@@ -643,7 +647,7 @@ crossTab = function(x=PBSdat, y=c("year","major"),
 		xdim = sapply(X[,y,drop=FALSE],function(xx){length(.su(xx))})
 		xnam = sapply(X[,y,drop=FALSE],function(xx){.su(xx)},simplify=FALSE)
 		Z    = array(0, dim=xdim, dimnames=xnam )
-		X$ID = apply(X[,y,drop=FALSE],1,function(x){paste0(PBSmodelling:::.trimWhiteSpace(x),collapse="|")}) ## sometimes paste adds whitespace depending on format of y-values.
+		X$ID = apply(X[,y,drop=FALSE],1,function(x){paste0(.trimWhiteSpace(x),collapse="|")}) ## sometimes paste adds whitespace depending on format of y-values.
 
 		## vector summary of x by y using func (unless func returns more than one summary value)
 		Zsum = sapply(split(X[,z],X$ID),func) #,simplify=FALSE)
@@ -666,7 +670,7 @@ crossTab = function(x=PBSdat, y=c("year","major"),
 ##  Programmatically darken the colour of existing RGB values.
 ##  https://stackoverflow.com/questions/30219738/is-there-a-way-to-programmatically-darken-the-color-given-rgb-values
 ## --------------------------------------Roland|RH
-darkenRGB = function(cols, pct, add)
+darkenRGB <- function(cols, pct, add)
 {
 	##require(colorspace)
 	xyz  = apply(col2rgb(cols),1,deparse)
@@ -702,7 +706,7 @@ darkenRGB = function(cols, pct, add)
 ##  Used only for POP and YMR (Yellowmouth)
 ##  deprecated -- use adjustMajor
 ## ---------------------------------------------RH
-expand5C = function(dat)
+expand5C <- function(dat)
 {
 	dat$major_adj = dat$major
 	## Use a points in polygon routine (see bio.fields.xls for 5C polygon)
@@ -740,7 +744,7 @@ expand5C = function(dat)
 ##  Extract model posteriors from three model
 ##  platforms (Awatea, SS3, iSCAM) for clients.
 ## ---------------------------------------------RH
-extractPost = function(spc="BOR", stock="CST", assYr=2021, path=getwd(),
+extractPost <- function(spc="BOR", stock="CST", assYr=2021, path=getwd(),
    values="R", runs=1:3, rwts=rep(1,3), vers="", burnin=200, nmcmc=1200,
    model="Awatea", fleets="trawl", extra="forSomeone",
    proj=FALSE, projY1=2022, projY2=2023, catpol=1500)
@@ -750,7 +754,7 @@ extractPost = function(spc="BOR", stock="CST", assYr=2021, path=getwd(),
 	## qtab------------------------------2021-04-19
 	## Quantile tabulation summary using decimal places
 	## -----------------------------------------AME
-	qtab = function(xx.MCMC, dig=0, quants3=tcall(quants3)) {  ## dig is number of dec places
+	qtab <- function(xx.MCMC, dig=0, quants3=tcall(quants3)) {  ## dig is number of dec places
 		out = paste0( c( 
 			prettyNum(round(quantile(xx.MCMC, quants3[2]), digits=dig), big.mark=options()$big.mark),
 			" (", prettyNum(round(quantile(xx.MCMC, quants3[1]), digits=dig), big.mark=options()$big.mark),
@@ -1148,7 +1152,8 @@ extractPost = function(spc="BOR", stock="CST", assYr=2021, path=getwd(),
 ## Find nearest position in vector choice using a target point.
 ## source: ## https://stat.ethz.ch/pipermail/r-help/2008-July/167216.html
 ## ---------------------------------------------RH
-findPV = function(p,v){
+findPV <- function(p,v)
+{
 	## Using sapply allows multiple target points p
 	sapply(p, function(x,v){
 		 ## occasionally two vector points are equidistant to the target p
@@ -1164,7 +1169,7 @@ findPV = function(p,v){
 ## to fit on one page.
 ## Similar to function PBSmodelling::.findSquare
 ## ---------------------------------------------RH
-findRC = function (nf, orient="portrait") 
+findRC <- function (nf, orient="portrait") 
 {
 	sqn = sqrt(nf)
 	m = ceiling(sqn)
@@ -1180,13 +1185,15 @@ findRC = function (nf, orient="portrait")
 #fitLogit-------------------------------2009-11-09
 # Fit binomial data using logit link function
 #-------------------------------------------ARK/RH
-fitLogit = function(dat, yfld="pmat", xflds="age") { 
+fitLogit <- function(dat, yfld="pmat", xflds="age") 
+{
 	# Calculate logit regression assuming binomial error
 	dat = na.omit(dat[,c(yfld,xflds)])
 	expr=paste("glmfit = glm(",yfld,"~",paste(xflds,collapse="+"),
 		", family=binomial(link=\"logit\"), data=dat)",sep="")
 	eval(parse(text=expr))
-	return(glmfit) }
+	return(glmfit) 
+}
 
 
 ## flagIt-------------------------------2018-12-04
@@ -1198,7 +1205,7 @@ fitLogit = function(dat, yfld="pmat", xflds="age") {
 ##  n   : number of times to decrement the radius (max=5)
 ##  lab : optional label to precede the flagged coordinate
 ## ---------------------------------------------RH
-flagIt = function(a, b, A=45, r=0.2, n=1, lab, ...)
+flagIt <- function(a, b, A=45, r=0.2, n=1, lab, ...)
 {
 	xlim = par()$usr[1:2]
 	xdif = abs(diff(xlim))
@@ -1227,7 +1234,8 @@ flagIt = function(a, b, A=45, r=0.2, n=1, lab, ...)
 # Gathers data from multiple columns into key-value pairs.
 # Essentially a replacement function for tidyr::gather.
 #-----------------------------------------------RH
-gatherVals = function(x, columns){
+gatherVals <- function(x, columns)
+{
 	if (missing(columns)) {
 		columns=1:ncol(x)  ## i.e. use all columns
 	} else if (all(is.character(columns))) {
@@ -1321,7 +1329,7 @@ getData <-function(fqtName, dbName="PacHarvest", strSpp=NULL, server=NULL,
 			timeQ = round(proc.time()[1:3]-timeQ0,2) }
 		else {
 			data("species", package="PBSdata", envir=penv())
-			suni = function(x) {sort(unique(x))}
+			suni <- function(x) {sort(unique(x))}
 			alfSpp=suni(species$code[species$fish])                 ## all fish species
 			trfSpp=suni(species$code[species$rf])                   ## total rockfish species
 			orfSpp=setdiff(trfSpp,"396")                            ## other rockfish species
@@ -1400,7 +1408,7 @@ getData <-function(fqtName, dbName="PacHarvest", strSpp=NULL, server=NULL,
 			##------------------------------------------------------------
 			qnam <- paste(path,fqtName,sep="/")
 			strQ <- readLines(qnam)
-			strQ <- PBSmodelling:::.trimWhiteSpace(strQ)
+			strQ <- .trimWhiteSpace(strQ)
 			##+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 			## 2015-10-28 -- RH added code to allow insertion of other SQL files.
 			if(any(grepl("@INSERT",strQ))) {
@@ -1670,8 +1678,8 @@ getData <-function(fqtName, dbName="PacHarvest", strSpp=NULL, server=NULL,
 #-----------------------------------------------RH
 getFile <- function(..., list=character(0), path=getwd(), 
    senv=NULL, tenv=.GlobalEnv, use.pkg=FALSE, 
-   reload=FALSE, try.all.frames=FALSE, use.all.packages=FALSE) {
-
+   reload=FALSE, try.all.frames=FALSE, use.all.packages=FALSE) 
+{
 	gfnam = c(as.character(substitute(list(...))[-1L]), list)
 	if (is.null(gfnam)) return(invisible())
 	if (!is.null(senv)) {
@@ -1748,7 +1756,8 @@ getFile <- function(..., list=character(0), path=getwd(),
 		} # end if reload
 	}    # end i loop
 	junk=gc(verbose=FALSE) # garbage collection (shunt messages to junk also)
-	invisible() }
+	invisible()
+}
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~getFile
 
 
@@ -1758,7 +1767,7 @@ getFile <- function(..., list=character(0), path=getwd(),
 ##  If fnam exists as a string vector, it returns the strings.
 ##  If fnam does not exist, it simply returns itself.
 ## ---------------------------------------------RH
-getName = function(fnam)
+getName <- function(fnam)
 {
 	snam = as.character(substitute(fnam))
 	penv = parent.frame(1)
@@ -1784,7 +1793,8 @@ getName = function(fnam)
 # Code: Scripting Guy
 # URL : http://blogs.technet.com/b/heyscriptingguy/archive/2005/07/07/how-can-i-get-a-list-of-the-odbc-drivers-that-are-installed-on-a-computer.aspx
 #--------------------------------------------SG/RH
-getODBC <- function(os=.Platform$OS.type, pattern=NULL, status="Installed") {
+getODBC <- function(os=.Platform$OS.type, pattern=NULL, status="Installed")
+{
 	if (os!="windows") {
 		err="'getODBC' needs Windows OS to use Windows Scripting"
 		cat(err,"\n"); return(invisible(err)) }
@@ -1812,7 +1822,8 @@ getODBC <- function(os=.Platform$OS.type, pattern=NULL, status="Installed") {
 	if (!is.null(pattern))
 		odbcOut = odbcStat[grep(pattern,odbcStat)]
 	packList(c("odbcAll","odbcList","odbcStat","odbcOut"),target="PBStool",tenv=.PBStoolEnv)
-	invisible(odbcOut) }
+	invisible(odbcOut)
+}
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~getODBC
 
 
@@ -1886,18 +1897,20 @@ inWord = Vectorize(function(word, morpheme, prefix=FALSE, suffix=FALSE)
 #isThere--------------------------------2009-06-18
 # Check to see if object physically exists in the specified environment.
 #-----------------------------------------------RH
-isThere = function(x, envir=parent.frame()) {
+isThere <- function(x, envir=parent.frame())
+{
 	if (class(x)[1]!="character")
 		showError(paste("isThere()\n'x' needs to be a character string"),as.is=TRUE)
-	x %in% ls(envir=envir,all.names=TRUE) }
+	x %in% ls(envir=envir,all.names=TRUE)
+}
 
 
 #lenv-----------------------------------2010-05-25
 # Get the local/parent/global environment.
 #-----------------------------------------------RH 
-	lenv = function(){ sys.frame(sys.nframe()-1) } # local environment (probably the same as parent.frame())
-	penv = function(){ parent.frame() }            # parent environment
-	genv = function(){ .GlobalEnv }                # global environment
+	lenv <- function(){ sys.frame(sys.nframe()-1) } # local environment (probably the same as parent.frame())
+	penv <- function(){ parent.frame() }            # parent environment
+	genv <- function(){ .GlobalEnv }                # global environment
 
 
 ## linguaFranca-------------------------2024-09-12
@@ -2697,9 +2710,9 @@ listTables <- function (dbName, pattern=NULL, path=getwd(),
 #prime----------------------------------2010-03-25
 # Report the prime numbers given an integer vector
 #-----------------------------------------------RH
-prime = function(x=2:100)
+prime <- function(x=2:100)
 {
-	is.prime = function(xx) {
+	is.prime <- function(xx) {
 		if (xx<=1) return(FALSE)
 		else if (is.element(xx,2:3)) return(TRUE)
 		else !is.element(0,xx%%2:floor(sqrt(xx))) }
@@ -2716,7 +2729,7 @@ prime = function(x=2:100)
 ## Redefine boxplot to show quantiles (RH 150910)
 ## http://r.789695.n4.nabble.com/Box-plot-with-5th-and-95th-percentiles-instead-of-1-5-IQR-problems-implementing-an-existing-solution-td3456123.html
 ##----------------------------------------------RH
-quantBox = function (x, use.cols = TRUE, ...) ## taken from boxplot.matrix
+quantBox <- function (x, use.cols = TRUE, ...) ## taken from boxplot.matrix
 {
 	ttget(qboxplot)
 	if (rev(class(x))[1]=="matrix") {
@@ -2735,7 +2748,7 @@ quantBox = function (x, use.cols = TRUE, ...) ## taken from boxplot.matrix
 ## readClog-----------------------------2024-02-29
 ## Read a ChangeLog file and convert it to an R list.
 ## ---------------------------------------------RH
-readClog = function(fnam)
+readClog <- function(fnam)
 {
 	dat  = readLines(fnam)
 	cdat = dat[grep("^$",dat,invert=TRUE)]    ## condense dat by removing blank lines
@@ -2750,7 +2763,7 @@ readClog = function(fnam)
 	#lmod = grep("^\\s\\s[*]",cdat)
 
 	clog = list()
-	tdat = PBSmodelling:::.trimWhiteSpace(cdat)         ## remove whitespace before and after text in each line
+	tdat = .trimWhiteSpace(cdat)         ## remove whitespace before and after text in each line
 	tbrk = c(lver,length(tdat)+1)
 	for (i in 1:length(lver)) {
 		ii   = tdat[lver[i]]
@@ -2804,7 +2817,8 @@ revStr <- function(x)
 #runModules-----------------------------2012-07-10
 # runModules: Display a master GUI to display modules
 #-----------------------------------------------RH
-runModules <- function () {
+runModules <- function () 
+{
 	.runModHelper <- function() {
 		getWinVal(scope = "L");  act <- getWinAct()[1]
 		if (!exists("act") || !exists("eN")) return()
@@ -2846,7 +2860,8 @@ runModules <- function () {
 #scaleVec-------------------------------2011-09-14
 # Scales a vector to span a target minimum and maximum (see 'scalePar' & 'restorePar')
 #-------------------------------------------JTS/RH
-scaleVec = function(V, Tmin=0, Tmax=1) {
+scaleVec <- function(V, Tmin=0, Tmax=1)
+{
 	if (Tmin>Tmax) stop("Tmin > Tmax")
 	Pmin = min(V,na.rm=TRUE); Pmax=max(V,na.rm=TRUE)
 	Sval = (V - Pmin)/(Pmax - Pmin)
@@ -2854,14 +2869,16 @@ scaleVec = function(V, Tmin=0, Tmax=1) {
 	Sval = pmin(Sval, 1)
 	Snor = (2/pi) * asin(sqrt(Sval))                  # normalise to (0,1)
 	Tval = Tmin + (Tmax - Tmin) * sin(pi * Snor/2)^2  # recast to lie between Tmin and Tmax
-	return(Tval) }
+	return(Tval)
+}
 #-----------------------------------------scaleVec
 
 
 #showError------------------------------2014-10-07
 # Display error message on device surface
 #-----------------------------------------------RH
-showMessage <- function(str, type="", as.is=FALSE, err=FALSE, ...) {
+showMessage <- function(str, type="", as.is=FALSE, err=FALSE, ...)
+{
 	par0 = par(no.readonly=TRUE); on.exit(par(par0))
 	resetGraph(); expandGraph(mar=c(0,0,0,0),oma=c(0,0,0,0))
 	if (!as.is) str <- paste(strwrap(str,50),collapse="\n")
@@ -2872,19 +2889,22 @@ showMessage <- function(str, type="", as.is=FALSE, err=FALSE, ...) {
 	else msg <- paste(type,str,sep=" : ")
 	evalCall(addLabel,argu=list(x=.5,y=.5,txt=msg,cex=1.2,col="red"),...,checkpar=TRUE)
 	if (err) stop("See display",call.=FALSE) 
-	invisible()}
-
-showError=function(str, type="", as.is=FALSE, err=TRUE, ...) {
+	invisible()
+}
+showError <- function(str, type="", as.is=FALSE, err=TRUE, ...)
+{
 	setPBSoptions("showError", TRUE)
 	showMessage(str=str, type=type, as.is=as.is, err=err, ...) 
-	invisible()}
+	invisible()
+}
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~showError
 
 
 #spooler--------------------------------2008-08-21
 # Spools list objects into fields of data frames.
 #-----------------------------------------------RH
-spooler <- function(xlist,newfld="area",target){
+spooler <- function(xlist,newfld="area",target)
+{
 	targ=as.character(substitute(target))
 	if (!any(class(xlist)=="list"))
 		showError(paste("Supply a list of vectors from names available:\n\n",
@@ -2906,7 +2926,8 @@ spooler <- function(xlist,newfld="area",target){
 				expr=paste(expr,"z2=is.element(",targ,"[,\"",fld,"\"],",deparse(jj),"); ",sep="")
 				expr=paste(expr,targ,"[z1&z2,\"",newfld,"\"]=\"",val,"\"",sep="")
 				eval(parse(text=expr),envir=parent.frame(1))
-}	}	} }
+}	}	} 
+}
 
 
 #stdConc--------------------------------2011-07-15
@@ -2920,7 +2941,7 @@ spooler <- function(xlist,newfld="area",target){
 #  dUout  = denominator unit desired
 #  fac    = multiplicative factor (e.g., 75 for 75 mg)
 #-----------------------------------------------RH
-stdConc = function(dat, nUout="mg", dUout="kg", fac=1)
+stdConc <- function(dat, nUout="mg", dUout="kg", fac=1)
 {
 	oldopts = options(); on.exit(options(oldopts))
 	options(stringsAsFactors=FALSE)
@@ -2988,7 +3009,7 @@ stdConc = function(dat, nUout="mg", dUout="kg", fac=1)
 #subsetFile-----------------------------2013-05-07
 # Subsets an ASCII file every n rows (enrow).
 #-----------------------------------------------RH
-subsetFile = function(fnam,enrow=30,header=TRUE,os=.Platform$OS.type)
+subsetFile <- function(fnam,enrow=30,header=TRUE,os=.Platform$OS.type)
 {
 	if (os!="windows") stop("You're sh1t out of luck")
 	if (!file.exists(fnam)) stop("File name specified does not exist.")
@@ -3065,15 +3086,17 @@ testPch <- function (pch=1:200, ncol=10, grid=TRUE, newframe=TRUE, octal=FALSE, 
 	mtext(as.character(1:ncol), side=3, line=.4, at=(1:ncol), cex=1.3, col="blue")
 	mtext(ylab, side=2, line=1, at=yval, cex=1.3, col="red",las=1)
 	mtext(paste(ifelse(octal,"OCTAL STRINGS","PCH CHARACTERS"),"(",pch[1],"-",pch[npch],")"), side=3, line=2.2, cex=1.2)
-	invisible(yval) }
+	invisible(yval) 
+}
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~testPch
 
 
 #toUpper--------------------------------2012-09-19
 # Function to capitalise first letters of words
 #-----------------------------------------------RH
-toUpper = function(x,exclude=c("&","and","exact","or","in","on","organic","pelagic","sp.","spp.","species","undetermined","unidentified",
-   "birds","barnacles","crabs","eggs","fishes","larvae","matter","objects","remains","sample","shells","subfamily","tunicates","worms")) {
+toUpper <- function(x,exclude=c("&","and","exact","or","in","on","organic","pelagic","sp.","spp.","species","undetermined","unidentified",
+   "birds","barnacles","crabs","eggs","fishes","larvae","matter","objects","remains","sample","shells","subfamily","tunicates","worms"))
+{
 	strList = strsplit(x,split=" ")
 	strL = sapply(strList,function(x){
 		x = x[!is.element(x,"")]  # remove extra spaces
@@ -3090,40 +3113,43 @@ toUpper = function(x,exclude=c("&","and","exact","or","in","on","organic","pelag
 #ttget----------------------------------2013-01-17
 # Provide PBStools wrappers for PBSmodelling functions tget/tcall/tprint/tput/lisp
 #-----------------------------------------------RH 
-ttget   = function(...) {tget  (..., penv=parent.frame(), tenv=.PBStoolEnv)}
-ttcall  = function(...) {tcall (..., penv=parent.frame(), tenv=.PBStoolEnv)}
-ttprint = function(...) {tprint(..., penv=parent.frame(), tenv=.PBStoolEnv)}
-ttput   = function(...) {tput  (..., penv=parent.frame(), tenv=.PBStoolEnv)}
-tlisp   = function(...) {lisp  (..., pos =.PBStoolEnv)}
+ttget   <- function(...) {tget  (..., penv=parent.frame(), tenv=.PBStoolEnv)}
+ttcall  <- function(...) {tcall (..., penv=parent.frame(), tenv=.PBStoolEnv)}
+ttprint <- function(...) {tprint(..., penv=parent.frame(), tenv=.PBStoolEnv)}
+ttput   <- function(...) {tput  (..., penv=parent.frame(), tenv=.PBStoolEnv)}
+tlisp   <- function(...) {lisp  (..., pos =.PBStoolEnv)}
 
 # functions called from window description files
-.win.onClose  = function(){ ttcall(.onClose)() }
-.win.runModHelperQuit = function(){ ttcall(.runModHelperQuit)() }
+.win.onClose  <- function(){ ttcall(.onClose)() }
+.win.runModHelperQuit <- function(){ ttcall(.runModHelperQuit)() }
 
 # Provide PBSdata wrappers for PBSmodelling functions tget/tcall/tprint/tput/lisp
 #-----------------------------------------------RH 
-dtget   = function(...) {tget  (..., penv=parent.frame(), tenv=.PBSdataEnv)}
-dtcall  = function(...) {tcall (..., penv=parent.frame(), tenv=.PBSdataEnv)}
-dtprint = function(...) {tprint(..., penv=parent.frame(), tenv=.PBSdataEnv)}
-dtput   = function(...) {tput  (..., penv=parent.frame(), tenv=.PBSdataEnv)}
-dlisp   = function(...) {lisp  (..., pos =.PBSdataEnv)}
+dtget   <- function(...) {tget  (..., penv=parent.frame(), tenv=.PBSdataEnv)}
+dtcall  <- function(...) {tcall (..., penv=parent.frame(), tenv=.PBSdataEnv)}
+dtprint <- function(...) {tprint(..., penv=parent.frame(), tenv=.PBSdataEnv)}
+dtput   <- function(...) {tput  (..., penv=parent.frame(), tenv=.PBSdataEnv)}
+dlisp   <- function(...) {lisp  (..., pos =.PBSdataEnv)}
 
 #wrapText-------------------------------2008-09-17
 # Wrap, mark and indent a long text string.
 #-----------------------------------------------RH
-wrapText=function(string,width=50,prefix=c("> ","+ "),exdent=3) {
+wrapText <- function(string,width=50,prefix=c("> ","+ "),exdent=3)
+{
 	if (length(prefix)==1) prefix=c(prefix,prefix)
 	wrap=strwrap(string,width=width,prefix=prefix[2],exdent=exdent)
 	problems=c("$","^","*","(","+","|","{","[","\\","\"","?")
 	wrap[1]=sub(paste(ifelse(any(substring(prefix[2],1,1)==problems),"\\",""),
 		prefix[2],sep=""),prefix[1],wrap[1])
 	wrap=paste(paste(wrap,collapse="\n"),"\n",sep="")
-	return(wrap) }
+	return(wrap)
+}
 
 #zapDupes-------------------------------2008-12-05
 # Delete duplicated records based on specified index.
 #-----------------------------------------------RH
-zapDupes = function(dat, index) {
+zapDupes <- function(dat, index)
+{
 	if (!all(is.element(index,names(dat))==TRUE)) 
 		showError ("Choose index fields that exist in data file.")
 	atts=attributes(dat)[setdiff(names(attributes(dat)),c("names","row.names"))]
@@ -3137,28 +3163,32 @@ zapDupes = function(dat, index) {
 	dat=dat[!zD,]              # get the unique events (not duplicated)
 	attr(dat,"dupes")=dupes
 	attributes(dat)=c(attributes(dat),atts)
-	return(dat) }
+	return(dat)
+}
 
 #-----Supplementary hidden functions-----
 
 #.chooseFQT-----------------------------2007-09-20
 # Choose a file/query/table from the user-specified path
 #-----------------------------------------------RH
-.chooseFQT <- function() {
+.chooseFQT <- function() 
+{
 	path <- getWinVal()$path
 	sfiles <- list.files(path=path)
-	chooseWinVal(sfiles,"fqtName",winname=tcall(.PBSmod)$.activeWin) }
+	chooseWinVal(sfiles,"fqtName",winname=tcall(.PBSmod)$.activeWin)
+}
 
 #.flush.cat-----------------------------2011-09-30
 # Flush the cat down the console
-.flush.cat = function(...) { cat(...); flush.console(); invisible() }
+.flush.cat <- function(...) { cat(...); flush.console(); invisible() }
 
 #.grabPath------------------------------2010-06-02
 # Return the specified directory in the package 
 # tree; if win=TRUE, also set the 'path' variable 
 # in the active window.
 #-----------------------------------------------RH
-.grabPath = function(where, pkg="PBStools", win=FALSE) {
+.grabPath <- function(where, pkg="PBStools", win=FALSE)
+{
 	if (missing(where))
 		stop("\nSpecify a folder in target package")
 	pkgPath <- system.file(package = pkg)
@@ -3170,25 +3200,26 @@ zapDupes = function(dat, index) {
 	pkgList <- list(path=pkgDir)
 	if (win) 
 		try(setWinVal(pkgList, winName=tcall(.PBSmod)$.activeWin), silent=TRUE)
-	invisible(pkgDir) }
+	invisible(pkgDir)
+}
 
 # Shortcut functions:
-.getApath = function(where="admb",    pkg="PBStools", win=FALSE) { .grabPath(where, pkg, win) }
-.getEpath = function(where="examples",pkg="PBStools", win=FALSE) { .grabPath(where, pkg, win) }
-.getSpath = function(where="sql",     pkg="PBStools", win=FALSE) { .grabPath(where, pkg, win) }
-.getWpath = function(where="win",     pkg="PBStools", win=FALSE) { .grabPath(where, pkg, win) }
+.getApath <- function(where="admb",    pkg="PBStools", win=FALSE) { .grabPath(where, pkg, win) }
+.getEpath <- function(where="examples",pkg="PBStools", win=FALSE) { .grabPath(where, pkg, win) }
+.getSpath <- function(where="sql",     pkg="PBStools", win=FALSE) { .grabPath(where, pkg, win) }
+.getWpath <- function(where="win",     pkg="PBStools", win=FALSE) { .grabPath(where, pkg, win) }
 
-.setApath = function(where="admb",    pkg="PBStools", win=TRUE)  { .grabPath(where, pkg, win) }
-.setEpath = function(where="examples",pkg="PBStools", win=TRUE)  { .grabPath(where, pkg, win) }
-.setSpath = function(where="sql",     pkg="PBStools", win=TRUE)  { .grabPath(where, pkg, win) }
-.setWpath = function(where="win",     pkg="PBStools", win=TRUE)  { .grabPath(where, pkg, win) }
+.setApath <- function(where="admb",    pkg="PBStools", win=TRUE)  { .grabPath(where, pkg, win) }
+.setEpath <- function(where="examples",pkg="PBStools", win=TRUE)  { .grabPath(where, pkg, win) }
+.setSpath <- function(where="sql",     pkg="PBStools", win=TRUE)  { .grabPath(where, pkg, win) }
+.setWpath <- function(where="win",     pkg="PBStools", win=TRUE)  { .grabPath(where, pkg, win) }
 #----------------------------------------.grabPath
 
 
-## .plotDev-----------------------------2021-04-21
+## .plotDev-----------------------------2024-10-29
 ## Save plot on current devise using values from a GUI, if available.
 ## ---------------------------------------------RH
-.plotDev = function(nam=NULL, act=NULL, lang=c("e"))
+.plotDev <- function(nam=NULL, act=NULL, lang=c("e"))
 {
 	if (is.null(nam)) {
 		if (exists(".PBSmod",envir=.PBSmodEnv) && !all(substring(names(tcall(.PBSmod)),1,1)=="."))
@@ -3206,11 +3237,11 @@ zapDupes = function(dat, index) {
 	}
 	outnam = paste(nam,act,sep=".")
 	createFdir(lang)
-	fout.e = fout = outnam
+	fout.e = outnam
 	for (l in lang) {
 		changeLangOpts(L=l)
-		fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
-		morsels = list.files(switch(l,'e'=".",'f'="./french"), pattern=paste0("\\.",act))
+		fout = switch(l, 'e' = paste0("./english/",fout.e), 'f' = paste0("./french/",fout.e) )
+		morsels = list.files(switch(l,'e'="./english",'f'="./french"), pattern=paste0("\\.",act))
 		if (length(morsels)>0 && any(grepl(nam,morsels))) {
 			bites = grep(nam,morsels,value=TRUE)
 			nbite = length(bites)
@@ -3226,15 +3257,17 @@ zapDupes = function(dat, index) {
 # Return the current working directory and if win=TRUE, 
 # also set the path variable in the active window
 #-----------------------------------------------RH
-.setCWD = function(win=TRUE) {
+.setCWD <- function(win=TRUE)
+{
 	path = getwd()
 	cwdList = list(path = path)
 	if (win) setWinVal(cwdList,winName=tcall(.PBSmod)$.activeWin)
-	invisible(path) }
+	invisible(path) 
+}
 
 
 #.su------------------------------------2011-09-12
 # Shortcut for sort(unique(x))
 #-----------------------------------------------RH
-.su = function(x) { sort(unique(x)) }
+.su <- function(x) { sort(unique(x)) }
 

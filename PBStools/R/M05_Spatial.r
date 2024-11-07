@@ -102,14 +102,16 @@ calcHabitat <- function(topofile="bctopo", isob=c(150,435),
 			if (i %in% c("eps","png","wmf")) dev.off()
 		}
 	}
-	invisible(habitat) }
+	invisible(habitat)
+}
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~calcHabitat
 
 
 #calcOccur------------------------------2013-01-28
 # Calculate percent occurrence of events in PolySet
 #-----------------------------------------------RH
-calcOccur = function(polyset="qcb", events, wt=1, mess=FALSE, ioenv=.GlobalEnv) {
+calcOccur <- function(polyset="qcb", events, wt=1, mess=FALSE, ioenv=.GlobalEnv)
+{
 	assign("PBStool",list(module="M05_Spatial",call=match.call(),args=args(calcOccur),ioenv=ioenv),envir=.PBStoolEnv)
 	polyset=as.character(substitute(polyset)) #string name of PolySet object
 	events=as.character(substitute(events))   #string name of events bject
@@ -142,7 +144,8 @@ calcOccur = function(polyset="qcb", events, wt=1, mess=FALSE, ioenv=.GlobalEnv) 
 		showMessage(mess,as.is=TRUE,adj=1,x=.9,col="dodgerblue") }
 	stuff=c("pd","loc","eidpid","occur","poccur")
 	packList(stuff,"PBStool",tenv=.PBStoolEnv)
-	return(poccur) }
+	return(poccur)
+}
 #----------------------------------------calcOccur
 
 
@@ -150,7 +153,8 @@ calcOccur = function(polyset="qcb", events, wt=1, mess=FALSE, ioenv=.GlobalEnv) 
 # Determine SRF assessment areas or subareas (gullies) based on 
 # combinations of major and minor areas and localities.
 #-----------------------------------------------RH
-calcSRFA <- function(major, minor=NULL, loc=NULL, subarea=FALSE) { 
+calcSRFA <- function(major, minor=NULL, loc=NULL, subarea=FALSE)
+{ 
 	getsrfa <- function(x) {
 		i <- ifelse(is.na(x[1]),"",x[1])
 		j <- ifelse(is.na(x[2]),"",x[2])
@@ -186,7 +190,8 @@ calcSRFA <- function(major, minor=NULL, loc=NULL, subarea=FALSE) {
 		xin <- cbind(major,minor,loc) }
 	if (subarea) fn <- getsrfs else fn <- getsrfa
 	srfa <- apply(xin,1,fn)
-	return(srfa) }
+	return(srfa)
+}
 #-----------------------------------------calcSRFA
 
 
@@ -194,7 +199,7 @@ calcSRFA <- function(major, minor=NULL, loc=NULL, subarea=FALSE) {
 ## Assign a stock area designation based on species
 ## HART code and PMFC major and/or minor areas.
 ## ---------------------------------------------RH
-calcStockArea = function (strSpp, dat, stockFld="stock", gmu=TRUE)
+calcStockArea <- function (strSpp, dat, stockFld="stock", gmu=TRUE)
 {
 	if (missing(strSpp))
 		stop("Must specify a species to determine stock allocation")
@@ -319,9 +324,9 @@ calcStockArea = function (strSpp, dat, stockFld="stock", gmu=TRUE)
 # using PMFC major and minor areas, a stratifying vector,
 # and a weighting vector.
 #-----------------------------------------------RH
-calcWAParea = function (major, minor, strat, wts)
+calcWAParea <- function (major, minor, strat, wts)
 {
-	stratify = function (major,minor,strat,wts,targ.major,targ.minor) {
+	stratify <- function (major,minor,strat,wts,targ.major,targ.minor) {
 		area.good = is.element(major,targ.major) & !is.element(minor,c(0,99))
 		area.kno  = area.good & !is.element(minor,targ.minor)
 		area.bad  = is.element(major,targ.major) &  is.element(minor,c(0,99))
@@ -476,7 +481,8 @@ calcSurficial <- function(surf="qcb", hab,
 	.addAxis(xlim=xlim,ylim=ylim,tckLab=FALSE,tck=0.014,tckMinor=.007)  ## .addAxis currently not exported from PBSmapping namespace
 	box()
 	if (pix|wmf) dev.off()
-	invisible() }
+	invisible()
+}
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~calcSurficial
 
 
@@ -725,7 +731,7 @@ clarify <- function(dat, cell=c(0.1,0.075), nG=8, dSpp=3, Vmin=3, trfun,
 ## findEP-------------------------------2024-02-29
 ## Find events in polys and and add poly info to events
 ## ---------------------------------------------RH
-findEP = function(events, polys, maxRows=1e+08)
+findEP <- function(events, polys, maxRows=1e+08)
 {
 	if (!is.EventData(events))
 		stop("Object 'events' must be an EvenData set (see PBSmapping help)")
@@ -762,11 +768,11 @@ findEP = function(events, polys, maxRows=1e+08)
 ## Find holes and place them under correct parents.
 ## Can be a slow process -- set 'use.sp.pkg=TRUE' for faster execution
 ## ---------------------------------------------RH
-findHoles = function(polyset, minVerts=25, nlevs=1, use.sp.pkg=TRUE) 
+findHoles <- function(polyset, minVerts=25, nlevs=1, use.sp.pkg=TRUE) 
 {
 	on.exit(gc(verbose=FALSE))
 	## Subfunctions----------------------
-	findHope = function(X,Y,Z,use.sp=TRUE){
+	findHope <- function(X,Y,Z,use.sp=TRUE){
 		znames = names(Z)
 		slop = array(FALSE,dim=c(length(X),length(Y)),dimnames=list(hole=znames,solid=znames))
 		for (i in X){
@@ -790,7 +796,7 @@ findHoles = function(polyset, minVerts=25, nlevs=1, use.sp.pkg=TRUE)
 		}
 		return(slop)
 	}
-	ammendPoly = function(fswiss, pid, rawP, targetP) {
+	ammendPoly <- function(fswiss, pid, rawP, targetP) {
 		## Go through swiss cheese polygons and put the holes in the right place
 		for (j in 1:ncol(fswiss)) {
 			jj  = colnames(fswiss)[j]
@@ -905,7 +911,7 @@ findHoles = function(polyset, minVerts=25, nlevs=1, use.sp.pkg=TRUE)
 ## plotConcur---------------------------2024-10-24
 ## Horizontal barplot of concurrent species in tows.
 ## ---------------------------------------------RH
-plotConcur = function(strSpp="410", dbName="GFFOS", spath=.getSpath(),
+plotConcur <- function(strSpp="410", dbName="GFFOS", spath=.getSpath(),
    mindep=150, maxdep=435, major=NULL, minor=NULL, top=NULL, gear=1,
    saraSpp=c("027","034","394","410","424","435","437","440","442","453"),
    reset.mf=TRUE, eps=FALSE, png=FALSE, pngres=300, colour="topo", 
@@ -1030,7 +1036,7 @@ plotConcur = function(strSpp="410", dbName="GFFOS", spath=.getSpath(),
 ## Plot the Extent of Occurrence for a species 
 ## using a convex hull to surround events.
 ## ---------------------------------------------RH
-plotEO = function (id="lst", strSpp="453", col="red", 
+plotEO <- function (id="lst", strSpp="453", col="red", 
    xlim=c(-136,-122.5), ylim=c(48,54.8), prefix="map", 
    inarea=NULL, exarea=NULL, areafld="PMFC",
    exland=FALSE, rmXY=FALSE, rmSM=TRUE,
@@ -1222,7 +1228,7 @@ plotEO = function (id="lst", strSpp="453", col="red",
 ## plotGMA------------------------------2024-10-24
 ##  Plot the Groundfish Management Areas
 ## ---------------------------------------------RH
-plotGMA = function(gma=gma, major=major, xlim=c(-134,-123), ylim=c(48.05,54.95), 
+plotGMA <- function(gma=gma, major=major, xlim=c(-134,-123), ylim=c(48.05,54.95), 
    eps=FALSE, png=FALSE, extra.labels=NULL, isobath, strSpp,
    PIN=c(9,9), pngres=400, lang=c("e","f"))
 {
@@ -1326,7 +1332,7 @@ plotGMA = function(gma=gma, major=major, xlim=c(-134,-123), ylim=c(48.05,54.95),
 ## hab228=calcHabitat(topofile="bctopo2",isob=c(62,447),digits=2,xlim=c(-134.5,-122.5))
 ## save("hab228",file="hab228.rda")
 ## ---------------------------------------------RH
-plotHabitat = function(fnam="hab228", isob=c(62,448), col.hab="greenyellow",
+plotHabitat <- function(fnam="hab228", isob=c(62,448), col.hab="greenyellow",
    major.code, col.maj="orange", lab.maj="0AAA",
    png=FALSE, pngres=400, PIN = c(9,8.7),
    fout="daHood", lang=c("e","f"))
@@ -1384,7 +1390,7 @@ plotHabitat = function(fnam="hab228", isob=c(62,448), col.hab="greenyellow",
 ## plotLocal----------------------------2024-10-24
 ## Plot DFO fishing localities with the highest catch.
 ## ---------------------------------------------RH
-plotLocal = function(dat, area, aflds=NULL, pcat=0.95, cpue=FALSE, powr=1,
+plotLocal <- function(dat, area, aflds=NULL, pcat=0.95, cpue=FALSE, powr=1,
    useLL=FALSE, showAll=FALSE, xlim=c(-136,-122.5), ylim=c(48,54.8),
    fid=NULL, fidtype="PBStools", strSpp, Ntop=5, years, short=TRUE,
    plot=TRUE, png=FALSE, pngres=400, PIN=c(9,7.3),
@@ -1579,7 +1585,7 @@ plotLocal = function(dat, area, aflds=NULL, pcat=0.95, cpue=FALSE, powr=1,
 plotTernary <- function(x=c(3,2,1), connect=FALSE, show.geometry=TRUE,
    bw=FALSE, eps=FALSE, wmf=FALSE)
 {
-	ciao = function(opar){ gc(verbose=FALSE); par(opar) }
+	ciao <- function(opar){ gc(verbose=FALSE); par(opar) }
 	oldpar=par(no.readonly=TRUE); on.exit(ciao(oldpar))
 	fill = ifelse(bw,"light gray","yellow")
 	xlim <- c(0,1); ylim <- c(0,sqrt(3)/2)
@@ -1641,17 +1647,18 @@ plotTernary <- function(x=c(3,2,1), connect=FALSE, show.geometry=TRUE,
 	text(0.5,sq3/2+tadj,"3",font=2)
 	if(eps|wmf) dev.off()
 #browser();return()
-	invisible() }
+	invisible()
+}
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotTernary
 
 
 #plotTertiary---------------------------2018-01-02
 # Composition plots within a polygonal space.
 #-----------------------------------------------RH
-plotTertiary = function(x=c(100,5,25,10,50), pC=c(0.5,0.5), r=0.5,
+plotTertiary <- function(x=c(100,5,25,10,50), pC=c(0.5,0.5), r=0.5,
    diag=FALSE, eps=FALSE, wmf=FALSE)
 {
-	ciao = function(opar){ gc(verbose=FALSE); par(opar) }
+	ciao <- function(opar){ gc(verbose=FALSE); par(opar) }
 	oldpar=par(no.readonly=TRUE); on.exit(ciao(oldpar))
 	assign("PBStool",list(module="M05_Spatial",call=match.call(),args=args(plotTertiary)),envir=.PBStoolEnv)
 
@@ -1832,7 +1839,8 @@ plotTertiary = function(x=c(100,5,25,10,50), pC=c(0.5,0.5), r=0.5,
 	text(tadj*sx+X,tadj*sy+Y,1:N,cex=1.2,font=2)
 	if(eps|wmf) dev.off()
 #browser();return()
-	invisible(pMtab) }
+	invisible(pMtab)
+}
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotTertiary
 
 
@@ -1840,7 +1848,7 @@ plotTertiary = function(x=c(100,5,25,10,50), pC=c(0.5,0.5), r=0.5,
 ##  Plot histogram showing depth-of-capture
 ##  Modified code to make use of the map object (RH 230727)
 ## ---------------------------------------------RH
-preferDepth = function(strSpp="410", fqtName="pht_fdep.sql", dbName="PacHarvest",
+preferDepth <- function(strSpp="410", fqtName="pht_fdep.sql", dbName="PacHarvest",
    spath=NULL, type="SQL", hnam=NULL, get.effort=FALSE, lang=c("f","e"))
 {
 	warn   = options()$warn; options(warn=-1)
@@ -1878,7 +1886,8 @@ preferDepth = function(strSpp="410", fqtName="pht_fdep.sql", dbName="PacHarvest"
 	invisible()
 }
 ##.preferDepth.getEffort----------------2021-04-08
-.preferDepth.getEffort=function(strSpp="ALL") {
+.preferDepth.getEffort <- function(strSpp="ALL")
+{
 	resetGraph()
 	par(mar=c(0,0,0,0),oma=c(0,0,0,0))
 	showMessage("Please wait while effort data is retrieved for this GUI session",col="blue",cex=1.2)
@@ -1949,7 +1958,7 @@ preferDepth = function(strSpp="410", fqtName="pht_fdep.sql", dbName="PacHarvest"
 	## Scroll through map object and make it compatible
 	if (type=="FILE" && fqtName==paste0("map",spp)) {
 		needflds = c("depth","catch","effort")
-		fixflds = function(dat, nflds=needflds) {
+		fixflds <- function(dat, nflds=needflds) {
 			for (nn in nflds) {
 				if (is.element(nn, colnames(dat))) {
 					return(dat)
@@ -2181,7 +2190,7 @@ preferDepth = function(strSpp="410", fqtName="pht_fdep.sql", dbName="PacHarvest"
 #  fnam = assume input data object (not file) is always called `dat` and
 #         output object (not file) is always called `claradat`.
 #-----------------------------------------------RH
-prepClara =function(ssid=7, gfld=c("X","Y"), sfld="spp", mfld="catKg", fnam=NULL, ioenv=.GlobalEnv)
+prepClara  <- function(ssid=7, gfld=c("X","Y"), sfld="spp", mfld="catKg", fnam=NULL, ioenv=.GlobalEnv)
 {
 	SSID = paste(ssid,collapse=".")
 	if (is.null(fnam)){ 
@@ -2226,7 +2235,8 @@ prepClara =function(ssid=7, gfld=c("X","Y"), sfld="spp", mfld="catKg", fnam=NULL
 ## zapHoles-----------------------------2024-02-29
 ## Attempts to remove holes overwritten by solids.
 ## ---------------------------------------------RH
-zapHoles <- function(pset){
+zapHoles <- function(pset)
+{
 	if (!is.PolySet(pset)) showError("`zapHoles()` requires a valid PolySet")
 	flds=names(pset); key=c("PID","SID")
 	if (any(match(key,flds,nomatch=0)==0)) return(pset) # no holes to zap (need PID and SID)
@@ -2250,6 +2260,7 @@ zapHoles <- function(pset){
 	atts$keep=cent[!is.element(cent$index,zap$index),]
 	atts$zap=zap
 	attributes(pset)=c(attributes(pset),atts)
-	return(pset) }
+	return(pset)
+}
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~zapHoles
 

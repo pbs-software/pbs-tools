@@ -127,7 +127,7 @@ calcRatio <- function(dat, nfld, dfld, nzero=TRUE, dzero=TRUE, sumF=mean,
 ## dumpMod------------------------------2023-02-09
 ##  Dump catch from modern sources used in catch reconstruction.
 ## ---------------------------------------------RH
-dumpMod = function(dat,catch=c("landed","discard"),fid=1:5,strSpp="396",dbs=TRUE)
+dumpMod <- function(dat,catch=c("landed","discard"),fid=1:5,strSpp="396",dbs=TRUE)
 {
 	data("pmfc", package="PBSdata", envir=penv())
 	gmu=pmfc$gmu; names(gmu)=pmfc$major
@@ -181,7 +181,7 @@ dumpMod = function(dat,catch=c("landed","discard"),fid=1:5,strSpp="396",dbs=TRUE
 ## dumpRat------------------------------2023-02-09
 ##  Dump catch ratios calculated by a catch reconstruction.
 ## ---------------------------------------------RH
-dumpRat = function(strSpp="396", rats=c("alpha","beta","gamma","delta","lambda"), ioenv=.GlobalEnv)
+dumpRat <- function(strSpp="396", rats=c("alpha","beta","gamma","delta","lambda"), ioenv=.GlobalEnv)
 {
 	expr = paste("getFile(PBStool",strSpp,",senv=ioenv,reload=TRUE,tenv=penv()); dat=PBStool",sep="")
 	eval(parse(text=expr))
@@ -228,7 +228,7 @@ dumpRat = function(strSpp="396", rats=c("alpha","beta","gamma","delta","lambda")
 ##           pht_catch_records.sql
 ##           fos_catch_records.sql
 ## ---------------------------------------------RH
-getCatch = function(strSpp="396", dbs=c("gfb","gfc","pht","fos"),
+getCatch <- function(strSpp="396", dbs=c("gfb","gfc","pht","fos"),
    sql=FALSE, sqlpath=.getSpath(), proBio=FALSE, ioenv=.GlobalEnv)
    #uid=Sys.info()["user"], pwd=uid, ioenv=.GlobalEnv) 
 {
@@ -706,7 +706,7 @@ makeCATtables <- function(strSpp, comm=1:7, path=.getSpath(), pout=FALSE)
 ## plotCatch----------------------------2013-01-28
 ##  Plot catch history as annual barplot using specified catch fields
 ## ---------------------------------------------RH
-plotCatch=function(dat="dbr.rem", flds=c("CAtrawl","UStrawl","TotalHL"),
+plotCatch <- function(dat="dbr.rem", flds=c("CAtrawl","UStrawl","TotalHL"),
    yrlim=NULL, wmf=FALSE, ioenv=.GlobalEnv, ...)
 {
 	assign("PBStool",list(module="M03_Fishery",call=match.call(),args=args(plotCatch),ioenv=ioenv),envir=.PBStoolEnv)
@@ -777,12 +777,12 @@ plotFOScatch <- function(strSpp="453", majors=c(1,3:9), space=0.5,
    fplot="Groundfish Trawl", xlim=c("2007-04","2011-06"),
    fyrM1=4, uid=Sys.info()["user"], pwd=uid, wmf=FALSE, ...)
 {
-	fyear=function(yrmo,startM=4) { # deprecated (see 'convFY')
+	fyear <- function(yrmo,startM=4) { # deprecated (see 'convFY')
 		# local function to get fishing years
 		yr=as.numeric(substring(yrmo,1,4)); mo=as.numeric(substring(yrmo,6,7))
 		fyr=yr; sM=is.element(mo,startM:12); fyr[!sM]=fyr[!sM]-1; names(fyr)=yrmo
 		return(fyr) }
-	xvec=function(xlim) { # deprecated (see 'convYM')
+	xvec <- function(xlim) { # deprecated (see 'convYM')
 		yr=as.numeric(substring(xlim,1,4)); mo=as.numeric(substring(xlim,6,7))
 		yrs=range(yr); yrs=yrs[1]:yrs[2]; nyrs=length(yrs)
 		X=paste(rep(yrs,each=12),rep(pad0(1:12,2),nyrs),sep="-")
@@ -921,7 +921,7 @@ plotFOScatch <- function(strSpp="453", majors=c(1,3:9), space=0.5,
 ##  ICES Journal of Marine Science.
 ##  Code allows user to perform frequentist (NLM) and Bayesian (BRugs) analyses.
 ## ---------------------------------------------RH
-runCCA = function(fnam="nage394", hnam=NULL, ioenv=.GlobalEnv, ...)
+runCCA <- function(fnam="nage394", hnam=NULL, ioenv=.GlobalEnv, ...)
 {
 	assign("PBStool",list(module="M03_Fishery",call=match.call(),args=args(runCCA),ioenv=ioenv,plotname="CCAplot",dots=list(...)),envir=.PBStoolEnv)
 	fnam=as.character(substitute(fnam))
@@ -943,7 +943,7 @@ runCCA = function(fnam="nage394", hnam=NULL, ioenv=.GlobalEnv, ...)
 	invisible()
 }
 
-.runCCA.model  = function(P)
+.runCCA.model  <- function(P)
 {
 	Z=P[1]; alpha=P[2]; betak=P[3]; tau=P[4]; rho=P[5:9]
 	unpackList(ttcall(PBStool)$FP,scope="L")
@@ -963,7 +963,7 @@ runCCA = function(fnam="nage394", hnam=NULL, ioenv=.GlobalEnv, ...)
 	return(paA)
 }
 
-.runCCA.objFun = function(P)
+.runCCA.objFun <- function(P)
 { ## User's objective function
 	Z=P[1]; alpha=P[2]; betak=P[3]; tau=P[4]; sigma=P[5]; n=P[6]
 	rho1=P[7]; rho2=P[8]; rho3=P[9]; rho4=P[10]; rho5=P[11]; 
@@ -988,7 +988,7 @@ runCCA = function(fnam="nage394", hnam=NULL, ioenv=.GlobalEnv, ...)
 	return(out) 
 }
 
-.runCCA.getData = function()
+.runCCA.getData <- function()
 { ## Get user's data
 	getWinVal(scope="L")
 	ioenv = ttcall(PBStool)$ioenv
@@ -1026,7 +1026,7 @@ runCCA = function(fnam="nage394", hnam=NULL, ioenv=.GlobalEnv, ...)
 	invisible()
 }
 	
-.runCCA.plotData = function()
+.runCCA.plotData <- function()
 { ## Plot user's data
 	afile = ttcall(PBStool)$afile
 	if (is.null(afile)) .runCCA.getData()
@@ -1051,7 +1051,7 @@ runCCA = function(fnam="nage394", hnam=NULL, ioenv=.GlobalEnv, ...)
 	invisible()
 }
 
-.runCCA.setVals = function()
+.runCCA.setVals <- function()
 { ## Set user's settings
 	getWinVal(scope="L")
 	active = theta$active; names(active) = rownames(theta)
@@ -1117,7 +1117,7 @@ runCCA = function(fnam="nage394", hnam=NULL, ioenv=.GlobalEnv, ...)
 	invisible()
 }
 
-.runCCA.evalMod = function()
+.runCCA.evalMod <- function()
 { ## Evaluate user's model
 	FP = ttcall(PBStool)$FP
 	if (is.null(FP)) .runCCA.setVals()
@@ -1138,7 +1138,7 @@ runCCA = function(fnam="nage394", hnam=NULL, ioenv=.GlobalEnv, ...)
 	invisible()
 }
 
-.runCCA.plotNLM = function()
+.runCCA.plotNLM <- function()
 { ## User's plot of NLM results
 	FP = ttcall(PBStool)$FP
 	if (is.null(FP)) { .runCCA.setVals(); .runCCA.evalMod() }
@@ -1258,7 +1258,7 @@ runCCA = function(fnam="nage394", hnam=NULL, ioenv=.GlobalEnv, ...)
 
 #-----WinBUGS-Model-------------------------------------------------------------
 
-.runCCA.checkMon = function()
+.runCCA.checkMon <- function()
 { ## Check user's monitor choices
 	FP = ttcall(PBStool)$FP
 	if (is.null(FP)) .runCCA.setVals()
@@ -1286,7 +1286,7 @@ runCCA = function(fnam="nage394", hnam=NULL, ioenv=.GlobalEnv, ...)
 		return(TRUE) }
 }
 
-.runCCA.compileMod = function()
+.runCCA.compileMod <- function()
 { ## Initialize and compile the WinBUGS model
 	isOK = .runCCA.checkMon(); if (!isOK) stop("Reset monitors")
 	getWinVal(scope="L")
@@ -1313,7 +1313,7 @@ runCCA = function(fnam="nage394", hnam=NULL, ioenv=.GlobalEnv, ...)
 	invisible()
 }
 
-.runCCA.updateMod = function()
+.runCCA.updateMod <- function()
 { ## Update the model and save complete history in "CCAhist" (in "PBStool")
 	isOK = .runCCA.checkMon(); if (!isOK) stop("Reset monitors")
 	getWinVal(scope="L")
@@ -1340,7 +1340,7 @@ runCCA = function(fnam="nage394", hnam=NULL, ioenv=.GlobalEnv, ...)
 	invisible()
 }
 
-.runCCA.plotTrace = function(file=ttcall(PBStool)$CCAhist,clrs=c("blue","red","green","magenta","navy"))
+.runCCA.plotTrace <- function(file=ttcall(PBStool)$CCAhist,clrs=c("blue","red","green","magenta","navy"))
 {
 	isOK = .runCCA.checkMon(); if (!isOK) stop("Reset monitors")
 	getWinVal(scope="L")
@@ -1360,7 +1360,7 @@ runCCA = function(fnam="nage394", hnam=NULL, ioenv=.GlobalEnv, ...)
 	invisible()
 }
 
-.runCCA.plotDens = function(file=ttcall(PBStool)$CCAhist,clrs=c("blue","red","green","magenta","navy"))
+.runCCA.plotDens <- function(file=ttcall(PBStool)$CCAhist,clrs=c("blue","red","green","magenta","navy"))
 {
 	isOK = .runCCA.checkMon(); if (!isOK) stop("Reset monitors")
 	getWinVal(scope="L")
@@ -1380,7 +1380,7 @@ runCCA = function(fnam="nage394", hnam=NULL, ioenv=.GlobalEnv, ...)
 	invisible()
 }
 
-.runCCA.plotACF = function(file=ttcall(PBStool)$CCAhist,clrs=c("blue","red","green","magenta","navy"))
+.runCCA.plotACF <- function(file=ttcall(PBStool)$CCAhist,clrs=c("blue","red","green","magenta","navy"))
 {
 	isOK = .runCCA.checkMon(); if (!isOK) stop("Reset monitors")
 	getWinVal(scope="L")
@@ -1400,7 +1400,7 @@ runCCA = function(fnam="nage394", hnam=NULL, ioenv=.GlobalEnv, ...)
 	invisible()
 }
 
-.runCCA.diag.panel = function(x, ...)
+.runCCA.diag.panel <- function(x, ...)
 { ## Histograms for diagonal of pairs plor
 	usr = par("usr"); on.exit(par(usr))
 	h = hist(x, breaks="Sturges", plot=FALSE)
@@ -1411,7 +1411,7 @@ runCCA = function(fnam="nage394", hnam=NULL, ioenv=.GlobalEnv, ...)
 	box(); invisible()
 }
 
-.runCCA.plotPairs = function()
+.runCCA.plotPairs <- function()
 { ## Pairs plot
 	isOK = .runCCA.checkMon(); if (!isOK) stop("Reset monitors")
 	getWinVal(scope="L")
@@ -1438,7 +1438,7 @@ runCCA = function(fnam="nage394", hnam=NULL, ioenv=.GlobalEnv, ...)
 	packList("plotname","PBStool",tenv=.PBStoolEnv)
 	par(ask=FALSE,mgp=c(0,.75,0))
 	pairs(file, diag.panel=.runCCA.diag.panel, gap=0, cex.labels=1.2,
-		panel=function(x,y,z=modes) {
+		panel <- function(x,y,z=modes) {
 			n   = length(x); nn = n-1
 			xmn = mean(x,na.rm=TRUE); ymn = mean(y,na.rm=TRUE)
 			points(x,y,pch=16,cex=0.6,col="darkgray")
@@ -1452,7 +1452,7 @@ runCCA = function(fnam="nage394", hnam=NULL, ioenv=.GlobalEnv, ...)
 	invisible()
 }
 
-.runCCA.getChains = function(chains=BRugs::samplesGetFirstChain():BRugs::samplesGetLastChain())
+.runCCA.getChains <- function(chains=BRugs::samplesGetFirstChain():BRugs::samplesGetLastChain())
 { ## amalgamates chains
 	if (is.null(ttcall(PBStool)$CCAhist)) return(FALSE)
 	getWinVal(scope="L")
@@ -1471,7 +1471,7 @@ runCCA = function(fnam="nage394", hnam=NULL, ioenv=.GlobalEnv, ...)
 	return(TRUE)
 }
 
-.runCCA.plotHist = function()
+.runCCA.plotHist <- function()
 { ## Histograms of parameter posterior distributions
 	isOK = .runCCA.checkMon(); if (!isOK) stop("Reset monitors")
 	getWinVal(scope="L")
@@ -1520,7 +1520,7 @@ runCCA = function(fnam="nage394", hnam=NULL, ioenv=.GlobalEnv, ...)
 	invisible()
 }
 
-.runCCA.getLayout = function(nc)
+.runCCA.getLayout <- function(nc)
 {
 	if (nc <= 3) return(c(nc,1))
 	else if (nc <=8) return(c(ceiling(nc/2),2))
@@ -1535,7 +1535,7 @@ runCCA = function(fnam="nage394", hnam=NULL, ioenv=.GlobalEnv, ...)
 ##  Summarize catch by year and PMFC area from modern 
 ##  catch input data used in catch reconstruction.
 ## ---------------------------------------------RH
-sumCatTabs=function(dat, facs=list(c("year","major")), 
+sumCatTabs <- function(dat, facs=list(c("year","major")), 
    cflds=c("landed","discard"), fnam )
 {
 	if (missing(dat) || !is.array(dat)) {
@@ -1569,7 +1569,7 @@ sumCatTabs=function(dat, facs=list(c("year","major")),
 ##  qu("fos_gabe_andrews.sql",dbName="GFFOS",strSpp="123", as.is=c(F,F,T,rep(F,8),T))
 ##  gear: 1=BT, 2=TR, 3=MW, 4=HL, 5=LL
 ## ---------------------------------------------RH
-tabSFW = function(dat, gear=1, shallow=300, nspp=10, year, major)
+tabSFW <- function(dat, gear=1, shallow=300, nspp=10, year, major)
 {
 	## Get records for specified gear type(s) and years
 	dat = dat[is.element(dat$gear, gear),]
@@ -1689,7 +1689,7 @@ tabSFW = function(dat, gear=1, shallow=300, nspp=10, year, major)
 ## trackBycat---------------------------2013-01-28
 ##  Track annual fish group catches between depth limits.
 ## ---------------------------------------------RH
-trackBycat = function(strSpp="396", major=5:7, mindep=70, maxdep=441, 
+trackBycat <- function(strSpp="396", major=5:7, mindep=70, maxdep=441, 
      dbs=c("gfb","pht","fos"), trawl="bottom", spath=.getSpath(), 
      pyrs=1996:2010, rda=NULL, ioenv=.GlobalEnv)
 {

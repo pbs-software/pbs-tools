@@ -155,7 +155,7 @@
 ##  If meth==0, strata comprise 'xvar' (usually 'year') only.
 ##  If meth==1, strata comprise year and survey stratum.
 ## -----------------------------------------PJS|RH
-calcBiom = function(dat, reps=0, seed=42, meth=1, fix125flag, xvar="year", 
+calcBiom <- function(dat, reps=0, seed=42, meth=1, fix125flag, xvar="year", 
    areavar="area", stratumvar="stratum", towvar="set", postfilename)
 {
 	## syntax,  Density(string) Reps(int) SEed(int) Meth(int) FIX125flag(int) Xvar(string) /*
@@ -281,7 +281,7 @@ calcBiom = function(dat, reps=0, seed=42, meth=1, fix125flag, xvar="year",
 ##  go through PJS machinations.
 ##  Can be applied to non-synoptic surveys.
 ## -----------------------------------------PJS|RH
-doSynoptic = function(dat, survey, logappendflag=TRUE)
+doSynoptic <- function(dat, survey, logappendflag=TRUE)
 {
 	logfile = "surveyprepmessages.log"
 	if (logappendflag) append=TRUE else FALSE
@@ -331,7 +331,7 @@ doSynoptic = function(dat, survey, logappendflag=TRUE)
 	## Populate missing values of 'distance', 'door', and 'speed' with means
 	## May eventually become a primary function if it's useful on a broader scale.
 	## Added in loop to factor in vessels over the years (RH 220524)
-	fixmiss = function(dat, flds) {
+	fixmiss <- function(dat, flds) {
 		uvess = .su(dat$vessel)
 		for (v in uvess) {
 			zv = is.element(dat$vessel,v)
@@ -463,7 +463,7 @@ doSynoptic = function(dat, survey, logappendflag=TRUE)
 ## getLabels----------------------------2022-05-19
 ##  Read in data file and get labels.
 ## -----------------------------------------PJS|RH
-getLabels = function(file)
+getLabels <- function(file)
 {
 	dat = read.csv(file) ## insheet using `file'
 	## Process strata for GIG historical (because data have no grouping codes)
@@ -539,7 +539,7 @@ getLabels = function(file)
 ## getLabelends-------------------------2019-07-23
 ##  Get depth ranges from stratum names (methinks)
 ## -----------------------------------------PJS|RH
-getLabelends = function (labelname)
+getLabelends <- function (labelname)
 {
 	pos1 = pmax(regexpr(":",labelname),0)
 	pos2 = regexpr("-",labelname)
@@ -560,7 +560,7 @@ getLabelends = function (labelname)
 ##       3 = month name
 ##       4 = two-character string
 ## -----------------------------------------PJS|RH
-getMonth = function(dates, type=1)
+getMonth <- function(dates, type=1)
 {
 	z = dates!="" & !is.na(dates)
 	mos = rep(ifelse(type%in%c(1), NA, ""),length(dates))
@@ -586,7 +586,7 @@ getMonth = function(dates, type=1)
 ##  Get species codes from data
 ##  (also checks for more than one species)
 ## -----------------------------------------PJS|RH
-getSpecies = function(species)
+getSpecies <- function(species)
 {
 	#ici = lenv() ## RH 200716
 	#tempfile = paste0(convSlashes(tempdir(),"unix"),"/tmpsurvey.txt")
@@ -623,7 +623,7 @@ getSpecies = function(species)
 ## getUsability-------------------------2019-08-02
 ##  Qualify data by usability code.
 ## -----------------------------------------PJS|RH
-getUsability = function(dat, use=c(0,1,2,6))
+getUsability <- function(dat, use=c(0,1,2,6))
 {
 	Nrows = nrow(dat)
 	if ("usability" %in% colnames(dat)) {
@@ -661,7 +661,7 @@ getUsability = function(dat, use=c(0,1,2,6))
 ## getVessel----------------------------2019-08-02
 ##  Get survey vessel codes.
 ## -----------------------------------------PJS|RH
-getVessel = function(dat)
+getVessel <- function(dat)
 {
 	vessel = 1:20
 	names(vessel) = c(
@@ -721,7 +721,7 @@ getVessel = function(dat)
 ##  Keep user's attributes after performing an
 ##  expression such as subsetting a file.
 ## ---------------------------------------------RH
-keepAtts =function(dat, expr, batts=c("names","row.names","class"), extras=list())
+keepAtts  <- function(dat, expr, batts=c("names","row.names","class"), extras=list())
 {
 	unpackList(extras)
 	keepatts = attributes(dat)
@@ -743,7 +743,7 @@ keepAtts =function(dat, expr, batts=c("names","row.names","class"), extras=list(
 ##   0.05, 0.25, 0.5, 0.75, and 0.95 quantiles.
 ## Now using results from 'boot::boot' & 'boot::boot.ci' (RH 190821)
 ## -----------------------------------------PJS|RH
-plotIndex = function(bootbomb, analytic, type="PJS", surv=ttcall(surveyname),
+plotIndex <- function(bootbomb, analytic, type="PJS", surv=ttcall(surveyname),
    png=FALSE, pngres=400, PIN=c(8,7), lang=c("e","f"))
 {
 	createFdir(lang)
@@ -845,7 +845,7 @@ plotIndex = function(bootbomb, analytic, type="PJS", surv=ttcall(surveyname),
 ## prepGFsurv---------------------------2022-05-19
 ##  Prepare GF surveys using PJS codes.
 ## -----------------------------------------PJS|RH
-prepGFsurv = function(file, survey, strSpp, datemask, doorspread=61.6,
+prepGFsurv <- function(file, survey, strSpp, datemask, doorspread=61.6,
    shrimpyear=1975, savefile=TRUE, usevar=FALSE, attended=FALSE,
    spath="C:/Users/haighr/Files/Projects/R/Develop/PBStools/Authors/SQLcode")
 {
@@ -969,7 +969,7 @@ prepGFsurv = function(file, survey, strSpp, datemask, doorspread=61.6,
 ##  survey==8  -- using Norm Olsen's grouping codes
 ##  survey==11 -- using Paul Starr's strata
 ## -----------------------------------------PJS|RH
-prepGIGhis = function(file, survey="GIGhis")
+prepGIGhis <- function(file, survey="GIGhis")
 {
 	surveyname = "GIG Historical"
 	ttput(surveyname)
@@ -1092,7 +1092,7 @@ prepGIGhis = function(file, survey="GIGhis")
 ## prepHSass----------------------------2022-05-17
 ##  Prepare Hecate Strait assemblage survey data.
 ## -----------------------------------------PJS|RH
-prepHSass = function(file, survey="HSass")
+prepHSass <- function(file, survey="HSass")
 {
 	surveyname = "Hecate Strait Assemblage"
 	ttput(surveyname)
@@ -1189,7 +1189,7 @@ prepHSass = function(file, survey="HSass")
 ## prepHSsyn----------------------------2022-05-17
 ##  Prepare Hecate Strait synoptic survey data.
 ## -----------------------------------------PJS|RH
-prepHSsyn = function(file, survey="HSsyn")
+prepHSsyn <- function(file, survey="HSsyn")
 {
 	surveyname = "Hecate Strait Synoptic"
 	ttput(surveyname)
@@ -1231,7 +1231,7 @@ prepHSsyn = function(file, survey="HSsyn")
 ## prepQCSsyn---------------------------2022-05-17
 ##  Prepare QCS synoptic survey data
 ## -----------------------------------------PJS|RH
-prepQCSsyn = function(file, survey)
+prepQCSsyn <- function(file, survey)
 {
 	ttget(gfbsurvey)
 	if (all(gfbsurvey[[survey]]==1))
@@ -1306,7 +1306,7 @@ prepQCSsyn = function(file, survey)
 ##  Prepare US National Marine Fisheries Service
 ##  triennial survey data from WCVI.
 ## -----------------------------------------PJS|RH
-prepNMFStri = function(file, survey="NMFStri")
+prepNMFStri <- function(file, survey="NMFStri")
 {
 	ici = lenv() ## RH 200716
 	surveyname = "NMFS Triennial"
@@ -1484,7 +1484,7 @@ prepNMFStri = function(file, survey="NMFStri")
 ## prepWCHGsyn--------------------------2022-05-18
 ##  Prepare WCHG (formerly WCQCI) synoptic survey data
 ## -----------------------------------------PJS|RH
-prepWCHGsyn = function(file, survey="WCHGsyn")
+prepWCHGsyn <- function(file, survey="WCHGsyn")
 {
 	surveyname = "WCHG Synoptic"
 	ttput(surveyname)
@@ -1567,7 +1567,7 @@ prepWCHGsyn = function(file, survey="WCHGsyn")
 ## prepWCVIsyn-------------------------2022-05-17
 ##  Prepare west coast Vancouver Island synoptic survey data.
 ## -----------------------------------------PJS|RH
-prepWCVIsyn = function(file, survey="WCVIsyn")
+prepWCVIsyn <- function(file, survey="WCVIsyn")
 {
 	surveyname = "WCVI Synoptic"
 	ttput(surveyname)
@@ -1606,7 +1606,7 @@ prepWCVIsyn = function(file, survey="WCVIsyn")
 ##  dend      -- character field name for ending depth of tow
 ##  renamevar -- character name for new field
 ## -----------------------------------------PJS|RH
-restratify = function(dat, strategy, dbegin, dend, renamevar)
+restratify <- function(dat, strategy, dbegin, dend, renamevar)
 {
 	## Definition of the values to pass for a restratification strategy:
 	strategies = c("min(begin_end)", "max(begin_end)", "begin", "end", "mean(begin_end)")
@@ -1663,7 +1663,7 @@ restratify = function(dat, strategy, dbegin, dend, renamevar)
 ##  Ensure unique tows occur for each survey,
 ##  collapse records as needed.
 ## -----------------------------------------PJS|RH
-uniqtows = function(dat)
+uniqtows <- function(dat)
 {
 	## check for more than 1 observation per tow:
 	dat$tow = paste(dat$year, dat$set, sep="-")

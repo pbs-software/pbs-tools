@@ -12,7 +12,7 @@
 #collectFigs----------------------------2016-10-17
 # Collect encapsulated postscript figures into one document.
 #-----------------------------------------------RH
-collectFigs = function(path=".", ext="eps", is.fnum=FALSE, 
+collectFigs <- function(path=".", ext="eps", is.fnum=FALSE, 
    fout="collectFigs", width=6.5, capskip=0, pattern=NULL, show.output=FALSE)
 {
 	cwd = getwd(); on.exit(setwd(cwd))
@@ -93,16 +93,16 @@ collectFigs = function(path=".", ext="eps", is.fnum=FALSE,
 ##  exInt = exclude integers from manipulation to signicant digits
 ##  use.round = if TRUE, round catches to N decimal places.
 ## ---------------------------------------------RH
-formatCatch = function(dat, N=3, X=0, zero="0", na="---",
+formatCatch <- function(dat, N=3, X=0, zero="0", na="---",
    K=",", exInt=TRUE, use.round=FALSE, scipen=20)
 {
 	scipen.old = options()$scipen
 	on.exit(options(scipen=scipen.old))
 	options(scipen=scipen)
 
-	makeCmat =function(x,colname="Y") {
+	makeCmat  <- function(x,colname="Y") {
 		matrix(x,ncol=1,dimnames=list(names(x),colname)) }
-	makeRmat =function(x,rowname="Y") {
+	makeRmat  <- function(x,rowname="Y") {
 		matrix(x,nrow=1,dimnames=list(rowname,names(x))) }
 
 	if (is.vector(dat)) {
@@ -224,7 +224,8 @@ formatCatch = function(dat, N=3, X=0, zero="0", na="---",
 # Make a longtable header for Sweave, source:
 # http://tex.stackexchange.com/questions/41067/caption-for-longtable-in-sweave?rq=1
 #-----------------------------------------------RH
-makeLTH <- function(xtab.table, table.caption, table.label, struts=FALSE, add.continue = FALSE) {
+makeLTH <- function(xtab.table, table.caption, table.label, struts=FALSE, add.continue = FALSE)
+{
 	longtable.header <- paste(
 		paste("\\caption{", table.caption, "}",sep = "", collapse = ""),
 		paste("\\label{", table.label, "}\\\\ ",sep = "", collapse = ""),
@@ -254,7 +255,7 @@ makeLTH <- function(xtab.table, table.caption, table.label, struts=FALSE, add.co
 # Split a long data table into side-by-side pieces
 # for printing in LaTeX.
 #-----------------------------------------------RH
-splitTab = function(tab, np=3, row.names=TRUE, row.label="row", row.numeric=FALSE)
+splitTab <- function(tab, np=3, row.names=TRUE, row.label="row", row.numeric=FALSE)
 {
 	## Deal with the rows
 	nr = nrow(tab)
@@ -297,7 +298,7 @@ splitTab = function(tab, np=3, row.names=TRUE, row.label="row", row.numeric=FALS
 ## texArray-----------------------------2023-07-24
 ## Flatten and format an array for latex output.
 ## ---------------------------------------------RH
-texArray =function(x, table.caption="My table", table.label="tab:mytable",
+texArray  <- function(x, table.caption="My table", table.label="tab:mytable",
    strSpp=NULL, sigdig=3, zero="---", exInt=TRUE, use.round=FALSE, 
    collab=NULL, dash.delim=NULL, tablewidth=6.5,
    rm.empty=FALSE, start.page=1, ignore.col=NULL,
@@ -308,7 +309,7 @@ texArray =function(x, table.caption="My table", table.label="tab:mytable",
 	if (!is.array(x) && !is.matrix(x) && !is.data.frame(x)) stop("input an array or a matrix")
 	N = dim(x)
 	L = length(N)
-	fn.select.rows = function(x,r) {  # select rows from 2-dimensional table
+	fn.select.rows <- function(x,r) {  # select rows from 2-dimensional table
 		if (is.null(r)) return(x)
 		if (is.numeric(r))
 			s = x[r,]
@@ -564,7 +565,7 @@ texArray =function(x, table.caption="My table", table.label="tab:mytable",
 		include.colnames = FALSE,
 		type = "latex",
 		tabular.environment = "longtable",
-		sanitize.text.function = function(x){x},
+		sanitize.text.function <- function(x){x},
 		math.style.negative = FALSE
 	)
 	cat("\\end{document}\n",file=texout,append=TRUE)
@@ -578,7 +579,7 @@ texArray =function(x, table.caption="My table", table.label="tab:mytable",
 	## \newcolumntype{C}[1]{>{\centering\let\newline\\\arraybackslash\hspace{0pt}}p{#1}}
 	## \newcolumntype{R}[1]{>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}p{#1}}
 	## \begin{longtable}{L{1.5in}L{2.2in}C{0.55in}C{1.1in}C{0.7in}C{0.7in}L{1.5in}}
-	LCR = function(align, width, units="in") {
+	LCR <- function(align, width, units="in") {
 		if (!any(align==c("L","C","R"))) stop("Choose alignment 'L', 'C', or 'R'")
 		mess = paste0(">{\\\\",
 			ifelse(align=="L","raggedright",ifelse(align=="C","centering","raggedleft")),
@@ -612,7 +613,7 @@ texArray =function(x, table.caption="My table", table.label="tab:mytable",
 ## texThatVec-------------------------2018-05-07
 ##  Convert a vector to a phrase 'x, y, and z'
 ## ---------------------------------------------RH
-texThatVec = function(vec, simplify=TRUE)
+texThatVec <- function(vec, simplify=TRUE)
 {
 	warn = options()$warn
 	on.exit(options(warn=warn))

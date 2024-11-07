@@ -30,7 +30,7 @@ imputeRate <- function(qtName="Ex03_Portfolio", dbName="Examples", AID=1, pathN=
 		gsub("cwd value=1","cwd value=1 selected=TRUE",temp),
 		gsub("sql value=2","sql value=2 selected=TRUE",temp) )
 	writeLines(temp,con=wtmp)
-	.onClose=function() { ttget(PBStool); save("PBStool",file="PBStool.rda") }
+	.onClose <- function() { ttget(PBStool); save("PBStool",file="PBStool.rda") }
 	assign(".onClose",.onClose,envir=.PBStoolEnv)
 	createWin(wtmp);  .imputeRate.impIR()
 	invisible() 
@@ -158,7 +158,8 @@ imputeRate <- function(qtName="Ex03_Portfolio", dbName="Examples", AID=1, pathN=
 ## .imputeRate.trajIR-------------------2017-12-10
 ## Calculate the value trajectory.
 ## ---------------------------------------------RH
-.imputeRate.trajIR=function(x,cw,y0,r){ 
+.imputeRate.trajIR <- function(x,cw,y0,r)
+{
 	## x=periods, cw=contributions/withdrawals, y0=starting value, r=period rate
 	cw[1]=y0 ## initial value already includes 1st contribution
 	ri = (1+r)^(as.numeric(rev(x)[1]-x)/365)
@@ -207,7 +208,8 @@ imputeRate <- function(qtName="Ex03_Portfolio", dbName="Examples", AID=1, pathN=
 ## .imputeRate.plotIR-------------------2023-02-25
 ##  Plot the results of the imputed rate.
 ## ---------------------------------------------RH
-.imputeRate.plotIR = function() {
+.imputeRate.plotIR <- function()
+{
 	getWinVal(scope="L")
 	unpackList(ttcall(PBStool), scope="L")
 	cenv=environment(); penv=parent.frame(1); genv=.PBStoolEnv
@@ -281,7 +283,7 @@ imputeRate <- function(qtName="Ex03_Portfolio", dbName="Examples", AID=1, pathN=
 ## .imputeRate.resetIR------------------2010-10-20
 ## Reset/reinitialize the GUI.
 ## ---------------------------------------------RH
-.imputeRate.resetIR=function()
+.imputeRate.resetIR <- function()
 {
 	act <- getWinAct()[1]
 	if (is.null(act))

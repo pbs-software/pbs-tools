@@ -37,14 +37,15 @@
 # allo : Tow allocation scheme 0=existing, 1=optimal
 #-----------------------------------------------RH
 bootBG <- function (dat="pop.pmr.qcss", K=100, S=100, R=500, SID=NULL, 
-	ci=seq(0.1,0.9,0.1), lims=c("emp","norm","basic","perc","bca"), allo=0, ioenv=.GlobalEnv) {
+	ci=seq(0.1,0.9,0.1), lims=c("emp","norm","basic","perc","bca"), allo=0, ioenv=.GlobalEnv)
+{
 	#Subfunctions--------------
-	cmatrix=function(x,cc) {
+	cmatrix <- function(x,cc) {
 		dnam=dimnames(x); rnam=dnam[[1]]; cnam=dnam[[2]]
 		if (all(is.numeric(cc))) cnam=cnam[cc]
 		else cnam=cnam[match(cc,cnam)]
 		matrix(x[,cc],nrow=dim(x)[1],dimnames=list(rnam,cnam)) }
-	mysum=function(x,f){
+	mysum <- function(x,f){
 		z=!is.na(x)
 		sum(f[z]*x[z])}
 	#--------------------------
@@ -158,14 +159,15 @@ bootBG <- function (dat="pop.pmr.qcss", K=100, S=100, R=500, SID=NULL,
 	Best <- apply(cmatrix(z,BS),2,sum) # B estimated from random binomial gamma
 	bgtab=x; dStab=y; BStab=z; Bboot=Bboot.all; Bobs=Btrue
 	packList(c("dat","bgtab","dStab","BStab","bgsamp","Bboot","Bqnt","Best","Bobs","group"),"PBStool",tenv=.PBStoolEnv)
-	invisible() }
+	invisible()
+}
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~bootBG
 
 ## calcHBLL-----------------------------2022-07-21
 ##  Calculate swept-area index values for HBLL surveys.
 ##  Parallels PJS routine 'calcBiom'
 ## -----------------------------------------PJS|RH
-calcHBLL = function(dat, ssid, reps=0, seed=42, meth=1, xvar="year")
+calcHBLL <- function(dat, ssid, reps=0, seed=42, meth=1, xvar="year")
 {
 	##  GC  DESC                     AREA_KM2  SSID
 	## 321  HBLL OUT North, 20 - 70 m    3329  22
@@ -289,9 +291,10 @@ calcHBLL = function(dat, ssid, reps=0, seed=42, meth=1, xvar="year")
 # Calculate survey strata population moments,
 # including relative biomass, from raw survey data.
 #--------------------------------------------NO/RH
-calcMoments = function(strSpp="396", survID=c(1,2,3,121,167)) {
+calcMoments <- function(strSpp="396", survID=c(1,2,3,121,167))
+{
 	#Subfunctions------------------------
-	calcBio=function(dat,i,sa,Bonly=TRUE) {
+	calcBio <- function(dat,i,sa,Bonly=TRUE) {
 		if (length(i)==1) i = 1:nrow(dat)
 		dat <- dat[i,] # Resample the data frame
 		# Mean biomass (kg/km2) per stratum h
@@ -368,18 +371,21 @@ calcPMR <- function(x, na.value=NULL)
 #getBootRuns----------------------------2013-11-25
 # Get Norm's survey bootstrap results.
 #-----------------------------------------------RH
-getBootRuns=function(strSpp) {
+getBootRuns <- function(strSpp)
+{
 	getData("gfb_boot.sql","GFBioSQL",strSpp=strSpp,path=.getSpath(),tenv=penv())
 	surveys=PBSdat[order(PBSdat$date,PBSdat$bootID),]
 	ttput(PBSdat)
-	return(surveys) }
+	return(surveys)
+}
 
 
 #getPMR---------------------------------2010-06-02
 # Get pmr values from survey data in GFBioSQL
 # using the SQL query 'gfb_pmr.sql'.
 #-----------------------------------------------RH
-getPMR =  function(strSpp="396",survID=c(1,2,3,121,167)){
+getPMR =  function(strSpp="396",survID=c(1,2,3,121,167))
+{
 	assign("PBStool",list(module="M04_Survey",call=match.call(),args=args(getPMR)),envir=.PBStoolEnv)
 	sTime=proc.time()
 	pmrTab = NULL
@@ -397,14 +403,16 @@ getPMR =  function(strSpp="396",survID=c(1,2,3,121,167)){
 	packList(c("pmrTab","sTime"),"PBStool",tenv=.PBStoolEnv)
 	sTime=proc.time()-sTime
 	cat(paste("\nDone and done in ",show0(round(sTime[3],1),1,add2int=TRUE)," sec\n",sep=""))
-	return(pmrTab) }
+	return(pmrTab)
+}
 
 #makePMRtables--------------------------2010-06-02
 # Make CSV files containg pmr values for survey strata
 #-----------------------------------------------RH
 makePMRtables <- function(strSpp, surveys=list(qcss=c(1,2,3,121,167),
      wcvis=c(16,70,126), wqcis=c(79,122,129)), 
-     qName="gfb_pmr.sql", path=.getSpath()) {
+     qName="gfb_pmr.sql", path=.getSpath())
+{
 	for (i in names(surveys)) {
 		cat(paste("Processing '",i,"'\n",sep="")); flush.console()
 		sid <- surveys[[i]]
@@ -414,14 +422,16 @@ makePMRtables <- function(strSpp, surveys=list(qcss=c(1,2,3,121,167),
 			getData(qName,"GFBioSQL",strSpp=strSpp,path=path,surveyid=j,tenv=penv())
 			write.table(PBSdat,paste("pmr-",i,".csv",sep=""),sep=",",
 				append=ifelse(first,FALSE,TRUE),row.names=FALSE,col.names=ifelse(first,TRUE,FALSE))
-		} } }
+		} } 
+}
 
 
 #makeSSID-------------------------------2013-01-23
 # Make a data object of survey series information
 # called `ssid` for inclusion to `PBSdata`.
 #-----------------------------------------------RH
-makeSSID = function() {
+makeSSID <- function()
+{
 	getData("SURVEY","GFBioSQL")
 	z = is.element(PBSdat$SURVEY_SERIES_ID,0)
 	PBSdat$SURVEY_SERIES_ID[z]= 1000 + PBSdat$SURVEY_ID[z]
@@ -455,7 +465,7 @@ makeSSID = function() {
 ## plotHBLL-----------------------------2024-10-24
 ##  Plot Hard-bottom LL locations on a BC coast map.
 ## ---------------------------------------------RH
-plotHBLL = function(dat, xlim=c(-134.5,-122.5), ylim=c(48,54.8),
+plotHBLL <- function(dat, xlim=c(-134.5,-122.5), ylim=c(48,54.8),
    png=FALSE, pngres=400, PIN=c(9,8.25), lang=c("f","e"))
 {
 	data("nepacLL",package="PBSmapping")
@@ -506,7 +516,8 @@ plotHBLL = function(dat, xlim=c(-134.5,-122.5), ylim=c(48,54.8),
 #sampBG---------------------------------2008-09-30
 # Sample from the binomial-gamma distribution.
 #-----------------------------------------------RH
-sampBG <- function (n, p=0.25, mu=1, rho=0.5) {
+sampBG <- function (n, p=0.25, mu=1, rho=0.5)
+{
 	# Obtain z-variates from binomial gamma distribution
 	# Note: -------------------------------------
 	# nu = 1/(rho^2) squared reciprocal CV of non-zeroes
@@ -517,12 +528,14 @@ sampBG <- function (n, p=0.25, mu=1, rho=0.5) {
 	nu=1/rho^2; numu=nu/mu
 	gvec  <- rgamma(n,shape=nu,rate=numu) # gamma vector
 	bgvec <- bvec * gvec                  # binomial gamma vector
-	return(bgvec) }
+	return(bgvec)
+}
 
 #showAlpha------------------------------2013-01-18
 # Show quantile confidence levels (alpha) for bootstrapped biomass.
 #-----------------------------------------------RH
-showAlpha <- function(lims=c("emp","bca")) {
+showAlpha <- function(lims=c("emp","bca"))
+{
 	if (!exists("PBStool",envir=.PBStoolEnv) || is.null(ttcall(PBStool)$Bboot) || is.null(ttcall(PBStool)$bgtab)) bootBG()
 	unpackList(ttcall(PBStool),scope="L")
 	m    <- dim(bgtab)[1]
@@ -668,7 +681,8 @@ showAlpha <- function(lims=c("emp","bca")) {
 		mtext(eval(parse(text=mlab)),side=2,line=2,cex=.9,las=0)
 	}
 	packList(c("plev","xy","xcount","pobs"),"PBStool",tenv=.PBStoolEnv)
-	invisible() }
+	invisible()
+}
 #----------------------------------------showAlpha
 
 
@@ -728,10 +742,10 @@ showIndices =  function(strSpp="396", serID=1, survID=NULL, bootID,
 	}
 
 	# Function to group and flatten x by some factor, usually y
-	flatten=function(x,f,off=0) {
+	flatten <- function(x,f,off=0) {
 		xx=split(x,f); ff=split(f,f)
 		#cc=sapply(xx,function(x){1:length(x)},simplify=FALSE) # for colour positions
-		plump=function(pillow,off=0) {
+		plump <- function(pillow,off=0) {
 			plist=sapply(pillow,function(i){
 				if (length(i)>1 && off>0) 
 					i=seq(i[1]-off/2,i[1]+off/2,len=length(i))
@@ -827,7 +841,8 @@ showIndices =  function(strSpp="396", serID=1, survID=NULL, bootID,
 # Simulate a population projection based on prior binomial-gamma parameters.
 #-----------------------------------------------RH
 simBGtrend <- function(pmr=pop.pmr.qcss, Npred=15, genT=NULL,
-   Nsim=1, yrs=NULL, alpha=1, ioenv=.GlobalEnv) {
+   Nsim=1, yrs=NULL, alpha=1, ioenv=.GlobalEnv)
+{
 	#Subfunctions--------------
 	wval <- function(y,alpha=1){ 
 		#weighted y based on distance x; sum values for current weighted y
@@ -914,7 +929,8 @@ simBGtrend <- function(pmr=pop.pmr.qcss, Npred=15, genT=NULL,
 	lines(x0,y0tru,col="forestgreen",lwd=2)
 	lines(c(x0,NA,x0),c(y0lo,NA,y0hi),col="blue",lwd=2)
 	points(x0,y0tru,pch=15,col="gold"); points(x0,y0tru,pch=0,col="black")
-	invisible() }
+	invisible()
+}
 #---------------------------------------simBGtrend
 
 
@@ -946,12 +962,14 @@ trend <- function(strSpp="442", fqtName="gfb_iphc.sql",
 	temp <- gsub("guest",Sys.info()["user"],temp)
 	writeLines(temp,con=wtmp)
 	createWin(wtmp); options(warn=warn)
-	invisible() }
+	invisible()
+}
 
 #.trend.getSQLspp-----------------------2010-10-20
 # Get IPHC data for a selected species
 #-----------------------------------------------RH
-.trend.getSQLspp <- function(spp=NULL){
+.trend.getSQLspp <- function(spp=NULL)
+{
 	getWinVal(scope="L",winName="window"); act <- getWinAct()[1]
 	if (!is.null(act) && act=="getdata")
 		getdata <- TRUE else getdata <- FALSE
@@ -976,12 +994,14 @@ trend <- function(strSpp="442", fqtName="gfb_iphc.sql",
 		setWinVal(list(strSpp=spp),winName="window") } 
 	setWinVal(list(fnam="PBSdat"),winName="window")
 	tput(PBSdat,tenv=ioenv)
-	invisible() }
+	invisible()
+}
 
 #.trend.trendy--------------------------2013-04-04
 # Main engine of the trend algorithm.
 #-----------------------------------------------RH
-.trend.trendy <- function() {
+.trend.trendy <- function()
+{
 	getWinVal(scope="L",winName="window")
 	ioenv = ttcall(PBStool)$ioenv
 	spp  <- eval(parse(text=paste("c(\"",gsub(",","\",\"",strSpp),"\")",sep="")));
@@ -1104,12 +1124,14 @@ trend <- function(strSpp="442", fqtName="gfb_iphc.sql",
 		mtext(msg,side=3,line=.5,cex=1);
 		if (iii!="gdev") dev.off()
 	}
-	invisible() }
+	invisible()
+}
 
 #.trend.funky---------------------------2010-10-20
 # Transformation function interpreter.
 #-----------------------------------------------RH
-.trend.funky <- function() {
+.trend.funky <- function()
+{
 	# Generate forward and backward transformation functions
 	getWinVal(scope="L",winName="window");
 	if (!any(tran==c("log2","log","log10"))) {
@@ -1121,17 +1143,19 @@ trend <- function(strSpp="442", fqtName="gfb_iphc.sql",
 		ftran <- get(tran)
 		zbase <- match(tran,c("log2","log","log10"));
 		tbase <- switch(zbase,2,exp(1),10);
-		fexp  <- paste("btran = function(x,t=",tbase,"){t^x}");
+		fexp  <- paste("btran <- function(x,t=",tbase,"){t^x}");
 		eval(parse(text=fexp)); 
 		packList(c("ftran","btran"),"PBStool",tenv=.PBStoolEnv)
 		#setWinVal(list(zero=FALSE),winName="window")
 		}
-	invisible() }
+	invisible()
+}
 
 #.trend.booty---------------------------2013-04-03
 # Calculate and plot bootstraps.
 #-----------------------------------------------RH
-.trend.booty <- function() {
+.trend.booty <- function()
+{
 	alist <- ttcall(PBStool)$tlist
 	if (is.null(alist)) showError("Generate a TREND first")
 	# Bootstrap the indices and generate multiple trends
@@ -1178,7 +1202,8 @@ trend <- function(strSpp="442", fqtName="gfb_iphc.sql",
 			box() }
 		if(iii!="gdev") dev.off()
 	}
-	invisible() }
+	invisible()
+}
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~trend
 
 

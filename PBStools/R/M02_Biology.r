@@ -158,7 +158,7 @@ calcLW <- function(dat=pop.age, strSpp="396", xfld="len", yfld="wt",
 				fout = switch(l, 'e' = paste0("./english/",fout.e), 'f' = paste0("./french/",fout.e) )
 	
 				if (length(sex)>3)
-					rc = rev(PBSmodelling:::.findSquare(length(sex)))  ## .findSquare no longer exported from PBSmodelling namespace
+					rc = rev(.findSquare(length(sex)))
 				else
 					rc = c(1,length(sex))
 				if (plotit && ptype!="win")
@@ -661,7 +661,7 @@ calcSG <- function(dat=pop.age, strSpp="", yfld="len", tau=c(5,80), fixt0=FALSE,
 						ttput(SGdat)  #assign("SGdat",idat,envir=.PBStoolEnv)
 						here = lenv()
 						## make.pVec only rlevant to vonB
-						make.parVec =function(xdat,xVec) { ## only affects row 1 of parVec, sometimes row 3
+						make.parVec  <- function(xdat,xVec) { ## only affects row 1 of parVec, sometimes row 3
 							xy <- hist(xdat$yval, nclass=20, plot=FALSE);
 							Ymod <- xy$breaks[2:length(xy$breaks)][is.element(xy$density,max(xy$density))]
 							Ymod <- mean(Ymod)
@@ -690,7 +690,7 @@ calcSG <- function(dat=pop.age, strSpp="", yfld="len", tau=c(5,80), fixt0=FALSE,
 							enough.contrast = diff(range(TLpred)) > 2
 #if (i==2) {browser();return()}
 							if (enough.points && enough.contrast) {  ## nls cannot fit when calculation has no contrast
-								#bModel = function(x, pars, tau=tau) {
+								#bModel <- function(x, pars, tau=tau) {
 								#	#P=coef[1:4]; tau=coef[5:6] #; is.pred=as.logical(coef[7])
 								#	a = pars[[1]]; b=pars[[2]]; y1=pars[[3]]; y2=pars[[4]]
 								#	junk=ttcall(aModel)(P=c(a,b,y1,y2), x, tau); browser();return()}
@@ -858,7 +858,7 @@ calcVB <- function(dat=pop.age, strSpp="", yfld="len", fixt0=FALSE,
 		#return(n1*log(ssq)); };
 		return(fval);
 	}
-	msg = function(x,flag="data"){
+	msg <- function(x,flag="data"){
 		nx = nrow(x)
 		.flush.cat("\t",paste0(flag,": ",nx," records"),"\n")
 	}
@@ -1153,7 +1153,7 @@ calcVB <- function(dat=pop.age, strSpp="", yfld="len", fixt0=FALSE,
 						yval <- idat$yval; age <- idat$age
 						ttput(VBdat)  #assign("VBdat",idat,envir=.PBStoolEnv)
 						here = lenv()
-						make.parVec =function(xdat,xVec) { ## only affects row 1 of parVec, sometimes row 3
+						make.parVec  <- function(xdat,xVec) { ## only affects row 1 of parVec, sometimes row 3
 							xy <- hist(xdat$yval, nclass=20, plot=FALSE);
 							Ymod <- xy$breaks[2:length(xy$breaks)][is.element(xy$density,max(xy$density))]
 							Ymod <- mean(Ymod)
@@ -1326,8 +1326,8 @@ compCsum <- function(dat=pop.age, pro=TRUE, strSpp="", xfld="age", plus=60,
 	yfac="year",areas=list(major=NULL, minor=NULL, locality=NULL, 
 	srfa=NULL, srfs=NULL, popa=NULL), ttype=list(c(1,4),c(2,3)), 
 	stype=c(1,2,5:8), ameth=3, allTT=TRUE, years=1998:2006,
-	pix=FALSE, wmf=FALSE, singles=FALSE, pages=FALSE, ioenv=.GlobalEnv) {
-
+	pix=FALSE, wmf=FALSE, singles=FALSE, pages=FALSE, ioenv=.GlobalEnv) 
+{
 	assign("PBStool",list(module="M02_Biology",call=match.call(),args=args(compCsum),ioenv=ioenv),envir=.PBStoolEnv)
 	#Subfunctions----------------------------------
 	createPNG <- function(plotname,rc=c(1,3),rheight=4.5,mar=c(2,2,.5,.5),oma=c(2,1.5,0,0)) {
@@ -1339,7 +1339,7 @@ compCsum <- function(dat=pop.age, pro=TRUE, strSpp="", xfld="age", plus=60,
 		if (.Platform$OS.type=="windows")
 			do.call("win.metafile",list(filename=plotname, width=6.5, height=rheight*rc[1]))
 		expandGraph(mfrow=rc,mar=mar,oma=oma,mgp=c(1.5,.5,0),cex=0.8) }
-	csum=function(x,N,yspc=1){ # transform x-data to relative cumulative sums
+	csum <- function(x,N,yspc=1){ # transform x-data to relative cumulative sums
 		pos=attributes(x)$pos; lab=attributes(x)$lab
 		if (pro) {
 			xy=hist(x,breaks=seq(min(x)-.5,max(x)+.5,1),plot=FALSE)
@@ -1354,7 +1354,7 @@ compCsum <- function(dat=pop.age, pro=TRUE, strSpp="", xfld="age", plus=60,
 		yqnt=max(0,yqnt); yqnt=min(1,yqnt); xqnt=approx(y,x,yqnt,rule=2,ties="ordered")$y
 		out=c(xqnt,yqnt); attr(out,"clr")=clr; attr(out,"lab")=lab
 		invisible(out) }
-	clab=function(coord,delim=""){ # label the curves
+	clab <- function(coord,delim=""){ # label the curves
 		x=coord[1]; y=coord[2]
 		clr=attributes(coord)$clr; lab=attributes(coord)$lab
 		if (delim!="") {dpos=regexpr(delim,lab); lab=substring(lab,dpos+1)}
@@ -1365,7 +1365,7 @@ compCsum <- function(dat=pop.age, pro=TRUE, strSpp="", xfld="age", plus=60,
 		polygon(xbox,ybox,col="ghostwhite",border=clr)
 		text(x,y,lab,col=clr,adj=c(ifelse(wmf,.5,.45),ifelse(wmf,.3,.4)),cex=.7) 
 		invisible() }
-	plotCurve=function(pdat,xfld,yfac,yspc=1) { # plot the relative cumulative curves
+	plotCurve <- function(pdat,xfld,yfac,yspc=1) { # plot the relative cumulative curves
 		paul=any(yfac==c("area","trip")); gap=!paul
 		plot(0,0,type="n",xlab="",ylab="",xlim=xlim,ylim=ylim,axes=FALSE)
 		mfg=par()$mfg; nr=mfg[3]
@@ -1510,7 +1510,8 @@ compCsum <- function(dat=pop.age, pro=TRUE, strSpp="", xfld="age", plus=60,
 	if ((!singles&!pages) && (pix|wmf)) dev.off()
 	stuff=c("xlim","ylim","alab","tlab","aName","tName","aaName","ttName","clrs","plotname","strSpp")
 	packList(stuff,"PBStool",tenv=.PBStoolEnv)
-	invisible() }
+	invisible() 
+}
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~compCsum
 
 
@@ -1571,12 +1572,12 @@ estOgive <- function(dat=pop.age, strSpp="", method=c("DN"),
 		return(nm/n)
 	}
 	## Proportions-at-age (nu is now in log space)
-	page = function(p=.5,mu,nu) {
+	page <- function(p=.5,mu,nu) {
 		mu - sqrt(-exp(nu)*log(p))
 	}
 
 	## Fit maturity using double normal
-	fitDN = function(P) {
+	fitDN <- function(P) {
 		mu=P[1]; logvL=P[2]; logvR=P[3]
 		vL = exp(logvL); vR= exp(logvR)
 		a = obs$mn; pobs=obs$pemp; zL = a<=mu; zR = a>mu
@@ -1587,7 +1588,7 @@ estOgive <- function(dat=pop.age, strSpp="", method=c("DN"),
 #browser();return()
 		return(n*log(ssq))
 	}
-	calcDN = function(P, a=obs$mn) {
+	calcDN <- function(P, a=obs$mn) {
 		mu=P[1]; logvL=P[2]; logvR=P[3]
 		vL = exp(logvL); vR= exp(logvR)
 		#a = seq(1,60,len=1000) #a = obs$mn; pobs=obs$pemp; 
@@ -1597,7 +1598,7 @@ estOgive <- function(dat=pop.age, strSpp="", method=c("DN"),
 	}
 
 	## Logistic code extracted from Vivian Haist MSLM size-based NZ rock lobster model
-	fitVH = function(P) {
+	fitVH <- function(P) {
 		mat50 = P[1]; mat95add = P[2]
 		## mat50 = size/age at 50% maturity
 		## mat95add = increment to get to 95% maturity
@@ -1607,14 +1608,14 @@ estOgive <- function(dat=pop.age, strSpp="", method=c("DN"),
 		n <- length(pobs); ssq <- sum((pobs-pred)^2 )
 		return(n*log(ssq))
 	}
-	calcVH = function(P,a=obs$mn) {
+	calcVH <- function(P,a=obs$mn) {
 		mat50=P[1]; mat95add=P[2]
 		pred = 1. / (1. + exp((-log(19.) / mat95add) * (a - mat50)))  ## predicted maturity
 		return(pred)
 	}
 
 	## Add label with pointer to median value
-	doLab =function(x, y, x50, n=1, ...) {
+	doLab  <- function(x, y, x50, n=1, ...) {
 		if (is.null(Arcs)) Arcs=c(150,165,315,330,135,120,345,360)
 		if (x50>xlim[1] & x50<xlim[2]) {
 			flagIt(a=x50, b=0.5, r=radius, A=Arcs[sin], col=fg[sin], n=n, ...)
@@ -1624,14 +1625,14 @@ estOgive <- function(dat=pop.age, strSpp="", method=c("DN"),
 			text(ldL[1], ldL[2]+.02*dy, show0(round(mdBL,1),1,add2int=TRUE), cex=0.8, col=fg[sin])
 		}
 	}
-	lighten = function(clrs,N=5,M=4){
+	lighten <- function(clrs,N=5,M=4){
 		liteclrs = sapply(clrs, function(x){
 			cFun = colorRampPalette(c(x,"white"))
 			cFun(N)[M]
 		})
 		return(liteclrs)
 	}
-	amendLeg = function(legtxt, muval, mulab, vLval=NULL){
+	amendLeg <- function(legtxt, muval, mulab, vLval=NULL){
 		revleg  = rev(legtxt)
 		lastleg = revleg[1]
 #if (mulab=="DN") {browser();return()}
@@ -2080,7 +2081,7 @@ estOgive <- function(dat=pop.age, strSpp="", method=c("DN"),
 ## If show.age=TRUE, a GUI reports # ages by
 ##  specified field pair for each sex.
 ## ---------------------------------------------RH
-extractAges = function(dat, ameth=c(3,17), use.sfc.age=1:3, sex=c(2,1),
+extractAges <- function(dat, ameth=c(3,17), use.sfc.age=1:3, sex=c(2,1),
    rmSM=TRUE, only.markSM=FALSE, rmRC=9,
    show.age=FALSE, show.flds=c("ameth","ttype"), show.only=FALSE)
 {
@@ -2168,7 +2169,8 @@ extractAges = function(dat, ameth=c(3,17), use.sfc.age=1:3, sex=c(2,1),
 #   sim   : logical, if TRUE return components of the simulated proportions-at-age.
 #-------------------------------------------JTS/RH
 genPa <- function(np=40, 
-     theta=list(Z=0.1,mu=15,sigma=5,bh=c(10,20),rho=c(3,2),tau=1.5), sim=TRUE) {
+   theta=list(Z=0.1,mu=15,sigma=5,bh=c(10,20),rho=c(3,2),tau=1.5), sim=TRUE) 
+{
 	unpackList(theta)
 	if (length(bh)!=length(rho))
 		showError("Lengths of 'bh' and 'rho'\n(ages at and magnitudes of recruitment anomalies, respectively)\nmust be the same",as.is=TRUE)
@@ -2192,7 +2194,8 @@ genPa <- function(np=40,
 		for (i in om) PBStool[[i]] <- get(i)
 		ttput(PBStool)
 	}
-	return(pa) }
+	return(pa) 
+}
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~genPa
 
 
@@ -2200,7 +2203,7 @@ genPa <- function(np=40,
 ##  Get stomach contents (if any) that match the
 ##  SPECIMEN_ID in a bioDat object ('gfb_bio.sql')
 ## ---------------------------------------------RH
-getPrey = function(bioDat)
+getPrey <- function(bioDat)
 {
 	getData("B05e_Specimen_Stomach","GFBioSQL")
 	stomachs = PBSdat
@@ -2228,8 +2231,8 @@ histMetric <- function(dat=pop.age, xfld="age", xint=1, minN=50,
 	major=NULL, minor=NULL, locality=NULL, srfa=NULL, srfs=NULL,
 	xlim=NULL, ylim=NULL, pxlab=c(.075,.85),axes=TRUE,
 	fill=FALSE, bg="grey90", fg="black", 
-	hrow=0.75, hpage=8, wmf=FALSE, pix=FALSE, ioenv=.GlobalEnv) {
-
+	hrow=0.75, hpage=8, wmf=FALSE, pix=FALSE, ioenv=.GlobalEnv)
+{
 	xlab=ifelse(xfld=="len","Length (cm)",ifelse(xfld=="age","Age (y)","Metric"))
 	assign("PBStool",list(module="M02_Biology",call=match.call(),args=args(histMetric),ioenv=ioenv,xlab=xlab),envir=.PBStoolEnv)
 	dat=as.character(substitute(dat)); spp=substring(dat,1,3)
@@ -2290,7 +2293,7 @@ histMetric <- function(dat=pop.age, xfld="age", xint=1, minN=50,
 	NYR=length(YRS)
 
 	if (ntt==1) {
-		rc=PBSmodelling:::.findSquare(NYR) ## no longer exported from Namespace
+		rc=.findSquare(NYR) 
 		m=rc[1]; n=rc[2] }
 	else {
 		m=NYR; n=ntt }
@@ -2355,7 +2358,8 @@ histMetric <- function(dat=pop.age, xfld="age", xint=1, minN=50,
 
 	stuff=c("dat","xy","YRS","ttype","xlim","ylim")
 	packList(stuff,"PBStool",tenv=.PBStoolEnv)
-	invisible() }
+	invisible() 
+}
 #---------------------------------------histMetric
 
 
@@ -2787,7 +2791,7 @@ mapMaturity <- function (dat=pop.age, strSpp="", type="map", mats=1:7,
 ## plotAdens----------------------------2024-01-03
 ##  Plot density of field (length) by age as waveforms.
 ## ---------------------------------------------RH
-plotAdens = function(dat, xfld="len", yfld="age", type="dens", sd=3,
+plotAdens <- function(dat, xfld="len", yfld="age", type="dens", sd=3,
 	strSpp="417", bysex=TRUE, stype=c(1,2,6:8),
 	xlim=NULL, ylim=NULL, yspan=2, yrel=TRUE, nmin=1,
 	dcol, png=FALSE, pngres=400, PIN=c(8,8), ...)
@@ -3016,7 +3020,8 @@ plotProp <- function(fnam, hnam=NULL, ioenv=.GlobalEnv, ...)
 ## .plotProp.calcP----------------------2020-10-07
 ## Perform calculations to get proportions.
 ## ---------------------------------------------RH
-.plotProp.calcP <- function(reload=FALSE) {
+.plotProp.calcP <- function(reload=FALSE)
+{
 	getWinVal(winName="window",scope="L")
 	ioenv = ttcall(globo)$ioenv
 	expr  = paste("getFile(",fnam,",senv=ioenv,use.pkg=TRUE,try.all.frames=TRUE,reload=reload,tenv=penv()); dat=",fnam,sep="")
@@ -3198,7 +3203,9 @@ plotProp <- function(fnam, hnam=NULL, ioenv=.GlobalEnv, ...)
 ## .plotProp.plotP----------------------2020-10-07
 ## Guts of the plotting routine.
 ## ---------------------------------------------RH
-.plotProp.plotP <- function(wmf=FALSE,png=FALSE) { ## Start blowing bubbles
+.plotProp.plotP <- function(wmf=FALSE,png=FALSE)
+{
+	## Start blowing bubbles
 	sordid <- function(x, lab="wot", count=TRUE) {  ## count and classify specimens
 		z <- is.element(x,c("",NA,NaN))
 		x <- x[!z]; if(length(x)==0) return("");
@@ -3212,7 +3219,7 @@ plotProp <- function(fnam, hnam=NULL, ioenv=.GlobalEnv, ...)
 		x = as.vector(RGB); names(x) = row.names(RGB)
 		dom = names(rev(sort(x)))[1]
 		paste("dark",dom,sep="") }
-	plaster =function(x,sep="",enc=c("(",")")) { ## paste together unique values
+	plaster  <- function(x,sep="",enc=c("(",")")) { ## paste together unique values
 		if (is.null(x) || all(x=="")) return(NULL)
 		lab=as.character(substitute(x))
 		ux=sort(unique(x)); ux=setdiff(ux,c("",NA))
@@ -3308,7 +3315,8 @@ plotProp <- function(fnam, hnam=NULL, ioenv=.GlobalEnv, ...)
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~.plotProp.plotP
 
 ## .plotProp.resetP---------------------2017-07-19
-.plotProp.resetP <- function() {
+.plotProp.resetP <- function() 
+{
 	resList <-
 	structure(list(psize = 0.03, powr = 0.5, lwd = 2, bcol = c("blue", 
 "grey", "coral"), showH = TRUE, hide0 = TRUE, showM = FALSE, 
@@ -3325,7 +3333,8 @@ plotProp <- function(fnam, hnam=NULL, ioenv=.GlobalEnv, ...)
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~.plotProp.resetP
 
 ## .plotProp.resetT---------------------2010-10-20
-.plotProp.resetT <- function() {
+.plotProp.resetT <- function()
+{
 	resList <- list(agg = FALSE, XYopt = structure(list(
         fld = structure(c(2L, 1L), .Label = c("age", "year"), class = "factor"), 
         lim1 = c(NA, 0), lim2 = c(NA_real_, NA_real_), int = c(1, 
@@ -3468,8 +3477,8 @@ plotProp <- function(fnam, hnam=NULL, ioenv=.GlobalEnv, ...)
 #  L[5] = length of soft-dorsal-fin base,
 #  L[6] = preanal length.
 #-----------------------------------------------RH
-predictRER = function(S,L,N) {
-
+predictRER <- function(S,L,N)
+{
 	if (length(L)!=6) {
 		mess = "Need 6 length measurements:\n\n\t1) dorsal fin spine 1\n\t2) snout\n\t3) gill rakers\n\t4) pelvic fin rays\n\t5) soft-dorsal-fin base\n\t6) preanal"
 		showAlert(mess); stop(mess) }
@@ -3481,15 +3490,16 @@ predictRER = function(S,L,N) {
 	D  = 101.557*sL[1] + 52.453*sL[2] +  0.294* N[1] +
 		   51.920*sL[3] +  0.564* N[2] - 38.604*sL[4] -
 		   22.601*sL[5] - 10.203*sL[6] - 10.445
-	return(D) }
+	return(D)
+}
 
 
 #reportCatchAge-------------------------2010-10-20
 # Analyses and plots from catch-at-age report.
 # Originals by Jon Schnute for Pacific ocean perch (pop).
 #-----------------------------------------------RH
-reportCatchAge <- function(prefix="pop", path=getwd(), hnam=NULL, ...) {
-
+reportCatchAge <- function(prefix="pop", path=getwd(), hnam=NULL, ...)
+{
 	prefix=as.character(substitute(prefix))
 	assign("PBStool",list(module="M02_Biology",call=match.call(),args=args(reportCatchAge),plotname="Rplot",prefix=prefix),envir=.PBStoolEnv)
 	options(warn=-1)
@@ -3508,12 +3518,14 @@ reportCatchAge <- function(prefix="pop", path=getwd(), hnam=NULL, ...) {
 		temp <- gsub("#import=",paste("import=\"",hnam,"\"",sep=""),temp)
 	writeLines(temp,con=wtmp)
 	createWin(wtmp) 
-	invisible() }
+	invisible()
+}
 
 #.reportCatchAge.getrep-----------------2010-10-20
 # Get the report file created by ADMB as directed by a TPL file
 #-----------------------------------------------RH
-.reportCatchAge.getrep <- function() {
+.reportCatchAge.getrep <- function()
+{
 	getWinVal(scope="L")
 	report=paste(prefix,".rep",sep=""); repfile=paste(path,"/",report,sep="")
 	if (!file.exists(convSlashes(repfile))) showError(repfile,"nofile")
@@ -3545,19 +3557,23 @@ reportCatchAge <- function(prefix="pop", path=getwd(), hnam=NULL, ...) {
 	stuff=c("prefix","report",names(admRep),"yr","age","Btot","RkB","catch","Ft","Rkprod",
 			"surveys","poi","lin","ryrs","qq")
 	packList(stuff,"PBStool",tenv=.PBStoolEnv) 
-	invisible() }
+	invisible()
+}
 
 #.reportCatchAge.checkssb---------------2010-10-20
 # Check ADMB SSB calculation
 #----------------------------------------------JTS
-.reportCatchAge.checkssb <- function() {
+.reportCatchAge.checkssb <- function()
+{
 	unpackList(ttcall(PBStool),scope="L");
-	(mata %*% (wgtat*Nat)) -SSB; };
+	(mata %*% (wgtat*Nat)) -SSB
+}
 
 #.reportCatchAge.plotrep----------------2010-10-20
 # Plot various components of the report file.
 #-------------------------------------------JTS/RH
-.reportCatchAge.plotrep=function(plotcodes, unique.only=TRUE) {
+.reportCatchAge.plotrep <- function(plotcodes, unique.only=TRUE)
+{
 	choices=c("AA","AP","BE","CP","HS","PP","RN","RP","SB","SG","SM","WA")
 	if (missing(plotcodes) || is.null(plotcodes) || length(plotcodes)==0 || all(plotcodes=="")) {
 		showMessage(paste(c("The function '.reportCatchAge.plotrep' needs a vector of codes.\n",
@@ -3571,7 +3587,7 @@ reportCatchAge <- function(prefix="pop", path=getwd(), hnam=NULL, ...) {
 	if (is.null(ttcall(PBStool)$report)) .reportCatchAge.getrep()
 
 	# Plot bubbles for an age distribution
-	AAfun = APfun = function(z,pow=0.5,siz=0.10){
+	AAfun = APfun <- function(z,pow=0.5,siz=0.10){
 		unpackList(ttcall(PBStool),scope="L")
 		xlim <- range(yr);  xdiff <- diff(xlim); xlim <- xlim+0.02*c(-1,1)*xdiff;
 		ylim <- range(age); ydiff <- diff(ylim); ylim <- ylim+0.05*c(-1,1)*ydiff;
@@ -3758,7 +3774,7 @@ reportCatchAge <- function(prefix="pop", path=getwd(), hnam=NULL, ...) {
 	# Main body of .reportCatchAge.plotrep()
 	plotcodes=plotcodes[is.element(plotcodes,choices)]
 	if (unique.only) plotcodes=unique(plotcodes) # order is retained
-	N=length(plotcodes); rc=PBSmodelling:::.findSquare(N); pnum=0; cexN=3/sqrt(N)
+	N=length(plotcodes); rc=.findSquare(N); pnum=0; cexN=3/sqrt(N)
 	figpars=list(mfrow=rc,mar=c(4.5,4,0.5,1),oma=c(0,0,0,0),mgp=c(2.5,.5,0),las=1,tcl=-.3)
 	unpackList(ttcall(PBStool),scope="L")
 	unpackList(figpars); resetGraph()
@@ -3774,7 +3790,8 @@ reportCatchAge <- function(prefix="pop", path=getwd(), hnam=NULL, ...) {
 			addLabel(.5,.5,paste("'",i,"' not available",sep=""),cex=cexN,col="red") }
 		if (N>1) addLabel(.95,.95,LETTERS[pnum],cex=cexN,adj=1)
 	}
-	invisible() }
+	invisible()
+}
 #-----------------------------------reportCatchAge
 
 
@@ -3785,7 +3802,7 @@ reportCatchAge <- function(prefix="pop", path=getwd(), hnam=NULL, ...) {
 ##  Note: ageing methdology is not a sensible selection 
 ##  criterion because the fish selected have not been aged.
 ## ---------------------------------------------RH
-requestAges=function(strSpp, nage=500, year=2016, 
+requestAges <- function(strSpp, nage=500, year=2016, 
    areas=list(major=3:9, minor=NULL), ttype=c(1,4), gear=1,
    sex=1:2, nfld = "nallo", run.sql=TRUE, only.sql=FALSE, bySID=FALSE,
    spath=.getSpath(), uid=Sys.info()["user"], pwd=uid, ...)
@@ -3795,7 +3812,7 @@ requestAges=function(strSpp, nage=500, year=2016,
 	assign("PBStool",list(module="M02_Biology",call=match.call(),args=args(requestAges)),envir=.PBStoolEnv)
 
 ##Subfunctions --------------------------
-	adjustN = function(a,b,nmin=10){           ## a=available , b=desired, nmin=minimum acceptable
+	adjustN <- function(a,b,nmin=10){           ## a=available , b=desired, nmin=minimum acceptable
 #print(a); print(b)
 		if (round(sum(b),5) > round(sum(a),5)) {
 			showMessage(paste("There are only",sum(round(a,0)),"otoliths available.\n",
@@ -3823,7 +3840,7 @@ requestAges=function(strSpp, nage=500, year=2016,
 		}
 		else return(b) }
 
-	moveCat=function(C,S){
+	moveCat <- function(C,S){
 		if (all(S)) return(C) ## all periods sampled, no need to move catch
 		n=length(C); x=1:n; y=rep(0,n)
 		y[!S]=.05
@@ -3836,7 +3853,7 @@ requestAges=function(strSpp, nage=500, year=2016,
 			C[i]= 0 }
 		return(C) }
 
-	catnip = function(...) {cat(... ,sep="")}
+	catnip <- function(...) {cat(... ,sep="")}
 ##---------------------------subfunctions
 	}
 
@@ -4312,7 +4329,8 @@ requestAges=function(strSpp, nage=500, year=2016,
 			catnip("E,",paste(TRAY[5,],collapse=","),"\n",file=fnam,append=TRUE)
 			catnip("Last serial,",max(lastSerial),"\n\n",file=fnam,append=TRUE)
 	}	}
-	invisible(samp) }
+	invisible(samp)
+}
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~requestAges
 
 
@@ -4321,7 +4339,7 @@ requestAges=function(strSpp, nage=500, year=2016,
 ## quantile plots to show how well each age is fit.
 ## Need to run 'calcVB' first to get DATA
 ## ---------------------------------------------RH
-residVB = function(P, L1="surv", L2="Females", yval="len", 
+residVB <- function(P, L1="surv", L2="Females", yval="len", 
    area="major_3|4", ttype="surv_2|3", Amax, ylim,
    png=FALSE, pngres=400, PIN=c(8,8), lang=c("e","f"))
 {
@@ -4411,7 +4429,8 @@ residVB = function(P, L1="surv", L2="Females", yval="len",
 #simBSR---------------------------------2011-06-14
 # Simulate Blackspotted Rockfish biological data.
 #-----------------------------------------------RH
-simBSR = function(Nfish) {
+simBSR <- function(Nfish)
+{
 	SL  = runif(Nfish,95.5,539)   # Standard length (mm)
 	L1 = rnorm(Nfish,7.8,0.7)     # Length of dorsal-fin spine 1 (%SL)
 	L2 = rnorm(Nfish,8.0,0.6)     # Snout length (%SL)
@@ -4427,12 +4446,14 @@ simBSR = function(Nfish) {
 	N = cbind(N1,N2)
 	SLN = cbind(S,L,N); dimnames(SLN)=list(1:Nfish,c("S","L1","L2","L3","L4","L5","L6","N1","N2"))
 	attr(SLN,"spp") = "BSR"
-	return(SLN) }
+	return(SLN)
+}
 
 #simRER---------------------------------2011-06-14
 # Simulate Rougheye Rockfish biological data.
 #-----------------------------------------------RH
-simRER = function(Nfish) {
+simRER <- function(Nfish)
+{
 	SL  = runif(Nfish,63.4,555.2) # Standard length (mm)
 	L1 = rnorm(Nfish,5.8,0.6)     # Length of dorsal-fin spine 1 (%SL)
 	L2 = rnorm(Nfish,7.5,0.7)     # Snout length (%SL)
@@ -4448,14 +4469,15 @@ simRER = function(Nfish) {
 	N = cbind(N1,N2)
 	SLN = cbind(S,L,N); dimnames(SLN)=list(1:Nfish,c("S","L1","L2","L3","L4","L5","L6","N1","N2"))
 	attr(SLN,"spp") = "RER"
-	return(SLN) }
+	return(SLN)
+}
 
 
 ## sumBioTabs---------------------------2022-03-15
 ## Summarize frequency occurrence of biological samples
 ## and specimens and send output to a data table.
 ## ---------------------------------------------RH
-sumBioTabs=function(dat, fnam="sumBioTab.csv", samps=TRUE, specs=TRUE,
+sumBioTabs <- function(dat, fnam="sumBioTab.csv", samps=TRUE, specs=TRUE,
    facs=list(c("year","major"), c("year","ttype"), c("year","stype"),
    c("year","ameth"), c("year","gear") ) )
 {
@@ -4497,7 +4519,7 @@ sumBioTabs=function(dat, fnam="sumBioTab.csv", samps=TRUE, specs=TRUE,
 ## Note: Any modifications to 'gfb_bio.sql' may require similar changes in 'gfb_catch_records.sql'
 ## NOAA PDO data: https://www.ncei.noaa.gov/pub/data/cmb/ersst/v5/index/ersst.v5.pdo.dat
 ## ---------------------------------------------RH
-weightBio = function(adat, cdat, sunit="TID", sweight="catch", 
+weightBio <- function(adat, cdat, sunit="TID", sweight="catch", 
    ttype=NULL, stype=c(0,1,2,5:8,17), scat=NULL, ameth=c(2:4,17), sex=2:1, major=NULL,
    wSP=c(TRUE,TRUE), wN=TRUE, plus=60, accum=TRUE, Nmin=0, Amin=NULL, 
    ctype="C", per=90, SSID=NULL, tabs=TRUE, gear=NULL,
@@ -4753,7 +4775,7 @@ weightBio = function(adat, cdat, sunit="TID", sweight="catch",
 
 	## Second reweighting by Quarter if commercial or by Stratum Area if survey
 	#if (wSP[2]) {  ## Why has this been disabled?
-		wtdMA = function(A){
+		wtdMA <- function(A){
 			zA = A>0; zA1 = A==1; zA2 = A>1
 			if (any(zA1) && !all(zA1)) {
 				pAList = sapply(split(A[zA2],A[zA2]),function(x,y){x/y},y=sum(A[zA2]),simplify=FALSE)
@@ -5031,7 +5053,7 @@ weightBio = function(adat, cdat, sunit="TID", sweight="catch",
 	#agetab[,,"1","wp"][z] = -agetab[,,"1","wp"][z]
 	#agetab[,,"2","wp"][z] = -agetab[,,"2","wp"][z]
 
-	makeCmat =function(x,colname="Y") {
+	makeCmat  <- function(x,colname="Y") {
 		matrix(x,ncol=1,dimnames=list(names(x),colname)) }
 
 	## Plot weighted proportions-at-age
@@ -5164,7 +5186,7 @@ weightBio = function(adat, cdat, sunit="TID", sweight="catch",
 						if (length(xuse)==1) zmax=makeCmat(zmax,xuse)
 						imax = apply(zmax,2,function(x){x >= quantile(x,0.95) })
 						zmax[!imax] = 0
-						makePoly = function(amat,rel=FALSE) {
+						makePoly <- function(amat,rel=FALSE) {
 							amat[is.element(amat,0)] = NA
 							xval = as.numeric(dimnames(amat)[[2]])
 							xdif = ifelse(length(xval)==1,1,diff(xval)[1])
