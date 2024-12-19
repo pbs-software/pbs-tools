@@ -31,6 +31,7 @@
 ##  getFile.........Get a dataset (binary libraries, binary local, dumped data, comma-delimited text.
 ##  getName.........Get the names of the input object.
 ##  getODBC.........Get a string vector of ODBC drivers on user's Windows system.
+##  getVer..........Get version of loaded or installed R packages
 ##  installPkgs.....Install specified packages if they are missing or if newer versions are available..
 ##  inWord..........Find morphemes (parts of words) in word and report T/F
 ##  isThere.........Check to see if object physically exists in the specified environment.
@@ -132,7 +133,7 @@ addStrip <- function (x, y, col, lab, xwidth=0.01, yheight=0.3, ...)
 ## ---------------------------------------------RH
 adjustMajor <- function(dat, strSpp="POP", plot=FALSE)
 {
-	if (!strSpp %in% c("POP","YMR"))
+	if (!strSpp %in% c("POP","YMR","396","440"))
 		stop (paste0("Function 'adjustMajor' has no rule for '", strSpp, "'"))
 	if (is.element("major_old", colnames(dat)))  ## legacy from 'expand5C'
 		dat$major_gffos = dat$major_old
@@ -140,7 +141,7 @@ adjustMajor <- function(dat, strSpp="POP", plot=FALSE)
 		dat$major_gffos = dat$major
 	dat$major_adj = dat$major_gffos
 
-	if (strSpp %in% c("POP","YMR")) {
+	if (strSpp %in% c("POP","YMR","396","440")) {
 		## Expand 5C for both POP and YMR from 5B and 5E
 		## Use a points in polygon routine (see bio.fields.xls for 5C polygon)
 		poly5C = data.frame(PID=rep(1,6),POS=1:6,X=c(-131.5,-132,-131,-130,-130,-131.2), Y=c(52.33333333,52.33333333,51.5,51.8,52.16666667,52.16666667))
@@ -166,7 +167,7 @@ adjustMajor <- function(dat, strSpp="POP", plot=FALSE)
 		if (any(zCSJ))
 			dat$major_adj[zCSJ] = 7  ## 5C
 	}
-	if (strSpp %in% c("POP")) {
+	if (strSpp %in% c("POP","396")) {
 		## Expand 5A for POP from 3D
 		## Use a points in polygon routine
 		## Pacific Ocean Perch within Subarea 127-1 and that portion of Subareas 127-2
@@ -537,13 +538,14 @@ convYP <- function(x, ndays=90)
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~convYP
 
 
-#countLines-----------------------------2013-05-07
-# Count the number of lines in an ASCII file.
-#-----------------------------------------------RH
-countLines <- function(fnam,os=.Platform$OS.type)
+## countLines---------------------------2024-11-22
+##  Count the number of lines in an ASCII file.
+## ---------------------------------------------RH
+countLines <- function(fnam, os=.Platform$OS.type)
 {
-	if (os!="windows") stop("You're sh1t out of luck")
+	if (os!="windows") stop("Only works on Windows")
 	if (!file.exists(fnam)) stop("File name specified does not exist.")
+	fnam = convSlashes(fnam, os="windows")  ## because file name might include directories
 	cmd = paste("%SystemRoot%\\system32\\findstr /R /N \"^\" ",fnam," | %SystemRoot%\\system32\\find /C \":\"",sep="")
 	Nrow = as.numeric(shell(cmd,intern=TRUE))
 	return(Nrow)
@@ -587,7 +589,7 @@ createDSN <- function(trusted=TRUE)
 
 
 ## createFdir---------------------------2024-10-22
-## Create a subdirectory called `french' for
+## Create figure subdirectory called `french' for
 ## storing figures with French text and labels.
 ## Extend this to creating an english subdirectory (RH 241022)
 ## ---------------------------------------------RH
@@ -607,6 +609,27 @@ createFdir <- function(lang, dir=".")
 	invisible()
 }
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~createFdir
+
+
+## createTdir---------------------------2024-11-21
+## Create table and data subdirectories called
+##  `tables' and `data', respectively.
+## Parallels function `createFdir'
+## ---------------------------------------------RH
+createTdir <- function(dir=".")
+{
+	wd = sub("/$","",dir) ## get rid of trailing delimiter
+
+	## Create a subdirectory called `tables' for output tables (csv, adm, dat, etc.)
+	if (!dir.exists(paste0(wd,"/tables/")))
+		dir.create(paste0(wd,"/tables/"))
+
+	## Create a subdirectory called `data' for output binaries (rda, rds, etc.)
+	if (!dir.exists(paste0(wd,"/data/")))
+		dir.create(paste0(wd,"/data/"))
+	invisible()
+}
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~createTdir
 
 
 ## crossTab-----------------------------2024-02-29
@@ -1827,6 +1850,34 @@ getODBC <- function(os=.Platform$OS.type, pattern=NULL, status="Installed")
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~getODBC
 
 
+## getVer ------------------------------2024-12-17
+##  Get version of loaded or installed packages
+##  https://stackoverflow.com/questions/42901293/r-packages-installed-version-numbers
+## -----------------------------------Roasty247|RH
+getVer <- function(print=TRUE, all=FALSE, pat="^.+$", expat="^zzz")
+{
+	Packages <- data.frame()
+	packages = .packages(all.available=all)
+	packages = grep(pat, packages, value=TRUE)
+	if (length(packages)==0) {
+		mess = paste0("No installed packages with pattern = '", pat, "'")
+		.flush.cat(mess, "\n")
+		return(invisible(mess))
+	}
+	packages = grep(expat, packages, invert=TRUE, value=TRUE)
+	for(i in 1:(length((packages)))){
+		package <-(packages)[i]
+		version <- packageVersion(package)
+		PV <- data.frame(package, version)
+		Packages <- rbind(Packages,PV)
+	}
+	if (print)
+		print(Packages)
+	invisible(Packages)
+}
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~getVer
+
+
 #installPkgs----------------------------2016-05-18
 # Install specified packages if they are missing
 # or if newer versions are available.
@@ -2365,6 +2416,7 @@ linguaFranca <- function(x, lang="e", little=4, strip=FALSE, localnames=FALSE)
 			## medium double words
 			xtwo.med = sapply(xtwo.big, function(xx){
 				gsub("[Cc]entral [Rr]un", eval(parse(text=deparse("ex\u{00E9}cution centrale"))),
+				gsub("[Ff]ish [Ww]eight", "poids du poisson", ## (RH 241108)
 				gsub("[Mm]ean [Ww]eight", "poids moyen",
 				gsub("[Ss]urvey [Yy]ear", eval(parse(text=deparse("ann\u{00E9}e du relev\u{00E9}"))),
 				gsub("[Ww]hole [Cc]atch", eval(parse(text=deparse("prise enti\u{00E8}re"))),
@@ -2381,7 +2433,7 @@ linguaFranca <- function(x, lang="e", little=4, strip=FALSE, localnames=FALSE)
 				gsub("[Hh]al[fv](e)? [Cc]atch", eval(parse(text=deparse("moiti\u{00E9} prise"))),
 				gsub("[Mm]ean\\([Cc][Pp][Uu][Ee])", "moyenne(cpue)",
 				gsub("[Bb]ase [Cc]ase|[Bb]ase [Rr]un", eval(parse(text=deparse("sc\u{00E9}nario de r\u{00E9}f\u{00E9}rence"))),
-				xx)))))))))))))))))
+				xx))))))))))))))))))
 			})
 			xtwo.wee = sapply(xtwo.med, function(xx){
 				gsub("[Nn]o CPUE", "pas de CPUE",
@@ -2481,9 +2533,7 @@ linguaFranca <- function(x, lang="e", little=4, strip=FALSE, localnames=FALSE)
 				gsub("[B][C] [Cc]oastwide",  eval(parse(text=deparse("sur toute la c\u{00F4}te de la C-B"))),
 				xx)))))))))))))))))))))))))))
 			})
-#browser();return()
 			## words describing fisheries
-#browser();return()
 			xfish = sapply(xgeo, function(xx){
 				gsub("[Mm]ajor", "principal",
 				gsub("[Mm]inor", "secondaire",
@@ -2505,22 +2555,27 @@ linguaFranca <- function(x, lang="e", little=4, strip=FALSE, localnames=FALSE)
 				gsub("[Tt]rip [Cc]ode", "code de voyage",
 				gsub("from age readers", eval(parse(text=deparse("des lecteurs d'\u{00E2}ge"))),
 				gsub("[S][B][F] [Tt]rap", "MC casier",
+				xx))))))))))))))))))))
+			})
+			## continue words describing fisheries
+			xfish2 = sapply(xfish, function(xx){
 				gsub("[Hh](\\_)?[Ll]rock", eval(parse(text=deparse("HLs\u{00E9}b"))),
 				gsub("[Ss]ablefish [Tt]rap", eval(parse(text=deparse("pi\u{00E8}ge \u{00E0} morue charbonni\u{00E8}re"))),
 				gsub("[R][E][B][S] [Nn]orth", "REBS nord",
 				gsub("[R][E][B][S] [Ss]outh", "REBS sud",
+				gsub("[Cc]ommercial [Ff]ishery", eval(parse(text=deparse("p\u{00EA}che commerciale"))),
 				gsub("[Jj]ig(ging)? [Ss]urvey(s)?", eval(parse(text=deparse("relev\u{00E9}\\2 \u{00E0} la turlutte"))),
 				gsub("[Hh]ook [\\&|Aa](nd)? [Ll]ine", eval(parse(text=deparse("hame\u{00E7}on et lignes"))),
 				gsub("(SoG|Strait of Georgia) [Hh]ake", eval(parse(text=deparse("merlu du d\u{00E9}troit de G\u{00E9}orgie"))),
 				gsub("[Hh][Ll](\\_|\\.| )[Rr]ock(fish)?", eval(parse(text=deparse("HL.s\u{00E9}baste"))),
-				gsub("[Ff][Ii][Ss][Hh]([Ee][Rr][Yy]|ing)", eval(parse(text=deparse("p\u{00EA}che"))),
 				gsub("[Hh](\\&|\\.)[Ll](\\_|\\.| )[Rr]ock(fish)?", eval(parse(text=deparse("H&L s\u{00E9}baste"))),
 				gsub("[Tt][Rr][Aa][Ww][Ll](\\s+|\\_)[Ff][Ii][Ss][Hh][Ee][Rr][Yy]", eval(parse(text=deparse("p\u{00EA}che\\1au\\1chalut"))),
 				gsub("[Mm][Ii][Dd][Ww][Aa][Tt][Ee][Rr](\\s+|\\_)[Ff][Ii][Ss][Hh][Ee][Rr][Yy]", eval(parse(text=deparse("p\u{00EA}che\\1p\u{00E9}lagique"))),
-				xx))))))))))))))))))))))))))))))))
+				xx))))))))))))
 			})
+#browser();return()
 			## single words describing biology
-			xbio = sapply(xfish, function(xx){
+			xbio = sapply(xfish2, function(xx){
 				gsub("[Ss]pent", eval(parse(text=deparse("us\u{00E9}"))),
 				gsub("[Mm]ature", "mature",
 				gsub("[Ee]mbryos", "embryons",
@@ -2529,9 +2584,10 @@ linguaFranca <- function(x, lang="e", little=4, strip=FALSE, localnames=FALSE)
 				gsub("[Ii]mmature", "immature",
 				gsub("[Pp]ectoral", "pectorale",
 				gsub("[Mm]aturing", eval(parse(text=deparse("\u{00E0} maturit\u{00E9}"))),
+				gsub("[Rr]ockfish", eval(parse(text=deparse("s\u{00E9}baste"))), ## (RH 241108)
 				gsub("[Ss]pecimen", eval(parse(text=deparse("sp\u{00E9}cimen"))),
 				gsub("[Ff]ertili[sz]ed", eval(parse(text=deparse("fertilis\u{00E9}"))),
-				xx))))))))))
+				xx)))))))))))
 			})
 			## single words up to 6 characters
 			xone.small = sapply(xbio, function(xx){
@@ -2566,7 +2622,7 @@ linguaFranca <- function(x, lang="e", little=4, strip=FALSE, localnames=FALSE)
 				gsub("[Ss]eason", "saison",
 				gsub("[Ss]eries", eval(parse(text=deparse("s\u{00E9}ries"))),
 				gsub("[Vv]essel", "navire",
-				gsub("[Ww]eight", "poids",
+				gsub("[Ww]eight(s)?", "poid\\1",
 				gsub(" [Mm]ajor ", " zone ",
 				gsub("[Ss]urv(ey)?", eval(parse(text=deparse("relev\u{00E9}"))),
 				gsub("[Dd]rop(ped)?",  eval(parse(text=deparse("enlev\u{00E9}"))),
@@ -2591,10 +2647,11 @@ linguaFranca <- function(x, lang="e", little=4, strip=FALSE, localnames=FALSE)
 				gsub("[m][s][y]", "rmd",         ## rendement maximal durable (no longer soutenu) (be careful of words ending in 'msy')
 				gsub("[U][S][R]", "RSS",         ## r\'{e}f\'{e}rence de stock sup\'{e}rieure
 				gsub("[T][R][P]", "PRC",         ## point de r\'{e}f\'{e}rence cible
+				gsub("[S][S][I][D]", "IDSR",     ## identification de la s\'{e}rie de relev\'{e} (RH 241108)
 				gsub("[M][C][M][C]", "MCCM",     ## Monte Carlo \`{a} cha\^{i}ne de Markov
 				gsub("[P][M][F][C]", "CPMP",     ## Monte Carlo \`{a} cha\^{i}ne de Markov
 				gsub("[R|S]\\+[S|R]", "R+R",     ## research + survey (relev\'{e})
-				xx)))))))))))))))))))
+				xx))))))))))))))))))))
 			})
 #browser();return()
 			## species code3 acronyms
@@ -2635,15 +2692,17 @@ linguaFranca <- function(x, lang="e", little=4, strip=FALSE, localnames=FALSE)
 				gsub("^BC\\s+","C-B ",
 				gsub(" north$"," nord",
 				gsub(" south$"," sud",
+				gsub("[Yy]ear", eval(parse(text=deparse("ann\u{00E9}e"))), ## (RH 241108)
 				gsub("\\(/y(r?))", "(/an)",
-				gsub(" [\\&|Aa](nd)? "," et ",
-				gsub("([.+ ])? to ([.+ ])?", eval(parse(text=deparse("\\1 \u{00E0} \\2"))),  ## (RH 230727)
 				gsub("\\(bar(s)?)", "(barre\\1)",
 				gsub("\\(line(s)?)", "(ligne\\1)",
+				gsub(" [\\&|Aa](nd)? "," et ",
+				gsub("([.+ ])? to ([.+ ])?", eval(parse(text=deparse("\\1 \u{00E0} \\2"))),  ## (RH 230727)
 				#gsub("R([[:digit:]]+)","E\\1",  ## Model run numbers, e.g. R75
 				#gsub("R(\\d+)","E\\1",  ## Model run numbers, e.g. R75 (but R0 gets converted!)
-				gsub("sigmaR( )?=( )?(0|1)\\.([1-9])","sigmaR\\1=\\2\\3,\\4",
-				xx))))))))))))))))))
+				gsub("sigmaR( )?=( )?(0|1)\\.([1-9])", "sigmaR\\1=\\2\\3,\\4",
+				gsub("[Ff][Ii][Ss][Hh]([Ee][Rr][Yy]|ing)", eval(parse(text=deparse("p\u{00EA}che"))),
+				xx))))))))))))))))))))
 			})
 #browser();return()
 			xout[xBpos] = xbig

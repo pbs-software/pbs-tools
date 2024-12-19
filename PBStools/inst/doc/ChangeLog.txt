@@ -10,6 +10,15 @@ Authors: RH  = Rowan Haigh
          BK  = Brian Krishka
 ------------------------------
 
+1.43.4 (2024-12-19)  [Rcheck=T, Rbuild=T]
+  * R code
+    + Made changes to various functions during SGR 2025 stock assessment (RH 241218)
+      - Added new functions `createTdir', `getVer', `tabMW'
+      - Modified `adjustMajor', `buildCatch', `calcCVage', `calcLen', `calcLW', `calcSG', `calcVB', 'compBmsy', `linguaFranca', `processBio', `tabAmeth', `weightBio'
+  * Documentation
+    + Added new Rd files for `getVer' and `tabMW' (RH 241218)
+    + Updated Rd files for `calcCVage', `calcLW' `calcSG', `calcVB', `plotGREFS', `tabAmeth' (RH 241219)
+
 1.43.3 (2024-11-07)  [Rcheck=T, Rbuild=T]
   * R code
     + Forgot to update function `.plotDev' to use english subdirectory for figure files (RH 241029)

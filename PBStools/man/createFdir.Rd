@@ -1,36 +1,45 @@
 \name{createFdir}
 \alias{createFdir}
+\alias{createTdir}
 \title{
-  Create a French Directory
+  Create Figure/Table Directories
 }
 \description{
-  Create a french subdirectory in the directory (\sQuote{folder}
-  to millennials) where figures are being deposited after creation.
+  Create \code{english}/\code{french} subdirectories in the working directory
+  where figures are deposited after creation.
+
+  Ditto \code{tables} and \code{data} subdirectories.
 }
 \usage{
 createFdir(lang, dir=".")
+createTdir(dir=".")
 }
 \arguments{
   \item{lang}{\code{character} -- a vector of letters that denote the language for output:
-    currently only \code{"e"} (english) and \code{"f"} (french).}
-  \item{dir}{\code{character} -- directory in which a subdirectory 
-    called \code{french} is created (if not already present).}
+    currently only \code{"e"} (english) and \code{"f"} (french)}
+  \item{dir}{\code{character} -- directory in which figure/table subdirectories
+    are created (if not already present)}
 }
 \details{
-  Un petit fonction de convenience when creating french figures via
+  Un petit fonction de convenience when creating french (and now english) figures via
   the function \code{linguaFranca}.
 }
 \value{
-  Returns rien but creates a subdirecory called \code{french} (because the code is based in english).
+  Returns rien but creates subdirectories called \code{english}, \code{french},
+  \code{tables}, and \code{data}.
+}
+\note{
+  Started life as `create French directory'.
 }
 \references{
-  \href{http://www.dfo-mpo.gc.ca/csas-sccs/process-processus/translation-traduction-eng.html}{CSAS Policy on the translation of documents}
+\href{http://www.dfo-mpo.gc.ca/csas-sccs/process-processus/translation-traduction-eng.html}{%
+CSAS Policy on the translation of documents}
 }
 \author{
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
   \emph{locus opus}: Remote office, Vancouver BC\cr
-  Last modified \code{Rd: 2020-10-08}
+  Last modified \code{Rd: 2024-12-18}
 }
 \seealso{
 \code{\link[PBStools]{confODBC}},

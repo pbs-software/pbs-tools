@@ -7,51 +7,51 @@
 }
 \usage{
 calcVB(dat=pop.age, strSpp="", yfld="len", fixt0=FALSE, 
-   areas=list(major=NULL, minor=NULL, locality=NULL, srfa=NULL,srfs=NULL, popa=NULL),
-   ttype=list(commercial=c(1,4,5),research=c(2,3)), stype=c(1,2,6,7,17), scat=NULL,
-   sex=list(Females=2,Males=1), rm.studs=NULL, subtitle,
+   areas=list(major=NULL,minor=NULL,locality=NULL,srfa=NULL,srfs=NULL,popa=NULL),
+   ttype=list(commercial=c(1,4,5),research=c(2,3)), stype=c(1,2,6,7,17),
+   scat=NULL, sex=list(Females=2,Males=1), rm.studs=NULL, 
    year=NULL, xlim=NULL, ylim=NULL, ameth=c(2,3,17), jit=c(0,0), 
    eps=FALSE, jpg=FALSE, pdf=FALSE, png=FALSE, tif=FALSE, wmf=FALSE,
-   outnam, singles=FALSE, pages=FALSE, tables=TRUE, figures=TRUE,
+   outnam,  subtitle, singles=FALSE, pages=FALSE, tables=TRUE, figures=TRUE,
    ioenv=.GlobalEnv, lang=c("e","f"))
 }
 \arguments{
-  \item{dat}{\code{data.frame} -- biological data set with fields \code{yfld} and \code{age}.}
+  \item{dat}{\code{data.frame} -- biological data set with fields \code{yfld} and \code{age}}
   \item{strSpp}{\code{character} -- string code for species. If dataset has attribute \code{spp},
-    this will be used before \code{strSpp}.}
+    this will be used before \code{strSpp}}
   \item{yfld}{\code{character} -- name of the field in \code{dat} that contains y-values
-    for the fit with \code{age}.}
-  \item{fixt0}{\code{logical} -- if \code{TRUE}, fix the parameter \code{t0} to equal 0.}
+    for the fit with \code{age}}
+  \item{fixt0}{\code{logical} -- if \code{TRUE}, fix the parameter \code{t0} to equal 0}
   \item{areas}{\code{numeric} -- list of area codes named by the field in which they may appear in dataset;
-    choices can be any/all of \code{major}, \code{minor}, \code{locality}, \code{srfa}, \code{srfs}, \code{popa}.}
-  \item{ttype}{\code{numeric} -- list of trip type codes to use from field \code{ttype}.}
-  \item{stype}{\code{numeric} -- vector of sample type codes to use from field \code{stype}.}
-  \item{scat}{\code{numeric} -- numeric code(s) for species category (usually to identify sorted vs. unsorted samples).}
+    choices can be any/all of \code{major}, \code{minor}, \code{locality}, \code{srfa}, \code{srfs}, \code{popa}}
+  \item{ttype}{\code{numeric} -- list of trip type codes to use from field \code{ttype}}
+  \item{stype}{\code{numeric} -- vector of sample type codes to use from field \code{stype}}
+  \item{scat}{\code{numeric} -- numeric code(s) for species category (usually to identify sorted vs. unsorted samples)}
   \item{sex}{\code{numeric} -- list of sex codes, where \cr
     0=not looked at, 1=male, 2=female, 3=looked at but unknown \cr
-    e.g. \code{list(Females=2, Males=1, Unknown=c(0,3))}.}
-  \item{rm.studs}{\code{numeric} -- \emph{n}, if specified, remove Studentized residuals lying outside \emph{n} standard deviations.}
-  \item{subtitle}{\code{character} -- explicit subtitle to override an internally generated one.}
-  \item{year}{\code{numeric} -- integer vector of years used to subset \code{dat}.}
-  \item{xlim}{\code{numeric} -- vector specifying the limits of the x-axis.}
-  \item{ylim}{\code{numeric} -- vector specifying the limits of the y-axis.}
-  \item{ameth}{\code{numeric} -- code specifying ageing method protocol -- defaults to \code{3} (break & burn) plus \code{17} (break & bake).}
+    e.g. \code{list(Females=2, Males=1, Unknown=c(0,3))}}
+  \item{rm.studs}{\code{numeric} -- \emph{n}, if specified, remove Studentized residuals lying outside \emph{n} standard deviations}
+  \item{year}{\code{numeric} -- integer vector of years used to subset \code{dat}}
+  \item{xlim}{\code{numeric} -- vector specifying the limits of the x-axis}
+  \item{ylim}{\code{numeric} -- vector specifying the limits of the y-axis}
+  \item{ameth}{\code{numeric} -- code specifying ageing method protocol -- defaults to \code{3} (break & burn) plus \code{17} (break & bake)}
   \item{jit}{\code{numeric} -- two-element vector specifying amount of jittering to apply in the 
     x- and -y-directions respectively. (See \code{jitter} in the \pkg{base} package.)}
-  \item{eps}{\code{logical} -- if \code{TRUE}, send plot to a postscript \code{.eps} file.}
-  \item{jpg}{\code{logical} -- if \code{TRUE}, send plot to a raster \code{.jpg} file.}
-  \item{pdf}{\code{logical} -- if \code{TRUE}, send plot to a postscript \code{.pdf} file.}
-  \item{png}{\code{logical} -- if \code{TRUE}, send plot to a raster \code{.png} file.}
-  \item{tif}{\code{logical} -- if \code{TRUE}, send plot to a raster \code{.tif} file.}
-  \item{wmf}{\code{logical} -- if \code{TRUE}, send plot to a vector \code{.wmf} file.}
-  \item{outnam}{\code{character} -- explicit image file name to override an internally generated one.}
-  \item{singles}{\code{logical} -- if \code{TRUE} and \code{eps|jpg|pdf|png|tif|wmf}, send each area/trip type combination to separate files.}
-  \item{pages}{\code{logical} -- if \code{TRUE} and \code{eps|jpg|pdf|png|tif|wmf}, send each page of area plots to separate files.}
-  \item{tables}{\code{logical} -- if \code{TRUE} and \code{lang="e"}, download output into \code{.csv} tables.}
-  \item{figures}{\code{logical} -- if \code{TRUE}, plot the figures.}
-  \item{ioenv}{\code{environment} -- input/output environment for function input data and output results.}
+  \item{eps}{\code{logical} -- if \code{TRUE}, send plot to a postscript \code{.eps} file}
+  \item{jpg}{\code{logical} -- if \code{TRUE}, send plot to a raster \code{.jpg} file}
+  \item{pdf}{\code{logical} -- if \code{TRUE}, send plot to a postscript \code{.pdf} file}
+  \item{png}{\code{logical} -- if \code{TRUE}, send plot to a raster \code{.png} file}
+  \item{tif}{\code{logical} -- if \code{TRUE}, send plot to a raster \code{.tif} file}
+  \item{wmf}{\code{logical} -- if \code{TRUE}, send plot to a vector \code{.wmf} file}
+  \item{outnam}{\code{character} -- explicit image file name to override an internally generated one}
+  \item{subtitle}{\code{character} -- explicit subtitle to override an internally generated one}
+  \item{singles}{\code{logical} -- if \code{TRUE} and \code{eps|jpg|pdf|png|tif|wmf}, send each area/trip type combination to separate files}
+  \item{pages}{\code{logical} -- if \code{TRUE} and \code{eps|jpg|pdf|png|tif|wmf}, send each page of area plots to separate files}
+  \item{tables}{\code{logical} -- if \code{TRUE} and \code{lang="e"}, download output into \code{.csv} tables}
+  \item{figures}{\code{logical} -- if \code{TRUE}, plot the figures}
+  \item{ioenv}{\code{environment} -- input/output environment for function input data and output results}
   \item{lang}{\code{character} -- a vector of letters that denote the language for output:
-    currently only \code{"e"} (english) and \code{"f"} (french).}
+    currently only \code{"e"} (english) and \code{"f"} (french)}
 }
 \details{
   The function plots von Bertalanffy fits to length-age or weight-age data where each column 
@@ -87,8 +87,8 @@ calcVB(dat=pop.age, strSpp="", yfld="len", fixt0=FALSE,
 \author{
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
-  \emph{locus opus}: Regional Headquarters (RHQ), Vancouver BC\cr
-  Last modified \code{Rd: 2023-06-08}
+  \emph{locus opus}: remote office, Vancouver BC\cr
+  Last modified \code{Rd: 2024-12-19}
 }
 \seealso{
   \pkg{PBStools}:

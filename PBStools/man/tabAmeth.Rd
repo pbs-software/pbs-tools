@@ -9,11 +9,12 @@
   (specimens) and samples by trip type and ageing method for each sex.
 }
 \usage{
-tabAmeth(dat)
+tabAmeth(dat, aged=TRUE)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
-  \item{dat}{\code{data.frame} -- biological data extract (\code{bio123}).}
+  \item{dat}{\code{data.frame} -- biological data extract (\code{bio123})}
+  \item{aged}{\code{logical} -- if \code{TRUE}, tabulate only the aged structures}
 }
 \details{
   Uses \code{'crossTab'} for each ageing method to 
@@ -26,8 +27,8 @@ tabAmeth(dat)
 \author{
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
-  \emph{locus opus}: Regional Headquarters (RHQ), Vancouver BC\cr
-  Last modified \code{Rd: 2023-06-08}
+  \emph{locus opus}: remote office, Vancouver BC\cr
+  Last modified \code{Rd: 2024-12-19}
 }
 %% ~Make other sections like Warning with \section{Warning }{....} ~
 \seealso{

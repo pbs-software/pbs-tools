@@ -42,7 +42,8 @@ WHERE
   --AND C.BEST_DATE <= '2020-02-17' -- To be able to reproduce for RER
   --AND C.BEST_DATE <= '2020-12-31' -- To be able to reproduce for YMR
   --AND C.BEST_DATE <= '2021-12-31' -- To be able to reproduce for CAR
-  AND C.BEST_DATE <= '2023-03-31' -- To be able to reproduce for POP
+  --AND C.BEST_DATE <= '2023-03-31' -- To be able to reproduce for POP
+  AND C.BEST_DATE <= '2024-03-31' -- To be able to reproduce for YTR
 
 DECLARE @total AS FLOAT
 SET @total = (SELECT 
@@ -73,4 +74,5 @@ ORDER BY SUM(AC.LANDED + AC.DISCARDED) / @total DESC
 -- getData("pht_concurrent.sql","PacHarvest",strSpp="228",major=5:6,dummy=12,mindep=70,maxdep=441,gear=c(1,3)) -- QCS (major 5+6 and minor 12)
 -- qu("fos_concurrent.sql",dbName="GFFOS",strSpp="396",major=5:7,mindep=96,maxdep=416,dummy=34,top=20,gear=1) -- QCS (major 567 and minor 34)
 -- qu("fos_concurrent.sql",dbName="GFFOS",strSpp="394",major=8:9,mindep=137,maxdep=845,top=25,gear=3) -- WCHG H&L
+-- qu("fos_concurrent.sql",dbName="GFFOS",strSpp="418",major=3:9,mindep=71,maxdep=338,top=100,gear=3)
 

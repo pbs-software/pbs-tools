@@ -23,27 +23,29 @@
 ## =============================================================================
 
 
-## calcCVage----------------------------2024-10-24
+## calcCVage----------------------------2024-12-03
 ##  Calculate CV of ages based on age or length data.
 ##  Runs SQL query 'gfb_ages_read.sql' at least once.
 ## ---------------------------------------------RH
-calcCVage <- function(dat, read_true=1, read_obs=NULL, cvtype="age", Amax=50,
-   min.ages=1:6, min.cv=0.25, smooth=FALSE,
-   plot=TRUE, png=FALSE, pngres=400, PIN=c(8,6), outnam, lang=c("e","f"))
+calcCVage <- function(dat, read_prim=2, read_prec=NULL, cvtype="age",
+   Amax=50, min.ages=1:4, min.cv=0.05, interp=FALSE, smooth=TRUE,
+   tabs=TRUE, plot=TRUE, png=FALSE, pngres=400, PIN=c(8,6), outnam,
+   lang=c("e","f"))
 {
-	readT = paste0("read", read_true)
+	createTdir()
+	readT = paste0("read", read_prim)
 	dat   = dat[dat[,readT] > 0 & !is.na(dat[,readT]),]
 	if (cvtype=="age") {
-		if (is.null(read_obs))
+		if (is.null(read_prec))
 			readObs = setdiff(colnames(dat)[grep("^read",colnames(dat))], .su(c("read0",readT)))  ## exclude 'Unknown' also (RH 220502)
 		else
-			readObs = paste0("read", read_obs)
+			readObs = paste0("read", read_prec)
 	}
 	else
 		readObs = "len"
-	eval(parse(text=paste0("alist = split(dat, dat$read", read_true, ")")))
+	eval(parse(text=paste0("alist = split(dat, dat$read", read_prim, ")")))
 	#Amax = max(as.numeric(names(alist)))
-	Atab = array(0,dim=c(Amax,ifelse(smooth,6,5)), dimnames=list(age=1:Amax, stat=c("N","MU","SD","CV","SDa","CVsm")[1:ifelse(smooth,6,5)]))
+	Atab = array(0,dim=c(Amax,ifelse(smooth,6,5)), dimnames=list(age=1:Amax, stat=c("N","MU","SD","CV","SDa","SDsm")[1:ifelse(smooth,6,5)]))
 
 	for (i in 1:length(alist)){
 		ii = names(alist)[i]
@@ -75,16 +77,24 @@ calcCVage <- function(dat, read_true=1, read_obs=NULL, cvtype="age", Amax=50,
 		Atab[as.character(Amax),"CV"] = min.cv * 2  ## arbitrary choice
 
 	#cv0 = is.na(Atab[,"CV"]) | (is.element(Atab[,"CV"],0) & Atab[,"N"] <= 1)
-	cv0 = is.na(Atab[,"CV"]) | (is.element(Atab[,"CV"],0) & Atab[,"N"] <= 2)
-	while(any(cv0)) {
-		cva = (1:nrow(Atab))[cv0]
-		cvb = rbind(Atab[pmax(1,cva-1),"CV"], Atab[pmin(nrow(Atab),cva+1),"CV"])
-		cvc = apply(cvb,2,mean) #calcGM)  ## geometric mean cannot handle 0 values sensibly
-#browser();return()
-		Atab[cv0,"CV"] = cvc
-		#cv0 = is.element(Atab[,"CV"],0) | is.na(Atab[,"CV"])
-		cv0 = is.na(Atab[,"CV"]) | (is.element(Atab[,"CV"],0) & Atab[,"N"] <= 2) ## believe CV=0 if n>2
+	if (interp) {
+		## Should revise this section to perform strictly linear inperolations:
+		## (y[2]-y[1]) / (x[2]-x[1]) * (xstar-x[1]) + y[1]
+		## https://www.reddit.com/r/excel/comments/n1bmzu/how_to_linearly_interpolate_between_the_correct/
+		cv0 = is.na(Atab[,"CV"]) | (is.element(Atab[,"CV"],0) & Atab[,"N"] <= 2)
+		while(any(cv0)) {
+			cva = (1:nrow(Atab))[cv0]
+			cvb = rbind(Atab[pmax(1,cva-1),"CV"], Atab[pmin(nrow(Atab),cva+1),"CV"])
+			cvc = apply(cvb,2,mean) #calcGM)  ## geometric mean cannot handle 0 values sensibly
+			Atab[cv0,"CV"] = cvc
+			#cv0 = is.element(Atab[,"CV"],0) | is.na(Atab[,"CV"])
+			cv0 = is.na(Atab[,"CV"]) | (is.element(Atab[,"CV"],0) & Atab[,"N"] <= 2) ## believe CV=0 if n>2
+		}
+	} else {
+		rm0 = Atab[,"CV"]==0
+		Atab[rm0,"CV"] = NA
 	}
+#browser();return()
 
 	xsmoo = as.numeric(rownames(Atab))
 	xoff  = mean(diff(xsmoo))/2
@@ -94,9 +104,9 @@ calcCVage <- function(dat, read_true=1, read_obs=NULL, cvtype="age", Amax=50,
 		xsmoo = as.numeric(rownames(Atab))
 		ysmoo = GT0(loess.smooth(xsmoo, xsmoo * Atab[,"CV"], evaluation=nrow(Atab), span=1/2)$y)
 		#ysmoo = loess.smooth(xsmoo, log(GT0(xsmoo * Atab[,"CV"])), evaluation=nrow(Atab), span=2/3)$y; ysmoo = exp(ysmoo)
-		Atab[,"CVsm"] = ysmoo
-	}
+		Atab[,"SDsm"] = ysmoo
 #browser();return()
+	}
 	names.not = names.arg = rep("",nrow(Atab))
 	names.out = seq(5,Amax,5)
 	names.arg[match(names.out,rownames(Atab))] = names.out
@@ -130,10 +140,14 @@ calcCVage <- function(dat, read_true=1, read_obs=NULL, cvtype="age", Amax=50,
 				}
 				axis(1, at=seq(5, max(xsmoo), 5), tick=T, labels=F, tcl=-0.25)
 				mtext(linguaFranca("Standard deviation of age",l), side=2, line=1.5, cex=1.5)
-				lines(xsmoo, xsmoo * Atab[,"CV"], lwd=2, lty=2, col=switch(cvtype, 'age'="brown", 'len'="green4"))
+				yvals = xsmoo * Atab[,"CV"]
+				ygrps = split(na.omit(yvals),cumsum(is.na(yvals))[!is.na(yvals)])  ## https://stackoverflow.com/questions/74674411/split-vector-by-each-na-in-r
+				lapply(ygrps, function(y, ycol) {
+					x = as.numeric(names(y)); points(x, y, pch=20, col=ycol) }, ycol=switch(cvtype, 'age'="darkorange3", 'len'="green4"))
+				lines(xsmoo, yvals, lwd=2, lty=3, col=switch(cvtype, 'age'="darkorange3", 'len'="green4"))
 				lines(xsmoo, ysmoo, lwd=2, col=switch(cvtype, 'age'="red", 'len'="blue"))
-				box()
 #browser();return()
+				box()
 
 				par(fig=c(0,1,0,0.4), mar=c(3,4,0.5,0), new=TRUE)
 				barplot(Atab[,"CV"], col=switch(cvtype, 'age'="moccasin", 'len'="olivedrab1"), space=0, xaxt="n", xlab="", ylab="", cex.axis=1.2, cex.lab=1.4, names.arg=names.not)
@@ -154,7 +168,10 @@ calcCVage <- function(dat, read_true=1, read_obs=NULL, cvtype="age", Amax=50,
 			if(png) dev.off()
 		}; eop()
 	}
-	write.csv(Atab,file=paste0(outnam,".csv"))
+	if (tabs) {
+		clearFiles(paste0("./tables/",outnam,".csv"))
+		write.csv(Atab, file=paste0("./tables/",outnam,".csv"))
+	}
 	return(Atab)
 }
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~calcCVage
@@ -209,7 +226,7 @@ compAF <- function(x, year=2003, sex=2, amax=40, pfld="wp",
    type="cumul", fac="len", lang=c("e","f"))
 {
 	if (length(x)==0) stop("Supply a named list for x")
-	std   <- function(x){x/sum(x)}
+	std   = function(x){x/sum(x)}
 	ncomp = length(x)
 	nsex  = length(sex)
 	ntype = length(type)
@@ -237,7 +254,7 @@ compAF <- function(x, year=2003, sex=2, amax=40, pfld="wp",
 		}
 #browser();return()
 		if (ntype==1 && nsex==1) {
-			rc = .findSquare(nyear) ## .findSquare no longer exported from PBSmodelling namespace
+			rc = .findSquare(nyear)  ## .findSquare exported from PBSmodelling namespace once more (RH 241106)
 			np = 0  ## keep track of # plots
 			par(mfrow=rc, mar=c(0,0,0,0), oma=c(4,4.75,3,0.5), mgp=c(1.6,0.5,0))
 		} else {
@@ -316,7 +333,7 @@ compAF <- function(x, year=2003, sex=2, amax=40, pfld="wp",
 			} ## end s (sex) loop
 		} ## end y (year) loop
 		#mtext (linguaFranca("Age",l), side=1, outer=TRUE, line=2.5, cex=1.5)
-		mtext (linguaFranca(switch(fac, 'age'="Age", 'len'="Length (cm)"),l), side=1, outer=TRUE, line=2.5, cex=1.75)
+		mtext (linguaFranca(switch(fac, 'age'="Age (y)", 'len'="Length (cm)"),l), side=1, outer=TRUE, line=2.5, cex=1.75)
 		mtext (linguaFranca(paste0(ifelse(type=="cumul","Cumulative ",""), "Frequency"),l), side=2, outer=TRUE, line=2.75, cex=1.75, las=0)
 		mtext (linguaFranca(switch(s,"Males","Females"),l), side=3, outer=TRUE, line=0.5, cex=1.75, las=0)
 		if(png) dev.off()
@@ -362,6 +379,7 @@ compBmsy <- function(Bspp, spp="POP", Mnams=c("Est M","Fix M"),
 		iBspp = Bspp[[i]]
 		if (is.null(Mnams)) Mnams = names(iBspp)
 		names(iBspp) = if (spplabs) paste(i,"\n",Mnams,sep="") else Mnams
+#browser();return()
 		if (is.null(param) && calcRat) {
 			iBmsy = sapply(iBspp,function(x) { x[["Bt.MCMC"]] / x[["Bmsy.MCMC"]] }, simplify=FALSE)
 		} else if (!is.null(param)) {
@@ -428,7 +446,6 @@ compBmsy <- function(Bspp, spp="POP", Mnams=c("Est M","Fix M"),
 				#}
 			}
 			par(mar=c(3, switch(l,'e'=left.space[1],'f'=left.space[2]), 0.5, 0.5), cex=ifelse(f%in%c("png","eps"),1,1.2), mgp=c(1.6,0.6,0))
-#browser();return()
 			quantBox(Bmsy, horizontal=TRUE, las=1, xlim=c(0.5,nmods+top.space), ylim=ylim, cex.axis=cex.axis, yaxs="i", outline=FALSE,
 				pars=list(boxwex=boxwidth,medlwd=2,whisklty=1), quants=quants, names=FALSE)
 			if (Nrats>0)
@@ -494,8 +511,12 @@ compBmsy <- function(Bspp, spp="POP", Mnams=c("Est M","Fix M"),
 				#text(c(ratios,oratios),par()$usr[3],labels=show0(round(c(ratios,oratios),2),2),adj=c(1.1,-.5),col=c("red","green4",ocol))
 				text(c(ratios),par()$usr[3],labels=show0(round(ratios,2),2),adj=c(1.1,-.5),col=rcol)
 			}
+#browser();return()
 			if (is.null(param)) {
-				t.yr ="italic(t)"  ## for BOR SRR (RH 240328)
+				if (spp=="BOR" & t.yr>2019 & t.yr<=2024)
+					t.yr ="italic(t)"  ## for BOR SRR (RH 240328)
+				else
+					t.yr =paste0("italic(", t.yr, ")")  ##  (RH 241209)
 				mess = paste0("mtext(expression(italic(B)[", t.yr, "]/italic(B)[",linguaFranca(refpt,l),"]),side=1,line=2,cex=", sub(",",".",cex.lab), ")")
 			} else {
 				mess = sapply(strsplit(param,"_"),function(x){if(length(x)==1) x else paste0("italic(",x[1],")[",x[2],"]")})
@@ -556,10 +577,10 @@ compLen <- function(dat, strSpp, fld="len", lbin=1, sex=c(2,1),
 		dat.group[[i]] = dat[,"group",drop=FALSE]
 		qtmp[[i]] = sapply(split(dat[,fld],paste(dat$group,dat$year,sep="-")),quantile,c(0.05,0.95))
 	}
-	xlim = if (missing(yrs)) range(dat$year) else range(yrs)
+	xlim = if (missing(yrs)) range(dat$year,na.rm=TRUE) else range(yrs,na.rm=TRUE)
 	if (is.null(ylim)) {
-		ylim.group = sapply(qtmp,function(x){c(min(x[1,]),max(x[2,]))})
-		ylim = c(min(ylim.group[1,]),max(ylim.group[2,]))
+		ylim.group = sapply(qtmp,function(x){c(min(x[1,],na.rm=TRUE),max(x[2,],na.rm=TRUE))})
+		ylim = c(min(ylim.group[1,],na.rm=TRUE),max(ylim.group[2,],na.rm=TRUE))
 	}
 	Qbox = as.list(rep(NA,diff(xlim)+1)); names(Qbox)=xlim[1]:xlim[2]
 	Lbin = .su(ceiling(.su(dat[,fld])/lbin)*lbin)
@@ -690,7 +711,7 @@ compLen <- function(dat, strSpp, fld="len", lbin=1, sex=c(2,1),
 						ydat$plbin = apply(ydat[,c("pbin","lbin")],1,prod)
 						Lest = sum(ydat$plbin)  ## need to bootstrap this procedure
 
-						Lboot <- function(Ydat,R) {
+						Lboot = function(Ydat,R) {
 							Lsamp = numeric()
 							for (r in 1:R) {
 								jdat = split(Ydat,Ydat$GC)  ## split by Grouping Code (stratum)
@@ -2402,9 +2423,9 @@ plotAgeErr <- function(dat, nsamp, xlim=NULL, ylim=NULL, jitter=0.25, seed=42,
 	## remove non-specified ageing methods
 	dat = dat[!is.na(dat$ameth),]
 
-	## remove specimen IDs for which there is no precision reading
+	## remove specimen IDs for which there is no precision reading (ART=3)
 	pSPID = dat$SPID[is.element(dat$atype,3)]
-	dat = dat[is.element(dat$SPID,pSPID),]
+	dat   = dat[is.element(dat$SPID,pSPID),]
 
 	## remove records where specimens were read by only one employee
 	one = crossTab(dat,"SPID","EMID",function(x){length(unique(x))}) < 2
@@ -2490,7 +2511,7 @@ plotAgeErr <- function(dat, nsamp, xlim=NULL, ylim=NULL, jitter=0.25, seed=42,
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotAgeErr
 
 
-## plotBTMW-----------------------------2024-10-24
+## plotBTMW-----------------------------2024-11-27
 ##  Plot for bottom (BT) vs. midwater (MW) trawl catch
 ##  WHEN MC.GEAR IN ('BOTTOM TRAWL','UNKNOWN TRAWL') THEN 1
 ##  WHEN MC.GEAR IN ('TRAP') THEN 2
@@ -2532,14 +2553,15 @@ plotBTMW <- function(dat, strSpp="417", years=1996:2018, major=list('BC'=3:9),
 	gcodes = list(
 		gear   = c('0'="Unknown", '1'="Bottom_Trawl", '2'="Trap", '3'="Midwater_Trawl", '4'="Hook_&_Line", '5'="Longline", '8'="Mixed_H&L"),
 		fid    = c('0'="Unknown", '1'="Trawl", '2'="Halibut", '3'="Sablefish", '4'="Dogfish/Lingcod", '5'="H&L_Rockfish", '8'="GF_Longline", '9'="Foreign"),
-		sector = c('0'="UNKNOWN", '1'="FOREIGN", '2'="GROUNDFISH LONGLINE", '3'="GROUNDFISH TRAWL", '4'="HALIBUT", '5'="HALIBUT AND SABLEFISH", '6'="K/L", '7'="K/ZN", '8'="LINGCOD", '9'="ROCKFISH INSIDE",'10'="ROCKFISH OUTSIDE", '11'="SABLEFISH", '12'="SCHEDULE II", '13'="SPINY DOGFISH", '14'="ZN"),
+		sector = c('0'="UNKNOWN", '1'="FOREIGN", '2'="GROUNDFISH LONGLINE", '3'="GROUNDFISH TRAWL", '4'="HALIBUT", '5'="HALIBUT & SABLEFISH", '6'="K/L", '7'="K/ZN", '8'="LINGCOD", '9'="ROCKFISH INSIDE",'10'="ROCKFISH OUTSIDE", '11'="SABLEFISH", '12'="SCHEDULE II", '13'="SPINY DOGFISH", '14'="ZN"),
 		fishery = c('0'="Unknown", '1'="BSR_trawl", '2'="BSR_other", '3'="RER_trawl", '4'="RER_other", '5'="HYB_trawl", '6'="HYB_other"), ## REBS only
 		stock = switch(strSpp,
 			'440'=c('UNK'="UNKNOWN", '3C'="3C", '3D5AB'="3D5AB", '5CD'="5CD", '5E'="5E"), ## YMR
 			'437'=c('UNK'="UNKNOWN", '3CD'="3CD", '5AB'="5AB", '5CD'="5CD", '5E'="5E"), ## CAR
 			'396'=c('UNK'="UNKNOWN", '5ABC'="5ABC", '3CD'="3CD", '5DE'="5DE"), ## POP
 			'435'=c('UNK'="UNKNOWN", 'CST'="Coastwide", '5ABC'="5ABC", '3CD'="3CD", '5DE'="5DE"), ## BOR
-			'418'=c('UNK'="Unknown", 'BC'="BC coast", '3CD'="3CD", '5ABC'="5ABC", '5DE'="5DE") ## YTR
+			'418'=c('UNK'="Unknown", 'BC'="BC coast", '3CD'="3CD", '5ABC'="5ABC", '5DE'="5DE"), ## YTR
+			'405'=c('UNK'="Unknown", 'BC'="BC coast", '3CD'="3CD", '5ABC'="5ABC", '5DE'="5DE") ## SGR
 		) 
 	)
 	if (is.null(gcodes$stock)) {message(paste0("Need to define stocks for ", strSpp)); browser(); return() }
@@ -2566,16 +2588,17 @@ plotBTMW <- function(dat, strSpp="417", years=1996:2018, major=list('BC'=3:9),
 		}
 		gdat  = zdat[is.element(zdat[,gnam], gval),]
 
-		if (gnam=="stock") ## fixed to one area for now
+		if (gnam=="stock") {  ## fixed to one area for now
 			gtab  = crossTab(gdat, c("year",gnam), "catKg")
-		else
-			gtab  = crossTab(gdat, c("year",gnam,"stock"), "catKg")
-
-		if (all(dimnames(gtab)[[3]]=="CST"))
-			dimnames(gtab)[[3]] = "BC"
-		narea = dim(gtab)[3]
-		if(is.na(narea)) narea = 1
 #browser(); return()
+			narea = 1
+		} else {
+			gtab  = crossTab(gdat, c("year",gnam,"stock"), "catKg")
+			if (all(dimnames(gtab)[[3]]=="CST"))
+				dimnames(gtab)[[3]] = "BC"
+			narea = dim(gtab)[3]
+			if(is.na(narea)) narea = 1
+		}
 
 		#glty  = rep(c(6,1,5,2,3,4,3),ncode)[1:ncode]
 		glty  = rep(1,ncode)
@@ -2618,9 +2641,10 @@ plotBTMW <- function(dat, strSpp="417", years=1996:2018, major=list('BC'=3:9),
 			for (a in 1:narea) {
 				aa = names(major)[a]
 				atab = gtab
-#browser();return()
 				#if (narea>1)   ## remove if statement -- quick fiddle for BOR 2024 (RH 240807)
-				atab = gtab[,,aa]#,drop=FALSE]
+				if (length(dim(gtab))==3)
+					atab = gtab[,,aa]#,drop=FALSE]
+#browser();return()
 
 				if (gnam%in%c("stock")) { icol=acol; ibg=abg }
 				else                    { icol=gcol; ibg=gbg }
@@ -2636,17 +2660,23 @@ plotBTMW <- function(dat, strSpp="417", years=1996:2018, major=list('BC'=3:9),
 					points(xval, atab[,ii], pch=gpch[ii], col=icol[ii], bg=ibg[ii],cex=1.5)
 				}
 				iii = intersect(as.character(gval),colnames(gtab)) ## use names instead of numeric indices
-				xpos = if (strSpp %in% c("418")  && gnam %in% c("sector")) 0.99 else 0.8
+				zx1 = strSpp %in% c("418") && gnam %in% c("sector")
+				zx2 = strSpp %in% c("405") && gnam %in% c("stock")
+				zx3 = strSpp %in% c("405") && gnam %in% c("sector")
+				xpos = if (zx1|zx3) 0.99 else if (zx2) 0.5 else 0.8
 				#ypos = if (strSpp %in% c("417","418") || (strSpp %in% "437" && gnam %in% c("sector","fid")))  0.45 else 0.99
-				ypos = if (strSpp %in% c("417") || (strSpp %in% c("418","437") && gnam %in% c("sector","fid")))  0.5 else 0.99
+				zy1 = strSpp %in% c("417")
+				zy2 = strSpp %in% c("418","437") && gnam %in% c("sector","fid")
+				zy3 = strSpp %in% c("405") && gnam %in% c("sector")
+				ypos = if (zy1|zy2|zy3) 0.5 else 0.99
 				if (a==1)
 					addLegend(xpos, ypos, lty=glty[iii], seg.len=3, lwd=2, col=icol[iii], pch=gpch[iii], pt.bg=ibg[iii], pt.cex=1.75, legend=linguaFranca(gsub("_"," ", gleg[iii]),l), cex=1.2, xjust=1, yjust=1, bty="n")
-				if (narea==1 && (.su(gdat$stock)%in%c("BC","CST") || aa%in%c("BC","CST"))) { # && strSpp %in% c('435','BOR'))
+#browser();return()
+				if (narea==1 && length(.su(gdat$stock))==1 && (.su(gdat$stock)%in%c("BC","CST") || aa%in%c("BC","CST"))) { # && strSpp %in% c('435','BOR'))
 					aaa = linguaFranca("BC coastwide", l)  ## quick fiddle for BOR 2024 (RH 240807)
 				} else {
 					aaa = aa
 				}
-#browser();return()
 				#addLabel(0.05, 0.95, txt=aaa, adj=c(0,1), cex=1.5, col=switch(aa,'3CD'="green4",'5ABC'="blue",'5DE'="red",'BC'="purple",'CST'="purple","black"), font=2)
 				addLabel(0.05, 0.95, txt=aaa, adj=c(0,1), cex=1.5, col=acol[aa], font=2) #switch(aa,'3CD'="green4",'5ABC'="blue",'5DE'="red",'BC'="purple",'CST'="purple","black"), font=2)
 
@@ -2994,12 +3024,16 @@ processBio <- function(dat=PBSdat, strSpp, addsrfa=TRUE,
    addsrfs=TRUE, addpopa=TRUE, addstock=TRUE, addsort=TRUE,
    useSM=FALSE, maxrows=5e4, zflds=c("ssrc","AC","FOSTID"))
 {
-	f <- function(x){format(x,scientific=FALSE,big.mark=",")}
-	if (!useSM)
-		dat = zapSeamounts(dat)  ## remove seamount data
-	atts=attributes(dat)[setdiff(names(attributes(dat)),c("names","row.names","class"))] # extra attributes to retain
-	N=nrow(dat); nloop=ceiling(nrow(dat)/maxrows)
-	DAT=NULL
+	f <- function(x) {
+		format(x,scientific=FALSE,big.mark=",")
+	}
+	if (!useSM) {
+		dat = zapSeamounts(dat)  ## remove seamount data -- high # records (15,444) for RER in 2024
+	}
+	atts = attributes(dat)[setdiff(names(attributes(dat)),c("names","row.names","class"))] # extra attributes to retain
+#browser();return()
+	N = nrow(dat); nloop = ceiling(nrow(dat)/maxrows)
+	DAT = NULL
 	for (i in 1:nloop) {
 		n0=(i-1)*maxrows+1; n1=min(i*maxrows,N)
 		cat(paste("processing rows",f(n0),"to",f(n1),"of",f(N)),"\n"); flush.console()
@@ -3033,6 +3067,7 @@ processBio <- function(dat=PBSdat, strSpp, addsrfa=TRUE,
 #browser();return()
 		}
 		if (addsort) {
+			## The unsorted-keeper-discard algorithm came from a 2015 Pcod assessment, Table 7
 			idat$sort = rep("Z",nrow(idat))
 
 			## Unsorted ---------
@@ -3060,7 +3095,7 @@ processBio <- function(dat=PBSdat, strSpp, addsrfa=TRUE,
 			## D-1-3  K-1-2  K-3-2 K-3-NA  U-0-1  U-1-1 U-1-NA Z-0-NA  Z-3-1 
 			##   479    175   1216    983      6   5044   1100      3     12 
 		}
-		if (strSpp=="REBS") {
+		if (strSpp %in% c("REBS","394","425")) {
 			idat$sppG = idat$spp
 			idat$gene = rep(0,nrow(idat))
 			gBSR = grepl("18",idat$exist); idat$sppG[gBSR]  = "425"; idat$gene[gBSR] = 1
@@ -3406,9 +3441,22 @@ splineCPUE <- function(dat, ndf=50, strSpp="ZZZ", ufld="cpue",
 ## tabAmeth-----------------------------2024-05-02
 ##  Tabulate ageing error structures available in bio123.
 ## ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~RH
-tabAmeth <- function(dat)
+tabAmeth <- function(dat, aged=TRUE)
 {
-	dat  = dat[dat$age>0 & !is.na(dat$age),]
+	codes = c('0'="unknown method", '1'="surface read", '2'="thin section", '3'="break & burn", '4'="burnt & ts", 
+		'5'="unknown otolith", '6'="dorsal fin xs", '7'="pectoral fin", '8'="pelvic fin", '9'="unknown fin", '10'="scale",
+		'11'="dorsal spine", '12'="vertebrae", '13'="length", '14'="pre-opercular", '15'="anal fin", '16'="surface & B/B", '17'="break & bake")
+	if (aged) {
+		## Original code uses 'ameth' field, which presumes that fish has been aged
+		dat  = dat[dat$age>0 & !is.na(dat$age),] ## this line should have been optional (RH 241125)
+	} else {
+		z0 = is.na(dat$ameth)
+		z1 = dat$oto   > 0;  dat$ameth[z0 & z1] = 101
+		z2 = dat$fin   > 0;  dat$ameth[z0 & z2] = 102
+		z3 = dat$scale > 0;  dat$ameth[z0 & z3] = 103
+		cnams = names(codes); codes = paste0(codes, " (aged)"); names(codes) = cnams
+		codes = c(codes, '101'="otoliths (not aged)", '102'="fins (not aged)", '103'="scales (not aged)")
+	}
 	tdat = split(dat, dat$ttype)
 	names(tdat) = sapply(names(tdat), function(i){switch(as.numeric(i),"Non-obs domestic","Research","Charter","Obs domestic","Obs J-V",
 		"Non-obs J-V", "Polish Comm Natl", "Russian Comm Natl", "Russian Comm Supp", "Polish Comm Supp", "Recreational", "Japanese Comm Natl", "Japanese Comm", "Unknown Foreign")})
@@ -3419,21 +3467,25 @@ tabAmeth <- function(dat)
 		x$sexnam[is.element(x$sex,1)] = "M"
 		mess = list()
 		for (i in .su(x$ameth)) {
-			ii = switch(as.character(i), '0'="unknown method", '1'="surface read", '2'="thin section", '3'="break & burn", '4'="burnt & ts", 
-				'5'="unknown otolith", '6'="dorsal fin xs", '7'="pectoral fin", '8'="pelvic fin", '9'="unknown fin", '10'="scale",
-				'11'="dorsal spine", '12'="vertebrae", '13'="length", '14'="pre-opercular", '15'="anal fin", '16'="surface & B/B", '17'="break & bake")
+			#ii = switch(as.character(i), '0'="unknown method", '1'="surface read", '2'="thin section", '3'="break & burn", '4'="burnt & ts", 
+			#	'5'="unknown otolith", '6'="dorsal fin xs", '7'="pectoral fin", '8'="pelvic fin", '9'="unknown fin", '10'="scale",
+			#	'11'="dorsal spine", '12'="vertebrae", '13'="length", '14'="pre-opercular", '15'="anal fin", '16'="surface & B/B", '17'="break & bake",
+			#	'101'="otoliths not aged", '102'="fins not aged", '103'="scales not aged")
+			imess = paste0("ii = switch(as.character(i), ", paste0(paste0("'",names(codes),"'=","\"",codes,"\""),collapse=", "), ")")
+			eval(parse(text=imess))
+#browser();return()
+			if (is.null(ii)) {browser();return()}
 			idat = x[is.element(x$ameth,i),]
-			nspec = crossTab(idat,"sexnam","age",countVec)
+			nspec = crossTab(idat,"sexnam","SPID",countVec)
 			nsamp = crossTab(idat,"sexnam","SID",function(j){length(.su(j))})
 			#mess[[ii]]  = paste0(names(nspec), ": ", nspec," (",nsamp,")")
 			imess =  paste0(nspec," (",nsamp,")")
 			names(imess) = names(nspec)
-			if (is.null(ii)) {browser();return()}
 			.flush.cat(ii,"\n")
 			mess[[ii]] = imess
 		}
 		return(mess)
-	})
+	})  ## end lapply tlist
 	ss = names(unlist(sapply(tlist,names)))
 	s0 = grep("[[:digit:]]$",ss,invert=TRUE)
 	if (any(s0)) ss[s0] = paste0(ss[s0],"1")
@@ -3451,6 +3503,7 @@ tabAmeth <- function(dat)
 			out[ri,names(jvec)] = jvec
 		}
 	}
+#browser();return()
 	write.csv(out, "ameth.summary.csv", row.names=FALSE)
 #browser();return()
 	tlist$years = lapply(tdat,function(x){table(x$year)})

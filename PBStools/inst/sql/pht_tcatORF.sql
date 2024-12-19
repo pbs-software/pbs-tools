@@ -67,4 +67,4 @@ SELECT
     (C.landed>0 OR C.discard>0 OR C.POP>0 OR C.ORF>0 OR C.TAR>0)
 
 -- getData("pht_tcatORF.sql","PacHarvest",strSpp="415")
-
+-- qu("pht_tcatORF.sql",dbName="PacHarvest",strSpp="418")
