@@ -295,10 +295,10 @@ splitTab <- function(tab, np=3, row.names=TRUE, row.label="row", row.numeric=FAL
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~splitTab
 
 
-## texArray-----------------------------2023-07-24
+## texArray-----------------------------2025-01-03
 ## Flatten and format an array for latex output.
 ## ---------------------------------------------RH
-texArray  <- function(x, table.caption="My table", table.label="tab:mytable",
+texArray <- function(x, table.caption="My table", table.label="tab:mytable",
    strSpp=NULL, sigdig=3, zero="---", exInt=TRUE, use.round=FALSE, 
    collab=NULL, dash.delim=NULL, tablewidth=6.5,
    rm.empty=FALSE, start.page=1, ignore.col=NULL,
@@ -521,7 +521,6 @@ texArray  <- function(x, table.caption="My table", table.label="tab:mytable",
 
 	colnames(goo) = gsub("\\s+"," ",gsub("\\_",uscore,colnames(goo))) ## (RH 210420)
 	goo = as.data.frame(sapply(goo,function(x){gsub("\\_",uscore,x)}))
-#browser();return()
 
 	## Italicise words from italics.file, if supplied
 	if (!is.null(italics.file) && file.exists(italics.file)){
@@ -565,14 +564,13 @@ texArray  <- function(x, table.caption="My table", table.label="tab:mytable",
 		include.colnames = FALSE,
 		type = "latex",
 		tabular.environment = "longtable",
-		sanitize.text.function <- function(x){x},
+		sanitize.text.function = function(x){x},
 		math.style.negative = FALSE
 	)
 	cat("\\end{document}\n",file=texout,append=TRUE)
 	texfile = readLines(texout)
 	ltdelim=grep("\\{longtable}",texfile)
 	texfile[ltdelim[1]] = sub("\\{longtable}","{longtable}[c]",texfile[ltdelim[1]])
-#browser();return()
 
 	## New (2017-05-10) by RH
 	## \newcolumntype{L}[1]{>{\raggedright\let\newline\\\arraybackslash\hspace{0pt}}p{#1}}

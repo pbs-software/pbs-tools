@@ -199,6 +199,12 @@ pdfsubject={Software for semi-serious scientists}%
 \titlespacing{\subsection}{0pt}{*0}{*0}
 \titlespacing{\subsubsection}{0pt}{*0}{*0}
 
+%% Create a blue underlined hyperlink (e.g., http://tex.stackexchange.com/questions/233668/new-ulem-command-not-working)
+\usepackage[normalem]{ulem}                         %% The ulem package: underlining for emphasis, can also strikethrough
+\newcommand\bluline{\bgroup\markoverwith
+  {\textcolor{blue}{\rule[-0.5ex]{2pt}{0.4pt}}}\ULon} %% wtf
+\newcommand\urldfo[2]{\href{#1}{\bluline{#2}}}
+
 %===========================================================
 \begin{document}
 \pagenumbering{roman}
@@ -235,7 +241,7 @@ pdfsubject={Software for semi-serious scientists}%
 
 \tab \pkg{PBStools} provides an R interface for algorithms commonly used in fisheries. The scope of this package is by no means comprehensive, having grown from the need to satisfy tasks specific to British Columbia (BC) ocean fisheries. Many of the functions provide a quick way to visualize data, and in some cases perform preliminary analyses. Though oriented to users at the Pacific Biological Station (PBS), these functions may provide a broad utility to users at other locales. The User Guide is organised into sections that loosely classify the functions by theme -- (1)~Utility, (2)~Biology, (3)~Fishery, (4)~Survey, (5)~Spatial, (6)~Temporal, and (7)~Catch Reconstruction. Within each section, the functions are described alphabetically.
 
-\tab \pkg{PBStools} depends heavily on two other R package: \pkg{PBSmapping} \citep{Schnute-etal:2004b,Boers-etal:2004} and \pkg{PBSmodelling} \citep{Schnute-etal:2006}. We use the latter to implement several Graphical User Interfaces (GUIs) that facilitate a few select functions. Most functions, however, are designed for use on the command line or in sourced code. Many of the functions invisibly return auxiliary output in a list object called \code{PBStool}, which is located in the temporary working environment \code{.PBStoolEnv}. Accessor functions called \code{ttget}, \code{ttcall}, and \code{ttprint} enable the user to get, call, and print objects from the \code{.PBStoolEnv} environment, while \code{ttput} puts (writes) obects to \code{.PBStoolEnv}.
+\tab \pkg{PBStools} depends heavily on two other R package: \pkg{PBSmapping} \citep{Schnute-etal:2004_pbsmap, Boers-etal:2004} and \pkg{PBSmodelling} \citep{Schnute-etal:2006}. We use the latter to implement several Graphical User Interfaces (GUIs) that facilitate a few select functions. Most functions, however, are designed for use on the command line or in sourced code. Many of the functions invisibly return auxiliary output in a list object called \code{PBStool}, which is located in the temporary working environment \code{.PBStoolEnv}. Accessor functions called \code{ttget}, \code{ttcall}, and \code{ttprint} enable the user to get, call, and print objects from the \code{.PBStoolEnv} environment, while \code{ttput} puts (writes) obects to \code{.PBStoolEnv}.
 
 \tab Amongst the various functions in the package, we include those that implement some of the models published by the authors. For example, \code{calcSG} estimates parameters for the Schnute growth model \citep{Schnute:1981}, which offers a versatile alternative to the von Bertalanffy growth model (\code{calcVB}). The functions presented in the Survey section make use of the binomial-gamma model \citep{Schnute-Haigh:2003} for characterizing survey strata populations when designing or simulating groundfish trawl surveys. The function \code{runCCA} implements the composition analysis of \citet{Schnute-Haigh:2007} to estimate total mortality $Z$ of rockfish (\emph{Sebastes} spp.) using three combined effects: survival at age ($S_a$), fishery selectivity at age ($\beta_a$), and relative recruitment anomalies ($R_a$). Finally, the function \code{buildCatch} provides an efficient method for reconstructing rockfish catch from 1918 to the present along the BC coast \citep{Haigh-Yamanaka:2011}.
 
@@ -1007,7 +1013,7 @@ pbsfun()
 Their model uses a design vector $\phi$ and a parameter vector $\theta$; the latter contains the quantities to be estimated in a negative log likelihood using the complete parameter vector $(\theta, \sigma)$ for a logistic-normal model or $(\theta, n)$ for a Dirichlet model.
 Here we use $\theta$ primarily as a parameter vector, but include the design elements $b_1,...b_m$ for expediency.
   
-\tab Additionally, for the selectivity component, we use the parameterisation of \citet{Edwards-etal:2012} where $\mu$ represents the age of full selectivity and $\sigma = \sqrt\nu$ represents the variance of the left limb of a double normal (see equation F.7 in the Pacific Ocean Perch assessment).
+\tab Additionally, for the selectivity component, we use the parameterisation of \citet{Edwards-etal:2012_pop5ABC} where $\mu$ represents the age of full selectivity and $\sigma = \sqrt\nu$ represents the variance of the left limb of a double normal (see equation F.7 in the Pacific Ocean Perch assessment).
 This parameretisation replaces (T2.2) in \citet{Schnute-Haigh:2007}, which uses $\alpha$ and $\beta_k$.
 
 \tab The output is a proportions-at-age vector of length \code{np}.\\
@@ -1164,7 +1170,7 @@ BSR correctly predicted 94.1% of the time
 
 \subsection {processBio}
 
-\tab Process further the global data object \code{PBSdat} that results from the SQL query \code{gfb\_bio.sql}.  Currently, this function can add fields \code{srfa} (slope rockfish assessment areas), \code{srfs} (slope rockfish assessment subareas or gulllies), and \code{popa} (Pacific ocean perch areas identified by \citet{Schnute-etal:2001}. These three areas do not exist as fields in \db{GFBioSQL}.
+\tab Process further the global data object \code{PBSdat} that results from the SQL query \code{gfb\_bio.sql}.  Currently, this function can add fields \code{srfa} (slope rockfish assessment areas), \code{srfs} (slope rockfish assessment subareas or gulllies), and \code{popa} (Pacific ocean perch areas identified by \citet{Schnute-etal:2001_pop}. These three areas do not exist as fields in \db{GFBioSQL}.
 
 \begin{examplebox}
 \example{processBio}
@@ -1220,7 +1226,7 @@ report << "$mata\n"    << "$$vector mode=\"numeric\" \n"    << mata    << endl;
 
 \tab ADMB projects are controlled by a prefix (e.g., \gui{pop}) that ADMB uses to accept input (\code{pop.tpl}, \code{pop.dat}, \code{pop.pin}) and spawn copious output (\code{pop.exe}, \code{pop.cpp}, \code{pop.o}, \code{pop.std}, \code{pop.rep}, \code{...}). The R package \pkg{PBSadmb} (available on CRAN) provides an easy to use GUI system for running ADMB directly from R.
 
-\tab Aside from reading in the report file (e.g., \code{pop.rep}), the GUI offers a few user-controlled tweaks (see \code{reportCatchAge} help file for details) that affect the simulation and recruitment plots. The light blue buttons on the right recreate six pairs of plots similar to those that appear in the 2001 POP assessment \citep{Schnute-etal:2001}. Alternatively, the user can pick and choose combinations of plots from the menu check boxes (lower right), then press the green \gui{PLOT} button. The plot codes appear in the help file; however, we reproduce them below for convenience. Figure~\ref{fig:PBStools-reportCatchAge} results from choosing the \gui{BE} check box and plotting.
+\tab Aside from reading in the report file (e.g., \code{pop.rep}), the GUI offers a few user-controlled tweaks (see \code{reportCatchAge} help file for details) that affect the simulation and recruitment plots. The light blue buttons on the right recreate six pairs of plots similar to those that appear in the 2001 POP assessment \citep{Schnute-etal:2001_pop}. Alternatively, the user can pick and choose combinations of plots from the menu check boxes (lower right), then press the green \gui{PLOT} button. The plot codes appear in the help file; however, we reproduce them below for convenience. Figure~\ref{fig:PBStools-reportCatchAge} results from choosing the \gui{BE} check box and plotting.
 
 \setcounter{table}{0}
 \begin{table}[ht!]
@@ -1417,7 +1423,7 @@ For a comprehensive catch reconstruction, see \code{buildCatch}.
 
 \subsection {glimmer}
 
-\tab This function performs a standardised GLM analysis and plots the results. It calculates parameter coefficients using the \pkg{stats} package functions \code{lm} and \code{aov}. (The \code{aov} results are not currently used for anything.) See Section 7 of \citet{Schnute-etal:2004a} for a detailed discussion on \sQuote{Standardized CPUE Analyses} and the additive lognormal model:
+\tab This function performs a standardised GLM analysis and plots the results. It calculates parameter coefficients using the \pkg{stats} package functions \code{lm} and \code{aov}. (The \code{aov} results are not currently used for anything.) See Section 7 of \citet{Schnute-etal:2004_lst} for a detailed discussion on \sQuote{Standardized CPUE Analyses} and the additive lognormal model:
 %
 \eqn{\log y_{hijklmn} = \mu_h + \alpha_i + \beta_j + \gamma_k + \delta_l + \phi_m + \sigma\epsilon_{hijklmn}}
 
@@ -1953,7 +1959,7 @@ pbsfun(Nsim=7)
 
 \subsection {trend}
 
-\tab An interactive GUI menu (Figure~\ref{fig:GUI-trend}) created by a call to \code{trend} facilitates the exploration of trends in survey data. Once the user chooses a dataset, pressing the \gui{TREND} button displays boxplots of catch or CPUE grouped by year. A trend line (Figure~\ref{fig:PBStools-trend}) fit through annual points, summarized by a user-specified summary function (e.g., \code{mean}), yields an annual rate of change $r$ and the accumulated change $R$ over the period of the fit \citep{Schnute-etal:2004a}. Pressing the \gui{BOOT} button generates and displays bootstrapped estimates of slope $b$ and annual rate $r$.
+\tab An interactive GUI menu (Figure~\ref{fig:GUI-trend}) created by a call to \code{trend} facilitates the exploration of trends in survey data. Once the user chooses a dataset, pressing the \gui{TREND} button displays boxplots of catch or CPUE grouped by year. A trend line (Figure~\ref{fig:PBStools-trend}) fit through annual points, summarized by a user-specified summary function (e.g., \code{mean}), yields an annual rate of change $r$ and the accumulated change $R$ over the period of the fit \citep{Schnute-etal:2004_lst}. Pressing the \gui{BOOT} button generates and displays bootstrapped estimates of slope $b$ and annual rate $r$.
 
 \tab The package includes three sample datasets from the International Pacific Halibut Commission (IPHC)\footnote{International Pacific Halibut Commission (IPHC), P.O. Box 95009, Seattle, WA  98145-2009, U.S.A}: \code{iphc.rbr}, \code{iphc.rer}, and \code{iphc.yyr} for Redbanded Rockfish (\emph{Sebastes babcocki}), Rougheye Rockfish (\emph{S.~aleutianus}), and Yelloweye Rockfish (\emph{S.~ruberrimus}), respectively. These data have been summarized extensively, the latest by \citet{Obradovich-etal:2008}. The IPHC director, Dr. Bruce Leaman, has kindly granted PBS permission to include them here.
 
@@ -2291,7 +2297,7 @@ where $a$~= -0.8063372, $b$~= 1.006260, $O$~= ORF, $T$~= TRF, and POP = TRF - OR
 
 \tab Landings (metric tonnes) from eight modern catch databases (\db{GFCatch}, \db{PacHarvest}, \db{PacHarvHL}, \db{PacHarvSable}, \db{PacHarvHL}, \db{PacHarvHL}, and \db{GFFOS}) are summarized in a 5-dimensional array where $i$~= calendar year, $j$~= PMFC major area code, $k$~= fishery ID, $l$~= species or catch group, and $m$~= the database. Then for each element $(i,j,k,l)$, the maximum landing across database $m$ is taken. This methodology is utilized due to the non-contiguous nature of the data sources. This also means that compiling individual catch records across the database sources, as performed for the trawl fishery by \code{getCatch}, is too complicated for the hook and line fisheries. It is possible if definite cut points can be identified for the various time series (which we no longer do for the reconstruction).
 
-\tab The reconstruction executes a complex series of rules using SQL (Structured Query Language) queries (shown in the DFO boxes below) combined with R code \citep{R-Core} to derive an annual catch series for five fisheries (Trawl, Halibut, Sablefish, Dogfish-Lingcod, H\&L (hook and line) Rockfish) in BC's eight PMFC areas (4B, 3C, 3D, 5A, 5B, 5C, 5D, 5E). This yields 40 annual series (48 when fisheries are combined).
+\tab The reconstruction executes a complex series of rules using SQL (Structured Query Language) queries (shown in the DFO boxes below) combined with R code \citep{R:2024_base} to derive an annual catch series for five fisheries (Trawl, Halibut, Sablefish, Dogfish-Lingcod, H\&L (hook and line) Rockfish) in BC's eight PMFC areas (4B, 3C, 3D, 5A, 5B, 5C, 5D, 5E). This yields 40 annual series (48 when fisheries are combined).
 
 
 %~~~~~~~~~~~~~~~~~~~PacHarv3
@@ -2465,11 +2471,11 @@ Email rowan.haigh@dfo-mpo.gc.ca}
 
 \clearpage
 
-\bibliographystyle{jss}
+\bibliographystyle{resDoc}
 %\addcontentsline{toc}{section}{\protect\numberline{}References}
 \phantomsection
 \addcontentsline{toc}{section}{References}
-\bibliography{PBSrefs}
+\bibliography{CSAPrefs}
 
 \end{document}
 

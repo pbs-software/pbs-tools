@@ -1,0 +1,951 @@
+\documentclass[letterpaper,11pt,fleqn]{article}
+%\VignetteIndexEntry{Catch Reconstruction}
+%\VignettePackage{PBStools}
+
+% Packages
+%\usepackage{Sweave}
+\usepackage{graphicx}
+\usepackage{verbatim,fancyvrb}
+\usepackage[top=1in, bottom=1in, left=1in, right=1in]{geometry} %  page margins
+\usepackage[font=small,format=plain,labelfont=bf,indention=0.25in,labelsep=period,justification=raggedright]{caption}
+\usepackage{parskip}
+\usepackage[hang,flushmargin,multiple]{footmisc}
+\interfootnotelinepenalty=10000
+%\usepackage{clipboard}
+
+%% Fonts
+\renewcommand{\rmdefault}{phv}% Helvetica
+\renewcommand{\sfdefault}{phv}% Helvetica
+\usepackage[scaled=1.1]{inconsolata} %% trial and error
+\renewcommand{\ttdefault}{zi4} %% pcr (courier) can be alernative
+\usepackage{pifont}%% for check marks
+%\usepackage(textcomp, logix)%% for straightquotes
+
+% http://tex.stackexchange.com/questions/49788/hyperref-url-long-url-with-dashes-wont-break?rq=1
+\usepackage[hyphens]{url}
+\def\UrlFont{\small\tt}
+
+\usepackage[round]{natbib}
+\usepackage{lscape}
+\usepackage[utf8]{inputenc}
+\usepackage{mathtools}
+\usepackage{longtable,array} % need array when specifying a ragged right column:  >{\raggedright\arraybackslash}{p2in}
+\usepackage{tabularx}
+\usepackage{xifthen}         % provides \ifthenelse and \isempty
+%\usepackage{amsmath}
+  \setlength{\mathindent}{0.5in}
+
+\usepackage{hyperref}
+% from Sweave.Rnw in C:\Apps\R\R300\library\utils\doc
+\hypersetup{%
+colorlinks,%
+plainpages=true,%
+linkcolor=black,%
+citecolor=black,%
+urlcolor=blue,%
+%pdfstartview=FitH,% or Fit
+pdfstartview=Fit, %{XYZ null null 1},%
+pdfview={XYZ null null null},%
+pdfpagemode=UseOutlines,% for bookmarks
+pdfauthor={Rowan Haigh},%
+pdftitle={Catch Reconstruction Update},%
+pdfsubject={Building catch history for rockfish}%
+}
+\usepackage{bookmark}
+\bookmarksetup{numbered,open,}
+\usepackage{pdfcomment}
+
+\raggedright
+%\setlength{\hangindent}{0.25in}
+\def\noi{\noindent}
+\def\noh{\noindent \hangindent=\parindent}
+\def\tab{\hspace{0.5 in}}
+\newcommand\tstrut{\rule{0pt}{2.4ex}}         % top strut for table row
+\newcommand\bstrut{\rule[-1.0ex]{0pt}{0pt}}   % bottom strut for table row
+
+% For colors
+\usepackage{color}
+\definecolor{red}{rgb}{0.8039216,0.2156863,0}
+\definecolor{green}{RGB}{0, 128, 0}
+\definecolor{blue}{rgb}{0, 0, 1}
+\definecolor{slategrey}{rgb}{0.4392157, 0.5019608, 0.5647059}
+\definecolor{darkslategrey}{RGB}{47, 79, 79}
+\definecolor{deepskyblue}{rgb}{0, 0.7490196, 1}
+\definecolor{gainsboro}{rgb}{0.8627451,0.8627451,0.8627451}
+\definecolor{aliceblue}{RGB}{240, 248, 255}
+\definecolor{dodgerblue}{RGB}{24, 116, 205}
+\definecolor{moccasin}{RGB}{255, 236, 204}
+\definecolor{honeydew}{RGB}{240, 255, 240}
+\definecolor{lightcyan}{RGB}{224, 255, 255}
+
+% Definitions
+%\newfont{inc}{inconsolata} 
+\newcommand{\slan}{{\tt S}}
+\newcommand{\rlan}{{\tt R}}
+\newcommand{\pbsd}{{\tt PBSdata}}
+\newcommand{\pbsf}{{\tt PBSfishery}}
+\newcommand{\pbst}{{\tt PBStools}}
+\newcommand{\pbsdat}{{\it PBS Data}}
+\newcommand{\tcl}{{\tt Tcl/Tk}}
+\newcommand{\pc}{\%}
+\newcommand{\tqs}{\textquotesingle}
+%\newcommand{\tqd}{\DoubleQuote}
+
+% from RODBC.Rnw
+\newcommand{\code}[1]{\grey{\texttt{#1}}}
+\newcommand{\pkg}[1]{{\bf #1}}
+\newcommand{\var}[1]{\emph{#1}}
+\newcommand{\link}[1]{#1}
+\newcommand{\sQuote}[1]{`#1'}
+\newcommand{\dQuote}[1]{``#1''}
+\newcommand{\eqn}[1]{\begin{equation}#1\end{equation}}
+\newcommand{\gfrac}[2]{\genfrac{}{}{}{0}{#1}{#2}}
+
+\newcommand{\gui}[1]{\small\textmd{\textsf{#1}}\normalsize}
+\newcommand{\db}[1]{\small\textmd{\textsf{#1}}\normalsize}
+\newcommand{\func}[1]{{\textcolor{dodgerblue} {#1}}}
+\newcommand{\ital}[1]{{\it #1}}
+\newcommand{\bold}[1]{{\bf #1}}
+\newcommand{\under}[1]{{\underline {#1}}}
+
+\newcommand{\red}[1]{{\textcolor{red} {#1}}}
+\newcommand{\green}[1]{{\textcolor{green} {#1}}}
+\newcommand{\blue}[1]{{\textcolor{blue} {#1}}}
+\newcommand{\grey}[1]{{\textcolor{darkslategrey} {#1}}}
+\newcommand{\sky}[1]{{\textcolor{deepskyblue} {#1}}}
+%\newcommand{\dfo}[1]{{\colorbox{aliceblue}{\color{slategrey} {#1}}}}
+%\colorbox{declared-color1}{\color{declared-color2}{text}}
+
+%% https://mjtsai.com/blog/2005/07/29/roman-straight-quotes-in-pdflatex/
+\def\softquote{\hspace{-0.15em}\rotatebox{45}{\hbox{\textrm\'{}} }\hspace{-0.5em}}
+\def\hardquote{\hspace{-0.1em}\rotatebox{20}{\hbox{$'$} }\hspace{-0.5em}}
+%% In the end, just use \textquotesingle
+%\newcommand{\supquote}[1]{\textquotesingle\hspace{0.1em}\code{#1}\textquotesingle}
+\newcommand{\supquote}[1]{\textquotesingle\code{#1}\textquotesingle}
+
+
+\newcommand\pbsfig[4]{    % #1=filename, #2=main caption, #3=figure height, #4=short caption
+	\begin{figure}[ht!] %[htbp]
+	\centering
+	\includegraphics[width=6.5in,height=#3in,keepaspectratio=TRUE]{#1.png}
+	% http://xelatex.blogspot.ca/2008/03/newcommand-with-optional-argument.html
+	\ifthenelse{\isempty{#4}}
+		{\caption[#2]{(\emph{#1}) #2}\vspace{1ex}}
+		{\caption[#4]{(\emph{#1}) #2}\vspace{1ex}}
+	\label{fig:#1}
+	\end{figure}
+	%\clearpage
+}
+%% #1=figure1 #2=figure2 #3=label #4=caption #5=width (fig) #6=height (fig)
+\newcommand\figbeside[6]{
+\begin{figure}[!ht]
+  \centering
+  \pdftooltip{
+  \begin{minipage}[c]{0.475\textwidth}
+    \begin{center}
+    \includegraphics[width=#5in,height=#6in,keepaspectratio=TRUE]{{#1}.png}
+    \end{center}
+    %\caption{#3}
+    %\label{fig:#1}
+  \end{minipage}}{Figure~\ref{fig:#3} left}%
+  \quad
+  \pdftooltip{
+  \begin{minipage}[c]{0.475\textwidth}
+    \begin{center}
+    \includegraphics[width=#5in,height=#6in,keepaspectratio=TRUE]{{#2}.png}
+    \end{center}
+    %\caption{#4}
+    %\label{fig:#2}
+  \end{minipage}}{Figure~\ref{fig:#3} right}
+  \caption{#4}
+  \label{fig:#3}
+  \end{figure}
+}
+\newcommand\example[1]{    % #1 = function name (or any text) for example line.
+	\textbf{\emph{Example~(#1):}}\\ \vspace{3 pt}
+}
+\newcommand\results[1]{    % #1 = function name (or any text) for example line.
+	\textbf{\emph{Output~(#1):}}\\ \vspace{3 pt}
+}
+% Coloured box environment
+% Source: Manifold @ http://answers.google.com/answers/threadview?id=282787
+\makeatletter\newenvironment{dfobox}{%
+   \begin{lrbox}{\@tempboxa}\begin{minipage}{\columnwidth}\raggedright}{\end{minipage}\end{lrbox}%
+   \colorbox{moccasin}{\usebox{\@tempboxa}}
+}\makeatother
+
+% Example box environment
+% Source: Manifold @ http://answers.google.com/answers/threadview?id=282787
+\makeatletter\newenvironment{examplebox}{%
+   \begin{lrbox}{\@tempboxa}\begin{minipage}{\textwidth}\raggedright}{\end{minipage}\end{lrbox}%
+   \colorbox{lightcyan}{\usebox{\@tempboxa}}
+}\makeatother
+
+% Output box environment
+% Source: Manifold @ http://answers.google.com/answers/threadview?id=282787
+\makeatletter\newenvironment{outputbox}{%
+   \begin{lrbox}{\@tempboxa}\begin{minipage}{\textwidth}\raggedright}{\end{minipage}\end{lrbox}%
+   \colorbox{honeydew}{\usebox{\@tempboxa}}
+}\makeatother
+
+% Item box environment
+% Source: Manifold @ http://answers.google.com/answers/threadview?id=282787
+\makeatletter\newenvironment{itembox}{%
+   \begin{lrbox}{\@tempboxa}\begin{minipage}{\textwidth}\raggedright}{\end{minipage}\end{lrbox}%
+   \colorbox{moccasin}{\usebox{\@tempboxa}}
+}\makeatother
+
+% Get rid of all that margin space
+\topmargin -0.5in 
+\oddsidemargin 0in \evensidemargin 0in
+\textheight 9.0in \textwidth 6.5in
+
+% Undoing the dumb defaults for float
+% http://mintaka.sdsu.edu/GF/bibliog/latex/floats.html
+% Alter some LaTeX defaults for better treatment of figures:
+% See p.105 of "TeX Unbound" for suggested values.
+% See pp. 199-200 of Lamport's "LaTeX" book for details.
+% General parameters, for ALL pages:
+  \renewcommand{\topfraction}{0.9}% max fraction of floats at top
+  \renewcommand{\bottomfraction}{0.8}% max fraction of floats at bottom
+% Parameters for TEXT pages (not float pages):
+  \setcounter{topnumber}{2}
+  \setcounter{bottomnumber}{2}
+  \setcounter{totalnumber}{4}     % 2 may work better
+  \setcounter{dbltopnumber}{2}    % for 2-column pages
+  \renewcommand{\dbltopfraction}{0.9}	% fit big float above 2-col. text
+  \renewcommand{\textfraction}{0.07}	% allow minimal text w. figs
+% Parameters for FLOAT pages (not text pages):
+  \renewcommand{\floatpagefraction}{0.7}	% require fuller float pages
+% N.B.: floatpagefraction MUST be less than topfraction !!
+  \renewcommand{\dblfloatpagefraction}{0.7}	% require fuller float pages
+
+\setlength{\parskip}{6pt plus 6pt minus 3pt}
+%Latex: Squeezing the Vertical White Space
+%http://www.terminally-incoherent.com/blog/2007/09/19/latex-squeezing-the-vertical-white-space/
+\usepackage[compact]{titlesec}
+%\titlespacing{\section}{0pt}{*0}{*0}
+%\titlespacing{\section}{0pt}{*0}{*0}
+%\titlespacing{\subsection}{0pt}{*0}{*0}
+%\titlespacing{\subsubsection}{0pt}{*0}{*0}
+\titlespacing{\section}{0pt}{12pt}{6pt}
+\titlespacing{\subsection}{0pt}{9pt}{6pt}
+\titlespacing{\subsubsection}{0pt}{6pt}{6pt}
+
+%% https://latex.org/forum/viewtopic.php?t=3889
+\newcounter{crumb}
+\newcommand{\critem}{%
+	\stepcounter{crumb}%
+	\thecrumb}
+
+\newcounter{crump}
+\newcommand{\criten}{%
+	\stepcounter{crump}%
+	\thecrump}
+
+%\newcommand{\popfart}{Sumtingwong}
+%% Create a blue underlined hyperlink (e.g., http://tex.stackexchange.com/questions/233668/new-ulem-command-not-working)
+\usepackage[normalem]{ulem}                         %% The ulem package: underlining for emphasis, can also strikethrough
+\newcommand\bluline{\bgroup\markoverwith
+  {\textcolor{blue}{\rule[-0.5ex]{2pt}{0.4pt}}}\ULon} %% wtf
+\newcommand\urldfo[2]{\href{#1}{\bluline{#2}}}
+
+
+%===========================================================
+\begin{document}
+\pagenumbering{roman}
+
+\title{Catch Reconstruction Update}
+\author{Rowan Haigh}
+
+\maketitle
+\tableofcontents
+\listoftables % (lot)
+\listoffigures % (lof)
+%\clearpage
+%\fancyfoot[R]{\small \date{}}
+
+%\clearpage
+%\begin{minipage}{\textwidth}
+%\vspace*{4in}
+%\begin{center}
+%\LARGE\it\grey{Page left blank for printing purposes.}
+%\end{center}
+%\vfill % equivalent to \vspace{\fill}
+%\end{minipage}
+
+%\vspace{4.0 in}
+%\centerline{\large\it\grey{Page left blank for printing purposes.}\normalsize}
+
+\newpage
+\pagenumbering{arabic}
+
+%%------------------------------------------------
+%\phantomsection
+%\addcontentsline{toc}{section}{Introduction} % Adds to bookmarks only
+%\section* {Introduction}
+\section{Introduction}
+
+Within the package \pkg{PBStools}, there is a function called \supquote{buildCatch}, which provides an efficient method for reconstructing rockfish (RRF) catch from 1918 to the present along the BC coast \citep{Haigh-Yamanaka:2011}. 
+The latest stock assessment to use \code{buildCatch} was Silvergray Rockfish (SGR, \emph{Sebastes brevispinis}) in 2025. 
+The Offshore Rockfish Program (ORP), currently headed by Rowan Haigh, usually updates the code during each stock assessment. 
+
+While the catch reconstruction (CR) extends back to 1918, the start of any rockfish fishery is usually set to 1935, before the fishery started to increase during World War~II. 
+Prior to this, trawl catches of RRF were negligible, and non-trawl fleet catches occurred in trace amounts. 
+During the period 1950-1975, US vessels routinely caught more rockfish than did Canadian vessels. 
+Additionally, from the mid-1960s to the mid-1970s, foreign fleets (Russian and Japanese) removed large amounts of rockfish, primarily POP. 
+These large catches were first reported by various authors \citep{Westrheim-etal:1972, Gunderson-etal:1977, Leaman-Stanley:1993}; however, \citet{Ketchen:1980_pop, Ketchen:1980_gf} re-examined the foreign fleet catch, largely because statistics from the USSR called all rockfish `perches' while the Japanese used the term `Pacific ocean perch' indiscriminately. 
+In the catch reconstruction, all historical foreign catches (annual rockfish landings) are tracked separately from Canadian landings, converted to foreign-caught RRF, and added to total RRF landings during the reconstruction process.
+
+
+%%------------------------------------------------
+%\phantomsection
+%\addcontentsline{toc}{section}{Data Sources} % Adds to bookmarks only
+%\section* {Data Sources}
+\section{Data sources}
+
+Starting in 2015, all official Canadian catch tables from the databases below (except \code{PacHarv3}) have been merged into one table called \supquote{GF\_MERGED\_CATCH}, which is available in DFO's \code{GFFOS} database.
+All groundfish DFO databases are housed on the \code{DFBCV9TWVASP001} server (soon to change again).
+RRF catch by fishery sector ultimately comes from the following seven DFO databases:
+\begin{itemize}
+	\item \code{PacHarv3} sales slips (1982-1995) -- hook and line only;
+	\item \code{GFCatch} (1954-1995) -- trawl and trap;
+	\item \code{PacHarvHL} merged data table (1986-2006) -- halibut, Schedule II troll, ZN rockfish;
+	\item \code{PacHarvSable} fisherlogs (1995-2005) -- sablefish trap and longline;
+	\item \code{PacHarvest} observer trawl (1996-2007) -- primarily bottom trawl;
+	\item \code{GFFOS} groundfish subset from Fishery Operation System (2006-present) -- all fisheries and modern surveys; and
+	\item \code{GFBioSQL} joint-venture hake and research survey catches (1947-present) -- multiple gear types.
+\end{itemize}
+\code{GFBioSQL} is an SQL Server database that mirrors the \code{GFBio} Oracle database.
+All data sources other than \code{PacHarv3} were superseded by \code{GFFOS} beginning in 2007 because this latter repository was designed to record all Canadian west coast landings and discards from commercial fisheries and research activities. 
+Reporting changed in \code{GFFOS} to reflect fishing `sectors' that were different for some of the fisheries; primarily, Schedule II became `Spiny Dogfish' and `Lingcod' while ZN hook and line became `Rockfish Inside' (waters between Vancouver Island and the BC mainland) and `Rockfish Outside' (waters offshore and excluding Inside waters).
+
+Prior to the modern catch databases, historical landings of aggregate rockfish -- either total rockfish (TRF) or rockfish other than POP (ORF) -- were reported by eight different data sources (see \citealt{Haigh-Yamanaka:2011}).
+The earliest historical source of rockfish landings comes from the Canada Dominion Bureau of Statistics (1918-1950).
+\citet{Ketchen:1976} provides the bulk of trawl landings in the middle period (1950-1975).
+
+The CR algorithm is coded in the R function \supquote{buildCatch}, which can be found in the R package \href{https://github.com/pbs-software/pbs-tools}{PBStools}.
+The goal is to estimate the reconstructed catch of any rockfish species, generically designated as \supquote{RRF}, from reported$\vert$estimated landings and reported$\vert$estimated discards.
+Estimated landings are calculated using a ratio (called \supquote{gamma} herein), either \code{RRF/ORF} or \code{RRF/TRF}, to derive \code{RRF} from either \code{ORF} (rockfish other than \code{POP}) or \code{TRF} (total rockfish).
+Similarly, estimated discards are calculated using a ratio (called \supquote{delta} herein) \code{RRF/TAR}, where \code{TAR} is the target species landed by fishery.
+
+%%------------------------------------------------
+\section{Reconstruction details}
+
+%%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{Definition of terms}
+
+A brief synopsis of the catch reconstruction follows, with a reminder of the definition of terms:
+\underline{Fisheries}: there are five fisheries in the reconstruction (even though trawl dominates most RRF catches):
+\begin{itemize}
+	\item T = groundfish trawl (bottom + midwater),
+	\item H = Halibut longline,
+	\item S = Sablefish trap/longline,
+	\item DL = Dogfish and Lingcod troll/longline (originally called `Schedule II'),
+	\item ZN = hook and line rockfish (sector called `ZN' from 1986 to 2006 and `Rockfish Outside' and `Rockfish Inside' from 2007 on).
+\end{itemize}
+\underline{TRF}: acronym for `total rockfish' (all species of \emph{Sebastes} \& \emph{Sebastolobus})
+
+\underline{ORF}: acronym for `other rockfish' (= TRF minus POP), landed catch aggregated by year, fishery, and PMFC (Pacific Marine Fisheries Commission) major area
+
+\underline{POP}: Pacific Ocean Perch
+
+\underline{RRF}: reconstructed rockfish species (e.g., YTR)
+
+\underline{TAR}: target species landed catch, used for discard calculations
+
+\underline{L\,\&\,D}:~~L= landed catch, D= releases (informally called `discards')
+
+\underline{gamma}: geometric mean of annual ratios of landed catch, $\sum_i \text{RRF}_i^\text{L} / \text{ORF}_i^\text{L}$, grouped by major PMFC area and fishery.
+	For YTR, the reference years were set to 1998-2015 for the trawl fishery and 2007-2015 for the four non-trawl fisheries.
+	
+\underline{delta}: geometric mean of annual ratios of discarded catch to landed catch, $\sum_i \text{RRF}_i^\text{D} / \text{TAR}_i^\text{L}$, grouped by major PMFC area and fishery using reference years $i$= 1997-2006 for the trawl fishery and 2000-2004 for all other fisheries.
+	Observer records were used to gather data on releases.
+
+\pagebreak
+%%------------------------------------------------
+%\phantomsection
+%\addcontentsline{toc}{section}{Changes since 2011} % Adds to bookmarks only
+%\section* {Changes to the reconstruction algorithm since 2011}
+\section{Changes to the reconstruction algorithm since 2011}
+
+Stock assessments since Haigh and Yamanaka (2011) have made either permanent changes to the catch reconstruction algorithm or choices specific to the stock being assessed.
+
+%%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{Pacific Ocean Perch (2012)}
+
+In two stock assessments for POP in areas 3CD and 5DE \citep{Edwards-etal:2014_pop3CD, Edwards-etal:2014_pop5DE}, the authors documented several departures from the catch reconstruction algorithm introduced by \citet{Haigh-Yamanaka:2011}.
+
+%%++++++++++++++++++++++++++++++++++++++++++++++++
+%\underline{Item~1}~~(\green{\ding{51}} RRF 2025)\\  [deprecate]
+\newcommand{\poptwelveone}{drop trawl and trap records from \code{PacHarv3} (1954-1995)}
+\begin{itembox}
+%\setword{\bold{Item~1}\,:~drop trawl and trap records from \code{PacHarv3} (1954-1995)}{Word:Love}
+\bold{Item~\critem}\,:~\poptwelveone~~(\green{\ding{51}} RRF 2025) 
+%\bold{Item~\critem}\,:~drop trawl and trap records from \code{PacHarv3} (1954-1995)~~(\green{\ding{51}} RRF 2025)
+\end{itembox}\\ \vspace*{1ex}
+The initial reconstuction algorithm \citep{Haigh-Yamanaka:2011} used both \code{GFCatch} (logbook records, \citealt{Rutherford:1999}) and \code{PacHarv3} (sales slips) because it was assumed that the two databases should be recording the same landings.
+Under this assumption, the two sources could be compared by year and major area, and the maximum values used.
+Unfortunately, sales slips used large statistical areas while logbooks used PMFC areas and subareas. 
+Conversion from the former to the latter can be performed reasonably well, but two large statistical areas in particular straddle PMFC boundaries with no easy way to assign the catch (Figure~\ref{fig:CR-PH3-Problem-Areas}).
+The first area, coded 9021, comprises statistical areas 2E and 102, which cover large portions of PMFC 5B, 5C, and 5D.
+For POP in particular, area 9021 includes Moresby Gully in PMFC areas 5B and 5C. 
+The second area, coded 9270, comprises statistical areas 27 and 127 which include a POP agglomeration in PMFC areas 3D and 5A off the NW tip of Vancouver Island.
+The problem occurs, for example, when \code{GFCatch} reports POP landings from 3D and 5A in the 9270 region while the POP landings reported by \code{PacHarv3} are assigned to 3D or 5A only, neither of which matches the \code{GFCatch} landings.
+There is no method for splitting the \code{PacHarv3} catch from these two large statistical areas.
+
+Therefore, only the \code{GFCatch} database for the trawl and trap records from 1954 to 1995 were used, rather than trying to mesh \code{GFCatch} and \code{PacHarv3}.
+The point is somewhat moot as stock assessments since 2015 by the ORP use the merged-catch data table from \code{GFFOS}.
+
+\pbsfig{CR-PH3-Problem-Areas}{Problematic statistical areas in the \code{PacHarv3} database that span multiple PMFC areas\,: 9021 (shaded green) shows DFO statistical area 102 (inshore area 2E excluded); 9270 (shaded blue) shows DFO statistical area 127 (inshore area 27 excluded).}{3.5}{}
+
+%%++++++++++++++++++++++++++++++++++++++++++++++++
+\newcommand{\poptwelvetwo}{retain use of \code{PacHarv3} data for H\&L fisheries}
+\begin{itembox}
+\bold{Item~\critem}\,:~\poptwelvetwo~~~(\green{\ding{51}} RRF 2025)
+\end{itembox}\\ \vspace*{1ex}
+Retain use of data for the H\&L fisheries from \code{PacHarv3}; these data do not appear in other databases.
+
+%%++++++++++++++++++++++++++++++++++++++++++++++++
+\newcommand{\poptwelvethree}{include additional BC rockfish catch for Japanese fleet}
+\begin{itembox}
+\bold{Item~\critem}\,:~\poptwelvethree~~(\green{\ding{51}} RRF 2025)
+\end{itembox}\\ \vspace*{1ex}
+%Include an additional data source for BC rockfish catch by the Japanese fleet reported in \citet{Ketchen:1980_gf}.
+In an earlier POP stock assessment for 5ABC \citep{Edwards-etal:2012_pop5ABC}, Russian and Japanese catches were estimated by \citet{Ketchen:1980_pop} for the Queen Charlotte Sound (QCS) area; however, the author only supplied a one-page Appendix for estimates of Russian rockfish catch for the west coast of Vancouver Island (WCVI) and the west coast of Haida Gwaii (WCHG).
+Japanese catch numbers were not supplied for WCVI and WCHG in the QCS reconstruction.
+Fortunately, \citet{Ketchen:1980_gf} reported landings estimates of `Pacific Ocean Perch', a term most likely including all rockfish, by the Japanese fleet.
+Therefore, both the Russian catch in \citet{Ketchen:1980_pop} and the Japanese catch in \citet{Ketchen:1980_gf} were used.
+
+\begin{examplebox}
+\small current defaults: \code{useCA = TRUE, useUS = TRUE, useFF = TRUE}
+\end{examplebox}
+
+%%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{Yellowtail Rockfish (2014)}
+
+%%++++++++++++++++++++++++++++++++++++++++++++++++
+\newcommand{\ytrfourteenone}{add supplementary YTR catch to \supquote{rrfhistory} data object}
+\begin{itembox}
+\bold{Item~\critem}\,:~\ytrfourteenone~~(\green{\ding{51}} RRF 2025)
+\end{itembox}\\ \vspace*{1ex}
+The Yellowtail Rockfish (YTR) assessment \citep{DFO-SAR:2015_ytr} added supplementary data to the \supquote{rrfhistory} object\footnote{\code{rrfhistory} parallels the primary \code{POP|ORF|TRF} object called \supquote{orfhistory}, see \citet{Haigh-Yamanaka:2011} for all historical sources}, specifically YTR catch data from Canadian, US, and Polish fleets \citep{Ketchen:1980_gf}.
+This was done to incorporate high catches of YTR (6,700\,t in 1975 and 2,339\,t in 1976) by Polish vessels in 3D.
+
+Traditional groundfish species\footnote{English Sole (\emph{Parophrys vetulus}), Rock Sole(\emph{Lepidopsetta bilineatus}), Petrale Sole (\emph{Eopsetta jordani}), Dover Sole (\emph{Microstomus pacificus}), Rex Sole (\emph{Errex zachirus}), Pacific Cod (\emph{Gadus macrocephalus}), Lingcod (\emph{Ophiodon elongatus}), Sablefish (\emph{Anoplopoma fimbria}), Pacific Ocean Perch (\emph{Sebastes alutus}), Spiny Dogfish (\emph{Squalus acanthias})} catches were reported for 1950-1975 by \citet{Ketchen:1976}.
+A subset of these data, \supquote{POP} and \supquote{ORF} (other rockfish excluding POP, also reported in \citealt{Ketchen:1976}), appear in the historical catch object called \supquote{orfhistory}.
+(\code{TRF}, total rockfish, is simply \code{POP} + \code{ORF}.)
+These data contribute to the historical rockfish catch by year that can be used to calculate \code{RRF} via \code{gamma} (e.g., \code{RRF/ORF}).
+
+Primary rockfish species\footnote{Yellowtail Rockfish (\emph{S.\,favidus}), Canary Rockfish (\emph{S.\,pinniger}), Silvergray Rockfish (\emph{S.\,brevispinis}), Yellowmouth Rockfish (\emph{S.\,reedi}), Bocaccio (\emph{S.\,paucispinis}), Widow Rockfish (\emph{S.\,entomelas}), Redstripe Rockfish (\emph{S.\,proriger}), Rougheye Rockfish (\emph{S.\,aleutianus}), Redbanded Rockfish (\emph{S.\,babcocki})} catches were reported for the years 1967-1978 by \citet{Ketchen:1980_gf}.
+This latter set can be added to \supquote{rrfhistory} (only YTR, sablefish, lingcod, and the common flatfish species were present in 2014).
+The CR code creates an array of reported catches called \supquote{catmod}\,\footnote{from two database (DB) sources\,: \code{GFFOS.GF\_MERGED\_CATCH} and \code{PacHarv3.CATCH\_SUMMARY}} (\code{year} $\times$ \code{major} $\times$ \code{fid} $\times$ \code{catch}), which are primarily Canadian but can include foreign catches if supplied through \code{rrfhistory}.
+Therefore, \code{catmod} is an array that contains \emph{reported} landings and discards for \code{RRF}, as well as \emph{reported} landings of \code{ORF} and \code{TRF}.
+
+%%++++++++++++++++++++++++++++++++++++++++++++++++
+\newcommand{\ytrfourteentwo}{use offshore areas to calculate \code{gamma} and \code{delta}}
+\begin{itembox}
+\bold{Item~\critem}\,:~\ytrfourteentwo~~(\red{\ding{55}} RRF 2025)
+\end{itembox}\\ \vspace*{1ex}
+Use selected offshore areas that reflected the activity of the foreign fleets' impact on this species to calculate \code{gamma} (RRF/ORF) and delta ratios (RRF/TAR)\footnote{Redbanded Rockfish (RBR) assessment \citep{Edwards-etal:2017_rbr} also tried defining  \code{gamma} from specified areas.}.
+Initially, specific areas (\code{major}, \code{minor}, \code{locality}) were provided to the CR algorithm; however, feedback from the Canadian Groundfish Research and Conservation Society (CGRCS), specifically Brian Mose, provided a fixed set of \code{gamma} values by major area for estimating YTR caught by the trawl fleet.
+
+\begin{examplebox}
+\small current defaults\,:~~\code{refarea = NULL, refgear = NULL}\\
+\small ad hoc arguments\,:~~\code{pjs = FALSE, outside = FALSE}
+\end{examplebox}
+
+%%++++++++++++++++++++++++++++++++++++++++++++++++
+\newcommand{\ytrfourteenthree}{specify start years for adopting reported landed catch}
+\begin{itembox}
+\bold{Item~\critem}\,:~\ytrfourteenthree~~(\green{\ding{51}} RRF 2025)
+\end{itembox}\\ \vspace*{1ex}
+Allow user to specify years by fishery (five-element vector called \supquote{useYR1}) for the CR to start using reported (database) catch.
+The default value is 1996; exceptions\,: 1956 for POP caught by Trawl (FID=1) and 1982 for POP$\vert$YYR caught by Dogfish-Lingcod (FID=4) or H\&L Rockfish (FID=5).
+Estimate RRF landings (using \code{gamma}) for years earlier than the specified$\vert$default years.
+
+\begin{examplebox}
+\small current default\,:~~\code{useYR1 = c(1996, 2000, 2007, 2007, 1986)}
+\end{examplebox}
+
+%%++++++++++++++++++++++++++++++++++++++++++++++++
+\newcommand{\ytrfourteenfour}{use a random binomial-gamma distribution to estimate \code{gamma}}
+\begin{itembox}
+\bold{Item~\critem}\,:~\ytrfourteenfour~~(\red{\ding{55}} RRF 2025)
+\end{itembox}\\ \vspace*{1ex}
+An experimental method was implemented to calculate \code{gamma} using a binomial-gamma distibution \citep{Schnute-Haigh:2003}, conditioned on the data.
+The results provided similar \code{gamma} ratios as those derived by the mean of annual estimates.
+This method was only tried for YTR and RBR.
+
+\begin{examplebox}
+\small current default\,:~~\code{useBG = FALSE}
+\end{examplebox}
+
+%%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{Shortspine Thornyhead (2015)}
+
+%%++++++++++++++++++++++++++++++++++++++++++++++++
+\newcommand{\sstfifteenone}{use merged catch table \code{GF\_MERGED\_CATCH} in \code{GFFOS}}
+\begin{itembox}
+\bold{Item~\critem}\,:~\sstfifteenone~~(\green{\ding{51}} RRF 2025)
+\end{itembox}\\ \vspace*{1ex}
+The Shortspine Thornyhead (SST) assessment \citep{Starr-Haigh:2017_sst} was the first to use the merged catch table \supquote{GF\_MERGED\_CATCH} in \code{GFFOS}.
+Previous assessments required the meshing together of catches from six separate databases: \code{GFBioSQL} (research, midwater joint-venture Hake, midwater foreign), \code{GFCatch} (trawl and trap), \code{GFFOS} (all fisheries), \code{PacHarvest} (trawl), \code{PacHarvHL} (hook and line), and \code{PacHarvSable} (trap and longline).
+In the end, the CR algorithm was not used for SST because it was estimating non-existent catches prior to 1996 (Brian Mose, pers. comm. 2015).
+Reported catches were used with a tweak to disaggregate SST catch prior to 1996 (because all thornyhead catch was called SST before this year) into SST and Longspine Thornyhead (LST).
+
+\begin{examplebox}
+\small current default\,:~~\code{useGFM = TRUE}
+\end{examplebox}
+
+%%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{Yelloweye Rockfish Outside (2015)}
+
+%%++++++++++++++++++++++++++++++++++++++++++++++++
+\newcommand{\yyrfifteenone}{use depth-stratified \code{gamma} and \code{delta}}
+\begin{itembox}
+\bold{Item~\critem}\,:~\yyrfifteenone~~(\red{\ding{55}} RRF 2025)
+\end{itembox}\\ \vspace*{1ex}
+The Yelloweye Rockfish (YYR) assessment \citep{Yamanaka-etal:2018_yyr} introduced the concept of depth-stratified \code{gamma} and \code{delta} ratios for an inshore rockfish (shallow water, reef-based species); however, this functionality has not been used for offshore rockfish to date.
+
+For each fishery and PMFC area, landings records were stratified by reference year and 100-m depth interval.
+Within each depth stratum, records that contained a non-zero ORF landing were used to calculate a ratio of total YYR to total ORF and then weighted by the number of observations within each year-depth stratum to derive a stratified-weighted \code{gamma} for each fishery-area combination.
+Within any given year, area, and fishery, at least 10\pc{} of the records had to contain a non-zero depth value to be stratified by depth.
+Otherwise, the year-area-fishery stratum was assumed to contain one depth zone.
+During the 14 May 2015 workshop, only records with a non-zero YYR catch were used in the depth-stratified \code{gamma} calculation, and industry pointed out that this would likely bias the estimation of YYR landings.
+Therefore, the YYR assessment used all records that contained a non-zero ORF landing.
+
+\begin{examplebox}
+\small current defaults: \code{strat.gamma = FALSE, strat.delta = FALSE}
+\end{examplebox}
+
+%%++++++++++++++++++++++++++++++++++++++++++++++++
+\newcommand{\yyrfifteentwo}{fix values for the halibut fishery}
+\begin{itembox}
+\bold{Item~\critem}\,:~\yyrfifteentwo~~(\red{\ding{55}} RRF 2025)
+\end{itembox}\\ \vspace*{1ex}
+The Pacific Halibut Management Association (PHMA) requested a few tweaks to the YYR base case reconstruction:
+\begin{itemize}
+	\item fix \code{gamma} for the halibut fishery (\code{fid}=2) by area (5A=0.25, 5B=0.25, 5C=0.375, 5D=0.3);
+	\item set the 1999 halibut fishery catch of YYR to be 17.5\pc{} less than that for the 1998 catch.
+\end{itemize}
+
+\begin{examplebox}
+\small ad hoc argument\,:~~\code{phma = FALSE}
+\end{examplebox}
+
+%%++++++++++++++++++++++++++++++++++++++++++++++++
+\newcommand{\yyrfifteenthree}{exclude catch records from seamounts}
+\begin{itembox}
+\bold{Item~\critem}\,:~\yyrfifteenthree~~(\green{\ding{51}} RRF 2025)
+\end{itembox}\\ \vspace*{1ex}
+A number of commercial fishing events came from various seamounts\,: Bowie=4,171 records, Brownbear=472, Cobb=790, Dellwood=102, Eickelberg=804, Union=1,381.
+However, only Bowie and Dellwood Seamounts recorded landed catch of YYR\,: Bowie with 282 records (31.3\,t) and Dellwood with 8 records (1.5\,t).
+Up until this point, seamount data had been ignored (and included in CRs).
+
+\begin{examplebox}
+\small current default\,:~~\code{useSM = FALSE}
+\end{examplebox}
+
+%%++++++++++++++++++++++++++++++++++++++++++++++++
+\newcommand{\yyrfifteenfour}{do not reconstruct catch from foreign fleets}
+\begin{itembox}
+\bold{Item~\critem}\,:~\yyrfifteenfour~~(\red{\ding{55}} RRF 2025)
+\end{itembox}\\ \vspace*{1ex}
+Discussion with industry at the 14 May 2015 workshop revealed that foreign catches were likely POP with no YYR bycatch.
+
+\begin{examplebox}
+\small current default\,:~~\code{useFF = TRUE}
+\end{examplebox}
+
+%%++++++++++++++++++++++++++++++++++++++++++++++++
+\newcommand{\yyrfifteenfive}{exclude data from the experimental Langara Spit POP fishery}
+\begin{itembox}
+\bold{Item~\critem}\,:~\yyrfifteenfive~~(\red{\ding{55}} RRF 2025)
+\end{itembox}\\ \vspace*{1ex}
+This option is likely appropriate for inshore and/or reef-based rockfish species because they would not have been impacted by offshore experiments (or historical offshore foreign fleet activity).
+
+\begin{examplebox}
+\small current default\,:~~\code{useLS = TRUE}
+\end{examplebox}
+
+%%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{Pacific Ocean Perch 5ABC (2017)}
+
+%%++++++++++++++++++++++++++++++++++++++++++++++++
+\newcommand{\popseventeenone}{expand 5C to include southern 5E (Anthony Island)}
+\begin{itembox}
+\bold{Item~\critem}\,:~\popseventeenone~~(\red{\ding{55}} RRF 2025)
+\end{itembox}\\ \vspace*{1ex}
+The Pacific Ocean Perch (POP) assessment in Queen Charlotte Sound (QCS, 5ABC, \citealt{Haigh-etal:2018_pop5ABC}) included catches from the Anthony Island area.
+That is, PMFC 5C was expanded around Cape St. James (from Moresby Gully) to inclue southern 5E:
+\begin{itemize}
+	\item a tow occurred in PMFC 5E with a valid latitude $\leq$ 52$^{\circ}$ 20$^{\prime}$ North or
+	\item a tow occurred in PMFC major 5E, minor 34, and localities 1 or 5.
+\end{itemize}
+
+\begin{examplebox}
+\small current default\,:~~\code{useAI = FALSE}
+\end{examplebox}
+
+%%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{Redstripe Rockfish (2018)}
+
+%%++++++++++++++++++++++++++++++++++++++++++++++++
+\newcommand{\rsreighteenone}{calculate \code{gamma} and \code{delta} using geometric means}
+\begin{itembox}
+\bold{Item~\critem}\,:~\rsreighteenone~~(\green{\ding{51}} RRF 2025)
+\end{itembox}\\ \vspace*{1ex}
+The Redstripe Rockfish (RSR) assessment \citep{Starr-Haigh:2021_rsr}, introduced the use of summarising annual \code{gamma} and \code{delta} ratios from reference years (Section A.2.2) by calculating the geometric mean across years instead of using the arithmetic mean. 
+This choice reduces the influence of single anomalously large annual ratios.
+
+\begin{examplebox}
+\small current default\,:~~\code{useGM = FALSE}
+\end{examplebox}
+
+%%++++++++++++++++++++++++++++++++++++++++++++++++
+\newcommand{\rsreighteentwo}{replace observed landings with estimated ones}
+\begin{itembox}
+\bold{Item~\critem}\,:~\rsreighteentwo~~(\red{\ding{55}} RRF 2025)
+\end{itembox}\\ \vspace*{1ex}
+Estimate RRF (using \code{gamma}) for observed landings later than 1996 for trawl and/or later than 2006 for the non-trawl fisheries, should the user have reason to replace observed landings with estimated ones.
+
+%%++++++++++++++++++++++++++++++++++++++++++++++++
+\newcommand{\rsreighteenthree}{specify years by fishery for discard regimes}
+\begin{itembox}
+\bold{Item~\critem}\,:~\rsreighteenthree~~(\green{\ding{51}} RRF 2025)
+\end{itembox}\\ \vspace*{1ex}
+Specify years by fishery for discard regimes when discard ratios are applied. 
+Previously, these had been fixed to 1954-1995 for the trawl fishery and 1986-2005 for the non-trawl fisheries. 
+Note\,: years before the discard period assume no discarding, and years after the discard period assume that discards have been reported in the databases.
+
+\begin{examplebox}
+\small current default\,:~~\code{disyrs = list(1954:1995, 1986:2005, 1986:2005, 1986:2005, 1986:2005)}
+\end{examplebox}
+
+%%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{Widow Rockfish (2019)}
+
+%%++++++++++++++++++++++++++++++++++++++++++++++++
+\newcommand{\wwrnineteenone}{allocate post-EEZ foreign catch to fisheries by gear type}
+\begin{itembox}
+\bold{Item~\critem}\,:~\wwrnineteenone~~(\green{\ding{51}} RRF 2025)
+\end{itembox}\\ \vspace*{1ex}
+The Widow Rockfish (WWR) assessment \citep{Starr-Haigh:2021_wwr} found a substantial amount of WWR reported as foreign catch in the database \code{GFBioSQL} that came from midwater gear off WCVI. 
+Subsequently, the catch reconstruction algorithm was changed to assign \code{GFBio} foreign catch to four of the five fisheries based on gear type:
+\begin{itemize}
+  \item bottom and midwater trawl gear assigned to the Trawl fishery,
+  \item longline gear assigned to the Halibut fishery,
+  \item trap and line-trap mix gear assigned to the Sablefish fishery, and
+  \item h\&l gear assigned to the ZN rockfish fishery.
+\end{itemize}
+The assignment only happens if the user chooses to use foreign catch in the reconstruction. 
+These foreign catches occurred well after the foreign fleet activity between 1965 and the implementation of an exclusive economic zone in 1977.
+
+%%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{Bocaccio (2019)}
+
+%%++++++++++++++++++++++++++++++++++++++++++++++++
+\newcommand{\bornineteenone}{specify flexible reference years to calculate \code{gamma}}
+\begin{itembox}
+\bold{Item~\critem}\,:~\bornineteenone~~(\green{\ding{51}} RRF 2025)
+\end{itembox}\\ \vspace*{1ex}
+The Bocaccio rockfish (BOR) assessment \citep{Starr-Haigh:2022_bor} used advice from the technical working group, which identified specific reference years for the calculation of \code{gamma}: 1990-2000 for trawl (to capture the years before decreasing mortality caps for BOR were placed on the trawl fleet) and 2007-2011 for non-trawl (to capture years after some form of observer program like electronic monitoring was applied to the hook and line fleets). 
+The catch reconstruction algorithm was previously coded to only allow one set of reference years to be applied across all fisheries.
+The algorithm was changed so that a user can now specify separate reference years for each fishery. 
+
+\begin{examplebox}
+\small current default\,:~~\code{refyrs = c(list(1996:2023), rep(list(2007:2011),4))}
+\end{examplebox}
+
+%%++++++++++++++++++++++++++++++++++++++++++++++++
+\newcommand{\bornineteentwo}{reconcile catches from \code{GFM} and \code{PH3}}
+\begin{itembox}
+\bold{Item~\critem}\,:~\bornineteentwo~~(\green{\ding{51}} RRF 2025)
+\end{itembox}\\ \vspace*{1ex}
+Once the merged catch table (\code{GF\_MERGED\_CATCH} in \code{GFFOS}) was introduced (SST 2015), catch from all databases other than \code{PacHarv3} have been reconciled so that caches are not double counted. 
+The remaining two catch data sources (GFM and PH3, for brevity) were re-assessed by comparing ORF data, and the CR algorithm was changed in how the data sources were merged for the categories \code{RRF landed}, \code{RRF discard}, \code{ORF landed}, \code{POP landed}, and \code{TRF landed}:
+\begin{itemize}
+  \item GFM catch is the only source needed for FID 1 (Trawl fishery), as was previously assumed;
+  \item GFM and PH3 catches appear to supplement each other for FIDs 2 (Halibut fishery), 3 (Sablefish fishery), and 4 (Dogfish/Lingcod fishery), and the catches were added in any given year up to 2005 (electronic monitoring started in 2006 and so the \code{GFFOS} database was reporting all catch for these fisheries by then);
+  \item GFM and PH3 catches appear to be redundant for FID 5 (H\&L Rockfish fishery), and so the maximum catch was used in any given year.
+\end{itemize}
+
+%%++++++++++++++++++++++++++++++++++++++++++++++++
+\newcommand{\bornineteenthree}{use historical \code{SBF} and \code{LIN} to calculate discards for \code{FID}s 3 \& 4}
+\begin{itembox}
+\bold{Item~\critem}\,:~\bornineteenthree~~(\green{\ding{51}} RRF 2025)
+\end{itembox}\\ \vspace*{1ex}
+Use historical Sablefish (SBF) and Lingcod (LIN) trawl landings from 1950 to 1975 \citep{Ketchen:1976} to calculate historical discards for FIDs 3 and 4 during this period. 
+These landings could not be used directly because they were taken by the trawl fleet; therefore, an estimation of SBF and LIN landed catch by FIDs 3 and 4, respectively, relative to SBF and LIN landed catch by FID 1 (trawl) was calculated from GFM. 
+Annual ratios of SBF$_3$/SBF$_1$ and LIN$_4$/LIN$_1$ from 1996-2011 were chosen to calculate a geometric mean; the ratios from 2012 on started to diverge from those in the chosen period. 
+The procedure yielded average ratios: SBF$_3$/SBF$_1$ = 10.235 and LIN$_4$/LIN$_1$ = 0.351, which were used to scale the 1950-1975 trawl landings of SBF and LIN, respectively. 
+From these estimated landings, discards of the RRF were calculated by applying \code{delta}.
+
+\pagebreak
+%%++++++++++++++++++++++++++++++++++++++++++++++++
+\newcommand{\bornineteenfour}{reallocate \code{PH3} records to five fisheries}
+\begin{itembox}
+\bold{Item~\critem}\,:~\bornineteenfour~~(\green{\ding{51}} RRF 2025)
+\end{itembox}\\ \vspace*{1ex}
+Re-allocate PH3 records to the various catch reconstruction fisheries based on data from 1952 to 1995.
+The distribution of effort (events) and catch by species for each gear type (Table~\ref{tab:CR_PH3_events_catch}) led to the code revision in Table~\ref{tab:CR_PH3_fisheries}.
+
+\bigskip
+
+\setlength{\tabcolsep}{3pt}
+\begin{table}[ht]
+\footnotesize
+\centering
+\caption{PacHarv3 (PH3) number of events reportedly catching each species and catch (t) of species from 1952-95 by gear type and species code,
+where SCO\,= Scorpionfishes, POP\,= Pacific Ocean Perch, YTR\,= Yellowtail Rockfish, YMR\,= Yellowmouth Rockfish, YYR\,= Yelloweye Rockfish, 
+SST\,= Shortspine Thornyhead, PAH\,= Pacific Halibut, SBF\,= Sablefish, DOG\,= Spiny Dogfish, and LIN\,= Lingcod.}
+\label{tab:CR_PH3_events_catch}
+%\begin{tabular}{ccrrxc}
+\begin{tabularx}{\textwidth}{lXrrrrrrrrrr}
+\hline
+\tstrut Code & PH3 Gear Description     &     SCO &     POP &     YTR &     YMR &     YYR &     SST &     PAH &     SBF &     DOG &      LIN \bstrut \\
+\hline\tstrut
+EVENTS       &                          &         &         &         &         &         &         &         &         &         \\
+10           & GILL NET, SALMON         &      55 &         &         &         &      17 &         &         &         &         &      164\\
+11           & NET, SET                 &         &         &         &         &         &         &         &         &       1 &         \\
+20           & SEINE, PURSE, SALMON     &       4 &         &         &         &       2 &         &         &         &         &       14\\
+30           & TROLL, SALMON            &    4281 &      49 &      69 &       1 &    2587 &      11 &     613 &      40 &      77 &     5201\\
+31           & TROLL,FREEZER,SALMON     &     614 &       1 &      14 &       2 &     294 &       2 &      91 &       8 &      31 &     1752\\
+36           & JIG, HAND, NON-SALMON    &    1126 &      25 &     241 &      13 &     914 &       4 &       1 &       1 &     152 &      845\\
+40           & LONGLINE                 &    2893 &     109 &     355 &     100 &    2738 &     327 &    4484 &     603 &    1248 &     2377\\
+50           & TRAWL, OTTER, BOTTOM     &    3910 &    2419 &    2335 &    1521 &     557 &    1435 &         &    2469 &     748 &     3098\\
+51           & TRAWL, MIDWATER          &     770 &     155 &     770 &     175 &      21 &      26 &         &      51 &     210 &      173\\
+57           & SHRIMP TRAWL             &     173 &      10 &       2 &         &      21 &         &         &       2 &      12 &       82\\
+70           & SEINE, BEACH             &       4 &         &         &         &         &         &         &         &         &        2\\
+90           & TRAP                     &      74 &         &       1 &       1 &      14 &      18 &         &     753 &       3 &       34\\
+\hline\tstrut
+CATCH                                   &         &         &         &         &         &         &         &         &         &         \\
+10           & GILL NET, SALMON         &     3.6 &         &         &         &     1.0 &         &         &         &         &       16\\
+11           & NET, SET                 &         &         &         &         &         &         &         &         &     2.5 &         \\
+20           & SEINE, PURSE, SALMON     &     0.2 &         &         &         &     0.7 &         &         &         &         &      4.3\\
+30           & TROLL, SALMON            &    3060 &     1.3 &     5.6 &     0.0 &     925 &     2.0 &     538 &      20 &      70 &     5757\\
+31           & TROLL,FREEZER,SALMON     &      73 &     0.0 &     2.2 &     0.4 &      31 &     4.0 &      52 &     0.1 &      99 &      695\\
+36           & JIG, HAND, NON-SALMON    &    2133 &     5.2 &      40 &     4.6 &     745 &     0.1 &     0.3 &     1.1 &     175 &     1883\\
+40           & LONGLINE                 &    6921 &      11 &      29 &      35 &    7922 &      91 &   48384 &   10785 &   21799 &     6119\\
+50           & TRAWL, OTTER, BOTTOM     &  117534 &   79327 &   28758 &   17609 &    1818 &    3468 &         &    6090 &   12637 &    45811\\
+51           & TRAWL, MIDWATER          &   17737 &     469 &   14867 &     735 &     3.3 &     7.7 &         &     7.9 &    1400 &      103\\
+57           & SHRIMP TRAWL             &      23 &     0.6 &     2.1 &         &     0.3 &         &         &     0.0 &      18 &       34\\
+70           & SEINE, BEACH             &     0.1 &         &         &         &         &         &         &         &         &      0.6\\
+90           & TRAP                     &      76 &         &     0.0 &     0.6 &     3.6 &     6.4 &         &   50886 &      34 &      4.4\\
+\hline
+\end{tabularx}
+%\end{tabular}
+\end{table}
+
+\pagebreak
+%% https://tex.stackexchange.com/questions/207973/table-with-a-column-of-verbatim [egreg]
+\setlength{\tabcolsep}{0pt}
+\begin{table}[ht]
+\footnotesize
+\raggedright
+\caption{Code extract from Oracle SQL query \supquote{ph3\_fcatORF.sql} that defines catch reconstruction FIDs
+(1\,= Trawl, 2\,= Halibut, 3\,= Sablefish, 4\,= Dogfish/Lingcod, 5\,= H\&L Rockfish) from gear types and dominant
+species caught (by weight) per event in \code{PH3} table \supquote{CATCH\_SUMMARY}.}
+\label{tab:CR_PH3_fisheries}
+%%\begin{tabular}{l}
+\begin{tabular}{ >{\ttfamily\catcode`_=12 }l }
+\hline
+\tstrut FID definition in SQL query \tqs ph3_fcatORF.sql\tqs \bstrut \\
+\hline\tstrut
+%%\begin{Verbatim}[fontsize=\footnotesize]
+(CASE -- in order of priority\\
+~~~-- originally TRAWL (otter bottom, midwater, shrimp, herring)\\
+~~~WHEN TAR.GR_GEAR_CDE IN (50,51,57,59) THEN 1\\
+~~~-- Partition LONGLINE\\
+~~~WHEN TAR.GR_GEAR_CDE IN (40) AND TAR.Target IN (\tqs14\tqs) THEN 2\\
+~~~WHEN TAR.GR_GEAR_CDE IN (40) AND TAR.Target IN (\tqs455\tqs) THEN 3\\
+~~~WHEN TAR.GR_GEAR_CDE IN (40) AND TAR.Target IN (\tqs044\tqs,\tqs467\tqs) THEN 4\\
+~~~WHEN TAR.GR_GEAR_CDE IN (40) AND TAR.Target NOT IN (\tqs614\tqs,\tqs455\tqs,\tqs044\tqs,\tqs467\tqs)) THEN 5\\
+~~~-- Partition TROLL (salmon, freezer salmon)\\
+~~~WHEN TAR.GR_GEAR_CDE IN (30,31) AND TAR.Target IN (\tqs614\tqs) THEN 2\\
+~~~WHEN TAR.GR_GEAR_CDE IN (30,31) AND TAR.Target IN (\tqs455\tqs) THEN 3\\
+~~~WHEN TAR.GR_GEAR_CDE IN (30,31) AND TAR.Target IN (\tqs044\tqs,\tqs467\tqs) THEN 4\\
+~~~WHEN TAR.GR_GEAR_CDE IN (30,31) AND TAR.Target NOT IN (\tqs614\tqs,\tqs455\tqs,\tqs044\tqs,\tqs467\tqs)) THEN 5\\
+~~~-- Partition JIG (hand non-salmon)\\
+~~~WHEN TAR.GR_GEAR_CDE IN (36) AND TAR.Target IN (\tqs614\tqs) THEN 2\\
+~~~WHEN TAR.GR_GEAR_CDE IN (36) AND TAR.Target IN (\tqs455\tqs) THEN 3\\
+~~~WHEN TAR.GR_GEAR_CDE IN (36) AND TAR.Target IN (\tqs044\tqs,\tqs467\tqs) THEN 4\\
+~~~WHEN TAR.GR_GEAR_CDE IN (36) AND TAR.Target NOT IN (\tqs614\tqs,\tqs455\tqs,\tqs044\tqs,\tqs467\tqs)) THEN 5\\
+~~~-- originally TRAP (experimental, salmon, longline, shrimp \& prawn, crab)\\
+~~~WHEN TAR.GR_GEAR_CDE IN (86,90,91,92,97,98) THEN 3\\
+~~~-- Unassigned Trawl, Halibut, Sablefish, Dogfish-Lingcod, H\&L Rockfish\\
+~~~WHEN TAR.Target IN (\tqs394\tqs,\tqs396\tqs,\tqs405\tqs,\tqs418\tqs,\tqs440\tqs,\tqs451\tqs) THEN 1\\
+~~~WHEN TAR.Target IN (\tqs614\tqs) THEN 2\\
+~~~WHEN TAR.Target IN (\tqs455\tqs) THEN 3\\
+~~~WHEN TAR.Target IN (\tqs044\tqs,\tqs467\tqs) THEN 4\\
+~~~WHEN TAR.Target IN (\tqs388\tqs,\tqs401\tqs,\tqs407\tqs,\tqs424\tqs,\tqs431\tqs,\tqs433\tqs,\tqs442\tqs) THEN 5\\
+~~~ELSE 0 END) AS "fid", \\
+%%\end{Verbatim}
+\hline
+\end{tabular}
+\end{table}
+
+
+%%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{Pacific Ocean Perch (2023)}
+
+%%++++++++++++++++++++++++++++++++++++++++++++++++
+\newcommand{\poptwentythreeone}{adjust the 5C boundary to include areas from 5B and 5E}
+\begin{itembox}
+\bold{Item~\critem}\,:~\poptwentythreeone~~(\red{\ding{55}} RRF 2025)
+\end{itembox}\\ \vspace*{1ex}
+In the 2023 stock assessment of POP \citep{Starr-Haigh:2025_pop}, the catch reconstruction (and other biological functions) were updated to more fully transfer catches from Moresby Gully in PMFC 5B and from Flamingo Inlet and Anthony Island in southern 5E to area 5C, the boundaries of which were extended around Cape St. James in 1996 for Pacific Ocean Perch and Yellowmouth Rockfish. 
+This reallocation was previously achieved (but not implemented in catch reconstructions) by determining if tows' geographical coordinates fell within a 5C polygon extension (Figure~\ref{fig:CR-POP-5C-5A}).
+However, catch data prior to 1996 typically did not contain specific coordinate information, and an update to the historical data extract included minor PMFC areas and fishing localities to better characterise the major PMFC area identifier.
+Combinations of these three areas were used to reallocate fishing events to 5C when no geographical coordinates were provided:
+\begin{itemize}
+	\item 5B -- SE Cape St. James (~major 6, minor 8, locality 6~)
+	\item 5B -- Outside Cape St. James (~major 6, minor 8, locality 12~)
+	\item 5E -- Anthony Island (~major 9, minor 34, locality 1~)
+	\item 5E -- Flamingo Inlet (~major 9, minor 34, locality 5~)
+\end{itemize}
+
+%%++++++++++++++++++++++++++++++++++++++++++++++++
+\newcommand{\poptwentythreetwo}{adjust the 3D-5A boundary for POP south to Brooks Peninsula}
+\begin{itembox}
+\bold{Item~\critem}\,:~\poptwentythreetwo~~(\red{\ding{55}} RRF 2025)
+\end{itembox}\\ \vspace*{1ex}
+A year after the POP assessment had been accepted, GMU noticed a discrepancy in 3CD catch from their reporting system, Quota Management System (QMS), compared to the catch reconstruction, which relies on the Fishery Operations System (FOS).
+The issue was traced back to a boundary change between 3D and 5A for POP, which according to a footnote in the 2013/14 IFMP, indicated that the 5A boundary had been moved south to match the latitude at Brooks Peninsula (50.8$^{\circ}$\,N).
+This 3D-5A adjustment (Figure~\ref{fig:CR-POP-5C-5A}) will be used in subsequent POP stock assessments.
+
+%\pbsfig{CR-POP-poly5C}{PMFC area extension of PMFC area 5C around Cape St. James used to manage Pacific Ocean Perch and Yellowmouth Rockfish since 1996}{3.5}{}
+
+%\pbsfig{CR-POP-poly5A}{PMFC area extension of PMFC area 5A south to Brooks Peninsula used to manage Pacific Ocean Perch (only) since 2013. Fishing localities are labelled by PMFC minor area and locality code.}{3}{}
+
+%% #1=figure1 #2=figure2 #3=label #4=caption #5=width (fig) #6=height (fig)
+\figbeside{CR-POP-poly5C}{CR-POP-poly5A}{CR-POP-5C-5A}{(Left) PMFC area extension of PMFC area 5C around Cape St. James used to manage Pacific Ocean Perch and Yellowmouth Rockfish since 1996. (Right) PMFC area extension of PMFC area 5A south to Brooks Peninsula used to manage Pacific Ocean Perch (only) since 2013. Fishing localities are labelled by PMFC minor area and locality code.}{3.2}{3.5}
+
+%\clearpage
+
+%%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{Yellowtail Rockfish (2024)}
+
+%%++++++++++++++++++++++++++++++++++++++++++++++++
+\newcommand{\ytrtwentyfourone}{keep derived and reported catch periods separate}
+\begin{itembox}
+\bold{Item~\critem}\,:~\ytrtwentyfourone~~(\green{\ding{51}} RRF 2025)
+\end{itembox}\\ \vspace*{1ex}
+The Yellowtail Rockfish (YTR) assessment \citep{Starr-Haigh:2025_ytr} used a CR algorithm that was revised to more clearly delineate the reconstructed-catch periods from the reported-catch periods.
+
+As previously, the reconstuction of catch prior to 1950 used early records from 1918 to 1950 \citep{CDBS:1918-1950}.
+Catch of RRF in this period is \emph{always} reconstructed from:
+\begin{itemize}
+	\item \code{lambda} -- proportion of catch by gear type \supquote{trawl}, \supquote{trap}, \supquote{h\&l};
+	\item \code{beta} -- proportion of \code {h\&l} by fishery (2=halibut, 4=dogfish/lingcod, 5=h\&l rockfish);
+	\item \code{gamma} -- proportion of \code{ORF|TRF} allocated to RRF.
+\end{itemize}
+
+The intermediate period (1951-1995) can be a mixture of reconstructed and reported catch, or it can be entirely reconstructed.
+This period is almost never represented entirely by reported catch; POP would be the only exception because the earliest reported catches occurred in 1950 \citep{Ketchen:1976}.
+Additionally, POP is a special case because it can be an RRF (in a POP assessment) or a reference catch for other species (although this has never been done).
+This middle period is complicated, but generally:
+\begin{itemize}
+	\item reported catch is stored in the object \supquote{catmod} (primarily CA catch but can include foreign catch, see above); catches have been summed across nations;
+	\item each component of reported catch (landed, discard, ORF/TRF) is extracted from \code{catmod} into two-dimensional matrices (e.g., \supquote{repcatRRF});
+	\item reconstructed CA RRF is calculated two ways\,: (i)~using \code{catmod} (\code{RRF}\,= \code{gamma} $\times$ \code{ORF}) and (ii)~using \code{orfhistory} (\code{RRF}\,= \code{beta} $\times$ \code{gamma} $\times$ \code{ORF}), and adopts the greatest value for each year, major area, and fishery;
+	\item reconstructed catch is summed across nations by year\,: 1951-1995 for CA and US, 1951-1977 for foreign fleets;
+	\item knit the two periods together -- reconstructed catch followed by reported catch.
+\end{itemize}
+Previously, there were sometimes grey zones where catch was a mixture of reconstructed (usually foreign) and reported (Canadian) catch within the trawl fishery.
+This may still be desirable (hard to anticipate) but for now, reconstruct catch prior to the EEZ year (1977) and use reported thereafter when believable records for RRF occur.
+Otherwise, reconstruct prior to observer years (e.g., 1996 for trawl).
+
+%%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{Silvergray Rockfish (2025)}
+
+%%++++++++++++++++++++++++++++++++++++++++++++++++
+\newcommand{\sgrtwentyfiveone}{add supplementary SGR catch to \supquote{rrfhistory} data object}
+\begin{itembox}
+\bold{Item~\critem}\,:~\sgrtwentyfiveone~~(\green{\ding{51}} RRF 2025)
+\end{itembox}\\ \vspace*{1ex}
+The Silvergray Rockfish (SGR) assessment \citep{Starr-Haigh:2025_sgr} added supplementary catch data, specifically for SGR (and others?) from Canadian, US, and Polish fleets \citep{Ketchen:1980_gf}, to the \supquote{rrfhistory} object.
+
+%%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{Changes adopted by \code{RRF} 2025}
+
+A summary of the historical changes appears in Table~\ref{tab:CR_changes}, with the final column showing which changes might be adopted for an RRF assessment in 2025.
+
+\setlength{\tabcolsep}{3pt}
+% latex table generated in R 4.5.0 by xtable 1.8-4 package
+% Fri Jan  3 11:44:01 2025
+\begin{table}[ht]
+\footnotesize
+\centering
+\caption{Summary of changes made to the catch reconstruction algorithm since its inception in 2011.
+Final column indicates which changes might be adopted for a typical rockfish species using a check mark (e.g., RRF 2025).
+Acronyms: BOR\,= Bocaccio (rockfish), EEZ\,= Exclusive Economic Zone, FID\,= Fishery Identification number, 
+GFFOS\,= Groundfish Fishery Operations System database, GFM\,= groundfish merged catch table in \code{GFFOS}, H\&L\,= hook and line,
+LIN\,= Lingcod, PH3\,= \code{PacHarv3} database, POP\,= Pacific Ocean Perch, RSR\,= Redstripe Rockfish, RRF\,= reference rockfish, SBF\,= Sablefish,
+SGR\,= Silvergray Rockfish, SST\,= Shortspine Thornyhead, WWR\,= Widow Rockfish, YTR\,= Yellowtail Rockfish, YYR\,= Yelloweye Rockfish.}
+\label{tab:CR_changes}
+%\begin{tabular}{ccrrxc}
+\begin{tabularx}{0.9\textwidth}{rrXc}
+\hline
+\tstrut Item & Assessment & Description & RRF(2025) \bstrut\\ 
+\hline\tstrut
+\criten & POP 2012 & \poptwelveone & \green{\ding{51}} \\ 
+\criten & POP 2012 & \poptwelvetwo & \green{\ding{51}} \\ 
+\criten & POP 2012 & \poptwelvethree & \green{\ding{51}} \\ 
+\criten & YTR 2014 & \ytrfourteenone & \green{\ding{51}} \\ 
+\criten & YTR 2014 & \ytrfourteentwo & \red{\ding{55}} \\ 
+\criten & YTR 2014 & \ytrfourteenthree & \green{\ding{51}} \\ 
+\criten & YTR 2014 & \ytrfourteenfour & \red{\ding{55}} \\ 
+\criten & SST 2015 & \sstfifteenone & \green{\ding{51}} \\ 
+\criten & YYR 2015 & \yyrfifteenone & \red{\ding{55}} \\ 
+\criten & YYR 2015 & \yyrfifteentwo & \red{\ding{55}} \\ 
+\criten & YYR 2015 & \yyrfifteenthree & \green{\ding{51}} \\ 
+\criten & YYR 2015 & \yyrfifteenfour & \red{\ding{55}} \\ 
+\criten & YYR 2015 & \yyrfifteenfive & \red{\ding{55}} \\ 
+\criten & POP 2017 & \popseventeenone & \red{\ding{55}} \\ 
+\criten & RSR 2018 & \rsreighteenone & \green{\ding{51}} \\ 
+\criten & RSR 2018 & \rsreighteentwo & \red{\ding{55}} \\ 
+\criten & RSR 2018 & \rsreighteenthree & \green{\ding{51}} \\ 
+\criten & WWR 2019 & \wwrnineteenone & \green{\ding{51}} \\ 
+\criten & BOR 2019 & \bornineteenone & \green{\ding{51}} \\ 
+\criten & BOR 2019 & \bornineteentwo & \green{\ding{51}} \\ 
+\criten & BOR 2019 & \bornineteenthree & \green{\ding{51}} \\ 
+\criten & BOR 2019 & \bornineteenfour & \green{\ding{51}} \\ 
+\criten & POP 2023 & \poptwentythreeone & \red{\ding{55}} \\ 
+\criten & POP 2023 & \poptwentythreetwo & \red{\ding{55}} \\ 
+\criten & YTR 2024 & \ytrtwentyfourone & \green{\ding{51}} \\ 
+\criten & SGR 2025 & \sgrtwentyfiveone & \green{\ding{51}} \\ 
+\hline
+\end{tabularx}
+%\end{tabular}
+\end{table}
+
+\clearpage
+%-----CONTACT-----
+%\vspace*{4ex} \noindent {\bf \Large Contact}\\
+\vspace*{2ex}
+\phantomsection
+\addcontentsline{toc}{section}{Contact Information} % Adds to bookmarks only
+%\addcontentsline{toc}{section}{\protect\numberline{}Contact Information}
+\section* {Contact Information}
+\vspace*{2ex} \noindent \blue{{\bf \normalsize Rowan Haigh}}\\
+\small
+\grey{Offshore Rockfish Program, Groundfish Section\\
+Stock Assessment and Research Division\\
+Fisheries and Oceans Canada\\
+Pacific Biological Station, Nanaimo, BC  V9T 6N7}\\
+%\sky{Tel. +1 250-756-7123  fac simile +1 250-756-7053\\
+\sky{Email rowan.haigh@dfo-mpo.gc.ca} 
+\normalsize
+
+%\clearpage
+
+\bibliographystyle{resDoc}
+%\addcontentsline{toc}{section}{\protect\numberline{}References}
+\phantomsection
+\addcontentsline{toc}{section}{References}
+\bibliography{CSAPrefs}%%{C:/Users/haighr/Files/GFish/CSAP/Refs/CSAPrefs}
+
+\end{document}
+
