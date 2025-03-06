@@ -1,10 +1,10 @@
 Package: PBStools
-Version: 1.43.5
-Date:    2025-01-10
-Title:   Tools for the Efficient Execution of Onerous Tasks
+Version: 1.43.6
+Date:    2025-03-06
+Title:   Tools to Tackle Onerous Tasks
 Authors@R: c(
    person("Rowan", "Haigh", role = c("aut", "cre"), email = "rowan.haigh@dfo-mpo.gc.ca"),
-   person(c("Jon", "T."), "Schnute", role = "ctb", email = "schnutej-dfo@shaw.ca"),
+   person(c("Jon", "T."), "Schnute", role = "ctb", email = "schnutej@shaw.ca"),
    person("Norm", "Olsen", role = "ctb", email = "norm.olsen@dfo-mpo.gc.ca"),
    person("Lisa", "Lacko", role = "ctb", email = "lisa.lacko@dfo-mpo.gc.ca"),
    person(c("Paul", "J."), "Starr", role = "ctb", email = "paul@starrfish.net"),
@@ -20,11 +20,10 @@ Copyright:   2007-2025, Fisheries and Oceans Canada
 Depends:     R (>= 3.5.0), PBSmapping, PBSmodelling, PBSdata, RODBC
 Imports:     colorspace, graphics, grDevices, methods, stats, utils
 Suggests:    boot, BRugs, cluster, MASS, reshape, sp, xtable
-Description: A refreshing assortment of tools for exploring data from
-   fisheries and other realms. While the focus is on providing efficient
-   yet vivacious summary tools for fisheries stock assessments and 
-   species at risk reports, occasional flights of fancy will elevate
-   mundane information to Uranus.
+Description: A bewildering assortment of tools to explore data from
+   fisheries and alternate realms. While the focus is on providing efficient
+   yet vivacious summary tools for fisheries stock assessments, occasional
+   flights of fancy will elevate mundane information to Uranus.
 License: GPL (>= 2)
 URL: https://github.com/pbs-software/pbs-tools,
      https://github.com/pbs-software/pbs-data,

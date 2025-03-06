@@ -298,7 +298,7 @@ out = weightBio(age396, Scat396, ctype="S", sunit="SID", SSID=1,
 \author{
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
-  \emph{locus opus}: Regional Headquarters (RHQ), Vancouver BC\cr
+  \emph{locus opus}: Remote office, Vancouver BC\cr
   Last modified \code{Rd: 2023-06-08}
 
   \href{mailto:paul@starrfish.net}{Paul J. Starr}, Stock Assessment Scientist\cr

@@ -67,7 +67,7 @@ prepWCVIsyn(file, survey="WCVIsyn")
 
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
-  \emph{locus opus}: Regional Headquarters (RHQ), Vancouver BC\cr
+  \emph{locus opus}: Remote office, Vancouver BC\cr
   Last modified \code{Rd: 2023-02-10}
 }
 \note{

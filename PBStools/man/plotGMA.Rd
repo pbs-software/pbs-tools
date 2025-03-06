@@ -51,7 +51,7 @@ plotGMA(gma=gma, major=major, xlim=c(-134,-123), ylim=c(48.05,54.95),
 \author{
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
-  \emph{locus opus}: Regional Headquarters (RHQ), Vancouver BC\cr
+  \emph{locus opus}: Remote office, Vancouver BC\cr
   Last modified \code{Rd: 2023-06-19}
 }
 \seealso{
