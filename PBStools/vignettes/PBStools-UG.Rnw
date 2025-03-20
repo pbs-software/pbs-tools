@@ -38,9 +38,9 @@ urlcolor=blue,%
 pdfstartview=Fit, %{XYZ null null 1},%
 pdfview={XYZ null null null},%
 pdfpagemode=UseOutlines,% for bookmarks
-pdfauthor={Rowan Haigh and Jon T. Schnute},%
-pdftitle={PBStools User's Guide},%
-pdfsubject={Software for semi-serious scientists}%
+pdfauthor={Rowan Haigh},%
+pdftitle={PBStools User Guide},%
+pdfsubject={Tools to Tackle Tricky Tasks}%
 }
 
 \raggedright
@@ -192,12 +192,13 @@ pdfsubject={Software for semi-serious scientists}%
 % N.B.: floatpagefraction MUST be less than topfraction !!
   \renewcommand{\dblfloatpagefraction}{0.7}	% require fuller float pages
 
-%Latex: Squeezing the Vertical White Space
-%http://www.terminally-incoherent.com/blog/2007/09/19/latex-squeezing-the-vertical-white-space/
+%% Latex: Squeezing the Vertical White Space
+%% http://www.terminally-incoherent.com/blog/2007/09/19/latex-squeezing-the-vertical-white-space/
+%% \titlespacing*{<command>}{<left>}{<before-sep>}{<after-sep>}
 \usepackage[compact]{titlesec}
-\titlespacing{\section}{0pt}{*0}{*0}
-\titlespacing{\subsection}{0pt}{*0}{*0}
-\titlespacing{\subsubsection}{0pt}{*0}{*0}
+\titlespacing{\section}{0pt}{12pt}{6pt}%{*0}{*0}
+\titlespacing{\subsection}{0pt}{6pt}{3pt}%{*0}{*0}
+\titlespacing{\subsubsection}{0pt}{6pt}{3pt}%{*0}{*0}
 
 %% Create a blue underlined hyperlink (e.g., http://tex.stackexchange.com/questions/233668/new-ulem-command-not-working)
 \usepackage[normalem]{ulem}                         %% The ulem package: underlining for emphasis, can also strikethrough
@@ -209,8 +210,8 @@ pdfsubject={Software for semi-serious scientists}%
 \begin{document}
 \pagenumbering{roman}
 
-\title{PBStools: User's Guide}
-\author{Rowan Haigh and Jon T. Schnute}
+\title{PBStools User Guide}
+\author{Rowan Haigh}
 
 \maketitle
 \tableofcontents
@@ -239,7 +240,7 @@ pdfsubject={Software for semi-serious scientists}%
 \section* {What is PBStools?}
 %\addcontentsline{toc}{section}{\protect\numberline{}What is PBStools?}
 
-\tab \pkg{PBStools} provides an R interface for algorithms commonly used in fisheries. The scope of this package is by no means comprehensive, having grown from the need to satisfy tasks specific to British Columbia (BC) ocean fisheries. Many of the functions provide a quick way to visualize data, and in some cases perform preliminary analyses. Though oriented to users at the Pacific Biological Station (PBS), these functions may provide a broad utility to users at other locales. The User Guide is organised into sections that loosely classify the functions by theme -- (1)~Utility, (2)~Biology, (3)~Fishery, (4)~Survey, (5)~Spatial, (6)~Temporal, and (7)~Catch Reconstruction. Within each section, the functions are described alphabetically.
+\tab \pkg{PBStools} provides an R interface for algorithms commonly used in fisheries. The scope of this package is by no means comprehensive, having grown from the need to satisfy tasks specific to British Columbia (BC) ocean fisheries. Many of the functions provide a quick way to visualize data, and in some cases perform preliminary analyses. Though oriented to users at the Pacific Biological Station (PBS), these functions may provide a broad utility to users at other locales. The User Guide is organised into sections that loosely classify the functions by theme -- (1)~Utility, (2)~Biology, (3)~Fishery, (4)~Survey, (5)~Spatial, (6)~Assessment, (7)~Catch Reconstruction, and (8)~\LaTeX. Within each section, the functions are described alphabetically.
 
 \tab \pkg{PBStools} depends heavily on two other R package: \pkg{PBSmapping} \citep{Schnute-etal:2004_pbsmap, Boers-etal:2004} and \pkg{PBSmodelling} \citep{Schnute-etal:2006}. We use the latter to implement several Graphical User Interfaces (GUIs) that facilitate a few select functions. Most functions, however, are designed for use on the command line or in sourced code. Many of the functions invisibly return auxiliary output in a list object called \code{PBStool}, which is located in the temporary working environment \code{.PBStoolEnv}. Accessor functions called \code{ttget}, \code{ttcall}, and \code{ttprint} enable the user to get, call, and print objects from the \code{.PBStoolEnv} environment, while \code{ttput} puts (writes) obects to \code{.PBStoolEnv}.
 
@@ -275,11 +276,20 @@ For more information, see:\\ \footnotesize
 \clearpage
 %\setcounter{section}{1}
 %-------------------------------------------------
-\section {Utility functions}
+\section{Utility Functions}%% M01 (module 1)
 
 \tab The utility functions described in this section cover a broad range of activities. The number of functions has grown over time and inevitably, some of the functions may replicate the behaviour of functions in other packages. Additionally, the utility of these functions can either decline or cease based on changes in dependent packages. Feedback is appreciated from any users of \pkg{PBStools}.
 
-\subsection {biteData}
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{addStrip}
+\tab Add a vertical colour strip as a legend.
+
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{adjustMajor}
+\tab Evolution of expand5C() to other species.
+
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{biteData}
 
 \tab Subset a matrix or data frame using a vector object with the same name as one of the fields in the data matrix/frame and return the subset data matrix/frame. If there are no fields with the name of the vector object, the data matrix/frame is returned unaltered.
 
@@ -314,7 +324,16 @@ Records in swiss object subset where Education=1:5
 \end{Verbatim}
 \end{outputbox}
 
-\subsection {chewData}
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{calcHM}
+\tab Calculate the harmonic mean of a vector of numbers.
+
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{changeLangOpts}
+\tab Change the options that control the display of numbers based on language.
+
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{chewData}
 
 \tab Remove records from a data frame or matrix that contribute little information to unique categories of the factor specified. Records are removed if a specified factor's categories don't number more than the specified minimum. If there are no fields with the name of the specified factor, the data matrix/frame is returned unaltered.
 
@@ -347,11 +366,17 @@ Unique records in 'iris$Petal.Width'
 \end{outputbox}
 
 
-\subsection {collectFigs}
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{clearFiles}
+\tab Check to see if file exists and keep a copy if it does before removing it.
+
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{collectFigs}
 
 \tab Collect figures (currently only encapsulated postscript \code{.eps} supported) into one document using a latex compiler (\code{latex.exe}, \code{dvips.exe}, \code{ps2pdf.exe}). The code constructs a \code{.tex} file that uses all available \code{.eps} files in the specified directory. The final result is a bookmarked PDF file called \code{<fout>.pdf}, where \code{fout} is user-supplied prefix for the output file.
 
-\subsection {confODBC}
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{confODBC}
 
 \tab Use a command line utility found in Windows OS called \code{odbcconf.exe} that configures an ODBC Data Source Name from the system's command line. The function runs the command line utility with the user-supplied information, and configures a User DSN on the his/her computer.
 
@@ -373,7 +398,12 @@ pbsfun()
 %\pbstest{PBStools-confODBC}{ODBC data source configuration for DSN \dQuote{Popsicle}.}{3.25}{Mars attacks}
 \pbsfig{PBStools-confODBC}{ODBC data source configuration for DSN \dQuote{Popsicle}.}{3.25}{}
 
-\subsection {convFY}
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{convCT}
+\tab Convert a crossTab object to regular matrix or data frame.
+
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{convFY}
 
 \tab Convert a vector of dates into a vector of fishing or fiscal years based on a specified month to start the fishing/fiscal year.  The function returns a numeric vector of fishing/fiscal years of equal length to the input vector of dates. The output vector has names representing year-month \code{YYYY-MM}.  If the starting month is set to 1, the output dates also represent calendar years.
 
@@ -399,7 +429,12 @@ Fishing years starting in April
 \end{Verbatim}
 \end{outputbox}
 
-\subsection {convYM}
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{convUTF}
+\tab Convert UTF-8 strings into Unicode characters.
+
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{convYM}
 
 \tab Convert a 2-element vector of date limits into a vector of year-months where every month within the limits is represented.  The function returns an expanded character vector of ordered year-months \code{YYYY-MM} between and including the specified date limits. This character vector can be used for labelling and other factor-like routines.
 
@@ -426,7 +461,8 @@ Year-month labels between the specified date limits
 \end{Verbatim}
 \end{outputbox}
 
-\subsection {convYP}
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{convYP}
 
 \tab Convert a vector of dates into one of year-periods through binning the dates into intervals specified in days. The routine actually fudges the integer day interval to a real number that will create even breaks. The function returns a vector (with the same length as the input date vector) that specifies dates as real numbers where the integer part is the year and the fraction part is the proportion of the year corresponding to the bin's right-most value. Each element of the vector also has a name that specifies the year and bin number.
 
@@ -450,7 +486,16 @@ Year periods based on numeric value of input dates
 \end{Verbatim}
 \end{outputbox}
 
-\subsection {createDSN}
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{countLines}
+\tab Count the number of lines in an ASCII file.
+
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{countVec}
+\tab Count number of definite vector elements (non NA) that exclude (or include) zero values.
+
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{createDSN}
 
 \tab Create a suite of User DSNs for PBS groundfish databases, currently hosted on the server \db{DFBCV9TWVASP001}. This function uses \code{confODBC} and will overwrite existing DSNs if they exist. Currently, six DSNs for DFO databases will be created:
 
@@ -473,18 +518,44 @@ pbsfun()
 \end{examplebox}
 \pbsfig{PBStools-createDSN}{ODBC data source configuration for DFO groundfish database DSNs.}{3.25}{}
 
-\subsection {crossTab}
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{createFdir}
+\tab Create a subdirectory called `french' for storing figures with French text and labels.
+
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{crossTab}
 
 \tab Run a cross tabulation on a data frame, summarizing z-values by specified \sQuote{factors}.
 This function requires the R package \pkg{reshape}, and uses the functions \code{melt.data.frame} and \code{cast} therein.
 The output reports a cross tabulation of \code{y} with values \code{z} summarized by \code{func}.
 The function \code{crossTab} is useful for summarizing data query results (e.g., total catch by year and PMFC major area) when exploring / debugging functions like \code{buildCatch}.
 
-\subsection {fitLogit}
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{darkenRGB}
+\tab Programmatically darken the colour of given RGB values.
 
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{expand5C}
+\tab Transfer events from Moresby Gully in 5B and Flamingo Inlet/Anthony Island in 5E to PMFC 5C.
+
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{extractPost}
+\tab Extract model posteriors from three model platforms (Awatea, SS3, iSCAM) for clients.
+
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{findPV}
+\tab Find nearest position in vector choice using a target point.
+
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{findRC}
+\tab Return no. (rows, columns) for multi-panel figures given no. figures to fit on one page.
+
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{fitLogit}
 \tab Fit binomial data using a \code{logit} link function in a \code{glm}. The function returns a GLM fit of the binomial data using the specified independent observations. See the \sQuote{Value} section of the \code{glm} help file in the \pkg{stats} package.
 
-\subsection {flagIt}
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{flagIt}
 
 \tab Take a coordinate \code{(a,b)} and label it using a diagonal line of radius \code{r} and angle \code{A}.
 A diagonal dotted line in light grey radiates out from a central coordinate and the coordinate values are used to label the coordinate itself.
@@ -505,7 +576,12 @@ pbsfun = function() {
 \end{examplebox}
 \pbsfig{PBStools-flagIt}{The point (10, 0.5) flagged using vectors at 10$^{\circ}$ angles.}{3.0}{}
 
-\subsection {getData}
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{gatherVals}
+\tab Gather data from multiple columns into key-value pairs (replaces tidyr::gather).
+
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{getData}
 
 \tab Attempt to get data from a variety of types (e.g., data objects/files, queries/tables) and remote sources (\code{ORA}, \code{SQL}, \code{MDB}, \code{DBF}, \code{XLS}, \code{FILE}). The data table retrieved is placed in a global data frame object called \code{PBSdat}. If the type is \code{MDB}, the query/table name and the database name are attached as attributes. If the type is \code{SQL} or \code{ORA}, the DB name, query name, and SQL code are attached as attributes. This function, which remains one of the key utilities in \pkg{PBStools} for retrieving data, is essentially a glossy wrapper for the function \code{sqlQuery} in the package \pkg{RODBC}.
 
@@ -557,7 +633,8 @@ pbsfun = function() {
   \code{...}        &  additional arguments for \code{RODBC}'s function \code{sqlQuery} (specifically if the user wishes to specify \code{rows\_at\_time=1}).\\
 \end{longtable}
 
-\subsection {getFile}
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{getFile}
 
 \tab Attempt to get data from the specified file name (without specifying the extension). If a data object with this name exists in the specified target environment (local or global), the function will not attempt to reload it unless the users specifies \code{reload=TRUE}. Failing to find an R data object, the function tries the binary libraries for package data objects, unless the user specifies \code{ignore.data=TRUE}. Thereafter, the code searches for remote data files in the following order: (i)~local binary files with the extension \code{.rda}, (ii)~ASCII data files created using \code{dump} and with the extension \code{.r}, (iii)~comma-data delimited files \code{.csv}, and (iv)~ordinary text files \code{.txt}.
 
@@ -575,7 +652,12 @@ pbsfun = function() {
   \code{use.all.packages}  &  logical: if \code{TRUE}, look for data binaries in all the packages installed in the user's R library folder.\\
 \end{longtable}
 
-\subsection {getName}
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{getGreek}
+\tab Generate Greek letters using unicodes.
+
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{getName}
 
 \tab Get string names from user supplied input. If the name supplied exists as an object in the parent frame, the object will be assessed for its potential as a source of names using the following criteria:
 
@@ -616,7 +698,24 @@ attr(,"len")
 \end{Verbatim}
 \end{outputbox}
 
-\subsection {isThere}
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{getODBC}
+\tab Get a string vector of ODBC drivers on user's Windows system.
+
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{getVer}
+\tab Get version of loaded or installed R packages
+
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{installPkgs}
+\tab Install specified packages if they are missing or if newer versions are available.
+
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{inWord}
+\tab Find morphemes (parts of words) in word and report T/F
+
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{isThere}
 
 \tab Check to see whether objects physically exist in the specified environment. This differs from the function \code{exists} in that the latter sees objects across environments.  This function looks in the specified environment and the object must be physically present to elicit a \code{TRUE} response.
 
@@ -645,11 +744,17 @@ But it isn't really there...
 \end{Verbatim}
 \end{outputbox}
 
-\subsection {lenv, penv, genv}
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{lenv, penv, genv}
 
 \tab These shortcut functions get the local (\code{lenv}), parent (\code{penv}), and global (\code{genv}) environments, respectively.
 
-\subsection {listTables}
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{linguaFranca}
+\tab Translate English phrases to French in figures.
+
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{listTables}
 
 \tab List the tables in a specified SQL, Oracle or Microsoft ACCESS database. User can choose table type and/or search table names through pattern matching. The results of the pkg{RODBC} function \code{sqlTables} are dumped to a data frame object called \code{PBSdat}. If no pattern is specified, all table names in the target database are returned. If a pattern is provided, only table names containing the pattern are returned. Pattern matching is case-sensitive. Additionally, the user can choose table types, depending on the server type.
 
@@ -679,7 +784,8 @@ Tables in 'Examples.mdb'
 \end{Verbatim}
 \end{outputbox}
 
-\subsection {makeLTH}
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{makeLTH}
 
 \tab Make a longtable header for printing an \code{xtable} in Sweave, source: \\
 \url{http://tex.stackexchange.com/questions/41067/caption-for-longtable-in-sweave?rq=1}
@@ -687,11 +793,21 @@ Tables in 'Examples.mdb'
 
 \tab This code was provided by a clever Swedish fellow (pseudonym = \code{chepec}) to elegantly break a longtable across pages by specifying \emph{Continued on next page} as a footer where the table breaks, and changes the caption on the following page to \dQuote{Table xx -- continued from previous page}.
 
-\subsection {prime}
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{prime}
 
 \tab Report the prime numbers given an integer vector. If none are found, the function returns \code{NULL}. The function will reject non-vector objects, non-numeric vectors, and numeric vectors that do not comprise integers. 
 
-\subsection {revStr}
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{quantBox}
+\tab Redefine boxplot to show quantiles.
+
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{readClog}
+\tab Read a ChangeLog file and convert it to an R list.
+
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{revStr}
 
 \tab Reverse a string character by character. Code taken from examples in the \pkg{base} package \code{strsplit}.
 
@@ -712,13 +828,15 @@ etteivreS namuH eht rauwdraN
 \end{Verbatim}
 \end{outputbox}
 
-\subsection {runModules}
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{runModules}
 
 \tab Display an interactive GUI to run the various modules in \pkg{PBStools} (Figure~\ref{fig:GUI-runModules}).
 
 \pbsfig{GUI-runModules}{GUI menu control to run available \pkg{PBStools} GUIs.}{2.0}{}
 
-\subsection {scaleVec}
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{scaleVec}
 
 \tab Scale a vector to span a target minimum and maximum (see \pkg{PBSmodelling} functions \code{scalePar} and \code{restorePar}.)
 
@@ -746,11 +864,13 @@ pbsfun()
 \end{examplebox}
 \pbsfig{PBStools-scaleVec}{A sample of 50 points from the random uniform distribution betweeen 100 and 1000 rescaled to lie between -3 and 5.}{3.0}{Random uniform samples rescaled between -3 and 5}
 
-\subsection {showError, showMessage}
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{showError, showMessage}
 
 \tab Display a message on the current device. If \code{err==TRUE}, code execution stops. A wrapper function called \code{showError} is included for backwards compatibility.
 
-\subsection {spooler}
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{spooler}
 
 \tab Spool a named list or list of lists into a new field of an existing data frame where the names of the lists match existing fields in the target data frame. The elements of the list are values to match in the existing fields. The values placed in \code{newfld} are either matched values (if a simple list is supplied) or list names concatenated with matched values (if a list of lists is supplied).
 
@@ -796,7 +916,8 @@ pbsfun()
 \end{Verbatim}
 \end{outputbox}
 
-\subsection {stdConc}
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{stdConc}
 
 \tab Standardise a chemical concentration from various aavailable unit combinations to a common concentration and adjust for moisture.
 Note that the input object \code{dat} mixes data types (\code{numeric} and \code{character}). 
@@ -811,15 +932,26 @@ The available units for combinations in the numerator and denominator are:\vspac
     \code{pdw} & \% dry weight & \code{ppm} & parts per million & \code{ppt} & parts per thousand\\
 \end{tabular}
 
-\subsection {toUpper}
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{subsetFile}
+\tab Subset an ASCII file every n rows (enrow).
+
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{testPch}
+\tab Display plotting symbols or octal strings.
+
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{toUpper}
 
 \tab Capitalise the first letter of each word in a sentence or phrase. The function uses \code{strsplit} and \code{toupper} along with a whole mess of \code{sapply} calls. A vector of sentences or phrases can be passed to \code{x}.
 
-\subsection {ttget, ttcall, ttprint, ttput, tlisp}
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{ttget, ttcall, ttprint, ttput, tlisp}
 
 \tab These functions are wrappers to the \pkg{PBSmodelling} accessor functions (\code{tget}, \code{tcall}, \code{tprint}, \code{tput}, and \code{lisp}) that get/print/list objects from or put objects into a temporary work environment, in this case \code{.PBStoolEnv}. Working objects include \code{PBStool}, which acts as a storage object for many of the functions. These accessor functions were developed as a response to the CRAN repository policy statement: \dQuote{Packages should not modify the global environment (user's workspace).} 
 
-\subsection {wrapText}
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{wrapText}
 
 \tab Wrap a long text string to a desired width, mark it with prefixes, and indent the lines following the first.  Using the package \pkg{base} function \code{strwrap}, this function splits a long text string into a target width, indents lines following the first, and adds a prefix string \code{prefix[1]} to the first line and \code{prefix[2]} to all indented lines.
 
@@ -850,7 +982,8 @@ pbsfun()
 \end{Verbatim}
 \end{outputbox}
 
-\subsection {zapDupes}
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{zapDupes}
 
 \tab Zap (remove) records from a data frame using an code{index} to determine whether duplicated indexed records exist.  The function orders the data frame based on the \code{index}, then removes records based on duplicated indices. There is no control over which of the duplicated records will be zapped. Pre-existing attributes other than \code{names} and \code{row.names} are transferred to the reduced object.
 
@@ -884,10 +1017,9 @@ After zapping using index 'PID', there are 7 rows
 \end{Verbatim}
 \end{outputbox}
 
-\clearpage
-
+%\clearpage
 %-------------------------------------------------
-\section {Biological functions}
+\section{Biological Functions}%% M02 (module 2)
 
 \vspace*{2ex} 
 \begin{dfobox} % see code from Manifold above
@@ -902,7 +1034,8 @@ getData("gfb_bio.sql", "GFBioSQL", strSpp="396", path=.getSpath())
 Substitute your species code for \code{strSpp}. The package contains an example dataset for Pacific ocean perch (POP, code = ``396'') \emph{Sebastes alutus} in PMFC areas 5A, 5B, 5C, and 5D. To make it available in the global environment, type \code{data(pop.age)}.
 \end{dfobox}
 
-\subsection {calcLW}
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{calcLW}
 
 \tab Calculate the length-weight relationship for a fish species.
 The functions spits results out to a comma-delimited text file (\code{.csv}). 
@@ -930,7 +1063,8 @@ pbsfun()
 \end{examplebox}
 \pbsfig{PBStools-calcLW}{Regression analyses showing the fitted model and survey length-weight pairs used to estimate $a_s$ and $b_s$.}{3.0}{Allometric relationship between survey lengths and weights}
 
-\subsection {calcSG}
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{calcSG}
 
 \tab Calculate the length or weight \emph{vs.} age relationship by fitting the data using a versatile Schnute growth model \citep{Schnute:1981}.
 Each column of the plot shows the fits for Males, Females, and M+F (Figure~\ref{fig:PBStools-calcSG}).
@@ -953,7 +1087,8 @@ pbsfun()
 \end{examplebox}
 \pbsfig{PBStools-calcSG}{Schnute versatile growth model fits to POP length and age survey data in slope rockfish assessment areas (\code{srfa}) 5AB and 5CD combined.}{3.0}{Schnute growth model fits to POP length and age survey data}
 
-\subsection {calcVB}
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{calcVB}
 
 \tab Calculate the length (or weight) vs. age relationship by fitting these data to a von Bertalanffy growth model (Figure~\ref{fig:PBStools-calcVB}). This function provides a quick screen for combinations of management area and trip type. Figures generally comprise three columns where each column shows the model fits for Males, Females, and M+F. If the data are plotted to the screen device, each row shows the fits by trip type, and each page shows the fits by area. If plots are sent to image files \code{.png} or \code{.wmf}, each trip type and area combination goes to separate image files (handy for stacking in a \code{.doc} file). Note that areas can be combined if they are specified as lists within lists.
 
@@ -972,7 +1107,8 @@ pbsfun()
 \end{examplebox}
 \pbsfig{PBStools-calcVB}{von Bertalanffy growth model fits to POP length and age data in slope rockfish assessment areas (\code{srfa}) 5AB and 5CD combined.}{3.0}{von Bertalanffy growth model fits to POP length and age survey data}
 
-\subsection {compCsum}
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{compCsum}
 
 \tab Compare cumulative relative frequency curves for specified factors such as age. Typically, factors are fields in the data object and comparisons are performed for each specified area and trip type. If the data are plotted to the screen device, each panel contains curves by combinations of trip type (rows) and factor (columns), and each page shows these combinations by area. If plots are sent to image files \code{.png} or \code{.wmf}, either each row is sent to separate files when \code{singles=TRUE} (handy for stacking in a \code{.doc} file) or each page is sent to a separate file when \code{pages=TRUE}.
 
@@ -991,7 +1127,8 @@ pbsfun()
 \end{examplebox}
 \pbsfig{PBStools-compCsum}{Annual cumulative frequency curves for POP age proportions in slope rockfish assessment areas 5AB + 5CD using research and charter trip data.}{3.0}{Annual cumulative frequency curves for POP age proportions}
 
-\subsection {estOgive}
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{estOgive}
 
 \tab Estimate the cumulative distribution of the proportion of mature fish smoothed by binning ages. The cumulative distribution of mature fish is plotted and the point at 50\%  maturity is interpolated. The x-axis (age or length) can be binned to smooth out rough or sparse data.
 
@@ -1007,7 +1144,12 @@ pbsfun()
 \end{examplebox}
 \pbsfig{PBStools-estOgive}{Maturity ogives for POP estimated from plotting the cumulative sum of the proportion mature:total fish using binned ages. Diagonal dashed lines indicate ages at 50\% maturity. Superimposed are model fits (smooth curves) to a double normal distribution.}{3.0}{Empirical and model estimates of POP age at 50\% maturity}
 
-\subsection {genPa}
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{extractAges}
+\tab Extract records with positive age and qualify by the selected ageing method.
+
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{genPa}
 
 \tab Generate proportions-at-age using the catch curve composition of \citet{Schnute-Haigh:2007} (see Table 2, p.219 therein).
 Their model uses a design vector $\phi$ and a parameter vector $\theta$; the latter contains the quantities to be estimated in a negative log likelihood using the complete parameter vector $(\theta, \sigma)$ for a logistic-normal model or $(\theta, n)$ for a Dirichlet model.
@@ -1044,7 +1186,8 @@ pbsfun()
 \end{examplebox}
 \pbsfig{PBStools-genPa}{Plots of survival $S_a$, selectivity $\beta_a$, recruitment $R_a$, and predicted proportions $p_a$ as functions of age $a$, based on the catch curve model of \citet{Schnute-Haigh:2007}.}{3.5}{Simulated survival, selectivity, recruitment, and proportions-at-age}
 
-\subsection {histMetric}
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{histMetric}
 
 \tab Plot a matrix of histograms or cumulative frequencies for a specified biology metric by year and trip type. The function displays the relative frequency of a specified metric like length by year (row) and trip type (column). Cells where the number of specimens \code{<= minN} are left blank. If only one trip type is specified or available, the cells display the annual histograms by row with an automatically calculated number of columns.
 
@@ -1060,7 +1203,8 @@ pbsfun()
 \end{examplebox}
 \pbsfig{PBStools-histMetric}{Histograms of POP length samples from 2003 to 2007 for the four trip types. Values of $n$ (number of specimens) and $L$ (mean length in cm) appear in red.}{3.0}{Histograms of POP length samples from 2003 to 2007}
 
-\subsection {histTail}
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{histTail}
 
 \tab Plot a histogram for a specified biology metric with an option to zoom in on the tail detail. The function displays the relative frequency of a specified metric like age. Its functionality is minimal, providing a quick histogram for a specified field in a data frame. The tail histogram appears as an inset on the right showing a zoom-in of the frequency of the upper tail data. The user can specify whether to plot the relative probability distribution (\code{prob=TRUE}) or a frequency distribution (\code{prob=FALSE}). The default provides the former for the main histogram and the latter for the tail zoom-in.
 
@@ -1076,7 +1220,8 @@ pbsfun()
 \end{examplebox}
 \pbsfig{PBStools-histTail}{Histogram of POP ages with an inset that zooms in on the tail region of the distribution.}{3.0}{Histogram tail zoom for POP ages}
 
-\subsection {mapMaturity}
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{mapMaturity}
 
 \tab Map each maturity code to show its relative occurrence by month. For each maturity code the function plots a row of monthly boxes colour-coded by the relative occurrence of the code in that month compared to the year.
 
@@ -1092,7 +1237,12 @@ pbsfun()
 \end{examplebox}
 \pbsfig{PBStools-mapMaturity}{Relative monthly frequency of observed maturity codes for female POP.}{3.0}{Maturity map of POP females}
 
-\subsection {plotProp}
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{plotAdens}
+\tab Plot density of field (length) by age as waveforms.
+
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{plotProp}
 
 \tab Display proportions-at-age (or some other metric such as length or weight) vs. year using the \pkg{PBSmodelling} function \code{plotBubbles} controlled by an interactive GUI invoked by \code{plotProp()} (Figure~\ref{fig:GUI-plotProp}). Data inputs appear on the left. The file name can be selected from the user's global environment \code{ls(1)} or from a list of binary files (\code{rda}) in the user's current working directory. If no field is specified for stratification the value is set to \code{year}, effectively meaning that the annual data are not stratified. If the check box is activated, the stratifying field can also serve to apply relative weightings to the observed proportions. Note that for most stratifying variables, weighting makes no sense. A field that would be meaningful is the \code{catch} of the species. 
 
@@ -1112,7 +1262,8 @@ pbsfun()
 
 \pbsfig{PBStools-plotProp}{Proportions-at-age for POP rendered as proportional bubbles.}{4.0}{Bubble plot showing proportions-at-age for POP}
 
-\subsection {predictRER}
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{predictRER}
 
 \tab A discriminant function for the accurate classification of Rougheye Rockfish (RER, \emph{Sebastes aleutianus}) and Blackspotted Rockfish (BSR, \emph{Sebastes melanostictus}).
 Exploring 35 morphometric and 9 meristic characters, \citet{Orr-Hawkins:2008} provide a discriminant function (using only 6 morphometrics $L$ and 2 meristics $N$) 
@@ -1168,19 +1319,9 @@ BSR correctly predicted 94.1% of the time
 \end{Verbatim}
 \end{outputbox}
 
-\subsection {processBio}
 
-\tab Process further the global data object \code{PBSdat} that results from the SQL query \code{gfb\_bio.sql}.  Currently, this function can add fields \code{srfa} (slope rockfish assessment areas), \code{srfs} (slope rockfish assessment subareas or gulllies), and \code{popa} (Pacific ocean perch areas identified by \citet{Schnute-etal:2001_pop}. These three areas do not exist as fields in \db{GFBioSQL}.
-
-\begin{examplebox}
-\example{processBio}
-\begin{Verbatim}[fontsize=\footnotesize]
-getData("gfb_bio.sql", "GFBioSQL", strSpp="396", path=.getSpath())
-pop.bio = processBio(PBSdat)
-\end{Verbatim}
-\end{examplebox}
-
-\subsection {reportCatchAge}
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{reportCatchAge}
 
 \tab This function is very specific in that it takes as its input the report file generated by Jon Schnute's ADMB template file (\code{.tpl}) for a Pacific ocean perch catch-at-age model. The Report Section of the template file (displayed below) saves a list object as a text file (\code{.rep}) using PBS formatting. Once the function reads this list object into R, a GUI (Figure~\ref{fig:GUI-reportCatchAge}) provides the user with various plotting options to view the results of the analysis. 
 
@@ -1256,11 +1397,17 @@ report << "$mata\n"    << "$$vector mode=\"numeric\" \n"    << mata    << endl;
 
 \pbsfig{PBStools-reportCatchAge}{Annual estimates of POP biomass: available to the fishery (solid back line), mature (dashed red line), and total (dotted blue line) for the Goose Island Gully population in Queen Charlotte Sound. Circles indicate research survey estimates, scaled to available biomass by $q_1$. Plus symbols indicate charter survey estimates, scaled with $q_2$. The blue bar plot represents annual catches.}{3.5}{Estimates of annual POP biomass in Goose Island Gully}
 
-\subsection {requestAges}
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{requestAges}
 
 \tab This function queries the DFO database \db{GFBioSQL} for available otoliths to age. It chooses random otoliths based on trips' commercial catch weights of the specified species (e.g., \dQuote{396} for POP). The function  invisibly returns the otolith data with supplementary quarterly commercial catch. Also, it writes this otolith data to binary \code{.rda} and ascii \code{.csv} files. The random samples formatted to simulate an otolith tray (for ageing personnel) is written to a file called \code{oto123-C(YYYY)-areas(0+0+0)-sex(1+2)-N999.csv} (where \code{123} = species code, \code{C} = Commercial or \code{S} = Survey, \code{YYYY} = year, \code{0} = PMFC area code, and \code{999} = number of otoliths).
 
-\subsection {simBSR, simRER}
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{residVB}
+\tab Calculate and plot Studentised residuals as quantile plots.
+
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{simBSR, simRER}
 
 \tab Simulate biological data that best characterizes Blackspotted Rockfish (BSR, \emph{Sebastes melanostictus}) and Rougheye Rockfish (RER, \emph{S.~aleutianus}), using parameter estimates from Table 2 in \citet{Orr-Hawkins:2008}. This table provides a range of BSR standard lengths (mm) and distributions for morphometrics and meristics. The functions \code{simBSR} and \code{simRER} sample from a random uniform distribution for $S$ and from random normal distributions for model inputs of $\lambda$ and $N$ -- tables below give $(\mu , \sigma)$.
 
@@ -1299,11 +1446,13 @@ The values are described above, but generally, \code{S}~= standard length of the
 and \code{N}~= numbers of gill rakers and dorsal fin rays.
 
 
-\subsection {sumBioTabs}
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{sumBioTabs}
 
 \tab This function provides a simple utility to summarise the number of samples and specimens by factor pairs in a biological data object. Aside from the factor strings chosen, the object must contain the field \code{SID} (sample ID) if a sample summary is indicated. The latter also require the package \pkg{reshape}. The summary is sent to a \code{CSV} file.
 
-\subsection {weightBio}
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{weightBio}
 
 \tab This function executes a method for representing commercial age structure for a given species through weighting age frequencies $n_a$ or proportions $n^\prime_a$ by catch. For simplicity, we assume that age frequencies $n_a$ are weighted, unless otherwise specified. The weighting occurs at two levels: quarterly $q$ and annually $y$. Notation is summarized in Table~\ref{tab:PBStools-weightBio}.
 
@@ -1370,14 +1519,15 @@ to retain the original number of observations.
 If initially we had used proportions $n_{atqy}^\prime$ instead of frequencies $n_{atqy}$ , the final standardization would not be necessary; however, its application does not affect the outcome.
 
 \tab It sometimes matters if we choose to weight frequencies rather than proportions: the numeric outcome can be very different, especially if the input samples comprise few observations. Theoretically, weighting frequencies emphasizes our belief in individual observations at specific ages while weighting proportions emphasizes our belief in sampled age distributions. Neither method yields inherently better results; however, if your original sampling methodology favours sampling few fish from many tows rather than sampling many fish from few tows, then weighting frequencies probably makes more sense than weighting proportions.
-\clearpage
 
+%\clearpage
 %-------------------------------------------------
-\section {Fishery functions}
+\section{Fishery Functions}%% M03 (module 3)
 
 \tab Most of the fishery functions use commercial catch and effort data. Some functions tap into the DFO databases (SQL server and Oracle) directly, and therefore cannot be used by those not logged onto the DFO network. Other functions can use local data files. An example dataset, \code{testdatC} included in the \pkg{PBSdata} package, provides a random subset of commercial observer trawl data in DFO's \db{PacHarvest} database.
 
-\subsection {calcRatio}
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{calcRatio}
 
 \tab Calculate the annual ratios of one catch to another (or one field to another) for various PMFC major areas and coastwide. A suitable dataset can be obtained by DFO personnel by running the SQL query \code{pht\_catORF.sql}, where ORF refers to rockfish other than POP, for a specified species code. The query returns a data frame with fields of \code{catch} and \code{discard} for the target, as well as \code{POP} and \code{ORF} catch. Total rockfish catch (\code{TRF}) can be calculated by summing \code{POP} and \code{ORF}. The mean ratios are invisibly returned in a matrix where rows are fishing years and columns are PMFC area codes. Figure 13 provides visual results of yellowmouth rockfish \code{catch} to \code{ORF} (all rockfish catch other than POP). Discard rates could be represented by setting the ratio to \code{discard} over \code{catch}.
 
@@ -1398,7 +1548,8 @@ pbsfun(TRUE)
 \end{examplebox}
 \pbsfig{PBStools-calcRatio}{Distribution of proportions of yellowmouth rockfish landings to landings of all rockfish other than Pacific ocean perch in the trawl fishery by fishing year (Apr to Mar). Vertical grey bars indicate the extent of the data. Horizontal grey bars within the boxplots indicate median ratios (all zero here). Blue triangles indicate mean ratios (also presented as numbers). Panels summarize ratios by PMFC areas; the final panel summarizes ratios on a coastwide basis.}{4.0}{Proportions of YMR landings to those of ORF}
 
-\subsection {dumpMod, dumpRat}
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{dumpMod, dumpRat}
 
 \tab Dump catch from modern databases that has been collected and organised during a catch reconstruction (see \code{buildCatch}) into CSV tables.
 The function \code{dumpCat} flattens the input array \code{dat} from four or five dimensions to two dimensions and sends the result to a comma-delimited text file (\code{.csv}).
@@ -1407,11 +1558,13 @@ The function \code{dumpCat} flattens the input array \code{dat} from four or fiv
 The reconstruction procedure stores ratio arrays in a list object \code{PBStool123}, where \code{123} is the species Hart code.
 The function \code{dumpRat} extracts the arrays and sends them to a comma-delimited text file (\code{.csv}).
 
-\subsection {formatCatch}
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{formatCatch}
 
 \tab Format a table of numeric values so that each cell displays $N$ significant figures in character format. The algorithm relies on string manipulation to achieve a result that cannot be obtained by the base package's \code{format} function alone. The formatted table can then be passed to \pkg{xtable}'s function \code{xtable}, which produces output that can be passed to \code{print.xtable} for use in LaTeX.
 
-\subsection {getCatch}
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{getCatch}
 
 \tab Extract catch records for a species from various databases and combine them into one catch file.
 This function provides a quick method of extracting contiguous datasets and combining them into one data object. 
@@ -1421,7 +1574,8 @@ For a comprehensive catch reconstruction, see \code{buildCatch}.
 
 \tab The function returns a data object of survey catch records \code{Scat123.wB} and commercial catch records \code{Ccat123.wB} resulting from the merge of various database query results. The results are also written to system binary files \code{Scat123.wB.rda, Ccat123.wB.rda}, where \code{123} specifies the species code and \code{wB} specifies creation for use in the function \code{weightBio}.
 
-\subsection {glimmer}
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{glimmer}
 
 \tab This function performs a standardised GLM analysis and plots the results. It calculates parameter coefficients using the \pkg{stats} package functions \code{lm} and \code{aov}. (The \code{aov} results are not currently used for anything.) See Section 7 of \citet{Schnute-etal:2004_lst} for a detailed discussion on \sQuote{Standardized CPUE Analyses} and the additive lognormal model:
 %
@@ -1447,7 +1601,8 @@ pbsfun()
 \end{examplebox}
 \pbsfig{PBStools-glimmer}{Commercial POP CPUE U (kg/h) estimated from an additive lognormal model as $\log_2 U$: (A) year as $2^{\mu + \alpha_i}$, (B) month as $2^{\beta_j}$, (C) vessel as $2^{\gamma_k}$, (D) depth zone (50m intervals) as $2^{\delta_l}$, and (E) latitudinal groups as $2^{\phi_m}$. Vertical error bars indicate 95\% confidence limits. Green line in (A) shows the back-transformed linear fit through $\alpha_i$; implies an annual gain of 4.8\%/y.}{3.0}{GLM analysis of POP catch per unit effort}
 
-\subsection {makeCATtables}
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{makeCATtables}
 
 \tab This function creates tables of commercial catch by management fishing year. Various fisheries can be specified. The code scrolls through the specified fisheries, issuing the appropriate SQL query for each catch summary. The results are sent to a text file called \code{cattab-XXX.csv}, where \code{XXX} = the specified \code{strSpp} (species code). Table~\ref{tab:PBStools-makeCATtables} lists the available SQL queries for this function.
 
@@ -1506,7 +1661,8 @@ Sends the output displayed in Table~\ref{tab:PBStools-makePOPtables} to \code{ca
   \label{tab:PBStools-makePOPtables}
 \end{table}
 
-\subsection {plotCatch}
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{plotCatch}
 
 \tab This function displays the annual catch history contained in the specified file as stacked bars (Figure~\ref{fig:PBStools-plotCatch}). Each bar shows the cumulative catch from specified fields. Decadal mean catch is displayed in horizontal bands. If the user wishes to change the bar colours by passing in a vector \code{col} to the function, s/he must also pass in a similar vector \code{fill} for the legend.
 
@@ -1518,21 +1674,9 @@ plotCatch(dat=ymr.rem)
 \end{examplebox}
 \pbsfig{PBStools-plotCatch}{Catch history of Yellowmouth Rockfish (\emph{Sebastes reedi}) by US and Canadian fleets along the BC coast. Mean annual catches by decade are displayed in horizontal boxes.}{3.5}{Catch history of Yellowmouth Rockfish}
 
-\subsection {plotConcur}
 
-\tab Create a barplot of the top 20 concurrent species from tows capturing the target species \code{strSpp} between a minimum and maximum depth. This function uses the SQL code \code{pht\_concurrent.sql} to query the observer trawl database \db{PacHarvest}. A variant of this (\code{phhl\_concurent.sql}) taps into the hook and line database \db{PacHarvHL}. This function can only be used by personnel logged onto the DFO network.
-
-The default settings for this function create a one-panel plot (Figure~\ref{fig:PBStools-plotConcur}). If a multiple figure plot is desired, say \code{par(mfrow=c(2,2))}, then set the argument \code{reset.mf=FALSE} in calls to \code{plotConcur} after setting the \code{mfrow} option in \code{par}.
-
-\begin{examplebox}
-\example{plotConcur}
-\begin{Verbatim}[fontsize=\footnotesize]
-plotConcur(strSpp="410", mindep=150, maxdep=435) # DFO only
-\end{Verbatim}
-\end{examplebox}
-\pbsfig{PBStools-plotConcur}{Concurrence of species in trawl tows (1996-2007) capturing Darkblotched Rockfish (\emph{Sebastes crameri}) at depths 150--435~m. Abundance is expressed as a percent of total catch weight. The target species is highlighted in red.}{3.0}{Concurrence of species in trawl tows capturing Darkblotched Rockfish}
-
-\subsection {plotFOScatch}
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{plotFOScatch}
 
 \tab This function queries the DFO \db{FOS}\footnote{Fishery Operations System} database for catches of the specified species, and plots monthly catches as bars stacked by PMFC area. The SQL query \code{fos\_catch.sql} (DFO personnel only) obtains catch from all fisheries, and the user chooses which fishery to display. Barplot categories are combinations of year and month, and catch is colour-coded by PMFC area (blues for 3C-3D, yellow-orange-red for 5A-5B-5C, and greens for 5D-5E) to provide a visual feel for the part of the coast (WCVI\footnote{west coast of Vancouver Island}, QSC\footnote{Queen Charlotte Sound or central BC coast}, or WCHG\footnote{west coast Haida Gwaii (offshore west, Hecate Strait to the east, \& Dixon Entrance to the north)}) that provides the predominant catch (Figure~\ref{fig:PBStools-plotFOScatch}). The total catch is reported at the end of each fishing year.
 
@@ -1546,7 +1690,8 @@ plotFOScatch(strSpp="401")  # DFO only
 \end{examplebox}
 \pbsfig{PBStools-plotFOScatch}{Monthly catch of Redbanded Rockfish (\emph{Sebastes babcocki}) from BC's seven offshore PMFC areas. Fishing year is assumed to run from April to March.}{4.0}{Monthly catch of Redbanded Rockfish from PMFC areas}
 
-\subsection {runCCA}
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{runCCA}
 
 \tab  Perform a catch-curve analysis using a model formulated by \citet{Schnute-Haigh:2007}. 
 The code allows a user to perform both frequentist (NLM) and Bayesian (BRugs) analyses.
@@ -1565,11 +1710,17 @@ The code allows a user to perform both frequentist (NLM) and Bayesian (BRugs) an
 The Bayesian model is coded in the OpenBUGS language and can be found in the examples subdirectory 
 \code{library/PBStools/examples}.
 
-\subsection {sumCatTabs}
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{sumCatTabs}
 
 \tab The catch reconstruction algorithm of \citet{Haigh-Yamanaka:2011} builds input catch data files for a specified rockfish species from numerous databases (SQL Server and Oracle). This function takes those input files and summarizes catch by year and PMFC area. 
 
-\subsection {trackBycat}
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{tabSFW}
+\tab Make tables of commercial catch using target groups and regions for Seafood Watch.
+
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{trackBycat}
 
 \tab Track fish group catches by year and PMFC area that occur between depths corresponding to a target species' depth-of-occurrence.
 The function currently uses three SQL query files called \code{gfb\_bycatch.sql}, \code{pht\_bycatch.sql}, and \code{fos\_bycatch.sql}, which tap into the DFO databases \db{GFBioSQL}, \db{PacHarvest}, and \db{GFFOS}, respectively.
@@ -1598,14 +1749,14 @@ The catch array is saved to an \code{.rda} file with a name that indicates major
   \code{clrs}     & vector of colour names to distinguish the fish groups within any one bar.\\
 \end{tabular}
 
-\clearpage
-
+%\clearpage
 %-------------------------------------------------
-\section {Survey functions}
+\section{Survey Functions}%% M04 (module 4)
 
 \tab The survey functions arose from a paper we wrote for designing trawl surveys \citep{Schnute-Haigh:2003}. Essentially, every survey stratum hosts a unique population for the target species of interest. Each population can be summarized by three parameters that determine a binomial-gamma distribution: $p$~= proportion of tows that do not catch the target species, $\mu$~= mean density of the target species in tows that catch the target species, and $\rho$~= the coefficient of variation of these positive-catch densities.
 
-\subsection {bootBG}
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{bootBG}
 
 \tab Bootstrap stratified biomass estimates using random draws from the binomial-gamma distribution using strata population parameters \citep{Schnute-Haigh:2003} supplied. This function depends on the R-package \pkg{boot}. These parameters are used to estimate the survey population using random draws from the binomial-gamma distribution.
 
@@ -1640,7 +1791,8 @@ pbsfun()
 \end{Verbatim}
 \end{examplebox}
 
-\subsection {calcMoments}
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{calcMoments}
 
 \tab Calculate survey moments, including relative biomass, for a species from raw survey data. The function uses \code{getData} to calculate survey specs using the SQL queries:
 \begin{Verbatim}[fontsize=\footnotesize]
@@ -1696,7 +1848,8 @@ Total 871.986514 257 9.336097e-02 0.305550267 0.03504071
 \end{Verbatim}
 \end{outputbox}
 
-\subsection {calcPMR}
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{calcPMR}
 
 \tab This function calculates the binomial-gamma parameters ($p$, $\mu$, $\rho$) of a sample population, as described by \citet{Schnute-Haigh:2003}: 
 
@@ -1733,7 +1886,8 @@ Estimated parameters of the sampled binomial-gamma distribution:
 \end{Verbatim}
 \end{outputbox}
 
-\subsection {getBootRuns}
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{getBootRuns}
 
 \tab This function calls the SQL query \code{gfb\_boot.sql} to download the bootstrap results for the selected species from \db{GFBioSQL} tables \code{BOOT\_HEADER} and \code{BOOT\_DETAIL}. The bootstrap tables are maintained by Norm Olsen (PBS, Nanaimo).
 
@@ -1784,7 +1938,8 @@ pbsfun()
 \end{Verbatim}
 \end{outputbox}
 
-\subsection {getPMR}
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{getPMR}
 
 \tab Get \code{p}, \code{mu}, and \code{rho} values for populations by strata from survey data housed in \db{GFBioSQL} using the query \code{gfb\_pmr.sql} stored in \code{library/PBStools/sql}.\\ 
 The function executes the SQL query for each survey ID \code{i}:
@@ -1833,7 +1988,8 @@ Done and done in 2.4 sec
 \end{Verbatim}
 \end{outputbox}
 
-\subsection {makePMRtables}
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{makePMRtables}
 
 \tab Create \code{.csv} files containing $(p, \mu, \rho)$ \citep{Schnute-Haigh:2003} values for strata in the specified surveys. The code scrolls through the survey IDs, issuing sequential SQL queries to the DFO database \db{GFBioSQL}, and collects the debris in \code{.csv} files, one for each name in the list surveys.
 
@@ -1852,7 +2008,8 @@ pbsfun()
 \textbf{\emph{Output:}}\\
 See files \code{'pmr\-qcss.csv'}, \code{'pmr\-wcvi.csv'}, and \code{'pmr\-wqci.csv'} in your current working directory. These file contain binomial-gamma parameters for Shortspine Thornyhead (\emph{Sebastolobus alascanus}) in each of the survey's strata.
 
-\subsection {makeSSID}
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{makeSSID}
 
 \tab Make a data object of survey series information called \code{ssid} for use in the package \pkg{PBSdata}.
 The function imports the SQL table \code{SURVEY} from the DFO database \db{GFBioSQL} using:
@@ -1861,7 +2018,12 @@ The function imports the SQL table \code{SURVEY} from the DFO database \db{GFBio
 
 The survey information is then summarised by its series number and saved to a binary \code{.rda} file. 
 
-\subsection {sampBG}
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{plotHBLL}
+\tab Plot Hard-bottom LL locations on a BC coast map.
+
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{sampBG}
 
 \tab Take random samples from the binomial-gamma distribution. This function generates random samples from both the binomial and the gamma distributions, and returns the product of the two.
 
@@ -1893,7 +2055,8 @@ Estimated parameters of the sampled binomial-gamma distribution:
 \end{Verbatim}
 \end{outputbox}
 
-\subsection {showAlpha}
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{showAlpha}
 
 \tab Show quantile confidence levels $\alpha$ for bootstrapped biomass. This function assumes that \code{bootBG()} has been run and that the data list object \code{PBStool} exists in the global position. The figure generated (Figure~\ref{fig:PBStools-showAlpha}) follows the format of Figure 3 in \citet{Schnute-Haigh:2003}. The panels show: \\
 \tab (a) histogram of bootstrapped biomass;\\
@@ -1914,7 +2077,8 @@ pbsfun()
 \end{examplebox}
 \pbsfig{PBStools-showAlpha}{Results from $S$=1000 simulations, $R$=500 bootstraps, and tow budget $K$=100 for POP caught in eight strata of the Queen Charlotte Sound survey in 2003 (235 tows). (\bold{Panels~a-c}) (a)~histogram, (b)~cumulative probability distribution, and (c)~normal quantiles for the $S$ estimates $\hat{B}$. Vertical dashed lines in (b) and (c) denote the observed value $B$~= 23t. (\bold{Panels~d-e}) Observed probabilities that the observed value $B$ lies in the $j^\text{{th}}$ confidence interval, based on (d) empirical confidence limits and (e) limits adjusted for bias correction and acceleration. (\bold{Panels~f-g}) plot of $\hat{\alpha}_j$ vs. $\alpha_j$ based on (f)~empirical confidence limits and (g) limits adjusted for bias correction and acceleration. Vertical and horizontal dashed lines in (f g) show median levels at 50\%, and solid lines denote the equality $\hat{\alpha}=\alpha$.}{6.0}{Bootstrap analysis for simulated POP surveys in QCS} \clearpage
 
-\subsection {showIndices}
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{showIndices}
 
 \tab Show survey indices for a species from bootstrapped biomass estimates stored in the SQL database \db{GFBioSQL}. The function relies on a short query function called \code{getBootRuns} which in turn queries tables of survey information (\code{BOOT\_HEADER}) and relative biomass estimates by species for each survey (\code{BOOT\_DETAIL}). The results are plotted with their confidence intervals (Figure~\ref{fig:PBStools-showIndices}). The user should be aware that any survey ID \code{survID} can have multiple boot runs \code{bootID} (e.g., re-stratification trials).
 
@@ -1940,7 +2104,8 @@ pbsfun()
 \end{examplebox}
 \pbsfig{PBStools-showIndices}{Relative abundance indices from surveys in Queen Charlotte Sound for Arrowtooth Flounder (\emph{Atheresthes stomias}). The bootstrapped results are stored on DFO's SQL Server database \db{GFBioSQL}. Duplicated points usually indicate a restratification exercise but can occasionally represent two surveys in the same year.}{3.25}{Relative abundance indices for Arrowtooth Flounder in QCS}
 
-\subsection {simBGtrend}
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{simBGtrend}
 
 \tab Simulate a population projection based on prior binomial-gamma parameters and display the results.  This function attempts to simulate a population past the observed year by randomly sampling the binomial-gamma distribution using weighted prior values of the population parameters \code{p}, \code{mu}, and \code{rho}.
 
@@ -1957,7 +2122,8 @@ pbsfun(Nsim=7)
 \end{examplebox}
 \pbsfig{PBStools-simBGtrend}{Forward simulation (based on 7 trajectories) of POP abundance in Queen Charlotte Sound using past values of stratum population parameters ($p$, $\mu$, $\rho$).}{2.75}{Forward simulation of POP abundance in Queen Charlotte Sound}
 
-\subsection {trend}
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{trend}
 
 \tab An interactive GUI menu (Figure~\ref{fig:GUI-trend}) created by a call to \code{trend} facilitates the exploration of trends in survey data. Once the user chooses a dataset, pressing the \gui{TREND} button displays boxplots of catch or CPUE grouped by year. A trend line (Figure~\ref{fig:PBStools-trend}) fit through annual points, summarized by a user-specified summary function (e.g., \code{mean}), yields an annual rate of change $r$ and the accumulated change $R$ over the period of the fit \citep{Schnute-etal:2004_lst}. Pressing the \gui{BOOT} button generates and displays bootstrapped estimates of slope $b$ and annual rate $r$.
 
@@ -1967,14 +2133,14 @@ pbsfun(Nsim=7)
 
 \pbsfig{PBStools-trend}{IPHC survey CPUE index (log$_2$(number of fish/effective skate)) for Redbanded Rockfish (\emph{Sebastes babcocki}). The boxplots summarize annual non-zero data, where box whiskers show the extent of the data and box horizontal division indicates the median. Square symbols show the annual values of the specified summary function (in this case \code{median}). Superimposed on the boxplots is a regression line of the summary function. Barplots below show the proportion of non-zero values in the original dataset, and values at the base of the bars indicate the number of points used in the index calculation. Values in the subtitle summarize the trend line, where $b$~= slope of the regression, $r$~= annual rate of change, and $R$~= accumulated change over the period of the trend line. }{6.0}{IPHC survey CPUE index for Redbanded Rockfish}
 
-\clearpage
-
+%\clearpage
 %-------------------------------------------------
-\section {Spatial functions}
+\section{Spatial Functions}%% M05 (module 5)
 
 \tab Spatial functions arose primarily from work that DFO contributed to COSEWIC\footnote{Committee on the Status of Endangered Wildlife in Canada (\url{http://www.cosewic.gc.ca/})} in collaboration with the federal Ministry of Environment. Species-at-risk legislation requires that we know the spatial extent of marine species flagged for concern.
 
-\subsection {calcHabitat}
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{calcHabitat}
 
 \tab This function calculates potential habitat using specified bathymetry limits. The default topography dataset \code{bctopo} was downloaded from the site \url{http://topex.ucsd.edu/cgi-bin/get_data.cgi} after specifying these boundaries: west (-134.5), east (-124.5), south (48), north (55). A user from another region could download a similar data file with different boundaries.
 
@@ -1988,7 +2154,8 @@ calcHabitat(isob=c(150,435), digits=2)
 \end{examplebox}
 \pbsfig{PBStools-calcHabitat}{Highlighted bathymetry (green) between 150 and 435~m serves as a proxy for Darkblotched Rockfish (\emph{Sebastes crameri}) habitat along the BC coast.}{4.5}{Highlighted bathymetry between 150 and 435~m}
 
-\subsection {calcOccur}
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{calcOccur}
 
 \tab This function calculates the percent occurrence of events (\code{EventData}) in a set of labelled polygons (\code{PolySet}). Consequently, the \code{PolySet} must have a \code{PolyData} attribute with a category field called \code{label} that provides categories or bins in which to count events and calculate percent occurrence. The results for the tow subset \code{testdatC} in various categories of surficial geology for the Queen Charlotte Basin \citep{Barrie-etal:1991, Sinclair-etal:2005} are displayed in Figure~\ref{fig:PBStools-calcOccur}.
 
@@ -2006,7 +2173,8 @@ pbsfun()
 \end{examplebox}
 \pbsfig{PBStools-calcOccur}{Percent occurrence of tows from \code{testdatC} in the surficial geology categories of the Queen Charlotte Basin \code{PolySet}.}{2.0}{Percent occurrence of tows in surficial geology categories}
 
-\subsection {calcSRFA}
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{calcSRFA}
 
 \tab Determine the slope rockfish assessment areas from combinations of PMFC major and minor areas as well as locality codes for fishing grounds within PMFC minor areas. The function either accepts three vectors (\code{major}, \code{minor}, \code{loc}) of equal length or one matrix/data frame \code{major} with three columns corresponding to the first three arguments. Slope rockfish assessment subareas or gullies can be determined by setting the argument \code{subarea=TRUE}.
 
@@ -2042,7 +2210,16 @@ pbsfun()
   \label{tab:PBStools-calcSRFA}
 \end{table}
 
-\subsection {calcSurficial}
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{calcStockArea}
+\tab Assign a stock area designation based on species HART code and PMFC major and/or minor areas.
+
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{calcWAParea}
+\tab Assign a stock area designation for Walleye Pollock using PMFC major and minor areas, a stratifying vector, and a weighting vector.
+
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{calcSurficial}
 
 \tab Calculate the intersection of two \code{PolySets}, specifically surficial geology and potential habitat using a bathymetry interval. The results of the intersection are displayed on a map, including the area (km$^2$) of surficial geology categories that occurs in the bathymetry interval or potential habitat (Figure~\ref{fig:PBStools-calcSurficial}).
 
@@ -2059,7 +2236,8 @@ pbsfun()
 \end{examplebox}
 \pbsfig{PBStools-calcSurficial}{Surficial geology of the Queen Charlotte basin and Hecate Strait. A rough bathymetry contour (150--145~m, derived from \code{calcHabitat} with \code{digits=1}) lies beneath the highlighted geology. The legend shows geology categories and the area (km$^2$) intersecting the bathymetry interval.}{5.0}{Surficial geology of the Queen Charlotte basin and Hecate Strait}
 
-\subsection {clarify}
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{clarify}
 
 \tab This function summarizes large datasets of catch represented by many species into $n$ CLARA\footnote{\bold{C}lustering \bold{Lar}ge \bold{A}pplications} clusters using the function \code{clara} in the package \pkg{cluster} \citep{Kaufman-Rousseeuw:1990}. Essentially, \code{clara} sub-samples the large data set, identifying the best $k$ medoids (centre is defined as the item which has the smallest sum of distances to the other items in the cluster) using a dissimilarity metric. In the end, all records are assigned to one of the $k$ clusters. Further routines in the R-package \pkg{PBSmapping} locate fishing events in grid cells and display the results (Figure~\ref{fig:PBStools-clarify}).
 
@@ -2101,13 +2279,39 @@ YTR & Yellowtail Rockfish   & \emph{Sebastes flavidus}  \bstrut \\
   \label{tab:PBStools-clarify}
 \end{table}
 
-\subsection {findHoles}
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{findEP}
+\tab Find events in polys and and add poly info to events.
+
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{findHoles}
 
 \tab Identifies polygons within polygons of the same PID, and transforms them into holes, if they are not already set that way. Also weeds out small polygons before the hole identification routine runs. This function can become very slow when there are hundreds of polygons. Hence the argument \code{minVerts} can reduce the number of candidate polygons. Ideally, \code{findHoles} should be programmed in C.
 
 The output is a PolySet that identifies parents and holes based on the position of polygons within polygons.
 
-\subsection {plotGMA}
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{plotConcur}
+
+\tab Create a barplot of the top 20 concurrent species from tows capturing the target species \code{strSpp} between a minimum and maximum depth. This function uses the SQL code \code{pht\_concurrent.sql} to query the observer trawl database \db{PacHarvest}. A variant of this (\code{phhl\_concurent.sql}) taps into the hook and line database \db{PacHarvHL}. This function can only be used by personnel logged onto the DFO network.
+
+The default settings for this function create a one-panel plot (Figure~\ref{fig:PBStools-plotConcur}). If a multiple figure plot is desired, say \code{par(mfrow=c(2,2))}, then set the argument \code{reset.mf=FALSE} in calls to \code{plotConcur} after setting the \code{mfrow} option in \code{par}.
+
+\begin{examplebox}
+\example{plotConcur}
+\begin{Verbatim}[fontsize=\footnotesize]
+plotConcur(strSpp="410", mindep=150, maxdep=435) # DFO only
+\end{Verbatim}
+\end{examplebox}
+\pbsfig{PBStools-plotConcur}{Concurrence of species in trawl tows (1996-2007) capturing Darkblotched Rockfish (\emph{Sebastes crameri}) at depths 150--435~m. Abundance is expressed as a percent of total catch weight. The target species is highlighted in red.}{3.0}{Concurrence of species in trawl tows capturing Darkblotched Rockfish}
+
+
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{plotEO}
+\tab Plot Extent of Occurrence for a species using a convex hull.
+
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{plotGMA}
 
 \tab Plot the groundfish management areas (GMA) for Pacific Ocean Perch (\emph{Sebastes alutus}) and Yellowmouth Rockfish (\emph{S. reedi}) used by Pacific groundfish managers at RHQ in Vancouver. The PolySet \code{gma.popymr} can be found in the R package \pkg{PBSvault}, which is only available to DFO personnel, and contains an attribute called \code{PolyData} that defines colours and labels for each of the GMAs.
 
@@ -2126,7 +2330,16 @@ pbsfun()
 \end{examplebox}
 \pbsfig{PBStools-plotGMA}{Groundfish Management Areas for Pacific Ocean Perch and Yellowmouth Rockfish.}{4.5}{Groundfish Management Areas for POP and YMR}
 
-\subsection {plotTernary}
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{plotHabitat}
+\tab Plot potential habitat using bathymetry output from `calcHabitat'.
+
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{plotLocal}
+\tab Plot DFO fishing localities with the highest catch.
+
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{plotTernary}
 
 \tab   Plot a ternary diagram using compositional data classified into three categories.   When population components are amalgamated into $g=3$ groups, vectors of proportions can be portrayed in a graph called a ternary diagram \citep[p.~5]{Aitchison:1986}. The diagram begins with an equilateral triangle that has vertices labelled \dQuote{1}, \dQuote{2}, and \dQuote{3}.  A vector \bold{p} $(p_1, p_2, p_3)$ of proportions can then be represented as a point within this triangle, where the perpendicular distance to the side opposite vertex \dQuote{i} is proportional to $p_i$.
 
@@ -2141,7 +2354,8 @@ pbsfun()
 \end{examplebox}
 \pbsfig{PBStools-plotTernary}{Ternary diagram for compositions amalgamated into $g=3$ groups. The indicated point represents a vector of proportions. Solid lines perpendicular to the sides of an equilateral triangle have lengths proportional to $p_i (i=1,2,3)$. Dotted lines facilitate a proof that this method actually works, given the constraint $\Sigma_{i=1}^3 p_i = 1$ \citep[Fig.~2]{Schnute-Haigh:2007}.}{4.5}{Ternary diagram for compositions amalgamated into 3 groups}
 
-\subsection {plotTertiary}
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{plotTertiary}
 
 \tab   Plot a compositional diagram using data classified into $n$ categories. This function seeks to extend the ternary diagram from 3 to $n$ proportions. However, the geometry of mutiple vertices (squares, pentagons, hexagons, etc.) does not translate into deterministic solutions as it does for triangles \citep{Aitchison:1986, Schnute-Haigh:2007}. The algorithm currently yields a compromise solution because the constraint $\Sigma_{i=1}^n p_i = 1$ rarely yields a common point within polygons that are not equilateral triangles. The problem still needs more thought.
 
@@ -2159,7 +2373,8 @@ pbsfun()
 \pbsfig{PBStools-plotTertiary}{Tertiary diagram for compositions amalgamated into $g=5$ groups. The indicated point represents a vector of proportions. Solid lines perpendicular to the opposite sides of a polygon have lengths roughly proportional to $p_i (i=1,...,n)$.}{4.5}{Tertiary diagram for compositions amalgamated into 5 groups}
 
 
-\subsection {preferDepth}
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{preferDepth}
 
 \tab This function displays the depth distribution for a selected species using an interactive GUI (Figure~\ref{fig:GUI-preferDepth}). The SQL code \code{pht\_fdep.sql} grabs the depth table from the remote SQL Server database \db{PacHarvest} and the Oracle database \db{GFFOS}. The user may also specify an R object or a data file. The menu control offers some ability to specify years and/or areas (if available in the file). The depth-of-capture frequency for the selected species appears as a histogram (Figure~\ref{fig:PBStools-preferDepth}). The cumulative catch is superimposed to show the depths at which the species is caught in relation to the tow frequency histogram. The total fleet effort is displayed as a shaded histogram in the background.
 
@@ -2167,13 +2382,15 @@ pbsfun()
 
 \pbsfig{PBStools-preferDepth}{Relative frequency of tows in 10-m depth bins that capture Shortraker Rockfish (SKR, \emph{Sebastes borealis}) from commercial trawl records (1996--2007). The vertical solid lines denote the 2.5\% and 97.5\% quantiles. The shaded histogram in the background reports the relative trawl effort on all species. The cumulative catch of SKR, superimposed on the histogram in relative space (0 to 1), provides confirmation that the bulk of SKR comes from these depths. The depth of median cumulative catch is indicated by an inverted red triangle at top. \sQuote{N} reports the total number of tows; \sQuote{C} reports the total catch (t).}{4.0}{Relative frequency of commercial tows that capture Shortraker Rockfish}
 
-\subsection {prepClara}
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{prepClara}
 
 \tab Prepare a data object for use by \code{clarify}, which uses the \pkg{cluster} function \code{clara}. The grouping variable \code{gfld} will determine how event data are collapsed into spatial units. The Lon-Lat default is likely equivalent to a sinlge field identifying each fishing event unless events happen to occupy the same Lon-Lat coordinate. A user may wish to create a field that delimits grid cells, but these should be the same as or smaller than those specified in the function \code{clarify}.
 
 The function assumes that the input data object is always called \sQuote{dat}, but a source file can be called anything as long as its import to R creates \code{dat}. Similarly, the output data object is always called \sQuote{claradat} but can be saved to a system file with any name. The function automatically names the output file containing \code{claradat} depending on whether an input name \code{fnam} was specified or SQl code was executed to get the input data. 
 
-\subsection {zapHoles}
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{zapHoles}
 
 \tab The function attempts to remove (zap) holes that will ultimately be filled anyway. It uses centroid matching between holes and solids to identify candidate holes for removal.  The value returned is a \code{PolySet} potentially modified to remove holes that will be filled. Non-essential attributes will be retained and supplemented with two additional ones created by the \pkg{PBSmapping} functions \code{calcCentroid} and \code{calcArea}: (i)~\code{keep} -- data frame summarizing the kept polygons, and (ii)~\code{zap} -- data frame summarizing the holes removed.
 
@@ -2202,14 +2419,18 @@ pbsfun()
 \end{Verbatim}
 \end{examplebox}
 
-\clearpage  % end of section
-
+%\clearpage  % end of section
 %-------------------------------------------------
-\section {Temporal functions}
+\section{Assessment Functions}%% M06 (module 6)
 
-\tab The temporal functions here are few, consisting of a moving average and an ad hoc method for calculating the rate of return on a portfolio of anything measurable (e.g. stocks). Other functions that help scientists visualize how populations change over time -- changes in species composition or the diversity of phytoplankton samples -- have been moved to a package called \pkg{PBSplankton}.
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{calcCVage}
+\tab Calculate CV of ages based on age or length data.
 
-\subsection {calcMA}
+%\tab The temporal functions here are few, consisting of a moving average and an ad hoc method for calculating the rate of return on a portfolio of anything measurable (e.g. stocks). Other functions that help scientists visualize how populations change over time -- changes in species composition or the diversity of phytoplankton samples -- have been moved to a package called \pkg{PBSplankton}.
+
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{calcMA}
 
 \tab Calculate a moving average of a series using a fixed period occurring every number of specified base units (usually days). The moving average is accumulated backwards from the last observation.
 
@@ -2230,29 +2451,89 @@ pbsfun()
 \end{examplebox}
 \pbsfig{PBStools-calcMA}{Semi-annual moving average calculated every 30 days.}{3.0}{}
 
-\subsection {imputeRate}
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{compAF}
+\tab Compare age frequencies using discrete or cumulative distribution plots.
 
-\tab Impute the rate of return for an investment (existing account or simulated) that experiences regular or irregular contributions and/or withdrawals. This function creates an interactive GUI (Figure~\ref{fig:GUI-imputeRate}) to facilitate the process. The code adopts a variant of a formula in Microsoft Excel's \gui{XIRR} function where the \dQuote{internal rate of return} $r$ is derived iteratively when the net present value (\code{NPV}) is set to 0.
-%
-\eqn{\text{NPV} = \sum_{i=1}^{N} \gfrac{C_i}{(1-r)^{(\gfrac{d_{i}-d_{1}}{365})}}} 
-where:\\
-\tab $d_i$ = the $i^\text{{th}}$ contribution date;\\
-\tab $d_1$ = the initial date;\\
-\tab $C_i$ = the $i^\text{{th}}$ contribution; and\\
-\tab $C_1$ = initial value of the portfolio (includes $1^{\text{st}}$ contribution).	
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{compBmsy}
+\tab Compare biomass posteriors relative to Bmsy or Bavg.
 
-\tab Here we use the \pkg{PBSmodelling} function \code{calcMin} to minimize the squared difference between the calculated NPV of the contribution stream and the final value of the portfolio (Figure~\ref{fig:PBStools-imputeRate}). User's can either specify an MDB table in the current working directory or \code{Examples.mdb} in the package's \code{sql} directory. There is also an option to simulate a dataset using the random pareto distribution.
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{compLen}
+\tab Compare annual length distributions among surveys series or commercial gears.
 
-\pbsfig{GUI-imputeRate}{GUI menu Internal Rate of Return to estimate the annualized return on an investment that experiences episodic contributions.}{4.0}{GUI menu Internal Rate of Return}
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{compVB}
+\tab Compare fitted von B curves using parameters.
 
-\pbsfig{PBStools-imputeRate}{Portfolio progress where green bars represent episodic contributions, the orange line shows the cumulative contributions, the grey dots report the monthly portfolio values, and the blue line shows a calculated fit using the estimated internal rate of return.}{3.5}{Portfolio performance using Internal Rate of Return}
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{compVBpars}
+\tab Compare MCMC derived parameters from von Bertalanffy model.
 
-\clearpage
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{createMA}
+\tab Create table of DFO management actions for Appendix A (catch).
 
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{makeAgeErr}
+\tab Make an ageing error matrix for Awatea.
+
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{plotAgeErr}
+\tab Plot ageing precision data from primary and secondary readers.
+
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{plotBTMW}
+\tab Plot bottom (BT) vs. midwater (MW) trawl catch.
+
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{plotMW}
+\tab Plot annual mean weights by stock and by PMFC area.
+
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{plotSnail}
+\tab Plot snail-trail plots for MCMC analysis.
+
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{processBio}
+
+\tab Process further the global data object \code{PBSdat} that results from the SQL query \code{gfb\_bio.sql}.  Currently, this function can add fields \code{srfa} (slope rockfish assessment areas), \code{srfs} (slope rockfish assessment subareas or gulllies), and \code{popa} (Pacific ocean perch areas identified by \citet{Schnute-etal:2001_pop}. These three areas do not exist as fields in \db{GFBioSQL}.
+
+\begin{examplebox}
+\example{processBio}
+\begin{Verbatim}[fontsize=\footnotesize]
+getData("gfb_bio.sql", "GFBioSQL", strSpp="396", path=.getSpath())
+pop.bio = processBio(PBSdat)
+\end{Verbatim}
+\end{examplebox}
+
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{processMap}
+\tab Process PBSdat created by call to `fos\_map\_density.sql' to create a map object for stock assessment.
+
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{quantAges}
+\tab Plot quantile boxes of age by year and/or area, including mean age over time.
+
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{splineCPUE}
+\tab Fit spline curves through CPUE data to determine CV process error.
+
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{tabAmeth}
+\tab Tabulate ageing error structures available in bio123.
+
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{tabOtos}
+\tab Tabulate otoliths available and aged.
+
+%\clearpage
 %-------------------------------------------------
-\section {Catch Reconstruction}
+\section{Catch Reconstruction}%% M07 (module 7)
 
-\subsection {buildCatch}
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{buildCatch}
 
 \tab The function \code{buildCatch} offers an automated algorithm for reconstructing rockfish (RRF) catches in British Columbia (BC); full details are given in \citet{Haigh-Yamanaka:2011}. The catch reconstruction uses: 
 (i)~reliable landings from modern databases, 
@@ -2440,15 +2721,60 @@ getData("fos_vcatORF.sql",dbName="GFFOS",strSpp=strSpp,path=.getSpath(),
   \code{reconstruct}  &  logical: if \code{TRUE} (default) complete the reconstruction as previously; if \code{FALSE}, terminate the code once the modern catch array has been compiled and saved (to a binary file \code{cat123mod.rda}, where \code{123} = species code).\\
 \end{longtable}
 
-\subsection {plotData}
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{plotDiag}
 
 \tab Plot data components of a catch reconstruction for user inspection and diagnostic checking. The function plots \code{z}-values of \code{y} for each \code{x}. The default plot shows lines because a typical \code{x} comprises years. An alternative is to show the \code{z}-values as bars for each \code{y} grouped by \code{x}.
 
 \tab This plot is used by the catch reconstruction algorithm \code{buildCatch} which automatically increments the plot number \code{pD} that is logged in the temporary list object \code{PBStool}. Additionally, the catch reconstruction creates a subdirectory \code{CRdiag} to which \code{plotData} sends image files.
 
-\subsection {plotRecon}
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{plotGREFS}
+\tab Plot gamma for reference years by fishery.
+
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{plotRecon}
 
 \tab Plot reconstructed catch using barplots stacked by catch in PMFC areas. This function allows greater control over the plotting details (see Figure~\ref{fig:PBStools-buildCatch}) than is currently offered by the \code{buildCatch} routine. Ideally, the latter should call \code{plotRecon}, but the implementation has not occurred yet.
+
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{quickCat}
+\tab Subsets a large dataset derived from query `fos\_mcatORF.sql'.
+
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{surveyCatch}
+\tab Query the survey catch data and make summary tables.
+
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{zapSeamounts}
+\tab Remove seamount records using combinations of major, minor, and locality codes.
+
+%-------------------------------------------------
+\section{LaTeX Functions}%% M08 (module 8)
+
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{collectFigs}
+\tab Collect encapsulated postscript figures into one document.
+
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{formatCatch}
+\tab Format numeric table so that entries display N significnat figures.
+
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{makeLTH}
+\tab Make a longtable header for printing an xtable.
+
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{splitTab}
+\tab Split a long data table into side-by-side pieces for printing in LaTeX.
+
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{texArray}
+\tab Flatten and format an array for latex output.
+	
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{texThatVec}
+\tab Convert a vector to a phrase `x, y, and z'.
 
 
 
@@ -2462,10 +2788,10 @@ getData("fos_vcatORF.sql",dbName="GFFOS",strSpp=strSpp,path=.getSpath(),
 \vspace*{2ex} \noindent \blue{{\bf \normalsize Rowan Haigh}}\\
 \small
 \grey{Research Biologist, Groundfish Section\\
-Marine Ecosystems and Aquaculture Division\\
+Stock Assessment \& Research Division\\
 Fisheries and Oceans Canada\\
 Pacific Biological Station, Nanaimo, BC  V9T 6N7}\\
-\sky{Tel. +1 250-756-7123  fac simile +1 250-756-7053\\
+\sky{Tel. +1 250-327-2052  fac simile +1 250-756-7053\\
 Email rowan.haigh@dfo-mpo.gc.ca} 
 \normalsize
 

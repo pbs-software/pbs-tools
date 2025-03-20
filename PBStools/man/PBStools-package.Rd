@@ -3,7 +3,7 @@
 \alias{PBStools}
 \docType{package}
 
-\title{PBStools -- Tools for the Efficient Execution of Onerous Tasks}
+\title{PBStools -- Tools to Tackle Tricky Tasks}
 
 \description{
   \pkg{PBStools} provides tools for stock assessments, 
@@ -176,31 +176,6 @@
   \code{\link[PBStools]{texArray}}      \tab Flatten and format an array for latex output;\cr
   \code{\link[PBStools]{texThatVec}}    \tab Convert a vector to a phrase \sQuote{x, y, and z}.\cr
   \tab \cr
-  \bold{M09. PJSsurvey}   \tab \cr
-  \code{\link[PBStools]{calcBiom}}      \tab Calculate swept-area biomass estimate and bootstrap within strata;\cr
-  \code{\link[PBStools]{doSynoptic}}    \tab Get the synoptic file for specified survey and go through PJS machinations;\cr
-  \code{\link[PBStools]{getLabels}}     \tab Read in data file and get labels;\cr
-  \code{\link[PBStools]{getLabelends}}  \tab Get depth ranges from stratum names (methinks);\cr
-  \code{\link[PBStools]{getMonth}}      \tab Extract month from dates vector;\cr
-  \code{\link[PBStools]{getSpecies}}    \tab Get species codes from data;\cr
-  \code{\link[PBStools]{getUsability}}  \tab Qualify data by usability code;\cr
-  \code{\link[PBStools]{getVessel}}     \tab Get survey vessel codes;\cr
-  \code{\link[PBStools]{keepAtts}}      \tab Keep user's attributes after performing an expression such as subsetting a file;\cr
-  \code{\link[PBStools]{plotIndex}}     \tab Plot survey index series after bootstrapping;\cr
-  \code{\link[PBStools]{prepGFsurv}}    \tab Prepare GF surveys using PJS codes;\cr
-  \code{\link[PBStools]{prepGIGhis}}    \tab Prepare GIG Historical (formerly called BG Reed) survey data;\cr
-  \code{\link[PBStools]{prepHSass}}     \tab Prepare Hecate Strait assemblage survey data;\cr
-  \code{\link[PBStools]{prepHSsyn}}     \tab Prepare Hecate Strait synoptic survey data;\cr
-  \code{\link[PBStools]{prepQCSsyn}}    \tab Prepare QCS synoptic survey data;\cr
-  \code{\link[PBStools]{prepNMFStri}}   \tab Prepare US National Marine Fisheries Service triennial survey data from WCVI;\cr
-  \code{\link[PBStools]{prepWCHGsyn}}   \tab Prepare WCHG (formerly WCQCI) synoptic survey data;\cr
-  \code{\link[PBStools]{prepWCVIsyn}}   \tab Prepare west coast Vancouver Island synoptic survey data;\cr
-  \code{\link[PBStools]{restratify}}    \tab Restratify survey by depth;\cr
-  \code{\link[PBStools]{uniqtows}}      \tab Ensure unique tows occur for each survey, collapse records as needed.\cr
-  \tab \cr
-  \bold{M10. Financial}  \tab \cr
-  \code{\link[PBStools]{imputeRate}}    \tab \bold{GUI:} Impute the rate of return of an investment.\cr
-  \tab \cr
   \bold{Z01. Borrow}   \tab \cr
   \code{\link[PBStools]{.ss3.readdat}}      \tab Read SS3 data files (\code{r4ss::SS_readdat_3.30}).\cr
   }
@@ -217,7 +192,7 @@
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
   \emph{locus opus}: Remote office, Vancouver BC\cr
-  Last modified \code{Rd: 2024-02-26}\cr
+  Last modified \code{Rd: 2025-03-20}\cr
 }
 \note{
   The working list object \code{PBStool} is stored in the 

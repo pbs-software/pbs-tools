@@ -46,27 +46,11 @@ calcMA(x, y, y2, period = 270, every = 10)
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
   \emph{locus opus}: Remote office, Vancouver BC\cr
-  Last modified \code{Rd: 2024-02-27}\cr
+  Last modified \code{Rd: 2025-03-19}\cr
 }
 \seealso{
   \code{\link[PBStools]{glimmer}}, 
   \code{\link[PBStools]{simBGtrend}}
-}
-\examples{
-local(envir=.PBStoolEnv,expr={
-pbsfun=function(os=.Platform$OS.type, arch=.Platform$r_arch) {
-  if (os=="windows" && arch=="i386") {
-    getData("Ex03_Portfolio","Examples",type="MDB",path=.getSpath())
-    # Annual average every 2 months:
-    ma=calcMA(PBSdat[[2]],PBSdat[[3]],period=365,every=60)
-    dat=attributes(ma)$dat
-    plot(dat$x,dat$y,type="l")
-    lines(ma$x,ma$y,col="blue",lwd=2) }
-  else 
-    showMessage("Only functional for Microsoft Access on 32-bit Windows OS")
-  invisible() }
-pbsfun()
-})
 }
 \keyword{manip}
 \keyword{smooth}

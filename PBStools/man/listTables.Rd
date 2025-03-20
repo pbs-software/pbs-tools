@@ -1,6 +1,6 @@
 \name{listTables}
 \alias{listTables}
-\title{List Tables in Specified SQL/ORA/MDB Database}
+\title{List Tables in Database}
 \description{
   List the tables in a specified SQL, Oracle or Microsoft ACCESS database.
   User can choose table type and/or search table names through pattern matching.
@@ -11,21 +11,21 @@ listTables(dbName, pattern=NULL, path=getwd(), server=NULL,
    silent=FALSE, tenv=.GlobalEnv) 
 }
 \arguments{
-  \item{dbName}{string specifying the name of a remote \code{SQL}/\code{ORA}
-    or local \code{MDB} database.}
-  \item{pattern}{string specifying search pattern for table names.}
-  \item{path}{string specifying path to \code{MDB} database.}
-  \item{server}{string specifying server name (\emph{e.g.}, \code{GFDB}, 
-    \code{DFBCV9TWVASP001}, \code{ORADEV}, or \code{ORAPROD}).}
-  \item{type}{type of server: \code{SQL}, \code{ORA} for Oracle, 
-    or \code{MDB} for Microsoft ACCESS.}
-  \item{ttype}{table type: \code{SEQUENCE}, \code{SYNONYM}, \code{SYSTEM TABLE},
-    \code{TABLE}, or \code{VIEW}; default \code{NULL} shows all table types.}
-  \item{trusted}{logical: if \code{TRUE}, allow \code{SQL}/\code{ORA} server 
-    to use a trusted DFO login ID.}
-  \item{uid, pwd}{user ID and password for authentication (if \code{trusted=FALSE}).}
-  \item{silent}{logical: if \code{TRUE} then table names are not printed to the console.}
-  \item{tenv}{target environment to which the result object \code{PBSdat} will be sent.}
+  \item{dbName}{\code{character} -- name of a remote \code{SQL}/\code{ORA}
+    or local \code{MDB} database}
+  \item{pattern}{\code{character} -- search pattern for table names}
+  \item{path}{\code{character} -- path to \code{MDB} database}
+  \item{server}{\code{character} -- server name (\emph{e.g.}, \code{GFDB}, 
+    \code{DFBCV9TWVASP001}, \code{ORADEV}, or \code{ORAPROD})}
+  \item{type}{\code{character} -- type of server: \code{SQL}, \code{ORA} for Oracle, 
+    or \code{MDB} for Microsoft ACCESS}
+  \item{ttype}{\code{character} -- table type: \code{SEQUENCE}, \code{SYNONYM}, \code{SYSTEM TABLE},
+    \code{TABLE}, or \code{VIEW}; default \code{NULL} shows all table types}
+  \item{trusted}{\code{logical} -- if \code{TRUE}, allow \code{SQL}/\code{ORA}
+    server to use a trusted DFO login ID}
+  \item{uid, pwd}{\code{character} -- user ID and password for authentication (if \code{trusted=FALSE})}
+  \item{silent}{\code{logical} -- if \code{TRUE}, do not print table names to the console}
+  \item{tenv}{\code{environment} -- target environment to which the result object \code{PBSdat} will be sent}
 }
 \details{
   The results of \code{RODBC::sqlTables} are dumped to a data frame 
@@ -42,30 +42,14 @@ listTables(dbName, pattern=NULL, path=getwd(), server=NULL,
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
   \emph{locus opus}: Remote office, Vancouver BC\cr
-  Last modified \code{Rd: 2021-06-15}\cr
+  Last modified \code{Rd: 2025-03-20}
 }
-\seealso{ 
-  \code{\link{getFile}}, \code{\link{getData}}
-}
-\examples{
-local(envir=.PBStoolEnv,expr={
-pbsfun=function(os=.Platform$OS.type,arch=.Platform$r_arch,dfo=FALSE) {
-  if (os=="windows") {
-    if(dfo) {
-      cat("Tables in 'PacHarvest' matching pattern 'Species'\n")
-      listTables("PacHarvest",pattern="Species") }
-    else if (arch=="i386") {
-      cat("Tables in 'Examples.mdb'\n")
-      listTables("Examples",type="MDB",ttype=c("TABLE","VIEW"),path=.getSpath())
-    }
-    else 
-      showMessage("Access to Examples.mdb only works for Microsoft Access on 32-bit Windows OS")
-  }
-  else showMessage("If logged onto DFO network, set argument 'dfo=T'")
-  invisible() }
-pbsfun()
-})
+\seealso{
+In package \pkg{PBStools}:\cr
+  \code{\link[PBStools]{getFile}},
+  \code{\link[PBStools]{getData}}
 }
 \keyword{data}
 \keyword{utilities}
 \concept{M01_Utility}
+

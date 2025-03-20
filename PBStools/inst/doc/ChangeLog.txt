@@ -10,6 +10,17 @@ Authors: RH  = Rowan Haigh
          BK  = Brian Krishka
 ------------------------------
 
+1.43.7 (2025-03-20)  [Rcheck=T, Rbuild=T]
+  * Rcode
+    + Added new function `getGreek' to generate Greek letters (RH 250307)
+    + Removed PJS survey functions (module M09_PJSsurvey); transferred to new repository named `PJSsurvey' (RH 250319)
+    + Removed financial functions (module M10_Financial) (RH 250319)
+  * Documentation
+    + Added new Rd file called `getGreek.Rd' (RH 250310)
+    + Removed Rd files describing PJS survey functions (RH 250319)
+    + Removed `Examples.mdb'; only useable in 32-bit R (RH 250319)
+    + Modified Rd files that use `Example.mdb'
+
 1.43.6 (2025-03-06)  [Rcheck=T, Rbuild=T]
   * Documentation
     + Modified vignette `Catch_Reconstruction' (RH 250306)

@@ -1,7 +1,7 @@
 Package: PBStools
-Version: 1.43.6
-Date:    2025-03-06
-Title:   Tools to Tackle Onerous Tasks
+Version: 1.43.7
+Date:    2025-03-20
+Title:   Tools to Tackle Tricky Tasks
 Authors@R: c(
    person("Rowan", "Haigh", role = c("aut", "cre"), email = "rowan.haigh@dfo-mpo.gc.ca"),
    person(c("Jon", "T."), "Schnute", role = "ctb", email = "schnutej@shaw.ca"),

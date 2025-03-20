@@ -1,10 +1,11 @@
 \name{splineCPUE}
 \alias{splineCPUE}
 \title{
-Spline Curve Through CPUE Series
+  Spline Curve Through CPUE Series
 }
 \description{
-Fit a series of spline curves through a CPUE index series using various degrees of freedom.
+  Fit a series of spline curves through a CPUE index series
+  using various degrees of freedom.
 }
 \usage{
 splineCPUE(dat, ndf=50, strSpp="ZZZ", ufld="cpue",
@@ -63,14 +64,15 @@ Can. J. Fish. Aquat. Sci. 68(6). 1124-1138.
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
   \emph{locus opus}: Remote office, Vancouver BC\cr
-  Last modified \code{Rd: 2024-02-28}
+  Last modified \code{Rd: 2025-03-20}
 }
 \seealso{
 In package \pkg{PBStools}:\cr
   \code{\link[PBStools]{findPV}},
-  \code{\link[PBStools]{plotIndex}},
   \code{\link[PBStools]{trend}},
-  \code{\link[PBStools]{weightBio}}.
+  \code{\link[PBStools]{weightBio}}\cr
+In package \pkg{PJSsurvey}:\cr
+  \code{\link[PJSsurvey]{plotIndex}}
 }
 % Add one or more standard keywords, see file 'KEYWORDS' in the
 % R documentation directory (show via RShowDoc("KEYWORDS")):
@@ -79,5 +81,5 @@ In package \pkg{PBStools}:\cr
 \keyword{smooth}
 % Use only one keyword per line.
 % For non-standard keywords, use \concept instead of \keyword:
-\concept{M06_Assessment}
+\concept{CPUE}
 % Use only one concept per line.

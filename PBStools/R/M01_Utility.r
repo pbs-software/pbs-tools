@@ -29,6 +29,7 @@
 ##  gatherVals......Gathers data from multiple columns into key-value pairs (replaces tidyr::gather).
 ##  getData.........Get data from a variety of sources (mostly ODBC)
 ##  getFile.........Get a dataset (binary libraries, binary local, dumped data, comma-delimited text.
+##  getGreek........Generate Greek letters using unicodes.
 ##  getName.........Get the names of the input object.
 ##  getODBC.........Get a string vector of ODBC drivers on user's Windows system.
 ##  getVer..........Get version of loaded or installed R packages
@@ -1782,6 +1783,32 @@ getFile <- function(..., list=character(0), path=getwd(),
 	invisible()
 }
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~getFile
+
+
+## getGreek ----------------------------2025-03-07
+##  Generate Greek letters using unicodes.
+## ---------------------------------------------RH
+getGreek <- function(letter, lower=TRUE) 
+{
+	if (lower) {
+		unicodes = paste0("03b",c(1:9, letters[1:6]))
+		unicodes = c(unicodes, paste0("03c",c(0:1, 3:9)) )
+	} else {
+		unicodes = paste0("039",c(1:9, letters[1:6]))
+		unicodes = c(unicodes, paste0("03a",c(0:1, 3:9)) )
+	}
+	greek = convUTF(paste0("\\u{", unicodes, "}"))
+	names(greek) = c("alpha","beta","gamma","delta","epsilon","zeta","eta","theta","iota","kappa",
+		"lambda","mu","nu","xi","omicron","pi","rho","sigma","tau","upsilon","phi","chi","psi","omega")
+	if (!missing(letter)) {
+		is.letter =  is.element(letter, names(greek))
+		if (!any(is.letter)) return("no matches")
+		if (!all(is.letter)) letter = letter[is.letter]
+		greek = greek[letter]
+	}
+	return(greek)
+}
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~getGreek
 
 
 ## getName------------------------------2009-05-11
