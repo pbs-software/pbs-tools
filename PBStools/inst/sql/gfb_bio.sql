@@ -1,4 +1,4 @@
--- Get specimen biological data from GFBioSQL (last revised 2022-12-01)
+-- Get specimen biological data from GFBioSQL (last revised 2025-04-23)
 -- Note: Not all users can access the Schnute overlay for table names.
 
 SET NOCOUNT ON
@@ -171,7 +171,7 @@ FROM
 WHERE 
   --COALESCE(GS.GENETIC_CODE, B03.SPECIES_CODE) IN (@sppcode)
   B03.SPECIES_CODE IN (@sppcode)
-  AND B02.MAJOR_STAT_AREA_CODE IN (@major)
+  AND B02.MAJOR_STAT_AREA_CODE IN (1,3,4,5,6,7,8,9,11,71,72,73,74,75,76,77) -- change back to '@major' after revised 'getData' makes its way into package PBStools
   --AND B02.FE_SUB_LEVEL_ID IS NULL  -- FISHING_EVENT_ID REPEATED MANY TIMES FOR HOOKS AND TRAPS IF NOT NULL (STUPID IDEA)
 
 -- Gather earliest GROUPING_CODE by FISHING_EVENT_ID (changed 180129 to match gfb_catch_records.sql)
@@ -486,6 +486,13 @@ SELECT
     WHEN AA.MAJOR_STAT_AREA_CODE IN (7) THEN '5C'
     WHEN AA.MAJOR_STAT_AREA_CODE IN (8) THEN '5D'
     WHEN AA.MAJOR_STAT_AREA_CODE IN (9) THEN '5E'
+    WHEN AA.MAJOR_STAT_AREA_CODE IN (71) THEN '3CD'
+    WHEN AA.MAJOR_STAT_AREA_CODE IN (72) THEN '3D5A'
+    WHEN AA.MAJOR_STAT_AREA_CODE IN (73) THEN '5AB'
+    WHEN AA.MAJOR_STAT_AREA_CODE IN (74) THEN '5BC'
+    WHEN AA.MAJOR_STAT_AREA_CODE IN (75) THEN '5CD'
+    WHEN AA.MAJOR_STAT_AREA_CODE IN (76) THEN '5DE'
+    WHEN AA.MAJOR_STAT_AREA_CODE IN (77) THEN '5BE'
     ELSE '0' END AS PMFC,                                     -- B02_Fishing_Event
   ISNULL(AA.DFO_STAT_AREA_CODE,'0') AS PFMA,                  -- B02_Fishing_Event
   ISNULL(AA.DFO_STAT_SUBAREA_CODE,0) AS PFMS,                 -- B02_Fishing_Event
@@ -611,25 +618,25 @@ SELECT * FROM #GFBBIO
 -- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="394") -- Rougheye Rockfish (RER: 191015, 191220, 200106 | for 2020 assess)
 -- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="425") -- Blackspotted Rockfish (BSR: 191015, 191220, 200106 | for 2020 assess)
 -- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="610") -- Rex Sole (RXL: 200123 | for 2020 MPF)
--- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp=c("394","425")) -- Rougheye/Blackspotted (REBS: 200107, 200228, 200316 for 2020 assess)
+-- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp=c("394","425")) -- Rougheye/Blackspotted (REBS: 200107, 200228, 200316 [2020 WP])
 -- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="437") -- Canary Rockfish (CAR: 200720, 200903 | for PJS)
--- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="440") -- Yellowmouth Rockfish (YMR: 200720, 200903, 200928, 210120, 210208 | for 2021 assess)
--- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="435") -- Bocaccio (BOR: 211014 | for 2021 update)
+-- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="440") -- Yellowmouth Rockfish (YMR: 200720, 200903, 200928, 210120, 210208 [2021 WP])
+-- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="435") -- Bocaccio (BOR: 211014 [2021 SR])
 -- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="225") -- Pacific Hake (PAK: 211210 | for PJS)
 -- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="396") -- Pacific Ocean Perch (POP: 210217, 211021, 221021 | for PJS)
 -- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="453") -- Longspine Thornyhead (LST: 220309 | for RH)
--- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="437") -- Canary Rockfish (CAR: 200720, 200903, 211013, 211123, 220502 | for 2022 assess)
+-- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="437") -- Canary Rockfish (CAR: 200720, 200903, 211013, 211123, 220502 [2022 WP])
 -- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="602") -- Arrowtooth Flounder (ARF: 180619, 180829, 180911, 200908, 200914, 201007, 230112 | for 2022 assess)
 -- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="401") -- Redbanded Rockfish (RBR: 230411 | for SCL)
--- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="396") -- Pacific Ocean Perch (POP: 230117, 230428 | for 2023 assess)
--- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="607") -- Petrale Sole (PEL: 230925 | for Mackenzie Mazur)
--- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="435") -- Bocaccio (BOR: 230117, 240102 | for 2024 update)
--- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="418") -- Yellowtail Rockfish (180531, 200910, 240208, 240315, 240320 | for 2024 assess)
+-- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="396") -- Pacific Ocean Perch (POP: 230117, 230428 [2023 WP])
+-- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="607") -- Petrale Sole (PEL: 230925 [MM])
+-- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="435") -- Bocaccio (BOR: 230117, 240102 [2024 SR])
+-- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="418") -- Yellowtail Rockfish (180531, 200910, 240208, 240315, 240320 [2024 WP])
 -- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="009") -- Rougheye Rockfish (240731) -- no records
--- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="394") -- Rougheye Rockfish (RER: 240731, 240904 | for Nick Fisch)
--- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="425") -- Blackspotted Rockfish (240731, 240904 | for Nick Fisch)
--- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="044") -- Spiny Dogfish (DOG: 241024 | for Dee Finn)
--- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="405") -- Silvergray Rockfish (SGR: 240731, 241108 [WP])
+-- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="394") -- Rougheye Rockfish (RER: 240731, 240904 [NF])
+-- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="425") -- Blackspotted Rockfish (BSR 240731, 240904 [NF])
+-- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="044") -- Spiny Dogfish (DOG: 241024 [DF])
 -- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="228") -- Walleye Pollock (WAP: 241125 [DH])
+-- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="405") -- Silvergray Rockfish (SGR: 240731, 241108, 250414, 250423 [2025 WP])
 
--- DF=Dee Finn, DH=Dana Haggarty, MM=Mackenzie Mazur, NF=Nick Fisch, PJS=Paul Starr, RH=Rowan Haigh, WP=working paper
+-- DF=Dee Finn, DH=Dana Haggarty, MM=Mackenzie Mazur, NF=Nick Fisch, PJS=Paul Starr, RH=Rowan Haigh, SR=Science Response, WP=working paper

@@ -10,6 +10,16 @@ Authors: RH  = Rowan Haigh
          BK  = Brian Krishka
 ------------------------------
 
+1.43.8 (2025-04-23)  [Rcheck=T, Rbuild=T]
+  * Rcode
+    + Modified function `calcMA' to deal with moving-average window more accurately (RH 250416)
+    + Added function `smoothPDO' to smooth environmental anomalies (RH 250416)
+    + Updated functions `adjustMajor', `getData', and `linguaFranca' (RH 230423)
+  * Scode
+    + Updated `gfb_bio.sql' to account for the combination areas created by the new shoreside biosampling program (RH 250423)
+  * Documentation
+    + Added french version of the catch reconstruction pdf (RH 250423)
+
 1.43.7 (2025-03-20)  [Rcheck=T, Rbuild=T]
   * Rcode
     + Added new function `getGreek' to generate Greek letters (RH 250307)
@@ -19,7 +29,7 @@ Authors: RH  = Rowan Haigh
     + Added new Rd file called `getGreek.Rd' (RH 250310)
     + Removed Rd files describing PJS survey functions (RH 250319)
     + Removed `Examples.mdb'; only useable in 32-bit R (RH 250319)
-    + Modified Rd files that use `Example.mdb'
+    + Modified Rd files that use `Examples.mdb'
 
 1.43.6 (2025-03-06)  [Rcheck=T, Rbuild=T]
   * Documentation

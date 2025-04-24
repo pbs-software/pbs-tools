@@ -1,0 +1,998 @@
+\documentclass[letterpaper,11pt,fleqn]{article}
+%\VignetteIndexEntry{Catch Reconstruction}
+%\VignettePackage{PBStools}
+\usepackage[T1]{fontenc}
+
+% Packages
+%\usepackage{Sweave}
+\usepackage{graphicx}
+\usepackage{verbatim,fancyvrb}
+\usepackage[top=1in, bottom=1in, left=1in, right=1in]{geometry} %  page margins
+\usepackage[font=small,format=plain,labelfont=bf,indention=0.25in,labelsep=period,justification=raggedright]{caption}
+\usepackage{parskip}
+\usepackage[hang,flushmargin,multiple]{footmisc}
+\interfootnotelinepenalty=10000
+%\usepackage{clipboard}
+
+%% Fonts
+\renewcommand{\rmdefault}{phv}% Helvetica
+\renewcommand{\sfdefault}{phv}% Helvetica
+\usepackage[scaled=1.1]{inconsolata} %% trial and error
+\renewcommand{\ttdefault}{zi4} %% pcr (courier) can be alernative
+\usepackage{pifont}%% for check marks
+%\usepackage(textcomp, logix)%% for straightquotes
+
+% http://tex.stackexchange.com/questions/49788/hyperref-url-long-url-with-dashes-wont-break?rq=1
+\usepackage[hyphens]{url}
+\def\UrlFont{\small\tt}
+
+\usepackage[round]{natbib}
+\usepackage{lscape}
+\usepackage[utf8]{inputenc}
+\usepackage{mathtools}
+\usepackage{longtable,array} % need array when specifying a ragged right column:  >{\raggedright\arraybackslash}{p2in}
+\usepackage{tabularx}
+\usepackage{xifthen}         % provides \ifthenelse and \isempty
+%\usepackage{amsmath}
+  \setlength{\mathindent}{0.5in}
+
+\usepackage{hyperref}
+% from Sweave.Rnw in C:\Apps\R\R300\library\utils\doc
+\hypersetup{%
+colorlinks,%
+plainpages=true,%
+linkcolor=black,%
+citecolor=black,%
+urlcolor=blue,%
+%pdfstartview=FitH,% or Fit
+pdfstartview=Fit, %{XYZ null null 1},%
+pdfview={XYZ null null null},%
+pdfpagemode=UseOutlines,% for bookmarks
+pdfauthor={Rowan Haigh},%
+pdftitle={Mise \`{a} jour sur la reconstitution des prises},%
+pdfsubject={Construire l'historique des prises de s\'{e}baste}%
+}
+%% Google AI
+%% "Reconstruire" generally refers to rebuilding something physical, like a building or a structure. 
+%% "Reconstituer" can have a broader meaning, including rebuilding, but also refers to piecing together something broken, creating a description or idea based on information, or bringing something back to its original state. 
+%% Both "reconstruire" and "reconstituer" can be used to describe reconstructing historical fisheries catch data, but "reconstituer" is generally more appropriate.
+
+\usepackage{bookmark}
+\bookmarksetup{numbered,open,}
+\usepackage{pdfcomment}
+
+\raggedright
+%\setlength{\hangindent}{0.25in}
+\def\noi{\noindent}
+\def\noh{\noindent \hangindent=\parindent}
+\def\tab{\hspace{0.5 in}}
+\newcommand\tstrut{\rule{0pt}{2.4ex}}         % top strut for table row
+\newcommand\bstrut{\rule[-1.0ex]{0pt}{0pt}}   % bottom strut for table row
+
+% For colors
+\usepackage{color}
+\definecolor{red}{rgb}{0.8039216,0.2156863,0}
+\definecolor{green}{RGB}{0, 128, 0}
+\definecolor{blue}{rgb}{0, 0, 1}
+\definecolor{slategrey}{rgb}{0.4392157, 0.5019608, 0.5647059}
+\definecolor{darkslategrey}{RGB}{47, 79, 79}
+\definecolor{deepskyblue}{rgb}{0, 0.7490196, 1}
+\definecolor{gainsboro}{rgb}{0.8627451,0.8627451,0.8627451}
+\definecolor{aliceblue}{RGB}{240, 248, 255}
+\definecolor{dodgerblue}{RGB}{24, 116, 205}
+\definecolor{moccasin}{RGB}{255, 236, 204}
+\definecolor{honeydew}{RGB}{240, 255, 240}
+\definecolor{lightcyan}{RGB}{224, 255, 255}
+
+% Definitions
+%\newfont{inc}{inconsolata} 
+\newcommand{\slan}{{\tt S}}
+\newcommand{\rlan}{{\tt R}}
+\newcommand{\pbsd}{{\tt PBSdata}}
+\newcommand{\pbsf}{{\tt PBSfishery}}
+\newcommand{\pbst}{{\tt PBStools}}
+\newcommand{\pbsdat}{{\it PBS Data}}
+\newcommand{\tcl}{{\tt Tcl/Tk}}
+\newcommand{\pc}{\%}
+\newcommand{\tqs}{\textquotesingle}
+%\newcommand{\tqd}{\DoubleQuote}
+
+% from RODBC.Rnw
+\newcommand{\code}[1]{\grey{\texttt{#1}}}
+\newcommand{\pkg}[1]{{\bf #1}}
+\newcommand{\var}[1]{\emph{#1}}
+\newcommand{\link}[1]{#1}
+\newcommand{\sQuote}[1]{`#1'}
+\newcommand{\dQuote}[1]{``#1''}
+\newcommand{\eqn}[1]{\begin{equation}#1\end{equation}}
+\newcommand{\gfrac}[2]{\genfrac{}{}{}{0}{#1}{#2}}
+
+\newcommand{\gui}[1]{\small\textmd{\textsf{#1}}\normalsize}
+\newcommand{\db}[1]{\small\textmd{\textsf{#1}}\normalsize}
+\newcommand{\func}[1]{{\textcolor{dodgerblue} {#1}}}
+\newcommand{\ital}[1]{{\it #1}}
+\newcommand{\bold}[1]{{\bf #1}}
+\newcommand{\under}[1]{{\underline {#1}}}
+
+\newcommand{\red}[1]{{\textcolor{red} {#1}}}
+\newcommand{\green}[1]{{\textcolor{green} {#1}}}
+\newcommand{\blue}[1]{{\textcolor{blue} {#1}}}
+\newcommand{\grey}[1]{{\textcolor{darkslategrey} {#1}}}
+\newcommand{\sky}[1]{{\textcolor{deepskyblue} {#1}}}
+%\newcommand{\dfo}[1]{{\colorbox{aliceblue}{\color{slategrey} {#1}}}}
+%\colorbox{declared-color1}{\color{declared-color2}{text}}
+
+%% https://mjtsai.com/blog/2005/07/29/roman-straight-quotes-in-pdflatex/
+\def\softquote{\hspace{-0.15em}\rotatebox{45}{\hbox{\textrm\'{}} }\hspace{-0.5em}}
+\def\hardquote{\hspace{-0.1em}\rotatebox{20}{\hbox{$'$} }\hspace{-0.5em}}
+%% In the end, just use \textquotesingle
+%\newcommand{\supquote}[1]{\textquotesingle\hspace{0.1em}\code{#1}\textquotesingle}
+%\newcommand{\supquote}[1]{\textquotesingle\code{#1}\textquotesingle}
+\newcommand{\angL}{\guillemotleft\,}
+\newcommand{\angR}{\,\guillemotright}
+\newcommand{\supquote}[1]{\guillemotleft\,\code{#1}\,\guillemotright}
+
+
+\newcommand\pbsfig[4]{    % #1=filename, #2=main caption, #3=figure height, #4=short caption
+	\begin{figure}[ht!] %[htbp]
+	\centering
+	\includegraphics[width=6.5in,height=#3in,keepaspectratio=TRUE]{#1.png}
+	% http://xelatex.blogspot.ca/2008/03/newcommand-with-optional-argument.html
+	\ifthenelse{\isempty{#4}}
+		{\caption[#2]{(\emph{#1}) #2}\vspace{1ex}}
+		{\caption[#4]{(\emph{#1}) #2}\vspace{1ex}}
+	\label{fig:#1}
+	\end{figure}
+	%\clearpage
+}
+%% #1=figure1 #2=figure2 #3=label #4=caption #5=width (fig) #6=height (fig) #7=short caption
+\newcommand\figbeside[7]{
+\begin{figure}[!ht]
+  \centering
+  \pdftooltip{
+  \begin{minipage}[c]{0.475\textwidth}
+    \begin{center}
+    \includegraphics[width=#5in,height=#6in,keepaspectratio=TRUE]{{#1}.png}
+    \end{center}
+    %\caption{#3}
+    %\label{fig:#1}
+  \end{minipage}}{Figure~\ref{fig:#3} left}%
+  \quad
+  \pdftooltip{
+  \begin{minipage}[c]{0.475\textwidth}
+    \begin{center}
+    \includegraphics[width=#5in,height=#6in,keepaspectratio=TRUE]{{#2}.png}
+    \end{center}
+    %\caption{#4}
+    %\label{fig:#2}
+  \end{minipage}}{Figure~\ref{fig:#3} right}
+	\ifthenelse{\isempty{#7}}
+		{\caption{#4}}
+		{\caption[#7]{#4}}
+  \label{fig:#3}
+  \end{figure}
+}
+\newcommand\example[1]{    % #1 = function name (or any text) for example line.
+	\textbf{\emph{Example~(#1):}}\\ \vspace{3 pt}
+}
+\newcommand\results[1]{    % #1 = function name (or any text) for example line.
+	\textbf{\emph{Output~(#1):}}\\ \vspace{3 pt}
+}
+% Coloured box environment
+% Source: Manifold @ http://answers.google.com/answers/threadview?id=282787
+\makeatletter\newenvironment{dfobox}{%
+   \begin{lrbox}{\@tempboxa}\begin{minipage}{\columnwidth}\raggedright}{\end{minipage}\end{lrbox}%
+   \colorbox{moccasin}{\usebox{\@tempboxa}}
+}\makeatother
+
+% Example box environment
+% Source: Manifold @ http://answers.google.com/answers/threadview?id=282787
+\makeatletter\newenvironment{examplebox}{%
+   \begin{lrbox}{\@tempboxa}\begin{minipage}{\textwidth}\raggedright}{\end{minipage}\end{lrbox}%
+   \colorbox{lightcyan}{\usebox{\@tempboxa}}
+}\makeatother
+
+% Output box environment
+% Source: Manifold @ http://answers.google.com/answers/threadview?id=282787
+\makeatletter\newenvironment{outputbox}{%
+   \begin{lrbox}{\@tempboxa}\begin{minipage}{\textwidth}\raggedright}{\end{minipage}\end{lrbox}%
+   \colorbox{honeydew}{\usebox{\@tempboxa}}
+}\makeatother
+
+% Item box environment
+% Source: Manifold @ http://answers.google.com/answers/threadview?id=282787
+\makeatletter\newenvironment{itembox}{%
+   \begin{lrbox}{\@tempboxa}\begin{minipage}{\textwidth}\raggedright}{\end{minipage}\end{lrbox}%
+   \colorbox{moccasin}{\usebox{\@tempboxa}}
+}\makeatother
+
+% Get rid of all that margin space
+\topmargin -0.5in 
+\oddsidemargin 0in \evensidemargin 0in
+\textheight 9.0in \textwidth 6.5in
+
+% Undoing the dumb defaults for float
+% http://mintaka.sdsu.edu/GF/bibliog/latex/floats.html
+% Alter some LaTeX defaults for better treatment of figures:
+% See p.105 of "TeX Unbound" for suggested values.
+% See pp. 199-200 of Lamport's "LaTeX" book for details.
+% General parameters, for ALL pages:
+  \renewcommand{\topfraction}{0.9}% max fraction of floats at top
+  \renewcommand{\bottomfraction}{0.8}% max fraction of floats at bottom
+% Parameters for TEXT pages (not float pages):
+  \setcounter{topnumber}{2}
+  \setcounter{bottomnumber}{2}
+  \setcounter{totalnumber}{4}     % 2 may work better
+  \setcounter{dbltopnumber}{2}    % for 2-column pages
+  \renewcommand{\dbltopfraction}{0.9}	% fit big float above 2-col. text
+  \renewcommand{\textfraction}{0.07}	% allow minimal text w. figs
+% Parameters for FLOAT pages (not text pages):
+  \renewcommand{\floatpagefraction}{0.7}	% require fuller float pages
+% N.B.: floatpagefraction MUST be less than topfraction !!
+  \renewcommand{\dblfloatpagefraction}{0.7}	% require fuller float pages
+
+\setlength{\parskip}{6pt plus 6pt minus 3pt}
+%Latex: Squeezing the Vertical White Space
+%http://www.terminally-incoherent.com/blog/2007/09/19/latex-squeezing-the-vertical-white-space/
+\usepackage[compact]{titlesec}
+%\titlespacing{\section}{0pt}{*0}{*0}
+%\titlespacing{\section}{0pt}{*0}{*0}
+%\titlespacing{\subsection}{0pt}{*0}{*0}
+%\titlespacing{\subsubsection}{0pt}{*0}{*0}
+\titlespacing{\section}{0pt}{12pt}{6pt}
+\titlespacing{\subsection}{0pt}{9pt}{6pt}
+\titlespacing{\subsubsection}{0pt}{6pt}{6pt}
+
+%% https://latex.org/forum/viewtopic.php?t=3889
+\newcounter{crumb}
+\newcommand{\critem}{%
+	\stepcounter{crumb}%
+	\thecrumb}
+
+\newcounter{crump}
+\newcommand{\criten}{%
+	\stepcounter{crump}%
+	\thecrump}
+
+%\newcommand{\popfart}{Sumtingwong}
+%% Create a blue underlined hyperlink (e.g., http://tex.stackexchange.com/questions/233668/new-ulem-command-not-working)
+\usepackage[normalem]{ulem}                         %% The ulem package: underlining for emphasis, can also strikethrough
+\newcommand\bluline{\bgroup\markoverwith
+  {\textcolor{blue}{\rule[-0.5ex]{2pt}{0.4pt}}}\ULon} %% wtf
+\newcommand\urldfo[2]{\href{#1}{\bluline{#2}}}
+
+%% Current species being assessed:
+\newcommand{\currRRF}{\code{SAR}}
+\newcommand{\currYR}{2025}
+
+\renewcommand{\contentsname}{Contenu}
+\renewcommand{\listfigurename}{Liste des figures}
+\renewcommand{\listtablename}{Liste des tableaux}
+\renewcommand{\refname}{R\'{e}f\'{e}rences}
+%===========================================================
+\begin{document}
+\pagenumbering{roman}
+
+\title{Mise \`{a} jour sur la reconstitution des prises}
+\author{Rowan Haigh}
+
+\maketitle
+\tableofcontents
+\listoftables % (lot)
+\listoffigures % (lof)
+%\clearpage
+%\fancyfoot[R]{\small \date{}}
+
+%\clearpage
+%\begin{minipage}{\textwidth}
+%\vspace*{4in}
+%\begin{center}
+%\LARGE\it\grey{Page left blank for printing purposes.}
+%\end{center}
+%\vfill % equivalent to \vspace{\fill}
+%\end{minipage}
+
+%\vspace{4.0 in}
+%\centerline{\large\it\grey{Page left blank for printing purposes.}\normalsize}
+
+\newpage
+\pagenumbering{arabic}
+
+%%------------------------------------------------
+%\phantomsection
+%\addcontentsline{toc}{section}{Introduction} % Adds to bookmarks only
+%\section* {Introduction}
+\section{Introduction}
+
+Le package \pkg{PBStools} comprend une fonction appel\'{e}e \supquote{buildCatch}, qui offre une m\'{e}thode efficace pour reconstruire les captures de s\'{e}baste (\code{RRF}) de 1918 \`{a} nos jours le long de la c\^{o}te de la Colombie-Britannique \citep{Haigh-Yamanaka:2011}. 
+La derni\`{e}re \'{e}valuation de stock \`{a} utiliser \code{buildCatch} concernait le s\'{e}baste argent\'{e} (SAR, \emph{Sebastes brevispinis}) en 2025. 
+Le programme de s\'{e}bastes extrac\^{o}tier (PSE), actuellement dirig\'{e} par Rowan Haigh, met g\'{e}n\'{e}ralement \`{a} jour le code \`{a} chaque \'{e}valuation de stock.
+
+Bien que la reconstitution des prises (RP) remonte \`{a} 1918, le d\'{e}but de toute p\^{e}che au s\'{e}baste est g\'{e}n\'{e}ralement fix\'{e} \`{a} 1935, avant que la p\^{e}che ne commence \`{a} se d\'{e}velopper pendant la Seconde Guerre mondiale. 
+Auparavant, les prises de \code{RRF} au chalut \'{e}taient n\'{e}gligeables, et les prises des flottilles non chaluti\`{e}res \'{e}taient infimes. Entre 1950 et 1975, les navires am\'{e}ricains capturaient r\'{e}guli\`{e}rement plus de s\'{e}bastes que les navires canadiens.
+En plus, du milieu des ann\'{e}es 1960 au milieu des ann\'{e}es 1970, les flottes \'{e}trang\`{e}res (russes et japonaises) ont captur\'{e} de grandes quantit\'{e}s de s\'{e}baste, principalement du s\'{e}baste \`{a} longue m\^{a}choire (\code{SLM}). 
+Ces importantes prises ont \'{e}t\'{e} signal\'{e}es pour la premi\`{e}re fois par divers auteurs (Westrheim et al., 1972; Gunderson et al., 1977; Leaman et Stanley, 1993); cependant, Ketchen (1980b,a) a r\'{e}examin\'{e} les prises des flottes \'{e}trang\`{e}res, en grande partie parce que les statistiques de l'URSS appelaient tous les s\'{e}bastes \supquote{perches}, tandis que les Japonais utilisaient indiff\'{e}remment le terme \supquote{Pacific Ocean Perch}.
+Dans la reconstitution des prises, toutes les prises \'{e}trang\`{e}res historiques (d\'{e}barquements annuels de s\'{e}baste) sont suivies s\'{e}par\'{e}ment des d\'{e}barquements canadiens, converties en \code{RRF} captur\'{e}es \`{a} l'\'{e}tranger et ajout\'{e}es au total des d\'{e}barquements \code{RRF} pendant le processus de reconstitution.
+
+%%------------------------------------------------
+%\phantomsection
+%\addcontentsline{toc}{section}{Data Sources} % Adds to bookmarks only
+%\section* {Data Sources}
+\section{Sources de donn\'{e}es}
+
+Depuis 2015, tous les tableaux officiels de prises canadiennes des bases de donn\'{e}es ci-dessous (\`{a} l'exception de \code{PacHarv3}) ont \'{e}t\'{e} fusionn\'{e}s en un seul tableau appel\'{e} \supquote{GF\_MERGED\_CATCH}, accessible dans la base de donn\'{e}es \code{GFFOS} du MPO.
+Toutes les bases de donn\'{e}es du MPO sur les poissons de fond sont h\'{e}berg\'{e}es sur le serveur \code{DFBCV9TWVASP001} (qui sera bient\^{o}t modifi\'{e}). 
+Les prises \code{RRF} par secteur de p\^{e}che proviennent des sept bases de donn\'{e}es du MPO suivantes\,:
+
+\begin{itemize}
+	\item bordereaux de vente \code{PacHarv3} (1982-1995) -- hame\c{c}on et ligne seulement;
+	\item \code{GFCatch} (1954-1995) -- chalut et casier;
+	\item tableau de donn\'{e}es fusionn\'{e}es \code{PacHarvHL} (1986-2006) -- fl\'{e}tan, tra\^{i}ne de l'annexe II, s\'{e}baste ZN;
+	\item journaux de p\^{e}che \code{PacHarvSable} (1995-2005) -- casier et palangre \`{a} morue charbonni\`{e}re;
+	\item chalut d'observation \code{PacHarvest} (1996-2007) -- principalement chalut de fond; 
+	\item sous-ensemble de poissons de fond \code{GFFOS} du syst\`{e}me d'exploitation des p\^{e}ches (2006-pr\'{e}sent) -- toutes les p\^{e}cheries et les relev\'{e}s modernes; et
+	\item prises de merlu et relev\'{e}s de recherche en coentreprise \code{GFBioSQL} (1947-pr\'{e}sent) -- engins multiples types.
+\end{itemize}
+\code{GFBioSQL} est une base de donn\'{e}es SQL Server qui refl\`{e}te la base de donn\'{e}es Oracle \code{GFBio}.
+Toutes les sources de donn\'{e}es autres que \code{PacHarv3} ont \'{e}t\'{e} remplac\'{e}es par \code{GFFOS} \`{a} partir de 2007, car ce dernier r\'{e}f\'{e}rentiel \'{e}tait con\c{c}u pour enregistrer tous les d\'{e}barquements et rejets de la c\^{o}te Ouest canadienne provenant des p\^{e}ches commerciales et des activit\'{e}s de recherche.
+Les rapports dans \code{GFFOS} ont \'{e}t\'{e} modifi\'{e}s pour refl\'{e}ter les \supquote{secteurs} de p\^{e}che diff\'{e}rents pour certaines p\^{e}cheries\,; principalement, l'annexe II est devenue \supquote{aiguillat commun} et \supquote{morue-lingue}, tandis que la p\^{e}che \`{a} la ligne ZN est devenue \supquote{s\'{e}baste int\'{e}rieur} (eaux entre l'\^{i}le de Vancouver et la partie continentale de la Colombie Britannique) et \supquote{s\'{e}baste ext\'{e}rieur} (eaux du large, excluant les eaux int\'{e}rieures).
+
+Avant les bases de donn\'{e}es de capture modernes, les d\'{e}barquements historiques de s\'{e}bastes globaux -- soit de s\'{e}bastes totaux (\code{TRF}) soit de s\'{e}bastes autres que \code{POP} (\code{ORF}) -- \'{e}taient d\'{e}clar\'{e}s par huit sources de donn\'{e}es diff\'{e}rentes (voir \citealt{Haigh-Yamanaka:2011}). 
+La plus ancienne source historique de d\'{e}barquements de s\'{e}baste provient du Bureau f\'{e}d\'{e}ral de la statistique du Canada (1918-1950).
+\citet{Ketchen:1976} fournit la majeure partie des d\'{e}barquements de chalutage au cours de la p\'{e}riode interm\'{e}diaire (1950-1975).
+
+L'algorithme RP est cod\'{e} dans la fonction R \supquote{buildCatch}, qui se trouve dans le package R \href{https://github.com/pbs-software/pbs-tools}{PBStools}.
+L'objectif est d'estimer les prises reconstitu\'{e}es de toute esp\`{e}ce de s\'{e}baste, d\'{e}sign\'{e}e g\'{e}n\'{e}riquement par \supquote{RRF}, \`{a} partir des d\'{e}barquements d\'{e}clar\'{e}s et des rejets d\'{e}clar\'{e}s et estim\'{e}s.
+Les d\'{e}barquements estim\'{e}s sont calcul\'{e}s \`{a} l'aide d'un ratio (appel\'{e} \supquote{gamma} ici), soit RRF/ORF , soit RRF/TRF, afin de d\'{e}river le \code{RRF} \`{a} partir de l'\code{ORF} (s\'{e}bastes autres que \code{POP}) ou du \code{TRF} (s\'{e}bastes totaux). 
+De m\^{e}me, les rejets estim\'{e}s sont calcul\'{e}s \`{a} l'aide d'un ratio (appel\'{e} \supquote{delta} ici) RRF/TAR, o\`{u} TAR correspond \`{a} l'esp\`{e}ce cible d\'{e}barqu\'{e}e par p\^{e}cherie.
+
+%%------------------------------------------------
+\section{D\'{e}tails de la reconstitution}
+
+%%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{D\'{e}finition des termes}
+
+Voici un bref r\'{e}sum\'{e} de la reconstitution de la capture, avec un rappel de la d\'{e}finition des termes\,:
+
+\underline{P\^{e}cheries}\,: il y a cinq p\^{e}cheries dans la reconstitution (m\^{e}me si le chalut domine la plupart des captures du \code{RRF})
+\begin{itemize}
+	\item T  = chalut de fond (fond + mi-eau),
+	\item H  = palangre \`{a} fl\'{e}tan,
+	\item S  = casier/palangre \`{a} morue charbonni\`{e}re,
+	\item DL = p\^{e}che \`{a} la tra\^{i}ne/palangre de aiguillat commun et de morue-lingue (appel\'{e}e \`{a} l'origine \supquote{Schedule II}),
+	\item ZN = s\'{e}baste \`{a} l'hame\c{c}on et \`{a} la ligne (secteur appel\'{e} \supquote{ZN} de 1986 \`{a} 2006 et \supquote{s\'{e}baste ext\'{e}rieur} et \supquote{s\'{e}baste int\'{e}rieur} \`{a} partir de 2007).
+\end{itemize}
+\underline{TRF}: acronyme de \supquote{totales s\'{e}bastes} (toutes les esp\`{e}ces de \emph{Sebastes} et \emph{Sebastolobus})
+
+\underline{ORF}: acronyme de \supquote{autres s\'{e}bastes} (= \code{TRF} moins \code{POP}), prises d\'{e}barqu\'{e}es agr\'{e}g\'{e}es par ann\'{e}e, p\^{e}cherie et zone principale de la PMFC (Pacific Marine Fisheries Commission)
+
+\underline{POP}: s\'{e}baste \`{a} longue m\^{a}choire
+
+\underline{RRF}: esp\`{e}ces de s\'{e}bastes en cours de reconstitution (par exemple, \currRRF)
+
+\underline{TAR}: captures d\'{e}barqu\'{e}es de l'esp\`{e}ce cible, utilis\'{e}es pour les calculs de rejets
+
+\underline{L\,\&\,D}:~~L=  prises d\'{e}barqu\'{e}es, D= remises \`{a} l'eau (appel\'{e}es officieusement \supquote{rejets})
+
+\underline{gamma}: moyenne g\'{e}om\'{e}trique des ratios annuels des prises d\'{e}barqu\'{e}es, $\sum_i \text{RRF}_i^\text{L} / \text{ORF}_i^\text{L}$ , regroup\'{e}s par zone PMFC et p\^{e}cherie principales de la PMFC. 
+Pour les \code{RRF}, les ann\'{e}es de r\'{e}f\'{e}rence peuvent g\'{e}n\'{e}ralement \^{e}tre choisies de 1996 \`{a} l'ann\'{e}e en cours pour chaque p\^{e}cherie. 
+Pour chaque \code{RRF} particulier, les ratios \code{gamma} annuels doivent \^{e}tre examin\'{e}s afin de choisir un ensemble d'ann\'{e}es appropri\'{e} (utiliser la fonction \supquote{plotGREFS} apr\`{e}s une reconstitution initiale).
+
+\underline{delta}:  moyenne g\'{e}om\'{e}trique (ou arithm\'{e}tique) des ratios annuels des prises rejet\'{e}es aux prises d\'{e}barqu\'{e}es, $\sum_i \text{RRF}_i^\text{D} / \text{TAR}_i^\text{L}$, regroup\'{e}s par zone principale du PMFC et p\^{e}cherie en utilisant des ann\'{e}es de r\'{e}f\'{e}rence s\'{e}lectionn\'{e}es $i$ entre 1996 et 2006 pour la p\^{e}che au chalut et entre 2000 et 2004 pour toutes les autres p\^{e}cheries. 
+L'ensemble r\'{e}duit d'ann\'{e}es refl\`{e}te les p\'{e}riodes pendant lesquelles des enregistrements d'observateurs \supquote{fiables} \'{e}taient disponibles pour les rejets.
+
+\pagebreak
+%%------------------------------------------------
+%\phantomsection
+%\addcontentsline{toc}{section}{Changes since 2011} % Adds to bookmarks only
+%\section* {Changes to the reconstruction algorithm since 2011}
+\section{Modifications apport\'{e}es \`{a} l'algorithme de reconstitution depuis 2011}
+
+Les \'{e}valuations des stocks depuis \citet{Haigh-Yamanaka:2011} ont apport\'{e} soit des modifications permanentes \`{a} l'algorithme de reconstitution des captures, soit des choix sp\'{e}cifiques au stock \'{e}valu\'{e}.
+
+%%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{S\'{e}baste \`{a} longue m\^{a}choire (2012)}
+
+Dans les \'{e}valuations des stocks de s\'{e}baste \`{a} longue m\^{a}choire (\code{SLM}) dans les zones 3CD et 5DE \citep{Edwards-etal:2014_pop3CD, Edwards-etal:2014_pop5DE}, les auteurs ont document\'{e} plusieurs \'{e}carts par rapport \`{a} l'algorithme de reconstitution des captures introduit par \citet{Haigh-Yamanaka:2011}.
+
+%%++++++++++++++++++++++++++++++++++++++++++++++++
+\newcommand{\poptwelveone}{enregistrements de chaluts et de casiers de  \code{PacHarv3} (1954-1995)}
+\begin{itembox}
+\bold{Article~\critem}\,:~\poptwelveone~~(\green{\ding{51}} \currRRF~\currYR) 
+\end{itembox}\\ \vspace*{1ex}
+L'algorithme de reconstitution initial \citep{Haigh-Yamanaka:2011} utilisait \`{a} la fois \code{GFCatch} (enregistrements des journaux de bord, \citealt{Rutherford:1999}) et \code{PacHarv3} (tickets de caisse), car il \'{e}tait suppos\'{e} que les deux bases de donn\'{e}es enregistreraient les m\^{e}mes d\'{e}barquements.
+Sous cette hypoth\`{e}se, les deux sources pouvaient \^{e}tre compar\'{e}es par ann\'{e}e et par zone principale, et les valeurs maximales utilis\'{e}es. 
+Malheureusement, les tickets de caisse utilisaient de vastes zones statistiques, tandis que les journaux de bord utilisaient les zones et sous-zones du PMFC. 
+La conversion des premi\`{e}res aux secondes peut \^{e}tre effectu\'{e}e raisonnablement bien, mais deux grandes zones statistiques en particulier chevauchent les limites du PMFC, sans qu'il soit facile d'attribuer les captures (figure~\ref{fig:CR-PH3-Problem-Areas}).
+La premi\`{e}re zone, cod\'{e}e 9021, comprend les zones statistiques 2E et 102, qui couvrent de larges portions des PMFC 5B, 5C et 5D. 
+Pour \code{SLM} en particulier, la zone 9021 inclut le ravin Moresby dans les zones PMFC 5B et 5C. 
+La deuxi\`{e}me zone, cod\'{e}e 9270, comprend les zones statistiques 27 et 127, qui incluent une agglom\'{e}ration de \code{SLM} dans les zones PMFC 3D et 5A, au large de la pointe nord-ouest de l'\^{i}le de Vancouver. 
+Le probl\`{e}me survient, par exemple, lorsque GFCatch signale des d\'{e}barquements de \code{SLM} provenant des zones 3D et 5A dans la r\'{e}gion 9270, alors que les d\'{e}barquements de \code{SLM} signal\'{e}s par \code{PacHarv3} sont attribu\'{e}s uniquement \`{a} 3D ou 5A, qui ne correspondent pas aux d\'{e}barquements de \code{GFCatch}.
+Il n'existe aucune m\'{e}thode permettant de s\'{e}parer les prises de \code{PacHarv3} de ces deux grandes zones statistiques.
+
+Par cons\'{e}quent, seule la base de donn\'{e}es \code{GFCatch} pour les relev\'{e}s de chaluts et de casiers de 1954 \`{a} 1995 a \'{e}t\'{e} utilis\'{e}e, plut\^{o}t que de tenter de fusionner \code{GFCatch} et \code{PacHarv3}. 
+Ce point est quelque peu discutable, car les \'{e}valuations des stocks r\'{e}alis\'{e}es depuis 2015 par la PSE utilisent le tableau de donn\'{e}es de captures fusionn\'{e}es du \code{GFFOS}.
+
+\pbsfig{CR-PH3-Problem-Areas}{Zones statistiques probl\'{e}matiques dans la base de donn\'{e}es PacHarv3 qui s'\'{e}tendent sur plusieurs zones PMFC\,: 9021 (ombr\'{e} en vert) montre la zone statistique 102 du MPO (zone c\^{o}ti\`{e}re 2E exclue); 9270 (ombr\'{e} en bleu) montre la zone statistique 127 du MPO (zone c\^{o}ti\`{e}re 27 exclue).}{3.5}{Domaines statistiques probl\'{e}matiques dans PacHarv3}
+
+%%++++++++++++++++++++++++++++++++++++++++++++++++
+\newcommand{\poptwelvetwo}{conserver l'utilisation des donn\'{e}es \code{PacHarv3} pour les p\^{e}cheries H\&L}
+\begin{itembox}
+\bold{Article~\critem}\,:~\poptwelvetwo~~~(\green{\ding{51}} \currRRF~\currYR)
+\end{itembox}\\ \vspace*{1ex}
+Conserver l'utilisation des donn\'{e}es pour les p\^{e}cheries H\&L de \code{PacHarv3}\,; ces donn\'{e}es n'apparaissent pas dans d'autres bases de donn\'{e}es.
+
+%%++++++++++++++++++++++++++++++++++++++++++++++++
+\newcommand{\poptwelvethree}{inclure des prises suppl\'{e}mentaires de s\'{e}baste de la Colombie-Britannique pour la flotte japonaise}
+\begin{itembox}
+\bold{Article~\critem}\,:~\poptwelvethree~~(\green{\ding{51}} \currRRF~\currYR)
+\end{itembox}\\ \vspace*{1ex}
+Dans une \'{e}valuation ant\'{e}rieure des stocks de \code{SLM} pour 5ABC \citep{Edwards-etal:2012_pop5ABC}, les prises russes et japonaises ont \'{e}t\'{e} estim\'{e}es par \citet{Ketchen:1980_pop} pour la zone du bassin de la Reine-Charlotte (BRC); cependant, l'auteur n'a fourni qu'une annexe d'une page pour les estimations des prises de s\'{e}baste russe pour la c\^{o}te ouest de l'\^{i}le de Vancouver (COIV) et la c\^{o}te ouest de Haida Gwaii (COHG).
+Les chiffres de capture japonais n'ont pas \'{e}t\'{e} fournis pour COIV et COHG dans la reconstitution BRC.
+Heureusement, \citet{Ketchen:1980_gf} a rapport\'{e} des estimations des d\'{e}barquements de \supquote{Pacific Ocean Perch}, terme d\'{e}signant vraisemblablement tous les s\'{e}bastes, par la flotte japonaise. 
+Par cons\'{e}quent, les prises russes dans \citet{Ketchen:1980_pop} et japonaises dans \citet{Ketchen:1980_gf} ont \'{e}t\'{e} utilis\'{e}es.
+
+\begin{examplebox}
+\small valeurs par d\'{e}faut actuelles\,: \code{useCA = TRUE, useUS = TRUE, useFF = TRUE}
+\end{examplebox}
+
+%%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{S\'{e}baste \`{a} queue jaune (2014)}
+
+%%++++++++++++++++++++++++++++++++++++++++++++++++
+\newcommand{\ytrfourteenone}{ajouter une capture SQJ suppl\'{e}mentaire \`{a} l'objet de donn\'{e}es \supquote{rrfhistory}}
+\begin{itembox}
+\bold{Article~\critem}\,:~\ytrfourteenone~~(\green{\ding{51}} \currRRF~\currYR)
+\end{itembox}\\ \vspace*{1ex}
+L'\'{e}valuation du s\'{e}baste \`{a} queue jaune (SQJ) \citep{DFO-SAR:2015_ytr} a ajout\'{e} des donn\'{e}es suppl\'{e}mentaires \`{a} l' objet \supquote{rrfhistory}\footnote{rrfhistory est parall\`{e}le \`{a} l'objet principal POP|ORF|TRF appel\'{e} 'orfhistory', voir \citet{Haigh-Yamanaka:2011} pour toutes les sources historiques}, notamment les donn\'{e}es de capture de SQJ des flottes canadienne, am\'{e}ricaine et polonaise \citep{Ketchen:1980_gf}.
+Cette mesure visait \`{a} int\'{e}grer en 3D les captures \'{e}lev\'{e}es de SQJ (6\,700~t en 1975 et 2\,339~t en 1976) par les navires polonais.
+
+Les captures d'esp\`{e}ces traditionnelles de poissons de fond\footnote{carlottin anglais (\emph{Parophrys vetulus}), fausse limande (\emph{Lepidopsetta bilineatus}), plie de Californie (\emph{Eopsetta jordani}), limande-sole (\emph{Microstomus pacificus}), plie royale (\emph{Errex zachirus}), morue du Pacifique (\emph{Gadus macrocephalus}), morue-lingue (\emph{Ophiodon elongatus}), morue charbonni\`{e}re (\emph{Anoplopoma fimbria}), s\'{e}baste \`{a} longue m\^{a}choire (\emph{Sebastes alutus}), aiguillat commun (\emph{Squalus acanthias})} ont \'{e}t\'{e} d\'{e}clar\'{e}es pour la p\'{e}riode 1950-1975 par \citet{Ketchen:1976}.
+Un sous-ensemble de ces donn\'{e}es, \supquote{POP} et \supquote{ORF} (autres s\'{e}bastes \`{a} l'exclusion des \code{POP} (ou \code{SLM}), \'{e}galement d\'{e}clar\'{e}es par \citealt{Ketchen:1976}), appara\^{i}t dans l'objet de capture historique appel\'{e} \supquote{orfhistory}.
+(\code{TRF}, s\'{e}baste total, est simplement \code{POP} + \code{ORF}.)
+Ces donn\'{e}es contribuent aux captures historiques de s\'{e}bastes par ann\'{e}e, qui peuvent \^{e}tre utilis\'{e}es pour calculer le \code{RRF} par \code{gamma} (par exemple, RRF/ORF).
+
+Les captures des principales esp\`{e}ces de s\'{e}bastes\footnote{S\'{e}baste \`{a} queue jaune (\emph{S.\,favidus}), s\'{e}baste canari (\emph{S.\,pinniger}), s\'{e}baste argent\'{e} (\emph{S.\,brevispinis}), s\'{e}baste \`{a} bouche jaune (\emph{S.\,reedi}), s\'{e}baste bocace (\emph{S.\,paucispinis}), s\'{e}baste veuve (\emph{S.\,entomelas}), s\'{e}baste \`{a} raie rouge (\emph{S.\,proriger}), s\'{e}baste \`{a} {\oe}il \'{e}pineux (\emph{S.\,aleutianus}), s\'{e}baste \`{a} bandes rouges (\emph{S.\,babcocki})} ont \'{e}t\'{e} signal\'{e}es pour les ann\'{e}es 1967 \`{a} 1978 par \citet{Ketchen:1980_gf}.
+Ce dernier ensemble peut \^{e}tre ajout\'{e} \`{a} \supquote{rrfhistory} (seuls le SQJ, la morue charbonni\`{e}re, la morue-lingue et les esp\`{e}ces communes de poissons plats \'{e}taient pr\'{e}sents en 2014). 
+Le code RP cr\'{e}e un tableau de captures d\'{e}clar\'{e}es appel\'{e} \supquote{catmod}\footnote{\`{a} partir de deux sources de base de donn\'{e}es (DB)\,: \code{GFFOS.GF\_MERGED\_CATCH} et \code{PacHarv3.CATCH\_SUMMARY}} (\code{year} $\times$ \code{major} $\times$ \code{fid} $\times$ \code{catch}), qui sont principalement canadiennes mais peuvent inclure des donn\'{e}es \'{e}trang\`{e}res est intercept\'{e} s'il est fourni via \code{rrfhistory}. 
+Par cons\'{e}quent, \code{catmod} est un tableau contenant les \emph{d\'{e}barquements} et les rejets signal\'{e}s pour \code{RRF}, ainsi que les \emph{d\'{e}barquements} signal\'{e}s pour \code{ORF} et \code{TRF}.
+
+%%++++++++++++++++++++++++++++++++++++++++++++++++
+\newcommand{\ytrfourteentwo}{utiliser les zones offshore pour calculer le \code{gamma} et le \code{delta}}
+\begin{itembox}
+\bold{Article~\critem}\,:~\ytrfourteentwo~~(\red{\ding{55}} \currRRF~\currYR)
+\end{itembox}\\ \vspace*{1ex}
+Utiliser des zones extrac\^{o}ti\`{e}res s\'{e}lectionn\'{e}es qui refl\`{e}tent l'activit\'{e} et l'impact des flottes \'{e}trang\`{e}res sur cette esp\`{e}ce pour calculer les ratios \code{gamma} (RRF/ORF) et \code{delta} (RRF/TAR)\footnote{L'\'{e}valuation du s\'{e}baste \`{a} bandes rouges (SBR) \citep{Edwards-etal:2017_rbr} a \'{e}galement tent\'{e} de d\'{e}finir le \code{gamma} \`{a} partir de zones sp\'{e}cifi\'{e}es}.
+Initialement, des zones sp\'{e}cifiques (majeures, mineures, localit\'{e}s) ont \'{e}t\'{e} fournies \`{a} l'algorithme RP; cependant, les commentaires de la Soci\'{e}t\'{e} canadienne de recherche et de conservation des poissons de fond (SCRCPF), en particulier de Brian Mose, ont fourni un ensemble fixe de valeurs \code{gamma} par zone principale pour estimer le SQJ captur\'{e} par la flotte de chalutiers.
+
+\begin{examplebox}
+\small valeurs par d\'{e}faut actuelles\,:~~\code{refarea = NULL, refgear = NULL}\\
+\small arguments ad hoc\,:~~\code{pjs = FALSE, outside = FALSE}
+\end{examplebox}
+
+%%++++++++++++++++++++++++++++++++++++++++++++++++
+\newcommand{\ytrfourteenthree}{pr\'{e}ciser les ann\'{e}es de d\'{e}but pour l'adoption des prises d\'{e}barqu\'{e}es d\'{e}clar\'{e}es}
+\begin{itembox}
+\bold{Article~\critem}\,:~\ytrfourteenthree~~(\green{\ding{51}} \currRRF~\currYR)
+\end{itembox}\\ \vspace*{1ex}
+Permet \`{a} l'utilisateur de sp\'{e}cifier les ann\'{e}es par p\^{e}cherie (vecteur \`{a} cinq \'{e}l\'{e}ments appel\'{e} \supquote{useYR1}) pour que le RP commence \`{a} utiliser les captures d\'{e}clar\'{e}es (base de donn\'{e}es). 
+La valeur par d\'{e}faut est 1996 ; exceptions : 1956 pour les \code{SLM} captur\'{e}s au chalut (FID=1) et 1982 pour les \code{SLM}$\vert$\code{SYJ} captur\'{e}s par la morue-lingue (FID=4) ou le s\'{e}baste (FID=5).
+Estimez les d\'{e}barquements \code{RRF} (\`{a} l'aide de la m\'{e}thode \code{gamma}) pour les ann\'{e}es ant\'{e}rieures aux ann\'{e}es sp\'{e}cifi\'{e}es ou par d\'{e}faut.
+
+\begin{examplebox}
+\small valeur par d\'{e}faut actuelle\,:~~\code{useYR1 = c(1996, 2000, 2007, 2007, 1986)}
+\end{examplebox}
+
+%%++++++++++++++++++++++++++++++++++++++++++++++++
+\newcommand{\ytrfourteenfour}{utiliser une distribution gamma binomiale al\'{e}atoire pour estimer \code{gamma}}
+\begin{itembox}
+\bold{Article~\critem}\,:~\ytrfourteenfour~~(\red{\ding{55}} \currRRF~\currYR)
+\end{itembox}\\ \vspace*{1ex}
+Une m\'{e}thode exp\'{e}rimentale a \'{e}t\'{e} mise en {\oe}uvre pour calculer le \code{gamma} \`{a} l'aide d'une distribution binomiale-gamma \citep{Schnute-Haigh:2003}, conditionn\'{e}e par les donn\'{e}es. 
+Les r\'{e}sultats ont fourni des ratios \code{gamma} similaires \`{a} ceux obtenus par la moyenne des estimations annuelles.
+Cette m\'{e}thode n'a \'{e}t\'{e} test\'{e}e que pour SQJ et SBR.
+
+\begin{examplebox}
+\small valeur par d\'{e}faut actuelle\,:~~\code{useBG = FALSE}
+\end{examplebox}
+
+%%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{S\'{e}bastolobe \`{a} courtes \'{e}pines (2015)}
+
+%%++++++++++++++++++++++++++++++++++++++++++++++++
+\newcommand{\sstfifteenone}{utiliser la table de capture fusionn\'{e}e \code{GF\_MERGED\_CATCH} dans \code{GFFOS}}
+\begin{itembox}
+\bold{Article~\critem}\,:~\sstfifteenone~~(\green{\ding{51}} \currRRF~\currYR)
+\end{itembox}\\ \vspace*{1ex}
+L'\'{e}valuation du s\'{e}bastolobe \`{a} courtes \'{e}pines (SC\'{E}) \citep{Starr-Haigh:2017_sst} a \'{e}t\'{e} la premi\`{e}re \`{a} utiliser la table de captures fusionn\'{e}e \supquote{GF\_MERGED\_CATCH} dans \code{GFFOS}.
+Les \'{e}valuations pr\'{e}c\'{e}dentes n\'{e}cessitaient le maillage des captures de six bases de donn\'{e}es distinctes\,: \code{GFBioSQL} (recherche, coentreprise p\'{e}lagique merlu, p\^{e}che \'{e}trang\`{e}re p\'{e}lagique), \code{GFCatch} (chalut et casier), \code{GFFOS} (toutes p\^{e}cheries), \code{PacHarvest} (chalut), \code{PacHarvHL} (hame\c{c}on et ligne), et \code{PacHarvSable} (casier et palangre).
+Finalement, l'algorithme RP n'a pas \'{e}t\'{e} utilis\'{e} pour le SC\'{E}, car il estimait des captures inexistantes avant 1996 (Brian Mose, comm. pers. 2015).
+Les captures d\'{e}clar\'{e}es ont \'{e}t\'{e} utilis\'{e}es avec une modification pour d\'{e}sagr\'{e}ger les captures de SC\'{E} avant 1996 (car toutes les captures de s\'{e}bastolobe \'{e}taient appel\'{e}es SC\'{E} avant cette ann\'{e}e) en SC\'{E} et s\'{e}bastolobe \`{a} longues \'{e}pines (SL\'{E}).
+
+\begin{examplebox}
+\small valeur par d\'{e}faut actuelle\,:~~\code{useGFM = TRUE}
+\end{examplebox}
+
+%%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{S\'{e}baste aux yeux jaunes \`{a} l'ext\'{e}rieur (2015)}
+
+%%++++++++++++++++++++++++++++++++++++++++++++++++
+\newcommand{\yyrfifteenone}{use depth-stratified \code{gamma} and \code{delta}}
+\begin{itembox}
+\bold{Article~\critem}\,:~\yyrfifteenone~~(\red{\ding{55}} \currRRF~\currYR)
+\end{itembox}\\ \vspace*{1ex}
+L'\'{e}valuation du s\'{e}baste aux yeux jaunes (SYJ) \citep{Yamanaka-etal:2018_yyr} a introduit le concept de ratios \code{gamma} et \code{delta} stratifi\'{e}s en profondeur pour un s\'{e}baste c\^{o}tier (esp\`{e}ce d'eau peu profonde, bas\'{e}e sur les r\'{e}cifs) ; cependant, cette fonctionnalit\'{e} n'a pas \'{e}t\'{e} utilis\'{e}e pour le s\'{e}baste du large \`{a} ce jour.
+
+Pour chaque p\^{e}cherie et zone PMFC, les enregistrements de d\'{e}barquements ont \'{e}t\'{e} stratifi\'{e}s par ann\'{e}e de r\'{e}f\'{e}rence et par intervalle de profondeur de 100~m.
+Dans chaque strate de profondeur, les enregistrements contenant un d\'{e}barquement \code{ORF} non nul ont \'{e}t\'{e} utilis\'{e}s pour calculer un ratio entre le total \code{SYJ} et le total \code{ORF}, puis pond\'{e}r\'{e}s par le nombre d'observations dans chaque strate ann\'{e}e-profondeur afin d'obtenir un \code{gamma} pond\'{e}r\'{e} stratifi\'{e} pour chaque combinaison p\^{e}cherie-zone. 
+Pour une ann\'{e}e, une zone et une p\^{e}cherie donn\'{e}es, au moins 10\,\pc{} des enregistrements devaient contenir une valeur de profondeur non nulle pour \^{e}tre stratifi\'{e}s par profondeur.
+Sinon, la strate ann\'{e}e-zone-p\^{e}cherie \'{e}tait suppos\'{e}e contenir une zone de profondeur. 
+Lors de l'atelier du 14 mai 2015, seuls les enregistrements contenant une capture SYJ non nulle ont \'{e}t\'{e} utilis\'{e}s dans le calcul du \code{gamma} stratifi\'{e} par profondeur , et l'industrie a soulign\'{e} que cela biaiserait probablement l'estimation des d\'{e}barquements SYJ. 
+Par cons\'{e}quent, l'\'{e}valuation SYJ a utilis\'{e} tous les enregistrements contenant un d\'{e}barquement \code{ORF} non nul.
+
+\begin{examplebox}
+\small valeurs par d\'{e}faut actuelles\,: \code{strat.gamma = FALSE, strat.delta = FALSE}
+\end{examplebox}
+
+%%++++++++++++++++++++++++++++++++++++++++++++++++
+\newcommand{\yyrfifteentwo}{fixer les valeurs pour la p\^{e}che au fl\'{e}tan}
+\begin{itembox}
+\bold{Article~\critem}\,:~\yyrfifteentwo~~(\red{\ding{55}} \currRRF~\currYR)
+\end{itembox}\\ \vspace*{1ex}
+La Pacific Halibut Management Association (PHMA) a demand\'{e} quelques ajustements \`{a} la reconstitution du cas de base SYJ\,:
+\begin{itemize}
+	\item fixer le \code{gamma} pour la p\^{e}che au fl\'{e}tan (fid=2) par zone (5A=0,25, 5B=0,25, 5C=0,375, 5D=0,3)\,;
+	\item fixer les prises de la p\^{e}che au fl\'{e}tan de SYJ en 1999 \`{a} 17,5\,\pc{} de moins que celles de 1998.
+\end{itemize}
+
+\begin{examplebox}
+\small argument ad hoc\,:~~\code{phma = FALSE}
+\end{examplebox}
+
+%%++++++++++++++++++++++++++++++++++++++++++++++++
+\newcommand{\yyrfifteenthree}{exclure les enregistrements de captures des monts sous-marins}
+\begin{itembox}
+\bold{Article~\critem}\,:~\yyrfifteenthree~~(\green{\ding{51}} \currRRF~\currYR)
+\end{itembox}\\ \vspace*{1ex}
+Plusieurs \'{e}v\'{e}nements de p\^{e}che commerciale ont \'{e}t\'{e} enregistr\'{e}s sur divers monts sous-marins\,: Bowie\,= 4\,171 enregistrements, Brownbear\,= 472, Cobb\,= 790, Dellwood\,= 102, Eickelberg\,= 804, Union\,= 1\,381. 
+Cependant, seuls les monts sous-marins Bowie et Dellwood ont enregistr\'{e} des prises d\'{e}barqu\'{e}es de \code{SYJ}\,: Bowie avec 282 enregistrements (31,3~t) et Dellwood avec 8 enregistrements (1,5~t). 
+Jusqu'\`{a} pr\'{e}sent, les donn\'{e}es relatives aux monts sous-marins avaient \'{e}t\'{e} ignor\'{e}es (et incluses dans les RP).
+
+\begin{examplebox}
+\small valeur par d\'{e}faut actuelle\,:~~\code{useSM = FALSE}
+\end{examplebox}
+
+%%++++++++++++++++++++++++++++++++++++++++++++++++
+\newcommand{\yyrfifteenfour}{ne pas reconstituer les captures des flottes \'{e}trang\`{e}res}
+\begin{itembox}
+\bold{Article~\critem}\,:~\yyrfifteenfour~~(\red{\ding{55}} \currRRF~\currYR)
+\end{itembox}\\ \vspace*{1ex}
+Les discussions avec l'industrie lors de l'atelier du 14 mai 2015 ont r\'{e}v\'{e}l\'{e} que les prises \'{e}trang\`{e}res \'{e}taient probablement des \code{SLM} sans prises accessoires de \code{SYJ}.
+
+\begin{examplebox}
+\small valeur par d\'{e}faut actuelle\,:~~\code{useFF = TRUE}
+\end{examplebox}
+
+%%++++++++++++++++++++++++++++++++++++++++++++++++
+\newcommand{\yyrfifteenfive}{exclure les donn\'{e}es de la p\^{e}che exp\'{e}rimentale SLM de Langara Spit}
+\begin{itembox}
+\bold{Article~\critem}\,:~\yyrfifteenfive~~(\red{\ding{55}} \currRRF~\currYR)
+\end{itembox}\\ \vspace*{1ex}
+Cette option est probablement appropri\'{e}e pour les esp\`{e}ces de s\'{e}bastes c\^{o}ti\`{e}res et/ou r\'{e}cifales, car elles n'auraient pas \'{e}t\'{e} affect\'{e}es par les exp\'{e}riences en mer (ou par l'activit\'{e} historique des flottes \'{e}trang\`{e}res en mer).
+
+\begin{examplebox}
+\small valeur par d\'{e}faut actuelle\,:~~\code{useLS = TRUE}
+\end{examplebox}
+
+%%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{S\'{e}baste \`{a} longue m\^{a}choire 5ABC (2017)}
+
+%%++++++++++++++++++++++++++++++++++++++++++++++++
+\newcommand{\popseventeenone}{\'{e}tendre la zone 5C pour inclure le sud de la zone 5E (\^{i}le Anthony)}
+\begin{itembox}
+\bold{Article~\critem}\,:~\popseventeenone~~(\red{\ding{55}} \currRRF~\currYR)
+\end{itembox}\\ \vspace*{1ex}
+L'\'{e}valuation des populations de s\'{e}baste \`{a} longue m\^{a}choire (\code{SLM}) dans le bassin de la Reine-Charlotte (BRC, 5ABC, \citealt{Haigh-etal:2018_pop5ABC}) incluait les prises de la zone de l'\^{i}le Anthony. 
+Autrement dit, la zone PMFC 5C a \'{e}t\'{e} \'{e}largie autour du cap Saint-James (\`{a} partir du goulet Moresby) pour inclure le sud de la zone 5E\,:
+\begin{itemize}
+	\item un remorquage s'est produit dans la PMFC 5E avec une latitude valide $\leq$ 52$^{\circ}$ 20$^{\prime}$ Nord ou
+	\item un remorquage s'est produit dans les localit\'{e}s PMFC majeures 5E, mineures 34 et 1 ou 5.
+\end{itemize}
+
+\begin{examplebox}
+\small valeur par d\'{e}faut actuelle\,:~~\code{useAI = FALSE}
+\end{examplebox}
+
+%%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{S\'{e}baste \`{a} raie rouge (2018)}
+
+%%++++++++++++++++++++++++++++++++++++++++++++++++
+\newcommand{\rsreighteenone}{ calculer \code{gamma} et \code{delta} en utilisant les moyennes g\'{e}om\'{e}triques}
+\begin{itembox}
+\bold{Article~\critem}\,:~\rsreighteenone~~(\green{\ding{51}} \currRRF~\currYR)
+\end{itembox}\\ \vspace*{1ex}
+L'\'{e}valuation du s\'{e}baste \`{a} raie rouge (\code{SRR}) \citep{Starr-Haigh:2021_rsr} a introduit la synth\`{e}se des ratios annuels \code{gamma} et \code{delta} des ann\'{e}es de r\'{e}f\'{e}rence en calculant la moyenne g\'{e}om\'{e}trique sur plusieurs ann\'{e}es plut\^{o}t que la moyenne arithm\'{e}tique. 
+Ce choix r\'{e}duit l'influence des ratios annuels uniques anormalement \'{e}lev\'{e}s.
+
+\begin{examplebox}
+\small valeur par d\'{e}faut actuelle\,:~~\code{useGM = FALSE}
+\end{examplebox}
+
+%%++++++++++++++++++++++++++++++++++++++++++++++++
+\newcommand{\rsreighteentwo}{remplacer les d\'{e}barquements observ\'{e}s par des d\'{e}barquements estim\'{e}s}
+\begin{itembox}
+\bold{Article~\critem}\,:~\rsreighteentwo~~(\red{\ding{55}} \currRRF~\currYR)
+\end{itembox}\\ \vspace*{1ex}
+Estimer le \code{RRF} (en utilisant le \code{gamma}) pour les d\'{e}barquements observ\'{e}s apr\`{e}s 1996 pour les p\^{e}cheries au chalut et/ou apr\`{e}s 2006 pour les p\^{e}cheries non chaluti\`{e}res, si l'utilisateur a des raisons de remplacer les d\'{e}barquements observ\'{e}s par des d\'{e}barquements estim\'{e}s.
+
+%%++++++++++++++++++++++++++++++++++++++++++++++++
+\newcommand{\rsreighteenthree}{pr\'{e}ciser les ann\'{e}es par p\^{e}cherie pour les r\'{e}gimes de rejets}
+\begin{itembox}
+\bold{Article~\critem}\,:~\rsreighteenthree~~(\green{\ding{51}} \currRRF~\currYR)
+\end{itembox}\\ \vspace*{1ex}
+Pr\'{e}ciser les ann\'{e}es par p\^{e}cherie pour les r\'{e}gimes de rejets lorsque les ratios de rejets sont appliqu\'{e}s. 
+Auparavant, ces ratios \'{e}taient fix\'{e}s \`{a} 1954-1995 pour la p\^{e}che au chalut et \`{a} 1986-2005 pour les p\^{e}cheries sans chalut. 
+Remarque\,: les ann\'{e}es pr\'{e}c\'{e}dant la p\'{e}riode de rejets supposent l'absence de rejets, et les ann\'{e}es suivant la p\'{e}riode de rejets supposent que des rejets ont \'{e}t\'{e} d\'{e}clar\'{e}s
+dans les bases de donn\'{e}es.
+
+\begin{examplebox}
+\small valeur par d\'{e}faut actuelle\,:~~\code{disyrs = list(1954:1995, 1986:2005, 1986:2005, 1986:2005, 1986:2005)}
+\end{examplebox}
+
+%%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{S\'{e}baste veuve (2019)}
+
+%%++++++++++++++++++++++++++++++++++++++++++++++++
+\newcommand{\wwrnineteenone}{r\'{e}partir les prises \'{e}trang\`{e}res post-ZEE entre les p\^{e}cheries par type d'engin}
+\begin{itembox}
+\bold{Article~\critem}\,:~\wwrnineteenone~~(\green{\ding{51}} \currRRF~\currYR)
+\end{itembox}\\ \vspace*{1ex}
+L'\'{e}valuation de la population de veuve (\code{SVV}) \citep{Starr-Haigh:2021_wwr} a r\'{e}v\'{e}l\'{e} qu'une quantit\'{e} importante de SVV d\'{e}clar\'{e}e comme prise \'{e}trang\`{e}re dans la base de donn\'{e}es \code{GFBioSQL} provenait d'engins p\'{e}lagiques au large de la COIV. 
+Par la suite, l'algorithme de reconstitution des prises a \'{e}t\'{e} modifi\'{e} pour attribuer les prises \'{e}trang\`{e}res \code{GFBio} \`{a} quatre des cinq p\^{e}cheries, en fonction du type d'engin\,:
+\begin{itemize}
+  \item engins de chalutage de fond et p\'{e}lagique affect\'{e}s \`{a} la p\^{e}che au chalut,
+  \item engin de palangre affect\'{e} \`{a} la p\^{e}che au fl\'{e}tan,
+  \item engin mixte de type casier et ligne-casier affect\'{e} \`{a} la p\^{e}che \`{a} la morue charbonni\`{e}re, et
+  \item engins de p\^{e}che \`{a} l'hame\c{c}on et \`{a} la ligne affect\'{e}s \`{a} la p\^{e}che au s\'{e}baste ZN.
+\end{itemize}
+L'affectation n'a lieu que si l'utilisateur choisit d'utiliser une capture \'{e}trang\`{e}re dans la reconstitution.
+Ces captures \'{e}trang\`{e}res ont eu lieu bien apr\`{e}s l'activit\'{e} de la flotte \'{e}trang\`{e}re entre 1965 et la mise en place d'une zone \'{e}conomique exclusive (ZEE) en 1977.
+
+%%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{S\'{e}baste bocace (2019)}
+
+%%++++++++++++++++++++++++++++++++++++++++++++++++
+\newcommand{\bornineteenone}{sp\'{e}cifier des ann\'{e}es de r\'{e}f\'{e}rence flexibles pour calculer le \code{gamma}}
+\begin{itembox}
+\bold{Article~\critem}\,:~\bornineteenone~~(\green{\ding{51}} \currRRF~\currYR)
+\end{itembox}\\ \vspace*{1ex}
+L'\'{e}valuation du s\'{e}baste bocace (\code{SBO}) \citep{Starr-Haigh:2022_bor} s'est appuy\'{e}e sur les conseils du groupe de travail technique, qui a identifi\'{e} des ann\'{e}es de r\'{e}f\'{e}rence sp\'{e}cifiques pour le calcul du \code{gamma}\,: 1990-2000 pour la p\^{e}che au chalut (afin de saisir les ann\'{e}es pr\'{e}c\'{e}dant l'imposition de plafonds de mortalit\'{e} d\'{e}croissants pour le SBO \`{a} la flotte de chalutiers) et 2007-2011 pour la p\^{e}che sans chalut (afin de saisir les ann\'{e}es suivant l'application d'un programme d'observation, comme la surveillance \'{e}lectronique, aux flottes de p\^{e}che \`{a} la ligne et \`{a} l'hame\c{c}on).
+L'algorithme de reconstitution des captures \'{e}tait auparavant cod\'{e} de mani\`{e}re \`{a} ne permettre l'application que d'un seul ensemble d'ann\'{e}es de r\'{e}f\'{e}rence \`{a} l'ensemble des p\^{e}cheries.
+L'algorithme a \'{e}t\'{e} modifi\'{e} afin qu'un utilisateur puisse d\'{e}sormais sp\'{e}cifier des ann\'{e}es de r\'{e}f\'{e}rence distinctes pour chaque p\^{e}cherie.
+
+\begin{examplebox}
+\small valeur par d\'{e}faut actuelle\,:~~\code{refyrs = c(list(1996:2023), rep(list(2007:2011),4))}
+\end{examplebox}
+
+%%++++++++++++++++++++++++++++++++++++++++++++++++
+\newcommand{\bornineteentwo}{rapprocher les captures de \code{GFM} et \code{PH3}}
+\begin{itembox}
+\bold{Article~\critem}\,:~\bornineteentwo~~(\green{\ding{51}} \currRRF~\currYR)
+\end{itembox}\\ \vspace*{1ex}
+Depuis l'introduction de la table de captures fusionn\'{e}es (\code{GF\_MERGED\_CATCH} dans \code{GFFOS}) (SC\'{E} 2015), les captures de toutes les bases de donn\'{e}es autres que \code{PacHarv3} ont \'{e}t\'{e} rapproch\'{e}es afin d'\'{e}viter toute double comptabilisation des caches. 
+Les deux autres sources de donn\'{e}es de captures (\code{GFM} et \code{PH3}, par souci de concision) ont \'{e}t\'{e} r\'{e}\'{e}valu\'{e}es en comparant les donn\'{e}es \code{ORF}, et l'algorithme RP a \'{e}t\'{e} modifi\'{e} pour la fusion des sources de donn\'{e}es pour les cat\'{e}gories \code{RRF} d\'{e}barqu\'{e}es, \code{RRF} rejet\'{e}es, \code{ORF} d\'{e}barqu\'{e}es, \code{POP} d\'{e}barqu\'{e}es, et \code{TRF} d\'{e}barqu\'{e}es\,:
+\begin{itemize}
+  \item les prises \code{GFM} sont la seule source n\'{e}cessaire pour le FID~1 (p\^{e}che au chalut), comme on le supposait auparavant\,;
+  \item les prises \code{GFM} et \code{PH3} semblent se compl\'{e}ter pour les FID~2 (p\^{e}che au fl\'{e}tan), 3 (p\^{e}cherie de morue charbonni\`{e}re), et 4 (p\^{e}cherie de aiguillat/morue-lingue), et les prises ont \'{e}t\'{e} ajout\'{e}es au cours d'une ann\'{e}e donn\'{e}e jusqu'en 2005 (la surveillance \'{e}lectronique a commenc\'{e} en 2006 et la base de donn\'{e}es du \code{GFFOS} signalait donc toutes les prises de ces p\^{e}cheries \`{a} ce moment-l\`{a})\,;
+  \item les prises \code{GFM} et \code{PH3} semblent \^{e}tre redondantes pour le FID~5 (p\^{e}cherie de s\'{e}baste H\&L), et donc la prise maximale a \'{e}t\'{e} utilis\'{e}e au cours d'une ann\'{e}e donn\'{e}e.
+\end{itemize}
+
+%%++++++++++++++++++++++++++++++++++++++++++++++++
+\newcommand{\bornineteenthree}{utiliser les donn\'{e}es historiques MCB et MLI pour calculer les rejets pour les \code{FID} 3 et 4}
+\begin{itembox}
+\bold{Article~\critem}\,:~\bornineteenthree~~(\green{\ding{51}} \currRRF~\currYR)
+\end{itembox}\\ \vspace*{1ex}
+Utiliser les d\'{e}barquements historiques de morue charbonni\`{e}re (MCB) et de morue-lingue (MLI) au chalut de 1950 \`{a} 1975 \citep{Ketchen:1976} pour calculer les rejets historiques des FID 3 et 4 au cours de cette p\'{e}riode.
+Ces d\'{e}barquements n'ont pas pu \^{e}tre utilis\'{e}s directement car ils ont \'{e}t\'{e} effectu\'{e}s par la flotte de chalutiers\,; par cons\'{e}quent, une estimation des prises d\'{e}barqu\'{e}es de MCB et de MLI par les FID 3 et 4, respectivement, par rapport aux prises d\'{e}barqu\'{e}es de MCB et de MLI par le FID 1 (chalut) a \'{e}t\'{e} calcul\'{e}e \`{a} partir du \code{GFM}.
+Les ratios annuels MCB3/MCB1 et MLI4/MLI1 de 1996 \`{a} 2011 ont \'{e}t\'{e} choisis pour calculer une moyenne g\'{e}om\'{e}trique\,; les ratios \`{a} partir de 2012 ont commenc\'{e} \`{a} diverger de ceux de la p\'{e}riode choisie. 
+La proc\'{e}dure a donn\'{e} des ratios moyens : MCB3/MCB1 = 10,235 et MLI4/MLI1 = 0,351, qui ont \'{e}t\'{e} utilis\'{e}s pour mettre \`{a} l'\'{e}chelle les d\'{e}barquements de chalut de MCB et de MLI de 1950 \`{a} 1975, respectivement.
+\`{A} partir de ces d\'{e}barquements estim\'{e}s, les rejets du \code{RRF} ont \'{e}t\'{e} calcul\'{e}s en appliquant le \code{delta}.
+
+\pagebreak
+%%++++++++++++++++++++++++++++++++++++++++++++++++
+\newcommand{\bornineteenfour}{r\'{e}affecter les enregistrements \code{PH3} \`{a} cinq p\^{e}cheries}
+\begin{itembox}
+\bold{Article~\critem}\,:~\bornineteenfour~~(\green{\ding{51}} \currRRF~\currYR)
+\end{itembox}\\ \vspace*{1ex}
+R\'{e}affecter les enregistrements \code{PH3} aux diff\'{e}rentes p\^{e}cheries de reconstitution des captures sur la base des donn\'{e}es de 1952 \`{a} 1995. 
+La distribution de l'effort (\'{e}v\'{e}nements) et des captures par esp\`{e}ce pour chaque type d'engin (tableau~\ref{tab:CR_PH3_events_catch}) a conduit \`{a} la r\'{e}vision du code dans le tableau~\ref{tab:CR_PH3_fisheries}.
+
+\bigskip
+
+\setlength{\tabcolsep}{3pt}
+\newcolumntype{L}{>{\raggedright\arraybackslash}X}
+\begin{table}[ht]
+\footnotesize
+\centering
+\caption[PacHarv3 r\'{e}sum\'{e} des \'{e}v\'{e}nements de p\^{e}che par esp\`{e}ce]{\code{PacHarv3} (\code{PH3}) nombre d'\'{e}v\'{e}nements ayant captur\'{e} chaque esp\`{e}ce et capture (t) d'esp\`{e}ces de 1952-95 par type d'engin et code d'esp\`{e}ce, o\`{u} RAS\,= rascasses, SLM\,= s\'{e}baste \`{a} longue m\^{a}choire, SQJ\,= s\'{e}baste \`{a} queue jaune, SBJ\,= s\'{e}baste \`{a} bouche jaune, SYJ\,= s\'{e}baste aux yeux jaunes, SC\'{E}\,= s\'{e}bastolobe \`{a} courtes \'{e}pines, FDP = fl\'{e}tan du Pacifique, MCB = morue charbonni\`{e}re, ACO = aiguillat commun, et MLI = morue-lingue.}
+\label{tab:CR_PH3_events_catch}
+%\begin{tabular}{ccrrxc}
+\begin{tabularx}{\textwidth}{lLrrrrrrrrrr}
+\hline
+\tstrut Code & Description~de l'engrenage &   RAS &     SLM &     SQJ &     SBJ &     SYJ & SC\'{E} &     FDP &     MCB &     ACO &      MLI \bstrut \\
+\hline\tstrut
+\'{E}V\'{E}NEMENTS   &                            &         &         &         &         &         &         &         &         &         \\
+10           & GILL~NET, SALMON         &      55 &         &         &         &      17 &         &         &         &         &      164\\
+11           & NET, SET                 &         &         &         &         &         &         &         &         &       1 &         \\
+20           & SEINE, PURSE, SALMON     &       4 &         &         &         &       2 &         &         &         &         &       14\\
+30           & TROLL, SALMON            &    4281 &      49 &      69 &       1 &    2587 &      11 &     613 &      40 &      77 &     5201\\
+31           & TROLL, FREEZER, SALMON   &     614 &       1 &      14 &       2 &     294 &       2 &      91 &       8 &      31 &     1752\\
+36           & JIG, HAND, NON-SALMON    &    1126 &      25 &     241 &      13 &     914 &       4 &       1 &       1 &     152 &      845\\
+40           & LONGLINE                 &    2893 &     109 &     355 &     100 &    2738 &     327 &    4484 &     603 &    1248 &     2377\\
+50           & TRAWL, OTTER, BOTTOM     &    3910 &    2419 &    2335 &    1521 &     557 &    1435 &         &    2469 &     748 &     3098\\
+51           & TRAWL, MIDWATER          &     770 &     155 &     770 &     175 &      21 &      26 &         &      51 &     210 &      173\\
+57           & SHRIMP~TRAWL             &     173 &      10 &       2 &         &      21 &         &         &       2 &      12 &       82\\
+70           & SEINE, BEACH             &       4 &         &         &         &         &         &         &         &         &        2\\
+90           & TRAP                     &      74 &         &       1 &       1 &      14 &      18 &         &     753 &       3 &       34\\
+\hline\tstrut
+LA PRISE                                &         &         &         &         &         &         &         &         &         &         \\
+10           & GILL~NET, SALMON         &     3,6 &         &         &         &     1,0 &         &         &         &         &       16\\
+11           & NET, SET                 &         &         &         &         &         &         &         &         &     2,5 &         \\
+20           & SEINE, PURSE, SALMON     &     0,2 &         &         &         &     0,7 &         &         &         &         &      4,3\\
+30           & TROLL, SALMON            &    3060 &     1,3 &     5,6 &     0,0 &     925 &     2,0 &     538 &      20 &      70 &     5757\\
+31           & TROLL, FREEZER, SALMON   &      73 &     0,0 &     2,2 &     0,4 &      31 &     4,0 &      52 &     0,1 &      99 &      695\\
+36           & JIG, HAND, NON-SALMON    &    2133 &     5,2 &      40 &     4,6 &     745 &     0,1 &     0,3 &     1,1 &     175 &     1883\\
+40           & LONGLINE                 &    6921 &      11 &      29 &      35 &    7922 &      91 &   48384 &   10785 &   21799 &     6119\\
+50           & TRAWL, OTTER, BOTTOM     &  117534 &   79327 &   28758 &   17609 &    1818 &    3468 &         &    6090 &   12637 &    45811\\
+51           & TRAWL, MIDWATER          &   17737 &     469 &   14867 &     735 &     3,3 &     7,7 &         &     7,9 &    1400 &      103\\
+57           & SHRIMP~TRAWL             &      23 &     0,6 &     2,1 &         &     0,3 &         &         &     0,0 &      18 &       34\\
+70           & SEINE, BEACH             &     0,1 &         &         &         &         &         &         &         &         &      0,6\\
+90           & TRAP                     &      76 &         &     0,0 &     0,6 &     3,6 &     6,4 &         &   50886 &      34 &      4,4\\
+\hline
+\end{tabularx}
+%\end{tabular}
+\end{table}
+
+\pagebreak
+%% https://tex.stackexchange.com/questions/207973/table-with-a-column-of-verbatim [egreg]
+\setlength{\tabcolsep}{0pt}
+\begin{table}[ht]
+\footnotesize
+\raggedright
+\caption[Extraits de code SQL d\'{e}finissant les FID dans PacHarv3]{Extrait de code d'une requ\^{e}te SQL 'ph3 fcatORF.sql' qui d\'{e}finit les FID de reconstitution de capture (1\,= chalut, 2\,= fl\'{e}tan, 3\,= morue charbonni\`{e}re, 4\,= aiguillat/morue-lingue, 5\,= s\'{e}baste H\&L) \`{a} partir des types d'engins et des esp\`{e}ces dominantes captur\'{e}es (en poids) par \'{e}v\'{e}nement dans le tableau \code{PH3} \supquote{CATCH\_SUMMARY}.}
+\label{tab:CR_PH3_fisheries}
+%%\begin{tabular}{l}
+\begin{tabular}{ >{\ttfamily\catcode`_=12 }l }
+\hline
+\tstrut D\'{e}finition du FID dans la requ\^{e}te SQL \supquote{ph3\_fcatORF.sql} \bstrut \\
+\hline\tstrut
+%%\begin{Verbatim}[fontsize=\footnotesize]
+(CASE ~-- par ordre de priorit\'{e}\\
+~~~-- \`{a} l'origine TRAWL (otter bottom, midwater, shrimp, herring)\\
+~~~WHEN TAR.GR_GEAR_CDE IN (50,51,57,59) THEN 1\\
+~~~-- Partition LONGLINE\\
+~~~WHEN TAR.GR_GEAR_CDE IN (40) AND TAR.Target IN (\tqs14\tqs) THEN 2\\
+~~~WHEN TAR.GR_GEAR_CDE IN (40) AND TAR.Target IN (\tqs455\tqs) THEN 3\\
+~~~WHEN TAR.GR_GEAR_CDE IN (40) AND TAR.Target IN (\tqs044\tqs,\tqs467\tqs) THEN 4\\
+~~~WHEN TAR.GR_GEAR_CDE IN (40) AND TAR.Target NOT IN (\tqs614\tqs,\tqs455\tqs,\tqs044\tqs,\tqs467\tqs)) THEN 5\\
+~~~-- Partition TROLL (salmon, freezer salmon)\\
+~~~WHEN TAR.GR_GEAR_CDE IN (30,31) AND TAR.Target IN (\tqs614\tqs) THEN 2\\
+~~~WHEN TAR.GR_GEAR_CDE IN (30,31) AND TAR.Target IN (\tqs455\tqs) THEN 3\\
+~~~WHEN TAR.GR_GEAR_CDE IN (30,31) AND TAR.Target IN (\tqs044\tqs,\tqs467\tqs) THEN 4\\
+~~~WHEN TAR.GR_GEAR_CDE IN (30,31) AND TAR.Target NOT IN (\tqs614\tqs,\tqs455\tqs,\tqs044\tqs,\tqs467\tqs)) THEN 5\\
+~~~-- Partition JIG (hand non-salmon)\\
+~~~WHEN TAR.GR_GEAR_CDE IN (36) AND TAR.Target IN (\tqs614\tqs) THEN 2\\
+~~~WHEN TAR.GR_GEAR_CDE IN (36) AND TAR.Target IN (\tqs455\tqs) THEN 3\\
+~~~WHEN TAR.GR_GEAR_CDE IN (36) AND TAR.Target IN (\tqs044\tqs,\tqs467\tqs) THEN 4\\
+~~~WHEN TAR.GR_GEAR_CDE IN (36) AND TAR.Target NOT IN (\tqs614\tqs,\tqs455\tqs,\tqs044\tqs,\tqs467\tqs)) THEN 5\\
+~~~-- \`{a} l'origine TRAP (experimental, salmon, longline, shrimp \& prawn, crab)\\
+~~~WHEN TAR.GR_GEAR_CDE IN (86,90,91,92,97,98) THEN 3\\
+~~~-- non attribu\'{e}\,: Trawl, Halibut, Sablefish, Dogfish-Lingcod, H\&L Rockfish\\
+~~~WHEN TAR.Target IN (\tqs394\tqs,\tqs396\tqs,\tqs405\tqs,\tqs418\tqs,\tqs440\tqs,\tqs451\tqs) THEN 1\\
+~~~WHEN TAR.Target IN (\tqs614\tqs) THEN 2\\
+~~~WHEN TAR.Target IN (\tqs455\tqs) THEN 3\\
+~~~WHEN TAR.Target IN (\tqs044\tqs,\tqs467\tqs) THEN 4\\
+~~~WHEN TAR.Target IN (\tqs388\tqs,\tqs401\tqs,\tqs407\tqs,\tqs424\tqs,\tqs431\tqs,\tqs433\tqs,\tqs442\tqs) THEN 5\\
+~~~ELSE 0 END) AS "fid", \\
+%%\end{Verbatim}
+\hline
+\end{tabular}
+\end{table}
+
+
+%%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{S\'{e}baste \`{a} longue m\^{a}choire (2023)}
+
+%%++++++++++++++++++++++++++++++++++++++++++++++++
+\newcommand{\poptwentythreeone}{ajuster la limite 5C pour inclure les zones 5B et 5E}
+\begin{itembox}
+\bold{Article~\critem}\,:~\poptwentythreeone~~(\red{\ding{55}} \currRRF~\currYR)
+\end{itembox}\\ \vspace*{1ex}
+Lors de l'\'{e}valuation du stock de \code{SLM} de 2023 \citep{Starr-Haigh:2025_pop}, la reconstitution des captures (et d'autres fonctions biologiques) a \'{e}t\'{e} mise \`{a} jour afin de transf\'{e}rer plus pr\'{e}cis\'{e}ment les captures du goulet Moresby (PMFC 5B) et du bras de mer Flamingo et de l'\^{i}le Anthony (sud de la zone 5E) vers la zone 5C, dont les limites ont \'{e}t\'{e} \'{e}tendues autour du cap Saint-James en 1996 pour le s\'{e}baste \`{a} longue m\^{a}choire et le s\'{e}baste \`{a} bouche jaune. 
+Cette r\'{e}affectation \'{e}tait auparavant r\'{e}alis\'{e}e (mais non mise en {\oe}uvre dans les reconstitutions des captures) en d\'{e}terminant si les coordonn\'{e}es g\'{e}ographiques des traits de chalut se situaient dans une extension de polygone de la zone 5C (figure~\ref{fig:CR-SLM-5C-5A}).
+Cependant, les donn\'{e}es de capture ant\'{e}rieures \`{a} 1996 ne contenaient g\'{e}n\'{e}ralement pas de coordonn\'{e}es sp\'{e}cifiques, et une mise \`{a} jour de l'extrait de donn\'{e}es historiques a inclus les zones PMFC mineures et les lieux de p\^{e}che afin de mieux caract\'{e}riser l'identifiant de la zone PMFC principale.
+Des combinaisons de ces trois zones ont \'{e}t\'{e} utilis\'{e}es pour r\'{e}affecter les activit\'{e}s de p\^{e}che \`{a} la zone 5C lorsqu'aucune coordonn\'{e}e g\'{e}ographique n'\'{e}tait fournie\,:
+\begin{itemize}
+	\item 5B -- SE Cap St. James (~majeur 6, mineur 8, localit\'{e} 6~)
+	\item 5B -- \`{a} l'ext\'{e}rieur du cap St. James (~majeur 6, mineur 8, localit\'{e} 12~)
+	\item 5E -- \^{i}le Anthony (~majeure 9, mineure 34, localit\'{e} 1~)
+	\item 5E -- bras de mer Flamingo (~majeure 9, mineure 34, localit\'{e} 5~)
+\end{itemize}
+
+%%++++++++++++++++++++++++++++++++++++++++++++++++
+\newcommand{\poptwentythreetwo}{ajuster la limite 3D-5A pour SLM au sud de la p\'{e}ninsule Brooks}
+\begin{itembox}
+\bold{Article~\critem}\,:~\poptwentythreetwo~~(\red{\ding{55}} \currRRF~\currYR)
+\end{itembox}\\ \vspace*{1ex}
+Un an apr\`{e}s l'acceptation de l'\'{e}valuation \code{SLM}, la GMU a constat\'{e} une divergence entre les captures de la zone 3CD, selon son syst\`{e}me de d\'{e}claration, le Syst\`{e}me de gestion des quotas, et la reconstitution des captures, bas\'{e}e sur le Syst\`{e}me d'exploitation des p\^{e}ches.
+Le probl\`{e}me a \'{e}t\'{e} attribu\'{e} \`{a} une modification de la limite entre les zones 3D et 5A pour la zone \code{SLM}. 
+Selon une note de bas de page du Plan de gestion int\'{e}gr\'{e}e de la p\^{e}che 2013-2014, la limite de la zone 5A avait \'{e}t\'{e} d\'{e}plac\'{e}e vers le sud pour correspondre \`{a} la latitude de la p\'{e}ninsule Brooks (50.8$^{\circ}$\,N).
+Cet ajustement 3D-5A (figure~\ref{fig:CR-SLM-5C-5A}) sera utilis\'{e} pour les stocks \code{SLM} ult\'{e}rieurs \'{e}valuations.
+
+%% #1=figure1 #2=figure2 #3=label #4=caption #5=width (fig) #6=height (fig)
+\figbeside{CR-SLM-poly5C}{CR-SLM-poly5A}{CR-SLM-5C-5A}{(\`{A} gauche) Extension de la zone PMFC 5C autour du cap St. James utilis\'{e}e pour g\'{e}rer le s\'{e}baste \`{a} longue m\^{a}choire et le s\'{e}baste \`{a} bouche jaune depuis 1996. (\`{A} droite) Extension de la zone PMFC 5A au sud jusqu'\`{a} la p\'{e}ninsule Brooks utilis\'{e}e pour g\'{e}rer le \code{SLM} (uniquement) depuis 2013. Les localit\'{e}s de p\^{e}che sont \'{e}tiquet\'{e}es par zone mineure PMFC et code de localit\'{e}.}{3.2}{3.5}{Extensions de zone PMFC pour \code{SLM} et s\'{e}baste \`{a} bouche jaune.}
+
+%\clearpage
+
+%%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{S\'{e}baste \`{a} queue jaune (2024)}
+
+%%++++++++++++++++++++++++++++++++++++++++++++++++
+\newcommand{\ytrtwentyfourone}{s\'{e}parer les p\'{e}riodes de capture d\'{e}riv\'{e}es et d\'{e}clar\'{e}es}
+\begin{itembox}
+\bold{Article~\critem}\,:~\ytrtwentyfourone~~(\green{\ding{51}} \currRRF~\currYR)
+\end{itembox}\\ \vspace*{1ex}
+L'\'{e}valuation du s\'{e}baste \`{a} queue jaune (\code{SQJ}) \citep{Starr-Haigh:2025_ytr} a utilis\'{e} un algorithme RP qui a \'{e}t\'{e} r\'{e}vis\'{e} pour d\'{e}limiter plus clairement les p\'{e}riodes de capture reconstitu\'{e}es des p\'{e}riodes de capture d\'{e}clar\'{e}es.
+
+Comme pr\'{e}c\'{e}demment, la reconstitution des prises ant\'{e}rieures \`{a} 1950 s'appuie sur les premiers relev\'{e}s de 1918 \`{a} 1950 \citep{CDBS:1918-1950}. 
+Les prises de \code{RRF} durant cette p\'{e}riode sont toujours reconstitu\'{e}es \`{a} partir des donn\'{e}es suivantes\,:
+
+As previously, the reconstitution of catch prior to 1950 used early records from 1918 to 1950 \citep{CDBS:1918-1950}.
+Catch of \code{RRF} in this period is \emph{always} reconstructed from:
+\begin{itemize}
+	\item \code{lambda} -- proportion des captures par type d'engin \supquote{chalut}, \supquote{casier}, \supquote{h\&l};
+	\item \code{beta} -- proportion de \code{h\&l} par p\^{e}cherie (2\,= fl\'{e}tan, 4\,= aiguillat/morue-lingue, 5\,= h\&l s\'{e}baste);
+	\item \code{gamma} -- proportion d' \code{ORF|TRF} allou\'{e}e au \code{RRF}.
+\end{itemize}
+
+La p\'{e}riode interm\'{e}diaire (1951-1995) peut \^{e}tre un m\'{e}lange de captures reconstitu\'{e}es et d\'{e}clar\'{e}es, ou \^{e}tre enti\`{e}rement reconstitu\'{e}e. 
+Cette p\'{e}riode n'est presque jamais enti\`{e}rement repr\'{e}sent\'{e}e par les captures d\'{e}clar\'{e}es\,; la \code{SLM} serait la seule exception, car les premi\`{e}res captures d\'{e}clar\'{e}es datent de 1950 \citep{Ketchen:1976}. 
+De plus, la \code{SLM} constitue un cas particulier, car elle peut \^{e}tre un \code{RRF} (dans une \'{e}valuation \code{SLM}) ou une capture de r\'{e}f\'{e}rence pour d'autres esp\`{e}ces (bien que cela n'ait jamais \'{e}t\'{e} fait). 
+Cette p\'{e}riode interm\'{e}diaire est complexe, mais en g\'{e}n\'{e}ral\,:
+\begin{itemize}
+	\item la capture signal\'{e}e est stock\'{e}e dans l'objet \supquote{catmod} (principalement CA catch mais peut inclure des donn\'{e}es \'{e}trang\`{e}res, prises, voir ci-dessus)\,; les prises ont \'{e}t\'{e} additionn\'{e}es pour toutes les nations\,;
+	\item chaque composant des captures d\'{e}clar\'{e}es (d\'{e}barqu\'{e}es, rejet\'{e}es, ORF/TRF) est extrait de code{catmod} dans des matrices bidimensionnelles (par exemple, \supquote{repcatRRF})\,;
+	\item le \code{RRF} CA reconstruit est calcul\'{e} de deux mani\`{e}res\,: (i)~en utilisant \code{catmod} (\code{RRF}\,= \code{gamma} $\times$ \code{ORF}) et (ii)~en utilisant \code{orfhistory} (\code{RRF}\,= \code{beta} $\times$ \code{gamma} $\times$ \code{ORF}), et adopte la valeur la plus \'{e}lev\'{e}e pour chaque ann\'{e}e, zone principale, et p\^{e}cherie\,;
+	\item les prises reconstitu\'{e}es sont additionn\'{e}es pour toutes les nations par ann\'{e}e : 1951-1995 pour les flottes de CA et US, 1951-1977 pour les flottes \'{e}trang\`{e}res\,;
+	\item relier les deux p\'{e}riodes ensemble -- capture reconstitu\'{e}e suivie de capture rapport\'{e}e.
+\end{itemize}
+Auparavant, il existait parfois des zones grises o\`{u} les prises \'{e}taient un m\'{e}lange de prises reconstitu\'{e}es (g\'{e}n\'{e}ralement \'{e}trang\`{e}res) et d\'{e}clar\'{e}es (canadiennes) dans la p\^{e}che au chalut. 
+Cela peut encore \^{e}tre souhaitable (difficile \`{a} anticiper), mais pour l'instant, il est pr\'{e}f\'{e}rable de reconstituer les prises ant\'{e}rieures \`{a} l'ann\'{e}e de la ZEE (1977) et d'utiliser les donn\'{e}es d\'{e}clar\'{e}es par la suite lorsque des donn\'{e}es cr\'{e}dibles pour la p\^{e}che au chalut sont disponibles. 
+Sinon, il est pr\'{e}f\'{e}rable de reconstituer les prises ant\'{e}rieures aux ann\'{e}es d'observation (par exemple, 1996 pour le chalut).
+
+%%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{S\'{e}baste argent\'{e} (2025)}
+
+%%++++++++++++++++++++++++++++++++++++++++++++++++
+\newcommand{\sgrtwentyfiveone}{ajouter une capture SAR suppl\'{e}mentaire \`{a} l'objet de donn\'{e}es \supquote{rrfhistory}}
+\begin{itembox}
+\bold{Article~\critem}\,:~\sgrtwentyfiveone~~(\green{\ding{51}} \currRRF~\currYR)
+\end{itembox}\\ \vspace*{1ex}
+L'\'{e}valuation du s\'{e}baste argent\'{e} (\code{SAR}) \citep{Starr-Haigh:2025_sgr} a ajout\'{e} des donn\'{e}es de capture suppl\'{e}mentaires, sp\'{e}cifiquement pour le SAR de 1968 \`{a} 1977 provenant des flottes canadiennes, am\'{e}ricaines, et japonaises \citep{Ketchen:1980_gf}, \`{a} l' objet \code{rrfhistory}.
+
+%%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{Modifications adopt\'{e}es par \currRRF{} en \currYR}
+
+Un r\'{e}sum\'{e} des changements historiques apport\'{e}s \`{a} la reconstitution des prises d'origine appara\^{i}t dans le tableau~\ref{tab:CR_changes}, la derni\`{e}re colonne indiquant les changements adopt\'{e}s par l' \'{e}valuation \currRRF{} en \currYR.
+
+\setlength{\tabcolsep}{3pt}
+% latex table generated in R 4.5.0 by xtable 1.8-4 package
+% Fri Jan  3 11:44:01 2025
+\begin{table}[ht]
+\footnotesize
+\centering
+\caption[R\'{e}sum\'{e} des modifications apport\'{e}es \`{a} la reconstitution des captures de 2011]{R\'{e}sum\'{e} des modifications apport\'{e}es \`{a} l'algorithme de reconstitution des captures depuis sa cr\'{e}ation en 2011. La derni\`{e}re colonne indique les changements qui pourraient \^{e}tre adopt\'{e}s pour une esp\`{e}ce de s\'{e}baste typique \`{a} l'aide d'une v\'{e}rification marque (par exemple,  \currRRF~\currYR). Acronymes\,: FID = num\'{e}ro d'identification de la p\^{e}che, GFFOS = base de donn\'{e}es du Syst\`{e}me des op\'{e}rations de p\^{e}che aux poissons de fond, GFM = tableau des captures fusionn\'{e}es de poissons de fond dans GFFOS, H\&L = hame\c{c}on et ligne, MCB = Morue charbonni\`{e}re, MLI = morue-lingue, PH3 = PacHarv3 base de donn\'{e}es, RRF = s\'{e}baste reconstruit, SAR = s\'{e}baste argent\'{e}, SBO = s\'{e}baste bocace, SC\'{E} = s\'{e}bastolobe \`{a} courtes \'{e}pines, SLM = s\'{e}baste \`{a} longue m\^{a}choire, SQJ = S\'{e}baste \`{a} queue jaune, SRR = s\'{e}baste \`{a} raie rouge, SVV = s\'{e}baste veuve, SYJ = S\'{e}baste aux yeux jaunes, ZEE = zone \'{e}conomique exclusive.}
+\label{tab:CR_changes}
+%\begin{tabular}{ccrrxc}
+\begin{tabularx}{0.95\textwidth}{rrXc}
+\hline
+\tstrut Article & \'{E}valuation & Description & \currRRF(\currYR) \bstrut\\ 
+\hline\tstrut
+\criten & SLM 2012 & \poptwelveone & \green{\ding{51}} \\ 
+\criten & SLM 2012 & \poptwelvetwo & \green{\ding{51}} \\ 
+\criten & SLM 2012 & \poptwelvethree & \green{\ding{51}} \\ 
+\criten & SQJ 2014 & \ytrfourteenone & \green{\ding{51}} \\ 
+\criten & SQJ 2014 & \ytrfourteentwo & \red{\ding{55}} \\ 
+\criten & SQJ 2014 & \ytrfourteenthree & \green{\ding{51}} \\ 
+\criten & SQJ 2014 & \ytrfourteenfour & \red{\ding{55}} \\ 
+\criten & SC\'{E} 2015 & \sstfifteenone & \green{\ding{51}} \\ 
+\criten & SYJ 2015 & \yyrfifteenone & \red{\ding{55}} \\ 
+\criten & SYJ 2015 & \yyrfifteentwo & \red{\ding{55}} \\ 
+\criten & SYJ 2015 & \yyrfifteenthree & \green{\ding{51}} \\ 
+\criten & SYJ 2015 & \yyrfifteenfour & \red{\ding{55}} \\ 
+\criten & SYJ 2015 & \yyrfifteenfive & \red{\ding{55}} \\ 
+\criten & SLM 2017 & \popseventeenone & \red{\ding{55}} \\ 
+\criten & SRR 2018 & \rsreighteenone & \green{\ding{51}} \\ 
+\criten & SRR 2018 & \rsreighteentwo & \red{\ding{55}} \\ 
+\criten & SRR 2018 & \rsreighteenthree & \green{\ding{51}} \\ 
+\criten & SVV 2019 & \wwrnineteenone & \green{\ding{51}} \\ 
+\criten & SBO 2019 & \bornineteenone & \green{\ding{51}} \\ 
+\criten & SBO 2019 & \bornineteentwo & \green{\ding{51}} \\ 
+\criten & SBO 2019 & \bornineteenthree & \green{\ding{51}} \\ 
+\criten & SBO 2019 & \bornineteenfour & \green{\ding{51}} \\ 
+\criten & SLM 2023 & \poptwentythreeone & \red{\ding{55}} \\ 
+\criten & SLM 2023 & \poptwentythreetwo & \red{\ding{55}} \\ 
+\criten & SQJ 2024 & \ytrtwentyfourone & \green{\ding{51}} \\ 
+\criten & SAR 2025 & \sgrtwentyfiveone & \green{\ding{51}} \\ 
+\hline
+\end{tabularx}
+%\end{tabular}
+\end{table}
+
+%%------------------------------------------------
+\section{Mises en garde}
+
+Les donn\'{e}es de capture disponibles avant 1996 (premi\`{e}re ann\'{e}e du programme d'observation \`{a} bord) pr\'{e}sentent des difficult\'{e}s d'utilisation dans un mod\`{e}le d'\'{e}valuation des stocks sans interpr\'{e}tation, tant en termes de d\'{e}clarations erron\'{e}es (c.-\`{a}-d. d\'{e}clarer les captures d'une esp\`{e}ce comme une autre) que d'identification erron\'{e}e des esp\`{e}ces. 
+Il existe \'{e}galement un risque de rejet en mer d\^{u} \`{a} des captures d\'{e}passant les limites autoris\'{e}es pour la conservation. 
+Bien que des p\^{e}cheurs aient signal\'{e} des erreurs de localisation des captures, ce probl\`{e}me ne constitue pas un probl\`{e}me majeur pour l'\'{e}valuation d'un stock c\^{o}tier. 
+De plus, une importante p\^{e}che \'{e}trang\`{e}re au s\'{e}baste a eu lieu dans les eaux de la Colombie-Britannique, principalement par les \'{E}tats-Unis, l'Union sovi\'{e}tique et le Japon de 1965 \`{a} 1976. 
+Ces pays avaient tendance \`{a} d\'{e}clarer leurs captures sous forme agr\'{e}g\'{e}e, regroupant g\'{e}n\'{e}ralement les s\'{e}bastes dans une seule cat\'{e}gorie. 
+Ces p\^{e}ches ont cess\'{e} apr\`{e}s la d\'{e}claration de la zone \'{e}conomique exclusive de 200 milles marins par le Canada en 1977.
+
+L'exactitude et la pr\'{e}cision des s\'{e}ries de captures reconstitu\'{e}es refl\`{e}tent intrins\`{e}quement les probl\`{e}mes associ\'{e} au d\'{e}veloppement d'une p\^{e}che commerciale\,:
+\begin{itemize}
+	\item voyages de d\'{e}chargement des prises sans aucune information sur la zone,
+	\item rejets non d\'{e}clar\'{e}s,
+	\item enregistrer les prises d'une esp\`{e}ce comme une autre pour \'{e}viter les violations des quotas,
+	\item d\'{e}velopper une expertise dans les syst\`{e}mes de surveillance,
+	\item r\'{e}glementations changeantes,
+	\item l'\'{e}volution des technologies de stockage des donn\'{e}es, etc.
+\end{itemize}
+
+Bon nombre de ces probl\`{e}mes ont \'{e}t\'{e} \'{e}limin\'{e}s gr\^{a}ce \`{a} l'introduction de\,:
+\begin{itemize}
+	\item programmes d'observation -- observateurs en mer (OEM) \`{a} partir de 1996 pour la flotte de chalutiers hauturiers, surveillance \'{e}lectronique (SE) \`{a} partir de 2006 pour les flottes H\&L, et SE rempla\c{c}ant l'OEM dans le flotte de chalutiers \`{a} partir de 2020 pendant la pand\'{e}mie de COVID\,;
+	\item surveillance \`{a} quai [\`{a} terre], et
+	\item des quotas individuels de navires n\'{e}gociables (QIN \`{a} partir de 1997) qui conf\`{e}rent la propri\'{e}t\'{e} du ressource pour le secteur de la p\^{e}che.
+\end{itemize}
+
+La proc\'{e}dure de reconstitution des prises ne reconstitue pas actuellement les prises par type d'engin (par exemple, chalut de fond ou chalut p\'{e}lagique, casier ou palangre). 
+Bien qu'il soit possible d'ajouter cette dimension, cela impliquerait de d\'{e}composer les prises dans le temps \`{a} l'aide des ratios observ\'{e}s dans la p\^{e}cherie moderne, ce qui ne repr\'{e}senterait probablement pas fid\`{e}lement l'activit\'{e} historique par type d'engin (voir les mises en garde similaires ci-dessus concernant l'utilisation des ratios de prises modernes pour reconstituer les prises d'une esp\`{e}ce \`{a} partir du total des prises de s\'{e}baste).
+
+Il est \`{a} noter que la reconstitution des prises r\'{e}partit les prises d'un \code{RRF} provenant de zones inconnues entre les zones PMFC proportionnellement aux prises connues dans les zones PMFC afin de refl\'{e}ter tous les pr\'{e}l\`{e}vements potentiels de biomasse dans les eaux de la Colombie-Britannique. 
+Par cons\'{e}quent, les prises d\'{e}clar\'{e}es par zone sont souvent inf\'{e}rieures aux prises reconstitu\'{e}es par zone.
+
+Les prises d'une ann\'{e}e d'\'{e}valuation sont g\'{e}n\'{e}ralement incompl\`{e}tes\,; c'est pourquoi celles de l'ann\'{e}e pr\'{e}c\'{e}dente sont souvent retenues.
+Parfois, les prises extrapol\'{e}es sont calcul\'{e}es \`{a} partir des totaux mensuels cumul\'{e}s compar\'{e}s aux mesures de prises pr\'{e}c\'{e}dentes (par exemple, la moyenne des prises mensuelles sur cinq ans). 
+Quoi qu'il en soit, il est conseill\'{e} de solliciter l'avis de l'industrie, soit par communication directe, soit en participant \`{a} un groupe de travail technique.
+
+
+\clearpage
+%-----CONTACT-----
+%\vspace*{4ex} \noindent {\bf \Large Contact}\\
+\vspace*{2ex}
+\phantomsection
+\addcontentsline{toc}{section}{Coordonn\'{e}es} % Adds to bookmarks only
+%\addcontentsline{toc}{section}{\protect\numberline{}Contact Information}
+\section* {Coordonn\'{e}es}
+\vspace*{2ex} \noindent \blue{{\bf \normalsize Rowan Haigh}}\\
+\small
+\grey{Programme de s\'{e}bastes extrac\^{o}tier, Section des poissons de fond\\
+Division de l'\'{e}valuation des stocks et de la recherche\\
+P\^{e}ches et Oc\'{e}ans Canada\\
+Station biologique du Pacifique, Nanaimo, C.-B.  V9T 6N7}\\
+%\sky{Tel. +1 250-756-7123  fac simile +1 250-756-7053\\
+\sky{Courriel rowan.haigh@dfo-mpo.gc.ca} 
+\normalsize
+
+%\clearpage
+
+\bibliographystyle{resDoc_french}
+%\addcontentsline{toc}{section}{\protect\numberline{}R\'{e}f\'{e}rences}
+\phantomsection
+\addcontentsline{toc}{section}{R\'{e}f\'{e}rences}
+\bibliography{CSAPrefs_french}
+%%\bibliography{C:/Users/haighr/Files/GFish/CSAP/Refs/CSAPrefs_french}
+
+\end{document}
+

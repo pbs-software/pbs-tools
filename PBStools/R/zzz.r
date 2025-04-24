@@ -52,7 +52,7 @@ if(getRversion() >= "2.15.1") utils::globalVariables(names=c(
 	"m","major","major.pop","mar","mata","maxit","mdbName","MDL","melt.data.frame","method","mfrow","mgp","minor","mmor","modelCheck","modelCompile","modelData","modelGenInits","modelUpdate","modT","mpd","msd","mu",
 	"nage","Nat","Nboot","nc","nC","nd","nepacLL","nepacLLhigh","nper","nRP","nspec","nT","nyr",
 	"obs","oma","orats","orfhistory","out",
-	"pa.obs","pa.raw","parVec","path","pathN","PBSdat","PBStool","PBSmin","Pfig","pfout.e","phi","pi.obs","pix","pjsa","PLIM","pmfc","PMFC","pmon","pnam","poi","pop.age","pop.pmr.qcss","popa","powr","prefix","pset","psize","Pstart","pwd","pyr",
+	"pa.obs","pa.raw","parVec","path","pathN","PBSdat","PBStool","PBSmin","pdo","Pfig","pfout.e","phi","pi.obs","pix","pjsa","PLIM","pmfc","PMFC","pmon","pnam","poi","pop.age","pop.pmr.qcss","popa","powr","prefix","pset","psize","Pstart","pwd","pyr",
 	"q2","qboxplot","qq","qtName","qu","quants",
 	"rate","rates","redo.currentMCMC","reltol","repN","rho","RkB","Roff","RPmax","RPmin","ryrs",
 	"s1","s2","samplesGetFirstChain","samplesGetLastChain","samplesHistory","samplesSet","SB","Scat","Sdat","sdate","seepa","seepi","set","setNames","sex","SG","SGdat","showC","showD","showE","showH","showL","showM","showQ","SID","sigma","so","species","speciesname","spn","spp","srfa","srfs","SSB","ssid","SSID","ssid.svid","steptol","sthin","stock","storageID","strArea","strat","stratum","stratum2006","strGear","strSpp","strYear","stype","survey","surveyname","surveys","synflds",

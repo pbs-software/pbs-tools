@@ -3,21 +3,22 @@
 \alias{adjustMajor}
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{
-  Expand PMFC 5C Area
+  Adjust PMFC Areas for GMU
 }
 \description{
-  \code{expand5C} -- Expand the PMFC 5C area by reassigning Morebsy Gully in PMFC 5B and Flamingo Inlet/Anthony Island in PMFC 5E to 5C.
-  Used only for Pacific Ocean Pearch (POP) and Yellowmouth Rockfish (YMR).
+  \code{expand5C} -- Expand the PMFC 5C area by reassigning Morebsy Gully in PMFC 5B and Flamingo Inlet/Anthony Island in PMFC 5E to 5C;
+  used only for Pacific Ocean Pearch (POP) and Yellowmouth Rockfish (YMR);
+  largely \emph{deprecated} in favour of \code{adjustMajor}.
   
-  \code{adjustMajor} -- Evolution of \emph{deprecated} function \code{'expand5C'} to expand additional
-  PMFC major areas like 5A into 3D for POP. 
-  Function will be extended to other species like outside Walleye Pollock (WAP):\cr
+  \code{adjustMajor} -- Evolution of function \code{'expand5C'} to expand additional
+  PMFC major areas like 5A into 3D for POP;
+  function might be extended to other species like outside Walleye Pollock (WAP):\cr
   PMFC minor area 12 (Queen Charlotte Strait) is added to major PMFC 5A (i.e. expand 5A);\cr
   PMFC minor area 20 (Juan de Fuca Strait) is added to major PMFC 3C (i.e. expand 3C).
 }
 \usage{
 expand5C(dat)
-adjustMajor(dat, strSpp="POP", plot=FALSE)
+adjustMajor(dat, strSpp="POP", plot=FALSE, poly="5A")
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -25,6 +26,7 @@ adjustMajor(dat, strSpp="POP", plot=FALSE)
     \code{X}, \code{Y}, \code{major}, \code{minor}, and \code{locality}.}
   \item{strSpp}{\code{character} -- Hart code for a single species}
   \item{plot}{\code{logical} -- if \code{TRUE}, plot the results (mainly for debugging)}
+  \item{poly}{\code{character} -- choice of polygon to plot (`5A' or `5C' for POP)}
 }
 \details{
     There is only reassignment if geographic coordinates (\code{X},\code{Y})
@@ -54,7 +56,7 @@ adjustMajor(dat, strSpp="POP", plot=FALSE)
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
   \emph{locus opus}: Remote office, Vancouver BC\cr
-  Last modified \code{Rd: 2024-10-28}
+  Last modified \code{Rd: 2025-04-23}
 }
 \note{
   Be aware that any algorithm that relies on combinations of (\code{major}, \code{minor}, \code{locality}), 

@@ -17,6 +17,7 @@
 ##  processBio......Process PBSdat created by call to 'gfb_bio.sql' query.
 ##  processMap......Process PBSdat created by call to `fos_map_density.sql' to create a map object for stock assessment.
 ##  quantAges.......Plot quantile boxes of age by year and/or area, including mean age over time.
+##  smoothPDO.......Smooth environmental indices like PDO
 ##  splineCPUE......Fit spline curves through CPUE data to determine CV process error.
 ##  tabAmeth........Tabulate ageing error structures available in bio123.
 ##  tabOtos.........Tabulate otoliths available and aged.
@@ -177,11 +178,11 @@ calcCVage <- function(dat, read_prim=2, read_prec=NULL, cvtype="age",
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~calcCVage
 
 
-#calcMA---------------------------------2011-05-05
-# Calculate a moving average using a fixed
-# period occurring every x units.
-#-----------------------------------------------RH
-calcMA <- function(x,y,y2,period=270,every=10)
+## calcMA-------------------------------2011-05-05
+##  Calculate a moving average using a fixed
+##  period occurring every x units.
+## ---------------------------------------------RH
+calcMA <- function(x, y, y2, period=270, every=10)
 {
 	xclass = class(x); yclass = class(y)  # get all classes of x & y
 	xallow = c("numeric","integer","ts","POSIXct","POSIXlt","Date")
@@ -191,29 +192,33 @@ calcMA <- function(x,y,y2,period=270,every=10)
 	# Make 'as.' functions to predefine empty vectors for filling in moving averages of x & y.
 	eval(parse(text=paste("xfun=as.",xclass,"; yfun=as.",yclass,sep="")))
 	if (!missing(y2) && length(y)==length(y2)){      # use y2 observations if any y-values missing
-		z=is.na(y); if(any(z)) y[z]=y2[z] }
-	z1=!is.na(x) & !is.na(y); x=x[z1]; y=y[z1]       # remove NAs
-	z2=order(x);            ; x=x[z2]; y=y[z2]       # enforce ordering of time series
-	n=length(x)
-	xdiff=as.numeric(diff(x))
-	xval=c(0,cumsum(xdiff))
-	nmean=ceiling((max(xval)-period)/every)
-	xma=rep(xfun(NA),nmean); yma=rep(yfun(NA),nmean); zma=rep(as.numeric(NA),nmean)
+		z = is.na(y); if(any(z)) y[z] = y2[z] }
+	z1 =!is.na(x) & !is.na(y); x = x[z1]; y = y[z1]       # remove NAs
+	z2 = order(x);           ; x = x[z2]; y = y[z2]       # enforce ordering of time series
+	n = length(x)
+	xdiff = as.numeric(diff(x))
+	xdiff = c(xdiff, mean(xdiff)) ## adjust for n-1
+	#xval  = c(0,cumsum(xdiff))
+	xval  = c(cumsum(xdiff))
+	nmean = ceiling((max(xval)-period)/every) + 1  ## for initial period
+	xma   = rep(xfun(NA),nmean); yma = rep(yfun(NA),nmean); zma = rep(as.numeric(NA),nmean)
 	# Slide the moving average backwards from the last observation
-	x1=xval[n]; x0=x1-period+1
+	x1 = xval[n]; x0 = x1-period+1
 	for (i in 1:nmean) {
 		z = xval>=x0 & xval<=x1
-		xma[i]=rev(x[z])[1]              # grab the end value
-		yma[i]=mean(y[z],na.rm=TRUE)
-		zma[i]=rev(xval[z])[1]           # grab the end value
-		x1=x1-every; x0=x1-period+1
+		xma[i] = rev(x[z])[1]              # grab the end value
+		yma[i] = mean(y[z],na.rm=TRUE)
+		zma[i] = rev(xval[z])[1]           # grab the end value
+		x1 = x1-every; x0 = x1-period+1
+#browser();return()
 	}
-	ma=data.frame(x=xma,y=yma,z=zma)
-	ma=ma[order(ma$x),]; rownames(ma)=1:nrow(ma) # Reverse the backwards accumulation
+	ma = data.frame(x=xma, y=yma, z=zma)
+	ma = ma[order(ma$x),]; rownames(ma)=1:nrow(ma) # Reverse the backwards accumulation
+#browser();return()
 	attr(ma,"dat")=data.frame(x=x,y=y,z=xval)
 	return(ma)
 }
-#-------------------------------------------calcMA
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~calcMA
 
 
 ## compAF-------------------------------2024-10-24
@@ -3340,6 +3345,87 @@ quantAges  <- function(bioDat, dfld="age", afld="major", tfld="year",
 	return(Qage)
 }
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~quantAges
+
+
+## smoothPDO ---------------------------2025-04-15
+##  Smooth environmental indices like PDO
+## ---------------------------------------------RH
+smoothPDO=function(dat=pdo, zfld="anomaly", period=365, every=365/6, 
+   addpos=TRUE, posgroup=4, addgrid=TRUE, gridcell=5)
+{
+	dnam = as.character(substitute(dat))
+	if (!zfld %in% colnames(dat))
+		stop (paste0("Specified z-field '", zfld, "' not a named column in '", dnam, "'"))
+	if (any(grepl("[Yy][Ee][Aa][Rr]",colnames(dat)))){
+		yrfld = grep("[Yy][Ee][Aa][Rr]",colnames(dat))
+		year = index = dat[,yrfld]
+		if (any(grepl("[Mm][Oo][Nn][Tt][Hh]",colnames(dat)))){
+			mofld = grep("[Mm][Oo][Nn][Tt][Hh]",colnames(dat))
+			month = dat[,mofld]
+			index = paste0(index, "-", pad0(month,2))
+		}
+		zval = dat[,zfld,drop=FALSE]
+		rownames(zval) = index
+#browser();return()
+	}
+	#ynam = paste(rep(rownames(dat),each=ncol(dat)),rep(pad0(1:ncol(dat),2),nrow(dat)),sep="-")
+	y    = as.vector(t(zval)); names(y)=rownames(zval)
+	y    = clipVector(y,NA)
+	#x    = as.numeric(substring(names(y),1,4)) + as.numeric(substring(names(y),6))/ncol(dat)
+	x     = as.POSIXct(paste(names(y),"-15",sep=""))
+	smoo = calcMA(x,y,period=period,every=every); ttput(smoo)
+	xval = substring(smoo$x,1,7)
+	yval = smoo$y
+	#xuse=c(TRUE,!is.element(diff(sign(yval)),0)); xuse[length(xuse)]=TRUE
+
+	## Determine when smoothed index flips from negative to positive and vice versa
+	if(addpos) {
+		flip = diff(sign(yval))
+#browser();return()
+		xuse = c(!is.element(flip,0),TRUE)#; xuse[1]=TRUE
+		puse = sapply(1:length(flip),function(i){ ii=i+(1:posgroup); ii=ii[ii<=length(flip)]; pout = if(flip[i]%in%c(0,-2)) FALSE else all(flip[ii]==0); return(pout) }) #if(pout){browser();return()} })
+		nuse = sapply(1:length(flip),function(i){ ii=i-(1:posgroup); ii=ii[ii>0]; nout = if(flip[i]%in%c(0,2))  FALSE else all(flip[ii]==0); return(nout) }) #if(pout){browser();return()} })
+		poslab = paste0(xval[puse], " to ", xval[nuse])
+	}
+	## Create a 5-yr grid from unsmoothed data
+	if (addgrid) {
+		ztcks = !duplicated(substring(x,1,4)) & substring(x,1,4) %in% seq(1855,2055,gridcell)
+		names(ztcks) = substring(x,1,7)
+		utcks = names(ztcks) >= xval[1] & names(ztcks) <= rev(xval)[1]  ## get the range covered by xval
+		ztcks = ztcks[utcks]
+		xgrid = 1:length(ztcks)
+		xgrid = scaleVec(xgrid,Tmin=1,Tmax=length(xval))  ## scale grid based on plotted coordinates
+#browser();return()
+		#xtcks = rep(FALSE,length(xval));xtcks[ztcks]=TRUE
+	}
+
+	xlab = rep("",length(xval))
+	xlab[xuse] = xval[xuse]
+	ypos=yneg=yval
+	ypos[ypos<=0] = 0
+	yneg[yneg>0]  = 0
+	#plot(smoo[[1]],smoo[[2]],type="h")
+	expandGraph(mfrow=c(1,1), oma=c(0,0,0,0), mar=c(2,3,1,0.5), mgp=c(2,0.5,0))
+	barplot(yval, space=0, col="gainsboro", border="gainsboro", names.arg=NULL, las=3, cex.names=.7, xlim=c(-1,length(yval)+1))
+	if (addgrid) {
+		abline(v=xgrid[ztcks], col="slategray", lty=2)
+		text(xgrid[ztcks], par()$usr[3], substring(names(ztcks)[ztcks],1,4), pos=1, cex=0.9, col="blue", xpd=NA)
+
+	}
+	barplot(ypos, space=0, col="red",  border="red",  add=TRUE, axes=FALSE)
+	barplot(yneg, space=0, col="blue", border="blue", add=TRUE, axes=FALSE)
+	abline(h=0, col="gainsboro"); #abline(v=c(0,as.numeric(rownames(smoo))[xuse]),lty=3)
+	text(par()$usr[1], 0, substring(x[1],1,4), cex=0.9, adj=0)
+	text(par()$usr[2], 0, substring(rev(x)[1],1,4), cex=0.9, adj=1)
+	addLabel(-0.025, 0.025, toupper(dnam), cex=1.5, adj=c(0,1), font=2, xpd=NA)
+	if (addpos) {
+		text((1:length(xval))[puse][yval[puse]<0][1:length(poslab)], par()$usr[4], poslab, srt=90, cex=0.7, adj=c(1,0), col="red")
+		addLabel(0.975,0.975, "Positive\nphases", cex=0.8, adj=c(1,1), col="red")
+	}
+#browser();return()
+	return(list(x=x,y=y,xval=xval,yval=yval,smoo=smoo,poslab=poslab))
+}
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~smoothPDO
 
 
 ## splineCPUE---------------------------2024-10-24
