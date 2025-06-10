@@ -633,10 +633,10 @@ SELECT * FROM #GFBBIO
 -- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="435") -- Bocaccio (BOR: 230117, 240102 [2024 SR])
 -- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="418") -- Yellowtail Rockfish (180531, 200910, 240208, 240315, 240320 [2024 WP])
 -- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="009") -- Rougheye Rockfish (240731) -- no records
--- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="394") -- Rougheye Rockfish (RER: 240731, 240904 [NF])
--- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="425") -- Blackspotted Rockfish (BSR 240731, 240904 [NF])
 -- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="044") -- Spiny Dogfish (DOG: 241024 [DF])
 -- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="228") -- Walleye Pollock (WAP: 241125 [DH])
 -- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="405") -- Silvergray Rockfish (SGR: 240731, 241108, 250414, 250423 [2025 WP])
+-- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="425") -- Blackspotted Rockfish (BSR 240731, 240904, 250501 [NF])
+-- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="394") -- Rougheye Rockfish (RER: 240731, 240904, 250501 [NF])
 
 -- DF=Dee Finn, DH=Dana Haggarty, MM=Mackenzie Mazur, NF=Nick Fisch, PJS=Paul Starr, RH=Rowan Haigh, SR=Science Response, WP=working paper

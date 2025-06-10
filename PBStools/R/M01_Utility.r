@@ -83,6 +83,7 @@
 	yellow=c(240,228,66),blue=c(0,114,178),vermillion=c(213,94,0),redpurple=c(204,121,167), white=c(255,255,255))
 .colBlind   <- sapply(.rgbBlind,function(x){rgb(x[1],x[2],x[3],maxColorValue=255)})
 .colGnuplot <- c("#e41a1c","#377eb8","#4daf4a","#984ea3","#ff7f00","#ffff33","#a65628","#f781bf")
+names(.colGnuplot) <- c("red","blue","green","purple","orange","yellow","brown","pink")
 
 
 ## addStrip-----------------------------2020-10-06
@@ -122,25 +123,67 @@ addStrip <- function (x, y, col, lab, xwidth=0.01, yheight=0.3, ...)
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~addStrip
 
 
-## adjustMajor-----------------------------2025-04-23
+## adjustMajor--------------------------2025-06-05
 ##  Evolution of expand5C() to other species.
 ##  POP/YMR:
 ##    Transfer events from Moresby Gully in 5B and 
 ##    Flamingo Inlet/Anthony Island in 5E to PMFC 5C.
 ##  POP:
 ##    Transfer events from upper 3D to 5A
-##  WAP:
-##    TBD
+##  GFBioSQL:
+##  (RH 250605) GFBio now has combo codes for majors
+##  stemming from sampling offloads by shoreside BSP.
+##  These need to be assigned to individual PMFC areas
+##  for many biological functions.
+##    71 = "3CD: West Coast Vancouver Island"
+##    72 = "3D5A: NW Vancouver Island and Southern QC Sound" 
+##    73 = "5AB: Queen Charlotte Sound"
+##    74 = "5BC: Northern QC Sound and Southern Hecate Strait"
+##    75 = "5CD: Hecate Strait"
+##    76 = "5DE: Northern Hecate Strait and West Coast Haida Gwaii"
+##    77 = "5BE: Northern QC Sound and West Coast Haida Gwaii"
 ## ---------------------------------------------RH
-adjustMajor <- function(dat, strSpp="POP", plot=FALSE, poly="5A")
+adjustMajor <- function(dat, strSpp, plot=FALSE, poly=c("5A","5C"), 
+   png=FALSE, pngres=400, lang=c("f","e"))
 {
-	if (!strSpp %in% c("POP","YMR","396","440","SLM"))
-		stop (paste0("Function 'adjustMajor' has no rule for '", strSpp, "'"))
-	if (is.element("major_old", colnames(dat)))  ## legacy from 'expand5C'
-		dat$major_gffos = dat$major_old
-	if (!is.element("major_gffos", colnames(dat)))
-		dat$major_gffos = dat$major
-	dat$major_adj = dat$major_gffos
+	if (missing(strSpp))
+		stop ("specify a species code (Hart or code3)")
+
+	## Reset majors to their original state
+	## ------------------------------------
+	## Legacy from 'expand5C' (revert to old major)
+	if (is.element("major_old", colnames(dat)))
+		dat$major = dat$major_old
+	## More legacy? (revert to gffos)
+	if (is.element("major_gffos", colnames(dat)))
+		dat$major = dat$major_gffos
+	## Revert to original if it exists (may be iterating on previously adjusted file)
+	if (is.element("major_init", colnames(dat)))
+		dat$major = dat$major_init
+	## Revert to GFBio majors
+#	if (is.element("major_gfbio", colnames(dat)))
+#		dat$major = dat$major_gfbio
+
+	## Set up an adjusted field starting from restored major (and retain the initial statesave original)
+	dat$major_adj  = dat$major
+	dat$major_init = dat$major
+
+	## Start processing majors
+	## -----------------------
+	## Check for combo-major codes from GFBio
+	if (any(is.element(dat$major, 71:77))) {
+		.flush.cat("Adjusting GFBioSQL combo majors\n")
+		#dat$major_gfbio = dat$major  ## could be major_init but treat differently for now
+		dat$major_adj[is.element(dat$major, 71)] = 3  ## 3CD
+		dat$major_adj[is.element(dat$major, 72)] = 4  ## 3D5A
+		dat$major_adj[is.element(dat$major, 73)] = 5  ## 5AB
+		dat$major_adj[is.element(dat$major, 74)] = 6  ## 5BC
+		dat$major_adj[is.element(dat$major, 75)] = 7  ## 5CD
+		dat$major_adj[is.element(dat$major, 76)] = 8  ## 5DE
+		dat$major_adj[is.element(dat$major, 77)] = 9  ## 5BE
+		## Switch majors (because adjustments below rely on adjustments above)
+		dat$major = dat$major_adj
+	}
 
 	if (strSpp %in% c("POP","YMR","396","440","SLM")) {
 		## Expand 5C for both POP and YMR from 5B and 5E
@@ -203,44 +246,63 @@ adjustMajor <- function(dat, strSpp="POP", plot=FALSE, poly="5A")
 			dat$major_adj[z3D] = 5  ## 5A
 	}
 	if (plot) {
-		if (poly=="5A") {
+		if (strSpp %in% c("POP","396","SLM") && "5A" %in% poly) {
 			## Plot poly5A map
-			expandGraph(mar=c(3,3,1,1), mgp=c(2,0.5,0))
-			data("nepacLL","nepacLLhigh", package="PBSmapping")
-			data("major", "minor", "locality", package="PBSdata")
-			#plotMap(nepacLL,xlim=c(-132,-127), ylim=c(49.75,52.5), col="palegreen", plt=NULL, cex.axis=1.2, cex.lab=1.5) ## both 5C and 5A expansions
-			#plotMap(nepacLLhigh,xlim=c(-128.5,-127.7), ylim=c(50.05,50.6), col="palegreen", plt=NULL, cex.axis=1.2, cex.lab=1.5) ## top of 3D
-			plotMap(nepacLLhigh,xlim=c(-130.5,-126.5), ylim=c(49.5,51.5), col="white", plt=NULL, cex.axis=1.2, cex.lab=1.5) ## CR map for 5A expansion
-			addPolys(locality, col="transparent", border="black", lwd=1); addLabels(attributes(locality)$PolyData)
-			#addPolys(minor, border="red", lwd=1)
-			addPolys(major, col="transparent", border="blue", lwd=2)
-			addPolys(poly5C, col=lucent("yellow",0.5))
-			#addPoints(e5C$e.in,col="black",pch=20)
-			addPolys(poly5A, col=lucent("purple",0.25))
-			#addPoints(e5A$e.in,col="black",pch=20)
-			addPolys(nepacLLhigh, col="palegreen")
-			text(c(-130,-129.5,-129), c(50.8,50.3,49.8), c("5A",paste0("+ 5A ", strSpp),"3D"), cex=1.5, font=2, col="blue")
-			box(lwd=2)
+			outnam = paste0("adjustMajor-", strSpp, "-poly5A")
+			createFdir(lang)
+			fout.e = outnam
+			for (l in lang) {
+				changeLangOpts(L=l)
+				fout = switch(l, 'e' = paste0("./english/",fout.e), 'f' = paste0("./french/",fout.e) )
+				if (png) {
+					clearFiles(paste0(fout,".png"))
+					png(file=paste0(fout,".png"), units="in", res=pngres, width=9.25, height=7.25)
+				}
+				expandGraph(mar=c(3,3,1,1), mgp=c(2,0.5,0))
+				data("nepacLL","nepacLLhigh", package="PBSmapping")
+				data("major", "minor", "locality", package="PBSdata")
+				plotMap(nepacLLhigh,xlim=c(-130.5,-126.5), ylim=c(49.5,51.5), col="white", plt=NULL, cex.axis=1.2, cex.lab=1.5) ## CR map for 5A expansion
+				addPolys(locality, col="transparent", border="black", lwd=1); addLabels(attributes(locality)$PolyData)
+				addPolys(major, col="transparent", border="blue", lwd=2)
+				addPolys(poly5A, col=lucent("purple",0.25))
+				addPoints(e5A$e.in,col="red",pch=20)
+				addPolys(nepacLLhigh, col="palegreen")
+				text(c(-130,-129.5,-129), c(50.8,50.3,49.8), c("5A",paste0("+ 5A ", linguaFranca(strSpp,l)),"3D"), cex=1.5, font=2, col="blue")
+				box(lwd=2)
+				if (png) dev.off()
+			}; eop()
 		}
-		if (poly=="5C") {
+		if (strSpp %in% c("POP","YMR","396","440","SLM") && "5C" %in% poly) {
 			## Plot poly5C map
-			expandGraph(mar=c(3,3,1,1), mgp=c(2,0.5,0))
-			data("nepacLL","nepacLLhigh", package="PBSmapping")
-			data("major", "minor", "locality", package="PBSdata")
-			plotMap(nepacLLhigh,xlim=c(-132.5,-129.5), ylim=c(51.0,53.0), col="white", plt=NULL, cex.axis=1.2, cex.lab=1.5) ## CR map for 5A expansion
-			addPolys(poly5C, col=lucent("orange",0.75))
-			pdata = attributes(locality)$PolyData
-			pdata$label_old = pdata$label
-			pdata$label = pdata$name
-			if (strSpp %in% c("SLM","SBJ"))
-				pdata$label = linguaFranca(pdata$label, lang="f", localnames=TRUE)
-			pdata$label = gsub("\\s+", "\n", pdata$label)
-			addPolys(locality, col="transparent", border="blue", lwd=1)
-			addPolys(major, col="transparent", border="red", lwd=2)
-			addPolys(nepacLLhigh, col="palegreen")
-			addLabels(pdata)
-			box(lwd=2)
-		}
+			outnam = paste0("adjustMajor-", strSpp, "-poly5C")
+			createFdir(lang)
+			fout.e = outnam
+			for (l in lang) {
+				changeLangOpts(L=l)
+				fout = switch(l, 'e' = paste0("./english/",fout.e), 'f' = paste0("./french/",fout.e) )
+				if (png) {
+					clearFiles(paste0(fout,".png"))
+					png(file=paste0(fout,".png"), units="in", res=pngres, width=8.2, height=8.9)
+				}
+				expandGraph(mar=c(3,3,1,1), mgp=c(2,0.5,0))
+				data("nepacLL","nepacLLhigh", package="PBSmapping")
+				data("major", "minor", "locality", package="PBSdata")
+				plotMap(nepacLLhigh,xlim=c(-132.5,-129.5), ylim=c(51.0,53.0), col="white", plt=NULL, cex.axis=1.2, cex.lab=1.5) ## CR map for 5A expansion
+				addPolys(poly5C, col=lucent("orange",0.75))
+				addPoints(e5C$e.in,col="black",pch=20)
+				pdata = attributes(locality)$PolyData
+				pdata$label_old = pdata$label
+				pdata$label = pdata$name
+				pdata$label = linguaFranca(pdata$label, lang=l, localnames=TRUE)
+				pdata$label = gsub("\\s+", "\n", pdata$label)
+				addPolys(locality, col="transparent", border="blue", lwd=1)
+				addPolys(major, col="transparent", border="red", lwd=2)
+				addPolys(nepacLLhigh, col="palegreen")
+				addLabels(pdata)
+				box(lwd=2)
+				if (png) dev.off()
+			}
+		}; eop()
 	}
 	## Switch majors
 	dat$major = dat$major_adj
@@ -469,7 +531,7 @@ convFY <- function(x,startM=4)
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~convFY
 
 
-## convUTF------------------------------2023-07-26
+## convUTF------------------------------2025-06-04
 ##  Convert UTF-8 strings into Unicode characters.
 ##  https://stackoverflow.com/questions/72591452/replace-double-by-single-backslash
 ##  Solution by G. Grothendieck
@@ -489,6 +551,7 @@ convUTF <- function(x, guide=FALSE)
 			"c cedilla    (\u00E7) : \\u00E7",
 			"e acute      (\u00E9) : \\u00E9",
 			"e circumflex (\u00EA) : \\u00EA",
+			"e grave      (\u00E8) : \\u00E8",
 			"e umlaut     (\u00EB) : \\u00EB",
 			"i acute      (\u00ED) : \\u00ED",
 			"i circumflex (\u00EE) : \\u00EE",
@@ -1302,7 +1365,7 @@ gatherVals <- function(x, columns)
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~gatherVals
 
 
-## getData------------------------------2025-05-23
+## getData------------------------------2025-05-28
 ## Get data from a variety of sources.
 ## subQtrust -- if user has no DFO trusted credentials:
 ##   if (type=="SQL"), c(trusted, uid, pwd) copied to `subQtrust'
@@ -1365,7 +1428,7 @@ getData <-function(fqtName, dbName="PacHarvest", strSpp=NULL, server=NULL,
 		eval(parse(text=expr)) }
 	else if (any(type==c("SQL","ORA","SQLX","ORAX"))) {
 		## If a direct expression, execute it. If no species, grab a table.
-		if (any(type==c("SQLX","ORAX")) || is.null(strSpp) || strSpp=="") {
+		if (any(type==c("SQLX","ORAX")) || is.null(strSpp) || all(strSpp=="")) { ## (RH 250528)
 			isExpr = ifelse(any(type==c("SQLX","ORAX")),TRUE,FALSE)
 			expr=paste(c("datt=.getSQLdata(dbName=\"",dbName,"\"",
 				",qtName=", ifelse(isExpr,"NULL",paste("\"",fqtName,"\"",sep="")),
@@ -2016,7 +2079,7 @@ isThere <- function(x, envir=parent.frame())
 	genv <- function(){ .GlobalEnv }                # global environment
 
 
-## linguaFranca-------------------------2025-04-22
+## linguaFranca-------------------------2025-06-04
 ## Translate English phrases to French (other languages possible)
 ## for use in plotting figures with French labels.
 ## Note that 'gsub' has a limit to its nesting depth.
@@ -2562,6 +2625,7 @@ linguaFranca <- function(x, lang="e", little=4, strip=FALSE, localnames=FALSE)
 				gsub("([[:space:]]+)[B][C]([[:space:]]+)", eval(parse(text=deparse("\\1C-B\\2"))),
 				gsub("[H][S]", "DH",
 				gsub("[Cc]oast", eval(parse(text=deparse("c\u{00F4}te"))),
+				gsub("[Cc]oastal( waters)?", eval(parse(text=deparse("eaux c\u{00F4}ti\u{00E8}res"))),
 				gsub("[G][I][G]", "GIG",  ## goulet de l'\^{i}le Goose
 				gsub("[Q][C][S]", "BRC",
 				gsub("[P][B][S]", "SBP",
@@ -2587,7 +2651,7 @@ linguaFranca <- function(x, lang="e", little=4, strip=FALSE, localnames=FALSE)
 				gsub("[Gg]oose [Ii]sland [Gg]ully", eval(parse(text=deparse("goulet de l'\u{00EE}le Goose"))),
 				gsub("[Qq]ueen [Cc]harlotte [Ss]ound", "bassin de la Reine-Charlotte",
 				gsub("[Qq]ueen [Cc]harlotte [Ss]trait", eval(parse(text=deparse("d\u{00E9}troit de la Reine-Charlotte"))),
-				xx))))))))))))))))))))))))))))
+				xx)))))))))))))))))))))))))))))
 			})
 			## words describing fisheries
 			xfish = sapply(xgeo, function(xx){

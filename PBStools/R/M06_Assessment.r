@@ -221,29 +221,28 @@ calcMA <- function(x, y, y2, period=270, every=10)
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~calcMA
 
 
-## compAF-------------------------------2024-10-24
+## compAF-------------------------------2025-06-04
 ## Compare age frequencies using discrete or
 ## cumulative distribution plots.
 ## ---------------------------------------------RH
-compAF <- function(x, year=2003, sex=2, amax=40, pfld="wp",
+compAF <- function(x, allyrs=2003, sex=2, amax=40, pfld="wp",
    png=FALSE, pngres=400, PIN=c(10,7.5),
    outnam, clrs=c("red","black"), ltys=1, 
    type="cumul", fac="len", lang=c("e","f"))
 {
 	if (length(x)==0) stop("Supply a named list for x")
 	std   = function(x){x/sum(x)}
-	ncomp = length(x)
+	ncomp = length(x)     ## e.g., surveys
 	nsex  = length(sex)
-	ntype = length(type)
-#browser();return()
-	years = sapply(x,function(xx){
-		noto=apply(xx[,,,"n",drop=FALSE],2,sum,na.rm=TRUE)
-		yrs = as.numeric(names(noto[noto>0]))
+	ntype = length(type)  ## type of plot (e.g. 'cumul')
+	years = lapply(x,function(xx){
+		noto = apply(xx[,,,"n",drop=FALSE],2,sum,na.rm=TRUE)
+		yrs  = as.numeric(names(noto[noto>0]))
 		return(yrs)
 	} )
-	year  = intersect(year,.su(unlist(years)))
-	nyear = length(year)
-	
+	binyear = intersect(allyrs, .su(unlist(years)))
+	nyear   = length(binyear)
+
 	col   = lucent(rep(clrs,ncomp)[1:ncomp],0.5)
 	lty   = rep(ltys,ncomp)[1:ncomp]
 
@@ -266,10 +265,27 @@ compAF <- function(x, year=2003, sex=2, amax=40, pfld="wp",
 			rc = c(ntype,nsex)
 			par(mfcol=rc, mar=c(0,0,0,0), oma=c(3.5,3.5,3,0.5), mgp=c(1.6,0.5,0))
 		}
-	
-		xnam = names(x)
-		ydiff = diff(year); udiff=unique(ydiff); ymode=udiff[which.max(tabulate(match(ydiff, udiff)))]
-		for (y in year) {
+
+		xnam   = names(x)
+		## New routine to get year-range for binned years (RH 250604)
+		binlabs = function(x,a) {
+			istart = match(x,a)
+			idiff  = diff(istart)
+			itail  = length(a) - rev(istart)[1]
+			iend   = istart + c(idiff-1, itail)
+			ilab   = paste(a[istart], a[iend], sep="-")
+			if (itail < 1)
+				ilab[length(ilab)] = a[istart[length(istart)]]
+			names(ilab) = x
+			return(ilab)
+		}
+		yrlabs = binlabs(x=binyear, a=allyrs)
+#browser(); return()
+		## The following three lines are largely useless and deprecated; remove at some point in future
+		#ydiff = diff(year)
+		#udiff = unique(ydiff)
+		#ymode = udiff[which.max(tabulate(match(ydiff, udiff)))]  ##  this seems particularly useless
+		for (y in binyear) {
 			for (s in sex) {
 				yy = as.character(y)
 				ss = as.character(s)
@@ -286,12 +302,14 @@ compAF <- function(x, year=2003, sex=2, amax=40, pfld="wp",
 					if(!is.element(yy,dimnames(xx)$year)) 0 
 					else sum(xx[,yy,ss,"n"])
 				})
-				#legtxt = paste0(names(notos)," ",round(notos), switch(fac, 'age'=" otos", 'len'=" lens"))
-				legtxt = paste0(names(notos)," ",round(notos), " obs")
+				legtxt = paste0(names(notos)," ",round(notos), switch(fac, 'age'=" otos", 'len'=" lens"))
+				#legtxt = paste0(names(notos)," ",round(notos), " obs")  ## must have been used for previous versions
 				ylim = c(0,max(sapply(xvec,max),na.rm=TRUE))
 				#yyy  = if (ymode<=1) yy else paste0(y-ymode+1,"-",y)
 				#yyy  = if (ymode<=1) yy else paste0(y,"-",y+ymode-1)
-				yyy  = if (ymode<=1 || y==max(unlist(years))) yy else paste0(y,"-",min(y+ymode-1,max(unlist(years))) )
+#if (y==2023) {browser();return()}
+				#yyy  = if (ymode<=1 || y==max(unlist(years))) yy else paste0(y,"-",min(y+ymode-1,max(unlist(years))) )
+				yyy = yrlabs[yy]
 
 #if(y==2023) {browser();return()}
 
@@ -317,7 +335,6 @@ compAF <- function(x, year=2003, sex=2, amax=40, pfld="wp",
 							lines(1:length(xvec[[n]]), cumsum(xvec[[n]]), col=col[n], lty=lty[n], lwd=3)
 						}
 					} )
-#browser();return()
 					#addLabel(0.05, 0.95, paste0(yyy, ifelse(np==1, linguaFranca(switch(s," - Male"," - Female"),l), "")), adj=c(0,1), cex=1.2)
 					addLabel(0.05, 0.95, yyy, adj=c(0,1), cex=1.2)
 					if (par()$mfg[2]==1) {
@@ -329,12 +346,12 @@ compAF <- function(x, year=2003, sex=2, amax=40, pfld="wp",
 						axis(1, at=seq(10,amax,10), labels=TRUE, cex.axis=1.5, las=1)
 					}
 				}
-#browser();return()
 				zleg = grep(" 0 ",legtxt,invert=TRUE)
 				if (type=="cumul")
 					addLegend(0.025,0.8, bty="n", lty=lty[zleg], seg.len=3, col=col[zleg], legend=linguaFranca(gsub("_"," ",legtxt[zleg]),l), yjust=1, xjust=0, lwd=3, cex=0.9)
 				else
 					addLegend(0.025,0.975,bty="n", lty=lty, seg.len=1, col=col, legend=linguaFranca(gsub("_"," ",legtxt),l), yjust=1, xjust=0, lwd=2, cex=0.9)
+#browser();return()
 			} ## end s (sex) loop
 		} ## end y (year) loop
 		#mtext (linguaFranca("Age",l), side=1, outer=TRUE, line=2.5, cex=1.5)

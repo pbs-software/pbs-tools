@@ -336,6 +336,6 @@ ORDER BY EC.TRIP_ID, EC.FISHING_EVENT_ID
 -- qu("fos_mcatSPP.sql",dbName="GFFOS",strSpp="607")  -- PEL Petrale Sole (230925)
 -- qu("fos_mcatSPP.sql",dbName="GFFOS",strSpp="435")  -- BOR Bocaccio (190705, 191016, 240105)
 -- qu("fos_mcatSPP.sql",dbName="GFFOS",strSpp="418")  -- YTR Yellowtail Rockfish (240208, 240315)
--- qu("fos_mcatSPP.sql",dbName="GFFOS",strSpp="405")  -- SGR Silvergray Rockfish (241119)
 -- qu("fos_mcatSPP.sql",dbName="GFFOS",strSpp="228")  -- WAP Walleye Pollock (241128)
+-- qu("fos_mcatSPP.sql",dbName="GFFOS",strSpp="405")  -- SGR Silvergray Rockfish (241119, 250414)
 

@@ -219,6 +219,6 @@ ORDER BY
 --qu("gfb_catch_records.sql",dbName="GFBioSQL",strSpp="435",as.is=c(rep(FALSE,15),TRUE,rep(FALSE,3))) -- BOR (191016, 240105)
 --qu("gfb_catch_records.sql",dbName="GFBioSQL",strSpp="418",as.is=c(rep(FALSE,15),TRUE,rep(FALSE,3))) -- YTR (240208, 240315)
 --qu("gfb_catch_records.sql",dbName="GFBioSQL",strSpp="394",as.is=c(rep(FALSE,15),TRUE,rep(FALSE,3))) -- RER (200228, 240501)
---qu("gfb_catch_records.sql",dbName="GFBioSQL",strSpp="405",as.is=c(rep(FALSE,15),TRUE,rep(FALSE,3))) -- SGR (241119)
 --qu("gfb_catch_records.sql",dbName="GFBioSQL",strSpp="228",as.is=c(rep(FALSE,15),TRUE,rep(FALSE,3))) -- WAP (241128)
+--qu("gfb_catch_records.sql",dbName="GFBioSQL",strSpp="405",as.is=c(rep(FALSE,15),TRUE,rep(FALSE,3))) -- SGR (241119, 250414)
 

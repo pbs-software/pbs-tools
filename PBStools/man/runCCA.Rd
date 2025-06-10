@@ -5,7 +5,7 @@
 \alias{.runCCA.diag.panel}
 \alias{.runCCA.evalMod}
 \alias{.runCCA.getChains}
-\alias{.runCCA.getData"}
+\alias{.runCCA.getData}
 \alias{.runCCA.getLayout}
 \alias{.runCCA.model}
 \alias{.runCCA.objFun}
@@ -95,7 +95,7 @@ runCCA(fnam="nage394", hnam=NULL, ioenv=.GlobalEnv, ...)
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
   \emph{locus opus}: Remote office, Vancouver BC\cr
-  Last modified \code{Rd: 2024-02-29}
+  Last modified \code{Rd: 2025-06-10}
 }
 \seealso{
 In package \pkg{PBStools}:\cr

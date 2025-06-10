@@ -1,5 +1,5 @@
 PBStools Changes
-==============================
+===================================
 Authors: RH  = Rowan Haigh
          JTS = Jon T. Schnute
          NO  = Norm Olsen
@@ -8,21 +8,36 @@ Authors: RH  = Rowan Haigh
          SA  = Sean Anderson
          EK  = Elise Keppel
          BK  = Brian Krishka
-------------------------------
+-----------------------------------
+CRAN package version numbers follow a "major.minor.patch" format (e.g., 1.2.3), where: 
+	Major: Indicates a significant change that might break existing code.
+	Minor: Indicates the addition of new features or improvements, while generally maintaining backward compatibility.
+	Patch: Indicates bug fixes and minor improvements that do not introduce new features.
+-----------------------------------
+
+1.43.9 (2025-06-09)  [Rcheck=T, Rbuild=T]
+  * R code
+    + Added revised code for the function `buildCatch' [M07] (RH 250526)
+    + Fixed small bug in function `getData' [M01] (RH 250528)
+    + Modified function `compAF' [M06] to better handle the labelling of binned-year panels (RH 250604)
+    + Modified function `linguaFranca' [M01] (RH 250604)
+    + Added e-grave to menu in function `convUTF' [M01] (RH 250604)
+    + Revised function `adjustMajor' [M01] to deal with combo-majors in GFBioSQL from the new shoreside BSP (RH 250605)
+    + Tweaked colours in function `weightBio' [M02] (RH 250605)
 
 1.43.8 (2025-04-23)  [Rcheck=T, Rbuild=T]
-  * Rcode
-    + Modified function `calcMA' to deal with moving-average window more accurately (RH 250416)
-    + Added function `smoothPDO' to smooth environmental anomalies (RH 250416)
-    + Updated functions `adjustMajor', `getData', and `linguaFranca' (RH 230423)
-  * Scode
+  * R code
+    + Modified function `calcMA' [M06] to deal with moving-average window more accurately (RH 250416)
+    + Added function `smoothPDO' [M06] to smooth environmental anomalies (RH 250416)
+    + Updated functions `adjustMajor' [M01], `getData' [M01], and `linguaFranca' [M01] (RH 230423)
+  * SQL code
     + Updated `gfb_bio.sql' to account for the combination areas created by the new shoreside biosampling program (RH 250423)
   * Documentation
     + Added french version of the catch reconstruction pdf (RH 250423)
 
 1.43.7 (2025-03-20)  [Rcheck=T, Rbuild=T]
-  * Rcode
-    + Added new function `getGreek' to generate Greek letters (RH 250307)
+  * R code
+    + Added new function `getGreek' [M01] to generate Greek letters (RH 250307)
     + Removed PJS survey functions (module M09_PJSsurvey); transferred to new repository named `PJSsurvey' (RH 250319)
     + Removed financial functions (module M10_Financial) (RH 250319)
   * Documentation
@@ -38,7 +53,7 @@ Authors: RH  = Rowan Haigh
 
 1.43.5 (2025-01-10)  [Rcheck=T, Rbuild=T]
   * R code
-    + Fixed a bug in `texArray' where a global replacement of `= function' with `<- function' broke an argument in `print' (RH 250103)
+    + Fixed a bug in `texArray' [M08] where a global replacement of `= function' with `<- function' broke an argument in `print' (RH 250103)
   * Documentation
     + Created a new vignette called `Catch_Reconstruction' (RH 250110)
       - provides changes to the CR algorithm since Haigh and Yamanaka (2011)

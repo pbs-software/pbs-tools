@@ -11,7 +11,7 @@
 ##==============================================================================
 
 
-## buildCatch---------------------------2024-12-06
+## buildCatch---------------------------2025-04-24
 ## Catch reconstruction algorithm for BC rockfish.
 ## Use ratios of RRF (reconstructed rockfish) to ORF 
 ## (rockfish other than POP) landings for multiple fisheries.
@@ -136,7 +136,8 @@ buildCatch <- function(
 			datPrev = paste0(catDir,"/",datPrev)
 			if (dir.exists(datPrev)) {
 				rda.files = list.files(datPrev, pattern="\\.rda$", full.names=TRUE)
-				file.copy(from=rda.files, to=paste0(catDir,"/",datDir), copy.date=TRUE)
+#browser();return()
+				rubbish = file.copy(from=rda.files, to=paste0(catDir,"/",datDir), copy.date=TRUE)
 			} else {
 				mess = paste0("!!! Previous data directory:\n",datPrev,"\ndoes not exist.")
 				message(mess); return(mess)
@@ -252,7 +253,7 @@ buildCatch <- function(
 			if (h=="rrf"){
 				htab=array(0,dim=c(length(HISYRS),length(majhis),length(sou),length(nat),length(act),length(fsh),length(spp)),
 					dimnames=list(HISYRS,majhis,sou,nat,act,fsh,spp))
-				names(dimnames(htab))=c("year","major","source","nation","action","fishery","RRF")
+				names(dimnames(htab))=c("year","major","source","nation","action","fishery","RRF")  ## rrfhistory field 'Year' instead of 'year';fixed this in Historical_Catch.mdb (RH 250106)
 			} else {
 				htab=array(0,dim=c(length(HISYRS),length(majhis),length(sou),length(nat),length(act),length(fsh),3),
 					dimnames=list(HISYRS,majhis,sou,nat,act,fsh,c("POP","ORF","TRF")))
@@ -632,35 +633,50 @@ buildCatch <- function(
 		## ---------------------------------------------------------------------
 		## Query observer logs only (trawl)
 		## -------------------------------------------------
-		.flush.cat("   querying trawl observer logs (~30 sec);\n")
-		getData("pht_obsORF.sql", dbName="PacHarvest", strSpp=strSpp, path=spath, tenv=penv(), dummy=dyrs)
-		zOpht = do.call('order', PBSdat)  ## Try ordering (RH: 240216): calls to SQL seem to return same records in different order.
-		phtOlogs = PBSdat[zOpht,]
-		save("phtOlogs", file=paste0(catDir,"/phtOlogs.rda"))
+		if (file.exists(paste0(catDir,"/phtOlogs.rda")) && !sql.force) {
+			.flush.cat("   loading 'phtOlogs' from binary\n")
+			load(paste0(catDir,"/phtOlogs.rda"))
+		} else {
+			.flush.cat("   querying trawl Observer logs (~30 sec);\n")
+			getData("pht_obsORF.sql", dbName="PacHarvest", strSpp=strSpp, path=spath, tenv=penv(), dummy=defyrs[[1]])
+			zOpht = do.call('order', PBSdat)  ## Try ordering (RH: 240216): calls to SQL seem to return same records in different order.
+			phtOlogs = PBSdat[zOpht,]
+			save("phtOlogs", file=paste0(catDir,"/phtOlogs.rda"))
+		}
 		## -------------------------------------------------
 		## Query observer logs only (for halibut, sched2, ZN)
 		## -------------------------------------------------
-		.flush.cat("   querying h&l observer logs;\n")
-		getData("phhl_fcatORF.sql","PacHarvHL",strSpp=strSpp,path=spath,fisheryid=c(2,4,5),logtype="OBSERVRLOG",tenv=penv())
-		#discat=fosdat[is.element(fosdat$fid,k) & is.element(fosdat$log,105),] # fisherlogs (supposed to record all discards, electronic monitoring)
-		#phfOlogs = PBSdat
-		zOphf = do.call('order', PBSdat)  ## Try ordering (RH: 240216): calls to SQL seem to return same records in different order.
-		phfOlogs = PBSdat[zOphf,]
-		save("phfOlogs",file=paste0(catDir,"/phfOlogs.rda"))
+		if (file.exists(paste0(catDir,"/phfOlogs.rda")) && !sql.force) {
+			.flush.cat("   loading 'phfOlogs' from binary\n")
+			load(paste0(catDir,"/phfOlogs.rda"))
+		} else {
+			.flush.cat("   querying h&l Observer logs;\n")
+			getData("phhl_fcatORF.sql","PacHarvHL",strSpp=strSpp,path=spath,fisheryid=c(2,4,5),logtype="OBSERVRLOG",tenv=penv())
+			#discat=fosdat[is.element(fosdat$fid,k) & is.element(fosdat$log,105),] # fisherlogs (supposed to record all discards, electronic monitoring)
+			#phfOlogs = PBSdat
+			zOphf = do.call('order', PBSdat)  ## Try ordering (RH: 240216): calls to SQL seem to return same records in different order.
+			phfOlogs = PBSdat[zOphf,]
+			save("phfOlogs",file=paste0(catDir,"/phfOlogs.rda"))
+		}
 		## -------------------------------------------------
 		## Query observer logs only (for sabefish)
 		## -------------------------------------------------
-		.flush.cat("   querying sablefish observer logs;\n")
-		getData("phs_scatORF.sql","PacHarvSable",strSpp=strSpp,path=spath,fisheryid=k,logtype="OBSERVRLOG",tenv=penv())
-		zOphs = do.call('order', PBSdat)  ## Try ordering (RH: 240216): calls to SQL seem to return same records in different order.
-		phsOlogs = PBSdat[zOphs,]
-		save("phsOlogs",file=paste0(catDir,"/phsOlogs.rda"))
+		if (file.exists(paste0(catDir,"/phsOlogs.rda")) && !sql.force) {
+			.flush.cat("   loading 'phsOlogs' from binary\n")
+			load(paste0(catDir,"/phsOlogs.rda"))
+		} else {
+			.flush.cat("   querying sablefish Observer logs;\n")
+			getData("phs_scatORF.sql", "PacHarvSable", strSpp=strSpp, path=spath, fisheryid=3, logtype="OBSERVRLOG", tenv=penv())
+			zOphs = do.call('order', PBSdat)  ## Try ordering (RH: 240216): calls to SQL seem to return same records in different order.
+			phsOlogs = PBSdat[zOphs,]
+			save("phsOlogs",file=paste0(catDir,"/phsOlogs.rda"))
+		}
 		## ---------------------------------------
 		##-----Stop querying the databases-----
 	} ## end sql
 	else { ## Load binaries from previous queries
-		dbdat=as.character(substitute(dbdat)) ## database list object name
-		expr=paste0("getFile(",dbdat,",senv=ioenv,try.all.frames=TRUE,tenv=penv(),path=catDir,reload=TRUE); fnam=names(",dbdat,"); unpackList(",dbdat,")")
+		dbdat = as.character(substitute(dbdat)) ## database list object name
+		expr  = paste0("getFile(",dbdat,",senv=ioenv,try.all.frames=TRUE,tenv=penv(),path=catDir,reload=TRUE); fnam=names(",dbdat,"); unpackList(",dbdat,")")
 		eval(parse(text=expr)) 
 	}
 	if (sql.only) return()
@@ -1147,7 +1163,8 @@ buildCatch <- function(
 		else {
 			x[3] = max(x[3],x[1]+x[2]) ## ensure TRF is the largest value
 			x[1] = x[3] - x[2]         ## assume ORF is now correct, POP is residual
-			return(x) } })
+			return(x) } 
+	})
 	kk = dimnames(catmod)$fid
 	for (ll in c("POP","ORF","TRF"))
 		catmod[ii,jj,kk,ll] = TOPmod[ll,ii,jj,kk]
@@ -1238,9 +1255,10 @@ buildCatch <- function(
 	## ------------------------------------------------------
 	## Terminate here if all you want are the modern landings
 	## ------------------------------------------------------
-	.flush.cat("-----Finished collecting the historical and modern landings-----\n\n")
+	.flush.cat("-----Finished collecting the historical and modern landings in catmod-----\n\n")
 	if (!reconstruct)
 		return(list(catmod0=catmod0, catmod1=catmod1, catmod2=catmod2, catmod=catmod)) 
+#browser();return()
 
 	fold03 = TRUE ## ----- only used for code folding -----
 	if (fold03) { ## 3. Calculate ratios
@@ -1917,6 +1935,7 @@ buildCatch <- function(
 		packList(c("ctab","alpha","beta","RATES","GREFS","gamma","delta","dfac"),"CR",tenv=.PBStoolEnv)
 	.flush.cat("-----Finished calculating reference ratios-----\n\n")
 	} ## fold03
+
 	fold04 = TRUE ## ----- only used for code folding -----
 	if (fold04) { ## 4. Allocate ancient rockfish
 	
@@ -1995,8 +2014,8 @@ buildCatch <- function(
 	if (saveinfo)
 		packList(c("cobra","lambda","gamma.lambda","ancientRRF"),"CR",tenv=.PBStoolEnv)
 	.flush.cat("-----Finished allocating ancient rockfish catch by unknown gear-----\n\n")
-
 	} ## end fold04
+
 	fold05 = TRUE ## ----- only used for code folding -----
 	if (fold05) { ## 5. Reconstruct RRF
 
@@ -2047,7 +2066,7 @@ buildCatch <- function(
 	## Record years that catch was reconstructed and reported
 	## ------------------------------------------------------
 	yrs.rec = catmats = list()
-	for (k in fid) { ## big k (fid) loop; ends on L2450
+	for (k in fid) { ## big k (fid) loop; ends on L2520
 		.flush.cat(paste0("Fishery ",k,":\n"))
 		kk = as.character(k)
 		jj = dimnames(catmod)$major
@@ -2113,7 +2132,9 @@ buildCatch <- function(
 #browser();return()
 		
 		## --------------------------------------------------------
-		## Reconstructed CA RRF landings from modern ORF (DB catch)
+		## Reconstructed CA RRF landings from modern ORF (DB catch) using gamma
+		## Note: catmod might now contain supplementary reported foreign catch for
+		##       a specific RRF (e.g., YTR), but this does not influence ORF.
 		## --------------------------------------------------------
 		## Only place where gamma is applied alone (but is used in beta.gamma above).
 		## Appears to be a subset of reccatRRFall, i.e. CAcatRRF.db ~= reccatRRFall[,,"CA"]
@@ -2123,7 +2144,7 @@ buildCatch <- function(
 		icom = intersect(dimnames(reccatRRFall)[[1]],dimnames(CAcatRRF.db)[[1]])  ## icom = in common
 #browser();return()
 		if (length(icom)>0) {
-			## Compares the two methods for estimating reconstructed RRF in CA and chooses the largest value
+			## Compare the two methods for estimating reconstructed RRF in CA and choose the largest value
 			CAcatRRF.db.com  = CAcatRRF.db[icom,,drop=FALSE]
 			CAcatRRF.ndb     = reccatRRFall[,,"CA"]
 			CAcatRRF.ndb.com = CAcatRRF.ndb[icom,,drop=FALSE]
@@ -2223,7 +2244,6 @@ buildCatch <- function(
 			}
 		} ## end nn loop (nat)
 #browser();return()
-
 		## --------------------------------------------------------------------------------------------
 		## Detect modern RRF landings and mesh with reconstructed RRF landings if no `useYR1' specified
 		## --------------------------------------------------------------------------------------------
@@ -2259,7 +2279,7 @@ buildCatch <- function(
 			}
 			yrs.rec[[kk]][["xrec"]] = sapply(as.data.frame(zrec),function(z){xrec[z]},simplify=FALSE)  ## record reconstructed years
 			yrs.rec[[kk]][["xrep"]] = sapply(as.data.frame(zrep),function(z){xrep[z]},simplify=FALSE)  ## record reported years
-		} ## end if useYR1
+		} ## end if calculate useYR1
 		else { ## useYR1 specified
 			## -------------------------------------------------------------------------
 			## Needed because estimation from orfSpp cannot occur before 1996 at present
@@ -2323,30 +2343,9 @@ buildCatch <- function(
 			jjcc = dimnames(comcatRRF)[[2]]
 			sppnewRRF[iicc,jjcc,kk] = sppnewRRF[iicc,jjcc,kk] + comcatRRF[iicc,jjcc,drop=FALSE]
 			sppnewORF[iicc,jjcc,kk] = sppnewORF[iicc,jjcc,kk] + comcatORF[iicc,jjcc,drop=FALSE]
-
-#			## Scroll through nationalities and accumulate catch [DEPRECATED] (done above)
-#			## sppnewRRF|sppnewORF only contains ancient catch at this point
-#			for (nn in natUse){
-#				if (nn %in% "CA") {
-#					## If Canadian, add the comcat matrix generated above
-#					sppnewRRF[iicc,jjcc,kk] = sppnewRRF[iicc,jjcc,kk] + comcatRRF[iicc,jjcc,drop=FALSE]
-#					sppnewORF[iicc,jjcc,kk] = sppnewORF[iicc,jjcc,kk] + comcatORF[iicc,jjcc,drop=FALSE]
-#				} else {
-#					## Foreign fleets -- Canada's EEZ established in 1977 (allow for some catch in 1977, none afterwards)
-#					iimed = as.character(MEDYRS[1]:1977)  
-#					## ----------------------------------------------------------------------
-#					## Kate Rutherford (2016-11-14):
-#					## For many years after EEZ, Canadian trawlers landed their fish in Washington
-#					## state (Blaine, Bellingham). The fish were still caught in Canada.
-#					## ----------------------------------------------------------------------
-#					if (nn %in% "US")
-#						iimed = as.character(MEDYRS)  ## This was first active in ver.161115.
-#					sppnewRRF[iimed,jjcc,kk] = sppnewRRF[iimed,jjcc,kk] + reccatRRFall[iimed,jjcc,nn]
-#					sppnewORF[iimed,jjcc,kk] = sppnewORF[iimed,jjcc,kk] + reccatORFall[iimed,jjcc,nn]
-#				}
-#			} ## end nn loop (nat)
-		} ## end else useYR1
-		## `sppnewRRF' now contains additional fishery catch from 1951 to current year at this stage (previously only 1918-1950 catch)
+			## `sppnewRRF' now contains additional fishery catch from 1951 to current year at this stage (previously only 1918-1950 catch)
+		} ## end else useYR1 specified
+#browser();return()
 
 		if (ascii.tables) {
 			recLfileRRF = paste0(tabDir,"/",fidfive[k],"-",strSpp,"-Landed-Recon-",numdate,".csv")
@@ -2547,7 +2546,6 @@ buildCatch <- function(
 		## Save catch matrices for later inspection or debugging (RH 240221)
 		catmats[[fidnam[k]]] = list(reccatORF=reccatORF, reccatRRF=reccatRRF, repcatORF=repcatORF, repcatRRF=repcatRRF, reccatRRFall=reccatRRFall, reccatORFall=reccatORFall)
 	} ## end k (fid) loop
-
 	} ## end fold05
 
 	## Save the various reccat and repcat arrays (RH 240221)

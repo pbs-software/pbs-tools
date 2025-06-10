@@ -4710,7 +4710,7 @@ tabMW <- function(dat, flds=c("year","SSID"), zfld="wt", ttype,
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~tabMW
 
 
-## weightBio----------------------------2024-11-21
+## weightBio----------------------------2025-06-05
 ## Weight age|length frequencies|proportions by catch|density.
 ##   adat = age123 from query 'gfb_bio.sql'    -- e.g., getData("gfb_bio.sql","GFBioSQL",strSpp="607",path=.getSpath()); bio607=processBio()
 ##   cdat = cat123gfm -- call 'fos_mcatSPP.sql' to get commercial catches from GFFOS' GF_MERGED_CATCH table. (RH 190807)
@@ -4724,12 +4724,9 @@ weightBio <- function(adat, cdat, sunit="TID", sweight="catch",
    wSP=c(TRUE,TRUE), wN=TRUE, plus=60, accum=TRUE, Nmin=0, Amin=NULL, 
    ctype="C", per=90, SSID=NULL, tabs=TRUE, gear=NULL,
    plot=TRUE, ptype="bubb", size=0.05, powr=0.5, zfld="wp", 
-   clrs=list( c(.colBlind["blue"],"cyan"),
-              c(.colBlind["bluegreen"],"chartreuse")),
-   cohorts=NULL, regimes=list(1900:1908, 1912:1915, 1923:1929, 1934:1943,
-   1957:1960, 1976:1988, 1992:1998, 2002:2006, 2014:2017), ## +'ve annual PDO (as of 211130)
-   #list(x=c(1962,1970,1977,1989,1990,1992,1999),y=rep(0,7)),
-   #regimes=list(1926:1929,1939:1946,1977:1978,1980:1981,1983:1984,1986:1988,1991:1992,1995:2006), #ALPI
+   clrs=list( c(.colBlind["blue"],"cyan"), c(.colBlind["bluegreen"],"chartreuse")),
+   cohorts=NULL,
+   regimes=list(1900:1908, 1912:1915, 1923:1929, 1934:1943,1957:1960, 1976:1988, 1992:1998, 2002:2006, 2014:2017), ## +'ve annual PDO (as of 211130)
    layout="portrait", win=TRUE, eps=FALSE, pdf=FALSE, png=FALSE, wmf=FALSE,
    longside=10, outnam, outres=400, ioenv=.GlobalEnv, lang=c("e","f"), ...)
 {
@@ -4743,18 +4740,18 @@ weightBio <- function(adat, cdat, sunit="TID", sweight="catch",
 	}
 	strSpp=attributes(adat)$spp; if(is.null(strSpp)) strSpp="000"
 	assign("PBStool",list(module="M02_Biology",call=match.call(),args=args(weightBio),ioenv=ioenv,spp=strSpp),envir=.PBStoolEnv)
-	sysyr=as.numeric(substring(Sys.time(),1,4)) # maximum possible year
+	sysyr=as.numeric(substring(Sys.time(),1,4))    ## maximum possible year
 	if (is.null(major)) {
 		adat$major[is.null(adat$major)] = 0
 		cdat$major[is.null(cdat$major)] = 0
 		major = sort(unique(adat$major)) }
 	if (is.null(ttype)) {
-		if (ctype=="C")      ttype = c(1,4,5) # commercial
-		else if (ctype=="S") ttype = c(2,3) # research/survey
+		if (ctype=="C")      ttype = c(1,4,5) ## commercial
+		else if (ctype=="S") ttype = c(2,3)   ## research/survey
 		else                 ttype = 1:14 }
 
 	## Age data
-	adat$SVID[is.na(adat$SVID)]=0; adat$GC[is.na(adat$GC)]=0; adat$area[is.na(adat$area)]=1 # to avoid grouping errors later on
+	adat$SVID[is.na(adat$SVID)]=0; adat$GC[is.na(adat$GC)]=0; adat$area[is.na(adat$area)]=1 ## to avoid grouping errors later on
 	ages = adat
 	if (any(sex==12)) { # thanks brian
 			age12 = ages[is.element(ages$sex,1:2),]
@@ -5354,9 +5351,10 @@ weightBio <- function(adat, cdat, sunit="TID", sweight="catch",
 								xreg=c(x1,x1,x2,x2); yreg=c(y1lo,y1hi,y2hi,y2lo)
 #print(xreg)  ## ***** xregs change by sex! need to fix
 								## polygon(xreg,yreg,border=FALSE, col=lucent("orange",0.2)) #"orange" #"floralwhite") #col="grey92")
-								if (is.null(clrs$r)) clrs[["r"]] = lucent("orange",0.2) 
+								#if (is.null(clrs$r)) clrs[["r"]] = lucent("orange",0.2) 
 								## peach=#FFE5B4, saffron=#F4C430, melon=#FDBCB4, apricot=#FBCEB1, banana=#FCF4A3
-								polygon(xreg, yreg, border=FALSE, col="#FCF4A3") #lucent("blue",0.5)) #"moccasin") #clrs[["r"]])  ##lucent doesn't work in polygons originating on x-axis !?!
+								#polygon(xreg, yreg, border=FALSE, col="#FCF4A3") #lucent("blue",0.5)) #"moccasin") #clrs[["r"]])  ##lucent doesn't work in polygons originating on x-axis !?!
+								polygon(xreg, yreg, border=FALSE, col=darkenRGB("#C6D1D4",-0.25) ) ## new colour for SGR 2025 -- light silver grey
 							}
 						}
 					}
@@ -5374,15 +5372,14 @@ weightBio <- function(adat, cdat, sunit="TID", sweight="catch",
 						mots = dots[setdiff(names(dots),c("f"))]  ## (RH 211201)
 						dots =  mots[!sapply(mots,function(x){any(is.null(x))})]  ## get rid of NULL elements
 						if (!is.null(dots$fill) && dots$fill)
-							dots$bg = lucent(bcol,0.2)
+							dots$bg = lucent(bcol,0.3) #0.2)  ## (RH 250604) try darker fill to improve the look
 						#dots.formal = dots[intersect(names(dots), names(formals(fun=plot.default)))]
 						dots.formal = dots[setdiff(names(dots), c("cex.noto","fx","fy","xlim","ylim"))]
 						unpackList(dots.formal)
 						dotty =  paste0(paste0(names(dots.formal),"=",names(dots.formal)),collapse=", ")
-						#mess = paste0("plotBubbles(z=zval, dnam=TRUE, hide0=TRUE, size=inch, xlim=xlimx, ylim=ylimx, xaxs=\"i\", yaxs=\"i\", frange=0.01, clrs=bcol, las=3, ylab=\"\", tcl=.25, ", dotty, ")")
-						mess = paste0("plotBubbles(z=zval, dnam=TRUE, hide0=TRUE, size=inch, xlim=xlimx, ylim=ylimx, frange=c(0.05,0), clrs=bcol, las=3, ylab=\"\", tcl=.25, ", dotty, ")")
-#browser();return()
+						mess = paste0("plotBubbles(z=zval, dnam=TRUE, hide0=TRUE, size=inch, xlim=xlimx, ylim=ylimx, frange=c(0.0,0), clrs=bcol, las=3, ylab=\"\", tcl=.25, ", dotty, ")")  ## frange needs to be c(0,0) to align with previous plot command (RH 250414)
 						eval(parse(text=mess))
+#browser();return()
 #abline(h=0,col=lucent("red",0.75))
 #browser();return()
 #if(k==2) {browser();return()}
