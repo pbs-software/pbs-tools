@@ -1,8 +1,10 @@
 ## <font color="#6A5ACD">PBStools: Tools to Tackle Tricky Tasks</font> ##
 
-<font color="red">&copy; Fisheries and Oceans Canada (2007-2025)</font>
+<font color="red">&copy; Fisheries and Oceans Canada (2007-2026)</font>
 
-**PBStools** provides an R interface for algorithms commonly used in fisheries. The scope of this package is by no means comprehensive, having grown from the need to satisfy tasks specific to British Columbia (BC) ocean fisheries. Many of the functions provide a quick way to visualize data, and in some cases perform preliminary analyses. Though oriented to users at the <a href="http://www.pac.dfo-mpo.gc.ca/science/facilities-installations/index-eng.html#pbs">Pacific Biological Station</a> (PBS), these functions may provide a broad utility to users at other locales. The R code modules and User Guide and are organised into sections that loosely classify the functions by theme -- (1) Utility, (2) Biology, (3) Fishery, (4) Survey, (5) Spatial, (6) Assessment, (7) Catch Reconstruction, (8) LaTeX, (9) PJS<sup>1</sup> survey index functions, and (10) Financial (very limited). Within each section, the functions are described alphabetically.
+**PBStools** provides an R interface for algorithms commonly used in fisheries. The scope of this package is by no means comprehensive, having grown from the need to satisfy tasks specific to British Columbia (BC) ocean fisheries. Many of the functions provide a quick way to visualize data, and in some cases perform preliminary analyses. Though oriented to users at the <a href="http://www.pac.dfo-mpo.gc.ca/science/facilities-installations/index-eng.html#pbs">Pacific Biological Station</a> (PBS), these functions may provide a broad utility to users at other locales. The R code modules and User Guide and are organised into sections that loosely classify the functions by theme -- (1) Utility, (2) Biology, (3) Fishery, (4) Survey, (5) Spatial, (6) Assessment, (7) Catch Reconstruction, and (8) LaTeX. Within each module, the functions are described alphabetically.
+
+Aside: the functions of Paul J. Starr for surveys were transferred from the module M09_PJSsurvey to a separate repository (<a href="https://github.com/pbs-software/pjs-survey">PJSsurvey</a>) in the PBS Software organization.
 
 **PBStools** depends heavily on two other R packages: **PBSmapping** and **PBSmodelling**. We use the latter to implement several Graphical User Interfaces (GUIs) that facilitate a few select functions. Most functions, however, are designed for use on the command line or in sourced code. Windows users need to be mindful that the R-statistical language is case sensitive. 
 
@@ -26,6 +28,8 @@ Most of the time, the source code has been checked using CRAN's `R CMD check --a
 
 Influences by Wizard Wickham pervade the Rverse these days; however, reliance on the convoluted machinations of the overlord are avoided in PBS packages wherever possible. While 'ggthis' and 'ggthat' provide code shortcuts, the underlying operations are not transparent. Furthermore, connecting 'ggblobs' using <a href="https://www.fromthebottomoftheheap.net/2015/06/03/my-aversion-to-pipes/">pipes</a> simply makes the mess even more difficult to clean up. Resist assimilation and keep your R code pure.
 
+Despite attempts to shun pseudo R code, various contributions by PBS scientists are wedded to the New Wickham Order. To save time interpreting pseudo R code into real R, the original contributions have been modified slightly and collected in a separate repository (<a href="https://github.com/pbs-software/pbs-wicked">PBSwicked</a>) in the PBS Software organization. 
+
 <font color="red"><h3>Disclaimer</h3></font>
 
 "Fisheries and Oceans Canada (DFO) GitHub project code is provided on an 'as is' basis and the user assumes responsibility for its use. DFO relinquishes control of the information and assumes no responsibility to protect the integrity, confidentiality, or availability of the information. Any claims against DFO stemming from the use of its GitHub project will be governed by all applicable Canadian Federal laws. Any reference to specific commercial products, processes, or services by service mark, trademark, manufacturer, or otherwise, does not constitute or imply their endorsement, recommendation or favouring by DFO. The Fisheries and Oceans Canada seal and logo, or the seal and logo of a DFO bureau, shall not be used in any manner to imply endorsement of any commercial product or activity by DFO or the Canadian Government.”
@@ -34,11 +38,11 @@ As with any freely available product, there is no warranty or promise that **PBS
 
 Maintainer: <a href="mailto:rowan.haigh@dfo-mpo.gc.ca">Rowan Haigh</a>
 
-<sup>1</sup>PJS = Paul J. Starr
+<!---<sup>1</sup>PJS = Paul J. Starr>-->
 
 <!---<p align="right"><img src="DFOlogo_small.jpg" alt="DFO logo" style="height:30px;"></p>-->
 
 <!---<img src="Uranus.png" alt="Description" width="300" height="300" style="opacity: 0.75;">-->
 
-<img src="Uranus.jpg" alt="Forest" style="width:5%" align="right"  hspace="5" />
+<img src="Uranus.jpg" alt="Uranus" style="width:5%" align="right"  hspace="5" />
 <img src="DFOlogo_small.jpg" alt="dfo" style="width:50%" align="right" />

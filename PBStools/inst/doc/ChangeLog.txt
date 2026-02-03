@@ -15,6 +15,29 @@ CRAN package version numbers follow a "major.minor.patch" format (e.g., 1.2.3), 
 	Patch: Indicates bug fixes and minor improvements that do not introduce new features.
 -----------------------------------
 
+1.44.0 (2026-02-03)  [Rcheck=T, Rbuild=T]
+  * R code
+    + Added SGR TAC information for 2025 (RH 250624)
+    + Changed variable `major_init' to `major_ini' in `adjustMajor' and `calcStockArea' (RH 250707)
+    + Modified `processBio' to deal with new major codes in Shoreside samples (RH 250707)
+      - added new argument `adjmajor'
+    + Made small changes to the call to `plotBubbles' wrt `frange' (RH 250711)
+    + Modified `processMap' to deal with new major codes in Shoreside samples (RH 250716)
+    + Added new function `texWrap()' to compile tex blobs (RH 250725)
+    + Updated the vector object `.PBSserver' to reflect the transition to a new server (11-15 Sep 2025) for PBS databases (RH 250904)
+    + Modified function `tabOtos' somewhat (RH 250918)
+    + Modified functions `confODBC', `getODBC', and `createDSN' after not using these functions for many years (RH 250919)
+      - added new argument `osbit' to `confODBC'
+      - added new argument `tdir' to `getODBC'
+    + Modified function `texWrap' by adding package `arydshln' (RH 250922)
+    + Added new argument `refpts' to function `plotSnail' (251012)
+    + Added new arguments `yrs' and `area' to function `quickCat' (RH 251017)
+    + Updated `createMA' for SGR and YTR [exact dates not determined] (RH 251202)
+    + Fixed spelling error in `buildcatch' from `Sablefsh' to `Sablefish' (RH 260130)
+    + Updated function `extractPost' to address a request from Kendra Holt for 'Bt/B0' (RH 260113)
+  * SQL code
+    + Added new query `fos_gfb_offloads.sql' to get number of samples from the GBSP shoreside offloads (RH 250827)
+
 1.43.9 (2025-06-09)  [Rcheck=T, Rbuild=T]
   * R code
     + Added revised code for the function `buildCatch' [M07] (RH 250526)

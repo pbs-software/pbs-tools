@@ -7,13 +7,15 @@
   Get a string vector of ODBC drivers on a user's Windows system.
 }
 \usage{
-getODBC(os=.Platform$OS.type, pattern=NULL, status="Installed")
+getODBC(os=.Platform$OS.type, pattern=NULL, 
+  status="Installed", tdir=tempdir())
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
-  \item{os}{operating system (e.g., \code{"windows"}, \code{"unix"}).}
-  \item{pattern}{string pattern used to filter the ODBC drivers.}
-  \item{status}{string denoting status of driver (e.g., "Installed"); set to \code{NULL} for all drivers.}
+  \item{os}{\code{string} -- operating system (e.g., \code{"windows"}, \code{"unix"})}
+  \item{pattern}{\code{string} -- pattern used to filter the ODBC drivers}
+  \item{status}{\code{string} -- status of driver (e.g., "Installed"); set to \code{NULL} for all drivers}
+  \item{tdir}{\code{string} -- temporary working directory}
 }
 \details{
   Creates a VB shell script file called \code{getODBC.vbs}
@@ -54,9 +56,13 @@ Next
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
   \emph{locus opus}: Remote office, Vancouver BC\cr
-  Last modified \code{Rd: 2020-10-13}
+  Last modified \code{Rd: 2026-02-03}
 }
 \seealso{
+  In package \pkg{PBStools}:\cr
+  \code{\link[PBStools]{confODBC}},
+  \code{\link[PBStools]{createDSN}}\cr
+  In package \pkg{PBSmodelling}:\cr
   \code{\link[PBSmodelling]{clearRcon}}
 }
 \keyword{programming}

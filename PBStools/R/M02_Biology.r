@@ -2499,7 +2499,7 @@ histTail <- function(dat=pop.age, xfld="age", tailmin=NULL,
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~histTail
 
 
-## mapMaturity--------------------------2024-10-24
+## mapMaturity--------------------------2025-07-11
 ## Plot maturity chart to see relative occurrence
 ## of maturity stages by month.
 ## Notes:
@@ -2709,7 +2709,6 @@ mapMaturity <- function (dat=pop.age, strSpp="", type="map", mats=1:7,
 					mcode = get(paste("mat",ss,sep=""))
 					## Note that xfac and yfac are reversed for some odd reason
 					yfac  = if (period=="year")  min(dat$year):max(dat$year) else 1:12 ## default to month (RH 240312)
-#browser();return()
 					bubbmat   = array(0,dim=c(length(mnam),length(yfac)),dimnames=list(mnam,yfac)) ## make 0 matrix
 					if (is.psex) {
 						xnam  = areas
@@ -2723,6 +2722,7 @@ mapMaturity <- function (dat=pop.age, strSpp="", type="map", mats=1:7,
 							fdat$xfac = f
 							crossbubb[[f]] = crossTab(fdat, c("xfac",period),"sex",function(x){sum(is.element(x,ss))/length(x)})
 						}
+#browser();return()
 						#crossbubb = crossTab(dat,c("region",period),"sex",function(x){sum(is.element(x,ss))/length(x)})
 					} else {
 						crossbubb = list(mats=crossTab(sdat,c("mat",period),"mat",length))  ## artificially make into a list
@@ -2790,7 +2790,9 @@ mapMaturity <- function (dat=pop.age, strSpp="", type="map", mats=1:7,
 						addLegend(0.425, 1, legend=linguaFranca(lout,l), cex=0.9, horiz=TRUE, bty="n", xjust=0.5, yjust=0.75)
 					} else {
 						if (is.psex) {
-							plotBubbles(bubbmat, xlim=xlim, ylim=ylim, xaxt="n", yaxt="n", cpro=FALSE, rpro=FALSE, hide0=TRUE, size=0.3, lwd=2, clrs=rev(CLRS[[s0]])[2], frange=0.02, dnam=ifelse(period=="year",TRUE,FALSE))
+							frange = 0.01 #0.02
+							size   = 0.225 #0.30
+							plotBubbles(bubbmat, xlim=xlim, ylim=ylim, xaxt="n", yaxt="n", cpro=FALSE, rpro=FALSE, hide0=TRUE, size=size, lwd=1, clrs=rev(CLRS[[s0]])[2], frange=frange, dnam=ifelse(period=="year",TRUE,FALSE))
 #browser();return()
 						} else {
 							plotBubbles(bubbmat, xlim=xlim, ylim=ylim, xaxt="n", yaxt="n", cpro=ifelse(byrow,FALSE,TRUE), rpro=ifelse(byrow,TRUE,FALSE), hide0=TRUE, size=0.3, lwd=2, clrs=rev(CLRS[[s0]])[2], frange=0.02)

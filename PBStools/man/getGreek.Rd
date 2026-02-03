@@ -24,14 +24,14 @@ getGreek(letter, lower=TRUE)
   Named vector of Greek letters.
 }
 \references{
-  \href{http://kestrel.nmt.edu/~raymond/software/howtos/greekscape.xhtml}{%
+  \href{https://kestrel.nmt.edu/~raymond/software/howtos/greekscape.xhtml}{%
   Greek Unicode and Inkscape}
 }
 \author{
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
   \emph{locus opus}: Remote office, Vancouver BC\cr
-  Last modified \code{Rd: 2025-03-10}
+  Last modified \code{Rd: 2026-02-03}
 }
 \note{
   To see Greek letters exported from R to a CSV file, import the CSV file into Excel using

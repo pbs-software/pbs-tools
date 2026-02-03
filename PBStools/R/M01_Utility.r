@@ -71,7 +71,8 @@
 ## RH: 2016-11-28 -- DFO phased out Windows 2003 servers; new server supports SQL Server 2008 and 2016
 ## RH: 2015-11-30 -- Virtualization of SVBCPBSGFIIS
 .PBSserver <- c(
-  GFDB="10.114.52.8",
+  GFDB="10.114.52.20\\SQL2016STD",
+  DFBCV9TWVASP003="10.114.52.20\\SQL2016STD",
   DFBCV9TWVASP001="10.114.52.8",
   SVBCPBSGFIIS="199.60.94.98",
   PACPBSGFDB="199.60.95.200",
@@ -79,6 +80,7 @@
   oldSVBCPBSGFIIS="199.60.95.134",
   oldDFBCV9TWVASP001="199.60.94.30"
 )
+
 .rgbBlind   <- list(black=c(0,0,0),orange=c(230,159,0),skyblue=c(86,180,233),bluegreen=c(0,158,115),
 	yellow=c(240,228,66),blue=c(0,114,178),vermillion=c(213,94,0),redpurple=c(204,121,167), white=c(255,255,255))
 .colBlind   <- sapply(.rgbBlind,function(x){rgb(x[1],x[2],x[3],maxColorValue=255)})
@@ -158,22 +160,22 @@ adjustMajor <- function(dat, strSpp, plot=FALSE, poly=c("5A","5C"),
 	if (is.element("major_gffos", colnames(dat)))
 		dat$major = dat$major_gffos
 	## Revert to original if it exists (may be iterating on previously adjusted file)
-	if (is.element("major_init", colnames(dat)))
-		dat$major = dat$major_init
+	if (is.element("major_ini", colnames(dat)))
+		dat$major = dat$major_ini
 	## Revert to GFBio majors
 #	if (is.element("major_gfbio", colnames(dat)))
 #		dat$major = dat$major_gfbio
 
 	## Set up an adjusted field starting from restored major (and retain the initial statesave original)
-	dat$major_adj  = dat$major
-	dat$major_init = dat$major
+	dat$major_adj = dat$major
+	dat$major_ini = dat$major
 
 	## Start processing majors
 	## -----------------------
 	## Check for combo-major codes from GFBio
 	if (any(is.element(dat$major, 71:77))) {
 		.flush.cat("Adjusting GFBioSQL combo majors\n")
-		#dat$major_gfbio = dat$major  ## could be major_init but treat differently for now
+		#dat$major_gfbio = dat$major  ## could be major_ini but treat differently for now
 		dat$major_adj[is.element(dat$major, 71)] = 3  ## 3CD
 		dat$major_adj[is.element(dat$major, 72)] = 4  ## 3D5A
 		dat$major_adj[is.element(dat$major, 73)] = 5  ## 5AB
@@ -474,23 +476,24 @@ coalesce <- function(...)
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~coalesce
 
 
-## confODBC-----------------------------2010-06-02
+## confODBC-----------------------------2025-09-19
 ## Set up an ODBC User Data Source Name (DSN)
 ## ---------------------------------------------RH
 confODBC <- function(dsn="PacHarvest",server="GFDB",db="PacHarvest",
-   driver="SQL Server",descr="",trusted=TRUE)
+   driver="SQL Server", descr="", trusted=TRUE, osbit=64)
 {
-	## use forward slashes "/" for server otherwise the translation
-	## is too dependent on the number of times "\" is escaped
-	## getFile(".PBSserver",path=.getSpath(),tenv=penv())
-	if (is.element(server,names(.PBSserver))) server <- .PBSserver[server]
+	#use forward slashes "/" for server otherwise the translation
+	#is too dependent on the number of times "\" is escaped
+	#getFile(".PBSserver",path=.setSpath(win=FALSE))
+	if (is.element(server,names(PBStools::.PBSserver))) server <- PBStools::.PBSserver[server]
 	syntax <- paste("{CONFIGDSN \"",driver,"\" \"DSN=",dsn,
 		"|Description=",descr,"|SERVER=",server,"|Trusted_Connection=",
 		ifelse(trusted,"Yes","No"),"|Database=",db,"\"}",sep="")
 	syntax=gsub("/","\\\\",syntax) # finally convert "/" to "\\"
 	cmd <- paste("odbcconf.exe /a",syntax)
+	if (osbit==64)
+		cmd = paste("C:\\Windows\\SysWOW64\\",cmd,sep="")
 	system(cmd)
-	invisible()
 }
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~confODBC
 
@@ -659,20 +662,21 @@ countVec <- function(x, exzero=TRUE)
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~countVec
 
 
-## createDSN----------------------------2016-12-01
-## Create entire suite of DSNs for the groundfish databases
+## createDSN----------------------------2025-09-19
+## Create entire suite of Data Source Names (DSNs)
+##  for the groundfish databases using 'confODBC()'
 ## ---------------------------------------------RH
 createDSN <- function(trusted=TRUE)
 {
 	today = Sys.Date()
-	descr = paste0("Created for PBStools (",today,")")
-	confODBC(dsn="GFBioSQL",    server="GFDB",db="GFBioSQL",     driver="SQL Server", descr=descr, trusted=trusted)
-	confODBC(dsn="GFCatch",     server="GFDB",db="GFCatch",      driver="SQL Server", descr=descr, trusted=trusted)
-	confODBC(dsn="GFCruise",    server="GFDB",db="GFCruise",     driver="SQL Server", descr=descr, trusted=trusted)
-	confODBC(dsn="PacHarvest",  server="GFDB",db="PacHarvest",   driver="SQL Server", descr=descr, trusted=trusted)
-	confODBC(dsn="PacHarvHL",   server="GFDB",db="PacHarvHL",    driver="SQL Server", descr=descr, trusted=trusted)
-	confODBC(dsn="PacHarvSable",server="GFDB",db="PacHarvSable", driver="SQL Server", descr=descr, trusted=trusted)
-	confODBC(dsn="GFFOS",       server="GFDB",db="GFFOS",        driver="SQL Server", descr=descr, trusted=trusted)
+	descr = paste0("Created by PBStools (",today,")")
+	confODBC(dsn="GFBioSQL",    server="GFDB", db="GFBioSQL",     driver="SQL Server", descr=descr, trusted=trusted)
+	confODBC(dsn="GFCatch",     server="GFDB", db="GFCatch",      driver="SQL Server", descr=descr, trusted=trusted)
+	confODBC(dsn="GFCruise",    server="GFDB", db="GFCruise",     driver="SQL Server", descr=descr, trusted=trusted)
+	confODBC(dsn="PacHarvest",  server="GFDB", db="PacHarvest",   driver="SQL Server", descr=descr, trusted=trusted)
+	confODBC(dsn="PacHarvHL",   server="GFDB", db="PacHarvHL",    driver="SQL Server", descr=descr, trusted=trusted)
+	confODBC(dsn="PacHarvSable",server="GFDB", db="PacHarvSable", driver="SQL Server", descr=descr, trusted=trusted)
+	confODBC(dsn="GFFOS",       server="GFDB", db="GFFOS",        driver="SQL Server", descr=descr, trusted=trusted)
 }
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~createDSN
 
@@ -852,11 +856,11 @@ expand5C <- function(dat)
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~expand5C
 
 
-## extractPost--------------------------2024-04-09
+## extractPost--------------------------2026-01-13
 ##  Extract model posteriors from three model
 ##  platforms (Awatea, SS3, iSCAM) for clients.
 ## ---------------------------------------------RH
-extractPost <- function(spc="BOR", stock="CST", assYr=2021, path=getwd(),
+extractPost = function(spc="BOR", stock="CST", assYr=2021, path=getwd(),
    values="R", runs=1:3, rwts=rep(1,3), vers="", burnin=200, nmcmc=1200,
    model="Awatea", fleets="trawl", extra="forSomeone",
    proj=FALSE, projY1=2022, projY2=2023, catpol=1500)
@@ -866,7 +870,7 @@ extractPost <- function(spc="BOR", stock="CST", assYr=2021, path=getwd(),
 	## qtab------------------------------2021-04-19
 	## Quantile tabulation summary using decimal places
 	## -----------------------------------------AME
-	qtab <- function(xx.MCMC, dig=0, quants3=tcall(quants3)) {  ## dig is number of dec places
+	qtab = function(xx.MCMC, dig=0, quants3=tcall(quants3)) {  ## dig is number of dec places
 		out = paste0( c( 
 			prettyNum(round(quantile(xx.MCMC, quants3[2]), digits=dig), big.mark=options()$big.mark),
 			" (", prettyNum(round(quantile(xx.MCMC, quants3[1]), digits=dig), big.mark=options()$big.mark),
@@ -907,6 +911,7 @@ extractPost <- function(spc="BOR", stock="CST", assYr=2021, path=getwd(),
 				ijmc = paste0(spc,"run",iii,"/MCMC.",iii,".",jjj)
 				mcdir = paste0(path,"/",ijmc)
 				mpdir = sub("/MCMC\\.","/MPD.",mcdir)
+#browser();return()
 				if (proj) {
 					## Specific to Dee's request for BOR
 					pyr1 = as.character(projY1); pyr2 = as.character(projY2)
@@ -931,7 +936,7 @@ extractPost <- function(spc="BOR", stock="CST", assYr=2021, path=getwd(),
 					kdf2 = rbind(kdf2,ijdat2) ## projected catches at harvest rate for run i rwt j
 					kdf3 = rbind(kdf3,ijdat3) ## projected catches at median composite 'kdf' harvest rate (manual iteration)
 				} else {
-					if (v %in% c("B","R","U","VB","P","Rdev","R0")){ ## MCMC
+					if (v %in% c("Bmsy","B","R","U","VB","P","Rdev","R0","BtB0")){ ## MCMC
 						is.mcmc = TRUE
 						if (v %in% "Rdev"){
 							kdat = getRdev(dir=paste0(path,"/",spc,"run",iii,"/MCMC.",iii,".",jjj), burnin=burnin)
@@ -943,10 +948,17 @@ extractPost <- function(spc="BOR", stock="CST", assYr=2021, path=getwd(),
 								redo.currentMCMC(strSpp=strSpp, assYr=assYr, stock=stock, mpdir=mpdir, mcdir=mcdir, mcsub=(burnin+1):nmcmc)
 							}
 							load (paste0(mcdir,"/currentMCMC.rda"))
-							if (v %in% "R0")
+							if (v %in% "R0") {
 								kdat = currentMCMC$P[,"R_0",drop=FALSE] ## (RH 240409)
-							else
+							} else if (v %in% "BtB0") {
+								kdat = currentMCMC[["B"]]
+								kdat = kdat / kdat[,1]
+							} else if (v %in% "Bmsy") {
+								load (paste0(mcdir,"/currentMSY.rda"))  ## (RH 250303)
+								kdat = matrix(data=currentMSY[["B"]], ncol=1, dimnames=list(rownames(currentMCMC$B),"Bmsy"))
+							} else {
 								kdat = currentMCMC[[v]]
+							}
 						}
 						rnams = rownames(kdat)
 						rnams = pad0(rnams,max(nchar(rnams))-1)
@@ -1006,6 +1018,7 @@ extractPost <- function(spc="BOR", stock="CST", assYr=2021, path=getwd(),
 					}
 				}
 			}
+#browser();return()
 			if (v %in% "P") {
 				allnams = colnames(kdf[[which.max(sapply(kdf,ncol))]])
 				if (all(sapply(kdf, function(x){all(colnames(x) %in% allnams)})) ) {
@@ -1082,13 +1095,19 @@ extractPost <- function(spc="BOR", stock="CST", assYr=2021, path=getwd(),
 				write.csv(catch, paste0(spc,"-", stock,"-", assYr,"-MPD(", v, ")-", extra, ".csv"), row.names=TRUE)
 				out = crdat
 			} else {
-				if (v %in% c("B")) {
+				if (v %in% c("B","BtB0")) {
 					if ( exists("xavgTS", inherits=FALSE) ) {
 						for (aa in dimnames(xavgTS)$area) {
-							write.csv(xavgTS[,,"B",aa], paste0(spc,"-", aa,"-", assYr,"-MCMC(", v, ")-", extra, ".csv"), row.names=TRUE)
+							if (v=="B")
+								write.csv(xavgTS[,,"B",aa], paste0(spc,"-", aa,"-", assYr,"-MCMC(", v, ")-", extra, ".csv"), row.names=TRUE)
+							if (v=="BtB0")
+								write.csv(xavgTS[,,"B",aa]/xavgTS[,1,"B",aa], paste0(spc,"-", aa,"-", assYr,"-MCMC(", v, ")-", extra, ".csv"), row.names=TRUE)
 						}
 					} else {
-						write.csv(avgTS[,,"Bt"], paste0(spc,"-", stock,"-", assYr,"-MCMC(", v, ")-", extra, ".csv"), row.names=TRUE)
+						if (v=="B")
+							write.csv(avgTS[,,"Bt"], paste0(spc,"-", stock,"-", assYr,"-MCMC(", v, ")-", extra, ".csv"), row.names=TRUE)
+						if (v=="BtB0")
+							write.csv(avgTS[,,"Bt"]/avgTS[,1,"Bt"], paste0(spc,"-", stock,"-", assYr,"-MCMC(", v, ")-", extra, ".csv"), row.names=TRUE)
 					}
 				}
 				if (v %in% c("R")) {
@@ -1365,7 +1384,7 @@ gatherVals <- function(x, columns)
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~gatherVals
 
 
-## getData------------------------------2025-05-28
+## getData------------------------------2025-08-18
 ## Get data from a variety of sources.
 ## subQtrust -- if user has no DFO trusted credentials:
 ##   if (type=="SQL"), c(trusted, uid, pwd) copied to `subQtrust'
@@ -1435,7 +1454,6 @@ getData <-function(fqtName, dbName="PacHarvest", strSpp=NULL, server=NULL,
 				",strSQL=", ifelse(isExpr,paste("\"",fqtName,"\"",sep=""),"NULL"),
 				",server=\"",server,"\",type=\"",substring(type,1,3),"\",rownum=",rownum,
 				",trusted=",trusted,",uid=\"",uid,"\",pwd=\"",pwd,"\",...)"),collapse="")
-#browser();return()
 			timeQ0=proc.time()[1:3]  ## start timing SQL query
 			eval(parse(text=expr)) 
 			timeQ = round(proc.time()[1:3]-timeQ0,2) }
@@ -1635,13 +1653,16 @@ getData <-function(fqtName, dbName="PacHarvest", strSpp=NULL, server=NULL,
 				ifelse(is.numeric(dummy),paste(dummy,collapse=","),
 				ifelse(is.character(dummy),paste("'",paste(dummy,collapse="','"),"'",sep=""),"''"))),x=strQ)
 			ttput(strQ)
-#browser();return()
-			expr <-paste("datt=.getSQLdata(dbName=\"",dbName,"\",strSQL=\"",strQ,
+			expr <- paste("datt=.getSQLdata(dbName=\"",dbName,"\",strSQL=\"",strQ,
 			"\",server=\"",server,"\",type=\"",type,"\",trusted=",trusted,
 			",uid=\"",uid,"\",pwd=\"",pwd,"\",...)",sep="")
-			timeQ0=proc.time()[1:3]  ### start timing SQL query
+			timeQ0 = proc.time()[1:3]  ### start timing SQL query
 #browser();return()
 			eval(parse(text=expr)) 
+			if (length(datt)==0){  ##(RH 250818)
+				odbcCloseAll()
+				 showError("SQL query has returned no records")
+			}
 			timeQ = round(proc.time()[1:3]-timeQ0,2)
 		}
 		if (!is.data.frame(datt)) { 
@@ -1722,7 +1743,8 @@ getData <-function(fqtName, dbName="PacHarvest", strSpp=NULL, server=NULL,
 			arg.vec = sapply(names(arg.list),function(x){paste(x,"=",paste(deparse(arg.list[[x]]),collapse=""),sep="")}) ## deparse breaks lines
 			args = paste(arg.vec,collapse=", ")
 			expr = paste("dat = sqlQuery(cnn, strSQL, ",args,")",sep="")
-#print(expr); #browser()
+#print(expr)
+#browser();return()
 			eval(parse( text=expr ))
 		} else {
 			dat <- sqlQuery(cnn, strSQL) #, list(...)[!is.element(names(list(...)),"driver")] ) #...) #, believeNRows=ifelse(type=="ORA",FALSE,TRUE))
@@ -1926,17 +1948,17 @@ getName <- function(fnam)
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~getName
 
 
-#getODBC--------------------------------2016-04-12
-# Get a string vector of ODBC drivers installed on user's Windows system.
-# Code: Scripting Guy
-# URL : http://blogs.technet.com/b/heyscriptingguy/archive/2005/07/07/how-can-i-get-a-list-of-the-odbc-drivers-that-are-installed-on-a-computer.aspx
-#--------------------------------------------SG/RH
-getODBC <- function(os=.Platform$OS.type, pattern=NULL, status="Installed")
+## getODBC------------------------------2025-09-19
+##  Get a string vector of ODBC drivers installed on user's Windows system.
+##  Code: Scripting Guy
+##  URL : http://blogs.technet.com/b/heyscriptingguy/archive/2005/07/07/how-can-i-get-a-list-of-the-odbc-drivers-that-are-installed-on-a-computer.aspx
+## ------------------------------------------SG/RH
+getODBC <- function(os=.Platform$OS.type, pattern=NULL, status="Installed", tdir=tempdir())
 {
 	if (os!="windows") {
 		err="'getODBC' needs Windows OS to use Windows Scripting"
 		cat(err,"\n"); return(invisible(err)) }
-	tdir <- tempdir()
+	#tdir <- tempdir()
 	fname <- paste(tdir, "\\getODBC.vbs", sep="")
 	cat('Const HKEY_LOCAL_MACHINE = &H80000002\n', file=fname)
 	cat('strComputer = "."\n', file=fname, append=TRUE)
@@ -1952,17 +1974,17 @@ getODBC <- function(os=.Platform$OS.type, pattern=NULL, status="Installed")
 	odbcAll  = system(paste("cscript //NoLogo", fname), minimized=TRUE, intern=TRUE)
 	odbcList = strsplit(odbcAll,split=" -- ")
 	odbcStat = sapply(odbcList,function(x){x[1]})
+#browser();return()
 	if (!is.null(status)) {
 		isStatus = sapply(odbcList,function(x){x[2]==status})
 		odbcStat = odbcStat[isStatus]
 	}
-	odbcOut = odbcStat
 	if (!is.null(pattern))
 		odbcOut = odbcStat[grep(pattern,odbcStat)]
 	packList(c("odbcAll","odbcList","odbcStat","odbcOut"),target="PBStool",tenv=.PBStoolEnv)
 	invisible(odbcOut)
 }
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~getODBC
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~getODBC
 
 
 ## getVer ------------------------------2024-12-17
@@ -2079,7 +2101,7 @@ isThere <- function(x, envir=parent.frame())
 	genv <- function(){ .GlobalEnv }                # global environment
 
 
-## linguaFranca-------------------------2025-06-04
+## linguaFranca-------------------------2025-08-07
 ## Translate English phrases to French (other languages possible)
 ## for use in plotting figures with French labels.
 ## Note that 'gsub' has a limit to its nesting depth.
@@ -2181,7 +2203,7 @@ linguaFranca <- function(x, lang="e", little=4, strip=FALSE, localnames=FALSE)
 			xlil = sapply(lilword, function(xx){
 				gsub("[Aa]nd", "et",
 				gsub("[Aa]vg", "moy",
-				gsub("[Aa]ge", eval(parse(text=deparse("\u{00E2}ge"))),
+				gsub("^[Aa]ge", eval(parse(text=deparse("\u{00E2}ge"))),
 				gsub("[Aa]ll", "tous",
 				gsub("[Ll]ag", eval(parse(text=deparse("d\u{00E9}calage"))),
 				#gsub("[Rr]un", eval(parse(text=deparse("Ex\u{00E9}"))),
@@ -2198,9 +2220,10 @@ linguaFranca <- function(x, lang="e", little=4, strip=FALSE, localnames=FALSE)
 				gsub("[Ss]ur(v?)", "rel",
 				gsub("[Cc]hain", eval(parse(text=deparse("cha\u{00EE}ne"))),
 				gsub("[Rr]ow(s)?", "ligne\\1",
+				gsub("[Bb]reak(s)?", "point\\1 de tranchage",
 				gsub("[Cc]olumn(s)?", "colonne\\1",
 				gsub("[Dd]iagonal(s)?", "diagonale\\1",
-				xx))))))))))))))))))))
+				xx)))))))))))))))))))))
 			})
 			## dat abbreviations
 			xlil = sapply(xlil, function(xx){
@@ -2323,9 +2346,10 @@ linguaFranca <- function(x, lang="e", little=4, strip=FALSE, localnames=FALSE)
 				gsub("Rdist (5ABC|3CD|5DE) fixed", eval(parse(text=deparse("Rdist fix\u{00E9}e pour \\1"))),
 				gsub("increase catch ([0-9]+)\\%", "augmenter les prises de \\1%",
 				gsub("split(-)?M at age ([0-9]+)", eval(parse(text=deparse("diviser M \u{00E0} \\2 ans"))),
+				gsub("[Cc]olo(u)?rs [Ii]ndicate [Aa]ge", eval(parse(text=deparse("les couleurs indiquent l'\u{00E2}ge"))),
 				gsub("fem(ale)? dome(-shape)? sel(ect)?", eval(parse(text=deparse("s\u{00E9}lectivit\u{00E9} du d\u{00F4}me femelle"))),
 				gsub("split M ages\\(([0-9]+),([0-9]+)\\)", "diviser M entre \\1 et \\2 ans",
-				xx)))))))))))))))))))))
+				xx))))))))))))))))))))))
 			})
 			## rockfish species names
 			xspp1 = sapply(xsen, function(xx){

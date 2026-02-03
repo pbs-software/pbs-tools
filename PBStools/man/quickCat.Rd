@@ -1,19 +1,23 @@
 \name{quickCat}
 \alias{quickCat}
 \title{
-Quick Catch Summaries
+  Quick Catch Summaries
 }
 \description{
-Reduce large output from query \code{'fos_mcatORF.sql'} to records with positive catch and produce catch summary \code{'.csv'} files.
+  Reduce large output from query \code{'fos_mcatORF.sql'} to records 
+  with positive catch and produce catch summary \code{'.csv'} files.
 }
 \usage{
-quickCat(dat, strSpp="000", removeSM=TRUE)
+quickCat(dat, strSpp="000", removeSM=TRUE,
+   yrs=1996:2024, area="BC")
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
-  \item{dat}{\code{data.frame} -- data object created by a call to \code{'fos_mcatORF.sql'}.}
-  \item{strSpp}{\code{character} -- string species code, usually Hart code (page number as a string).}
-  \item{removeSM}{\code{logical} -- if \code{TRUE}, remove catch data from seamounts.}
+  \item{dat}{\code{data.frame} -- data object created by a call to \code{'fos_mcatORF.sql'}}
+  \item{strSpp}{\code{character} -- string species code, usually Hart code (page number as a string)}
+  \item{removeSM}{\code{logical} -- if \code{TRUE}, remove catch data from seamounts}
+  \item{yrs}{\code{numeric} -- range of years over which to create summaries}
+  \item{area}{\code{string} -- name of area(s) to use in the summaries}
 }
 \details{
 Using the \code{'crossTab'} function, produce \code{'.csv'} files summarizing catch (tonnes) by year and one of the following factors:
@@ -31,7 +35,7 @@ Invisibly returns data object with positive catch records; also saves object to 
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
   \emph{locus opus}: Remote office, Vancouver BC\cr
-  Last modified \code{Rd: 2021-09-27}
+  Last modified \code{Rd: 2026-02-03}
 }
 \seealso{
 In package \pkg{PBStools}:\cr
@@ -40,7 +44,7 @@ In package \pkg{PBStools}:\cr
   \code{\link[PBStools]{formatCatch}},
   \code{\link[PBStools]{getCatch}},
   \code{\link[PBStools]{plotBTMW}},
-  \code{\link[PBStools]{surveyCatch}}.
+  \code{\link[PBStools]{surveyCatch}}
 }
 % Add one or more standard keywords, see file 'KEYWORDS' in the
 % R documentation directory (show via RShowDoc("KEYWORDS")):

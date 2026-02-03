@@ -11,7 +11,8 @@
 \usage{
 processBio(dat=PBSdat, strSpp, addsrfa=TRUE, 
    addsrfs=TRUE, addpopa=TRUE, addstock=TRUE, addsort=TRUE,
-   useSM=FALSE, maxrows=5e4, zflds=c("ssrc","AC","FOSTID"))
+   adjmajor=TRUE, useSM=FALSE, maxrows=5e4, 
+   zflds=c("ssrc","AC","FOSTID"))
 
 processMap(dat=PBSdat, strSpp, prefix="map", useSM=FALSE)
 }
@@ -35,6 +36,9 @@ processMap(dat=PBSdat, strSpp, prefix="map", useSM=FALSE)
     \code{calcStockArea}.}
   \item{addsort}{\code{logical} -- if \code{TRUE}, add a field called \code{'sort'}
     and populate with \code{"U"} (unsorted), \code{"K"} (keepers), and \code{"D"} (discards).}
+  \item{adjmajor}{\code{logical} -- if \code{TRUE}, adjust the major area codes to 
+    reassign them from POP|YMR records and/or GF Biosampling records (joint areas) to
+    alternative single-area  major-area codes}
   \item{useSM}{\code{logical} -- if \code{TRUE}, use data from seamounts else remove seamount data.}
   \item{maxrows}{\code{numeric} -- number of rows of \code{dat} to process at any 
     one time when \code{addpopa=TRUE}. Finding POP areas uses the function
@@ -66,14 +70,16 @@ processMap(dat=PBSdat, strSpp, prefix="map", useSM=FALSE)
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
   \emph{locus opus}: Remote office, Vancouver BC\cr
-  Last modified \code{Rd: 2020-07-14}
+  Last modified \code{Rd: 2026-02-03}
 }
 \seealso{ 
 In package \pkg{PBStools}:\cr
   \code{\link[PBStools]{getData}},
   \code{\link[PBStools]{getCatch}},
+  \code{\link[PBStools]{adjustMajor}},
   \code{\link[PBStools]{calcSRFA}},
   \code{\link[PBStools]{calcStockArea}}
 }
 \keyword{manip}
 \concept{M06_Assessment}
+

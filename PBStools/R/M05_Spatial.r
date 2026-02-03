@@ -54,18 +54,18 @@ calcHabitat <- function(topofile="bctopo", isob=c(150,435),
 	if (is.null(ylim)) ylim=rng[,"Y"]
 	else               ylim = c(max(ylim[1],rng[1,"Y"]),min(ylim[2],rng[2,"Y"]))
 
-	box=as.PolySet(data.frame(PID=rep(1,4),POS=1:4,X=xlim[c(1:2,2:1)],Y=ylim[c(1,1,2,2)]),projection="LL",zone=9)
+	box   = as.PolySet(data.frame(PID=rep(1,4),POS=1:4,X=xlim[c(1:2,2:1)],Y=ylim[c(1,1,2,2)]),projection="LL",zone=9)
 	poly0 = closePolys(fixBound(bPoly,.00001))   ## PolySet of outer-depth polygons
 	polyA = clipPolys(poly0, xlim=xlim, ylim=ylim)
 	polyB = findHoles(polyA, minVerts=minVerts, use.sp.pkg=use.sp.pkg)
 	#polyC = joinPolys(polyB,operation="UNION")
 
 	habitat = joinPolys(box,polyB,operation="DIFF") ### There is still a bug in joinPolys!!!
-	habitat = findHoles(habitat, minVerts=minVerts, use.sp.pkg=use.sp.pkg)
 #browser();return()
+	habitat = findHoles(habitat, minVerts=minVerts, use.sp.pkg=use.sp.pkg)
 
 	warn <- options()$warn; options(warn = -1)
-	area=calcArea(habitat); area=sum(area$area,na.rm=TRUE)
+	area = calcArea(habitat); area=sum(area$area,na.rm=TRUE)
 	attr(habitat,"area")=area
 	options(warn = warn)
 
@@ -195,11 +195,11 @@ calcSRFA <- function(major, minor=NULL, loc=NULL, subarea=FALSE)
 #-----------------------------------------calcSRFA
 
 
-## calcStockArea------------------------2023-05-09
+## calcStockArea------------------------2026-02-03
 ## Assign a stock area designation based on species
 ## HART code and PMFC major and/or minor areas.
 ## ---------------------------------------------RH
-calcStockArea <- function (strSpp, dat, stockFld="stock", gmu=TRUE)
+calcStockArea <- function(strSpp, dat, stockFld="stock", gmu=TRUE)
 {
 	if (missing(strSpp))
 		stop("Must specify a species to determine stock allocation")
@@ -231,8 +231,11 @@ calcStockArea <- function (strSpp, dat, stockFld="stock", gmu=TRUE)
 			newA[is.element(major,1)]   = "4B"
 		}
 		else if (is.element(strSpp,c("396","440"))){
-			if (!all(c("major_adj","major_old") %in% colnames(dat))) ## check to see if the majors have already been adjusted
-				dat = expand5C(dat)  ## Special area adjustment for POP and YMR
+			if (!any(c("major_adj","major_ini","major_old") %in% colnames(dat))) { ## check to see if the majors have already been adjusted
+				##  Special area adjustment for POP and YMR
+				#dat = expand5C(dat)
+				dat = adjustMajor(dat=dat, strSpp=strSpp)
+			}
 			if (strSpp %in% "396"){
 				newA[is.element(major,8:9)] = "5DE"
 				newA[is.element(major,7)]   = "5C"
@@ -957,20 +960,20 @@ plotConcur <- function(strSpp="410", dbName="GFFOS", spath=.getSpath(),
 	dat$spp   = as.character(dat$spp)
 	dat$code  = pad0(dat$code,3)
 	dat$latin = species[dat$code,"latin"]
-	dat  = dat[,c("code","spp","latin","catKt","pct")]
-	dat  = dat[rev(order(dat$pct)),]
-	dat$spp = toUpper(dat$spp)
+	dat       = dat[,c("code","spp","latin","catKt","pct")]
+	dat       = dat[rev(order(dat$pct)),]
+	dat$spp   = toUpper(dat$spp)
 
 	## Re-format the same table so that it's latex-ready
 	if (print.tab) {
 		write.csv(dat,paste(outnam,".csv",sep=""),row.names=FALSE)
 		textab = dat
-		textab$code  = pad0(textab$code,3)
+		textab$code   = pad0(textab$code,3)
 		#textab$spp   = toUpper(textab$spp)
-		textab$latin = paste("\\emph{",textab$latin,"}",sep="")
-		textab$catKt = format(round(textab$catKt * 1000.),big.mark=",",trim=TRUE)
-		textab$pct   = show0(round(textab$pct,3),3)
-		names(textab)=c("Code","Species","Latin name","Catch (t)","Catch (\\%)")
+		textab$latin  = paste("\\emph{",textab$latin,"}",sep="")
+		textab$catKt  = format(round(textab$catKt * 1000.),big.mark=",",trim=TRUE)
+		textab$pct    = show0(round(textab$pct,3),3)
+		names(textab) = c("Code","Species","Latin name","Catch (t)","Catch (\\%)")
 		write.csv(textab,paste("tex-",outnam,".csv",sep=""),row.names=FALSE)
 		## Note: to read the table back into R use 'read.csv("xyz.csv",check.names=FALSE)'
 	}
@@ -1032,7 +1035,7 @@ plotConcur <- function(strSpp="410", dbName="GFFOS", spath=.getSpath(),
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotConcur
 
 
-## plotEO-------------------------------2024-10-24
+## plotEO-------------------------------2025-07-16
 ## Plot the Extent of Occurrence for a species 
 ## using a convex hull to surround events.
 ## ---------------------------------------------RH
@@ -1129,6 +1132,7 @@ plotEO <- function (id="lst", strSpp="453", col="red",
 		mapdat = mapdat[!is.element(mapdat$EID,.su(inland$EID)),]
 	}
 	attr(mapdat,"projection") = attributes(mapDat)$projection
+	ttput(mapDat)
 
 	options(warn=-1)  ## Turn warnings off for area calc functions
 	for (i in 1:length(stocks)) {
@@ -1844,7 +1848,7 @@ plotTertiary <- function(x=c(100,5,25,10,50), pC=c(0.5,0.5), r=0.5,
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotTertiary
 
 
-## preferDepth--------------------------2024-10-24
+## preferDepth--------------------------2025-07-17
 ##  Plot histogram showing depth-of-capture
 ##  Modified code to make use of the map object (RH 230727)
 ## ---------------------------------------------RH
@@ -1886,8 +1890,7 @@ preferDepth <- function(strSpp="410", fqtName="pht_fdep.sql", dbName="PacHarvest
 	invisible()
 }
 ##.preferDepth.getEffort----------------2021-04-08
-.preferDepth.getEffort <- function(strSpp="ALL")
-{
+.preferDepth.getEffort <- function(strSpp="ALL") {
 	resetGraph()
 	par(mar=c(0,0,0,0),oma=c(0,0,0,0))
 	showMessage("Please wait while effort data is retrieved for this GUI session",col="blue",cex=1.2)
@@ -1955,8 +1958,9 @@ preferDepth <- function(strSpp="410", fqtName="pht_fdep.sql", dbName="PacHarvest
 		showError(paste("Species =",spp),type="nodata")
 	packList("dat","PBStool",tenv=.PBStoolEnv) ## RH: save the raw data for manual subsetting
 
+#browser();return()
 	## Scroll through map object and make it compatible
-	if (type=="FILE" && fqtName==paste0("map",spp)) {
+	if (type=="FILE" &&  grepl(paste0("map",spp),fqtName) ) { #fqtName==paste0("map",spp)) {
 		needflds = c("depth","catch","effort")
 		fixflds <- function(dat, nflds=needflds) {
 			for (nn in nflds) {
@@ -1974,6 +1978,7 @@ preferDepth <- function(strSpp="410", fqtName="pht_fdep.sql", dbName="PacHarvest
 			return(dat)
 		}
 		dat = fixflds(dat)
+#browser();return()
 		effort = dat[,c("year","date","major","minor","locality","depth","effort","gear")]
 		dat = dat[dat$catch>0 & !is.na(dat$catch),]
 		ttget(PBStool)
@@ -2089,7 +2094,6 @@ preferDepth <- function(strSpp="410", fqtName="pht_fdep.sql", dbName="PacHarvest
 					jdat <- idat
 					if (isE) jeff <- ieff
 				}
-#browser();return()
 				ntows <- nrow(jdat)
 				stuff = c("ifac","jfac","ntows")
 				packList(stuff,"PBStool",tenv=.PBStoolEnv)
@@ -2161,7 +2165,7 @@ preferDepth <- function(strSpp="410", fqtName="pht_fdep.sql", dbName="PacHarvest
 				}
 #browser();return()
 				old.lwd = par()$lwd; par(lwd=0.5)
-				plot(xy, freq=FALSE, xlab="", ylab="", main="",cex.lab=1.2, col=lucent(barcol[1],0.2), border="slategrey", xlim=XLIM, ylim=YLIM, axes=FALSE, add=TRUE)
+				plot(xy, freq=FALSE, xlab="", ylab="", main="",cex.lab=1.2, col=lucent(barcol[1],0.5), border="slategrey", xlim=XLIM, ylim=YLIM, axes=FALSE, add=TRUE)
 				par(lwd=old.lwd)
 				if (showD) lines(xc,yz,col="grey20",lwd=clwd)
 				if (showC) lines(xc,yc,col=ccol,lwd=clwd)

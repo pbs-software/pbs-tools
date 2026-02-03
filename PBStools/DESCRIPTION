@@ -1,6 +1,6 @@
 Package: PBStools
-Version: 1.43.9
-Date:    2025-06-10
+Version: 1.44.0
+Date:    2026-02-03
 Title:   Tools to Tackle Tricky Tasks
 Authors@R: c(
    person("Rowan", "Haigh", role = c("aut", "cre"), email = "rowan.haigh@dfo-mpo.gc.ca"),
@@ -16,10 +16,11 @@ Author:      Rowan Haigh [aut, cre], Jon T. Schnute [ctb], Norm Olsen [ctb],
              Lisa Lacko [ctb], Paul J. Starr [ctb], Sean Anderson [ctb],
              Elise Keppel [ctb], Brian Krishka [ctb]
 Maintainer:  Rowan Haigh <rowan.haigh@dfo-mpo.gc.ca>
-Copyright:   2007-2025, Fisheries and Oceans Canada
+Copyright:   2007-2026, Fisheries and Oceans Canada
 Depends:     R (>= 3.5.0), PBSmapping, PBSmodelling, PBSdata, RODBC
 Imports:     colorspace, graphics, grDevices, methods, stats, utils
 Suggests:    boot, BRugs, cluster, MASS, reshape, sp, xtable
+NeedsCompilation: no
 Description: A bewildering assortment of tools to explore data from
    fisheries and alternate realms. While the focus is on providing efficient
    yet vivacious summary tools for fisheries stock assessments, occasional

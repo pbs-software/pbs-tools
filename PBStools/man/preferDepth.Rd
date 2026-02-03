@@ -50,8 +50,8 @@ preferDepth(strSpp="410", fqtName="pht_fdep.sql", dbName="PacHarvest",
   \code{type}        \tab Type of file: \code{SQL}, \code{MDB}, or \code{FILE}.\cr
   \code{Trusted}     \tab Check if using a trusted DFO identity.\cr
   \code{SQL User ID} \tab SQL user ID assigned by the database server administrators.\cr
-  \code{password}    \tab Password assigned by the database server administrators.\cr \cr
-  \bold{Choose Area} \tab \cr
+  \code{password}    \tab Password assigned by the database server administrators.\cr
+  \bold{Choose Area} \tab  \cr
   \code{All}         \tab Use depth record from all areas.\cr
   \code{Major}       \tab Use depth records with a PMFC major area code.\cr
   \code{Minor}       \tab Use depth records with a PMFC minor area code.\cr
@@ -79,7 +79,7 @@ preferDepth(strSpp="410", fqtName="pht_fdep.sql", dbName="PacHarvest",
   \code{lwd}         \tab Line thickness (line width device) of cumulative catch curve.\cr
   \code{EFF}         \tab Button to explicitly refresh the trawl effort dataset.\cr
   \code{DATA}        \tab Button to explicitly refresh the depth dataset given the GUI settings.\cr
-  \code{PLOT}        \tab Button to plot the depth distribution given the GUI settings.\cr \cr
+  \code{PLOT}        \tab Button to plot the depth distribution given the GUI settings.\cr
   \bold{History widget} \tab 
   }
 }
@@ -91,7 +91,7 @@ preferDepth(strSpp="410", fqtName="pht_fdep.sql", dbName="PacHarvest",
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
   \emph{locus opus}: Remote office, Vancouver BC\cr
-  Last modified \code{Rd: 2024-02-27}
+  Last modified \code{Rd: 2026-02-03}
 }
 \seealso{
   \code{\link[PBStools]{getData}}, \code{\link[PBStools]{calcHabitat}}, \code{\link[PBStools]{histMetric}} \cr
@@ -118,3 +118,4 @@ pbsfun()
 }
 \keyword{hplot}
 \concept{M05_Spatial}
+

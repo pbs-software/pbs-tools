@@ -12,9 +12,9 @@
 \usage{
 plotSnail(BoverBmsy, UoverUmsy, model="SS", yrs=1935:2023,
    p=c(0.05,0.95), xLim=NULL, yLim=NULL, Lwd=1.5, ngear=1,
-   Cnames, assYrs=NULL, outs=FALSE, labYrs=NULL,  ## outs = outliers
-   ptypes="win", pngres=400, PIN=c(8,6), onepanel=TRUE, subarea, add=FALSE,
-   outnam, lang="e")
+   Cnames, assYrs=NULL, outs=FALSE, labYrs=NULL, refpts="BMSY",
+   ptypes="win", pngres=400, PIN=c(8,6), onepanel=TRUE, subarea,
+   add=FALSE, outnam, lang="e")
 }
 \arguments{
   \item{BoverBmsy}{\code{numeric} -- matrix of \eqn{B_t}{Bt} over \eqn{B_{\text{MSY}}}{Bmsy}}
@@ -31,6 +31,7 @@ plotSnail(BoverBmsy, UoverUmsy, model="SS", yrs=1935:2023,
   \item{outs}{\code{logical} -- if \code{TRUE}, extend the range of the 
     quantile box whiskers to include the outliers (all data)}
   \item{labYrs}{\code{numeric} -- vector of years to label on the trajectory line(s)}
+  \item{refpts}{\code{string} -- type of reference points (\code{'BMSY'} or \code{'B0'})}
   \item{ptypes}{\code{character} -- plot types for the figures: \code{'win'} = windows graphics device, \code{'eps'} = encapsulated postscript, \code{'png'} = portable network graphics, \code{'wmf'} = windows metafile}
   \item{pngres}{\code{numeric} -- resolution of output figure (pixels per inch)}
   \item{PIN}{\code{numeric} -- width and height of output figure (inches)}
@@ -52,7 +53,7 @@ Modified by:\cr
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
   \emph{locus opus}: Remote office, Vancouver BC\cr
-  Last modified \code{Rd: 2024-02-29}
+  Last modified \code{Rd: 2026-02-03}
 }
 \note{
   The term \emph{snail trail} comes from PJS.

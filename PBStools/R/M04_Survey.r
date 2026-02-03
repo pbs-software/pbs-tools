@@ -163,9 +163,10 @@ bootBG <- function (dat="pop.pmr.qcss", K=100, S=100, R=500, SID=NULL,
 }
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~bootBG
 
-## calcHBLL-----------------------------2022-07-21
+## calcHBLL-----------------------------2025-09-11
 ##  Calculate swept-area index values for HBLL surveys.
 ##  Parallels PJS routine 'calcBiom'
+##  Need to run 'getHBLL()' first.
 ## -----------------------------------------PJS|RH
 calcHBLL <- function(dat, ssid, reps=0, seed=42, meth=1, xvar="year")
 {
@@ -284,7 +285,6 @@ calcHBLL <- function(dat, ssid, reps=0, seed=42, meth=1, xvar="year")
 	}
 }
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~calcHBLL
-
 
 
 #calcMoments----------------------------2010-06-02

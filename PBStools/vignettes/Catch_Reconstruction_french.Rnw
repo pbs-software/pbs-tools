@@ -1,5 +1,5 @@
 \documentclass[letterpaper,11pt,fleqn]{article}
-%\VignetteIndexEntry{Catch Reconstruction}
+%\VignetteIndexEntry{Reconstruction de la capture}
 %\VignettePackage{PBStools}
 \usepackage[T1]{fontenc}
 

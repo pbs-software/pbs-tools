@@ -7,15 +7,16 @@
 }
 \usage{
 confODBC(dsn="PacHarvest", server="GFDB", db="PacHarvest",
-         driver="SQL Server", descr="", trusted=TRUE) 
+   driver="SQL Server", descr="", trusted=TRUE, osbit=64) 
 }
 \arguments{
-  \item{dsn}{Data Source Name for the ODBC connection.}
-  \item{server}{string specifying name of server that hosts the SQL Server databases.}
-  \item{db}{string specifying the name of the default database for the DSN connection.}
-  \item{driver}{string specifying the ODBC driver.}
-  \item{descr}{string specifying optional description of the DSN connection.}
-  \item{trusted}{logical: if \code{TRUE}, allow SQL Server to use a trusted DFO login ID.}
+  \item{dsn}{Data Source Name for the ODBC connection}
+  \item{server}{\code{string} -- name of server that hosts the SQL Server databases}
+  \item{db}{\code{string} -- name of the default database for the DSN connection}
+  \item{driver}{\code{string} -- name of the ODBC driver}
+  \item{descr}{\code{string} -- optional description of the DSN connection}
+  \item{trusted}{\code{logical} -- if \code{TRUE}, allow SQL Server to use a trusted DFO login ID}
+  \item{osbit}{\code{numeric} -- operating system architecture (32-bit or 64-bit)}
 }
 \details{
   \code{confODBC()} runs the Windows command line utility with the user-supplied 
@@ -27,12 +28,17 @@ confODBC(dsn="PacHarvest", server="GFDB", db="PacHarvest",
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
   \emph{locus opus}: Remote office, Vancouver BC\cr
-  Last modified \code{Rd: 2021-06-15}\cr
+  Last modified \code{Rd: 2026-02-03}\cr
 }
-\seealso{ 
-  \code{\link{getData}}, \code{\link{runModules}}
+\seealso{
+  In package \pkg{PBStools}:\cr
+  \code{\link[PBStools]{createDSN}},
+  \code{\link[PBStools]{getODBC}},
+  \code{\link[PBStools]{getData}},
+  \code{\link[PBStools]{runModules}}
 }
 \examples{
+\dontrun{
 local(envir=.PBStoolEnv,expr={
 pbsfun=function(os=.Platform$OS.type,dfo=FALSE) {
   if (os=="windows" && dfo)
@@ -43,6 +49,8 @@ pbsfun=function(os=.Platform$OS.type,dfo=FALSE) {
 pbsfun()
 })
 }
+}
 \keyword{data}
 \keyword{utilities}
 \concept{M01_Utility}
+

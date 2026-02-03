@@ -6,7 +6,8 @@
 ##  makeLTH.........Make a longtable header for printing an xtable;
 ##  splitTab........Split a long data table into side-by-side pieces for printing in LaTeX;
 ##  texArray........Flatten and format an array for latex output;
-##  texThatVec......Convert a vector to a phrase 'x, y, and z'.
+##  texThatVec......Convert a vector to a phrase 'x, y, and z';
+##  texWrap.........Wrap tex blob with basic tex code to see blob compiled.
 ##==============================================================================
 
 #collectFigs----------------------------2016-10-17
@@ -638,4 +639,85 @@ texThatVec <- function(vec, simplify=TRUE)
 	return(texvec)
 }
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~texThatVec
+
+
+## texWrap-----------------------------2025-09-22
+## Wrap tex blob with basic tex code to see blob compiled.
+## Created 2025-08-26
+## ---------------------------------------------RH
+texWrap <- function(texfile, outnam="someTex", start.page=1,
+   add.table=FALSE, add.defs=NULL, compile=FALSE)
+{
+	texout = paste(outnam, ".tex",sep="")
+	#----Latex preamble----------------------------
+	texhead = c(
+		"\\documentclass[11pt]{book}",
+		"%% ----- load packages -----",
+		"\\usepackage[top=1in, bottom=1in, left=1in, right=1in]{geometry}",
+		"\\usepackage[format=plain, indention=0.5cm, labelsep=period, font={normalsize}, justification=raggedright, singlelinecheck=false]{caption}",
+		"\\usepackage[T1]{fontenc}",
+		"\\usepackage[scaled=1.00]{uarial}",
+		"\\renewcommand{\\familydefault}{ua1}",
+		"\\renewcommand{\\rmdefault}{ua1}",
+		"\\usepackage[breaklinks=true,bookmarksdepth=4]{hyperref}",
+		"\\hypersetup{colorlinks, plainpages=true, linkcolor=black, citecolor=black, urlcolor=blue,}",
+		"\\usepackage{bookmark}",
+		"\\bookmarksetup{numbered,open,}",
+		"\\usepackage{enumitem}",
+		"\\setlist[itemize]{noitemsep, topsep=6pt}",
+		"\\setlist[enumerate]{noitemsep, topsep=6pt}",
+		"\\setlist[itemize,1]{align=parleft,left=0pt,label=\\large{\\textbullet}}",
+		"\\setlist[itemize,2]{align=parleft,left=0.25in,label=\\large{\\textopenbullet}}",
+		"\\usepackage{color}",
+		#"\\usefont{\\encodingdefault}{\\familydefault}{\\seriesdefault}{\\shapedefault}\\small",
+		"\\usepackage{amsmath}", ## need for \text{}
+		"\\usepackage[normalem]{ulem}",  ## The ulem package: underlining for emphasis, can also strikethrough
+		"\\usepackage{arydshln} % dashed lines in tables (load after other shit)",
+		"\\setlength\\dashlinedash{3pt} \\setlength\\dashlinegap{1.5pt} \\setlength\\arrayrulewidth{0.3pt}",
+
+		"%% ----- define macros -----",
+		"\\newcommand{\\pc}{\\%}",
+
+		"%% ----- fiddle dee dee -----",
+		"\\raggedright",
+		paste("\\setcounter{page}{", start.page, "}  % set the page numbering", sep="")
+	)
+	if (add.table) {
+		texhead = c(texhead,
+			"\\newcommand\\Tstrut{\\rule{0pt}{2.6ex}}       % top strut for table row",
+			"\\newcommand\\Bstrut{\\rule[-1.1ex]{0pt}{0pt}} % bottom strut for table row",
+			"\\usepackage{longtable,array} % need array when specifying a ragged right column",
+			"\\captionsetup[table]{position=above, skip=5pt}",
+			"\\setlength{\\LTleft}{0pt}     % left justify longtable",
+			"\\setlength{\\tabcolsep}{0pt}"
+		)
+	}
+	if (!is.null(add.defs) && length(add.defs)>0) {
+		texhead = c(texhead, add.defs)
+	}
+	## Read in user-specified tex blob
+	texblob = readLines(texfile)
+	## Convert 'itemize_csas' and 'enumerate_csas' to regular forms for generality
+	if (any(grepl("_csas",texblob))) {
+		zbad = grepl("_csas",texblob)
+		good = gsub("\\{\\}","", gsub("[0-9.-]","", gsub("_csas","", texblob[zbad])))
+		texblob[zbad] = good
+	}
+	texmash = c(texhead, "\\begin{document}", texblob, "\\end{document}")
+	writeLines(texmash, texout)
+	
+	if (compile) {
+		cmd1 = paste0("pdflatex.exe -quiet ", outnam, ".tex")
+		cmd2 = paste0("latexmk.exe  -c ", outnam, ".tex")
+		#cmd3 = paste0(outnam, ".pdf")
+		system(command=cmd1, intern=TRUE, wait=TRUE)
+		system(command=cmd2, intern=TRUE, wait=TRUE)
+		#system(command=cmd3, intern=FALSE, wait=FALSE)
+		
+	}
+
+browser();return()
+
+}
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~texWrap
 

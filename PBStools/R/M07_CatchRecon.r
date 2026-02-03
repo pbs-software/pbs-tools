@@ -11,7 +11,7 @@
 ##==============================================================================
 
 
-## buildCatch---------------------------2025-04-24
+## buildCatch---------------------------2026-01-30
 ## Catch reconstruction algorithm for BC rockfish.
 ## Use ratios of RRF (reconstructed rockfish) to ORF 
 ## (rockfish other than POP) landings for multiple fisheries.
@@ -78,7 +78,7 @@ buildCatch <- function(
 	.flush.cat(paste0("-----Start reconstructing catch for ",species[strSpp,"latin"],"-----\n\n"))
 	fidnam  = c("trawl","halibut","sablefish","sched2","zn","sabzn","sabhal","dogfish","lingcod","combined")
 	fshnam  = c("trawl","h&l","trap",rep("h&l",6),"combined")  ## general category vector
-	fidfive = c("Trawl","Halibut","Sablefsh","DogLing","HLRock")
+	fidfive = c("Trawl","Halibut","Sablefish","DogLing","HLRock")
 	REFYRS  = .su(unlist(refyrs))
 
 	run.details = paste0( orfSpp, 
@@ -486,7 +486,7 @@ buildCatch <- function(
 				.flush.cat("   loading 'gfmdat' from binary\n")
 				load(paste0(catDir,"/gfmdat.rda"))
 			} else {
-				.flush.cat("   SQL Server -- GFFOS (table GF_MERGED_CATCH) [takes ~ 5 minutes];\n")
+				.flush.cat("   SQL Server -- GFFOS (table GF_MERGED_CATCH) [takes ~5 min; ~15 min over VPN];\n")
 				clearFiles("gfmdat.rda") ## backup in case sql.force=TRUE
 				getData("fos_mcatORF.sql","GFFOS",strSpp=strSpp,path=spath,tenv=penv())
 				PBSdat$Y[round(PBSdat$Y,5)==0] = NA
@@ -1126,14 +1126,29 @@ buildCatch <- function(
 	ll = dimnames(catmod)$catch
 	for (kk in dimnames(catmod)$fid) {  ## fishery IDs
 		k = as.numeric(kk)
-#if (k==2) {browser();return()}
 		fcat = 0
 		if (!is.null(dbmerge[[k]])) {
 			fcat = apply(catmod2[ii,jj,kk,ll,dbmerge[[k]],drop=FALSE],1:4,max)
 		}
 		if (!is.null(dbadd[[k]])) {
-			xcat = apply(catmod2[ii,jj,kk,ll,dbadd[[k]],drop=FALSE],1:4,sum)
-			fcat = fcat + xcat
+			if (debug) {
+				## testing overlap 
+				test = catmod2[ii,jj,kk,ll,dbadd[[k]],drop=FALSE]
+				mood  = as.character(1991:2010)
+				print(test[mood,,kk,"landed",])
+			}
+			## NO updated PH3_CATCH_SUMMARY by adding records from 1996 to 2005 (RH 250803)
+			## if (k in 2:4) then add ph3 + gfm up to 1995 and merge thereafter (RH 250904)
+			xii = ii[is.element(ii,as.character(MODYRS[1]:1995))]
+			yii = ii[is.element(ii,as.character(1995:rev(MODYRS)[1]))]
+			xcat = apply(catmod2[xii,jj,kk,ll,dbadd[[k]],drop=FALSE],1:4,sum)
+			ycat = apply(catmod2[yii,jj,kk,ll,dbadd[[k]],drop=FALSE],1:4,max)
+			fcat = apply(catmod2[ii,jj,kk,ll,dbadd[[k]],drop=FALSE],1:4,function(x){0})
+			xmess = paste0("fcat[", paste0(sapply(dimnames(xcat),deparse, width.cutoff=500L), collapse=", "), "] <- xcat")
+			ymess = paste0("fcat[", paste0(sapply(dimnames(ycat),deparse, width.cutoff=500L), collapse=", "), "] <- ycat")
+			eval(parse(text=xmess))
+			eval(parse(text=ymess))
+#if (k==2) {browser();return()}
 		}
 		catmod[ii,jj,kk,ll] = fcat
 		if (!useGFM) {
@@ -2128,7 +2143,7 @@ buildCatch <- function(
 					repcatRRF[iipop,jjpop] = repcatRRF[iipop,jjpop] + repcatPOP[,jjpop]
 				}
 			} ## end POP
-		} ## end nn loop
+		} ## end nn (nations) loop
 #browser();return()
 		
 		## --------------------------------------------------------
@@ -2242,7 +2257,7 @@ buildCatch <- function(
 				reccatRRF[iimed,mm] = reccatRRF[iimed,mm] + reccatRRFall[iimed,mm,nn]
 				reccatORF[iimed,mm] = reccatORF[iimed,mm] + reccatORFall[iimed,mm,nn]
 			}
-		} ## end nn loop (nat)
+		} ## end nn (nations) loop
 #browser();return()
 		## --------------------------------------------------------------------------------------------
 		## Detect modern RRF landings and mesh with reconstructed RRF landings if no `useYR1' specified
@@ -2481,13 +2496,13 @@ buildCatch <- function(
 		## Letter: Chris Sporer, PHMA, 2015-06-12
 		## -------------------------------------------------------------------------
 		if (strSpp=="442" && !is.null(list(...)$phma) && list(...)$phma && k==2) {
+#browser();return()
 			phma.1999.orig = sppnewRRF["1999",,"2"]
 			phma.1999.prop = phma.1999.orig/sum(phma.1999.orig)
 			phma.1999.targ = (1-0.175) * sum(sppnewRRF["1998",,"2"])
 			phma.1999.adj  = phma.1999.prop * phma.1999.targ
 			sppnewRRF["1999",,"2"] = phma.1999.adj
 			## check : (sum(sppnewRRF["1998",,"2"])-sum(phma.1999.adj))/sum(sppnewRRF["1998",,"2"]) should equal 0.175
-#browser();return()
 		}
 
 		## ------------------------------
@@ -3002,12 +3017,13 @@ plotRecon <- function(dat=cat440rec, strSpp="440", major=c(1,3:9), fidout=10,
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotRecon
 
 
-## quickCat-----------------------------2020-02-19
+## quickCat-----------------------------2025-10-17
 ##  Subsets a large dataset derived from query 'fos_mcatORF.sql'
 ##  to remove non-zero catches of the RRF (landed+discard).
 ##  This facilitates crossTab queries for data summaries.
 ## ---------------------------------------------RH
-quickCat <- function(dat, strSpp="000", removeSM=TRUE)  ## incorporated revampCat
+quickCat <- function(dat, strSpp="000", removeSM=TRUE,
+   yrs=1996:2024, area="BC")  ## incorporated revampCat
 {
 	flds = colnames(dat)
 	if (removeSM) ## seamounts
@@ -3020,6 +3036,8 @@ quickCat <- function(dat, strSpp="000", removeSM=TRUE)  ## incorporated revampCa
 		dat$catKg = dat$landed + dat$discard
 	dat = dat[dat$catKg>0 & !is.na(dat$catKg),]
 	dat = dat[is.element(dat$major,3:9),]
+	dat = dat[is.element(dat$year,yrs),]
+	
 	if (nrow(dat)==0) stop("No recorded catch for this species")
 
 	if (strSpp %in% c("394","425")) {
@@ -3038,6 +3056,27 @@ quickCat <- function(dat, strSpp="000", removeSM=TRUE)  ## incorporated revampCa
 	}
 	flds = colnames(dat)
 
+	if (all(is.element(c("year","sector","catKg","major"), flds))){
+		for (a in area) {
+			major = switch(a, 'BC'=3:9, '5ABC'=5:7, '5DE'=8:9, '3CD'=3:4)
+			adat  = dat[is.element(dat$major, major),]
+			tab.sector = crossTab(adat, c("year","sector"), "catKg")
+			write.csv(tab.sector, file=paste0("cat",strSpp,".sector.", a, ".csv"))
+		}
+	}
+#browser();return()
+	if (all(is.element(c("year","gear","catKg","major"), flds))){
+		for (a in area) {
+			major = switch(a, 'BC'=3:9, '5ABC'=5:7, '5DE'=8:9, '3CD'=3:4)
+			adat  = dat[is.element(dat$major, major),]
+			tab.gear = crossTab(adat, c("year","gear"), "catKg")
+			gear.nam = c("Unknown","Bottom Trawl","Trap","Midwater Trawl","Hook and Line","Longline"); names(gear.nam) = as.character(0:5)
+			colnames(tab.gear) = gear.nam[colnames(tab.gear)]
+			write.csv(tab.gear, file=paste0("cat",strSpp,".gear.", a, ".csv"))
+			#ttput(tab.gear)
+		}
+	}
+#browser();return()
 	if (all(is.element(c("year","fid","catKg"), flds))){
 		tab.fid = crossTab(dat, c("year","fid"), "catKg")
 		fid.nam = c("Trawl","Halibut","Sablefish","Dogfish/Lingcod","H&L Rockfish","GF Longline","Foreign"); names(fid.nam) = as.character(c(1:5,8:9))
@@ -3050,23 +3089,10 @@ quickCat <- function(dat, strSpp="000", removeSM=TRUE)  ## incorporated revampCa
 		write.csv(tab.fishery, file=paste0("cat",strSpp,".fishery.sum.csv"))
 		ttput(tab.fishery)
 	}
-	if (all(is.element(c("year","gear","catKg"), flds))){
-		tab.gear = crossTab(dat, c("year","gear"), "catKg")
-		gear.nam = c("Unknown","Bottom Trawl","Trap","Midwater Trawl","Hook and Line","Longline"); names(gear.nam) = as.character(0:5)
-		colnames(tab.gear) = gear.nam[colnames(tab.gear)]
-#browser();return()
-		write.csv(tab.gear, file=paste0("cat",strSpp,".gear.sum.csv"))
-		ttput(tab.gear)
-	}
 	if (all(is.element(c("year","db","catKg"), flds))){
 		tab.db = crossTab(dat, c("year","db"), "catKg")
 		write.csv(tab.db, file=paste0("cat",strSpp,".db.sum.csv"))
 		ttput(tab.db)
-	}
-	if (all(is.element(c("year","sector","catKg"), flds))){
-		tab.sector = crossTab(dat, c("year","sector"), "catKg")
-		write.csv(tab.sector, file=paste0("cat",strSpp,".sector.sum.csv"))
-		ttput(tab.sector)
 	}
 
 	mess = paste0("cat",strSpp,"=dat; save(\"cat", strSpp, "\", ", "file=\"cat", strSpp, ".rda\")")

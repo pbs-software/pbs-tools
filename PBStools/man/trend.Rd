@@ -61,7 +61,7 @@ trend(strSpp="442", fqtName="gfb_iphc.sql", dbName="GFBioSQL",
   \code{TREND}       \tab Button to calculate and display the trend based on GUI choices.\cr
   \code{boots}       \tab Number of bootstrap replicates.\cr
   \code{BOOT}        \tab Button to calculate and display bootstrapped parameters.\cr
-  \code{wmf}         \tab Check box to send TREND or BOOT to a \code{.wmf} file. \cr \cr
+  \code{wmf}         \tab Check box to send TREND or BOOT to a \code{.wmf} file. \cr
   \bold{GUI Right - Settings:} \tab \cr
   \code{Years}       \tab Specify years either singly (e.g. \code{2000}), as a range (e.g. \code{2000:2003}),\cr
                      \tab    as a group (e.g. \code{1996,2000,2006}), or as a sequence (e.g. \code{seq(1997,2007,2)})\cr
@@ -76,7 +76,7 @@ trend(strSpp="442", fqtName="gfb_iphc.sql", dbName="GFBioSQL",
   \code{Colours}     \tab Choose colours for: \cr
                      \tab    boxplots, line connecting index points, least squares trend line, \cr
                      \tab    index points, bars showing proportion zeroes, and number of \cr
-                     \tab    data points used in the index calculation.\cr
+                     \tab    data points used in the index calculation.
   }
 }
 \references{
@@ -95,7 +95,7 @@ trend(strSpp="442", fqtName="gfb_iphc.sql", dbName="GFBioSQL",
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
   \emph{locus opus}: Remote office, Vancouver BC\cr
-  Last modified \code{Rd: 2024-02-26}\cr
+  Last modified \code{Rd: 2026-02-03}\cr
 }
 \seealso{
   In package \pkg{PBStools}:\cr
