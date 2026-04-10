@@ -295,5 +295,7 @@ ORDER BY EC.TRIP_ID, EC.FISHING_EVENT_ID
 -- qu("fos_mcatORF.sql",dbName="GFFOS",strSpp="440")  -- Yellowmouth Rockfish (200929, 210125)
 -- qu("fos_mcatORF.sql",dbName="GFFOS",strSpp="453")  -- Longspine Thornyhead (210923)
 -- qu("fos_mcatORF.sql",dbName="GFFOS",strSpp="437")  -- Canary Rockfish (211125)
+-- qu("fos_mcatORF.sql",dbName="GFFOS",strSpp="417")  -- Widow Rockfish 2026
+-- qu("fos_mcatORF.sql",dbName="GFFOS",strSpp="405")  -- Silvergray Rockfish 2025 (260316: catch update for CY 2025)
 
 

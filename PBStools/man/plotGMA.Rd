@@ -12,7 +12,7 @@
 \usage{
 plotGMA(gma=gma, major=major, xlim=c(-134,-123), ylim=c(48.05,54.95), 
    eps=FALSE, png=FALSE, extra.labels=NULL, isobath, strSpp,
-   PIN=c(9,9), pngres=400, lang=c("e","f"))
+   PIN=c(10,10), pngres=400, lang=c("e","f"))
 }
 \arguments{
   \item{gma}{\code{PolySet} -- Groundfish Management Areas (either \code{'gma'} or \code{'gma.popymr'} in the package \pkg{PBSvault}).}
@@ -51,8 +51,8 @@ plotGMA(gma=gma, major=major, xlim=c(-134,-123), ylim=c(48.05,54.95),
 \author{
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
-  \emph{locus opus}: Remote office, Vancouver BC\cr
-  Last modified \code{Rd: 2023-06-19}
+  \emph{locus opus}: remote office, Vancouver BC\cr
+  Last modified \code{Rd: 2026-04-10}
 }
 \seealso{
 Local package \pkg{PBSvault}: \code{gma.popymr}, \code{pfma} \cr

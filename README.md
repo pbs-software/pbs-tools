@@ -28,7 +28,7 @@ Most of the time, the source code has been checked using CRAN's `R CMD check --a
 
 Influences by Wizard Wickham pervade the Rverse these days; however, reliance on the convoluted machinations of the overlord are avoided in PBS packages wherever possible. While 'ggthis' and 'ggthat' provide code shortcuts, the underlying operations are not transparent. Furthermore, connecting 'ggblobs' using <a href="https://www.fromthebottomoftheheap.net/2015/06/03/my-aversion-to-pipes/">pipes</a> simply makes the mess even more difficult to clean up. Resist assimilation and keep your R code pure.
 
-Despite attempts to shun pseudo R code, various contributions by PBS scientists are wedded to the New Wickham Order. To save time interpreting pseudo R code into real R, the original contributions have been modified slightly and collected in a separate repository (<a href="https://github.com/pbs-software/pbs-wicked">PBSwicked</a>) in the PBS Software organization. 
+Despite attempts to shun pseudo R code, various contributions by PBS scientists are wedded to the New Wickham Order. To save time interpreting pseudo R code into real R, the original contributions have been modified slightly and collected in a separate repository (<a href="https://github.com/pbs-software/pbs-wicked">PBSwicked</a>) in the PBS Software collection on GitHub. 
 
 <font color="red"><h3>Disclaimer</h3></font>
 

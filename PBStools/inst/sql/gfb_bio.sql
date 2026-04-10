@@ -173,6 +173,9 @@ WHERE
   B03.SPECIES_CODE IN (@sppcode)
   AND B02.MAJOR_STAT_AREA_CODE IN (1,3,4,5,6,7,8,9,11,71,72,73,74,75,76,77) -- change back to '@major' after revised 'getData' makes its way into package PBStools
   --AND B02.FE_SUB_LEVEL_ID IS NULL  -- FISHING_EVENT_ID REPEATED MANY TIMES FOR HOOKS AND TRAPS IF NOT NULL (STUPID IDEA)
+  --AND B04.SAMPLE_ID IN (45034,45036,45038)  -- test for 1979-08-29 Widow Rockfish
+  --AND B04.SAMPLE_ID IN (341359,375143)  -- test for Shrimp and Sablefish
+  --AND B04.SAMPLE_ID IN (45034,45036,45038,341359,375143)  -- test for 1979 WWR, Shrimp, and SBF
 
 -- Gather earliest GROUPING_CODE by FISHING_EVENT_ID (changed 180129 to match gfb_catch_records.sql)
 -- This is likely to match the original series SSID
@@ -346,9 +349,10 @@ WHERE
 ORDER BY
   S.SURVEY_SERIES_ID, S.SURVEY_ID
 
--- Merge tables to get TRIP_ID, SURVEY_ID, and SURVEY_SERIES_ID (RH 181219)
+-- Merge tables to get TRIP_ID, SURVEY_ID, and SURVEY_SERIES_ID (RH 181219, 260205)
+-- Need to agglomerate some SSIDs (like shrimp) because they share the same TID
 SELECT
-  TS.TRIP_ID,
+  T.TRIP_ID,
   CASE
     WHEN OS.SURVEY_SERIES_ID IS NULL THEN 999
     WHEN OS.SURVEY_SERIES_ID IN (6,7) THEN 670          -- Shrimp trawl surveys
@@ -358,18 +362,20 @@ SELECT
     WHEN OS.SURVEY_ID IN (131) THEN 39                  -- HBLL North survey
     WHEN OS.SURVEY_SERIES_ID IN (10,21) THEN 21         -- GIG historical
     ELSE OS.SURVEY_SERIES_ID END AS SURVEY_SERIES_ID,
-  MAX(OS.SURVEY_ID) AS SURVEY_ID
+    MAX(ISNULL(OS.SURVEY_ID, 0)) AS SURVEY_ID
+    --COALESCE(MAX(OS.SURVEY_ID), 999) AS SURVEY_ID
+    --CONCAT(CAST(MIN(ISNULL(OS.SURVEY_ID, 0)) AS VARCHAR(50)), '-', CAST(MAX(ISNULL(OS.SURVEY_ID, 999)) AS VARCHAR(50))) AS SURVEY_ID  -- awkward
 INTO #TripSurvSer
 FROM 
-  #onlyTID T INNER JOIN
-  --TRIP T INNER JOIN
+  --#onlyTID T INNER JOIN  -- this looks like a problem point for sample 45036 (fixed)
+  #onlyTID T LEFT OUTER JOIN
   (#ORIGINAL_SURVEYS OS INNER JOIN
   TRIP_SURVEY TS ON
     OS.SURVEY_ID = TS.SURVEY_ID) ON
     T.TRIP_ID = TS.TRIP_ID
---WHERE T.TRIP_ID IN (10921,62066)
+--WHERE T.TRIP_ID IN (10919)
 GROUP BY
-  TS.TRIP_ID,
+  T.TRIP_ID,
   CASE
     WHEN OS.SURVEY_SERIES_ID IS NULL THEN 999
     WHEN OS.SURVEY_SERIES_ID IN (6,7) THEN 670          -- Shrimp trawl surveys
@@ -635,8 +641,11 @@ SELECT * FROM #GFBBIO
 -- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="009") -- Rougheye Rockfish (240731) -- no records
 -- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="044") -- Spiny Dogfish (DOG: 241024 [DF])
 -- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="228") -- Walleye Pollock (WAP: 241125 [DH])
--- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="405") -- Silvergray Rockfish (SGR: 240731, 241108, 250414, 250423 [2025 WP])
 -- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="425") -- Blackspotted Rockfish (BSR 240731, 240904, 250501 [NF])
 -- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="394") -- Rougheye Rockfish (RER: 240731, 240904, 250501 [NF])
+-- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="405") -- Silvergray Rockfish (SGR: 240731, 241108, 250414, 250423, 250707, 250828 [2025 WP])
+-- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="417") -- Widow Rockfish  (WWR: 250918 for Steve W)
+-- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="437") -- Canary Rockfish (CAR: 250919 for Steve W)
+-- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="417") -- Widow Rockfish  (WWR: 260203 for 2026 WP)
 
 -- DF=Dee Finn, DH=Dana Haggarty, MM=Mackenzie Mazur, NF=Nick Fisch, PJS=Paul Starr, RH=Rowan Haigh, SR=Science Response, WP=working paper

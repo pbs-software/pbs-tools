@@ -45,7 +45,7 @@ smoothPDO(dat=pdo, zfld="anomaly", period=365, every=365/6,
 }
 \references{
 Edwards A.M., Tai T.C., Watson J., Pe\ifelse{latex}{\out{\~{n}}}{\ifelse{html}{\out{&ntilde;}}{n}}a M.A., Hilborn A., Hannah C.G., Rooper C.N., Flynn K.L., and Oldford, G.L. (2024)
-\href{https://github.com/pbs-assess/pacea, https://zenodo.org/doi/10.5281/zenodo.13840804}{pacea}: 
+\href{https://github.com/pbs-assess/pacea}{pacea} : 
 An R package of Pacific ecosystem information to help facilitate an ecosystem approach to fisheries management.
 (Also on \href{https://zenodo.org/records/13840805}{Zenodo}.)
 
@@ -56,8 +56,8 @@ Technical Report MACEWANU-CMPT-TR-2017-1, 57p, Dept. Comp. Sci., MacEwan Univers
 \author{
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
-  \emph{locus opus}: Remote office, Vancouver BC\cr
-  Last modified \code{Rd: 2026-02-03}
+  \emph{locus opus}: remote office, Vancouver BC\cr
+  Last modified \code{Rd: 2026-04-11}
 }
 %% ~Make other sections like Warning with \section{Warning }{....} ~
 \seealso{

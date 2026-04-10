@@ -261,5 +261,6 @@ SELECT * FROM #FOSOUT
 -- qu("fos_map_density.sql",dbName="GFFOS",strSpp="228")
 -- qu("fos_map_density.sql",dbName="GFFOS",strSpp="396")  -- POP (230425)
 -- qu("fos_map_density.sql",dbName="GFFOS",strSpp="418")  -- YTR (240208, 240530)
--- qu("fos_map_density.sql",dbName="GFFOS",strSpp="405")  -- SGR (241209, 250508)
+-- qu("fos_map_density.sql",dbName="GFFOS",strSpp="405")  -- SGR (241209, 250508, 250716)
+-- qu("fos_map_density.sql",dbName="GFFOS",strSpp="417")  -- WWR (260210)
 

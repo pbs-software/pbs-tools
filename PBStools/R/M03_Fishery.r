@@ -2,6 +2,7 @@
 ## Module 3: Fishery
 ## -----------------
 ##  calcRatio.......Calculates ratios of numerator to denominator (e.g., 'discard'/'catch').
+##  collateGBSP.....Coltate data extracted from GFBioSQL and GFFOS by SQL code 'dfos_gfb_offloads.sql'.
 ##  dumpMod.........Dump catch from modern sources used in catch reconstruction.
 ##  dumpRat.........Dump catch ratios calculated by a catch reconstruction.
 ##  getCatch........Get catch records for a species from various databases and combine.
@@ -122,6 +123,97 @@ calcRatio <- function(dat, nfld, dfld, nzero=TRUE, dzero=TRUE, sumF=mean,
 	invisible(psum)
 }
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~calcRatio
+
+
+## collateGBSP -------------------------2026-02-27
+##  Coltate data extracted from GFBioSQL and GFFOS
+##  by the SQL code 'dfos_gfb_offloads.sql'
+##  Primarily for tables in the GBSP CTRFAS
+## ---------------------------------------------RH
+collateGBSP <- function(dat, datetag)
+{
+	ici = lenv()
+	data("species", package="PBSdata", envir=ici)
+	colnames(dat) = tolower(colnames(dat))
+	if (missing(datetag))
+		datetag = gsub("\\-","",substring(Sys.time(),3,10))
+
+	port.codes = c("2.Port Hardy", "3.Prince Rupert", "1.Ucluelet", "4.Port Simpson")
+	names(port.codes) = c("1123","1125","1136","14756") ## or see fos.codes$port[c("1123","1125","1136","14756")]
+	gear.codes = c("1.BT", "4.LL", "2.MW", "5.TP", "3.UT")
+	names(gear.codes) = c("BOTTOM TRAWL", "LONGLINE", "MIDWATER TRAWL", "TRAP", "UNKNOWN TRAWL")
+
+	groups = list()
+	groups[["TRF"]] = as.character(394:453)
+	groups[["TFF"]] = as.character(c(604:613,615:636))
+	groups[["ARF"]] = as.character(c(602))
+	groups[["PAC"]] = as.character(c(222))
+	groups[["PAH"]] = as.character(c(614))
+	groups[["PAK"]] = as.character(c(225))
+	groups[["SBF"]] = as.character(c(454,455))
+	atab = data.frame()  ## all species
+	for (i in 1:length(groups)) {
+		ii  = names(groups)[i]
+		iii = groups[[i]]
+		idat = dat[is.element(dat$spp_samp,iii),]  ## all species in group
+		ispp = .su(idat$spp_samp)
+		ispp = sort(species[ispp,"name"]) ## sort by name instead of Hart code
+		itab = data.frame() ## group species
+		for (j in 1:length(ispp)) {
+			jj  = ispp[j]
+			jjj = grep(paste0("^",jj,"$"),species$name)
+.flush.cat(jj, "\n")
+#if (jj=="Rock Sole") {browser();return()}
+			name  = species$name[jjj]
+			latin = species$latin[jjj]
+			code3 = species$code3[jjj]
+			hart  = species$code[jjj]
+			jdat  = idat[is.element(idat$spp_samp,hart),]  ## specific species in group
+
+			## Summarize the samples
+			nsamp = aggregate(sid   ~ fyear + port, data=jdat, countVec)
+			nfish = aggregate(nfish ~ fyear + port, data=jdat, sum)
+			nfema = aggregate(nfem  ~ fyear + port, data=jdat, sum)
+			nmale = aggregate(nmal  ~ fyear + port, data=jdat, sum)
+			jtab = cbind(nsamp, nfish[,3], nfema[,3], nmale[,3])
+			colnames(jtab) = c("Fyear", "Port", "Nsamp", "Nfish", "Nfemale", "Nmale")
+			jtab[,"Port"]  = port.codes[as.character(jtab[,"Port"])]
+
+			## Add modal majors
+			mtab = aggregate(major_mode ~ fyear + port, data=jdat, function(x){
+				xx=table(x); paste0(names(xx),"(",xx,")",collapse=";") })
+			jtab = cbind(jtab, ModalMajor=mtab[,3])
+
+			## Add modal gear
+			jdat[,"gear_mode"]  = gear.codes[as.character(jdat[,"gear_mode"])]  ## do this on jdat not jtab (before aggregate function)
+			gtab = aggregate(gear_mode ~ fyear + port, data=jdat, function(x){
+				xx=table(x); paste0(names(xx),"(",xx,")",collapse=";") })
+			gtab$gear_mode = gsub("[1-5]\\.", "", gtab$gear_mode)   ## get rid of gear ordering
+			jtab = cbind(jtab, ModalGear=gtab[,3])
+
+			## Order the table based on fishing year and offload port
+			jtab = jtab[order(jtab$Fyear, jtab$Port),]
+			jtab$Port = substring(jtab$Port,3)  ## get rid of port ordering (S to N)
+#browser();return()
+			#header = c(paste0(name, " (", hart, ")"), rep(convUTF("\\u{2013}"), ncol(jtab)-1))
+			header = c(paste0(name, " (", hart, ")"), rep("", ncol(jtab)-1))
+			header = c(code3, name, hart, rep("", ncol(jtab)-3))
+			jtab = rbind(header,jtab)
+			#jtab = cbind(Name=c(name,rep(NA,nrow(jtab)-1)), Code=c(hart,rep(NA,nrow(jtab)-1)), jtab)
+			itab = rbind(itab,jtab)  ## collect species in group i
+			atab = rbind(atab,jtab)  ## collect all species
+		}
+		write.csv(itab, paste0("GBSP_",ii,"_samples-", datetag, ".csv"), row.names=FALSE)
+	}
+	write.csv(atab, paste0("GBSP_ALL_samples-", datetag, ".csv"), row.names=FALSE)
+
+	## Create sample summary Table 1 for CTRFAS
+	nsamp = aggregate(sid ~ spp_samp, data=dat, countVec)
+	nfish = aggregate(nfish ~ spp_samp, data=dat, sum)
+	tab1  = data.frame(code=nsamp[,1], name=species[as.character(nsamp[,1]),"name"], nsamp=nsamp[,2], nfish=nfish[,2])
+	write.csv(tab1, paste0("GBSP_Table1-", datetag, ".csv"), row.names=FALSE)
+}
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~collateGBSP
 
 
 ## dumpMod------------------------------2023-02-09

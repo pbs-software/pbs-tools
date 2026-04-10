@@ -4712,7 +4712,7 @@ tabMW <- function(dat, flds=c("year","SSID"), zfld="wt", ttype,
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~tabMW
 
 
-## weightBio----------------------------2025-06-05
+## weightBio----------------------------2026-03-26
 ## Weight age|length frequencies|proportions by catch|density.
 ##   adat = age123 from query 'gfb_bio.sql'    -- e.g., getData("gfb_bio.sql","GFBioSQL",strSpp="607",path=.getSpath()); bio607=processBio()
 ##   cdat = cat123gfm -- call 'fos_mcatSPP.sql' to get commercial catches from GFFOS' GF_MERGED_CATCH table. (RH 190807)
@@ -4727,7 +4727,7 @@ weightBio <- function(adat, cdat, sunit="TID", sweight="catch",
    ctype="C", per=90, SSID=NULL, tabs=TRUE, gear=NULL,
    plot=TRUE, ptype="bubb", size=0.05, powr=0.5, zfld="wp", 
    clrs=list( c(.colBlind["blue"],"cyan"), c(.colBlind["bluegreen"],"chartreuse")),
-   cohorts=NULL,
+   cohorts=NULL, cohort.label.year=NULL, tag=NULL,  ## cohort.year for x-pos of labels
    regimes=list(1900:1908, 1912:1915, 1923:1929, 1934:1943,1957:1960, 1976:1988, 1992:1998, 2002:2006, 2014:2017), ## +'ve annual PDO (as of 211130)
    layout="portrait", win=TRUE, eps=FALSE, pdf=FALSE, png=FALSE, wmf=FALSE,
    longside=10, outnam, outres=400, ioenv=.GlobalEnv, lang=c("e","f"), ...)
@@ -4785,6 +4785,7 @@ weightBio <- function(adat, cdat, sunit="TID", sweight="catch",
 		ameth = .su(c(0,ameth))
 
 	#ages = extractAges(ages, ameth, rmSM=FALSE) ## use seamounts for REBS french fig equivalent
+	so("extractAges.r")
 	ages = extractAges(ages, ameth, rmSM=TRUE)
 #browser();return()
 	if (accum)
@@ -4806,7 +4807,6 @@ weightBio <- function(adat, cdat, sunit="TID", sweight="catch",
 		feid   = cdat$FEID
 		strata = cdat$GC; names(strata)  = feid     ## take stratification scheme from survey catch data
 		SVID   = cdat$SVID;  names(SVID) = feid
-#browser();return()
 		ages   = ages[is.element(ages$FEID,feid),]  ## get ages associated with the survey series
 		if (nrow(ages)==0) showError(paste("No age data left after matching FEID of survey series ",
 			SSID,"\n(catch linked to age via 'FEID')",sep=""),as.is=TRUE)
@@ -4937,9 +4937,8 @@ weightBio <- function(adat, cdat, sunit="TID", sweight="catch",
 	}
 
 	yrs  = floor(as.numeric(substring(names(pcat),1,8))-0.001)
-#browser();return()
-
 	uyrs = .su(yrs)
+	nyrs = length(uyrs)
 	names(atmp) = yrs
 	acat = sapply(split(pcat,yrs),func,na.rm=TRUE) ## total sample [sweight] per year
 	pvec = pcat/acat[names(atmp)]                  ## proportion of annual sample tow [sweight] in level (quarter/stratum)
@@ -5290,8 +5289,8 @@ weightBio <- function(adat, cdat, sunit="TID", sweight="catch",
 		if (is.null(xlim)) 
 			xlim = range(as.numeric(xuse))
 		xsho = xlim[1]:rev(xlim)[1]
+		if (nyrs<=2) xlim = xlim + c(-0.5,0.5)  ## need to expand range to make cohort lines work
 		xlimx = extendrange(xlim, f=ffx)
-		if (length(xuse)==1) xlim = xlim + c(-.5,.5)
 		ylimx = extendrange(c(0,plus), f=ffy)
 #print(c(xlim,xlimx));cat("\n")
 #browser(); return()
@@ -5338,12 +5337,31 @@ weightBio <- function(adat, cdat, sunit="TID", sweight="catch",
 					kkk = as.character(kk)
 					sexBub = max(display[,,kkk,zfld,drop=FALSE])     ## largest bubble for sex k
 					zval = display[,,kkk,zfld]
-					if (length(xuse)==1)
+					if (nyrs==1)
 						zval=makeCmat(zval,xuse)
 					zval = as.data.frame(zval)
 					plot(0,0, type="n", axes=FALSE, xlim=xlimx, ylim=ylimx, xlab="", ylab="")
 					#plot(0,0, type="n", axes=FALSE, xaxs="i", yaxs="i", xlim=xlimx, ylim=ylimx, xlab="", ylab="") ## (RH 230201)
 #abline(h=ylimx, v=xlimx,lwd=2)
+					if (!is.null(cohorts)) {
+						for (i in 1:length(cohorts$x)) {
+							a = cohorts$y[i]-cohorts$x[i]
+							#abline(a=a, b=1, col=.colBlind["orange"]) 
+							abline(a=a, b=1, col="slategray") 
+							xcoho = plus-1-a; ycoho = plus-1
+#browser();return()
+							if (xcoho>xlimx[1] & xcoho<xlimx[2] & ycoho>ylimx[1] & ycoho<ylimx[2]) {
+								text(plus+1.5-a, plus+1.5, -a, cex=ifelse(png,0.7,0.8), col="slategray", font=2, pos=2) #,adj=c(0.6,1.5))  ## WTF?
+							} else {
+								xyrpos = YRS[length(YRS)] + 0.5; yyrpos = a + xyrpos
+								if(!is.null(cohort.label.year)) {
+									xyrpos = cohort.label.year; yyrpos = a + xyrpos
+								}
+								text(xyrpos, yyrpos, -a, cex=ifelse(png,0.7,0.8), col="slategray", font=2, pos=3) #,adj=c(0.5,1.4))
+#if(a==-2015) {browser();return()}
+							}
+						}
+					}
 					if (!is.null(regimes)) {
 						x1 = par()$usr[1]; x2 = par()$usr[2]
 						if (length(xuse)>1) {
@@ -5388,7 +5406,7 @@ weightBio <- function(adat, cdat, sunit="TID", sweight="catch",
 					}
 					if (ptype=="bars") {
 						zmax = zval[-plus,] ## exclude the plus class
-						if (length(xuse)==1) zmax=makeCmat(zmax,xuse)
+						if (nyrs==1) zmax=makeCmat(zmax,xuse)
 						imax = apply(zmax,2,function(x){x >= quantile(x,0.95) })
 						zmax[!imax] = 0
 						makePoly = function(amat,rel=FALSE) {
@@ -5415,21 +5433,10 @@ weightBio <- function(adat, cdat, sunit="TID", sweight="catch",
 						plot(0,0, type="n", axes=FALSE, xlim=xlimx, ylim=ylimx, xlab="", ylab="")
 						xpos=intersect(min(xuse):max(xuse),round(pretty(xlim,n=10),5))
 						axis(1, at=xpos, las=3, cex.axis=ifelse(is.null(list(...)$cex.axis),0.8,list(...)$cex.axis), tcl=0.25)
-						ypos=intersect(0:plus,round(pretty(ylim,n=10),5))
+						ypos=intersect(0:plus,round(pretty(ylimx,n=10),5))
 						axis(2, at=ypos, las=1, cex.axis=ifelse(is.null(list(...)$cex.axis),0.8,list(...)$cex.axis), tcl=0.25)
 						polygon(poly1$xpol,poly1$ypol,border="gainsboro",col=aclr)
 						polygon(poly2$xpol,poly2$ypol,border="gainsboro",col=sclr)
-					}
-					if (!is.null(cohorts)) {
-						for (i in 1:length(cohorts$x)) {
-							a = cohorts$y[i]-cohorts$x[i]
-							abline(a=a, b=1, col=.colBlind["orange"]) 
-							xcoho = plus-1-a; ycoho = plus-1
-							if (xcoho>xlim[1] & xcoho<xlim[2] & ycoho>ylim[1] & ycoho<ylim[2])
-								text(plus+1-a,plus+1,-a,cex=ifelse(png,0.7,0.8),col=.colBlind["orange"],font=2) #,adj=c(0.6,1.5))
-							else
-								text(YRS[length(YRS)]+0.5,a+YRS[length(YRS)]+0.5,-a,cex=ifelse(png,0.7,0.8),col=.colBlind["orange"],font=2) #,adj=c(0.5,1.4)) 
-						}
 					}
 					noto = plt.noto[,kkk]; names(noto) = dimnames(plt.noto)$year #plt.noto[,"year"]  ## because of old crappy hadley crosstab
 					noto = noto[noto>0 & !is.na(noto)]
@@ -5445,10 +5452,12 @@ weightBio <- function(adat, cdat, sunit="TID", sweight="catch",
 					text(as.numeric(names(noto)), par()$usr[3]+0.015*abs(diff(par()$usr[3:4])), labels=labs, font=1, adj=0, srt=90,
 					#text(as.numeric(names(noto)), par()$usr[3]+0.02*abs(diff(par()$usr[3:4])), labels=bquote(.(nsam)%->%.(noto)), font=1, adj=0, srt=90,
 						cex=ifelse(is.null(list(...)$cex.noto),0.9,list(...)$cex.noto), col="grey15") #clrs[[k]][1])
-#browser();return()
 					box(lwd=ifelse(devnam=="png",max(1,floor(zoom/2)),1))
 					mtext(linguaFranca(paste("Age (",ifelse(kk==1,"Males",ifelse(kk==2,"Females",ifelse(kk==12,"Males + Females","Unknown"))),")"),l), side=2, line=1.5, las=3, cex=ifelse(is.null(list(...)$cex.lab), 1, list(...)$cex.lab))
 					#addLabel(0.05,0.05,txt=switch(k,"M","F","U"),cex=1.2,col=clrs[k],font=2)
+#browser();return()
+					if (!is.null(tag))  ## optional tag to stamp on plots
+						addLabel(0.99, 0.99, adj=c(1,1), txt=tag, cex=1.2, col=bcol, font=2)
 					par(new=FALSE)
 				}
 				if (devnam!="win") dev.off()

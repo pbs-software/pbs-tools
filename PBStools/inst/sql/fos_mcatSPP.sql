@@ -184,7 +184,7 @@ SELECT --top 100
     WHEN MC.GEAR IN ('MIDWATER TRAWL') THEN 3
     WHEN MC.GEAR IN ('HOOK AND LINE') THEN 4
     WHEN MC.GEAR IN ('LONGLINE') THEN 5
-    WHEN MC.GEAR IN ('LONGLINE OR HOOK AND LINE','TRAP OR LONGLINE OR HOOK AND LINE') THEN 8
+    --WHEN MC.GEAR IN ('LONGLINE OR HOOK AND LINE','TRAP OR LONGLINE OR HOOK AND LINE') THEN 8 -- These gears don't exist in GF_MERGED_CATCH
     ELSE 0 END AS \"gear\",
   CASE
     WHEN ISNULL(MC.VESSEL_NAME,'UNKNOWN') IN ('VIKING ENTERPRISE','OSPREY NO 1','RAW SPIRIT','NORTHERN ALLIANCE','VIKING ALLIANCE') THEN 1
@@ -337,5 +337,6 @@ ORDER BY EC.TRIP_ID, EC.FISHING_EVENT_ID
 -- qu("fos_mcatSPP.sql",dbName="GFFOS",strSpp="435")  -- BOR Bocaccio (190705, 191016, 240105)
 -- qu("fos_mcatSPP.sql",dbName="GFFOS",strSpp="418")  -- YTR Yellowtail Rockfish (240208, 240315)
 -- qu("fos_mcatSPP.sql",dbName="GFFOS",strSpp="228")  -- WAP Walleye Pollock (241128)
--- qu("fos_mcatSPP.sql",dbName="GFFOS",strSpp="405")  -- SGR Silvergray Rockfish (241119, 250414)
+-- qu("fos_mcatSPP.sql",dbName="GFFOS",strSpp="405")  -- SGR Silvergray Rockfish (241119, 250414, 250828)
+-- qu("fos_mcatSPP.sql",dbName="GFFOS",strSpp="417")  -- WWR Widow Rockfish (260209)
 

@@ -3248,7 +3248,7 @@ plotMW <- function(dat, xlim, ylim, outnam="Mean-Weight-Compare",
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotMW
 
 
-## plotSnail----------------------------2025-10-12
+## plotSnail----------------------------2026-03-12
 ## Plot snail-trail plots for MCMC analysis.
 ##  AME: replacing "2010" with as.character(currYear - 1)
 ##  RH: added assYrs = years past with estimated Bcurr
@@ -3429,8 +3429,8 @@ plotSnail <- function(BoverBmsy, UoverUmsy, model="SS", yrs=1935:2023,
 				text(c(0.4,0.8),par()$usr[3],labels=show0(round(c(0.4,0.8),2),2),adj=c(1.1,-.5),col=.colBlind[c("redpurple","bluegreen")])
 			} else if (refpts=="B0") {
 				abline(h=1, col=c("grey20"), lwd=2, lty=3)
-				abline(v=c(0.16,0.32), col=.colBlind[c("redpurple","bluegreen")], lwd=2, lty=c(4,5))  ## switch to colours for the blind
-				text(c(0.16,0.32),par()$usr[3],labels=show0(round(c(0.16,0.32),2),2),adj=c(1.1,-.5),col=.colBlind[c("redpurple","bluegreen")])
+				abline(v=c(0.2,0.32), col=.colBlind[c("redpurple","bluegreen")], lwd=2, lty=c(4,5))  ## switch to colours for the blind
+				text(c(0.2,0.32),par()$usr[3],labels=show0(round(c(0.20,0.32),2),2),adj=c(1.1,-.5),col=.colBlind[c("redpurple","bluegreen")])
 			}
 		}
 		if (onepanel) startPlot()
@@ -3928,7 +3928,7 @@ smoothPDO=function(dat=pdo, zfld="anomaly", period=365, every=365/6,
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~smoothPDO
 
 
-## splineCPUE---------------------------2024-10-24
+## splineCPUE---------------------------2026-03-23
 ## Fit spline curves through CPUE data to determine 
 ## optimal degrees of freedom (balance between rigorously
 ## fitting indices while not removing the majority of the signal)
@@ -3968,13 +3968,17 @@ splineCPUE <- function(dat, ndf=50, strSpp="ZZZ", ufld="cpue",
 		}
 		expandGraph(mfrow=c(2,2), mar=c(2.75,2.75,0.5,0.5), cex=1)
 	
+		## Panel 1
 		plot(DF, RSS, type="n", xlab=linguaFranca("degrees of freedom",l), ylab=linguaFranca("RSS",l))
 		addLabel(0.5, 0.95, linguaFranca("Residual Sum of Squares",l), adj=0.5)
 		abline(v=df.opt, col="green4", lty=3)
 		lines(DF, RSS, col="red", lwd=2)
 	
+		## Panel 2
 		plot(DF, dRSS, type="n", xlab=linguaFranca("degrees of freedom",l), ylab=paste0("d",linguaFranca("RSS",l)))
-		if (strSpp %in% c('YMR')) {
+		if (strSpp %in% c('SGR')) {
+			xpos=0.95; ypos=0.9; xadj=1
+		} else if (strSpp %in% c('YMR')) {
 			xpos=0.95; ypos=0.5; xadj=1
 		} else {
 			xpos=0.5; ypos=0.95; xadj=0.5
@@ -3986,13 +3990,13 @@ splineCPUE <- function(dat, ndf=50, strSpp="ZZZ", ufld="cpue",
 			points(DF,dRSS, pch=21, cex=.8, col="blue", bg="yellow")
 		CVpro = sqrt(RSS[findPV(min(dRSS),dRSS)]/(nrow(dat)-2))/mean(dat[,"index"])
 	
-		##  Plot the data and the 'optimal' fit
-		
+		## Panel 3
+		## Plot the data and the 'optimal' fit
 		#plot(index ~ year, data = dat, pch=21, col="green4", bg="green", cex=1.1, xlab=linguaFranca("Year",l), ylab=linguaFranca(ufld,l)) #, main = "data(index) & smoothing splines")
 		plot(index ~ year, data = dat, type="n", xlab=linguaFranca("Year",l), ylab=linguaFranca(ufld,l)) 
 		lines(index ~ year, data = dat, lty=1, col="slategrey")
 		points(index ~ year, data = dat, pch=21, col="green4", bg="green")
-		index.spl <- with(dat, smooth.spline(year, index, all.knots=TRUE))
+		index.spl <- with(dat, smooth.spline(year, index, all.knots=TRUE, spar=0.75))  ## default spline
 		lines(index.spl, col="blue", lty=2, lwd=2)
 	
 		index.df <- smooth.spline(dat[,"year"], dat[,"index"], df=df.opt, all.knots=TRUE)
@@ -4000,14 +4004,16 @@ splineCPUE <- function(dat, ndf=50, strSpp="ZZZ", ufld="cpue",
 		df.spl  = index.spl$df
 		rho.spl = RSS[findPV(df.spl,DF)]
 		cp.spl   = sqrt(rho.spl/(nrow(dat)-2))/mean(dat[,"index"])
-
+#browser();return()
 		lines(index.df, col="red", lty=1, lwd=2)
-		if (strSpp %in% c('BSR','WWR','YMR') || ufld %in% c("PDO")) {
+		if (strSpp %in% c('BSR','WWR','YMR','SGR') || ufld %in% c("PDO")) {
 			xpos=0.95; ypos=0.99; xadj=1
 		} else {
 			xpos=0.02; ypos=0.2; xadj=0
 		}
 		addLegend(xpos, ypos, legend=c(paste0(switch(l, 'e'="fitted df (nu) = ", 'f'=eval(parse(text=deparse("degr\u{00E9}s de libert\u{00E9} ajuste\u{00E9}s (nu) = ")))), signif(index.spl$df,4), ", cp=", signif(cp.spl,4)), paste0(switch(l, 'e'="with nu=", 'f'="avec nu="), signif(df.opt,4), ", rho=", signif(rho_k,4), ", cp=", signif(CVpro,4))), col = c("blue","red"), lty = 2:1, bty="n", bg="transparent", adj=0, xjust=xadj, cex=0.8)
+
+		## Panel 4
 		## Residual (Tukey Anscombe) plot:
 		ylim = if(ufld=="PDO") NULL else c(-0.35,0.45)
 		plot(residuals(index.df) ~ fitted(index.df), pch=21, col="red", bg="pink", cex=1.1, xlab=linguaFranca("Fitted Index",l), ylab=linguaFranca("Index residuals",l))

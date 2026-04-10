@@ -1,6 +1,6 @@
 -- Sales slip catch summary from PacHarv3 (HARVEST_V2_0) (RH: 2015-06-16)
 -- May need to refresh 'tnsnames.ora' in C:\Oracle\12.2.0\cli\network\admin
--- Norm transferred records for 1952-1992 to GFFOS as table 'PH3_CATCH_SUMMARY (NO 211215)
+-- Norm transferred records for 1952-1995 to GFFOS as table 'PH3_CATCH_SUMMARY (NO 211215)
 -- PH3_CATCH_SUMMARY emmpty, Norm transferring again (RH 221222)
 -- Converted Oracle SQL code to SQL server code, mostly unpacking two nested queries into temporary tables #PMFC and #TARGET (RH 221222)
 -- Introduced 'locality' field for Anthony Island, even though there are no records in minor area 142. (RH 230510)

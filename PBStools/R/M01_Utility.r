@@ -2101,7 +2101,7 @@ isThere <- function(x, envir=parent.frame())
 	genv <- function(){ .GlobalEnv }                # global environment
 
 
-## linguaFranca-------------------------2025-08-07
+## linguaFranca-------------------------2026-04-01
 ## Translate English phrases to French (other languages possible)
 ## for use in plotting figures with French labels.
 ## Note that 'gsub' has a limit to its nesting depth.
@@ -2135,7 +2135,7 @@ linguaFranca <- function(x, lang="e", little=4, strip=FALSE, localnames=FALSE)
 			locowords = sapply(locawords,function(xx){
 				locoset = sapply (xx, function(xxx){
 					## Shift words to the front
-					pattern = "[Oo]ff|[Ii]sland|[Cc]anyon|[Ss]ound|[Ss]pit|[Bb]ay|[Pp]oint|[Ss]pot|[Ii]nlet|[Dd]oughnut|[Bb]ank|[Ll]ake|[Ee]ntrance"
+					pattern = "[Oo]ff|[Ii]sland|[Cc]anyon|[Ss]ound|[Ss]pit|[Bb]ay|[Pp]oint|[Ss]pot|[Ii]nlet|[Dd]oughnut|[Bb]ank|[Ll]ake|[Ee]ntrance|[Ss]trait"
 #browser();return()
 					if (any(grepl(pattern,xxx))) {
 						xrev = c(xxx[grep(pattern,xxx)],xxx[grep(pattern,xxx,invert=TRUE)])
@@ -2177,14 +2177,20 @@ linguaFranca <- function(x, lang="e", little=4, strip=FALSE, localnames=FALSE)
 				gsub("[Ii]sland", eval(parse(text=deparse("\u{00CE}le"))),
 				gsub("[Ff]ather", eval(parse(text=deparse("P\u{00E8}re"))),
 				gsub("[Mm]iddle", "moyen",
+				gsub("[Ss]trait", eval(parse(text=deparse("d\u{00E9}troit d'"))),
 				gsub("[Ii]nshore", eval(parse(text=deparse("C\u{00F4}tier"))),
 				gsub("[Oo]utside", "Dehors",
 				gsub("[Dd]oughnut", "Beignet",
 				gsub("\\(shallow)", "(peu profonde)",
-				gsub("[Ee]ntrance", eval(parse(text=deparse("Entr\u{00E9}e"))),
+				gsub("[Ee]ntrance", eval(parse(text=deparse("entr\u{00E9}e"))),
 				gsub("[Oo]ffshore", eval(parse(text=deparse("Extrac\u{00F4}tier"))),
 				gsub("(\\s+)?[Oo]ff(\\s+)?", "\\1au large\\2",
-				xx)))))))))))))))))))))))))))))))
+				xx))))))))))))))))))))))))))))))))
+			})
+			## Cleanup anomalies
+			xloco = sapply(xloco, function(xx){
+				gsub("d' ", "d'",
+				xx)
 			})
 #browser();return()
 			return(xloco)
@@ -2282,6 +2288,9 @@ linguaFranca <- function(x, lang="e", little=4, strip=FALSE, localnames=FALSE)
 				gsub("[M][E][I]", "IEM",         ## indice ENSO multivari\'{e}
 				gsub("[P][B][S]", "SBP",
 				gsub("[P][D][O]", "ODP",         ## oscillation d\'{e}cennale du Pacifique
+				gsub("[G][I][G]", eval(parse(text=deparse("G\u{00CE}G"))),  ## goulet de l'\^{i}le Goose
+				gsub("[M][I][G]", "GMI",
+				gsub("[M][R][G]", "GMR",
 				gsub("[Q][C][S]", "BRC",
 				gsub("[S][O][I]", "IOA",         ## indice d'oscillation australe
 				gsub("[A][L][P][I]", "IBPA",     ## indice de basse pression des Al\'{e}outiennes
@@ -2290,7 +2299,7 @@ linguaFranca <- function(x, lang="e", little=4, strip=FALSE, localnames=FALSE)
 				gsub("[N][P][G][O]", "OGPN",     ## oscillation du gyre du Pacifique Nord
 				gsub("[W][C][H][G]", "COHG",
 				gsub("[W][C][V][I]", "COIV",
-				xx))))))))))))))))))))
+				xx)))))))))))))))))))))))
 			})
 			## ridiculous acronyms
 			xlil = sapply(xlil, function(xx){
@@ -2309,13 +2318,15 @@ linguaFranca <- function(x, lang="e", little=4, strip=FALSE, localnames=FALSE)
 				gsub("[M][P][D]", "MDP",         ## mode de distribution post\'{e}rieure
 				gsub("[M][S][Y]", "RMD",         ## rendement maximal durable (no longer soutenu)
 				gsub("[m][s][y]", "rmd",         ## rendement maximal durable (no longer soutenu)
+				gsub("[O][S][A]", eval(parse(text=deparse("RU\u{00C9}"))),         ## R\'{e}sidus \'{a} une \'{e}tape (or r\'{e}sidus \'{a} un pas)
 				gsub("[R][S][S]", "SRC",         ## somme r\'{e}siduelle de carr\'{e}s
 				gsub("[T][R][P]", "PRC",         ## point de r\'{e}f\'{e}rence cible
 				gsub("[U][S][R]", "RSS",         ## r\'{e}f\'{e}rence de stock sup\'{e}rieure
 				gsub("[I][P][H][C]", "CIFP",     ## Commission internationale du fl\'{e}tan du Pacifique
 				gsub("[H][B][L][L]", eval(parse(text=deparse("P\u{00E0}FD"))), ## palangre \`{a} fond dur
 				gsub("[M][C][M][C]", "MCCM",     ## Monte Carlo \`{a} cha\^{i}ne de Markov
-				xx))))))))))))))))))))
+				gsub("[S][D][N][R]", eval(parse(text=deparse("\u{00C9}TRN"))), ## \'{e}cart-type des r\'{e}sidus normalis\'{e}s
+				xx))))))))))))))))))))))
 			})
 			xout[xLpos] = xlil
 		}
@@ -2334,8 +2345,9 @@ linguaFranca <- function(x, lang="e", little=4, strip=FALSE, localnames=FALSE)
 				gsub("use Tweedie CPUE", "utiliser CPUE de Tweedie",
 				gsub("remove comm CPUE", "supprimer la CPUE commerciale",
 				gsub("add HBLL survey(s)", eval(parse(text=deparse("ajouter relev\u{00E9}\\1 de P\u{00E0}FD"))),
+				gsub("[Ll]oosen M [Pp]rior", eval(parse(text=deparse("assouplir la\ndistribution M ant\u{00E9}rieure"))),
 				gsub("use Francis reweight", eval(parse(text=deparse("utiliser la repond\u{00E9}ration de Francis"))),
-				gsub("AE([0-9]) no age error", "pas d'erreur de vieillissement",
+				gsub("(AE([0-9]) )?no age error", "pas d'erreur\nde vieillissement",
 				gsub("AE([0-9]) CASAL CV=0.1", "EV\\1 CASAL CV=0,1",
 				gsub("[Nn]atural [Mm]ortality", eval(parse(text=deparse("mortalit\u{00E9} naturelle"))),
 				gsub("D-M parameteri[sz]ation", eval(parse(text=deparse("param\u{00E9}trage de D-M"))),
@@ -2349,7 +2361,7 @@ linguaFranca <- function(x, lang="e", little=4, strip=FALSE, localnames=FALSE)
 				gsub("[Cc]olo(u)?rs [Ii]ndicate [Aa]ge", eval(parse(text=deparse("les couleurs indiquent l'\u{00E2}ge"))),
 				gsub("fem(ale)? dome(-shape)? sel(ect)?", eval(parse(text=deparse("s\u{00E9}lectivit\u{00E9} du d\u{00F4}me femelle"))),
 				gsub("split M ages\\(([0-9]+),([0-9]+)\\)", "diviser M entre \\1 et \\2 ans",
-				xx))))))))))))))))))))))
+				xx)))))))))))))))))))))))
 			})
 			## rockfish species names
 			xspp1 = sapply(xsen, function(xx){
@@ -2462,10 +2474,31 @@ linguaFranca <- function(x, lang="e", little=4, strip=FALSE, localnames=FALSE)
 				gsub("[Aa]symptotic [Ss]tandard [Ee]rror [Ee]stimate", "estimation d'erreur standard asymptotique",
 				xx)))))))))))))))))))))))))))
 			})
+			## TMB models
+			xtmb = sapply(xspp3, function(xx){
+				gsub("[T][M][B] [Mm]odel", eval(parse(text=deparse("mod\u{00E8}le TMB"))),
+				gsub("[Gg]eostatistical", eval(parse(text=deparse("g\u{00E9}ostatistique"))),
+				gsub("[Dd]esign-based", eval(parse(text=deparse("bas\u{00E9} sur la conception"))),
+				gsub("(01)?([_ ])?[Dd]elta[_ ][Ll]ognormal", eval(parse(text=deparse("\\1 delta lognormal"))),
+				gsub("(02)?([_ ])?[Dd]elta[_ ][Ll]ognormal[_ ]with[_ ][Dd]epth", eval(parse(text=deparse("\\1 delta lognormal avec profondeur"))),
+				gsub("(03)?([_ ])?[Tt]weedie", eval(parse(text=deparse("\\1 tweedie"))),
+				gsub("(04)?([_ ])?[Tt]weedie[_ ]with[_ ][Dd]epth", eval(parse(text=deparse("\\1 tweedie avec profondeur"))),
+				gsub("(05)?([_ ])?[Dd]elta[_ ][gg]amma", eval(parse(text=deparse("\\1 delta gamma"))),
+				gsub("(06)?([_ ])?[Dd]elta[_ ][Gg]amma[_ ]with[_ ][Dd]epth", eval(parse(text=deparse("\\1 delta gamma avec profondeur"))),
+				gsub("(07)?([_ ])?[Dd]elta[_ ][Pp]oisson[_ ]link[_ ][Gg]amma", eval(parse(text=deparse("\\1 delta poisson lien gamma"))),
+				gsub("(08)?([_ ])?[Dd]elta[_ ][Pp]oisson[_ ]link[_ ][Gg]amma[_ ]with[_ ][Dd]epth", eval(parse(text=deparse("\\1 delta poisson lien gamma avec profondeur"))),
+				gsub("(09)?([_ ])?[Dd]elta[_ ][Pp]oisson[_ ]link[_ ][Ll]ognormal", eval(parse(text=deparse("\\1 delta poisson lien lognormal"))),
+				gsub("(10)?([_ ])?[Dd]elta[_ ][Pp]oisson[_ ]link[_ ][Ll]ognormal[_ ]with[_ ][Dd]epth", eval(parse(text=deparse("\\1 delta poisson lien lognormal avec profondeur"))),
+				gsub("(11)?([_ ])?[Dd]elta[_ ][Gg]eneralized[_ ][Gg]amma[_ ][Dd]istribution", eval(parse(text=deparse("\\1 distribution gamma g\u{00E8}n\u{00E8}ralis\u{00E8}e delta"))),
+				gsub("(12)?([_ ])?[Dd]elta[_ ][Gg]eneralized[_ ][Gg]amma[_ ][Dd]istribution[_ ]with[_ ][Dd]epth", eval(parse(text=deparse("\\1 distribution gamma g\u{00E8}n\u{00E8}ralis\u{00E8}e delta avec profondeur"))),
+				gsub("(13)?([_ ])?[Dd]elta[_ ][Pp]oisson[_ ]link[Gg]eneralized[Ggamma[Dd]istribution", eval(parse(text=deparse("\\1 delta poisson lien distribution gamma g\u{00E8}n\u{00E8}ralis\u{00E8}e"))),
+				gsub("(14)?([_ ])?[Dd]elta[_ ][Pp]oisson[_ ]link[Gg]eneralized[Ggamma[Dd]istribution[_ ]with[_ ][Dd]epth", eval(parse(text=deparse("\\1 delta poisson lien distribution gamma g\u{00E8}n\u{00E8}ralis\u{00E8}e avec profondeur"))),
+				xx)))))))))))))))))
+			})
 			## large unwieldy phrases (poo)
-			xpoo = sapply(xss, function(xx){
+			xpoo = sapply(xtmb, function(xx){
 				gsub("[Uu]nsorted [A][F]", eval(parse(text=deparse("F\u{00C2} non tri\u{00E9}es"))),
-				gsub("OSA [Rr]esidual(s)?", eval(parse(text=deparse("r\u{00E9}sidu\\1 d'U\u{00C9}A"))),  ## r\'{e}sidus d'une \'{e}tape \`{a} l'avance
+				gsub("OSA [Rr]esidual(s)?", eval(parse(text=deparse("r\u{00E9}sidu\\1 \u{00E0} RU\u{00C9}"))),  ## r\'{e}sidus \'{a} une \'{e}tape (or r\'{e}sidus \'{a} un pas)
 				gsub("[Yy]ear of [Bb]irth", eval(parse(text=deparse("ann\u{00E9}e de naissance"))),
 				gsub("CPUE [Nn]ot [Uu]sed", eval(parse(text=deparse("CPUE non utilis\u{00E9}e"))),
 				gsub("[M][P][D] [Ee]stimate", eval(parse(text=deparse("estimation de MDP"))),
@@ -2562,11 +2595,13 @@ linguaFranca <- function(x, lang="e", little=4, strip=FALSE, localnames=FALSE)
 				gsub("[Ww]hole [Cc]atch", eval(parse(text=deparse("prise enti\u{00E8}re"))),
 				gsub("[Mm]atrix [Ii]ndex", "indice matriciel",
 				gsub("[Tt]ail [Dd]etails", eval(parse(text=deparse("d\u{00E9}tails de la queue"))),
-				gsub("[Oo]riginal von[Bb]", "vonB original",
+				gsub("[Ee]xpected [Aa]ge", eval(parse(text=deparse("\u{00E2}ge pr\u{00E9}vu"))),
 				gsub("[Pp]redicted [Aa]ge", eval(parse(text=deparse("\u{00E2}ge pr\u{00E9}dit"))),
+				gsub("[Oo]riginal von[Bb]", "vonB original",
 				gsub("[Tt]otal [Bb]iomass", "biomasse totale",
 				gsub("[Ff]ishing [Ee]ffort", eval(parse(text=deparse("effort de p\u{00EA}che"))),
 				gsub("[Ss]ummary [Bb]iomass", "biomasse somaire",
+				gsub("[Ss]tandard [Dd]eviation", eval(parse(text=deparse("\u{00E9}cart type"))),
 				gsub("[Pp]rojected [Cc]atch", eval(parse(text=deparse("prise projet\u{00E9}e"))),
 				gsub("[Mm]ean [Aa]ge \\(year", eval(parse(text=deparse("\u{00E2}ge moyen (ann\u{00E9}e"))),
 				gsub("[Tt]ow [Ll]ocation(s)?", "emplacement\\1 des traits de chalut",
@@ -2575,7 +2610,7 @@ linguaFranca <- function(x, lang="e", little=4, strip=FALSE, localnames=FALSE)
 				gsub("[Mm]ean\\([Cc][Pp][Uu][Ee])", "moyenne(cpue)",
 				gsub("[Bb]iomass [Cc]omparison(s)?", "comparaison\\1 de biomasse",
 				gsub("[Bb]ase [Cc]ase|[Bb]ase [Rr]un", eval(parse(text=deparse("sc\u{00E9}nario de r\u{00E9}f\u{00E9}rence"))),
-				xx))))))))))))))))))))
+				xx))))))))))))))))))))))
 			})
 			xtwo.wee = sapply(xtwo.med, function(xx){
 				gsub("[Nn]o CPUE", "pas de CPUE",
@@ -2587,16 +2622,20 @@ linguaFranca <- function(x, lang="e", little=4, strip=FALSE, localnames=FALSE)
 				gsub("[Mm]ean [Aa]ge", eval(parse(text=deparse("\u{00E2}ge moyen"))),
 				gsub("[A]lt [Cc]atch", "prises alt",
 				gsub("[Bb]ased [Oo]n", eval(parse(text=deparse("bas\u{00E9} sur"))),
-				gsub("[Aa]ge(\\s+)?\\(y(?:ear|r)", eval(parse(text=deparse("\u{00E2}ge (ann\u{00E9}e"))),
 				gsub("[Ee]nd [Yy]ear", eval(parse(text=deparse("ann\u{00E9}e de fin"))),
 				gsub("[Pp]er [Yy]ear", eval(parse(text=deparse("par l'ann\u{00E9}e"))),
-				gsub("[Bb]ase [Rr]un(s)?", eval(parse(text=deparse("simulation\\1 de r\u{00E9}f\u{00E9}rence"))),  ## Paul Marchal
-				gsub("[Bb]ut [Ff]ixed", "mais fixe",
 				gsub("[Aa]ge [Cc]lass", eval(parse(text=deparse("classe d'\u{00E2}ge"))),
+				gsub("[Bb]ut [Ff]ixed", "mais fixe",
 				gsub("min [B] [Yy]ear", eval(parse(text=deparse("ann\u{00E9}e de min B"))),
+				gsub("[Mm]odel [Ff]it", eval(parse(text=deparse("ajustement du mod\u{00E8}le"))),
+				#gsub("[Rr]elative( | ~ )SSB", "B\\1du\\1SR\\1relatif", ## BSR = biomasse du stock reproducteur (BSR gets re-translated to STN)
+				gsub("[Rr]elative( | ~ )SSB", "BFS\\1relatif", ## BFS = biomasse f\'{e}conde du stock
 				gsub("[Ss]tart [Yy]ear", eval(parse(text=deparse("ann\u{00E9}e de d\u{00E9}but"))),
+				gsub("[Mm]odel [Ii]nput", eval(parse(text=deparse("entr\u{00E9}e du mod\u{00E8}le"))),
+				gsub("[Bb]ase [Rr]un(s)?", eval(parse(text=deparse("simulation\\1 de r\u{00E9}f\u{00E9}rence"))),  ## Paul Marchal
 				gsub("[M][C][M][C] [Rr]un(s)?", eval(parse(text=deparse("simulation\\1 de MCCM"))),
-				xx))))))))))))))))))
+				gsub("[Aa]ge(\\s+)?\\(y(?:ear|r)", eval(parse(text=deparse("\u{00E2}ge (ann\u{00E9}e"))),
+				xx)))))))))))))))))))))
 			})
 			## single words 10 or more characters
 			xone.big = sapply(xtwo.wee, function(xx){
@@ -2650,7 +2689,9 @@ linguaFranca <- function(x, lang="e", little=4, strip=FALSE, localnames=FALSE)
 				gsub("[H][S]", "DH",
 				gsub("[Cc]oast", eval(parse(text=deparse("c\u{00F4}te"))),
 				gsub("[Cc]oastal( waters)?", eval(parse(text=deparse("eaux c\u{00F4}ti\u{00E8}res"))),
-				gsub("[G][I][G]", "GIG",  ## goulet de l'\^{i}le Goose
+				gsub("[G][I][G]", eval(parse(text=deparse("G\u{00CE}G"))),  ## goulet de l'\^{i}le Goose
+				gsub("[M][I][G]", "GMI",
+				gsub("[M][R][G]", "GMR",
 				gsub("[Q][C][S]", "BRC",
 				gsub("[P][B][S]", "SBP",
 				gsub("[H][B][L][L]", "PFD", ## palangre \`{a} fond dur
@@ -2675,7 +2716,7 @@ linguaFranca <- function(x, lang="e", little=4, strip=FALSE, localnames=FALSE)
 				gsub("[Gg]oose [Ii]sland [Gg]ully", eval(parse(text=deparse("goulet de l'\u{00EE}le Goose"))),
 				gsub("[Qq]ueen [Cc]harlotte [Ss]ound", "bassin de la Reine-Charlotte",
 				gsub("[Qq]ueen [Cc]harlotte [Ss]trait", eval(parse(text=deparse("d\u{00E9}troit de la Reine-Charlotte"))),
-				xx)))))))))))))))))))))))))))))
+				xx)))))))))))))))))))))))))))))))
 			})
 			## words describing fisheries
 			xfish = sapply(xgeo, function(xx){
@@ -2789,13 +2830,15 @@ linguaFranca <- function(x, lang="e", little=4, strip=FALSE, localnames=FALSE)
 				gsub("[M][P][D]", "MDP",         ## mode de distribution post\'{e}rieure
 				gsub("[M][S][Y]", "RMD",         ## rendement maximal durable (no longer soutenu)
 				gsub("[m][s][y]", "rmd",         ## rendement maximal durable (no longer soutenu) (be careful of words ending in 'msy')
+				gsub("[O][S][A]", eval(parse(text=deparse("RU\u{00C9}"))),     ## R\'{e}sidus \'{a} une \'{e}tape (or r\'{e}sidus \'{a} un pas)
 				gsub("[U][S][R]", "RSS",         ## r\'{e}f\'{e}rence de stock sup\'{e}rieure
 				gsub("[T][R][P]", "PRC",         ## point de r\'{e}f\'{e}rence cible
+				gsub("[S][D][N][R]", eval(parse(text=deparse("\u{00C9}TRN"))), ## \'{e}cart-type des r\'{e}sidus normalis\'{e}s
 				gsub("[S][S][I][D]", "IDSR",     ## identification de la s\'{e}rie de relev\'{e} (RH 241108)
 				gsub("[M][C][M][C]", "MCCM",     ## Monte Carlo \`{a} cha\^{i}ne de Markov
 				gsub("[P][M][F][C]", "CPMP",     ## Monte Carlo \`{a} cha\^{i}ne de Markov
 				gsub("[R|S]\\+[S|R]", "R+R",     ## research + survey (relev\'{e})
-				xx))))))))))))))))))))
+				xx))))))))))))))))))))))
 			})
 #browser();return()
 			## species code3 acronyms
@@ -2825,7 +2868,7 @@ linguaFranca <- function(x, lang="e", little=4, strip=FALSE, localnames=FALSE)
 				xx))))))))))))))))))))))
 			})
 			## final swipe through
-			xbig = sapply(xcode, function(xx){
+			xfin = sapply(xcode, function(xx){
 				gsub(" of "," de ",
 				gsub(" or "," ou ",
 				gsub(" by ", " par ",
@@ -2851,6 +2894,11 @@ linguaFranca <- function(x, lang="e", little=4, strip=FALSE, localnames=FALSE)
 				gsub("sigmaR( )?=( )?(0|1)\\.([1-9])", "sigmaR\\1=\\2\\3,\\4",
 				gsub("[Ff][Ii][Ss][Hh]([Ee][Rr][Yy]|ing)", eval(parse(text=deparse("p\u{00EA}che"))),
 				xx))))))))))))))))))))))
+			})
+			## tinker with silly french things
+			xbig = sapply(xfin, function(xx){
+				gsub("pas de ([aeiou])","pas d'\\1",
+				xx)
 			})
 #browser();return()
 			xout[xBpos] = xbig

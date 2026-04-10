@@ -15,6 +15,17 @@ CRAN package version numbers follow a "major.minor.patch" format (e.g., 1.2.3), 
 	Patch: Indicates bug fixes and minor improvements that do not introduce new features.
 -----------------------------------
 
+1.45.0 (2026-04-10)  [Rcheck=T, Rbuild=T]
+  * R code
+    + Added new function `collateGBSP' to collate results from `fos_gfb_offloads.sql' (RH 260227)
+      - creates tables of species samples by fishing year and port and dumps them to CSV files
+    + Changed LRP from 0.16B0 to 0.2B0 for SGR 2025 (RH 260312)
+    + Tweaked function `splineCPUE.r' to accommodate SGR 2025 (RH 260323)
+    + Modified function `plotGMA' to add contours that show the QCS gullies (RH 260324)
+    + Added new argument 'cohort.label.year' to function `weightBio' for specifying year along x-axis above with cohort labels appear (RH 260326)
+      - used to label where vertical gaps appear in the bubble plot
+    + Added more text strings to translate in function `linguaFranca' (RH 260401)
+
 1.44.0 (2026-02-03)  [Rcheck=T, Rbuild=T]
   * R code
     + Added SGR TAC information for 2025 (RH 250624)

@@ -1229,12 +1229,12 @@ plotEO <- function (id="lst", strSpp="453", col="red",
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotEO
 
 
-## plotGMA------------------------------2024-10-24
+## plotGMA------------------------------2026-03-24
 ##  Plot the Groundfish Management Areas
 ## ---------------------------------------------RH
-plotGMA <- function(gma=gma, major=major, xlim=c(-134,-123), ylim=c(48.05,54.95), 
+plotGMA = function(gma=gma, major=major, xlim=c(-134,-123), ylim=c(48.05,54.95), 
    eps=FALSE, png=FALSE, extra.labels=NULL, isobath, strSpp,
-   PIN=c(9,9), pngres=400, lang=c("e","f"))
+   PIN=c(10,10), pngres=400, lang=c("e","f"))
 {
 	oldpar=par(no.readonly=-TRUE); on.exit(par(oldpar))
 
@@ -1243,13 +1243,10 @@ plotGMA <- function(gma=gma, major=major, xlim=c(-134,-123), ylim=c(48.05,54.95)
 
 	if (!is.null(extra.labels) && mode(extra.labels)=="character" && extra.labels[1]=="default") {
 		extra.labels = as.EventData(data.frame(
-			EID = 1:6,
-			#X   = c(-132.3628,-130.0393,-129.1727,-126.3594),
-			#Y   = c(53.74724,51.48773,51.05771,50.15860),
-			#label = c("Haida\nGwaii","QCS","GIG","Vancouver\nIsland") ),
-			X   = c(-132.3628,-126.3594,-129.6393,-129.4904,-129.9202,-130.4673),
-			Y   = c(53.74724,50.15860,51.4,51.14122,51.70878,52.00878),
-			label = c("Haida\nGwaii","Vancouver\nIsland","Queen Charlotte Sound","GIG","MIG","MRG") ),
+			EID = 1:8,
+			X   = c(-132.3, -126.3594, -129.5, -129.45, -129.9202, -130.5, -131, -132.1),
+			Y   = c(53.5, 50.15860, 51.5, 51.2, 51.71, 52.00878, 53.15, 54.45),
+			label = c("Haida\nGwaii","Vancouver\nIsland","QCS","GIG","MIG","MRG","Hecate\nStrait", "Dixon Entrance") ),
 			projection="LL" )
 		if (!missing(strSpp) && strSpp%in%c("228"))
 			extra.labels = extra.labels[!is.element(extra.labels$label,c("Queen Charlotte Sound","GIG","MIG","MRG")),]
@@ -1263,11 +1260,18 @@ plotGMA <- function(gma=gma, major=major, xlim=c(-134,-123), ylim=c(48.05,54.95)
 	edata = pdata = attributes(gma)$PolyData
 	names(edata)[1]="EID"
 	edata=as.EventData(edata,projection="LL")
+	if (!is.null(isobath)) {
+		## Nudge the major area labels to avoid bathymetry
+		## 3C,3D,4B,5A,5B,5C,5D,5E
+		xnudge = c(-0.3,0,0,-0.75,0.25,-0.25,0,0)
+		ynudge = c(0,0,0,0,0,0.2,0,-0.2)
+		edata$X = edata$X + xnudge
+		edata$Y = edata$Y + ynudge
+	}
 
 	fout.e = fnam
 	for (l in lang) {  ## could switch to other languages if available in 'linguaFranca'.
 		changeLangOpts(L=l)
-		#fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
 		fout = switch(l, 'e' = paste0("./english/",fout.e), 'f' = paste0("./french/",fout.e) )
 
 		if (png) {
@@ -1302,27 +1306,31 @@ plotGMA <- function(gma=gma, major=major, xlim=c(-134,-123), ylim=c(48.05,54.95)
 		} else {
 			earlgrey = "grey"
 			addPolys(gma, polyProps=pdata, border=earlgrey)
-			addPolys(major,col="transparent",border="navyblue",lwd=2)
+			addPolys(major,col="transparent",border="darkslategray",lwd=2)
 		}
 		if (!missing(isobath) && is.PolySet(isobath))
-			addLines(isobath)
+			addLines(isobath, col=lucent("navy",0.5))
 		addPolys(nepacLLhigh,col="white",border=earlgrey)
 		.addAxis(par()$usr[1:2],ylim=par()$usr[3:4],tckLab=FALSE,tck=.015,tckMinor=.015/2)  ## .addAxis currently not exported from PBSmapping namespace
 		addLabels(edata,cex=2.5,font=2)
 		if (!is.null(extra.labels)) {
 			elabs = extra.labels
-			elab = linguaFranca(gsub("\\\n"," ",elabs$label),l)
+			is.acro = grep("QCS|GIG|MIG|MRG", elabs$label)
+			is.loca = grep("QCS|GIG|MIG|MRG", elabs$label, invert=T)
+			elab = gsub("\\\n", " ", elabs$label)
+			elab[is.acro] = linguaFranca(elab[is.acro], l)
+			elab[is.loca] = linguaFranca(elab[is.loca], l, localnames=T)
+#browser();return()
 			touche = rep(TRUE,length(elab))
 			if (!strSpp%in%c("sumting"))
-				touche = !is.element(elab, "Queen Charlotte Sound")
+				touche = !is.element(elab, c("Queen Charlotte Sound", "Dixon Entrance"))
 			elab[touche] = gsub("le\\\nde","le de",gsub("\\\nde\\\nla"," de la",gsub(" ","\n",elab[touche])))
 			elabs$label = elab
-			addLabels(elabs,cex=1.5,col="blue")
-#browser();return()
+			addLabels(elabs,cex=1.4,col="black")
 		}
 		text(-125.2416,52.70739,linguaFranca("BC",l),cex=5,col="grey",font=2)
 		box(lwd=2)
-	#browser();return()
+#browser();return()
 		if (eps|png) dev.off()
 	}; eop()
 	gc(verbose=FALSE)
