@@ -4712,7 +4712,7 @@ tabMW <- function(dat, flds=c("year","SSID"), zfld="wt", ttype,
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~tabMW
 
 
-## weightBio----------------------------2026-03-26
+## weightBio----------------------------2026-04-28
 ## Weight age|length frequencies|proportions by catch|density.
 ##   adat = age123 from query 'gfb_bio.sql'    -- e.g., getData("gfb_bio.sql","GFBioSQL",strSpp="607",path=.getSpath()); bio607=processBio()
 ##   cdat = cat123gfm -- call 'fos_mcatSPP.sql' to get commercial catches from GFFOS' GF_MERGED_CATCH table. (RH 190807)
@@ -4730,7 +4730,7 @@ weightBio <- function(adat, cdat, sunit="TID", sweight="catch",
    cohorts=NULL, cohort.label.year=NULL, tag=NULL,  ## cohort.year for x-pos of labels
    regimes=list(1900:1908, 1912:1915, 1923:1929, 1934:1943,1957:1960, 1976:1988, 1992:1998, 2002:2006, 2014:2017), ## +'ve annual PDO (as of 211130)
    layout="portrait", win=TRUE, eps=FALSE, pdf=FALSE, png=FALSE, wmf=FALSE,
-   longside=10, outnam, outres=400, ioenv=.GlobalEnv, lang=c("e","f"), ...)
+   longside=10, shortside=9, outnam, outres=400, ioenv=.GlobalEnv, lang=c("e","f"), ...)
 {
 	## Determine function for level-1 weighting
 	if (sweight=="density") func=mean else func=sum  ## perhaps try the geometric mean 'calcGM' in future
@@ -5304,8 +5304,14 @@ weightBio <- function(adat, cdat, sunit="TID", sweight="catch",
 		nlay   = LAYOUT[layout]
 		rows=switch(nlay,nsex,1,1)
 		cols=switch(nlay,1,nsex,1)
-		shortside=switch(nlay,min(1+1*length(xsho)*0.5,0.80*longside), 0.80*longside, 0.80*longside)
-		longside=switch(nlay, longside, min(2+2*length(xsho)*0.5,longside), longside)
+		## OK, need nonsense for AF with limited years
+		update.xaxis = list(...)$update.xaxis
+		if (is.null(update.xaxis)) update.xaxis = FALSE
+		if (!update.xaxis) {
+			shortside = switch(nlay, min(1+1*length(xsho)*0.5,0.80*longside), 0.80*longside, 0.80*longside)
+			longside  = switch(nlay, longside, min(2+2*length(xsho)*0.5,longside), longside)
+		}
+#browser();return()
 
 		devs=c(win=win,eps=eps,pdf=pdf,png=png,wmf=wmf); unpackList(devs)
 		fout.e = plotname
@@ -5343,7 +5349,7 @@ weightBio <- function(adat, cdat, sunit="TID", sweight="catch",
 					plot(0,0, type="n", axes=FALSE, xlim=xlimx, ylim=ylimx, xlab="", ylab="")
 					#plot(0,0, type="n", axes=FALSE, xaxs="i", yaxs="i", xlim=xlimx, ylim=ylimx, xlab="", ylab="") ## (RH 230201)
 #abline(h=ylimx, v=xlimx,lwd=2)
-					if (!is.null(cohorts)) {
+					if (!is.null(cohorts) && nyrs>1) {
 						for (i in 1:length(cohorts$x)) {
 							a = cohorts$y[i]-cohorts$x[i]
 							#abline(a=a, b=1, col=.colBlind["orange"]) 
@@ -5394,11 +5400,18 @@ weightBio <- function(adat, cdat, sunit="TID", sweight="catch",
 						if (!is.null(dots$fill) && dots$fill)
 							dots$bg = lucent(bcol,0.3) #0.2)  ## (RH 250604) try darker fill to improve the look
 						#dots.formal = dots[intersect(names(dots), names(formals(fun=plot.default)))]
-						dots.formal = dots[setdiff(names(dots), c("cex.noto","fx","fy","xlim","ylim"))]
+						dots.formal = dots[setdiff(names(dots), c("cex.noto","fx","fy","xlim","ylim","update.xaxis"))]
 						unpackList(dots.formal)
 						dotty =  paste0(paste0(names(dots.formal),"=",names(dots.formal)),collapse=", ")
 						mess = paste0("plotBubbles(z=zval, dnam=TRUE, hide0=TRUE, size=inch, xlim=xlimx, ylim=ylimx, frange=c(0.0,0), clrs=bcol, las=3, ylab=\"\", tcl=.25, ", dotty, ")")  ## frange needs to be c(0,0) to align with previous plot command (RH 250414)
 						eval(parse(text=mess))
+						## Adjust for plotBubbles quirky ticks
+						if (update.xaxis) {
+							xtck = eval(parse(text=paste0(round(xlim), collapse=":")))
+							axis(1, at=xtck, labels=FALSE, tcl=0.125)
+							xbig = round(pretty(xlim,n=10),5)
+							axis(1, at=xbig, las=3, cex.axis=ifelse(is.null(list(...)$cex.axis),0.8,list(...)$cex.axis), tcl=0.25)
+						}
 #browser();return()
 #abline(h=0,col=lucent("red",0.75))
 #browser();return()
@@ -5431,7 +5444,7 @@ weightBio <- function(adat, cdat, sunit="TID", sweight="catch",
 						#aclr = c(as.vector(col2rgb(sclr)/255),0.5) # transparent alpha colour
 						#aclr = rgb(aclr[1],aclr[2],aclr[3],alpha=aclr[4])
 						plot(0,0, type="n", axes=FALSE, xlim=xlimx, ylim=ylimx, xlab="", ylab="")
-						xpos=intersect(min(xuse):max(xuse),round(pretty(xlim,n=10),5))
+						xpos = intersect(min(xuse):max(xuse),round(pretty(xlim,n=10),5))
 						axis(1, at=xpos, las=3, cex.axis=ifelse(is.null(list(...)$cex.axis),0.8,list(...)$cex.axis), tcl=0.25)
 						ypos=intersect(0:plus,round(pretty(ylimx,n=10),5))
 						axis(2, at=ypos, las=1, cex.axis=ifelse(is.null(list(...)$cex.axis),0.8,list(...)$cex.axis), tcl=0.25)

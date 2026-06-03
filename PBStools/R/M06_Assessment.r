@@ -991,17 +991,18 @@ compVBpars <- function(bfiles, prefix="vbstan.barf.",
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~compVBpars
 
 
-## createMA-----------------------------2025-12-02
+## createMA-----------------------------2026-06-01
 ##  Create table of DFO management actions and quotas
 ##  for Catch Appendix A.
 ##  gears: 
-##    TRW = Trawl
-##    ZNO = ZN Outside
+##    TRW = Trawl (bottom and/or midwater)
+##    ZNO = ZN Outside (incl. early ZN)
+##    ZNI = ZN Inside
 ##    ZNH = ZN + Halibut
 ##    HAL = Halibut (licence L)
 ##    HLT = Hook & Line + Trap
 ## ---------------------------------------------RH
-createMA =function(yrs=1979:2024, strSpp="POP", addletters=TRUE, gears="TRW")
+createMA =function(yrs=1979:2026, strSpp="POP", addletters=TRUE, gears="TRW")
 {
 	dfo.action = dfo.quota = as.list(rep(NA,length(yrs)))
 	names(dfo.action) = names(dfo.quota) = yrs
@@ -1057,6 +1058,7 @@ createMA =function(yrs=1979:2024, strSpp="POP", addletters=TRUE, gears="TRW")
 	dfo.quota[["1981"]][["RBR"]][["TRW"]][["CST"]] =  365  ## inferred from Stocker (1981) [also look up for BOR, CAR, YTR]
 	##~~~~~Widow Rockfish~~~~~~~~~~~
 	dfo.quota[["1981"]][["WWR"]][["TRW"]][["CST"]] =  550  ## inferred from Stocker (1981) [also look up for BOR, CAR, YTR]
+	dfo.quota[["1981"]][["WWR"]][["ALL"]][["CST"]] =  550
 	##~~~~~Canary Rockfish~~~~~~~~~~~
 	dfo.quota[["1981"]][["CAR"]][["TRW"]][["CST"]] = 1650  ## inferred from Stocker (1981) [also look up for BOR, CAR, YTR]
 	##~~~~~Redstripe Rockfish~~~~~~~~~~~
@@ -1094,6 +1096,7 @@ createMA =function(yrs=1979:2024, strSpp="POP", addletters=TRUE, gears="TRW")
 	dfo.quota[["1982"]][["RBR"]][["TRW"]][["CST"]] =  200  ## inferred from Stocker (1981) [also look up for BOR, CAR, YTR]
 	##~~~~~Widow Rockfish~~~~~~~~~~~
 	dfo.quota[["1982"]][["WWR"]][["TRW"]][["CST"]] =  250  ## inferred from Stocker (1981) [also look up for BOR, CAR, YTR]
+	dfo.quota[["1982"]][["WWR"]][["ALL"]][["CST"]] =  250
 	##~~~~~Canary Rockfish~~~~~~~~~~~
 	dfo.quota[["1982"]][["CAR"]][["TRW"]][["CST"]] = 1700  ## inferred from Stocker (1981) [also look up for BOR, CAR, YTR]
 	##~~~~~Redstripe Rockfish~~~~~~~~~~~
@@ -1180,7 +1183,7 @@ createMA =function(yrs=1979:2024, strSpp="POP", addletters=TRUE, gears="TRW")
 
 	##-----1987--------------------------
 	dfo.action[["1987"]][["CAR|SGR"]] = "SRF: Shelf rockfish aggregates are [CAR+SGR] for 3C, 3D, 5AB, 5E; [CAR] for 5CD."
-	dfo.action[["1987"]][["@@@"]] = "TWL: Submission of logbooks for the trawl fishery becomes mandatory."
+	dfo.action[["1987"]][["@@@"]] = "TRW: Submission of logbooks for the trawl fishery becomes mandatory."
 	##~~~~~Canary|Silvergrey~~~~~~~~~~~~~
 	dfo.quota[["1987"]][["CAR|SGR"]][["TRW"]][["3C"]]  = 250
 	dfo.quota[["1987"]][["CAR|SGR"]][["TRW"]][["3D"]]  = 800
@@ -1255,7 +1258,7 @@ createMA =function(yrs=1979:2024, strSpp="POP", addletters=TRUE, gears="TRW")
 	dfo.quota[["1989"]][["YTR"]][["TRW"]][["CST"]] = 3500
 
 	##-----1990--------------------------
-	dfo.action[["1990"]][["PAH|SBF"]] = paste0(strSpp,": Started \\emph{Individual Vessel Quotas} (IVQ) systems for Halibut and Sablefish.")
+	dfo.action[["1990"]][["PAH|SBF"]] = paste0(strSpp,": Started \\emph{Individual Transferable Quotas} (ITQ) systems for Halibut and Sablefish.")
 	dfo.action[["1990"]][["CAR|SGR"]] = paste0(strSpp,": Only one half of the 1990 5E South area quotas (250t of CAR and 125t of SGR) have been included in the overall coastwide quotas, due to past underharvesting. Should the area quotas allocated be attained, additional quotas of 250t for CAR and 125t for SGR may be added to the coastwide quotas at a later date.")
 	##~~~~~Canary Rockfish~~~~~~~~~~~~~~~
 	dfo.quota[["1990"]][["CAR"]][["TRW"]][["5E"]]  = 250
@@ -1337,17 +1340,19 @@ createMA =function(yrs=1979:2024, strSpp="POP", addletters=TRUE, gears="TRW")
 	dfo.quota[["1993"]][["SGR"]][["TRW"]][["CST"]] = 1255
 	##~~~~~Widow Rockfish~~~~~~~~~~~~~~~~
 	dfo.quota[["1993"]][["WWR"]][["TRW"]][["CST"]] = 1800
+	dfo.quota[["1993"]][["WWR"]][["ALL"]][["CST"]] = 1800
 	##~~~~~Yellowmouth Rockfish~~~~~~~~~~
 	dfo.quota[["1993"]][["YMR"]][["TRW"]][["CST"]] = 1380
 	##~~~~~Yellowtail Rockfish~~~~~~~~~~
 	dfo.quota[["1993"]][["YTR"]][["TRW"]][["CST"]] = 4700
 
 	##-----1994--------------------------
-	dfo.action[["1994"]][["@@@"]] = "TWL: Started a dockside monitoring program (DMP) for the Trawl fleet."
-	dfo.action[["1994"]][["POP|YMR|RER|CAR|SGR|YTR|RSR|WWR|SKR|SST|LST|REBS"]] = "TWL: As a means of both reducing at-sea discarding and simplifying the harvesting regime, rockfish aggregation was implemented. Through consultation with GTAC, the following aggregates were identified: Agg~1=~POP, YMR, RER, CAR, SGR, YTR; Agg~2=~RSR, WWR; Agg~3=~SKR, SST, LST; Agg~4=~ORF."
+	dfo.action[["1994"]][["@@@"]] = "TRW: Started a dockside monitoring program (DMP) for the Trawl fleet."
+	dfo.action[["1994"]][["POP|YMR|RER|CAR|SGR|YTR|RSR|WWR|SKR|SST|LST|REBS"]] = "TRW: As a means of both reducing at-sea discarding and simplifying the harvesting regime, rockfish aggregation was implemented. Through consultation with GTAC, the following aggregates were identified: Agg~1=~(POP, YMR, RER, CAR, SGR, YTR); Agg~2=~(RSR, WWR); Agg~3=~(SKR, SST, LST); Agg~4=~ORF."
 	##~~~~~Aggregates~~~~~~~~~~~~~~~~~~~~
 	dfo.quota[["1994"]][["POP|YMR|RER|CAR|SGR|YTR"]][["TRW"]][["CST"]] = 12574
 	dfo.quota[["1994"]][["RSR|WWR"]][["TRW"]][["CST"]] = 4000
+	dfo.quota[["1994"]][["RSR|WWR"]][["ALL"]][["CST"]] = 4000
 	##~~~~~Pacific Ocean Perch~~~~~~~~~~~
 	dfo.quota[["1994"]][["POP"]][["TRW"]][["3C"]]  = 1173
 	dfo.quota[["1994"]][["POP"]][["TRW"]][["3D"]]  = 207
@@ -1359,10 +1364,11 @@ createMA =function(yrs=1979:2024, strSpp="POP", addletters=TRUE, gears="TRW")
 	##-----1995--------------------------
 	dfo.action[["1995"]][["BOR|RBR|RSR|SST"]] = "H\\&L: Implemented catch limits (monthly) on rockfish aggregates for H\\&L."
 	dfo.action[["1995"]][["WAP"]] = "WAP: Pollock TAC areas: 5CDE=5CD; 5AB=Area 12; 4B=Areas 13-18, 29."
-	dfo.action[["1995"]][["CAR|SGR|YTR|WWR|RER|POP|YMR|RSR|SKR|SST|LST|REBS"]] = "TWL: Trawl aggregates established in 1994 changed: Agg~1=~CAR, SGR, YTR, WWR, RER; Agg~2=~POP, YMR, RSR; Agg~3=~SKR, SST, LST; Agg~4=~ORF."
+	dfo.action[["1995"]][["CAR|SGR|YTR|WWR|RER|POP|YMR|RSR|SKR|SST|LST|REBS"]] = "TRW: trawl aggregates established in 1994 changed: Agg~1=~(CAR, SGR, YTR, WWR, RER); Agg~2=~(POP, YMR, RSR); Agg~3=~(SKR, SST, LST); Agg~4=~ORF."
 	##~~~~~Aggregates~~~~~~~~~~~~~~~~~~~~
-	dfo.quota[["1995"]][["CAR|SGR|YTR|WWR|RER"]][["TRW"]][["CST"]] = 9716
-	dfo.quota[["1995"]][["POP|YMR|RSR"]][["TRW"]][["CST"]] = 7320
+	dfo.quota[["1995"]][["CAR|SGR|YTR|WWR|RER"]][["TRW"]][["CST"]] = 9716  ## Agg 1
+	dfo.quota[["1995"]][["CAR|SGR|YTR|WWR|RER"]][["ALL"]][["CST"]] = 9716  ## Agg 1
+	dfo.quota[["1995"]][["POP|YMR|RSR"]][["TRW"]][["CST"]] = 7320  ## Agg 2
 	##~~~~~Pacific Ocean Perch~~~~~~~~~~~
 	dfo.quota[["1995"]][["POP"]][["TRW"]][["3C"]]  = 548
 	dfo.quota[["1995"]][["POP"]][["TRW"]][["3D"]]  = 72
@@ -1372,45 +1378,50 @@ createMA =function(yrs=1979:2024, strSpp="POP", addletters=TRUE, gears="TRW")
 	dfo.quota[["1995"]][["POP"]][["TRW"]][["CST"]] = 4234
 
 	##-----1996--------------------------
-	dfo.action[["1996"]][["@@@"]] = "TWL: Started 100\\% onboard observer program for offshore Trawl fleet; fishing year commenced Feb 16."
+	dfo.action[["1996"]][["@@@"]] = "TRW: started 100\\% onboard observer program for offshore Trawl fleet; fishing year commenced Feb 16."
 	dfo.action[["1996"]][["BOR|RBR|RSR|SST"]] = "H\\&L: Started DMP for H\\&L fleet."
-	dfo.action[["1996"]][["YTR|WWR|CAR|SGR|POP|YMR|RER|SKR|RSR|SCR|SST|LST|REBS"]] = "TWL: Rockfish aggregation will continue on a limited basis in 1996: Agg~1=~YTR, WWR; Agg~2=~CAR, SGR; Agg~3=~POP, YMR; Agg~4=~RER, SKR; Agg~5=~RSR, SCR; Agg~6=~ORF incl. SST, LST"
+	dfo.action[["1996"]][["YTR|WWR|CAR|SGR|POP|YMR|RER|SKR|RSR|SCR|SST|LST|REBS"]] = "TRW: rockfish aggregation will continue on a limited basis in 1996: Agg~1=~(YTR, WWR); Agg~2=~(CAR, SGR)); Agg~3=~(POP, YMR); Agg~4=~(RER, SKR); Agg~5=~(RSR, SCR); Agg~6=~(ORF incl. SST, LST)"
 	dfo.action[["1996"]][["WAP"]] = "WAP: Pollock TAC areas: 5CDE=5CD; 5AB=Areas 11,12; 4B=Areas 13-18, 29"
 	dfo.action[["1996"]][["SGR|CAR"]] = "H\\&L: 1996--2005 H\\&L Outside and Halibut fisheries managed rockfish aggregate~3 (CAR+SGR)."
 	##~~~~~Aggregates~~~~~~~~~~~~~~~~~~~~
-	dfo.quota[["1996"]][["SGR"]][["TRW"]][["CST"]]     = 1075 ## Agg 3
-	dfo.quota[["1996"]][["CAR"]][["TRW"]][["CST"]]     =  738 ## Agg 3
-	dfo.quota[["1996"]][["RER"]][["TRW"]][["CST"]]     =  700 ## Agg 4
-	dfo.quota[["1996"]][["SKR"]][["TRW"]][["CST"]]     =  440 ## Agg 4
-	dfo.quota[["1996"]][["LST|SST"]][["TRW"]][["CST"]] =  654 ## Agg 4 (idiots)
+	dfo.quota[["1996"]][["YTR|WWR"]][["ALL"]][["CST"]]       = 7734 ## Agg 1
+	dfo.quota[["1996"]][["CAR|SGR"]][["ALL"]][["CST"]]       = 1311 ## Agg 2
+	dfo.quota[["1996"]][["POP|YMR"]][["ALL"]][["CST"]]       = 2024 ## Agg 3
+	dfo.quota[["1996"]][["RER|SKR"]][["ALL"]][["CST"]]       = 6884 ## Agg 4
+	dfo.quota[["1996"]][["RSR|SCR"]][["ALL"]][["CST"]]       = 2085 ## Agg 5
+	dfo.quota[["1996"]][["ORF|LST|SST"]][["ALL"]][["CST"]]   =  752 ## Agg 6
+	#dfo.quota[["1996"]][["SGR"]][["TRW"]][["CST"]]     = 1075 ## Agg 3
+	#dfo.quota[["1996"]][["CAR"]][["TRW"]][["CST"]]     =  738 ## Agg 3
+	#dfo.quota[["1996"]][["RER"]][["TRW"]][["CST"]]     =  700 ## Agg 4
+	#dfo.quota[["1996"]][["SKR"]][["TRW"]][["CST"]]     =  440 ## Agg 4
+	#dfo.quota[["1996"]][["LST|SST"]][["TRW"]][["CST"]] =  654 ## Agg 4 (idiots)
 	#dfo.quota[["1996"]][["POP"]][["TRW"]][["CST"]]     = 3350 ## Agg 5
-	dfo.quota[["1996"]][["RSR"]][["TRW"]][["CST"]]     = 1760 ## Agg 5
-	dfo.quota[["1996"]][["YMR"]][["TRW"]][["CST"]]     = 1475 ## Agg 5
-	dfo.quota[["1996"]][["YTR"]][["TRW"]][["CST"]]     = 4675 ## Agg 6
-	dfo.quota[["1996"]][["WWR"]][["TRW"]][["CST"]]     = 2050 ## Agg 6
-	dfo.quota[["1996"]][["LST|SST"]][["TRW"]][["CST"]] = 752
+	#dfo.quota[["1996"]][["RSR"]][["TRW"]][["CST"]]     = 1760 ## Agg 5
+	#dfo.quota[["1996"]][["YMR"]][["TRW"]][["CST"]]     = 1475 ## Agg 5
+	#dfo.quota[["1996"]][["YTR"]][["TRW"]][["CST"]]     = 4675 ## Agg 6
+	#dfo.quota[["1996"]][["WWR"]][["TRW"]][["CST"]]     = 2050 ## Agg 6
 	##~~~~~Pacific Ocean Perch~~~~~~~~~~~
-	dfo.quota[["1996"]][["POP"]][["TRW"]][["3C"]]  = 491
-	dfo.quota[["1996"]][["POP"]][["TRW"]][["3D"]]  = 164
+	dfo.quota[["1996"]][["POP"]][["TRW"]][["3C"]]  =  491
+	dfo.quota[["1996"]][["POP"]][["TRW"]][["3D"]]  =  164
 	dfo.quota[["1996"]][["POP"]][["TRW"]][["5AB"]] = 1500
 	dfo.quota[["1996"]][["POP"]][["TRW"]][["5CD"]] = 4003
-	dfo.quota[["1996"]][["POP"]][["TRW"]][["5E"]]  = 726
+	dfo.quota[["1996"]][["POP"]][["TRW"]][["5E"]]  =  726
 	dfo.quota[["1996"]][["POP"]][["TRW"]][["CST"]] = 6884
 	##~~~~~Yellowtail Rockfish~~~~~~~~~~~
 	#dfo.quota[["1997"]][["YTR|WWR"]][["TRW"]][["CST"]] = 2707 + 2320 + 2707  ## three fishing periods
 
 	##-----1997--------------------------
-	dfo.action[["1997"]][["@@@"]] = "TWL: Interim fishing year from Jan 1 to Mar 31."
-	dfo.action[["1997"]][["@@@"]] = "TWL: Started IVQ system for Trawl Total Allowable Catch (TAC) species (April 1, 1997); aggregates no longer used"
+	dfo.action[["1997"]][["@@@"]] = "TRW: Interim fishing year from Jan 1 to Mar 31."
+	dfo.action[["1997"]][["@@@"]] = "TRW: Started ITQ system for Trawl Total Allowable Catch (TAC) species (April 1, 1997); aggregates no longer used"
 	dfo.action[["1997"]][["BOR|RBR"]] = paste0(strSpp,": Implemented catch limits (15,000 lbs per trip) on combined non-TAC rockfish for the Trawl fleet.")
-	dfo.action[["1997"]][["POP|YMR"]] = paste0(strSpp,": Permanent boundary adjustment -- Pacific Ocean Perch and Yellowmouth Rockfish caught within Subarea 102-3 and those portions of Subareas 142-1, 130-3 and 130-2 found southerly and easterly of a straight line commencing at 52$^\\circ$20$'$00$''$N 131$^\\circ$36$'$00$''$W thence to 52$^\\circ$20$'$00$''$N 132$^\\circ$00$'$00$''$W thence to 51$^\\circ$30$'$00$''$N 131$^\\circ$00$'$00$''$W and easterly and northerly of a straight line commencing at 51$^\\circ$30$'$00$''$N 131$^\\circ$00$'$00$''$W thence to 51$^\\circ$39$'$20$''$N 130$^\\circ$30$'$30$''$W will be deducted from the vessel's 5CD IVQ for those two species.")
-	dfo.action[["1997"]][["QBR|CPR|CHR|TIR|CAR|SGR|RER|SKR|SST|LST|POP|YMR|RSR|YTR|BKR|WWR|REBS"]] = "H\\&L: All H\\&L rockfish, with the exception of YYR, shall be managed under the following rockfish aggregates: Agg~1=~QBR, CPR; Agg~2=~CHR, TIR; Agg~3=~CAR, SGR; Agg~4=~RER, SKR, SST, LST; Agg~5=~POP, YMR, RSR; Agg~6=~YTR, BKR, WWR; Agg~7=~ORF excluding YYR."
-	dfo.action[["1997"]][["YTR"]] = "YTR: Groundfish Equivalent price (GFE) relative to POP = 1.26"
-	dfo.action[["1997"]][["WWR"]] = "WWR: Groundfish Equivalent price (GFE) relative to POP = 0.96"
-	dfo.action[["1997"]][["CAR"]] = "CAR: Groundfish Equivalent price (GFE) relative to POP = 1.19"
-	dfo.action[["1997"]][["SGR"]] = "SGR: Groundfish Equivalent price (GFE) relative to POP = 1.20"
-	dfo.action[["1997"]][["YMR"]] = "YMR: Groundfish Equivalent price (GFE) relative to POP = 1.19"
-	dfo.action[["1997"]][["RER"]] = "RER: Groundfish Equivalent price (GFE) relative to POP = 1.15"
+	dfo.action[["1997"]][["POP|YMR"]] = paste0(strSpp,": Permanent boundary adjustment -- Pacific Ocean Perch and Yellowmouth Rockfish caught within Subarea 102-3 and those portions of Subareas 142-1, 130-3 and 130-2 found southerly and easterly of a straight line commencing at 52$^\\circ$20$'$00$''$N 131$^\\circ$36$'$00$''$W thence to 52$^\\circ$20$'$00$''$N 132$^\\circ$00$'$00$''$W thence to 51$^\\circ$30$'$00$''$N 131$^\\circ$00$'$00$''$W and easterly and northerly of a straight line commencing at 51$^\\circ$30$'$00$''$N 131$^\\circ$00$'$00$''$W thence to 51$^\\circ$39$'$20$''$N 130$^\\circ$30$'$30$''$W will be deducted from the vessel's 5CD ITQ for those two species.")
+	dfo.action[["1997"]][["QBR|CPR|CHR|TIR|CAR|SGR|RER|SKR|SST|LST|POP|YMR|RSR|YTR|BKR|WWR|REBS"]] = "H\\&L: all H\\&L rockfish, with the exception of YYR, shall be managed under the following rockfish aggregates: Agg~1=~(QBR, CPR); Agg~2=~(CHR, TIR); Agg~3=~(CAR, SGR); Agg~4=~(RER, SKR, SST, LST); Agg~5=~(POP, YMR, RSR); Agg~6=~YTR, BKR, WWR); Agg~7=~(ORF excluding YYR)."
+	dfo.action[["1997"]][["YTR"]] = "YTR: Groundfish Equivalent (GFE) price relative to POP = 1.26"
+	dfo.action[["1997"]][["WWR"]] = "WWR: Groundfish Equivalent (GFE) price relative to POP = 0.96"
+	dfo.action[["1997"]][["CAR"]] = "CAR: Groundfish Equivalent (GFE) price relative to POP = 1.19"
+	dfo.action[["1997"]][["SGR"]] = "SGR: Groundfish Equivalent (GFE) price relative to POP = 1.20"
+	dfo.action[["1997"]][["YMR"]] = "YMR: Groundfish Equivalent (GFE) price relative to POP = 1.19"
+	dfo.action[["1997"]][["RER"]] = "RER: Groundfish Equivalent (GFE) price relative to POP = 1.15"
 	##~~~~~Canary Rockfish~~~~~~~~~~~~~~~
 	dfo.quota[["1997"]][["CAR"]][["TRW"]][["3CD"]]  = 503
 	dfo.quota[["1997"]][["CAR"]][["TRW"]][["5AB"]]  = 345
@@ -1435,9 +1446,12 @@ createMA =function(yrs=1979:2024, strSpp="POP", addletters=TRUE, gears="TRW")
 	dfo.quota[["1997"]][["SGR"]][["TRW"]][["5E"]]  =  273
 	dfo.quota[["1997"]][["SGR"]][["TRW"]][["CST"]] = 1510
 	dfo.quota[["1997"]][["SGR"]][["HLT"]][["CST"]] =    1  ## ZNO
+	##~~~~~Widow Rockfish~~~~~~~~~~~~~~~~
+	dfo.quota[["1997"]][["WWR"]][["TRW"]][["CST"]] = 2358
+	dfo.quota[["1997"]][["WWR"]][["ALL"]][["CST"]] = 2358
 
 	##-----1998--------------------------
-	dfo.action[["1998"]][["YTR"]] = "YTR: Yellowtail Rockfish caught in the offshore Pacific Hake fishery can be deducted from IVQ coastwide. The vessel master is responsible for designating the area at the time of the offload. (effective 1998-present)"
+	dfo.action[["1998"]][["YTR"]] = "YTR: Yellowtail Rockfish caught in the offshore Pacific Hake fishery can be deducted from ITQ coastwide. The vessel master is responsible for designating the area at the time of the offload. (effective 1998-present)"
 	dfo.action[["1998"]][["YYR"]] = "H\\&L: Aggregate 4 -- Option A: a quantity of Aggregates 2 to 5 and 7 combined not to exceed 100\\% of the total of Aggregate 1 per landing; an overage of Aggregate 1 and 6 up to a maximum of 10\\% per fishing period which shall be deducted from the vessel's succeeding fishing period limit. Option B: a quantity of Aggregates 2 to 7 combined not to exceed 100\\% of the Yelloweye rockfish per landing. Option C: 20,000 pounds of Aggregate 4 per fishing period; an overage for each of the Aggregates 3 to 5 and, Aggregates 6 and 7 combined, up to a maximum of 20\\% per fishing period which shall be deducted from the vessel's succeeding fishing period limit."
 	##~~~~~Canary Rockfish~~~~~~~~~~~~~~~
 	dfo.quota[["1998"]][["CAR"]][["TRW"]][["3CD"]] = 503
@@ -1463,6 +1477,9 @@ createMA =function(yrs=1979:2024, strSpp="POP", addletters=TRUE, gears="TRW")
 	dfo.quota[["1998"]][["SGR"]][["TRW"]][["5E"]]  =  273
 	dfo.quota[["1998"]][["SGR"]][["TRW"]][["CST"]] = 1510
 	dfo.quota[["1998"]][["SGR"]][["HLT"]][["CST"]] =  138  ## ZNO
+	##~~~~~Widow Rockfish~~~~~~~~~~~~~~~~
+	dfo.quota[["1998"]][["WWR"]][["TRW"]][["CST"]] = 2157
+	dfo.quota[["1998"]][["WWR"]][["ALL"]][["CST"]] = 2157
 
 	##-----1999--------------------------
 	##~~~~~Canary Rockfish~~~~~~~~~~~~~~~
@@ -1489,12 +1506,15 @@ createMA =function(yrs=1979:2024, strSpp="POP", addletters=TRUE, gears="TRW")
 	dfo.quota[["1999"]][["SGR"]][["TRW"]][["5E"]]  =  271
 	dfo.quota[["1999"]][["SGR"]][["TRW"]][["CST"]] = 1498
 	dfo.quota[["1999"]][["SGR"]][["HLT"]][["CST"]] =  137  ## ZNO
- 	
+	##~~~~~Widow Rockfish~~~~~~~~~~~~~~~~
+	dfo.quota[["1999"]][["WWR"]][["TRW"]][["CST"]] = 2157
+	dfo.quota[["1999"]][["WWR"]][["ALL"]][["CST"]] = 2157
+
 	##-----2000--------------------------
 	dfo.action[["2000"]][["PAH|RBR"]] = "PAH: Implemented catch limits (20,000 lbs per trip) on rockfish aggregates for the Halibut option D fleet."
 	dfo.action[["2000"]][["PAH|RBR|SST|BSR|RER|REBS"]] = "H\\&L: Implemented formal allocation of rockfish species between Halibut and H\\&L sectors."
 	dfo.action[["2000"]][["@@@"]] = "ALL: Formal discussions between the hook and line rockfish (ZN), halibut and trawl sectors were initiated in 2000 to establish individual rockfish species allocations between the sectors to replace the 92/8 split. Allocation arrangements were agreed to for rockfish species that are not currently under TAC. Splits agreed upon for these rockfish will be implemented in the future when or if TACs are set for those species."
-	dfo.action[["2000"]][["LST|SST"]] = "TWL: DFO cut LST TAC off WCVI to 404~t and set a conditional TAC of 425~t for an exploratory fishery north of 230$^\\circ$ true from Lookout Island."
+	dfo.action[["2000"]][["LST|SST"]] = "TRW: DFO cut LST TAC off WCVI to 404~t and set a conditional TAC of 425~t for an exploratory fishery north of 230$^\\circ$ true from Lookout Island."
 	dfo.action[["2000"]][["SGR"]] = "SGR: Allocation among commercial H\\&LL sectors: H\\&L 95\\%, Halibut 5\\%."
 	##~~~~~Canary Rockfish~~~~~~~~~~~~~~~
 	dfo.quota[["2000"]][["CAR"]][["TRW"]][["3CD"]] = 555
@@ -1521,6 +1541,9 @@ createMA =function(yrs=1979:2024, strSpp="POP", addletters=TRUE, gears="TRW")
 	dfo.quota[["2000"]][["SGR"]][["TRW"]][["5E"]]  =  248
 	dfo.quota[["2000"]][["SGR"]][["TRW"]][["CST"]] = 1373
 	dfo.quota[["2000"]][["SGR"]][["HLT"]][["CST"]] = 7.1 + 129.3  ## HAL + ZNO
+	##~~~~~Widow Rockfish~~~~~~~~~~~~~~~~
+	dfo.quota[["2000"]][["WWR"]][["TRW"]][["CST"]] = 2358
+	dfo.quota[["2000"]][["WWR"]][["ALL"]][["CST"]] = 2358
 
 	##-----2001--------------------------
 	dfo.action[["2001"]][["@@@"]] = "ALL: An agreement reached amongst the commercial groundfish industry has established the allocation of the rockfish species between the commercial Groundfish Trawl and Groundfish Hook and Line sectors."
@@ -1530,6 +1553,7 @@ createMA =function(yrs=1979:2024, strSpp="POP", addletters=TRUE, gears="TRW")
 	dfo.action[["2001"]][["POP"]] = "POP: TAC reduction (3y) for POP -- DFO reduced the 5CD POP TAC by 300 tonnes for research use as payment for the Hecate Strait Pacific Cod charter for each of the next three fishing seasons."
 	dfo.action[["2001"]][["SGRa"]] = "SGR: Allocation among commercial sectors (2001-2025): Trawl 88.43\\%, H\\&L 10.97\\%, Halibut 0.60\\%."
 	dfo.action[["2001"]][["SGR"]] = "SGR: TAC reduction (3y) for SGR -- DFO has adopted conservative F=M harvest strategy in establishing the Silvergrey Rockfish TAC for all areas except 5AB. In 5AB the TAC will be stepped downward by 60 tonnes annually for each of the 2001/2002, 2003/2004 and 2003/2004 seasons to achieve this harvest strategy."
+	dfo.action[["2001"]][["WWR"]] = "WWR: allocation among commercial sectors (2001-2026): Trawl 98.21\\%, H\\&L 1.79\\%, Halibut 0.60\\%."
 	##~~~~~Canary Rockfish~~~~~~~~~~~~~~~
 	dfo.quota[["2001"]][["CAR"]][["TRW"]][["3CD"]] = 529
 	dfo.quota[["2001"]][["CAR"]][["TRW"]][["5AB"]] = 265
@@ -1555,11 +1579,14 @@ createMA =function(yrs=1979:2024, strSpp="POP", addletters=TRUE, gears="TRW")
 	dfo.quota[["2001"]][["SGR"]][["TRW"]][["5E"]]  =  224
 	dfo.quota[["2001"]][["SGR"]][["TRW"]][["CST"]] = 1240
 	dfo.quota[["2001"]][["SGR"]][["HLT"]][["CST"]] = 8 + 154  ## HAL + ZNO
+	##~~~~~Widow Rockfish~~~~~~~~~~~~~~~~
+	dfo.quota[["2001"]][["WWR"]][["TRW"]][["CST"]] = 2316
+	dfo.quota[["2001"]][["WWR"]][["ALL"]][["CST"]] = 2316
 
 	##-----2002--------------------------
 	dfo.action[["2002"]][["QBR|YYR|CPR|CHR|TIR"]] = "H\\&L: Established the inshore rockfish conservation strategy."
 	dfo.action[["2002"]][["@@@"]] = "ALL: Closed areas to preserve four hexactinellid (glassy) sponge reefs."
-	dfo.action[["2002"]][["LST|SST"]] = "TWL: Managers created 5 LST management zones coastwide (WCVI, Triangle, Tidemarks, Flamingo, Rennell); zones north of WCVI were designated ``experimental''."
+	dfo.action[["2002"]][["LST|SST"]] = "TRW: Managers created 5 LST management zones coastwide (WCVI, Triangle, Tidemarks, Flamingo, Rennell); zones north of WCVI were designated ``experimental''."
 	dfo.action[["2002"]][["BOR"]] = "BOR: Status of Bocaccio was designated as `Threatened' by the Committee on the Status of Endangered Wildlife in Canada (COSEWIC) in November 2002. The designation was based on a new status report that indicated a combination of low recruitment and high fishing mortality had resulted in severe declines and low spawning abundance of this species. As the Species at Risk Act (SARA) was not yet in place, there was no legal designation for Bocaccio. Protection under SARA would only come in the event that this species was listed, by regulation, under the Act."
 	##~~~~~Canary Rockfish~~~~~~~~~~~~~~~
 	dfo.quota[["2002"]][["CAR"]][["TRW"]][["3CD"]] = 529
@@ -1586,6 +1613,9 @@ createMA =function(yrs=1979:2024, strSpp="POP", addletters=TRUE, gears="TRW")
 	dfo.quota[["2002"]][["SGR"]][["TRW"]][["5E"]]  =  224
 	dfo.quota[["2002"]][["SGR"]][["TRW"]][["CST"]] = 1187
 	dfo.quota[["2002"]][["SGR"]][["HLT"]][["CST"]] = 8 + 7  ## HAL + ZNO
+	##~~~~~Widow Rockfish~~~~~~~~~~~~~~~~
+	dfo.quota[["2002"]][["WWR"]][["TRW"]][["CST"]] = 2316
+	dfo.quota[["2002"]][["WWR"]][["ALL"]][["CST"]] = 2316
 
 	##-----2003--------------------------
 	dfo.action[["2003"]][["BOR|CAR|LST|YMR|YYR|BSR|RER|REBS"]] = paste0(strSpp,": Species at Risk Act (SARA) came into force in 2003.")
@@ -1616,6 +1646,9 @@ createMA =function(yrs=1979:2024, strSpp="POP", addletters=TRUE, gears="TRW")
 	dfo.quota[["2003"]][["SGR"]][["TRW"]][["5E"]]  =  248
 	dfo.quota[["2003"]][["SGR"]][["TRW"]][["CST"]] = 1267
 	dfo.quota[["2003"]][["SGR"]][["HLT"]][["CST"]] = 8 + 147  ## HAL + ZNO
+	##~~~~~Widow Rockfish~~~~~~~~~~~~~~~~
+	dfo.quota[["2003"]][["WWR"]][["TRW"]][["CST"]] = 2316
+	dfo.quota[["2003"]][["WWR"]][["ALL"]][["CST"]] = 2316
 
 	##-----2004--------------------------
 	dfo.action[["2004"]][["BOR"]] = "BOR: DFO reviewed management measures in the groundfish fisheries to assess the impacts on listed species under SARA. Voluntary program for the trawl fleet was developed and implemented in 2004 in which groundfish trawl vessels directed the proceeds of all landed Bocaccio Rockfish for research and management purposes. Ongoing to 2019."
@@ -1645,6 +1678,9 @@ createMA =function(yrs=1979:2024, strSpp="POP", addletters=TRUE, gears="TRW")
 	dfo.quota[["2004"]][["SGR"]][["TRW"]][["5E"]]  =  248
 	dfo.quota[["2004"]][["SGR"]][["TRW"]][["CST"]] = 1267
 	dfo.quota[["2004"]][["SGR"]][["HLT"]][["CST"]] = 8 + 147  ## HAL + ZNO
+	##~~~~~Widow Rockfish~~~~~~~~~~~~~~~~
+	dfo.quota[["2004"]][["WWR"]][["TRW"]][["CST"]] = 2316
+	dfo.quota[["2004"]][["WWR"]][["ALL"]][["CST"]] = 2316
 
 	##-----2005--------------------------
 	dfo.action[["2005"]][["BORa"]] = "BOR: DFO consulted with First Nations, stakeholders, and the Canadian public on Bocaccio COSEWIC designation for 1.5 years and planned recommendations for further action to be presented to the Minister of Environment and Governor in Council (Cabinet) in spring 2005. A final listing decision by Governor in Council was expected in October 2005."
@@ -1676,6 +1712,9 @@ createMA =function(yrs=1979:2024, strSpp="POP", addletters=TRUE, gears="TRW")
 	dfo.quota[["2005"]][["SGR"]][["TRW"]][["5E"]]  =  248
 	dfo.quota[["2005"]][["SGR"]][["TRW"]][["CST"]] = 1267
 	dfo.quota[["2005"]][["SGR"]][["HLT"]][["CST"]] = 8 + 147  ## HAL + ZNO
+	##~~~~~Widow Rockfish~~~~~~~~~~~~~~~~
+	dfo.quota[["2005"]][["WWR"]][["TRW"]][["CST"]] = 2316
+	dfo.quota[["2005"]][["WWR"]][["ALL"]][["CST"]] = 2316
 
 	##-----2006--------------------------
 	dfo.action[["2006"]][["@@@"]] = "ALL: Introduced an Integrated Fisheries Management Plan (IFMP) for all directed groundfish fisheries."
@@ -1684,7 +1723,7 @@ createMA =function(yrs=1979:2024, strSpp="POP", addletters=TRUE, gears="TRW")
 	dfo.action[["2006"]][["CAR"]] = "CAR: Sector allocations: T=87.7\\%, ZN=11.77\\%, L=0.53\\%"
 	dfo.action[["2006"]][["POP"]] = "POP: TAC reduction for POP -- DFO reduced the 5CD POP TAC by 700 tonnes for use in possible research programs."
 	dfo.action[["2006"]][["QBR|YYR|CPR|CHR|TIR"]] = "H\\&L: To support rockfish research the Groundfish Hook and Line Sub Committee (GHLSC) agreed to set aside 5\\% of the ZN allocations for research purposes."
-	dfo.action[["2006"]][["SST"]] = "H\\&L: Annual non-directed species caps by fishery -- Shortspine Thornyhead (Dogfish = 0.05\\% Dogfish IVQ, Outside ZN = 1881 lbs., Halibut = 8000 lbs., Sablefish = 10,512 lbs.)"
+	dfo.action[["2006"]][["SST"]] = "H\\&L: Annual non-directed species caps by fishery -- Shortspine Thornyhead (Dogfish = 0.05\\% Dogfish ITQ, Outside ZN = 1881 lbs., Halibut = 8000 lbs., Sablefish = 10,512 lbs.)"
 	dfo.action[["2006"]][["SGR"]] = "SGR: Research allocations: LL=7.0t"
 	##~~~~~Canary Rockfish~~~~~~~~~~~~~~~
 	dfo.quota[["2006"]][["CAR"]][["ALL"]][["3CD"]] = 604
@@ -1724,11 +1763,15 @@ createMA =function(yrs=1979:2024, strSpp="POP", addletters=TRUE, gears="TRW")
 	dfo.quota[["2006"]][["SGR"]][["HLT"]][["5CD"]] =   50
 	dfo.quota[["2006"]][["SGR"]][["HLT"]][["5E"]]  =   33
 	dfo.quota[["2006"]][["SGR"]][["HLT"]][["CST"]] =  166
+	##~~~~~Widow Rockfish~~~~~~~~~~~~~~~~
+	dfo.quota[["2006"]][["WWR"]][["TRW"]][["CST"]] = 2316
+	dfo.quota[["2006"]][["WWR"]][["HLT"]][["CST"]] =   42
+	dfo.quota[["2006"]][["WWR"]][["ALL"]][["CST"]] = 2358
 
 	##-----2007--------------------------
 	dfo.action[["2007"]][["BOR"]] = "BOR: COSEWIC reconfirmed Bocaccio's Threatened designation, and the species re-entered the SARA listing process in 2007."
 	dfo.action[["2007"]][["CAR"]] = "CAR: Research allocation: H\\&L=7.0t"
-	dfo.action[["2007"]][["SST|BSR|RER|REBS"]] = paste0(strSpp,": Amendment to Halibut IVQ cap for SST and RER -- reallocations can only occur in blocks up to 4000 lbs or until the vessel species cap is met. Once the first 4000 lbs has been caught additional IVQ can be reallocated onto the licence up to 4000 lbs. This can continue until the vessel species cap is met.")
+	dfo.action[["2007"]][["SST|BSR|RER|REBS"]] = paste0(strSpp,": Amendment to Halibut ITQ cap for SST and RER -- reallocations can only occur in blocks up to 4000 lbs or until the vessel species cap is met. Once the first 4000 lbs has been caught additional ITQ can be reallocated onto the licence up to 4000 lbs. This can continue until the vessel species cap is met.")
 	dfo.action[["2007"]][["SGR"]] = "SGR: Research allocations: LL=7.0t"
 	##~~~~~Canary Rockfish~~~~~~~~~~~~~~~
 	dfo.quota[["2007"]][["CAR"]] = dfo.quota[["2006"]][["CAR"]]
@@ -1757,9 +1800,13 @@ createMA =function(yrs=1979:2024, strSpp="POP", addletters=TRUE, gears="TRW")
 	dfo.quota[["2007"]][["SGR"]][["HLT"]][["5CD"]] =   50
 	dfo.quota[["2007"]][["SGR"]][["HLT"]][["5E"]]  =   33
 	dfo.quota[["2007"]][["SGR"]][["HLT"]][["CST"]] =  166
+	##~~~~~Widow Rockfish~~~~~~~~~~~~~~~~
+	dfo.quota[["2007"]][["WWR"]][["TRW"]][["CST"]] = 2316
+	dfo.quota[["2007"]][["WWR"]][["HLT"]][["CST"]] =   42
+	dfo.quota[["2007"]][["WWR"]][["ALL"]][["CST"]] = 2358
 
 	##-----2008--------------------------
-	dfo.action[["2008"]][["@@@"]] = "TWL: Fishing year changed from Apr 1, 2008 to Feb 20, 2009."
+	dfo.action[["2008"]][["@@@"]] = "TRW: Fishing year changed from Apr 1, 2008 to Feb 20, 2009."
 	dfo.action[["2008"]][["CARa"]] = "CAR: Stock status reviewed in Nov 2007; stock declined from original biomass but decline likely arrested; uncertain if recent catch levels will ensure rebuild; TAC for Canary reduced from 1193t to 912t coastwide."
 	dfo.action[["2008"]][["CARb"]] = "CAR: Research allocation: H\\&L=7.0t"
 	dfo.action[["2008"]][["SGR"]] = "SGR: Research allocations: LL=7.0t"
@@ -1804,9 +1851,13 @@ createMA =function(yrs=1979:2024, strSpp="POP", addletters=TRUE, gears="TRW")
 	dfo.quota[["2008"]][["SGR"]][["HLT"]][["5CD"]] =   50
 	dfo.quota[["2008"]][["SGR"]][["HLT"]][["5E"]]  =   33
 	dfo.quota[["2008"]][["SGR"]][["HLT"]][["CST"]] =  166
+	##~~~~~Widow Rockfish~~~~~~~~~~~~~~~~
+	dfo.quota[["2008"]][["WWR"]][["TRW"]][["CST"]] = 2316
+	dfo.quota[["2008"]][["WWR"]][["HLT"]][["CST"]] =   42
+	dfo.quota[["2008"]][["WWR"]][["ALL"]][["CST"]] = 2358
 
 	##-----2009--------------------------
-	dfo.action[["2009"]][["@@@"]] = "TWL: Fishing year changed from Feb 21 to Feb 20."
+	dfo.action[["2009"]][["@@@"]] = "TRW: Fishing year changed from Feb 21 to Feb 20."
 	dfo.action[["2009"]][["CARa"]] = "CAR: TAC for Canary further reduced from 912t to 679t coastwide."
 	dfo.action[["2009"]][["CARb"]] = "CAR: COSEWIC-designated marine species in Pacific region under consideration for listing under Schedule I of SARA: Canary as 'Threatened'."
 	dfo.action[["2009"]][["CARc"]] = "CAR: Research allocation: H\\&L=4.0t"
@@ -1853,6 +1904,10 @@ createMA =function(yrs=1979:2024, strSpp="POP", addletters=TRUE, gears="TRW")
 	dfo.quota[["2009"]][["SGR"]][["HLT"]][["5CD"]] =   50
 	dfo.quota[["2009"]][["SGR"]][["HLT"]][["5E"]]  =   33
 	dfo.quota[["2009"]][["SGR"]][["HLT"]][["CST"]] =  166
+	##~~~~~Widow Rockfish~~~~~~~~~~~~~~~~
+	dfo.quota[["2009"]][["WWR"]][["TRW"]][["CST"]] = 2316
+	dfo.quota[["2009"]][["WWR"]][["HLT"]][["CST"]] =   42
+	dfo.quota[["2009"]][["WWR"]][["ALL"]][["CST"]] = 2358
 
 	##-----2010--------------------------
 	dfo.action[["2010"]][["CARa"]] = "CAR: Stock status reviewed in Dec 2009; stock declined from unfished equilibrium biomass but decline likely arrested; TAC for Canary increased to 900t coastwide; stock expected to rebuild and remain at levels consistent with DFO's Precautionary Approach."
@@ -1899,6 +1954,10 @@ createMA =function(yrs=1979:2024, strSpp="POP", addletters=TRUE, gears="TRW")
 	dfo.quota[["2010"]][["SGR"]][["HLT"]][["5CD"]] =   50
 	dfo.quota[["2010"]][["SGR"]][["HLT"]][["5E"]]  =   33
 	dfo.quota[["2010"]][["SGR"]][["HLT"]][["CST"]] =  166
+	##~~~~~Widow Rockfish~~~~~~~~~~~~~~~~
+	dfo.quota[["2010"]][["WWR"]][["TRW"]][["CST"]] = 2316
+	dfo.quota[["2010"]][["WWR"]][["HLT"]][["CST"]] =   42
+	dfo.quota[["2010"]][["WWR"]][["ALL"]][["CST"]] = 2358
 
 	##-----2011--------------------------
 	dfo.action[["2011"]][["CAR"]] = "CAR: Research allocation: H\\&L=6.0t"
@@ -1946,9 +2005,13 @@ createMA =function(yrs=1979:2024, strSpp="POP", addletters=TRUE, gears="TRW")
 	dfo.quota[["2011"]][["SGR"]][["HLT"]][["5CD"]] =   50
 	dfo.quota[["2011"]][["SGR"]][["HLT"]][["5E"]]  =   33
 	dfo.quota[["2011"]][["SGR"]][["HLT"]][["CST"]] =  166
+	##~~~~~Widow Rockfish~~~~~~~~~~~~~~~~
+	dfo.quota[["2011"]][["WWR"]][["TRW"]][["CST"]] = 2316
+	dfo.quota[["2011"]][["WWR"]][["HLT"]][["CST"]] =   42
+	dfo.quota[["2011"]][["WWR"]][["ALL"]][["CST"]] = 2358
 
 	##-----2012--------------------------
-	dfo.action[["2012"]][["@@@"]] = "TWL: Froze the footprint of where groundfish bottom trawl activities can occur (all vessels under the authority of a valid Category T commercial groundfish trawl license selecting Option A as identified in the IFMP)."
+	dfo.action[["2012"]][["@@@"]] = "TRW: Froze the footprint of where groundfish bottom trawl activities can occur (all vessels under the authority of a valid Category T commercial groundfish trawl license selecting Option A as identified in the IFMP)."
 	dfo.action[["2012"]][["LST|RER|BSR|REBS"]] = paste0(strSpp,": Management plan published, with goal to maintain sustainable populations of LST and REBS within each species' known range in Canadian Pacific waters.")
 	dfo.action[["2012"]][["SGR"]] = "SGR: Research allocations: LL=7.0t"
 	##~~~~~Canary Rockfish~~~~~~~~~~~~~~~
@@ -1978,19 +2041,24 @@ createMA =function(yrs=1979:2024, strSpp="POP", addletters=TRUE, gears="TRW")
 	dfo.quota[["2012"]][["SGR"]][["HLT"]][["5CD"]] =   50
 	dfo.quota[["2012"]][["SGR"]][["HLT"]][["5E"]]  =   33
 	dfo.quota[["2012"]][["SGR"]][["HLT"]][["CST"]] =  166
+	##~~~~~Widow Rockfish~~~~~~~~~~~~~~~~
+	dfo.quota[["2012"]][["WWR"]][["TRW"]][["CST"]] = 2316
+	dfo.quota[["2012"]][["WWR"]][["HLT"]][["CST"]] =   42
+	dfo.quota[["2012"]][["WWR"]][["ALL"]][["CST"]] = 2358
 
 	##-----2013--------------------------
-	dfo.action[["2013"]][["@@@"]] = "TWL: To support groundfish research, the groundfish trawl industry agreed to the trawl TAC offsets to account for unavoidable mortality incurred during the joint DFO-Industry groundfish multi-species surveys in 2013."
+	dfo.action[["2013"]][["@@@"]] = "TRW: To support groundfish research, the groundfish trawl industry agreed to the trawl TAC offsets to account for unavoidable mortality incurred during the joint DFO-Industry groundfish multi-species surveys in 2013."
 	dfo.action[["2013"]][["BORa"]] = "BOR: COSEWIC had previously designated Bocaccio as Threatened in November 2002. Its status was re-examined and designated Endangered in November 2013."
 	dfo.action[["2013"]][["BORb"]] = "BOR: DFO formulated a plan for stepped reductions from current Bocaccio catch levels of approximately 137 tonnes (inclusive of trawl, groundfish hook and line, salmon troll, and recreational sectors) to a target level of 75 tonnes over 3 years (2013/14 to 2015/16). This plan accounted for First Nations' priority access for food, social, and ceremonial purposes. DFO worked with fishing interests to develop measures that would reduce Bocaccio catch and enable stock rebuilding over the long term."
-	dfo.action[["2013"]][["BORc"]] = "BOR: Annual Trawl \\emph{Mortality Cap} (MC) for Bocaccio was initially set at 150 tonnes. The IVQ carryover/underage limit was set to 15\\% of each vessels' Bocaccio holdings (in effect until 2019/20 fishery year)."
+	dfo.action[["2013"]][["BORc"]] = "BOR: Annual Trawl \\emph{Mortality Cap} (MC) for Bocaccio was initially set at 150 tonnes. The ITQ carryover/underage limit was set to 15\\% of each vessels' Bocaccio holdings (in effect until 2019/20 fishery year)."
 	dfo.action[["2013"]][["BORd"]] = "BOR: All H\\&L groundfish fisheries subject to Bocaccio trip limits based on landings of directed species. For example, Halibut directed trips could land up to 200 pounds of Bocaccio when 15,000 pounds or less of Halibut was landed, 300 pounds of Bocaccio when 30,000 pounds of Halibut was landed and 400 pounds of Bocaccio when greater than 30,000 pounds of Halibut was landed. The Dogfish, Lingcod, ZN Rockfish, and Sablefish fisheries were subject to similar trip limits for Bocaccio. These trip limits remained in effect until 2015/16."
 	dfo.action[["2013"]][["CAR"]] = "CAR: Research allocations: Trawl=2.1t, H\\&L=6.0t"
 	dfo.action[["2013"]][["POP"]] = "POP: New species-area groups have been created for Pacific Ocean Perch for 3CD, 5AB, 5C and 5DE."
 	dfo.action[["2013"]][["POPa"]] = "POP: Combine 5ABCD TACs reduction to 3413~mt is to be achieved over a three year period through an annual reduction of 258 mt. 2013/14 is the third year of this three year period. The expected catch level is to be 68\\% of TAC. TAC is subject to annual review."
-	dfo.action[["2013"]][["POPb"]] = "POP: Pacific Ocean Perch within Subarea 127-1 and that portion of Subareas 127-2 found northerly and westerly of 50$^\\circ$06$'$00$''$N will be deducted from the vessel's Pacific Ocean Perch rockfish 5A/B IVQ."
+	dfo.action[["2013"]][["POPb"]] = "POP: Pacific Ocean Perch within Subarea 127-1 and that portion of Subareas 127-2 found northerly and westerly of 50$^\\circ$06$'$00$''$N will be deducted from the vessel's Pacific Ocean Perch rockfish 5A/B ITQ."
 	dfo.action[["2013"]][["POPc"]] = "POP: Research allocations (trawl): 5AB=22.6t"
 	dfo.action[["2013"]][["SGR"]] = "SGR: Research allocations: T=6.0t, LL=7.0t"
+	dfo.action[["2013"]][["WWR"]] = "WWR: research allocations: T=0.3t"
 	##~~~~~Canary Rockfish~~~~~~~~~~~~~~~
 	dfo.quota[["2013"]][["CAR"]] = dfo.quota[["2011"]][["CAR"]]
 	##~~~~~Pacific Ocean Perch~~~~~~~~~~~
@@ -2017,6 +2085,10 @@ createMA =function(yrs=1979:2024, strSpp="POP", addletters=TRUE, gears="TRW")
 	dfo.quota[["2013"]][["SGR"]][["HLT"]][["5CD"]] =   50
 	dfo.quota[["2013"]][["SGR"]][["HLT"]][["5E"]]  =   33
 	dfo.quota[["2013"]][["SGR"]][["HLT"]][["CST"]] =  166
+	##~~~~~Widow Rockfish~~~~~~~~~~~~~~~~
+	dfo.quota[["2013"]][["WWR"]][["TRW"]][["CST"]] = 2316
+	dfo.quota[["2013"]][["WWR"]][["HLT"]][["CST"]] =   42
+	dfo.quota[["2013"]][["WWR"]][["ALL"]][["CST"]] = 2358
 
 	##-----2014--------------------------
 	dfo.action[["2014"]][["CAR"]] = "CAR: Research allocation: H\\&L=6.0t"
@@ -2024,6 +2096,8 @@ createMA =function(yrs=1979:2024, strSpp="POP", addletters=TRUE, gears="TRW")
 	dfo.action[["2014"]][["YTR"]] = "YTR: Coastwide population assessed by DFO Science"
 	dfo.action[["2014"]][["SGR"]] = "SGR: Research allocations: T=9.8t, LL=7.0t"
 	dfo.action[["2014"]][["SGR|SBF|ROL|PEL"]] = "TRW: Based on updated current information, application of DFO's Fishery Decision-Making Framework Incorporating the Precautionary Approach, and consultation with interested parties, revised total allowable catch levels (TACs) have been established for Trawl sector for Sablefish, Silvergray Rockfish, Rock Sole and Petrale Sole."
+	dfo.action[["2014"]][["WWRa"]] = "WWR: research allocations: T=0.7t"
+	dfo.action[["2014"]][["WWRb"]] = "H\\&L: (2014-26) this tonnage is not allocated to individual licence holders, nor is it transferable"
 	##~~~~~Canary Rockfish~~~~~~~~~~~~~~~
 	dfo.quota[["2014"]][["CAR"]] = dfo.quota[["2011"]][["CAR"]]
 	##~~~~~Pacific Ocean Perch~~~~~~~~~~~
@@ -2050,18 +2124,23 @@ createMA =function(yrs=1979:2024, strSpp="POP", addletters=TRUE, gears="TRW")
 	dfo.quota[["2014"]][["SGR"]][["HLT"]][["5CD"]] =   66
 	dfo.quota[["2014"]][["SGR"]][["HLT"]][["5E"]]  =   43
 	dfo.quota[["2014"]][["SGR"]][["HLT"]][["CST"]] =  220
+	##~~~~~Widow Rockfish~~~~~~~~~~~~~~~~
+	dfo.quota[["2014"]][["WWR"]][["TRW"]][["CST"]] = 2316
+	dfo.quota[["2014"]][["WWR"]][["HLT"]][["CST"]] =   42
+	dfo.quota[["2014"]][["WWR"]][["ALL"]][["CST"]] = 2358
 
 	##-----2015--------------------------
-	dfo.action[["2015"]][["@@@"]] = "ALL: Research allocations were specified starting in 2015 to account for the mortalities associated with survey catches to be covered by TACs."
+	dfo.action[["2015"]][["@@@"]]  = "ALL: Research allocations were specified starting in 2015 to account for the mortalities associated with survey catches to be covered by TACs."
 	dfo.action[["2015"]][["BORa"]] = "BOR: DFO Groundfish Management Unit refined the generalised primary objective for Bocaccio to specify that the aim was to also: \\emph{Achieve rebuilding throughout the species' range and grow out of the critical zone ($B > 0.4 B_{MSY}$) within three generations, with a 65\\% probability of success}. To support and monitor progress towards the objective, milestones were also established: \\emph{Achieve a positive stock trajectory trend in each 5-year interval, such that the biomass at the end of each 5-year period is greater than the biomass at the beginning of the same 5-year period. Between major assessments, progress towards this goal will be monitored by annually reviewing fishery-dependent and fishery-independent indices of stock trajectory}."
 	dfo.action[["2015"]][["BORb"]] = "BOR: To reduce Bocaccio mortality in the groundfish H\\&L fisheries new trip limits were introduced. For example, Halibut directed trips could land 100 pounds plus 1\\% of the amount of Halibut landed in excess of 10,000 pounds to a maximum of 600 pounds of Bocaccio. The Dogfish, Lingcod, ZN Rockfish, and Sablefish directed fisheries were subject to the same trip limits. These trip limits remained in effect during the 2019/20 fishing year."
 	dfo.action[["2015"]][["BORc"]] = "BOR: Bocaccio trawl MC reduced to 110~t coastwide."
-	dfo.action[["2015"]][["CAR"]] = "CAR: Research allocations: Trawl=2.7t, Longline=6.0t, Total=8.7t"
-	dfo.action[["2015"]][["POP"]] = "POP: Research allocations (trawl): 5AB=16.4t, 5C=0.6t, Total=17t"
-	dfo.action[["2015"]][["YTR"]] = "YTR: Research allocations: T=5t"
+	dfo.action[["2015"]][["CAR"]]  = "CAR: Research allocations: Trawl=2.7t, Longline=6.0t, Total=8.7t"
+	dfo.action[["2015"]][["POP"]]  = "POP: Research allocations (trawl): 5AB=16.4t, 5C=0.6t, Total=17t"
+	dfo.action[["2015"]][["YTR"]]  = "YTR: Research allocations: T=5t"
 	dfo.action[["2015"]][["SGRa"]] = "SGR: Research allocations: T=12.4t, LL=10.0t"
 	dfo.action[["2015"]][["SGRb"]] = "SGR: HLT (hook \\& line + trap) quotas now divided between Halibut and ZN Outside; combined herein for consistency with previous years"
 	dfo.action[["2015"]][["SGRd"]] = "SGR: The TAC for Silvergray rockfish will increase in 2015 as part of stepped increases started last year, based on harvest advice indicating it was likely in the healthy zone"
+	dfo.action[["2015"]][["WWR"]]  = "WWR: research allocations: T=0.2t"
 	##~~~~~Canary Rockfish~~~~~~~~~~~~~~~
 	dfo.quota[["2015"]][["CAR"]][["TRW"]][["3CD"]] = 503
 	dfo.quota[["2015"]][["CAR"]][["TRW"]][["5AB"]] = 197
@@ -2107,6 +2186,10 @@ createMA =function(yrs=1979:2024, strSpp="POP", addletters=TRUE, gears="TRW")
 	dfo.quota[["2015"]][["SGR"]][["HLT"]][["5CD"]] = 73 + 4
 	dfo.quota[["2015"]][["SGR"]][["HLT"]][["5E"]]  = 47 + 3
 	dfo.quota[["2015"]][["SGR"]][["HLT"]][["CST"]] = 241 + 13
+	##~~~~~Widow Rockfish~~~~~~~~~~~~~~~~
+	dfo.quota[["2015"]][["WWR"]][["TRW"]][["CST"]] = 2316
+	dfo.quota[["2015"]][["WWR"]][["HLT"]][["CST"]] =   42
+	dfo.quota[["2015"]][["WWR"]][["ALL"]][["CST"]] = 2316 + 42
 
 	##-----2016--------------------------
 	dfo.action[["2016"]][["BOR"]] = "BOR: Bocaccio trawl MC reduced to 80~t coastwide. Bocaccio remains a quota species in the trawl fishery, but not in the hook and line fisheries."
@@ -2114,6 +2197,7 @@ createMA =function(yrs=1979:2024, strSpp="POP", addletters=TRUE, gears="TRW")
 	dfo.action[["2016"]][["POP"]] = "POP: Research allocations (trawl): 3CD=15.3t, 5DE=41.8t, Total=57.1t"
 	dfo.action[["2016"]][["YTR"]] = "YTR: Research allocations: T=6.2t"
 	dfo.action[["2016"]][["SGR"]] = "SGR: Research allocations: T=10.7t, LL=10.0t"
+	dfo.action[["2016"]][["WWR"]] = "WWR: research allocations: T=1.5t"
 	##~~~~~Canary Rockfish~~~~~~~~~~~~~~~
 	dfo.quota[["2016"]][["CAR"]] = dfo.quota[["2015"]][["CAR"]]
 	##~~~~~Pacific Ocean Perch~~~~~~~~~~~
@@ -2150,12 +2234,17 @@ createMA =function(yrs=1979:2024, strSpp="POP", addletters=TRUE, gears="TRW")
 	dfo.quota[["2016"]][["SGR"]][["HLT"]][["5CD"]] = 73 + 4
 	dfo.quota[["2016"]][["SGR"]][["HLT"]][["5E"]]  = 47 + 3
 	dfo.quota[["2016"]][["SGR"]][["HLT"]][["CST"]] = 241 + 13
+	##~~~~~Widow Rockfish~~~~~~~~~~~~~~~~
+	dfo.quota[["2016"]][["WWR"]][["TRW"]][["CST"]] = 2316
+	dfo.quota[["2016"]][["WWR"]][["HLT"]][["CST"]] =   42
+	dfo.quota[["2016"]][["WWR"]][["ALL"]][["CST"]] = 2316 + 42
 
 	##-----2017--------------------------
 	dfo.action[["2017"]][["CAR"]] = "CAR: Research allocations: Trawl=2.3t, Longline=6.0t, Total=8.3t"
 	dfo.action[["2017"]][["POP"]] = "POP: Research allocations (trawl): 5AB=17.1t, 5C=0.8t, Total=17.9t"
 	dfo.action[["2017"]][["YTR"]] = "YTR: Research allocations: T=4t, LL=2t"
 	dfo.action[["2017"]][["SGR"]] = "SGR: Research allocations: T=13.6t, LL=10.0t"
+	dfo.action[["2017"]][["WWR"]] = "WWR: research allocations: T=0.2t"
 	##~~~~~Canary Rockfish~~~~~~~~~~~~~~~
 	dfo.quota[["2017"]][["CAR"]][["TRW"]][["3CD"]] = 615
 	dfo.quota[["2017"]][["CAR"]][["TRW"]][["5AB"]] = 241
@@ -2201,12 +2290,17 @@ createMA =function(yrs=1979:2024, strSpp="POP", addletters=TRUE, gears="TRW")
 	dfo.quota[["2017"]][["SGR"]][["HLT"]][["5CD"]] = 73 + 4
 	dfo.quota[["2017"]][["SGR"]][["HLT"]][["5E"]]  = 47 + 3
 	dfo.quota[["2017"]][["SGR"]][["HLT"]][["CST"]] = 241 + 13
+	##~~~~~Widow Rockfish~~~~~~~~~~~~~~~~
+	dfo.quota[["2017"]][["WWR"]][["TRW"]][["CST"]] = 2316
+	dfo.quota[["2017"]][["WWR"]][["HLT"]][["CST"]] =   42
+	dfo.quota[["2017"]][["WWR"]][["ALL"]][["CST"]] = 2316 + 42
 
 	##-----2018--------------------------
 	dfo.action[["2018"]][["CAR"]] = "CAR: Research allocations: Trawl=4.1t, Longline=6.4t, Total=10.5t"
 	dfo.action[["2018"]][["POP"]] = "POP: Research allocations (trawl): 3CD=32t, 5DE=41.8t, Total=73.8t"
 	dfo.action[["2018"]][["YTR"]] = "YTR: Research allocations: T=5.5t, LL=2t"
 	dfo.action[["2018"]][["SGR"]] = "SGR: Research allocations: T=13.0t, LL=12.7t"
+	dfo.action[["2018"]][["WWR"]] = "WWR: research allocations: T=0.7t"
 	##~~~~~Canary Rockfish~~~~~~~~~~~~~~~
 	dfo.quota[["2018"]][["CAR"]] = dfo.quota[["2017"]][["CAR"]]
 	##~~~~~Pacific Ocean Perch~~~~~~~~~~~
@@ -2243,12 +2337,17 @@ createMA =function(yrs=1979:2024, strSpp="POP", addletters=TRUE, gears="TRW")
 	dfo.quota[["2018"]][["SGR"]][["HLT"]][["5CD"]] = 73 + 4
 	dfo.quota[["2018"]][["SGR"]][["HLT"]][["5E"]]  = 47 + 3
 	dfo.quota[["2018"]][["SGR"]][["HLT"]][["CST"]] = 241 + 13
+	##~~~~~Widow Rockfish~~~~~~~~~~~~~~~~
+	dfo.quota[["2018"]][["WWR"]][["TRW"]][["CST"]] = 2316
+	dfo.quota[["2018"]][["WWR"]][["HLT"]][["CST"]] =   42
+	dfo.quota[["2018"]][["WWR"]][["ALL"]][["CST"]] = 2316 + 42
 
 	##-----2019--------------------------
 	dfo.action[["2019"]][["CAR"]] = "CAR: Research allocations: Trawl=2.0t, Longline=1.2t, Total=3.2t"
 	dfo.action[["2019"]][["POP"]] = "POP: Research allocations (trawl): 5AB=20.8t, 5C=1.0t, Total=21.8t"
 	dfo.action[["2019"]][["YTR"]] = "YTR: Research allocations: T=3.4t, LL=0.1t"
 	dfo.action[["2019"]][["SGR"]] = "SGR: Research allocations: T=14.6t, LL=1.7t"
+	dfo.action[["2019"]][["WWR"]] = "WWR: research allocations: T=0.2t"
 	##~~~~~Canary Rockfish~~~~~~~~~~~~~~~
 	dfo.quota[["2019"]][["CAR"]] = dfo.quota[["2017"]][["CAR"]]
 	##~~~~~Pacific Ocean Perch~~~~~~~~~~~
@@ -2285,12 +2384,18 @@ createMA =function(yrs=1979:2024, strSpp="POP", addletters=TRUE, gears="TRW")
 	dfo.quota[["2019"]][["SGR"]][["HLT"]][["5CD"]] = 73 + 4
 	dfo.quota[["2019"]][["SGR"]][["HLT"]][["5E"]]  = 47 + 3
 	dfo.quota[["2019"]][["SGR"]][["HLT"]][["CST"]] = 241 + 13
+	##~~~~~Widow Rockfish~~~~~~~~~~~~~~~~
+	dfo.quota[["2019"]][["WWR"]][["TRW"]][["CST"]] = 2316
+	dfo.quota[["2019"]][["WWR"]][["HLT"]][["CST"]] =   42
+	dfo.quota[["2019"]][["WWR"]][["ALL"]][["CST"]] = 2316 + 42
 
 	##-----2020--------------------------
 	dfo.action[["2020"]][["CAR"]] = "CAR: Research allocations: Trawl=6.2t, Longline=6.5t, Total=12.7t"
 	dfo.action[["2020"]][["POP"]] = "POP: Research allocations (trawl): 3CD=12.8t, 5E=87.1t, Total=99.9t"
 	dfo.action[["2020"]][["YTR"]] = "YTR: Research allocations: T=6.5t, LL=2t"
 	dfo.action[["2020"]][["SGR"]] = "SGR: Research allocations: T=12.2t, LL=12.7t"
+	dfo.action[["2020"]][["WWRa"]] = "WWR: TAC increase of 184t based on WWR 2019 FSA (high probability in Healthy zone)"
+	dfo.action[["2020"]][["WWRb"]] = "WWR: research allocations: T=0.8t"
 	##~~~~~Canary Rockfish~~~~~~~~~~~~~~~
 	dfo.quota[["2020"]][["CAR"]] = dfo.quota[["2017"]][["CAR"]]
 	##~~~~~Pacific Ocean Perch~~~~~~~~~~~
@@ -2327,12 +2432,17 @@ createMA =function(yrs=1979:2024, strSpp="POP", addletters=TRUE, gears="TRW")
 	dfo.quota[["2020"]][["SGR"]][["HLT"]][["5CD"]] = 73 + 4
 	dfo.quota[["2020"]][["SGR"]][["HLT"]][["5E"]]  = 47 + 3
 	dfo.quota[["2020"]][["SGR"]][["HLT"]][["CST"]] = 241 + 13
+	##~~~~~Widow Rockfish~~~~~~~~~~~~~~~~
+	dfo.quota[["2020"]][["WWR"]][["TRW"]][["CST"]] = 2500
+	dfo.quota[["2020"]][["WWR"]][["HLT"]][["CST"]] =   46
+	dfo.quota[["2020"]][["WWR"]][["ALL"]][["CST"]] = 2500 + 46
 
 	##-----2021--------------------------
 	dfo.action[["2021"]][["CAR"]] = "CAR: Research allocations: Trawl=1.8t, Longline=6.5t, Total=8.3t"
 	dfo.action[["2021"]][["POP"]] = "POP: Research allocations (trawl): 5AB=19.4t, 5CD=1.5t, Total=20.8t"
 	dfo.action[["2021"]][["YTR"]] = "YTR: Research allocations: T=2.3t, LL=2t"
 	dfo.action[["2021"]][["SGR"]] = "SGR: Research allocations: T=9.5t, LL=12.7t"
+	dfo.action[["2021"]][["WWR"]] = "WWR: research allocations: T=0.1t"
 	##~~~~~Canary Rockfish~~~~~~~~~~~~~~~
 	dfo.quota[["2021"]][["CAR"]] = dfo.quota[["2017"]][["CAR"]]
 	##~~~~~Pacific Ocean Perch~~~~~~~~~~~
@@ -2369,11 +2479,16 @@ createMA =function(yrs=1979:2024, strSpp="POP", addletters=TRUE, gears="TRW")
 	dfo.quota[["2021"]][["SGR"]][["HLT"]][["5CD"]] = 73 + 4
 	dfo.quota[["2021"]][["SGR"]][["HLT"]][["5E"]]  = 47 + 3
 	dfo.quota[["2021"]][["SGR"]][["HLT"]][["CST"]] = 241 + 13
+	##~~~~~Widow Rockfish~~~~~~~~~~~~~~~~
+	dfo.quota[["2021"]][["WWR"]][["TRW"]][["CST"]] = 2500
+	dfo.quota[["2021"]][["WWR"]][["HLT"]][["CST"]] =   46
+	dfo.quota[["2021"]][["WWR"]][["ALL"]][["CST"]] = 2500 + 46
 
 	##-----2022--------------------------
 	dfo.action[["2022"]][["POP"]] = "POP: Research allocations (trawl): 3CD=9.8t, 5E=106.5t, Total=116.3t"
 	dfo.action[["2022"]][["YTR"]] = "YTR: Research allocations: T=5.7t, LL=2t"
 	dfo.action[["2022"]][["SGR"]] = "SGR: Research allocations: T=12.9t, LL=12.7t"
+	dfo.action[["2022"]][["WWR"]] = "WWR: research allocations: T=0.8t"
 	##~~~~~Pacific Ocean Perch~~~~~~~~~~~
 	dfo.quota[["2022"]][["POP"]][["TRW"]][["3CD"]] = 750
 	dfo.quota[["2022"]][["POP"]][["TRW"]][["5AB"]] = 1687
@@ -2408,11 +2523,16 @@ createMA =function(yrs=1979:2024, strSpp="POP", addletters=TRUE, gears="TRW")
 	dfo.quota[["2022"]][["SGR"]][["HLT"]][["5CD"]] = 73 + 4
 	dfo.quota[["2022"]][["SGR"]][["HLT"]][["5E"]]  = 47 + 3
 	dfo.quota[["2022"]][["SGR"]][["HLT"]][["CST"]] = 241 + 13
+	##~~~~~Widow Rockfish~~~~~~~~~~~~~~~~
+	dfo.quota[["2022"]][["WWR"]][["TRW"]][["CST"]] = 2500
+	dfo.quota[["2022"]][["WWR"]][["HLT"]][["CST"]] =   46
+	dfo.quota[["2022"]][["WWR"]][["ALL"]][["CST"]] = 2500 + 46
 
 	##-----2023--------------------------
 	dfo.action[["2023"]][["POP"]] = "POP: Research allocations (trawl): 5AB=21.8t, 5CD=1.5t, Total=23.3t"
 	dfo.action[["2023"]][["YTR"]] = "YTR: Research allocations: T=3.3t, LL=2t"
 	dfo.action[["2023"]][["SGR"]] = "SGR: Research allocations: T=11.8t, LL=12.7t"
+	dfo.action[["2023"]][["WWR"]] = "WWR: research allocations: T=0.2t"
 	##~~~~~Pacific Ocean Perch~~~~~~~~~~~
 	dfo.quota[["2023"]][["POP"]][["TRW"]][["3CD"]] =  750
 	dfo.quota[["2023"]][["POP"]][["TRW"]][["5AB"]] = 1687
@@ -2447,10 +2567,15 @@ createMA =function(yrs=1979:2024, strSpp="POP", addletters=TRUE, gears="TRW")
 	dfo.quota[["2023"]][["SGR"]][["HLT"]][["5CD"]] = 73 + 4
 	dfo.quota[["2023"]][["SGR"]][["HLT"]][["5E"]]  = 47 + 3
 	dfo.quota[["2023"]][["SGR"]][["HLT"]][["CST"]] = 241 + 13
+	##~~~~~Widow Rockfish~~~~~~~~~~~~~~~~
+	dfo.quota[["2023"]][["WWR"]][["TRW"]][["CST"]] = 2500
+	dfo.quota[["2023"]][["WWR"]][["HLT"]][["CST"]] =   46
+	dfo.quota[["2023"]][["WWR"]][["ALL"]][["CST"]] = 2500 + 46
 
 	##-----2024--------------------------
 	dfo.action[["2024"]][["YTR"]] = "YTR: Research allocations: T=4.6t, LL=2t"
 	dfo.action[["2024"]][["SGR"]] = "SGR: Research allocations: T=12.1t, LL=12.7t"
+	dfo.action[["2024"]][["WWR"]] = "WWR: research allocations: T=1.5t"
 	##~~~~~Yellowtail Rockfish~~~~~~~~~~~
 	dfo.quota[["2024"]][["YTR"]][["TRW"]][["3C"]]  = 1224
 	dfo.quota[["2024"]][["YTR"]][["TRW"]][["3D5"]] = 4216
@@ -2479,9 +2604,14 @@ createMA =function(yrs=1979:2024, strSpp="POP", addletters=TRUE, gears="TRW")
 	dfo.quota[["2024"]][["SGR"]][["HLT"]][["5CD"]] = 73 + 4
 	dfo.quota[["2024"]][["SGR"]][["HLT"]][["5E"]]  = 47 + 3
 	dfo.quota[["2024"]][["SGR"]][["HLT"]][["CST"]] = 241 + 13
+	##~~~~~Widow Rockfish~~~~~~~~~~~~~~~~
+	dfo.quota[["2024"]][["WWR"]][["TRW"]][["CST"]] = 2500
+	dfo.quota[["2024"]][["WWR"]][["HLT"]][["CST"]] =   46
+	dfo.quota[["2024"]][["WWR"]][["ALL"]][["CST"]] = 2500 + 46
 
 	##-----2025--------------------------
 	dfo.action[["2025"]][["SGR"]] = "SGR: Research allocations: T=13.1t, LL=12.7t"
+	dfo.action[["2025"]][["WWR"]] = "WWR: research allocations: T=1.3t"
 	##~~~~~Silvergray Rockfish~~~~~~~~~~~
 	dfo.quota[["2025"]][["SGR"]][["TRW"]][["3CD"]] =  332
 	dfo.quota[["2025"]][["SGR"]][["TRW"]][["5AB"]] =  646
@@ -2503,6 +2633,18 @@ createMA =function(yrs=1979:2024, strSpp="POP", addletters=TRUE, gears="TRW")
 	dfo.quota[["2025"]][["SGR"]][["HLT"]][["5CD"]] = 73 + 4
 	dfo.quota[["2025"]][["SGR"]][["HLT"]][["5E"]]  = 47 + 3
 	dfo.quota[["2025"]][["SGR"]][["HLT"]][["CST"]] = 241 + 13
+	##~~~~~Widow Rockfish~~~~~~~~~~~~~~~~
+	dfo.quota[["2025"]][["WWR"]][["TRW"]][["CST"]] = 2500
+	dfo.quota[["2025"]][["WWR"]][["HLT"]][["CST"]] =   46
+	dfo.quota[["2025"]][["WWR"]][["ALL"]][["CST"]] = 2500 + 46
+
+	##-----2026--------------------------
+	dfo.action[["2026"]][["WWR"]] = "WWR: research allocations: T=2.3t"
+	##~~~~~Widow Rockfish~~~~~~~~~~~~~~~~
+	dfo.quota[["2026"]][["WWR"]][["TRW"]][["CST"]] = 2500
+	dfo.quota[["2026"]][["WWR"]][["HLT"]][["CST"]] =   46
+	dfo.quota[["2026"]][["WWR"]][["ALL"]][["CST"]] = 2500 + 46
+
 
 	ttput(dfo.action); ttput(dfo.quota)
 
@@ -2547,8 +2689,10 @@ createMA =function(yrs=1979:2024, strSpp="POP", addletters=TRUE, gears="TRW")
 		qval = qout[[ii]]
 		quotas[ii,names(qval)] = qval
 	}
-#browser();return()
-	write.csv(formatCatch(quotas, na="0"), file=paste0("dfo.mgmt.quotas.", strSpp, ".csv"))  ## format NA as 0 to make post-processing easier (RH 250623)
+	quotas2 = quotas[,c(grep("ALL",colnames(quotas),invert=T), grep("ALL",colnames(quotas)))]
+	write.csv(formatCatch(quotas2, na="0"), file=paste0("dfo.mgmt.quotas.", strSpp, ".csv"))  ## format NA as 0 to make post-processing easier (RH 250623)
+	ttput(quotas); ttput(quotas2)
+	collect = c("qout","years","areas","quotas","quotas2")
 
 	## Management Actions
 	## ------------------
@@ -2585,7 +2729,11 @@ createMA =function(yrs=1979:2024, strSpp="POP", addletters=TRUE, gears="TRW")
 #browser();retrun()
 	sout$comment = comm
 	write.csv(sout, file=paste0("dfo.mgmt.actions.", strSpp, ".csv"), row.names=FALSE)
+	ttput(sout)
 
+	collect = c(collect, "aout","rout","sout","comm")
+	stamp   = gsub("-","",substring(Sys.time(),3,10))
+	save(list=collect, file=paste0("createMA(", strSpp, ")-", stamp, ".rda"))
 	return(sout)
 }
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~createMA
@@ -2878,7 +3026,7 @@ makeAgeErr <- function(type="simple", strSpp, sql=FALSE,
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~makeAgeErr
 
 
-## plotAgeErr---------------------------2024-10-24
+## plotAgeErr---------------------------2026-05-08
 ## Plot ageing precision data
 ##   (modified from code by Sean Anderson, PBS)
 ## Arguments:
@@ -2971,7 +3119,7 @@ plotAgeErr <- function(dat, nsamp, xlim=NULL, ylim=NULL, jitter=0.25, seed=42,
 	if (is.null(ylim))
 		ylim = range(dat[,c("r2_amin","r2_amax")])
 	
-	fout.e = paste0("AgeErr",strSpp)
+	fout.e = paste0("plotAgeErr(",strSpp,")")
 	for (l in lang) {
 		changeLangOpts(L=l)
 		#fout = switch(l, 'e' = fout.e, 'f' = paste0("./french/",fout.e) )
@@ -3000,7 +3148,7 @@ plotAgeErr <- function(dat, nsamp, xlim=NULL, ylim=NULL, jitter=0.25, seed=42,
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotAgeErr
 
 
-## plotBTMW-----------------------------2024-11-27
+## plotBTMW-----------------------------2026-06-02
 ##  Plot for bottom (BT) vs. midwater (MW) trawl catch
 ##  WHEN MC.GEAR IN ('BOTTOM TRAWL','UNKNOWN TRAWL') THEN 1
 ##  WHEN MC.GEAR IN ('TRAP') THEN 2
@@ -3050,7 +3198,8 @@ plotBTMW <- function(dat, strSpp="417", years=1996:2018, major=list('BC'=3:9),
 			'396'=c('UNK'="UNKNOWN", '5ABC'="5ABC", '3CD'="3CD", '5DE'="5DE"), ## POP
 			'435'=c('UNK'="UNKNOWN", 'CST'="Coastwide", '5ABC'="5ABC", '3CD'="3CD", '5DE'="5DE"), ## BOR
 			'418'=c('UNK'="Unknown", 'BC'="BC coast", '3CD'="3CD", '5ABC'="5ABC", '5DE'="5DE"), ## YTR
-			'405'=c('UNK'="Unknown", 'BC'="BC coast", '3CD'="3CD", '5ABC'="5ABC", '5DE'="5DE") ## SGR
+			'405'=c('UNK'="Unknown", 'BC'="BC coast", '3CD'="3CD", '5ABC'="5ABC", '5DE'="5DE"), ## SGR
+			'417'=c('UNK'="Unknown", 'BC'="BC coast", '3CD'="3CD", '5ABC'="5ABC", '5DE'="5DE") ## WWR
 		) 
 	)
 	if (is.null(gcodes$stock)) {message(paste0("Need to define stocks for ", strSpp)); browser(); return() }
@@ -3152,12 +3301,13 @@ plotBTMW <- function(dat, strSpp="417", years=1996:2018, major=list('BC'=3:9),
 				zx1 = strSpp %in% c("418") && gnam %in% c("sector")
 				zx2 = strSpp %in% c("405") && gnam %in% c("stock")
 				zx3 = strSpp %in% c("405") && gnam %in% c("sector")
-				xpos = if (zx1|zx3) 0.99 else if (zx2) 0.5 else 0.8
+				zx4 = strSpp %in% c("417") && gnam %in% c("gear")
+				xpos = if (zx1|zx3) 0.99 else if (zx2|zx4) 0.5 else 0.95
 				#ypos = if (strSpp %in% c("417","418") || (strSpp %in% "437" && gnam %in% c("sector","fid")))  0.45 else 0.99
-				zy1 = strSpp %in% c("417")
+				zy1 = strSpp %in% c("417") && gnam %in% c("sector","fid")
 				zy2 = strSpp %in% c("418","437") && gnam %in% c("sector","fid")
 				zy3 = strSpp %in% c("405") && gnam %in% c("sector")
-				ypos = if (zy1|zy2|zy3) 0.5 else 0.99
+				ypos = if (zy1) 0.4 else if (zy2|zy3) 0.5 else 0.99
 				if (a==1)
 					addLegend(xpos, ypos, lty=glty[iii], seg.len=3, lwd=2, col=icol[iii], pch=gpch[iii], pt.bg=ibg[iii], pt.cex=1.75, legend=linguaFranca(gsub("_"," ", gleg[iii]),l), cex=1.2, xjust=1, yjust=1, bty="n")
 #browser();return()
@@ -3928,14 +4078,14 @@ smoothPDO=function(dat=pdo, zfld="anomaly", period=365, every=365/6,
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~smoothPDO
 
 
-## splineCPUE---------------------------2026-03-23
+## splineCPUE---------------------------2026-05-25
 ## Fit spline curves through CPUE data to determine 
 ## optimal degrees of freedom (balance between rigorously
 ## fitting indices while not removing the majority of the signal)
 ## and to calculate CV process error from RSS at optimal DF.
 ## ---------------------------------------------RH
 splineCPUE <- function(dat, ndf=50, strSpp="ZZZ", ufld="cpue",
-   png=FALSE, pngres=400, PIN=c(8,8), lang=c("e","f"), ...)
+   png=FALSE, pngres=400, PIN=c(9,9), lang=c("e","f"), ...)
 {
 	colnames(dat) = sub("[Yy]ear(s)?","year",colnames(dat))
 	colnames(dat) = sub(ufld,"index",colnames(dat))
@@ -3951,6 +4101,7 @@ splineCPUE <- function(dat, ndf=50, strSpp="ZZZ", ufld="cpue",
 	dRSS   = c(0,diff(RSS))
 	df.opt = DF[findPV(min(dRSS),dRSS)]
 	rho_k  = RSS[findPV(min(dRSS),dRSS)]
+#browser();return()
 
 	createFdir(lang)
 	fout.e = paste0(toupper(ufld), "res-CVpro-", strSpp)
@@ -3971,58 +4122,65 @@ splineCPUE <- function(dat, ndf=50, strSpp="ZZZ", ufld="cpue",
 		## Panel 1
 		plot(DF, RSS, type="n", xlab=linguaFranca("degrees of freedom",l), ylab=linguaFranca("RSS",l))
 		addLabel(0.5, 0.95, linguaFranca("Residual Sum of Squares",l), adj=0.5)
-		abline(v=df.opt, col="green4", lty=3)
+		abline(v=df.opt, col="gray10", lty=2, lwd=1)
 		lines(DF, RSS, col="red", lwd=2)
+		if (ndf<=50)
+			points(DF,RSS, pch=21, cex=1, col="red", bg="pink")
 	
 		## Panel 2
 		plot(DF, dRSS, type="n", xlab=linguaFranca("degrees of freedom",l), ylab=paste0("d",linguaFranca("RSS",l)))
 		if (strSpp %in% c('SGR')) {
 			xpos=0.95; ypos=0.9; xadj=1
-		} else if (strSpp %in% c('YMR')) {
+		} else if (strSpp %in% c('YMR','WWR')) {
 			xpos=0.95; ypos=0.5; xadj=1
 		} else {
 			xpos=0.5; ypos=0.95; xadj=0.5
 		}
 		addLabel(xpos, ypos, switch(l, 'e'="Change in RSS (~slope)", 'f'="changement dans SRC (~pente)"), adj=xadj)
-		abline(v=df.opt, col="green4", lty=3)
-		lines(DF, dRSS, col="blue", lwd=2)
+		abline(v=df.opt, col="gray10", lty=2, lwd=1)
+		lines(DF, dRSS, col="purple", lwd=2)
 		if (ndf<=50)
-			points(DF,dRSS, pch=21, cex=.8, col="blue", bg="yellow")
+			points(DF,dRSS, pch=21, cex=1, col="purple", bg="thistle")
 		CVpro = sqrt(RSS[findPV(min(dRSS),dRSS)]/(nrow(dat)-2))/mean(dat[,"index"])
 	
 		## Panel 3
-		## Plot the data and the 'optimal' fit
+		## Plot the data with default spline fit (blue dashes) and the 'optimal' fit (red) 
 		#plot(index ~ year, data = dat, pch=21, col="green4", bg="green", cex=1.1, xlab=linguaFranca("Year",l), ylab=linguaFranca(ufld,l)) #, main = "data(index) & smoothing splines")
 		plot(index ~ year, data = dat, type="n", xlab=linguaFranca("Year",l), ylab=linguaFranca(ufld,l)) 
-		lines(index ~ year, data = dat, lty=1, col="slategrey")
-		points(index ~ year, data = dat, pch=21, col="green4", bg="green")
-		index.spl <- with(dat, smooth.spline(year, index, all.knots=TRUE, spar=0.75))  ## default spline
+		lines(index ~ year, data = dat, lty=1, col="slategray")
+		points(index ~ year, data = dat, pch=21, col="blue", bg="cyan")
+		index.spl <- with(dat, smooth.spline(year, index, all.knots=TRUE, spar=NULL))  ## default spline (as of 260525)
 		lines(index.spl, col="blue", lty=2, lwd=2)
 	
-		index.df <- smooth.spline(dat[,"year"], dat[,"index"], df=df.opt, all.knots=TRUE)
+		index.df <- smooth.spline(dat[,"year"], dat[,"index"], df=df.opt, all.knots=TRUE)  
 
 		df.spl  = index.spl$df
 		rho.spl = RSS[findPV(df.spl,DF)]
 		cp.spl   = sqrt(rho.spl/(nrow(dat)-2))/mean(dat[,"index"])
-#browser();return()
-		lines(index.df, col="red", lty=1, lwd=2)
-		if (strSpp %in% c('BSR','WWR','YMR','SGR') || ufld %in% c("PDO")) {
+		lines(index.df, col="darkcyan", lty=1, lwd=3)
+		if (strSpp %in% c('BSR','YMR','SGR') || ufld %in% c("PDO")) {
 			xpos=0.95; ypos=0.99; xadj=1
 		} else {
-			xpos=0.02; ypos=0.2; xadj=0
+			xpos=0.02; ypos=0.99; xadj=0
 		}
-		addLegend(xpos, ypos, legend=c(paste0(switch(l, 'e'="fitted df (nu) = ", 'f'=eval(parse(text=deparse("degr\u{00E9}s de libert\u{00E9} ajuste\u{00E9}s (nu) = ")))), signif(index.spl$df,4), ", cp=", signif(cp.spl,4)), paste0(switch(l, 'e'="with nu=", 'f'="avec nu="), signif(df.opt,4), ", rho=", signif(rho_k,4), ", cp=", signif(CVpro,4))), col = c("blue","red"), lty = 2:1, bty="n", bg="transparent", adj=0, xjust=xadj, cex=0.8)
+		addLegend(xpos, ypos, legend=c(paste0(switch(l, 'e'="default : df=", 'f'=eval(parse(text=deparse("d\u{00E9}faut : ddl=")))), signif(index.spl$df,4), ", cp=", signif(cp.spl,4)), paste0(switch(l, 'e'="optimal : df=", 'f'="optimal : ddl="), signif(df.opt,4), ", rho=", signif(rho_k,4), ", cp=", signif(CVpro,4))), col=c("blue","darkcyan"), lty=2:1, lwd=c(2,3), bty="n", bg="transparent", adj=0, xjust=xadj, cex=0.8)
 
 		## Panel 4
 		## Residual (Tukey Anscombe) plot:
 		ylim = if(ufld=="PDO") NULL else c(-0.35,0.45)
-		plot(residuals(index.df) ~ fitted(index.df), pch=21, col="red", bg="pink", cex=1.1, xlab=linguaFranca("Fitted Index",l), ylab=linguaFranca("Index residuals",l))
-		abline(h = 0, col = "red")
+		res = residuals(index.df)
+		fit = fitted(index.df)
+		zpos   = res > 0
+		zneg   = res <= 0
+		plot(fit, res, type="n", xlab=linguaFranca("Fitted Index",l), ylab=linguaFranca("Index residuals",l))
+		abline(h = 0, col = "grey")
+		points(fit[zpos], res[zpos], pch=21, col="green4", bg="green", cex=1.1)
+		points(fit[zneg], res[zneg], pch=21, col="red", bg="pink", cex=1.1)
 		## consistency check:
 		stopifnot(all.equal(dat[,"index"], fitted(index.df) + residuals(index.df)))
 		## The chosen inner knots in original x-scale :
 		with(index.df$fit, min + range * knot[-c(1:3, nk+1 +1:3)]) # == unique(index$year)
-
+#browser();return()
 		if (png) dev.off()
 	}; eop()
 	return(list(DF=df.opt, RSS=RSS[findPV(min(dRSS),dRSS)], CVpro=CVpro))

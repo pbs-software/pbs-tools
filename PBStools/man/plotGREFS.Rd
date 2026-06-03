@@ -1,15 +1,15 @@
 \name{plotGREFS}
 \alias{plotGREFS}
 \title{
-  Plot Gamma by Reference Year
+  Plot gamma by Reference Year
 }
 \description{
   Plot the gamma value (landed RRF/landed ORF) in \code{'buildCatch'}
   by year, major area, and fishery ID to visualise its change over time.
 }
 \usage{
-plotGREFS(dat, years=1996:2019, majors=3:9, fid=1,
-   strSpp="394", addRGM=FALSE, aimRGM=FALSE, vlines, rlines, legpos, 
+plotGREFS(dat, years=1996:2019, majors=3:9, fid=1, strSpp="394", 
+   addRGM=FALSE, aimRGM=FALSE, vlines, rlines, legpos, ylim,
    onefig=FALSE, png=FALSE, pngres=400, PIN=c(12,9), lang="e")
 }
 %- maybe also 'usage' for other objects documented here.
@@ -26,6 +26,7 @@ plotGREFS(dat, years=1996:2019, majors=3:9, fid=1,
   \item{vlines}{\code{numeric} -- values (years) along the x-axis to add vertical dashed lines for visial delineation}
   \item{rlines}{\code{numeric} -- reference year interval (start, end) to shade}
   \item{legpos}{\code{numeric} -- vector of relative (X,Y) positions used to place the legend}
+  \item{ylim}{\code{numeric} -- limits of the y-axis}
   \item{onefig}{\code{logical} -- if \code{TRUE}, create a separate figure for each FID}
   \item{png}{\code{logical} -- if \code{TRUE}, send the figure(s) to a \code{'.png'} file}
   \item{pngres}{\code{numeric} -- resolution of output figure (pixels per inch)}
@@ -41,7 +42,7 @@ plotGREFS(dat, years=1996:2019, majors=3:9, fid=1,
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
   \emph{locus opus}: remote office, Vancouver BC\cr
-  Last modified \code{Rd: 2024-12-19}
+  Last modified \code{Rd: 2026-06-03}
 }
 \seealso{
 In package \pkg{PBStools}:\cr

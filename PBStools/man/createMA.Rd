@@ -9,7 +9,7 @@
   tailored to the specified species.
 }
 \usage{
-createMA(yrs=1979:2024, strSpp="POP", addletters=TRUE, gears="TRW")
+createMA(yrs=1979:2026, strSpp="POP", addletters=TRUE, gears="TRW")
 }
 \arguments{
   \item{yrs}{\code{numeric} -- range of years to select management actions applicable to \code{'strSpp'}}
@@ -39,8 +39,8 @@ createMA(yrs=1979:2024, strSpp="POP", addletters=TRUE, gears="TRW")
 \author{
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
-  \emph{locus opus}: Remote office, Vancouver BC\cr
-  Last modified \code{Rd: 2024-10-28}
+  \emph{locus opus}: remote office, Vancouver BC\cr
+  Last modified \code{Rd: 2026-06-03}
 }
 \seealso{
 In package \pkg{PBStools}:\cr

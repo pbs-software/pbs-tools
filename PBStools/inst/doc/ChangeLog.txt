@@ -15,6 +15,20 @@ CRAN package version numbers follow a "major.minor.patch" format (e.g., 1.2.3), 
 	Patch: Indicates bug fixes and minor improvements that do not introduce new features.
 -----------------------------------
 
+1.46.0 (2026-06-03)  [Rcheck=T, Rbuild=T]
+  * R code
+    + Updated output locations for files in `quickCat' (RH 260602)
+    + Adpated `plotBTMW' to handle WWR (RH 260602)
+    + Added WWR quotas and management actions to `createMA' (RH 260601)
+    + Updated `linguaFranca' (RH 260529)
+      - introduced shortcut subfunction `fr()' to handle eval(parse(text=deparse(x))); yet to be implemented
+    + Updated argument descriptions in `buildCatch', the R code, not the Rd file (RH 260526)
+    + Updated graphics output for function `splineCPUE' (RH 260525)
+    + Changed default output name in `plotAgErr' to reflect the function (RH 260508)
+    + Modified `addStrip' to control `adj' (RH 260507) 
+    + Modified `plotGREFS' to deal with discontinuous reference years (RH 260430)
+    + Added new argument `shortside' to function `weightBio' (RH 260428)
+
 1.45.0 (2026-04-10)  [Rcheck=T, Rbuild=T]
   * R code
     + Added new function `collateGBSP' to collate results from `fos_gfb_offloads.sql' (RH 260227)

@@ -88,7 +88,7 @@
 names(.colGnuplot) <- c("red","blue","green","purple","orange","yellow","brown","pink")
 
 
-## addStrip-----------------------------2020-10-06
+## addStrip-----------------------------2026-05-07
 ## Add a vertical colour strip as a legend.
 ## ---------------------------------------------RH
 addStrip <- function (x, y, col, lab, xwidth=0.01, yheight=0.3, ...) 
@@ -99,6 +99,7 @@ addStrip <- function (x, y, col, lab, xwidth=0.01, yheight=0.3, ...)
 	dots = list(...); unpackList(dots)
 	if (!exists("border", envir=fenv)) border = "gainsboro"
 	if (!exists("cex.txt", envir=fenv)) cex.txt = 0.9
+	if (!exists("adj", envir=fenv)) adj = 0
 	uxy <- par()$usr
 	x1 <- uxy[1];  x2 <- uxy[2]
 	y1 <- uxy[3];  y2 <- uxy[4]
@@ -119,7 +120,7 @@ addStrip <- function (x, y, col, lab, xwidth=0.01, yheight=0.3, ...)
 	for (i in 1:ncol)
 		ypol = c(ypol, c(yval[i],rep(yval[i+1],2),yval[i],NA))
 	polygon(xpol,ypol,border=border,col=col)
-	text(xval[2]+0.25*xw0, yval[1:ncol]+diff(yval)/2,labels=lab,cex=cex.txt,adj=0)
+	text(xval[2]+0.25*xw0, yval[1:ncol]+diff(yval)/2, labels=lab, cex=cex.txt, adj=adj)
 	invisible()
 }
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~addStrip
@@ -2101,7 +2102,7 @@ isThere <- function(x, envir=parent.frame())
 	genv <- function(){ .GlobalEnv }                # global environment
 
 
-## linguaFranca-------------------------2026-04-01
+## linguaFranca-------------------------2026-05-29
 ## Translate English phrases to French (other languages possible)
 ## for use in plotting figures with French labels.
 ## Note that 'gsub' has a limit to its nesting depth.
@@ -2111,6 +2112,8 @@ isThere <- function(x, envir=parent.frame())
 ## ---------------------------------------------RH
 linguaFranca <- function(x, lang="e", little=4, strip=FALSE, localnames=FALSE)
 {
+	fr = function(x) { eval(parse(text=deparse(x))) }  ## (RH 260529)
+
 	if (!is.element(lang, c("e","f")))
 		stop("Only 'e' or 'f' supported for argument 'lang'")
 	if (length(x)==1 && is.expression(x)) {
@@ -2345,9 +2348,11 @@ linguaFranca <- function(x, lang="e", little=4, strip=FALSE, localnames=FALSE)
 				gsub("use Tweedie CPUE", "utiliser CPUE de Tweedie",
 				gsub("remove comm CPUE", "supprimer la CPUE commerciale",
 				gsub("add HBLL survey(s)", eval(parse(text=deparse("ajouter relev\u{00E9}\\1 de P\u{00E0}FD"))),
-				gsub("[Ll]oosen M [Pp]rior", eval(parse(text=deparse("assouplir la\ndistribution M ant\u{00E9}rieure"))),
+				gsub("[Ll]oosen M [Pp]rior", eval(parse(text=deparse("assouplir la distribution M ant\u{00E9}rieure"))),
 				gsub("use Francis reweight", eval(parse(text=deparse("utiliser la repond\u{00E9}ration de Francis"))),
-				gsub("(AE([0-9]) )?no age error", "pas d'erreur\nde vieillissement",
+				gsub("[Aa]lternative [Rr]un", eval(parse(text=deparse("alternatif ex\u{00E9}cut\u{00E9}"))),
+				gsub("[Ss]wept(\\s|\\-)[Aa]rea", eval(parse(text=deparse("zone\\1balay\u{00E9}e"))),
+				gsub("(AE([0-9]) )?no age error", "pas d'erreur de vieillissement",
 				gsub("AE([0-9]) CASAL CV=0.1", "EV\\1 CASAL CV=0,1",
 				gsub("[Nn]atural [Mm]ortality", eval(parse(text=deparse("mortalit\u{00E9} naturelle"))),
 				gsub("D-M parameteri[sz]ation", eval(parse(text=deparse("param\u{00E9}trage de D-M"))),
@@ -2361,7 +2366,7 @@ linguaFranca <- function(x, lang="e", little=4, strip=FALSE, localnames=FALSE)
 				gsub("[Cc]olo(u)?rs [Ii]ndicate [Aa]ge", eval(parse(text=deparse("les couleurs indiquent l'\u{00E2}ge"))),
 				gsub("fem(ale)? dome(-shape)? sel(ect)?", eval(parse(text=deparse("s\u{00E9}lectivit\u{00E9} du d\u{00F4}me femelle"))),
 				gsub("split M ages\\(([0-9]+),([0-9]+)\\)", "diviser M entre \\1 et \\2 ans",
-				xx)))))))))))))))))))))))
+				xx)))))))))))))))))))))))))
 			})
 			## rockfish species names
 			xspp1 = sapply(xsen, function(xx){

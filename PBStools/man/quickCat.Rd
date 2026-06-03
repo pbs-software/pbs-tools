@@ -9,7 +9,7 @@
 }
 \usage{
 quickCat(dat, strSpp="000", removeSM=TRUE,
-   yrs=1996:2024, area="BC")
+   yrs=1996:2025, area="BC")
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -34,8 +34,8 @@ Invisibly returns data object with positive catch records; also saves object to 
 \author{
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
-  \emph{locus opus}: Remote office, Vancouver BC\cr
-  Last modified \code{Rd: 2026-02-03}
+  \emph{locus opus}: remote office, Vancouver BC\cr
+  Last modified \code{Rd: 2026-06-03}
 }
 \seealso{
 In package \pkg{PBStools}:\cr

@@ -1,7 +1,7 @@
 \name{splineCPUE}
 \alias{splineCPUE}
 \title{
-  Spline Curve Through CPUE Series
+  Spline Curve through CPUE Series
 }
 \description{
   Fit a series of spline curves through a CPUE index series
@@ -9,7 +9,7 @@
 }
 \usage{
 splineCPUE(dat, ndf=50, strSpp="ZZZ", ufld="cpue",
-   png=FALSE, pngres=400, PIN=c(8,8), lang=c("e","f"), ...)
+   png=FALSE, pngres=400, PIN=c(9,9), lang=c("e","f"), ...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -63,8 +63,8 @@ Can. J. Fish. Aquat. Sci. 68(6). 1124-1138.
 \author{
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
-  \emph{locus opus}: Remote office, Vancouver BC\cr
-  Last modified \code{Rd: 2025-03-20}
+  \emph{locus opus}: remote office, Vancouver BC\cr
+  Last modified \code{Rd: 2026-06-03}
 }
 \seealso{
 In package \pkg{PBStools}:\cr
@@ -82,4 +82,5 @@ In package \pkg{PJSsurvey}:\cr
 % Use only one keyword per line.
 % For non-standard keywords, use \concept instead of \keyword:
 \concept{CPUE}
+\concept{M06_Assessment}
 % Use only one concept per line.

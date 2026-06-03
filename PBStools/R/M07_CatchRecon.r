@@ -11,7 +11,7 @@
 ##==============================================================================
 
 
-## buildCatch---------------------------2026-01-30
+## buildCatch---------------------------2026-05-26
 ## Catch reconstruction algorithm for BC rockfish.
 ## Use ratios of RRF (reconstructed rockfish) to ORF 
 ## (rockfish other than POP) landings for multiple fisheries.
@@ -19,33 +19,32 @@
 ## Arguments definitions appear below:
 ## ---------------------------------------------RH
 buildCatch <- function(
-   dbdat,                ## List object of landing records from eight DFO databases
+   dbdat,                ## List object of landing records from eight DFO databases (or two GFM, PH3)
    strSpp="396",         ## Hart species code for the rockfish to be reconstructed (RRF)
-   orfSpp="TRF",         ## Field name of the denominator in the ratio of RRF to other rockfish (usually ORF but can be TRF or POP if these are more appropriate)
+   orfSpp="TRF",         ## Field name of the denominator in the gamma ratio of RRF to other rockfish (usually ORF but can be TRF if more appropriate; POP never been used)
    major=c(1,3:9),       ## Major PMFC area codes to see in plots; catch is always reconstructed for majors c(1,3:9)
-   fidout=c(1:5,10),     ## Fishery IDs for which an annual series barplot stacked by PMFC area is produced
+   fidout=c(1:5,10),     ## Fishery IDs (10=combined) for which an annual series barplot stacked by PMFC area is produced
    useYR1=c(1996,2000,2007,2007,1986), ## First year to start using reported landings (i.e. not estimated from gamma), one for each fishery:
    useGFM=TRUE,          ## Use the latest official GF_MERGED_CATCH table (compiled by Norm and Kate)
-   useCA=TRUE,           ## Use RRF|ORF catch from the CA fleet
-   useUS=TRUE,           ## Use RRF|ORF catch from the US fleet
-   useFF=TRUE,           ## Use RRF|ORF catch from the foreign (UR, JP, PO, etc) fleet
+   useCA=TRUE,           ## Use RRF|ORF|TRF landings from the CA fleet
+   useUS=TRUE,           ## Use RRF|ORF|TRF landings from the US fleet
+   useFF=TRUE,           ## Use RRF|ORF|TRF landings from the foreign (UR, JP, PO, etc) fleet
    useSM=FALSE,          ## Use catch data from seamounts
-   useLS=TRUE,           ## Use ORF catch from Langara Spit in gamma calculation
-   useAI=FALSE,          ## Use Anthony Island catch as 5C catch (chiefly for POP and maybe YMR)
+   useLS=TRUE,           ## Use ORF|TRF catch from Langara Spit in gamma calculation
+   useAI=FALSE,          ## Use Anthony Island catch as 5C catch (chiefly for POP and YMR); also includes 5A extension into 3D for POP only
    useGM=FALSE,          ## Use geometric mean to average annual ratios for gamma and delta (not used if strat.gamma, strat.delta, or useBG)
-   useBG=FALSE,          ## Sample from the binomial-gamma to estimate ratios RRF/ORF or RRF/TRF.
-   #refyrs=1997:2005,    ## Reference years to use for calculating gamma (e.g., RRF/ORF).
-   refyrs = c(list(1996:2023), rep(list(2007:2011),4)),  ## Reference years to use for calculating gamma (e.g., RRF/ORF). Now a list (RH 190917)
-   refarea=NULL,         ## Name of file containing reference areas to use when calculating gamma
+   useBG=FALSE,          ## Sample from the binomial-gamma to estimate ratios RRF/ORF or RRF/TRF (experimental and deprecated)
+   refyrs = c(list(1996:2025), rep(list(2007:2011),4)),  ## Reference years to use for calculating gamma (e.g., RRF/ORF). Now a list (RH 190917)
+   refarea=NULL,         ## Name of csv file containing reference areas to use when calculating gamma
    refgear=NULL,         ## Reference gear types years to use for calculating gamma (1=bottom trawl, 2=trap, 3=midwater trawl, 4=h&l, 5=longline, 8=h&l/longline/trap)
    strat.gamma=FALSE,    ## Stratify the RRF numerator and ORF denominator by depth zone and weight by frequency of RRF landed > 0
    strat.delta=FALSE,    ## Stratify the discard numerator and denominator by depth zone and weight by frequency of RRF discards > 0
    depbin=100,           ## Depth (m) bin to use for strat.gamma and strat.delta
    defyrs = c(list(1997:2006), rep(list(2000:2004),4)), ## Reference years to use for calculating delta (discard rate)
-   disyrs = list(1954:1995, 1986:2005, 1986:2005, 1986:2005, 1986:2005), ## Discard years (on set for each fishery (trawl, halibut, sable, dogling, hlrock)
-   sensitivity=NULL,     ## Sensitivity name for tweaking decisions
-   reconstruct=TRUE,     ## Complete the reconstruction to its end, otherwise terminate the code once the modern catch array has been compiled and saved
-   run.name=NULL,        ## Run name to keep track of various run configurations with gamma, delta, refarea, and refgear
+   disyrs = list(1954:1995, 1986:2005, 1986:2005, 1986:2005, 1986:2005), ## Discard years for each fishery (trawl, halibut, sable, dogling, hlrock)
+#  sensitivity=NULL,     ## Sensitivity name for tweaking decisions (only used once in algorithm; not sure how to use this generally) [deprecated]
+   reconstruct=TRUE,     ## Complete reconstruction to its end, otherwise terminate the code once the modern catch array has been compiled and saved
+   run.name=NULL,        ## Run name (used to make subfolders) to keep track of various run configurations with gamma, delta, refarea, and refgear
    ascii.tables=TRUE,    ## Create ASCII ouput tables and dump them into the subdirectory called `tables'
    diagnostics=FALSE,    ## Create automatically-numbered diagnostic images files to a subdirectory called `diags'
    saveinfo=TRUE,        ## Save various data and function objects to a list object called `CR' in the temporary environment `.PBStoolEnv'
@@ -55,11 +54,11 @@ buildCatch <- function(
    spath=.getSpath(),    ## Path to SQL code files -- defaults to the `sql' directory under `system.file(package="PBStools")'
    dpath=getwd(),        ## Database path for times when user wants to build alternative catch histories (in another directory) using data already queried
    eps=FALSE, png=FALSE, wmf=FALSE, # Send the figures to `.eps' , `.png', and `.wmf' files, respectively
-   uid=Sys.info()["user"], pwd=uid, # User ID and password for Oracle DB account authentication (only used for PacHarv3 currently)
+   uid=Sys.info()["user"], pwd=uid, # User ID and password for Oracle DB account authentication (originally used for PacHarv3, but now deprecated)
    ioenv=.GlobalEnv,     ## Input/output environment for function input data and output results
-   hadley=FALSE,         ## Use Hadley Wickham's bloated R packages
-   debug=FALSE,          ## set to TRUE to activate some lines that spew nonsense
-   ...)                  ## Additional ad hoc arguments to deal with PJS issues
+   hadley=FALSE,         ## Use Hadley Wickham's wicked R packages (only used in a few functions like `crossTab')
+   debug=FALSE,          ## set to TRUE to activate some lines that spew informative nonsense
+   ...)                  ## Additional ad hoc arguments to deal with user-specific issues
 {
 	## Reset to current working directory in case of code malfunction
 	cwd= getwd()
@@ -1703,7 +1702,7 @@ buildCatch <- function(
 		}
 	}
 	## ----------------------------------------------------------------------------------
-	## Fraidenberg ratios used by Stanley (2009)
+	## Fraidenberg ratios used by Rick D. Stanley (2009)
 	## ----------------------------------------------------------------------------------
 	if (strSpp=="437" && !is.null(list(...)$rds) && list(...)$rds) {
 		.flush.cat("   adjusting trawl gamma for Canary based on Fraidenberg ratios in Stanley (2009).\n")
@@ -2408,9 +2407,9 @@ buildCatch <- function(
 			## ---------------------------------------------------------
 			if (k==1) discard.regimes = list(inone=ALLYRS[1]:1996, icalc=NA, idata=1997:ALLYRS[nyrs])
 			## ------------------------------------------------------------------------
-			## Sensitivity -- Halibut bycatch applied back to 1918 (Chris Sporer, 2015)
+			## Sensitivity -- Halibut bycatch applied back to 1918 (Chris Sporer, 2015)  ## deprecated
 			## ------------------------------------------------------------------------
-			if (k==2 && "A.2" %in% sensitivity) discard.regimes = list(inone=NA, icalc=1918:2005, idata=2006:ALLYRS[nyrs])
+			# if (k==2 && "A.2" %in% sensitivity) discard.regimes = list(inone=NA, icalc=1918:2005, idata=2006:ALLYRS[nyrs])
 		}
 		unpackList(sapply(discard.regimes,as.character))
 		if (!all(is.na(icalc))) {
@@ -2719,12 +2718,12 @@ plotDiag  <- function(x, description="something",
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotDiag
 
 
-## plotGREFS----------------------------2024-11-27
+## plotGREFS----------------------------2026-04-30
 ## Plot gamma for reference years by fishery.
 ## ---------------------------------------------RH
 plotGREFS <- function(dat, years=1996:2019, majors=3:9, fid=1,
-   strSpp="394", addRGM=FALSE, aimRGM=FALSE, vlines, rlines, legpos, 
-   onefig=FALSE, png=FALSE, pngres=400, PIN=c(12,9), lang="e")
+   strSpp="394", addRGM=FALSE, aimRGM=FALSE, vlines, rlines, legpos,
+   ylim, onefig=FALSE, png=FALSE, pngres=400, PIN=c(12,9), lang="e")
 {
 	calcRGM <- function(x) { ## running geometric mean
 		mess = paste0("calcGM(x[1:",1:length(x),"])")
@@ -2732,7 +2731,8 @@ plotGREFS <- function(dat, years=1996:2019, majors=3:9, fid=1,
 		return(as.vector(RGM))
 	}
 	if (missing(rlines)) rlines=NULL
-	mcols = c("grey","mediumblue","dodgerblue","goldenrod1","sienna1","red","green2","green4")
+	#mcols = c("grey","mediumblue","dodgerblue","goldenrod1","sienna1","red","green2","green4")  ## compatible with buildCatch
+	mcols = c("thistle","green2","green4","dodgerblue","mediumblue","navyblue","sienna1","red")     ## compatible with SS3 subareas
 	names(mcols) = c(1,3:9)
 	fidnams = c("Trawl","Halibut","Sablefish","Dog/Ling","H&L Rock")
 	cyears  = dimnames(dat)[[1]]
@@ -2768,7 +2768,8 @@ plotGREFS <- function(dat, years=1996:2019, majors=3:9, fid=1,
 		}
 		kdat = dat[cyears,,k]
 		yting = !onefig || k == fid[1]
-		ylim = c(0,ifelse(onefig, max(dat[cyears,as.character(majors),as.character(fid)]), max(kdat[cyears,as.character(majors)])))
+		if (missing(ylim))
+			ylim = c(0,ifelse(onefig, max(dat[cyears,as.character(majors),as.character(fid)]), max(kdat[cyears,as.character(majors)])))
 
 		test = apply(kdat,2,function(x){ ## just in case we want to remove values >2 or 3 SDs
 			ss=2*sd(x); mean(x)>=(x-ss) & mean(x)<=(x+ss)})
@@ -2777,31 +2778,42 @@ plotGREFS <- function(dat, years=1996:2019, majors=3:9, fid=1,
 		if (!missing(vlines))
 			abline(v=vlines, col="dimgrey", lty=5)
 		if (!is.null(rlines)) {
+#browser();return()
 			#abline(v=rlines, col="red", lty=1, lwd=2)
-			polygon(x=rlines[c(1,1,2,2)], y=par()$usr[c(3,4,4,3)], col=lucent("yellow",0.25), border=F)
+			#polygon(x=rlines[c(1,1,2,2)], y=par()$usr[c(3,4,4,3)], col=lucent("gainsboro",0.75), border=F)
+			## Revise to show broken periods (RH 260430)
+			## Split by identifying where consecutive differences are not equal to 1
+			xpol = split(rlines, cumsum(c(1, diff(rlines) != 1)))
+			xpol = lapply(xpol, function(x){ c(x[1] - 0, x[length(x)] + 0)})
+			lapply(xpol, function(z) {polygon(x=z[c(1,1,2,2)], y=par()$usr[c(3,4,4,3)], col=lucent("gainsboro",0.75), border=F)})
 		}
 		#lines(years, kdat[cyears,"3"], col=lucent(mcols["3"],0.5), lwd=2)
 		
 		## Collect the running geometric mean (RGM)
 		if (addRGM) {
 			if (aimRGM && !is.null(rlines))
-				cRGM =  matrix(NA, nrow=length(majors), ncol=length(rlines[1]:rlines[2]), byrow=T, dimnames=list(area=majors, year=rlines[1]:rlines[2]) )
+				cRGM =  matrix(NA, nrow=length(majors), ncol=length(rlines[1]:rlines[length(rlines)]), byrow=T, dimnames=list(area=majors, year=rlines[1]:rlines[length(rlines)]) )
 			else
 				cRGM =  matrix(NA, nrow=length(majors), ncol=length(years), byrow=T, dimnames=list(area=majors, year=years) )
 		}
+#browser();return()
 		ttput(cRGM)
 		sapply(as.list(majors),function(j){
 			jj=as.character(j)
 			lines(years, kdat[cyears,jj], col=lucent(mcols[jj],0.5), lwd=3)
 			if (addRGM) {
 				if (aimRGM && !is.null(rlines)) {
-					ayears  = rlines[1] : rlines[2]
+					ayears  = rlines #rlines[1] : rlines[length(rlines)]
 					cayears = as.character(ayears)
 					aRGM    = calcRGM(kdat[cayears,jj])
-					ttget(cRGM); cRGM[jj, ] = aRGM; ttput(cRGM)
+					ttget(cRGM); cRGM[jj,cayears] = aRGM; ttput(cRGM)
+					## Fiddle to get discontinuous lines:
+					dyears = rlines[1]:rlines[length(rlines)]
+					dRGM   = rep(NA, length(dyears)); names(dRGM) = dyears
+					dRGM[cayears] = aRGM
 #browser();return()
-					lines(ayears, aRGM, lty=1, col="gainsboro", lwd=2)
-					lines(ayears, aRGM, lty=3, col=lucent(mcols[jj],1), lwd=2)
+					lines(dyears, dRGM, lty=1, col="gainsboro", lwd=2)
+					lines(dyears, dRGM, lty=3, col=lucent(mcols[jj],1), lwd=2)
 					points(rev(ayears)[1], rev(aRGM)[1], pch=19, col=lucent(mcols[jj],1))
 #if (jj=="7") {browser();return()}
 				} else {
@@ -2814,9 +2826,9 @@ plotGREFS <- function(dat, years=1996:2019, majors=3:9, fid=1,
 			}
 		})
 		ttget(cRGM)
-		write.csv(cRGM, paste0("./tables/GREFS-cRGM-fid(", fid, ").csv"))
+		keep = apply(cRGM,2,function(x){!all(is.na(x))})
+		write.csv(cRGM[,keep], paste0("./tables/GREFS-cRGM-fid(", fid, ").csv"))
 		axis(1, at=years[1]:rev(years)[1], tck=-0.01, labels=F)
-#browser();return()
 		axis(1, at=intersect(seq(1950,2050,ifelse(onefig,5,2)),years[1]:years[length(years)]), tck=-0.02, labels=T)
 		if (length(years)!=length(years[1]:years[length(years)]))
 			points(years, rep(par()$usr[3],length(years)), pch=21, col="black", bg="ghostwhite", xpd=NA)
@@ -2829,15 +2841,16 @@ plotGREFS <- function(dat, years=1996:2019, majors=3:9, fid=1,
 		if (missing(legpos)) {
 			LL = !onefig && k%in%c(1,2,3,4,5)
 			if (yting || length(fid)==1) {
-				addLegend(ifelse(LL,0.025,0.975), ifelse(LL,0.95,0.92), lty=1, lwd=2, col=rev(lucent(mcols[as.character(majors)],0.5)), legend=rev(c("3C","3D",paste0("5",LETTERS[1:5]))), bty="n", seg.len=3, xjust=ifelse(LL,0,1), cex=ifelse(png,0.7,1), y.intersp=ifelse(png,0.8,1))
+				addLegend(ifelse(LL,0.025,0.975), ifelse(LL,0.95,0.92), lty=1, lwd=3, col=rev(lucent(mcols[as.character(majors)],0.5)), legend=rev(c("3C","3D",paste0("5",LETTERS[1:5]))), bty="n", seg.len=3, xjust=ifelse(LL,0,1), cex=ifelse(png,0.7,1), y.intersp=ifelse(png,0.8,1))
 			}
 		} else {
-			addLegend(legpos[1], legpos[2], xjust=ifelse(is.na(legpos[3]),1,legpos[3]), lty=1, lwd=2, col=rev(lucent(mcols[as.character(majors)],0.5)), legend=rev(c("3C","3D",paste0("5",LETTERS[1:5]))), bty="n", seg.len=3, cex=ifelse(png,0.7,1), y.intersp=ifelse(png,0.8,1))
+			addLegend(legpos[1], legpos[2], xjust=ifelse(is.na(legpos[3]),1,legpos[3]), lty=1, lwd=3, col=rev(lucent(mcols[as.character(majors)],0.5)), legend=rev(c("3C","3D",paste0("5",LETTERS[1:5]))), bty="n", seg.len=3, cex=ifelse(png,0.7,1), y.intersp=ifelse(png,0.8,1))
 		}
-		addLabel(ifelse(strSpp%in%c("396") && fid==1,0.225, 0.05), 0.95, linguaFranca(fidnams[k],lang), cex=1.2, adj=c(0,0))
+		addLabel(ifelse(strSpp%in%c("396") && fid==1,0.225, 0.025), 0.95, linguaFranca(fidnams[k],lang), cex=1.2, adj=c(0,0))
 		if (png && !onefig) dev.off()
 	} ; eop()
 	if (png && onefig) dev.off()
+#browser();return()
 }
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotGREFS
 
@@ -3017,13 +3030,13 @@ plotRecon <- function(dat=cat440rec, strSpp="440", major=c(1,3:9), fidout=10,
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotRecon
 
 
-## quickCat-----------------------------2025-10-17
+## quickCat-----------------------------2026-06-02
 ##  Subsets a large dataset derived from query 'fos_mcatORF.sql'
 ##  to remove non-zero catches of the RRF (landed+discard).
 ##  This facilitates crossTab queries for data summaries.
 ## ---------------------------------------------RH
 quickCat <- function(dat, strSpp="000", removeSM=TRUE,
-   yrs=1996:2024, area="BC")  ## incorporated revampCat
+   yrs=1996:2025, area="BC")  ## incorporated revampCat
 {
 	flds = colnames(dat)
 	if (removeSM) ## seamounts
@@ -3036,6 +3049,7 @@ quickCat <- function(dat, strSpp="000", removeSM=TRUE,
 		dat$catKg = dat$landed + dat$discard
 	dat = dat[dat$catKg>0 & !is.na(dat$catKg),]
 	dat = dat[is.element(dat$major,3:9),]
+	dat.all = dat ## use all years for the database summary
 	dat = dat[is.element(dat$year,yrs),]
 	
 	if (nrow(dat)==0) stop("No recorded catch for this species")
@@ -3055,13 +3069,14 @@ quickCat <- function(dat, strSpp="000", removeSM=TRUE,
 		dat$fishery[is.element(dat$major,7)   & is.element(dat$fid, c(2:5))] = "HYB_other"  ## Hybrids non-trawl
 	}
 	flds = colnames(dat)
+	createTdir()
 
 	if (all(is.element(c("year","sector","catKg","major"), flds))){
 		for (a in area) {
 			major = switch(a, 'BC'=3:9, '5ABC'=5:7, '5DE'=8:9, '3CD'=3:4)
 			adat  = dat[is.element(dat$major, major),]
 			tab.sector = crossTab(adat, c("year","sector"), "catKg")
-			write.csv(tab.sector, file=paste0("cat",strSpp,".sector.", a, ".csv"))
+			write.csv(tab.sector, file=paste0("./tables/cat",strSpp,".sector.", a, ".csv"))
 		}
 	}
 #browser();return()
@@ -3072,7 +3087,7 @@ quickCat <- function(dat, strSpp="000", removeSM=TRUE,
 			tab.gear = crossTab(adat, c("year","gear"), "catKg")
 			gear.nam = c("Unknown","Bottom Trawl","Trap","Midwater Trawl","Hook and Line","Longline"); names(gear.nam) = as.character(0:5)
 			colnames(tab.gear) = gear.nam[colnames(tab.gear)]
-			write.csv(tab.gear, file=paste0("cat",strSpp,".gear.", a, ".csv"))
+			write.csv(tab.gear, file=paste0("./tables/cat",strSpp,".gear.", a, ".csv"))
 			#ttput(tab.gear)
 		}
 	}
@@ -3081,22 +3096,25 @@ quickCat <- function(dat, strSpp="000", removeSM=TRUE,
 		tab.fid = crossTab(dat, c("year","fid"), "catKg")
 		fid.nam = c("Trawl","Halibut","Sablefish","Dogfish/Lingcod","H&L Rockfish","GF Longline","Foreign"); names(fid.nam) = as.character(c(1:5,8:9))
 		colnames(tab.fid) = fid.nam[colnames(tab.fid)]
-		write.csv(tab.fid, file=paste0("cat",strSpp,".fid.sum.csv"))
+		write.csv(tab.fid, file=paste0("./tables/cat",strSpp,".fid.sum.csv"))
 		ttput(tab.fid)
 	}
 	if (all(is.element(c("year","fishery","catKg"), flds))){
 		tab.fishery = crossTab(dat, c("year","fishery"), "catKg")
-		write.csv(tab.fishery, file=paste0("cat",strSpp,".fishery.sum.csv"))
+		write.csv(tab.fishery, file=paste0("./tables/cat",strSpp,".fishery.sum.csv"))
 		ttput(tab.fishery)
 	}
+	## For database summary, use all years
 	if (all(is.element(c("year","db","catKg"), flds))){
-		tab.db = crossTab(dat, c("year","db"), "catKg")
-		write.csv(tab.db, file=paste0("cat",strSpp,".db.sum.csv"))
+		tab.db = crossTab(dat.all, c("year","db"), "catKg")
+		write.csv(tab.db, file=paste0("./tables/cat",strSpp,".db.sum.csv"))
 		ttput(tab.db)
 	}
 
-	mess = paste0("cat",strSpp,"=dat; save(\"cat", strSpp, "\", ", "file=\"cat", strSpp, ".rda\")")
+	mess = paste0("cat",strSpp,"=dat; save(\"cat", strSpp, "\", ", "file=\"./data/cat", strSpp, ".rda\")")
 	eval(parse(text=mess))
+	messy = paste0("cat",strSpp,".allyrs=dat.all; save(\"cat", strSpp, ".allyrs\", ", "file=\"./data/cat", strSpp, ".allyrs.rda\")")
+	eval(parse(text=messy))
 	invisible(return(dat))
 }
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~quickCat

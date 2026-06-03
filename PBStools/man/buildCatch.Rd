@@ -6,52 +6,25 @@
 \description{
   Build a catch reconstruction for one BC rockfish species (\code{RRF}) that uses: \cr
   (i) reliable landings of \code{RRF} from modern databases, \cr
-  (ii) estimated landings of \code{RRF} using ratios of \code{RRF} to a reference 
+  (ii) estimated landings of \code{RRF} using ratios of \code{RRF} to a reference
    species catch (\code{TRF}, \code{ORF}, or \code{POP}), \cr
   (iii) estimated discards of \code{RRF} using discard ratios from observer logs.
 }
 \usage{
 buildCatch(
-   dbdat,
-   strSpp      = "396",
-   orfSpp      = "TRF",
-   major       = c(1,3:9),
-   fidout      = c(1:5,10),
-   useYR1      = c(1996,2000,2007,2007,1986),
-   useGFM      = TRUE,
-   useCA       = TRUE,
-   useUS       = TRUE,
-   useFF       = TRUE,
-   useSM       = FALSE,
-   useLS       = TRUE,
-   useAI       = FALSE,
-   useGM       = FALSE,
-   useBG       = FALSE,
-   refyrs      =  c(list(1996:2023), rep(list(2007:2011),4)),
-   refarea     = NULL,
-   refgear     = NULL,
-   strat.gamma = FALSE,
-   strat.delta = FALSE,
-   depbin      = 100,
-   defyrs      =  c(list(1997:2006), rep(list(2000:2004),4)),
-   disyrs      =  list(1954:1995, 1986:2005, 1986:2005, 1986:2005, 1986:2005),
-   sensitivity = NULL,
-   reconstruct = TRUE,
-   run.name    = NULL,
-   ascii.tables= TRUE,
-   diagnostics = FALSE,
-   saveinfo    = TRUE,
-   sql         = FALSE,
-   sql.only    = FALSE,
-   sql.force   = FALSE,
-   spath       = .getSpath(),
-   dpath       = getwd(),
-   eps         = FALSE, png = FALSE, wmf = FALSE,
-   uid         = Sys.info()["user"], pwd = uid,
-   ioenv       = .GlobalEnv,
-   hadley      = FALSE,
-   debug       = FALSE,
-   ...)
+   dbdat, strSpp="396", orfSpp="TRF", major=c(1,3:9), 
+   fidout=c(1:5,10), useYR1=c(1996,2000,2007,2007,1986), 
+   useGFM=TRUE, useCA=TRUE, useUS=TRUE, useFF=TRUE, 
+   useSM=FALSE, useLS=TRUE, useAI=FALSE, useGM=FALSE, useBG=FALSE, 
+   refyrs = c(list(1996:2025), rep(list(2007:2011),4)),
+   refarea=NULL, refgear=NULL, strat.gamma=FALSE, strat.delta=FALSE,
+   depbin=100, defyrs=c(list(1997:2006), rep(list(2000:2004),4)),
+   disyrs = list(1954:1995, 1986:2005, 1986:2005, 1986:2005, 1986:2005),
+   reconstruct=TRUE, run.name=NULL, ascii.tables=TRUE, diagnostics=FALSE,
+   saveinfo=TRUE, sql=FALSE, sql.only=FALSE, sql.force=FALSE,
+   spath=.getSpath(), dpath=getwd(), eps=FALSE, png=FALSE, wmf=FALSE,
+   uid=Sys.info()["user"], pwd=uid, ioenv=.GlobalEnv, hadley=FALSE,
+   debug=FALSE, ...)
 }
 \arguments{
   \item{dbdat}{\code{list} -- list of data frames containing landing records from various DFO databases: \cr
@@ -80,7 +53,7 @@ buildCatch(
     \code{4}  = Dogfish-Lingcod, \cr
     \code{5}  = hook and line (H&L) rockfish, \cr
     \code{10} = all fisheries combined.}
-  \item{useYR1}{\code{numeric} -- if specified, use these years (for each FID) to start accepting landings reported in the databases 
+  \item{useYR1}{\code{numeric} -- if specified, use these years (for each FID) to start accepting landings reported in the databases
     instead of reconstructing landings from \code{gamma} (reference ratios of \code{RRF} to \code{ORF|TRF}).}
   \item{useGFM}{\code{logical} -- if \code{TRUE}, use the latest official \code{GF_MERGED_CATCH} table (compiled by Norm Olsen).}
   \item{useCA}{\code{logical} -- if \code{TRUE}, use \code{ORF|TRF} catch from the Canadian (CA) fleet.}
@@ -90,7 +63,7 @@ buildCatch(
   \item{useLS}{\code{logical} -- if \code{TRUE}, use \code{ORF|TRF} catch from Langara Spit in \code{gamma} calculation.}
   \item{useAI}{\code{logical} -- if \code{TRUE}, assign catch from Anthony Island (PMFC 5E south of 52.33333 degrees N) to PMFC area 5C,
     primarily for POP and YMR. Only works for data from GFFOS merged catch in \code{gfmdat}.}
-  \item{useGM}{\code{logical} -- if \code{TRUE}, use geometric mean to average annual ratios for \code{gamma} and 
+  \item{useGM}{\code{logical} -- if \code{TRUE}, use geometric mean to average annual ratios for \code{gamma} and
     \code{delta} only. Not used if \code{strat.gamma}, \code{strat.delta}, or \code{useBG} are \code{TRUE}.}
   \item{useBG}{\code{logical} -- if \code{TRUE}, sample from the binomial-gamma distribution to estimate ratios \code{RRF/ORF} or \code{RRF/TRF}.}
   \item{refyrs}{\code{numeric} -- reference years to use when calculating \code{gamma} (e.g., \code{RRF/ORF}).}
@@ -100,12 +73,12 @@ buildCatch(
     (e.g., \code{list(`1`=1)}), where gears 1=bottom trawl, 2=trap, 3=midwater trawl, 4=h&l, 5=longline, 8=h&l/longline/trap.}
   \item{strat.gamma}{\code{logical} -- if \code{TRUE}, stratify the \code{RRF} numerator and
     \code{ORF|TRF} denominator by depth zone and weight by frequency of \code{RRF} landed > 0.}
-  \item{strat.delta}{\code{logical} --if \code{TRUE}, stratify the discard numerator and 
+  \item{strat.delta}{\code{logical} --if \code{TRUE}, stratify the discard numerator and
     denominator by depth zone and weight by frequency of \code{RRF} discards > 0.}
   \item{depbin}{\code{integer} -- depth (m) bin to use for \code{strat.gamma} and \code{strat.delta}.}
   \item{defyrs}{\code{numeric} -- reference years to use when calculating \code{delta} (discard rates).}
   \item{disyrs}{\code{numeric} -- discard years, one set for each fishery (trawl, halibut, sable, dogling, hlrock).}
-  \item{sensitivity}{\code{character} -- sensitivity name for tweaking decisions.}
+  %%\item{sensitivity}{\code{character} -- sensitivity name for tweaking decisions.}
   \item{reconstruct}{\code{logical} -- if \code{TRUE} (default), complete the reconstruction as previously,\cr
     if \code{FALSE}, terminate the code once the modern catch array has been compiled and saved
     (to a binary file \code{cat123mod.rda}, where \code{123} = species code).}
@@ -123,7 +96,7 @@ buildCatch(
     from binary files saved from a previous query run (saves time; also see \code{dpath}).}
   \item{sql.only}{\code{logical} -- if \code{TRUE}, only execute the queries to download catch data from remote databases.}
   \item{sql.force}{\code{logical} -- if \code{TRUE}, force the SQL query even if the data file \code{.rda} exists.}
-  \item{spath}{\code{character} -- path to SQL code files; defaults to the \code{sql} 
+  \item{spath}{\code{character} -- path to SQL code files; defaults to the \code{sql}
     directory under \cr \code{system.file(package="PBStools")}.}
   \item{dpath}{\code{character} -- path to database (\code{.rda} files) already queried;
     useful when user wants to build alternative catch histories (in another directory) using data already queried.}
@@ -137,17 +110,17 @@ buildCatch(
   \item{...}{additional \emph{ad hoc} arguments to deal with industry issues.}
 }
 \details{
-  For the time period 1918--1949, landings of other rockfish (\code{ORF}) and total rockfish (\code{TRF}) 
-  are identical because catch agencies did not identify Pacific Ocean Perch (\code{POP}). 
-  \code{POP} started showing up in catch records in 1950, but appear artificially low from 1950--1952. 
-  Therefore, for the period 1918--1952 we predict \code{ORF} and \code{POP} using a linear regression of 
+  For the time period 1918--1949, landings of other rockfish (\code{ORF}) and total rockfish (\code{TRF})
+  are identical because catch agencies did not identify Pacific Ocean Perch (\code{POP}).
+  \code{POP} started showing up in catch records in 1950, but appear artificially low from 1950--1952.
+  Therefore, for the period 1918--1952 we predict \code{ORF} and \code{POP} using a linear regression of
   \code{ORF} \emph{vs}. \code{TRF} landings from the 1953--1995 data (excluding an anomalous 1966 point):
 
   \deqn{O = 2^a T^b}{%
         O = 2^a T^b}
 
   where \eqn{a} = -0.8063372, \eqn{b} = 1.006260, \eqn{O} = \code{ORF}, \eqn{T} = \code{TRF}, and \code{POP = TRF - ORF}.
-  
+
   The ratios calculated by \code{buildCatch}:\cr
   \eqn{\alpha} or \code{alpha} = proportion of \code{RRF} caught in a PMFC area for each fishery,\cr
   \eqn{\beta}  or \code{beta} = proportion of \code{RRF} caught in a PMFC area for H&L fisheries,\cr
@@ -155,10 +128,10 @@ buildCatch(
   \eqn{\delta} or \code{delta} = ratio of discarded \code{RRF} to landings of a fishery-dependent spcecies|group from observer logs,\cr
   \eqn{\lambda} or \code{lambda} = proportion of early \code{ORF|TRF} catch by general gear type,\cr
   are applied to the historical data to estimate historical landings of the \code{RRF}
-  species. For \code{POP} the historical trawl landings are known back to 1956 
+  species. For \code{POP} the historical trawl landings are known back to 1956
   and so these are used instead of deriving estimates.
 
-  Landings (metric tonnes) from the modern catch databases (detailed above) are used 
+  Landings (metric tonnes) from the modern catch databases (detailed above) are used
   to populate a 5-dimensional array where\cr
   \eqn{i} = calendar year,\cr
   \eqn{j} = PMFC major area code,\cr
@@ -167,41 +140,41 @@ buildCatch(
   \eqn{m} = the database name.\cr
   Then for each element \eqn{(i,j,k,l)}, the maximum landing across database \eqn{m} is taken.
   Some data sources overlap while others provide the only recorded landing for particular years.
-  This methodology is utilized due to the non-contiguous nature of the data sources. 
+  This methodology is utilized due to the non-contiguous nature of the data sources.
 }
 \value{
   The final reconstructed catch array is invisibly returned.
   Additionally, if \code{saveinfo=TRUE}, various data objects internal to the
   function are saved to a global list object called \code{"PBStool"}.
-  If \code{diagnostics=TRUE}, numerous plots of the various intermediary data 
+  If \code{diagnostics=TRUE}, numerous plots of the various intermediary data
   objects are stored as image files in a subdirectory called \code{"diags"}.
-  If \code{ascii.tables=TRUE}, numerous \code{.csv} files are saved containing 
+  If \code{ascii.tables=TRUE}, numerous \code{.csv} files are saved containing
   individual-fishery landings, ratio tables, and the final catch reconstruction
   in a subdirectory called \code{"tables"}.
-  Various data objects, including the database catch files, consolidated and 
-  massaged, are saved as system binary files (\code{".rda"}). 
-  The final reconstructed catch array is also flattened to a comma-delimited 
+  Various data objects, including the database catch files, consolidated and
+  massaged, are saved as system binary files (\code{".rda"}).
+  The final reconstructed catch array is also flattened to a comma-delimited
   text file \code{"Catch-History-123.csv"}, where \code{123} represents the RRF code.
 }
 \section{Summary of changes since 2011}{
-  In previous stock assessments for POP (Edwards et al. 2014a,b), the authors documented two departures from the catch reconstruction algorithm introduced by Haigh & Yamanaka (2011). 
-  The first dropped the use of data from the sales slip database PacHarv3 because catches were sometimes reported by large statistical areas that cannot be clearly mapped to PMFC areas. 
-  In theory, \code{PacHarv3} should report the same catch as that in the \code{GFCatch} database (Rutherford 1999), but area inconsistencies cause catch inflation when certain large statistical areas cover multiple PMFC areas. 
-  Therefore, only the \code{GFCatch} database for the trawl and trap records from 1954 to 1995 are used, rather than trying to mesh \code{GFCatch} and \code{PacHarv3}. 
-  The point is somewhat moot as assessments since 2015 use a merged catch data table, \code{GF\_MERGED\_CATCH}, which is available in DFO's \code{GFFOS} database. 
-  Data for the H&L fisheries from \code{PacHarv3} are still used as these do not appear in other databases. 
+  In previous stock assessments for POP (Edwards et al. 2014a,b), the authors documented two departures from the catch reconstruction algorithm introduced by Haigh & Yamanaka (2011).
+  The first dropped the use of data from the sales slip database PacHarv3 because catches were sometimes reported by large statistical areas that cannot be clearly mapped to PMFC areas.
+  In theory, \code{PacHarv3} should report the same catch as that in the \code{GFCatch} database (Rutherford 1999), but area inconsistencies cause catch inflation when certain large statistical areas cover multiple PMFC areas.
+  Therefore, only the \code{GFCatch} database for the trawl and trap records from 1954 to 1995 are used, rather than trying to mesh \code{GFCatch} and \code{PacHarv3}.
+  The point is somewhat moot as assessments since 2015 use a merged catch data table, \code{GF\_MERGED\_CATCH}, which is available in DFO's \code{GFFOS} database.
+  Data for the H&L fisheries from \code{PacHarv3} are still used as these do not appear in other databases.
   The second departure was the inclusion of an additional data source for Japanese rockfish catch reported in Ketchen (1980).
 
-  In 2014, the Yellowtail Rockfish (YTR) assessment (Starr et al. 2014) selected offshore areas that reflected the activity of the foreign fleets' impact on this species to calculate \eqn{\gamma} (\code{RRF/ORF}) and \eqn{\delta} ratios (\code{RRF/TAR}). 
+  In 2014, the Yellowtail Rockfish (YTR) assessment (Starr et al. 2014) selected offshore areas that reflected the activity of the foreign fleets' impact on this species to calculate \eqn{\gamma} (\code{RRF/ORF}) and \eqn{\delta} ratios (\code{RRF/TAR}).
   This option has not been used in other rockfish reconstructions.
 
-  In the 2015 Yelloweye Rockfish (YYR) assessment (Yamanaka et al. 2018) the concept of depth-stratified \eqn{\gamma} and \eqn{\delta} ratios was introduced; however, this functionality has not been used since. 
+  In the 2015 Yelloweye Rockfish (YYR) assessment (Yamanaka et al. 2018) the concept of depth-stratified \eqn{\gamma} and \eqn{\delta} ratios was introduced; however, this functionality has not been used since.
   Also in the YYR assessment, rockfish catch from seamounts was removed, as well as an option to exclude rockfish catch from the foreign fleet and the experimental Langara Spit POP fishery.
 
-  In the 2018 Redstripe Rockfish (RSR) assessment (Starr and Haigh, in press), gamma and delta ratios from reference years were calculated by taking the geometric mean across years instead of the previously used arithmetic mean. 
-  This reduces the influence of single anomalously large annual ratios. 
+  In the 2018 Redstripe Rockfish (RSR) assessment (Starr and Haigh, in press), gamma and delta ratios from reference years were calculated by taking the geometric mean across years instead of the previously used arithmetic mean.
+  This reduces the influence of single anomalously large annual ratios.
   Also new in 2018 was the ability to estimate RRF (using \eqn{\gamma}) for landings later than 1996, should the user have reason to replace observed landings with estimated ones.
-  For example, Widow Rockfish (WWR) observed landings by fishery were used starting in 1996 (trawl), 2000 (halibut), 2007 (sablefish), 2007 (dogfish/lingcod), and 1986 (h&l rockfish); prior to these years, landings were estimated using \eqn{\gamma}. 
+  For example, Widow Rockfish (WWR) observed landings by fishery were used starting in 1996 (trawl), 2000 (halibut), 2007 (sablefish), 2007 (dogfish/lingcod), and 1986 (h&l rockfish); prior to these years, landings were estimated using \eqn{\gamma}.
   The user can also specify years by fishery when discard ratios (\eqn{\delta}) are to be applied; for WWR these years were 1954:1995 (trawl), 1986:2005 (halibut), 1986:2005 (sablefish), 1986:2005 (dogfish/lingcod), and 1986:2005 (h&l rockfish).
   As previously, years before the discard period assume no discarding, and years after the discard period assume that discards have been reported in the databases.
 
@@ -210,8 +183,8 @@ buildCatch(
   The effect of excluding zeroes will increase both ratios using the non-stratified method.
   Depth-stratification calculations of \eqn{\gamma} and \eqn{\delta} have not been re-examined or altered in the current algorithm.
 
-  In 2019, the WWR sock assessment found substantial amounts of WWR in GFBioSQL reported as foreign catch (specifically 349t in years 1982, 1987-1991, and 2000), which came from midwater gear off WCVI. 
-  The reconstruction algorithm now assigns GFBio foreign catch to four of the five fisheries based on gear type -- bottom and midwater trawl gear assigned to trawl, longline gear assigned to halibut, trap and line-trap mix gear assigned to sablefish, h&l gear assigned to h&l rockfish -- assuming that the reconstruction uses foreign catch, which is optional. 
+  In 2019, the WWR sock assessment found substantial amounts of WWR in GFBioSQL reported as foreign catch (specifically 349t in years 1982, 1987-1991, and 2000), which came from midwater gear off WCVI.
+  The reconstruction algorithm now assigns GFBio foreign catch to four of the five fisheries based on gear type -- bottom and midwater trawl gear assigned to trawl, longline gear assigned to halibut, trap and line-trap mix gear assigned to sablefish, h&l gear assigned to h&l rockfish -- assuming that the reconstruction uses foreign catch, which is optional.
   These foreign catches occurred well after the foreign fleet activity between 1965 and the implementation of an exclusive economic zone in 1977.
 }
 \section{Additional information -- YTR 2014}{
@@ -220,7 +193,7 @@ buildCatch(
 
   A) Midwater trawling for YTR did not really begin in the domestic fishery until the mid-1980s.
   This is evident in the rapid rise of YTR landings from the mid-1980s of the reconstruction.
-  It is not known if the foreign fleet which fished rockfish from the early 1960s to 1977 used 
+  It is not known if the foreign fleet which fished rockfish from the early 1960s to 1977 used
   mid-water gear, but it is thought to be unlikely.
 
   B) The foreign fleet fished the outside waters off Vancouver Island and Queen Charlotte Islands
@@ -230,7 +203,7 @@ buildCatch(
 
   Brian made several useful suggestions to improve the historical estimation method:
 
-  A) Only include bottom trawl catches of YTR in the ratio estimation process, discarding all 
+  A) Only include bottom trawl catches of YTR in the ratio estimation process, discarding all
   midwater trawl catches of YTR as well as other rockfish species;
 
   B) Make the calculations based on the outside bottom trawl catches of rockfish, ignoring catches
@@ -256,7 +229,7 @@ buildCatch(
   }
 
   These trawl \code{gamma} values are currently hardwired in the code and
-  can be activated by the following arguments: 
+  can be activated by the following arguments:
 
   \tabular{rl}{
   \code{pjs}     \tab \code{logical} -- if \code{TRUE},\cr
@@ -267,9 +240,9 @@ buildCatch(
   }
 }
 \section{Additional information -- YYR 2015}{
-  On May 14th, 2015, the Yelloweye Rockfish (YYR) working group held a workshop on catch 
+  On May 14th, 2015, the Yelloweye Rockfish (YYR) working group held a workshop on catch
   reconstruction with members from the five fishery sectors.
-  
+
   Changes to the catch reconstruction from this meeting and subsequent follow-ups include:
   \itemize{
     \item Merging of six DFO database sources into one catch table called \code{GF_MERGED_CATCH};
@@ -314,9 +287,9 @@ buildCatch(
   it was mirrored in SQL Server; it now occurs only in SQL Server on the server called
   \code{DFBCV9TWVASP001}.
 
-  The function \code{buildCatch} has one argument for an Oracle database user ID and one for 
-  its password. 
-  If the user's authentication credentials are different for \emph{n} different Oracle databases, 
+  The function \code{buildCatch} has one argument for an Oracle database user ID and one for
+  its password.
+  If the user's authentication credentials are different for \emph{n} different Oracle databases,
   specify \code{uid} and \code{pwd} as \emph{n}-element vectors.
   However, currently there is only one Oracle database used -- \code{PacHarv3}.
 
@@ -324,18 +297,18 @@ buildCatch(
   which should only need to be performed once per species to extract historical landings from \code{PacHarv3}.
   All queries to SQL Server can be run in the 64-bit version of R.
 
-  The SQL server \code{DFBCV9TWVASP001} does not require a password if the server recognises 
+  The SQL server \code{DFBCV9TWVASP001} does not require a password if the server recognises
   a user's DFO login credentials.
 }
 \author{
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
-  \emph{locus opus}: Remote office, Vancouver BC\cr
-  Last modified \code{Rd: 2024-10-28}
+  \emph{locus opus}: remote office, Vancouver BC\cr
+  Last modified \code{Rd: 2026-05-26}
 }
 \references{
   Edwards, A.M., Haigh, R. and Starr, P.J. (2014a)
-  \href{https://www.dfo-mpo.gc.ca/csas-sccs/publications/resdocs-docrech/2013/2013_092-eng.html}{Pacific Ocean Perch (\emph{Sebastes alutus}) stock assessment for the north and west coasts of Haida Gwaii, British Columbia}. 
+  \href{https://www.dfo-mpo.gc.ca/csas-sccs/publications/resdocs-docrech/2013/2013_092-eng.html}{Pacific Ocean Perch (\emph{Sebastes alutus}) stock assessment for the north and west coasts of Haida Gwaii, British Columbia}.
   \emph{DFO Can. Sci. Advis. Sec. Res. Doc.} \bold{2013/092}: vi + 126 pp.
 
   Edwards, A.M., Haigh, R. and Starr, P.J. (2014b)
@@ -348,7 +321,7 @@ buildCatch(
 
   Ketchen, K.S. (1980)
   \href{https://waves-vagues.dfo-mpo.gc.ca/Library/10079.pdf}{Reconstruction of Pacific Ocean Perch (\emph{Sebastes alutus}) stock history in Queen Charlotte sound}.
-  Part I. Estimation of foreign catches, 1965--1976. 
+  Part I. Estimation of foreign catches, 1965--1976.
   \emph{Can. Manuscr. Rep. Fish. Aquat. Sci.} \bold{1570}: iv + 46 pp.
 
   Rutherford, K.L. (1999)
@@ -375,7 +348,7 @@ In package \pkg{PBStools}:\cr
     \code{\link[PBStools]{plotRecon}},
     \code{\link[PBStools]{sampBG}},
     \code{\link[PBStools]{surveyCatch}},
-    \code{\link[PBStools]{zapSeamounts}}, 
+    \code{\link[PBStools]{zapSeamounts}},
     \code{\link[PBStools]{SQLcode}}\cr
 In package \pkg{PBSdata}:\cr
     \code{\link[PBSdata]{orfhistory}},

@@ -20,7 +20,8 @@ weightBio(adat, cdat, sunit="TID", sweight="catch",
    regimes=list(1900:1908, 1912:1915, 1923:1929, 1934:1943,
    1957:1960, 1976:1988, 1992:1998, 2002:2006, 2014:2017),
    layout="portrait", win=TRUE, eps=FALSE, pdf=FALSE, png=FALSE, wmf=FALSE,
-   longside=10, outnam, outres=400, ioenv=.GlobalEnv, lang=c("e","f"), ...)
+   longside=10, shortside=9, outnam, outres=400, ioenv=.GlobalEnv,
+   lang=c("e","f"), ...)
 }
 \arguments{
   \item{adat}{\code{data.frame} -- ageing information (fields returned by 
@@ -104,6 +105,7 @@ weightBio(adat, cdat, sunit="TID", sweight="catch",
   \item{png}{\code{logical} -- if \code{TRUE}, send figure to a portable network graphics \code{.png} file}
   \item{wmf}{\code{logical} -- if \code{TRUE}, send figure to a Windows metafile \code{.wmf} file}
   \item{longside}{\code{numeric} -- dimension (inches) of the longest side of the figure}
+  \item{shortside}{\code{numeric} -- dimension (inches) of the shortest side of the figure}
   \item{outnam}{\code{character} -- explicit output name to override an internally generated one}
   \item{outres}{\code{numeric} -- output resolution (dots per inch) for raster-based graphics}
   \item{ioenv}{\code{environment} -- input/output environment for function input data and output results}
@@ -302,14 +304,17 @@ out = weightBio(age396, Scat396, ctype="S", sunit="SID", SSID=1,
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
   \emph{locus opus}: remote office, Vancouver BC\cr
-  Last modified \code{Rd: 2026-03-26}
+  Last modified \code{Rd: 2026-06-03}
 
   \href{mailto:paul@starrfish.net}{Paul J. Starr}, Stock Assessment Scientist\cr
   Canadian Groundfish Research & Conservation Society (CGRCS), Nanaimo BC
 }
 \seealso{
-  \code{\link[PBStools]{getCatch}}, \code{\link[PBStools]{getData}},
-  \code{\link[PBStools]{plotProp}}, \code{\link[PBStools]{reportCatchAge}},
+  In package \pkg{PBStools}:\cr
+  \code{\link[PBStools]{getCatch}},
+  \code{\link[PBStools]{getData}},
+  \code{\link[PBStools]{plotProp}},
+  \code{\link[PBStools]{reportCatchAge}},
   \code{\link[PBStools]{requestAges}} \cr
   Available SQL queries: \code{\link[PBStools]{SQLcode}}
 }
