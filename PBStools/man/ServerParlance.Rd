@@ -5,43 +5,84 @@
 \concept{Oracle}
 \title{Info: Server Parlance -- SQL Server vs. Oracle}
 \description{
-  \pkg{PBStools} allows a user to easily query SQL Server and Oracle databases.
-  At PBS, both types reside on a single server \code{DFBCV9TWVASP001}.
-  The two database systems are similar but the terminology is potentially confusing. 
+  \pkg{PBStools} allows a user to easily query SQL Server and Oracle databases
+  (although the latter have been avoided like the plague).
+  At PBS, both types reside on a single server \code{DFBCV9TWVASP003} (or \code{10.114.52.20}).
+  And according to Wizard Faris, the `instance' is named \code{SQL2016STD}.
+  Therefore, mortals need to use the combination \code{DFBCV9TWVASP003\\\\SQL2016STD}
+  (or \code{10.114.52.20\\\\SQL2016STD}) to enter the magic realm where data are guarded by dragons.
+  
+  The two database systems (SQL Server & Oracle) are similar but the terminology is potentially confusing. 
   This package attempts to equalize the two database systems for the end user by 
   representing the Oracle hierarchy in terms of the SQL Server system. 
   Specifically, we use the term \code{server} to refer to an Oracle database, 
   and the term \code{database} to refer to an Oracle schema.
 }
 \details{
-  In SQL Server parlance we have:
-  \tabular{rl}{
-    \bold{1.} \tab A server (\code{DFBCV9TWVASP001}).\cr
-    \bold{2.} \tab One or more SQL Server instances.\cr
-              \tab The default instance is unnamed but if you run multiple instances they have to be named.\cr
-    \bold{3.} \tab Each instance has one or more databases (e.g. \code{PacHarvest}).\cr
-    \bold{4.} \tab Each database contains one or more schemas (the default schema is \code{dbo}).\cr
-    \bold{5.} \tab Each schema consists of various logical objects (e.g. tables, views, procedures).
+\bold{SQL Server Terminology}\cr
+In SQL Server, the hierarchy is typically organized as follows:
+\enumerate{
+  \item \strong{Server} \cr
+  For example: \code{DFBCV9TWVASP003}.
+  \item \strong{SQL Server Instance(s)} \cr
+  A server can host one or more instances.
+  \itemize{
+    \item The default instance is unnamed.
+    \item Additional instances must be named (e.g., \code{SQL2016STD}).
   }
-  In Oracle parlance we have:
-  \tabular{ll}{
-    \bold{1.} \tab A server (\code{DFBCV9TWVASP001}).\cr
-    \bold{2.} \tab One or more databases (e.g. \code{GFSH}).\cr
-    \bold{3.} \tab Each database contains one or more schemas (e.g. \code{GFFOS}).\cr
-    \bold{4.} \tab Each schema consists of various logical objects (e.g. tables, views, procedures).
+  \item \strong{Databases} \cr
+  Each instance contains one or more databases (e.g., \code{GFBioSQL}).
+  \item \strong{Schemas} \cr
+  Each database contains one or more schemas.
+  \itemize{
+    \item The default schema is typically \code{dbo}.
   }
-  In comparison, an SQL Server instance is equivalent to an Oracle database, 
-  and an SQL Server database is equivalent to an Oracle schema.  
-  
-  SQL Server schemas are quite a bit different than Oracle schemas in that 
-  they are chiefly a way of organizing objects and controlling permissions within
-  a single database, whereas Oracle schemas are basically separate logical 
-  structures in the same way that SQL Server databases are.
+  \item \strong{Objects} \cr
+  Each schema contains logical objects such as tables, views, and stored procedures.
+}
+\bold{Oracle Terminology}\cr
+In Oracle, the structure is organized as follows:
+\enumerate{
+  \item \strong{Server} \cr
+  For example: \code{DFBCV9TWVASP003}.
+  \item \strong{Databases} \cr
+  A server hosts one or more Oracle databases (e.g., \code{GFSH}).
+  \item \strong{Schemas} \cr
+  Each database contains one or more schemas (e.g., \code{GFFOS}).
+  \itemize{
+    \item In Oracle, a schema is typically associated with a user.
+  }
+  \item \strong{Objects} \cr
+  Each schema contains logical objects such as tables, views, and procedures.
+}
+\bold{Key Comparisons}\cr
+The following mappings provide a rough equivalence between SQL Server and Oracle:
+\itemize{
+  \item SQL Server \strong{Instance} \eqn{\sim}{~} Oracle \strong{Database}
+  \item SQL Server \strong{Database} \eqn{\sim}{~} Oracle \strong{Schema}
+}
+\bold{Important Distinctions}\cr
+\itemize{
+  \item In \strong{SQL Server}, schemas are primarily used to organize objects
+  and control permissions within a single database.
+  \item In \strong{Oracle}, schemas act as distinct logical containers for objects,
+  and are more comparable to independent databases in SQL Server.
+  \item SQL Server uses a three-level structure (instance \eqn{\rightarrow}{->} database \eqn{\rightarrow}{->} schema),
+  whereas Oracle relies more directly on the database \eqn{\rightarrow}{->} schema structure.
+}
+}
+\note{
+  The orignal parlance was written a long time ago in a galaxy far, far away.
+  I asked my new best friend, Copilot, to reword and reorganize the Details section
+  and to verify that the blather was not gibberish.
 }
 \author{
-  \href{mailto:norm.olsen@dfo-mpo.gc.ca}{Norm Olsen}, Program Head -- Surveys\cr
+  \href{https://copilot.microsoft.com}{Microsoft Copilot} -- version 2605\cr
+  M365 Copilot, based on the GPT-5 chat model architecture, June 2026
+
+  \href{mailto:norm.olsen@dfo-mpo.gc.ca}{Norm Olsen}, Program Head -- Surveys (retired)\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
-  Last modified \code{Rd: 2019-03-22}
+  Last modified \code{Rd: 2026-06-09}
 }
 \seealso{
 In package \pkg{PBStools}:\cr

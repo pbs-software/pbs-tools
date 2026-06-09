@@ -183,7 +183,8 @@ FROM
     MC.DATABASE_NAME = A.DATABASE_NAME AND
     MC.TRIP_ID = A.TRIP_ID AND
     MC.FISHING_EVENT_ID = A.FISHING_EVENT_ID
-  LEFT JOIN GFFOS_Build.dbo.GF_FE_TRAWL_SPECS GFB ON MC.FISHING_EVENT_ID = GFB.FISHING_EVENT_ID
+--  LEFT JOIN GFFOS_Build.dbo.GF_FE_TRAWL_SPECS GFB ON MC.FISHING_EVENT_ID = GFB.FISHING_EVENT_ID
+  LEFT JOIN GF_FE_TRAWL_SPECS GFB ON MC.FISHING_EVENT_ID = GFB.FISHING_EVENT_ID  -- (RH 260430)
 --WHERE
   -- Langara Spit (Norm's choice based on the word "Langara" appearing in locality name)
   --(( MC.MAJOR_STAT_AREA_CODE IN (8) AND MC.MINOR_STAT_AREA_CODE IN (3) AND MC.LOCALITY_CODE IN (3) ) OR
@@ -295,7 +296,7 @@ ORDER BY EC.TRIP_ID, EC.FISHING_EVENT_ID
 -- qu("fos_mcatORF.sql",dbName="GFFOS",strSpp="440")  -- Yellowmouth Rockfish (200929, 210125)
 -- qu("fos_mcatORF.sql",dbName="GFFOS",strSpp="453")  -- Longspine Thornyhead (210923)
 -- qu("fos_mcatORF.sql",dbName="GFFOS",strSpp="437")  -- Canary Rockfish (211125)
--- qu("fos_mcatORF.sql",dbName="GFFOS",strSpp="417")  -- Widow Rockfish 2026
 -- qu("fos_mcatORF.sql",dbName="GFFOS",strSpp="405")  -- Silvergray Rockfish 2025 (260316: catch update for CY 2025)
+-- qu("fos_mcatORF.sql",dbName="GFFOS",strSpp="417")  -- Widow Rockfish 2026 (260430)
 
 

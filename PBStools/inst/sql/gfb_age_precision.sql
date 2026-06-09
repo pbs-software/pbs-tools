@@ -67,10 +67,12 @@ FROM
   INNER JOIN SPECIES S ON
     S.SPECIES_CODE = C.SPECIES_CODE
 WHERE
-  SA.AGE_READING_TYPE_CODE IN (2,3) AND
+--  SA.AGE_READING_TYPE_CODE IN (2,3) AND
+  SA.AGE_READING_TYPE_CODE IN (1,2,3,4) AND  -- expand the age reading types for Punt's AE
   C.SPECIES_CODE IN (@sppcode)
 ORDER BY SA.AGEING_METHOD_CODE
 
 -- qu("gfb_age_precision.sql", dbName="GFBioSQL", strSpp="439")
 -- qu("gfb_age_precision.sql", dbName="GFBioSQL", strSpp=c("394","425"))
 -- qu("gfb_age_precision.sql", dbName="GFBioSQL", strSpp="437")
+-- qu("gfb_age_precision.sql", dbName="GFBioSQL", strSpp="417")

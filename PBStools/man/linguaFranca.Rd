@@ -4,7 +4,7 @@
   Parler la lingua franca, n'est-ce pas?
 }
 \description{
-  Translate common stock assessment english words (lingua) in figures
+  Translate common english words (lingua) in stock assessment figures
   into french words (franca). The function name is shamelessly adopted
   from the term \emph{lingua franca}, which has the opposite goal of 
   providing one language common to speakers of multiple languages (so ironic).
@@ -33,6 +33,11 @@ linguaFranca(x, lang="e", little=4, strip=FALSE, localnames=FALSE)
   runes -- Sandinavian, Germanic, or just mysterious magic symbols),
   the code uses Unicode to render the accented letters without causing
   the heads of CRAN Wizards to spin.
+  
+  In 2026, \code{'grepl'} statements were added before each cluster of
+  \code{'gsub'} commands to help reduce the shocking number of substitution
+  attempts. This reduced the translation time considerably. However, users
+  still need to take the results avec un grain de sel.
 }
 \value{
   Yes, there is value added. On a functional note, if the language
@@ -43,16 +48,19 @@ linguaFranca(x, lang="e", little=4, strip=FALSE, localnames=FALSE)
   triangle), and Gail Shea (pie in face) proud.
 }
 \references{
-  \href{http://www.dfo-mpo.gc.ca/csas-sccs/process-processus/translation-traduction-eng.html}{CSAS Policy on the translation of documents}
+  \href{https://laws-lois.justice.gc.ca/eng/regulations/C.R.C.,_c._1561/FullText.html}{Translation Bureau Regulations}
+
+  \href{https://www.canada.ca/en/government/system/digital-government/policies-standards/policy-implementation-notice-departmental-adoption-gctranslate.html}{%
+  Policy Implementation Notice for Departmental Adoption of GCtranslate}
 }
 \author{
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
-  \emph{locus opus}: Remote office, Vancouver BC\cr
-  Last modified \code{Rd: 2020-07-14}
+  \emph{locus opus}: remote office, Vancouver BC\cr
+  Last modified \code{Rd: 2026-06-09}
 }
 \note{
-  Contact \href{mailto:ann.mariscak@dfo-mpo.gc.ca}{Ann Mariscak} (CSAP office)
+  Contact \href{mailto:ann.mariscak@dfo-mpo.gc.ca}{Ann Mariscak} (CSAS office)
   for more information on acceptable french translations.
 }
 \seealso{
@@ -71,3 +79,4 @@ In package \pkg{PBStools}:\cr
 \keyword{manip}% use one of  RShowDoc("KEYWORDS")
 %\keyword{ ~kwd2 }% __ONLY ONE__ keyword per line
 \concept{M01_Utility}
+

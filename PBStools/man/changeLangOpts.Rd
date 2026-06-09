@@ -30,13 +30,13 @@ fop()
   \code{'changeLangOpts'} with either \code{L="e"} or \code{L="f"}, respectively.
 }
 \value{
-  No value returned, just changes three items in \code{options()}.
+  No value returned, just changes three items in \code{options()}. You're welcome.
 }
 \author{
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
-  \emph{locus opus}: Remote office, Vancouver BC\cr
-  Last modified \code{Rd: 2019-09-30}
+  \emph{locus opus}: remote office, Vancouver BC\cr
+  Last modified \code{Rd: 2026-06-09}
 }
 \seealso{
 In package \pkg{PBStools}:\cr

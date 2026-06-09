@@ -646,6 +646,6 @@ SELECT * FROM #GFBBIO
 -- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="405") -- Silvergray Rockfish (SGR: 240731, 241108, 250414, 250423, 250707, 250828 [2025 WP])
 -- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="417") -- Widow Rockfish  (WWR: 250918 for Steve W)
 -- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="437") -- Canary Rockfish (CAR: 250919 for Steve W)
--- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="417") -- Widow Rockfish  (WWR: 260203 for 2026 WP)
+-- qu("gfb_bio.sql",dbName="GFBioSQL",strSpp="417") -- Widow Rockfish  (WWR: 260203, 260417 for 2026 WP)
 
 -- DF=Dee Finn, DH=Dana Haggarty, MM=Mackenzie Mazur, NF=Nick Fisch, PJS=Paul Starr, RH=Rowan Haigh, SR=Science Response, WP=working paper

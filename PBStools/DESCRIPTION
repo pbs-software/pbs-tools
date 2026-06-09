@@ -1,6 +1,6 @@
 Package: PBStools
-Version: 1.46.0
-Date:    2026-06-03
+Version: 1.46.5
+Date:    2026-06-09
 Title:   Tools to Tackle Tricky Tasks
 Authors@R: c(
    person("Rowan", "Haigh", role = c("aut", "cre"), email = "rowan.haigh@dfo-mpo.gc.ca"),

@@ -15,6 +15,14 @@ CRAN package version numbers follow a "major.minor.patch" format (e.g., 1.2.3), 
 	Patch: Indicates bug fixes and minor improvements that do not introduce new features.
 -----------------------------------
 
+1.46.5 (2026-06-09)  [Rcheck=T, Rbuild=T]
+  * R code
+    + Updated `linguaFranca' to reduce processig time when translating to french (RH 260605)
+      - added instances of `grepl' to reduce the need to go through every possible substitution
+  * Documentation
+    + Updated the file `PBStools-package.Rd' to include newer functions since the last update to the file (RH 260604)
+    + Updated `ServerParlance.Rd' with the help of my new best friend, Copilot (RH 260609)
+
 1.46.0 (2026-06-03)  [Rcheck=T, Rbuild=T]
   * R code
     + Updated output locations for files in `quickCat' (RH 260602)
