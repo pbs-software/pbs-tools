@@ -3026,11 +3026,13 @@ makeAgeErr <- function(type="simple", strSpp, sql=FALSE,
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~makeAgeErr
 
 
-## plotAgeErr---------------------------2026-05-08
+## plotAgeErr---------------------------2026-09-22
 ## Plot ageing precision data
 ##   (modified from code by Sean Anderson, PBS)
 ## Arguments:
 ##   dat       - data frame created by call to `gfb_age_precision.sql'
+##   atype     - age reader types to compare (new argument 260922);
+##               enforced 'atype' as argument pair because SQL query now returns all reader types
 ##   nsamp     - number of fish to randomly sample for plot
 ##   xlim|ylim - x|y limits for plot
 ##   jitter    - maximum value to to randomly sample from uniform for visualization (done separately for x & y);
@@ -3042,7 +3044,8 @@ makeAgeErr <- function(type="simple", strSpp, sql=FALSE,
 ##   pngres    - resolution (pixels/inch) for PNG figure
 ##   PIN       - output size (inches) specifying width and height for PNG figure.
 ## ------------------------------------------SA/RH
-plotAgeErr <- function(dat, nsamp, xlim=NULL, ylim=NULL, jitter=0.25, seed=42, 
+plotAgeErr <- function(dat, atype=c(2,3), nsamp, 
+   xlim=NULL, ylim=NULL, jitter=0.25, seed=42, 
    png=FALSE, pngres=400, PIN=c(8,8), lang=c("e","f"))
 {
 	opar = par(no.readonly=T); on.exit(par(opar))
@@ -3052,7 +3055,6 @@ plotAgeErr <- function(dat, nsamp, xlim=NULL, ylim=NULL, jitter=0.25, seed=42,
 		for (i in 1:26)
 			sppNam = sub(paste0("/",letters[i]), paste0("/",LETTERS[i]), sppNam)
 	}
-#browser();return()
 
 	## Create a subdirectory called `french' for French-language figures
 	createFdir(lang)
@@ -3075,14 +3077,16 @@ plotAgeErr <- function(dat, nsamp, xlim=NULL, ylim=NULL, jitter=0.25, seed=42,
 	RAGOUT = as.data.frame(array(0,dim=c(1,length(oflds)+2*length(aflds)),dimnames=list("0",c(oflds, paste0(rep(c("r1_","r2_"),each=length(aflds)),aflds)))))
 	ttput(RAGOUT)  ## send it to the PBStools environment
 	ragin  = split(dat,dat$SPID)
+#browser();return()
 	ragout = sapply(ragin, function(df,ofld,afld){
 		ttget(RAGOUT)
 		rout  = numeric()
-		r1    = .su(df$atype)[1]
-		r2    = .su(df$atype)[2]
+		## (RH 260922) enforced 'atype' as argument pair (because SQL query now returns all reader types)
+		r1    = atype[1] #.su(df$atype)[1]
+		r2    = atype[2] #.su(df$atype)[2]
 		read1 = df[is.element(df$atype,r1),]
 		read2 = df[is.element(df$atype,r2),]
-#browser();return()
+		if (nrow(read1)==0 || nrow(read2)==0) return(NA)
 		for (i in 1:nrow(read1)) {
 			irec = read1[i,,drop=FALSE]
 			for (j in 1:nrow(read2)) {
@@ -3093,10 +3097,11 @@ plotAgeErr <- function(dat, nsamp, xlim=NULL, ylim=NULL, jitter=0.25, seed=42,
 		}
 		ttput(RAGOUT)
 		return(as.matrix(rout))
-	}, ofld=oflds, afld=aflds, simplify=F)
+	}, ofld=oflds, afld=aflds, simplify=FALSE)
 	ttget(RAGOUT)
 	ragout = RAGOUT[-1,]  ## remove artificially initiated first row of zeroes (stoopid R)
 	ttput(ragout)         ## send it to the PBStools environment
+#browser();return()
 
 	dat.base = dat; dat = ragout
 	if (!is.null(seed)) set.seed(seed)
@@ -3398,7 +3403,7 @@ plotMW <- function(dat, xlim, ylim, outnam="Mean-Weight-Compare",
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotMW
 
 
-## plotSnail----------------------------2026-03-12
+## plotSnail----------------------------2026-09-28
 ## Plot snail-trail plots for MCMC analysis.
 ##  AME: replacing "2010" with as.character(currYear - 1)
 ##  RH: added assYrs = years past with estimated Bcurr
@@ -3407,9 +3412,9 @@ plotMW <- function(dat, xlim, ylim, outnam="Mean-Weight-Compare",
 ##  RH 230418: Modified code to accept multi-area quantiles from 'load_extra_mcmc.r'
 ##  RH 230831: Added option to label select years (like Adam Langley)
 ## -----------------------------------------AME/RH
-plotSnail <- function(BoverBmsy, UoverUmsy, model="SS", yrs=1935:2023,
+plotSnail <- function(BoverBmsy, UoverUmsy, model="SS", yrs=1935:2026,
    p=c(0.05,0.95), xLim=NULL, yLim=NULL, Lwd=1.5, ngear=1,
-   Cnames, assYrs=NULL, outs=FALSE, labYrs=NULL, refpts="BMSY",  ## outs = outliers
+   Cnames, assYrs=NULL, outs=FALSE, labYrs=NULL, refpts="BMSY", refpts.scale=1,  ## outs = outliers
    ptypes="win", pngres=400, PIN=c(8,6), onepanel=TRUE, subarea, add=FALSE,
    outnam, lang="e")
 {
@@ -3565,7 +3570,11 @@ plotSnail <- function(BoverBmsy, UoverUmsy, model="SS", yrs=1935:2023,
 			xlab = switch(l, 'e'=expression(paste(italic(B[t])/italic(B)[MSY])),   'f'=expression(paste(italic(B[t])/italic(B)[RMD])) )
 			ylab = switch(l, 'e'=expression(paste(italic(u[t-1])/italic(u)[MSY])), 'f'=expression(paste(italic(u[t-1])/italic(u)[RMD])) )
 		} else if (refpts=="B0") {
-			xlab = switch(l, 'e'=expression(paste(italic(B[t])/italic(B)[0])),   'f'=expression(paste(italic(B[t])/italic(B)[0])) )  ## point de r\'{e}f\'{e}rence cible
+			if (refpts.scale==1) {
+				xlab = switch(l, 'e'=expression(paste(italic(B[t])/italic(B)[0])),   'f'=expression(paste(italic(B[t])/italic(B)[0])) )  ## point de r\'{e}f\'{e}rence cible
+			} else {
+				xlab = switch(l, 'e'=expression(paste(italic(B[t])/italic(B)[TRP])),   'f'=expression(paste(italic(B[t])/italic(B)[PRC])) )  ## point de r\'{e}f\'{e}rence cible
+			}
 			ylab = switch(l, 'e'=expression(paste(italic(u[t-1])/italic(u)[TRP])), 'f'=expression(paste(italic(u[t-1])/italic(u)[PRC])) )
 		}
 		startPlot <- function () {
@@ -3579,8 +3588,8 @@ plotSnail <- function(BoverBmsy, UoverUmsy, model="SS", yrs=1935:2023,
 				text(c(0.4,0.8),par()$usr[3],labels=show0(round(c(0.4,0.8),2),2),adj=c(1.1,-.5),col=.colBlind[c("redpurple","bluegreen")])
 			} else if (refpts=="B0") {
 				abline(h=1, col=c("grey20"), lwd=2, lty=3)
-				abline(v=c(0.2,0.32), col=.colBlind[c("redpurple","bluegreen")], lwd=2, lty=c(4,5))  ## switch to colours for the blind
-				text(c(0.2,0.32),par()$usr[3],labels=show0(round(c(0.20,0.32),2),2),adj=c(1.1,-.5),col=.colBlind[c("redpurple","bluegreen")])
+				abline(v=c(0.2,0.32)/refpts.scale, col=.colBlind[c("redpurple","bluegreen")], lwd=2, lty=c(4,5))  ## switch to colours for the blind
+				text(c(0.2,0.32)/refpts.scale, par()$usr[3], labels=show0(round(c(0.20,0.32)/refpts.scale,2),2), adj=c(1.1,-.5), col=.colBlind[c("redpurple","bluegreen")])
 			}
 		}
 		if (onepanel) startPlot()

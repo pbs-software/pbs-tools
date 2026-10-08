@@ -5,14 +5,17 @@
 }
 \description{
   Plot the historical progression of the ratio \eqn{u_{t-1}/u_\text{MSY}}{u[t-1]/u[MSY]}
-  against \eqn{B_t/B_\text{MSY}}{B[t]/B[MSY]}. These plots are known as 
-  \sQuote{phase plots} by traditionalists, \sQuote{Kobe plots} by 
-  tuna commissions, and \sQuote{snail trails} by NZ wine connoisseurs.
+  (generally, \eqn{u_{t-1}/u_\text{TRP}}{u[t-1]/u[TRP]})
+  against \eqn{B_t/B_\text{MSY}}{B[t]/B[MSY]} (generally, \eqn{B_t/B_\text{TRP}}{B[t]/B[TRP]}), 
+  where TRP = target reference point (e.g, MSY, B0, 0.4B0).
+  These plots are known as \sQuote{phase plots} by traditionalists,
+  \sQuote{Kobe plots} by US tuna commissions, and 
+  \sQuote{snail trails} by NZ wine connoisseurs.
 }
 \usage{
-plotSnail(BoverBmsy, UoverUmsy, model="SS", yrs=1935:2023,
+plotSnail(BoverBmsy, UoverUmsy, model="SS", yrs=1935:2026,
    p=c(0.05,0.95), xLim=NULL, yLim=NULL, Lwd=1.5, ngear=1,
-   Cnames, assYrs=NULL, outs=FALSE, labYrs=NULL, refpts="BMSY",
+   Cnames, assYrs=NULL, outs=FALSE, labYrs=NULL, refpts="BMSY", refpts.scale=1,
    ptypes="win", pngres=400, PIN=c(8,6), onepanel=TRUE, subarea,
    add=FALSE, outnam, lang="e")
 }
@@ -32,6 +35,7 @@ plotSnail(BoverBmsy, UoverUmsy, model="SS", yrs=1935:2023,
     quantile box whiskers to include the outliers (all data)}
   \item{labYrs}{\code{numeric} -- vector of years to label on the trajectory line(s)}
   \item{refpts}{\code{string} -- type of reference points (\code{'BMSY'} or \code{'B0'})}
+  \item{refpts.scale}{\code{numeric} -- scale of reference point (e.g., 0.4B0)}
   \item{ptypes}{\code{character} -- plot types for the figures: \code{'win'} = windows graphics device, \code{'eps'} = encapsulated postscript, \code{'png'} = portable network graphics, \code{'wmf'} = windows metafile}
   \item{pngres}{\code{numeric} -- resolution of output figure (pixels per inch)}
   \item{PIN}{\code{numeric} -- width and height of output figure (inches)}
@@ -50,10 +54,10 @@ First created by:\cr
   \href{mailto:andrew.edwards@dfo-mpo.gc.ca}{Andrew M. Edwards}, PBS, DFO, Nanaimo BC
 
 Modified by:\cr
-  \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
+  \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish (until 2025)\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
-  \emph{locus opus}: Remote office, Vancouver BC\cr
-  Last modified \code{Rd: 2026-02-03}
+  \emph{locus opus}: remote office, Vancouver BC\cr
+  Last modified \code{Rd: 2026-09-24}
 }
 \note{
   The term \emph{snail trail} comes from PJS.

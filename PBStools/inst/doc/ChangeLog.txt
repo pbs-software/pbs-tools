@@ -15,13 +15,23 @@ CRAN package version numbers follow a "major.minor.patch" format (e.g., 1.2.3), 
 	Patch: Indicates bug fixes and minor improvements that do not introduce new features.
 -----------------------------------
 
+1.47.0 (2026-10-08)  [Rcheck=T, Rbuild=T]
+  * Rcode
+    + Modified function `plotSnail' to display x-values as B_TRP, where TRP=0.4B0, rather than B0 (RH 260928)
+    + Added new argument `atype' to function `plotAgeErr' (RH 260922)
+      - the query `gfb_age_precision.sql' now returns all age reader types (not just 2 and 3)
+  * SQL code
+    + Added new SQL query `fos_mcatRAY.sql' to replace `fos_mcatSPP.sql' (removed)  (RH 260721)
+    + Added new SQL script `fos_offloads.sql' to query the Offloads table in GFFOS, primarily for Sablefish (RH 250708)
+      - modified from query `fos_gfb_offloads.sql'
+
 1.46.5 (2026-06-09)  [Rcheck=T, Rbuild=T]
   * R code
     + Updated `linguaFranca' to reduce processig time when translating to french (RH 260605)
       - added instances of `grepl' to reduce the need to go through every possible substitution
   * Documentation
-    + Updated the file `PBStools-package.Rd' to include newer functions since the last update to the file (RH 260604)
     + Updated `ServerParlance.Rd' with the help of my new best friend, Copilot (RH 260609)
+    + Updated the file `PBStools-package.Rd' to include newer functions since the last update to the file (RH 260604)
 
 1.46.0 (2026-06-03)  [Rcheck=T, Rbuild=T]
   * R code
